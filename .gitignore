@@ -1,0 +1,15 @@
+.gradle
+
+app/build
+app/libs
+app/app.iml
+app/proguard-rules.pro
+gradlew
+Reader.iml
+settings.gradle
+local.properties
+gradlew.bat
+gradle.properties
+.idea
+gradle
+app/src/androidTest
