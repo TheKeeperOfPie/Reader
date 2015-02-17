@@ -34,7 +34,7 @@ Universal
 Thread List
   - Thread view
     - Thumbnail preview
-      - Click to scale up to full size image
+      - Click to scale up to full size image above thread entry, move post details under image
     - Post details
     - Comment button
   - Smooth translation animation on click to top of screen
