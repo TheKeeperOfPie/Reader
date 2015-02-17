@@ -1,5 +1,5 @@
 .gradle
-
+/build
 app/build
 app/libs
 app/app.iml
