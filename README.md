@@ -15,7 +15,7 @@ A Reddit client created to practice good UI/UX design
 
 <img src="/Assets/Screenshots/Comment Thread.png" width="400px"/>
 
-## Layout Plan 
+## Objectives
 
 Universal
   - Navigation Drawer
@@ -34,17 +34,24 @@ Universal
 Thread List
   - Thread view
     - Thumbnail preview
-      - Click to scale up to full size image
+      - Click to scale up to full size image above thread entry, move post details under image
     - Post details
     - Comment button
-  - Smooth transition on click to top of screen
+  - Smooth translation animation on click to top of screen
 
 Comment Thread
   - Thread view
     - Show expanded view
     - Swipe down gesture to return and animate position back to thread list
+    - Swipe sideways to move to previous/next post
   - Comment view
+    - Find a way to implement tree, including view for load more
     - Level indicator
     - Comment details
+    - Collapsable with possible animation
     - Expandable view for actions
+      - Upvote/downvote
+      - User profile
+      - Reply with circular review into reply entry Fragment
+      - Overflow for additional actions
   - Easy parent comment navigation
