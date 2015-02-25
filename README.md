@@ -55,3 +55,9 @@ Comment Thread
       - Reply with circular review into reply entry Fragment
       - Overflow for additional actions
   - Easy parent comment navigation
+
+Data Models
+  - API class
+  - Models for each necessary data set in the UI
+  - Implementing various libraries like Volley/Picasso
+  - Networking framework to sync data
