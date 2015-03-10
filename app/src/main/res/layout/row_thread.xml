@@ -3,33 +3,47 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:minHeight="56dp"
-    android:paddingStart="@dimen/activity_horizontal_margin"
-    android:paddingLeft="@dimen/activity_horizontal_margin"
-    android:paddingEnd="@dimen/activity_horizontal_margin"
-    android:paddingRight="@dimen/activity_horizontal_margin"
+    android:minHeight="72dp"
+    android:paddingTop="16dp"
+    android:paddingBottom="8dp"
     >
-    
-    <ImageView
+
+    <com.winsonchiu.reader.ImageViewNetwork
+        android:id="@+id/image_full"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_marginBottom="8dp"
+        android:scaleType="fitCenter"
+        android:adjustViewBounds="true"
+        android:visibility="gone"
+        />
+
+    <com.winsonchiu.reader.ImageViewNetwork
         android:id="@+id/image_thread_preview"
         android:layout_width="40dp"
         android:layout_height="40dp"
-        android:layout_alignParentTop="true"
+        android:layout_below="@id/image_full"
         android:layout_alignParentStart="true"
         android:layout_alignParentLeft="true"
+        android:layout_marginStart="@dimen/activity_horizontal_margin"
+        android:layout_marginLeft="@dimen/activity_horizontal_margin"
         android:contentDescription="@string/content_description_thread_preview"
+        android:scaleType="centerCrop"
         />
 
     <TextView
         android:id="@+id/text_thread_title"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_below="@id/image_full"
         android:layout_toEndOf="@+id/image_thread_preview"
         android:layout_toRightOf="@+id/image_thread_preview"
-        android:layout_toStartOf="@+id/button_comments"
-        android:layout_toLeftOf="@+id/button_comments"
+        android:layout_toStartOf="@+id/button_upvote"
+        android:layout_toLeftOf="@+id/button_upvote"
         android:layout_marginStart="@dimen/activity_horizontal_margin"
         android:layout_marginLeft="@dimen/activity_horizontal_margin"
+        android:textSize="16sp"
         />
 
     <TextView
@@ -39,19 +53,53 @@
         android:layout_below="@id/text_thread_title"
         android:layout_alignStart="@id/text_thread_title"
         android:layout_alignLeft="@id/text_thread_title"
-        android:layout_toStartOf="@+id/button_comments"
-        android:layout_toLeftOf="@+id/button_comments"
+        android:layout_toStartOf="@+id/button_upvote"
+        android:layout_toLeftOf="@+id/button_upvote"
+        android:textSize="12sp"
         />
     
     <ImageButton
-        android:id="@+id/button_comments"
+        android:id="@+id/button_upvote"
         android:layout_width="56dp"
         android:layout_height="wrap_content"
-        android:padding="@dimen/activity_horizontal_margin"
-        android:layout_alignParentTop="true"
+        android:layout_below="@id/image_full"
+        android:layout_alignTop="@id/image_thread_preview"
+        android:layout_alignStart="@+id/text_score"
+        android:layout_alignLeft="@+id/text_score"
+        android:layout_alignEnd="@+id/text_score"
+        android:layout_alignRight="@+id/text_score"
+        android:contentDescription="@string/content_description_button_upvote"
+        android:background="@android:color/transparent"
+        android:src="@drawable/ic_keyboard_arrow_up_white_24dp"
+        android:scaleType="center"
+        />
+
+    <TextView
+        android:id="@+id/text_score"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/button_upvote"
         android:layout_alignParentEnd="true"
         android:layout_alignParentRight="true"
-        android:contentDescription="@string/content_description_comments_button"
+        android:layout_marginStart="@dimen/activity_horizontal_margin"
+        android:layout_marginLeft="@dimen/activity_horizontal_margin"
+        android:layout_marginEnd="@dimen/activity_horizontal_margin"
+        android:layout_marginRight="@dimen/activity_horizontal_margin"
+        />
+
+    <ImageButton
+        android:id="@+id/button_downvote"
+        android:layout_width="56dp"
+        android:layout_height="wrap_content"
+        android:layout_alignStart="@+id/text_score"
+        android:layout_alignLeft="@+id/text_score"
+        android:layout_alignEnd="@id/text_score"
+        android:layout_alignRight="@id/text_score"
+        android:layout_below="@id/text_score"
+        android:contentDescription="@string/content_description_button_downvote"
+        android:background="@android:color/transparent"
+        android:src="@drawable/ic_keyboard_arrow_down_white_24dp"
+        android:scaleType="center"
         />
 
 </RelativeLayout>

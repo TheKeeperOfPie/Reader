@@ -1,14 +1,22 @@
 package com.winsonchiu.reader;
 
 import android.app.Activity;
-import android.net.Uri;
-import android.os.Bundle;
 import android.app.Fragment;
+import android.os.Bundle;
+import android.support.v4.widget.SwipeRefreshLayout;
+import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.SearchView;
+import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+
+import com.winsonchiu.reader.data.Link;
 
 
 /**
@@ -20,10 +28,13 @@ import android.view.ViewGroup;
  * create an instance of this fragment.
  */
 public class FragmentThreadList extends Fragment {
+
+    private static final String TAG = FragmentThreadList.class.getCanonicalName();
+
     // TODO: Rename parameter arguments, choose names that match
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
     private static final String ARG_PARAM1 = "param1";
-    private static final String ARG_PARAM2 = "param2";
+    private static final String ARG_PARAM2 = "param2";;
 
     // TODO: Rename and change types of parameters
     private String mParam1;
@@ -33,6 +44,8 @@ public class FragmentThreadList extends Fragment {
     private OnFragmentInteractionListener mListener;
 
     private RecyclerView recyclerThreadList;
+    private AdapterThreadList adapterThreadList;
+    private SwipeRefreshLayout swipeRefreshThreadList;
 
     /**
      * Use this factory method to create a new instance of
@@ -63,6 +76,41 @@ public class FragmentThreadList extends Fragment {
             mParam1 = getArguments().getString(ARG_PARAM1);
             mParam2 = getArguments().getString(ARG_PARAM2);
         }
+        setHasOptionsMenu(true);
+        setRetainInstance(true);
+    }
+
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+
+        inflater.inflate(R.menu.menu_thread_list, menu);
+
+        final MenuItem itemSearch = menu.findItem(R.id.action_search);
+
+        final SearchView searchView = (SearchView) itemSearch.getActionView();
+
+        searchView.setOnCloseListener(new SearchView.OnCloseListener() {
+            @Override
+            public boolean onClose() {
+                return false;
+            }
+        });
+        searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+            @Override
+            public boolean onQueryTextSubmit(String query) {
+                Log.d(TAG, "Query entered");
+                adapterThreadList.setParameters(query, "hot");
+                itemSearch.collapseActionView();
+                return true;
+            }
+
+            @Override
+            public boolean onQueryTextChange(String newText) {
+                return false;
+            }
+        });
+
+        super.onCreateOptionsMenu(menu, inflater);
     }
 
     @Override
@@ -71,29 +119,47 @@ public class FragmentThreadList extends Fragment {
 
         View view = inflater.inflate(R.layout.fragment_fragment_thread_list, container, false);
 
+        swipeRefreshThreadList = (SwipeRefreshLayout) view.findViewById(R.id.swipe_refresh_thread_list);
+        swipeRefreshThreadList.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+            @Override
+            public void onRefresh() {
+                Log.d(TAG, "swipeRefresh");
+                adapterThreadList.reloadAllLinks();
+            }
+        });
+
+        if (adapterThreadList == null) {
+            adapterThreadList = new AdapterThreadList(activity, new AdapterThreadList.ThreadClickListener() {
+                @Override
+                public void setRefreshing(boolean loading) {
+                    swipeRefreshThreadList.setRefreshing(loading);
+                }
+
+                @Override
+                public void onLinkClick(Link link) {
+                    Log.d(TAG, "Thumbnail: " + link.getThumbnail());
+                }
+
+                @Override
+                public void onImagePreviewClick(View row, Link link) {
+
+                }
+
+                @Override
+                public void setToolbarTitle(String title) {
+                    mListener.setToolbarTitle(title);
+                }
+            }, "all", "hot");
+        }
+
         recyclerThreadList = (RecyclerView) view.findViewById(R.id.recycler_thread_list);
         recyclerThreadList.setHasFixedSize(true);
         recyclerThreadList.setLayoutManager(new LinearLayoutManager(activity));
-        recyclerThreadList.setAdapter(new AdapterThreadList(new AdapterThreadList.ThreadClickListener() {
-            @Override
-            public void onThreadClick() {
-                
-            }
-
-            @Override
-            public void onImagePreviewClick() {
-
-            }
-        }));
+        recyclerThreadList.setItemAnimator(new DefaultItemAnimator());
+        recyclerThreadList.addItemDecoration(new DividerItemDecoration(activity, DividerItemDecoration.VERTICAL_LIST));
+        recyclerThreadList.setAdapter(adapterThreadList);
 
         return view;
-    }
-
-    // TODO: Rename method, update argument and hook method into UI event
-    public void onButtonPressed(Uri uri) {
-        if (mListener != null) {
-            mListener.onFragmentInteraction(uri);
-        }
     }
 
     @Override
@@ -102,7 +168,8 @@ public class FragmentThreadList extends Fragment {
         this.activity = activity;
         try {
             mListener = (OnFragmentInteractionListener) activity;
-        } catch (ClassCastException e) {
+        }
+        catch (ClassCastException e) {
             throw new ClassCastException(activity.toString()
                     + " must implement OnFragmentInteractionListener");
         }
@@ -113,6 +180,17 @@ public class FragmentThreadList extends Fragment {
         super.onDetach();
         mListener = null;
         activity = null;
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        adapterThreadList.setLoading(false);
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
     }
 
     /**
@@ -126,8 +204,7 @@ public class FragmentThreadList extends Fragment {
      * >Communicating with Other Fragments</a> for more information.
      */
     public interface OnFragmentInteractionListener {
-        // TODO: Update argument type and name
-        public void onFragmentInteraction(Uri uri);
+        void setToolbarTitle(String title);
     }
 
 }

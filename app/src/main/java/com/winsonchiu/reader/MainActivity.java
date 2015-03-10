@@ -1,27 +1,19 @@
 package com.winsonchiu.reader;
 
-import android.app.Activity;
-import android.support.v7.app.ActionBarActivity;
-import android.support.v7.app.ActionBar;
-import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentManager;
-import android.content.Context;
-import android.os.Build;
 import android.os.Bundle;
-import android.view.Gravity;
-import android.view.LayoutInflater;
+import android.support.v4.widget.DrawerLayout;
+import android.support.v7.app.ActionBarActivity;
+import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
-import android.view.ViewGroup;
-import android.support.v4.widget.DrawerLayout;
-import android.widget.ArrayAdapter;
-import android.widget.TextView;
 
 
 public class MainActivity extends ActionBarActivity
-        implements NavigationDrawerFragment.NavigationDrawerCallbacks {
+        implements NavigationDrawerFragment.NavigationDrawerCallbacks,
+        FragmentThreadList.OnFragmentInteractionListener {
 
+    private static final String TAG = MainActivity.class.getCanonicalName();
     /**
      * Fragment managing the behaviors, interactions and presentation of the navigation drawer.
      */
@@ -31,6 +23,8 @@ public class MainActivity extends ActionBarActivity
      * Used to store the last screen title. For use in {@link #restoreActionBar()}.
      */
     private CharSequence mTitle;
+    private int oldPosition = -1;
+    private Toolbar toolbar;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -41,15 +35,29 @@ public class MainActivity extends ActionBarActivity
                 getSupportFragmentManager().findFragmentById(R.id.navigation_drawer);
         mTitle = getTitle();
 
+        toolbar = (Toolbar) findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
+
         // Set up the drawer.
         mNavigationDrawerFragment.setUp(
                 R.id.navigation_drawer,
-                (DrawerLayout) findViewById(R.id.drawer_layout));
+                (DrawerLayout) findViewById(R.id.drawer_layout),
+                toolbar);
+
+    }
+
+    @Override
+    protected void onPostCreate(Bundle savedInstanceState) {
+        super.onPostCreate(savedInstanceState);
     }
 
     @Override
     public void onNavigationDrawerItemSelected(int position) {
         // TODO: update the main content by replacing fragments
+        if (oldPosition != position) {
+            getFragmentManager().beginTransaction().replace(R.id.frame_fragment, FragmentThreadList.newInstance("", "")).commit();
+        }
+        oldPosition = position;
     }
 
     public void onSectionAttached(int number) {
@@ -67,10 +75,7 @@ public class MainActivity extends ActionBarActivity
     }
 
     public void restoreActionBar() {
-        ActionBar actionBar = getSupportActionBar();
-        actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_STANDARD);
-        actionBar.setDisplayShowTitleEnabled(true);
-        actionBar.setTitle(mTitle);
+        setTitle(mTitle);
     }
 
 
@@ -84,7 +89,7 @@ public class MainActivity extends ActionBarActivity
             restoreActionBar();
             return true;
         }
-        return super.onCreateOptionsMenu(menu);
+        return true;
     }
 
     @Override
@@ -102,4 +107,10 @@ public class MainActivity extends ActionBarActivity
         return super.onOptionsItemSelected(item);
     }
 
+    @Override
+    public void setToolbarTitle(String title) {
+        mTitle = title;
+        toolbar.setTitle(mTitle);
+        Log.d(TAG, "Title: " + getTitle());
+    }
 }

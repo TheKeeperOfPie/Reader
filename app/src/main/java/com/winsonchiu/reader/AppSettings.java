@@ -13,6 +13,7 @@ public class AppSettings {
     public static final String INITIALIZED = "initialized";
     public static final String APP_ACCESS_TOKEN = "applicationAccessToken";
     public static final String DEVICE_ID = "deviceId";
+    public static final String EXPIRE_TIME = "expireTime";
 
     public static boolean initPrefs(Context context) {
 
