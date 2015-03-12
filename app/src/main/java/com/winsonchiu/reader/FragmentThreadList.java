@@ -9,14 +9,14 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.SearchView;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-
-import com.winsonchiu.reader.data.Link;
+import android.view.ViewTreeObserver;
 
 
 /**
@@ -46,6 +46,7 @@ public class FragmentThreadList extends Fragment {
     private RecyclerView recyclerThreadList;
     private AdapterThreadList adapterThreadList;
     private SwipeRefreshLayout swipeRefreshThreadList;
+    private LinearLayoutManager linearLayoutManager;
 
     /**
      * Use this factory method to create a new instance of
@@ -95,6 +96,13 @@ public class FragmentThreadList extends Fragment {
                 return false;
             }
         });
+        searchView.setOnKeyListener(new View.OnKeyListener() {
+            @Override
+            public boolean onKey(View v, int keyCode, KeyEvent event) {
+                Log.d(TAG, "onKey: " + keyCode);
+                return keyCode == 44;
+            }
+        });
         searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
             @Override
             public boolean onQueryTextSubmit(String query) {
@@ -106,9 +114,15 @@ public class FragmentThreadList extends Fragment {
 
             @Override
             public boolean onQueryTextChange(String newText) {
+                // TODO: Remove spaces from query text
+
+//                if (newText.contains(" ")) {
+//                    searchView.setQuery(newText.replaceAll(" ", ""), false);
+//                }
                 return false;
             }
         });
+        searchView.setSubmitButtonEnabled(true);
 
         super.onCreateOptionsMenu(menu, inflater);
     }
@@ -117,7 +131,7 @@ public class FragmentThreadList extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
 
-        View view = inflater.inflate(R.layout.fragment_fragment_thread_list, container, false);
+        View view = inflater.inflate(R.layout.fragment_thread_list, container, false);
 
         swipeRefreshThreadList = (SwipeRefreshLayout) view.findViewById(R.id.swipe_refresh_thread_list);
         swipeRefreshThreadList.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
@@ -128,21 +142,31 @@ public class FragmentThreadList extends Fragment {
             }
         });
 
+        linearLayoutManager = new LinearLayoutManager(activity);
+        recyclerThreadList = (RecyclerView) view.findViewById(R.id.recycler_thread_list);
+        recyclerThreadList.setHasFixedSize(true);
+        recyclerThreadList.setLayoutManager(linearLayoutManager);
+        recyclerThreadList.setItemAnimator(new DefaultItemAnimator());
+        recyclerThreadList.addItemDecoration(
+                new DividerItemDecoration(activity, DividerItemDecoration.VERTICAL_LIST));
+
         if (adapterThreadList == null) {
             adapterThreadList = new AdapterThreadList(activity, new AdapterThreadList.ThreadClickListener() {
                 @Override
+                public void loadUrl(String url) {
+                    getFragmentManager().beginTransaction().add(R.id.frame_fragment, FragmentWeb
+                            .newInstance(url, ""), "fragmentWeb").addToBackStack(null)
+                            .commit();
+                }
+
+                @Override
+                public void onFullLoaded(int position) {
+                    linearLayoutManager.scrollToPositionWithOffset(position, 0);
+                }
+
+                @Override
                 public void setRefreshing(boolean loading) {
                     swipeRefreshThreadList.setRefreshing(loading);
-                }
-
-                @Override
-                public void onLinkClick(Link link) {
-                    Log.d(TAG, "Thumbnail: " + link.getThumbnail());
-                }
-
-                @Override
-                public void onImagePreviewClick(View row, Link link) {
-
                 }
 
                 @Override
@@ -151,13 +175,17 @@ public class FragmentThreadList extends Fragment {
                 }
             }, "all", "hot");
         }
+        adapterThreadList.setActivity(activity);
 
-        recyclerThreadList = (RecyclerView) view.findViewById(R.id.recycler_thread_list);
-        recyclerThreadList.setHasFixedSize(true);
-        recyclerThreadList.setLayoutManager(new LinearLayoutManager(activity));
-        recyclerThreadList.setItemAnimator(new DefaultItemAnimator());
-        recyclerThreadList.addItemDecoration(new DividerItemDecoration(activity, DividerItemDecoration.VERTICAL_LIST));
         recyclerThreadList.setAdapter(adapterThreadList);
+        recyclerThreadList.getViewTreeObserver().addOnGlobalLayoutListener(
+                new ViewTreeObserver.OnGlobalLayoutListener() {
+                    @Override
+                    public void onGlobalLayout() {
+                        adapterThreadList.setViewHeight(recyclerThreadList.getHeight());
+                        recyclerThreadList.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+                    }
+                });
 
         return view;
     }
@@ -204,7 +232,7 @@ public class FragmentThreadList extends Fragment {
      * >Communicating with Other Fragments</a> for more information.
      */
     public interface OnFragmentInteractionListener {
-        void setToolbarTitle(String title);
+        void setToolbarTitle(CharSequence title);
     }
 
 }

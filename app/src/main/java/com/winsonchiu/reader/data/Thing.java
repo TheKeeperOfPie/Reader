@@ -36,4 +36,24 @@ public abstract class Thing {
     public void setKind(String kind) {
         this.kind = kind;
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+
+        Thing thing = (Thing) o;
+
+        return getId().equals(thing.getId());
+
+    }
+
+    @Override
+    public int hashCode() {
+        return getId().hashCode();
+    }
 }

@@ -5,6 +5,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 
 /**
@@ -56,7 +57,10 @@ public class Listing {
     }
 
     public void addChildren(List<Thing> children) {
-        this.children.addAll(children);
+        LinkedHashSet<Thing> linkedHashSet = new LinkedHashSet<>(this.children);
+        linkedHashSet.addAll(children);
+        this.children.clear();
+        this.children.addAll(linkedHashSet);
     }
 
     public static Listing fromJson(JSONObject rootJsonObject) throws JSONException {

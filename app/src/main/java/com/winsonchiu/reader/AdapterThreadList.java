@@ -1,31 +1,43 @@
 package com.winsonchiu.reader;
 
 import android.app.Activity;
+import android.content.SharedPreferences;
+import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
+import android.preference.PreferenceManager;
 import android.support.v7.widget.RecyclerView;
+import android.text.Html;
+import android.text.Spannable;
+import android.text.SpannableString;
+import android.text.SpannableStringBuilder;
+import android.text.Spanned;
 import android.text.TextUtils;
-import android.util.DisplayMetrics;
+import android.text.method.LinkMovementMethod;
+import android.text.style.ClickableSpan;
+import android.text.style.ForegroundColorSpan;
+import android.text.style.URLSpan;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageButton;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
-import com.android.volley.Request;
-import com.android.volley.RequestQueue;
-import com.android.volley.Response;
-import com.android.volley.VolleyError;
-import com.android.volley.toolbox.ImageLoader;
+import com.github.rjeschke.txtmark.Processor;
+import com.koushikdutta.async.future.FutureCallback;
+import com.koushikdutta.ion.Ion;
+import com.koushikdutta.ion.ProgressCallback;
+import com.winsonchiu.reader.data.FutureReddit;
 import com.winsonchiu.reader.data.Link;
 import com.winsonchiu.reader.data.Listing;
 import com.winsonchiu.reader.data.Reddit;
-import com.winsonchiu.reader.data.RedditJsonRequest;
-import com.winsonchiu.reader.data.Thing;
 
 import org.json.JSONException;
 import org.json.JSONObject;
-
-import java.util.ArrayList;
 
 /**
  * Created by TheKeeperOfPie on 3/7/2015.
@@ -33,26 +45,33 @@ import java.util.ArrayList;
 public class AdapterThreadList extends RecyclerView.Adapter<AdapterThreadList.ViewHolder> {
 
     private static final String TAG = AdapterThreadList.class.getCanonicalName();
+    private static final String BY = " by ";
+
     private ThreadClickListener listener;
-    private Reddit reddit;
     private Listing listingLinks;
     private boolean isLoading;
     private String sort = "";
     private String subreddit = "";
-    private RedditJsonRequest redditJsonRequest;
     private Drawable drawableEmpty;
     private Drawable drawableDefault;
-    private int maxLength;
+    private Activity activity;
+    private SharedPreferences preferences;
+    private int colorScore;
+    private int viewHeight;
 
     public AdapterThreadList(Activity activity, ThreadClickListener listener, String subreddit, String sort) {
-        DisplayMetrics displayMetrics = activity.getResources().getDisplayMetrics();
+        this.preferences = PreferenceManager.getDefaultSharedPreferences(activity.getApplicationContext());
+        this.activity = activity;
         this.listener = listener;
-        this.reddit = Reddit.getReddit(activity);
         this.listingLinks = new Listing();
-        this.maxLength = displayMetrics.heightPixels > displayMetrics.widthPixels ? displayMetrics.heightPixels : displayMetrics.widthPixels;
         setParameters(subreddit, sort);
         drawableEmpty = activity.getResources().getDrawable(R.drawable.ic_web_white_24dp);
         drawableDefault = activity.getResources().getDrawable(R.drawable.ic_textsms_white_24dp);
+        colorScore = activity.getResources().getColor(R.color.colorAccent);
+    }
+
+    public void setActivity(Activity activity) {
+        this.activity = activity;
     }
 
     public void setParameters(String subreddit, String sort) {
@@ -80,62 +99,60 @@ public class AdapterThreadList extends RecyclerView.Adapter<AdapterThreadList.Vi
         }
 
         Link link = (Link) listingLinks.getChildren().get(i);
+        viewHolder.imageFull.setMaxHeight(viewHeight - viewHolder.itemView.getHeight());
+        viewHolder.progressImage.setVisibility(View.GONE);
         viewHolder.imageFull.setVisibility(View.GONE);
+        viewHolder.imageThreadPreview.setImageBitmap(null);
         viewHolder.imageThreadPreview.setVisibility(View.VISIBLE);
         String thumbnail = link.getThumbnail();
         if (TextUtils.isEmpty(thumbnail)) {
             viewHolder.imageThreadPreview.setImageDrawable(drawableEmpty);
         }
-        else if (thumbnail.equals("self") || thumbnail.equals("default") || thumbnail.equals("nsfw")) {
+        else if (thumbnail.equals(Reddit.SELF) || thumbnail.equals(
+                Reddit.DEFAULT) || thumbnail.equals(Reddit.NSFW)) {
             viewHolder.imageThreadPreview.setImageDrawable(drawableDefault);
         }
         else {
-            viewHolder.imageThreadPreview.setImageUrl(thumbnail, reddit.getImageLoader());
+            Ion.with(viewHolder.imageThreadPreview)
+                    .load(thumbnail);
         }
         viewHolder.textThreadTitle.setText(link.getTitle());
-        viewHolder.textThreadInfo.setText("by " + link.getAuthor());
-        viewHolder.textScore.setText("" + link.getScore());
+
+        Spannable spannableInfo = new SpannableString(link.getScore() + BY + link.getAuthor());
+        spannableInfo.setSpan(new ForegroundColorSpan(colorScore), 0,
+                String.valueOf(link.getScore()).length(), Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
+        viewHolder.textThreadInfo.setText(spannableInfo);
 
     }
 
     public void reloadAllLinks() {
-        if (isLoading) {
-            redditJsonRequest.cancel();
-            reddit.getRequestQueue().cancelAll(new RequestQueue.RequestFilter() {
-                @Override
-                public boolean apply(Request<?> request) {
-                    return true;
-                }
-            });
-        }
         setLoading(true);
-        try {
-            redditJsonRequest = reddit.getMoreLinks(subreddit, sort, "", "", 30, false, new Response.Listener<JSONObject>() {
-                @Override
-                public void onResponse(JSONObject response) {
-                    try {
-                        listingLinks = Listing.fromJson(response);
-                        notifyDataSetChanged();
+        String url = "https://oauth.reddit.com" + "/r/" + subreddit + "/" + sort;
+        Ion.with(activity)
+                .load("GET", url)
+                .addHeader(Reddit.USER_AGENT, Reddit.CUSTOM_USER_AGENT)
+                .addHeader(Reddit.AUTHORIZATION, Reddit.BEARER + preferences.getString(AppSettings
+                        .APP_ACCESS_TOKEN, ""))
+                .addHeader("Content-Type", "application/json; charset=utf-8")
+                .asString()
+                .setCallback(new FutureReddit() {
+                    @Override
+                    public void onCompleted(Exception exception, JSONObject result) {
+
+                        try {
+                            listingLinks = Listing.fromJson(result);
+                            notifyDataSetChanged();
+                            listener.onFullLoaded(0);
+                        }
+                        catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+                        finally {
+                            setLoading(false);
+                        }
                     }
-                    catch (JSONException e) {
-                        e.printStackTrace();
-                    }
-                    finally {
-                        setLoading(false);
-                    }
-                }
-            }, new Response.ErrorListener() {
-                @Override
-                public void onErrorResponse(VolleyError error) {
-                    setLoading(false);
-                }
-            });
-            Log.d(TAG, "reloadAllLinks");
-        }
-        catch (JSONException e) {
-            setLoading(false);
-            e.printStackTrace();
-        }
+                });
+        Log.d(TAG, "reloadAllLinks");
     }
 
     public void loadMoreLinks() {
@@ -143,36 +160,34 @@ public class AdapterThreadList extends RecyclerView.Adapter<AdapterThreadList.Vi
             return;
         }
         setLoading(true);
-        try {
-            redditJsonRequest = reddit.getMoreLinks(subreddit, sort, listingLinks.getAfter(), "", 30, false, new Response.Listener<JSONObject>() {
-                @Override
-                public void onResponse(JSONObject response) {
-                    try {
-                        int startPosition = listingLinks.getChildren().size();
-                        Listing listing = Listing.fromJson(response);
-                        listingLinks.addChildren(listing.getChildren());
-                        listingLinks.setAfter(listing.getAfter());
-                        notifyItemRangeInserted(startPosition, listingLinks.getChildren().size() - 1);
+        String url = "https://oauth.reddit.com" + "/r/" + subreddit + "/" + sort + "?" + "after=" + listingLinks.getAfter();
+        Ion.with(activity)
+                .load("GET", url)
+                .addHeader(Reddit.USER_AGENT, Reddit.CUSTOM_USER_AGENT)
+                .addHeader(Reddit.AUTHORIZATION, Reddit.BEARER + preferences.getString(AppSettings
+                        .APP_ACCESS_TOKEN, ""))
+                .addHeader("Content-Type","application/json; charset=utf-8")
+                .asString()
+                .setCallback(new FutureReddit() {
+                    @Override
+                    public void onCompleted(Exception exception, JSONObject result) {
+                        try {
+                            int startPosition = listingLinks.getChildren()
+                                    .size();
+                            Listing listing = Listing.fromJson(result);
+                            listingLinks.addChildren(listing.getChildren());
+                            listingLinks.setAfter(listing.getAfter());
+                            notifyItemRangeInserted(startPosition, listingLinks.getChildren()
+                                    .size() - 1);
+                        }
+                        catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+                        finally {
+                            setLoading(false);
+                        }
                     }
-                    catch (JSONException e) {
-                        e.printStackTrace();
-                    }
-                    finally {
-                        setLoading(false);
-                    }
-                }
-            }, new Response.ErrorListener() {
-                @Override
-                public void onErrorResponse(VolleyError error) {
-                    listingLinks.setChildren(new ArrayList<Thing>());
-                    setLoading(false);
-                }
-            });
-        }
-        catch (JSONException e) {
-            setLoading(false);
-            e.printStackTrace();
-        }
+                });
     }
 
     public void setLoading(boolean loading) {
@@ -180,27 +195,33 @@ public class AdapterThreadList extends RecyclerView.Adapter<AdapterThreadList.Vi
         listener.setRefreshing(loading);
     }
 
+    public void setViewHeight(int viewHeight) {
+        this.viewHeight = viewHeight;
+    }
+
     protected class ViewHolder extends RecyclerView.ViewHolder {
 
-        protected ImageViewNetwork imageFull;
-        protected ImageViewNetwork imageThreadPreview;
+        protected ProgressBar progressImage;
+        protected ImageView imageFull;
+        protected ImageView imageThreadPreview;
         protected TextView textThreadTitle;
         protected TextView textThreadInfo;
-        protected TextView textScore;
+        protected ImageButton buttonComments;
+        protected LinearLayout layoutContainerActions;
+        private View.OnClickListener clickListenerLink;
 
         public ViewHolder(View itemView) {
             super(itemView);
-            this.imageFull = (ImageViewNetwork) itemView.findViewById(R.id.image_full);
-            this.imageThreadPreview = (ImageViewNetwork) itemView.findViewById(R.id.image_thread_preview);
+
+            this.progressImage = (ProgressBar) itemView.findViewById(R.id.progress_image);
+            this.imageFull = (ImageView) itemView.findViewById(R.id.image_full);
+            this.imageThreadPreview = (ImageView) itemView.findViewById(R.id.image_thread_preview);
             this.textThreadTitle = (TextView) itemView.findViewById(R.id.text_thread_title);
+            // TODO: Remove and replace with a real TextView that holds self_text
+            this.textThreadTitle.setMovementMethod(LinkMovementMethod.getInstance());
             this.textThreadInfo = (TextView) itemView.findViewById(R.id.text_thread_info);
-            this.textScore = (TextView) itemView.findViewById(R.id.text_score);
-            this.itemView.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    listener.onLinkClick((Link) listingLinks.getChildren().get(getPosition()));
-                }
-            });
+            this.buttonComments = (ImageButton) itemView.findViewById(R.id.button_comments);
+            this.layoutContainerActions = (LinearLayout) itemView.findViewById(R.id.layout_container_actions);
             this.imageThreadPreview.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
@@ -210,76 +231,172 @@ public class AdapterThreadList extends RecyclerView.Adapter<AdapterThreadList.Vi
                     imageFull.setVisibility(View.GONE);
                     imageThreadPreview.setVisibility(View.VISIBLE);
 
-                    if (!TextUtils.isEmpty(link.getUrl()) && !TextUtils.isEmpty(thumbnail) && !thumbnail.equals("self") && !thumbnail.equals("default") && !thumbnail.equals("nsfw")) {
-                        // TODO: Add support for popular image domains
-//                        String domain = link.getDomain();
-//                        if (domain.contains("imgur")) {
-//                            loadImgur(link, ViewHolder.this);
-//                        }
-//                        else if (domain.contains("gfycat")) {
-//                            loadGfycat(link, ViewHolder.this);
-//                        }
-//                        else {
-//                            loadBasicImage(link, ViewHolder.this);
-//                        }
-                        loadBasicImage(link, ViewHolder.this);
+                    if (link.isSelf()) {
+                        setTextViewHTML(textThreadTitle, Processor.process(link.getSelfText()));
+                        listener.onFullLoaded(getPosition());
                     }
-                    listener.onImagePreviewClick(ViewHolder.this.itemView, link);
+                    else if (!TextUtils.isEmpty(link.getUrl()) && !thumbnail.equals(
+                            Reddit.DEFAULT) && !thumbnail.equals(Reddit.NSFW)) {
+
+                        // TODO: Add support for popular image domains
+                        String domain = link.getDomain();
+                        if (domain.contains("imgur")) {
+                            loadImgur(link);
+                        }
+                        else {
+                            boolean isImage = checkIsImage(link.getUrl());
+                            if (isImage) {
+                                loadBasicImage(link);
+                            }
+                            else {
+                                listener.loadUrl(link.getUrl());
+                            }
+                        }
+                    }
                 }
             });
+            clickListenerLink = new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    layoutContainerActions.setVisibility(
+                            layoutContainerActions.getVisibility() == View.VISIBLE ? View.GONE :
+                                    View.VISIBLE);
+                }
+            };
+            this.itemView.setOnClickListener(clickListenerLink);
+            this.textThreadTitle.setOnClickListener(clickListenerLink);
+            this.textThreadInfo.setOnClickListener(clickListenerLink);
         }
 
+        protected void makeLinkClickable(SpannableStringBuilder strBuilder, final URLSpan span)
+        {
+            int start = strBuilder.getSpanStart(span);
+            int end = strBuilder.getSpanEnd(span);
+            int flags = strBuilder.getSpanFlags(span);
+            ClickableSpan clickable = new ClickableSpan() {
+                public void onClick(View view) {
+                    listener.loadUrl(span.getURL());
+                }
+            };
+            strBuilder.setSpan(clickable, start, end, flags);
+            strBuilder.removeSpan(span);
+        }
 
-        private void loadGfycat(Link link, ViewHolder viewHolder) {
+        protected void setTextViewHTML(TextView text, String html)
+        {
+            CharSequence sequence = Html.fromHtml(html);
+            SpannableStringBuilder strBuilder = new SpannableStringBuilder(sequence);
+            URLSpan[] urls = strBuilder.getSpans(0, sequence.length(), URLSpan.class);
+            for(URLSpan span : urls) {
+                makeLinkClickable(strBuilder, span);
+            }
+            text.setText(strBuilder);
+        }
+
+        private void loadGfycat(Link link) {
             // TODO: Add support for Gfycat
         }
 
-        private void loadImgur(Link link, ViewHolder viewHolder) {
+        private void loadImgur(Link link) {
             // TODO: Add support for Imgur
+
+            Log.d(TAG, "loadImgur: " + link.getUrl());
+
+            String url = link.getUrl();
+            if (!url.contains("http")) {
+                url += "http://";
+            }
+
+            if (!checkIsImage(url)) {
+                if (url.charAt(url.length() - 1) == '/') {
+                    url = url.substring(0, url.length() - 2);
+                }
+                url += ".jpg";
+            }
+
+            loadImage(url);
+
         }
 
-        private void loadBasicImage(final Link link, ViewHolder viewHolder) {
-            reddit.fetchHeaders(link.getUrl(), new Response.Listener<JSONObject>() {
-                @Override
-                public void onResponse(JSONObject response) {
-                    Log.d(TAG, "onResponse");
-                    try {
-                        JSONObject headers = response.getJSONObject("headers");
-                        Log.d(TAG, "Headers: " + headers);
-                        if (headers.getString("Content-Type").toLowerCase().contains("image")) {
-                            reddit.getImageLoader().get(link.getUrl(), new ImageLoader.ImageListener() {
-                                @Override
-                                public void onResponse(ImageLoader.ImageContainer response, boolean isImmediate) {
-                                    imageFull.setVisibility(View.VISIBLE);
-                                    imageFull.setImageBitmap(response.getBitmap());
-                                    imageThreadPreview.setVisibility(View.INVISIBLE);
-                                }
+        private void loadBasicImage(final Link link) {
 
-                                @Override
-                                public void onErrorResponse(VolleyError error) {
-                                    error.printStackTrace();
-                                }
-                            }, maxLength, maxLength);
+            Log.d(TAG, "loadBasicImage: " + link.getUrl());
+
+            String url = link.getUrl();
+            if (!url.contains("http")) {
+                url += "http://";
+            }
+
+            if (url.endsWith(".gif")) {
+                progressImage.setVisibility(View.VISIBLE);
+                Ion.with(activity)
+                        .load(url)
+                        .progress(new ProgressCallback() {
+                            @Override
+                            public void onProgress(long downloaded, long total) {
+                                progressImage.setProgress((int) ((float) downloaded / total *
+                                        1000));
+                            }
+                        })
+                        .intoImageView(imageFull)
+                        .setCallback(new FutureCallback<ImageView>() {
+                            @Override
+                            public void onCompleted(Exception e, ImageView result) {
+                                imageFull.setVisibility(View.VISIBLE);
+                                imageThreadPreview.setVisibility(View.INVISIBLE);
+                                listener.onFullLoaded(getPosition());
+                                progressImage.setVisibility(View.GONE);
+                                Log.d(TAG, "loadBasicImage completed");
+                            }
+                        });
+            }
+            else {
+                loadImage(url);
+            }
+        }
+
+        private void loadImage(String url) {
+            progressImage.setVisibility(View.VISIBLE);
+            Ion.with(activity)
+                    .load(url)
+                    .progress(new ProgressCallback() {
+                        @Override
+                        public void onProgress(long downloaded, long total) {
+                            progressImage.setProgress((int) ((float) downloaded / total *
+                                    1000));
                         }
-                    }
-                    catch (JSONException e) {
-                        e.printStackTrace();
-                    }
-                }
-            }, new Response.ErrorListener() {
-                @Override
-                public void onErrorResponse(VolleyError error) {
+                    })
+                    .asBitmap()
+                    .setCallback(new FutureCallback<Bitmap>() {
+                        @Override
+                        public void onCompleted(Exception e, Bitmap result) {
+                            if (result != null) {
+                                imageFull.setVisibility(View.VISIBLE);
+                                imageFull.setImageBitmap(result);
+                                imageThreadPreview.setVisibility(View.INVISIBLE);
+                                listener.onFullLoaded(getPosition());
+                            }
+                            else {
+                                Toast.makeText(activity, "Error loading image", Toast
+                                        .LENGTH_SHORT).show();
+                            }
+                            progressImage.setVisibility(View.GONE);
+                            Log.d(TAG, "loadBasicImage completed");
+                        }
+                    });
+        }
 
-                }
-            });
+        private boolean checkIsImage(String url) {
+            return url.endsWith(Reddit.GIF) || url.endsWith(Reddit.PNG) || url.endsWith(Reddit.JPG)
+                    || url.endsWith(Reddit.JPEG) || url.endsWith(Reddit.WEBP);
         }
     }
 
     public interface ThreadClickListener {
 
+        void loadUrl(String url);
+        void onFullLoaded(int position);
         void setRefreshing(boolean loading);
-        void onLinkClick(Link link);
-        void onImagePreviewClick(View row, Link link);
         void setToolbarTitle(String title);
 
     }

@@ -1,17 +1,22 @@
 package com.winsonchiu.reader;
 
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarActivity;
+import android.support.v7.widget.SearchView;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.TextView;
 
 
 public class MainActivity extends ActionBarActivity
         implements NavigationDrawerFragment.NavigationDrawerCallbacks,
-        FragmentThreadList.OnFragmentInteractionListener {
+        FragmentThreadList.OnFragmentInteractionListener,
+        FragmentWeb.OnFragmentInteractionListener {
 
     private static final String TAG = MainActivity.class.getCanonicalName();
     /**
@@ -25,6 +30,7 @@ public class MainActivity extends ActionBarActivity
     private CharSequence mTitle;
     private int oldPosition = -1;
     private Toolbar toolbar;
+    private TextView textTitle;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -36,6 +42,16 @@ public class MainActivity extends ActionBarActivity
         mTitle = getTitle();
 
         toolbar = (Toolbar) findViewById(R.id.toolbar);
+        toolbar.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                MenuItem itemSearch = toolbar.getMenu().findItem(R.id.action_search);
+                if (itemSearch != null) {
+                    itemSearch.expandActionView();
+                    ((SearchView) itemSearch.getActionView()).setQuery(toolbar.getTitle().toString().replaceAll("/r/", ""), false);
+                }
+            }
+        });
         setSupportActionBar(toolbar);
 
         // Set up the drawer.
@@ -75,7 +91,7 @@ public class MainActivity extends ActionBarActivity
     }
 
     public void restoreActionBar() {
-        setTitle(mTitle);
+        setToolbarTitle(mTitle);
     }
 
 
@@ -108,9 +124,31 @@ public class MainActivity extends ActionBarActivity
     }
 
     @Override
-    public void setToolbarTitle(String title) {
+    public void onBackPressed() {
+        if (getFragmentManager().getBackStackEntryCount() > 0) {
+            FragmentWeb fragmentWeb = (FragmentWeb) getFragmentManager().findFragmentByTag("fragmentWeb");
+
+            if (fragmentWeb != null && fragmentWeb.navigateBack()) {
+                return;
+            }
+
+            getFragmentManager().popBackStack();
+            Log.d(TAG, "popBackStack");
+        }
+        else {
+            super.onBackPressed();
+        }
+
+    }
+
+    @Override
+    public void setToolbarTitle(CharSequence title) {
         mTitle = title;
         toolbar.setTitle(mTitle);
-        Log.d(TAG, "Title: " + getTitle());
+    }
+
+    @Override
+    public void onFragmentInteraction(Uri uri) {
+
     }
 }

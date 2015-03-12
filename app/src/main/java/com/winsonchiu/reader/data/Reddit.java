@@ -3,7 +3,6 @@ package com.winsonchiu.reader.data;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
-import android.text.TextUtils;
 import android.util.Base64;
 import android.util.Log;
 
@@ -12,7 +11,7 @@ import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
-import com.android.volley.toolbox.ImageLoader;
+import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 import com.winsonchiu.reader.AppSettings;
 
@@ -27,6 +26,22 @@ import java.util.UUID;
  * Created by TheKeeperOfPie on 3/7/2015.
  */
 public class Reddit {
+
+    public static final String AUTHORIZATION = "Authorization";
+    public static final String BEARER = "Bearer ";
+    public static final String USER_AGENT = "User-Agent";
+    public static final String CUSTOM_USER_AGENT = "android:com.winsonchiu.reader:v0.1 (by " +
+            "/u/TheKeeperOfPie)";
+
+    public static final String GIF = ".gif";
+    public static final String PNG = ".png";
+    public static final String JPG = ".jpg";
+    public static final String JPEG = ".jpeg";
+    public static final String WEBP = ".webp";
+
+    public static final String SELF = "self";
+    public static final String DEFAULT = "default";
+    public static final String NSFW = "nsfw";
 
     private static final String TAG = Reddit.class.getCanonicalName();
 
@@ -51,40 +66,10 @@ public class Reddit {
     private static final String LIMIT = "limit";
     private static final String SHOW = "show";
 
-    private static Reddit reddit;
+    public static void fetchApplicationAccessToken(Context appContext) throws JSONException {
 
-    private RequestQueue requestQueue;
-    private ImageLoader imageLoader;
-    private SharedPreferences preferences;
-
-    private Reddit(Context appContext) {
-        requestQueue = Volley.newRequestQueue(appContext);
-        imageLoader = new ImageLoader(requestQueue, new LruCacheBitmap(appContext));
-        preferences = PreferenceManager.getDefaultSharedPreferences(appContext);
-        try {
-            fetchApplicationAccessToken();
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
-        requestQueue.start();
-    }
-
-    public static Reddit getReddit(Context context) {
-        if (reddit == null) {
-            reddit = new Reddit(context.getApplicationContext());
-        }
-        return reddit;
-    }
-
-    public RequestQueue getRequestQueue() {
-        return requestQueue;
-    }
-
-    public ImageLoader getImageLoader() {
-        return imageLoader;
-    }
-
-    private void fetchApplicationAccessToken() throws JSONException {
+        final SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences
+                (appContext);
 
         Log.d(TAG, "Expire time: " + preferences.getLong(AppSettings.EXPIRE_TIME, Long.MAX_VALUE));
         Log.d(TAG, "Current time: " + System.currentTimeMillis());
@@ -95,19 +80,24 @@ public class Reddit {
                 preferences.edit().putString(AppSettings.DEVICE_ID, UUID.randomUUID().toString()).commit();
             }
 
-            HashMap<String, String> params = new HashMap<>();
+            final HashMap<String, String> params = new HashMap<>();
             params.put(REDIRECT_URI, "https://com.winsonchiu.reader");
             params.put(GRANT_TYPE, INSTALLED_CLIENT_GRANT);
-            params.put(DEVICE_ID, preferences.getString(AppSettings.DEVICE_ID, UUID.randomUUID().toString()));
+            params.put(DEVICE_ID, preferences.getString(AppSettings.DEVICE_ID, UUID.randomUUID()
+                    .toString()));
             params.put(DURATION, "permanent");
 
-            requestQueue.add(new RedditJsonRequest(preferences, params, Request.Method.POST, APP_ONLY_URL, new Response.Listener<JSONObject>() {
+            RequestQueue requestQueue = Volley.newRequestQueue(appContext);
+
+            requestQueue.add(new StringRequest(Request.Method.POST, APP_ONLY_URL, new
+                    Response.Listener<String>() {
                 @Override
-                public void onResponse(JSONObject response) {
+                public void onResponse(String response) {
                     try {
+                        JSONObject jsonObject = new JSONObject(response);
                         Log.d(TAG, "Response: " + response);
-                        preferences.edit().putString(AppSettings.APP_ACCESS_TOKEN, response.getString(ACCESS_TOKEN)).commit();
-                        preferences.edit().putLong(AppSettings.EXPIRE_TIME, System.currentTimeMillis() + response.getLong("expires_in") * SEC_TO_MS).commit();
+                        preferences.edit().putString(AppSettings.APP_ACCESS_TOKEN, jsonObject.getString(ACCESS_TOKEN)).commit();
+                        preferences.edit().putLong(AppSettings.EXPIRE_TIME, System.currentTimeMillis() + jsonObject.getLong("expires_in") * SEC_TO_MS).commit();
                     }
                     catch (JSONException e) {
                         e.printStackTrace();
@@ -130,54 +120,43 @@ public class Reddit {
                     headers.put("Content-Type","application/x-www-form-urlencoded; charset=utf-8");
                     return headers;
                 }
-            });
-        }
-    }
 
-    public HeadRequest fetchHeaders(String url, Response.Listener<JSONObject> listener, Response.ErrorListener errorListener) {
-        HeadRequest headRequest = new HeadRequest(Request.Method.HEAD, url, listener, errorListener);
-        requestQueue.add(headRequest);
-        return headRequest;
-    }
-
-
-    public RedditJsonRequest getMoreLinks(String subreddit, String sort, String after, String before, int limit, boolean show, Response.Listener<JSONObject> listener, final Response.ErrorListener errorListener) throws JSONException {
-        HashMap<String, String> params = new HashMap<>();
-
-        StringBuilder builder = new StringBuilder(OAUTH_BASE_URL).append("/r/").append(subreddit).append("/").append(sort).append("?");
-        if (!TextUtils.isEmpty(after)) {
-            builder.append("after=").append(after).append("&");
-        }
-        else if (!TextUtils.isEmpty(before)) {
-            builder.append("before=").append(before).append("&");
-        }
-        builder.append(CLIENT_ID).append("=").append("zo7k-Nsh7vgn-Q").append("&");
-        builder.append(REDIRECT_URI).append("=").append("https://com.winsonchiu.reader").append("&");
-        if (show) {
-            builder.append(SHOW).append("all&");
-        }
-
-        String url = builder.toString();
-
-        RedditJsonRequest redditJsonRequest = new RedditJsonRequest(preferences, params, Request.Method.GET, url, listener, new Response.ErrorListener() {
-            @Override
-            public void onErrorResponse(VolleyError error) {
-                if (error.networkResponse != null && error.networkResponse.statusCode == 401) {
-                    try {
-                        fetchApplicationAccessToken();
-                    } catch (JSONException e) {
-                        e.printStackTrace();
-                    }
+                @Override
+                protected Map<String, String> getParams() throws AuthFailureError {
+                    return params;
                 }
-                errorListener.onErrorResponse(error);
-            }
-        });
+            });
 
-        requestQueue.add(redditJsonRequest);
 
-        Log.d(TAG, "requestQueue added: " + requestQueue.toString());
-
-        return redditJsonRequest;
+//            String client = String.format("%s:%s", "zo7k-Nsh7vgn-Q", "");
+//            String auth = "Basic " + Base64.encodeToString(client.getBytes(), Base64.DEFAULT);
+//
+//            Ion.with(appContext)
+//                    .load("POST", APP_ONLY_URL)
+//                    .setLogging("ION", Log.VERBOSE)
+//                    .addHeader(USER_AGENT, CUSTOM_USER_AGENT)
+//                    .addHeader(Reddit.AUTHORIZATION, auth)
+//                    .addHeader("Content-Type","application/json; charset=utf-8")
+//                    .setBodyParameter(REDIRECT_URI, "https://com.winsonchiu.reader")
+//                    .setBodyParameter(GRANT_TYPE, INSTALLED_CLIENT_GRANT)
+//                    .setBodyParameter(DEVICE_ID, preferences.getString(AppSettings.DEVICE_ID, UUID
+//                            .randomUUID()
+//                            .toString()))
+//                    .asString()
+//                    .setCallback(new FutureReddit() {
+//                        @Override
+//                        public void onCompleted(Exception exception, JSONObject result) {
+//                            try {
+//                                Log.d(TAG, "Result: " + result);
+//                                preferences.edit().putString(AppSettings.APP_ACCESS_TOKEN, result.getString(ACCESS_TOKEN)).commit();
+//                                preferences.edit().putLong(AppSettings.EXPIRE_TIME, System.currentTimeMillis() + result.getLong("expires_in") * SEC_TO_MS).commit();
+//                            }
+//                            catch (JSONException e) {
+//                                e.printStackTrace();
+//                            }
+//                        }
+//                    });
+        }
     }
 
 }
