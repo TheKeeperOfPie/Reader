@@ -18,6 +18,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
 
+import com.winsonchiu.reader.data.Link;
+
 
 /**
  * A simple {@link Fragment} subclass.
@@ -137,7 +139,6 @@ public class FragmentThreadList extends Fragment {
         swipeRefreshThreadList.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
-                Log.d(TAG, "swipeRefresh");
                 adapterThreadList.reloadAllLinks();
             }
         });
@@ -153,6 +154,13 @@ public class FragmentThreadList extends Fragment {
         if (adapterThreadList == null) {
             adapterThreadList = new AdapterThreadList(activity, new AdapterThreadList.ThreadClickListener() {
                 @Override
+                public void onClickComments(Link link) {
+                    getFragmentManager().beginTransaction().add(R.id.frame_fragment, FragmentComments
+                            .newInstance(link.getSubreddit(), link.getId()), "fragmentComments").addToBackStack(null)
+                            .commit();
+                }
+
+                @Override
                 public void loadUrl(String url) {
                     getFragmentManager().beginTransaction().add(R.id.frame_fragment, FragmentWeb
                             .newInstance(url, ""), "fragmentWeb").addToBackStack(null)
@@ -165,8 +173,8 @@ public class FragmentThreadList extends Fragment {
                 }
 
                 @Override
-                public void setRefreshing(boolean loading) {
-                    swipeRefreshThreadList.setRefreshing(loading);
+                public void setRefreshing(boolean refreshing) {
+                    swipeRefreshThreadList.setRefreshing(refreshing);
                 }
 
                 @Override
@@ -205,9 +213,9 @@ public class FragmentThreadList extends Fragment {
 
     @Override
     public void onDetach() {
-        super.onDetach();
         mListener = null;
         activity = null;
+        super.onDetach();
     }
 
     @Override

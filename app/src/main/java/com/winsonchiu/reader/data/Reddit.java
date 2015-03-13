@@ -1,5 +1,6 @@
 package com.winsonchiu.reader.data;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
@@ -26,6 +27,14 @@ import java.util.UUID;
  * Created by TheKeeperOfPie on 3/7/2015.
  */
 public class Reddit {
+
+    // Constant values to represent Thing states
+    public enum Vote {
+        NOT_VOTED, UPVOTED, DOWNVOTED
+    }
+    public enum Distinguished {
+        NOT_DISTINGUISHED, MODERATOR, ADMIN, SPECIAL
+    }
 
     public static final String AUTHORIZATION = "Authorization";
     public static final String BEARER = "Bearer ";
@@ -66,7 +75,20 @@ public class Reddit {
     private static final String LIMIT = "limit";
     private static final String SHOW = "show";
 
-    public static void fetchApplicationAccessToken(Context appContext) throws JSONException {
+    public static boolean resolveError(int code, Activity activity, ErrorListener listener) {
+        if (code == 401) {
+            try {
+                fetchApplicationAccessToken(activity, listener);
+            }
+            catch (JSONException e) {
+                e.printStackTrace();
+            }
+            return true;
+        }
+        return false;
+    }
+
+    public static void fetchApplicationAccessToken(Context appContext, final ErrorListener listener) throws JSONException {
 
         final SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences
                 (appContext);
@@ -96,8 +118,12 @@ public class Reddit {
                     try {
                         JSONObject jsonObject = new JSONObject(response);
                         Log.d(TAG, "Response: " + response);
-                        preferences.edit().putString(AppSettings.APP_ACCESS_TOKEN, jsonObject.getString(ACCESS_TOKEN)).commit();
+                        preferences.edit().putString(AppSettings.APP_ACCESS_TOKEN,
+                                jsonObject.getString(ACCESS_TOKEN)).commit();
                         preferences.edit().putLong(AppSettings.EXPIRE_TIME, System.currentTimeMillis() + jsonObject.getLong("expires_in") * SEC_TO_MS).commit();
+                        if (listener != null) {
+                            listener.onErrorHandled();
+                        }
                     }
                     catch (JSONException e) {
                         e.printStackTrace();
@@ -157,6 +183,12 @@ public class Reddit {
 //                        }
 //                    });
         }
+    }
+
+    public interface ErrorListener {
+
+        void onErrorHandled();
+
     }
 
 }

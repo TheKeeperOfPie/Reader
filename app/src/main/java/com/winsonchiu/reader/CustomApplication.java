@@ -15,7 +15,7 @@ public class CustomApplication extends Application {
     public void onCreate() {
         AppSettings.initPrefs(getApplicationContext());
         try {
-            Reddit.fetchApplicationAccessToken(getApplicationContext());
+            Reddit.fetchApplicationAccessToken(getApplicationContext(), null);
         }
         catch (JSONException e) {
             e.printStackTrace();

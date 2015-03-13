@@ -1,21 +1,18 @@
 package com.winsonchiu.reader.data;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by TheKeeperOfPie on 3/7/2015.
  */
 public class Link extends Thing {
 
-
-    // Constant values to represent Link states
-    public enum Vote {
-        NOT_VOTED, UPVOTED, DOWNVOTED
-    }
-    public enum Distinguished {
-        NOT_DISTINGUISHED, MODERATOR, ADMIN, SPECIAL
-    }
+    private static final String TAG = Link.class.getCanonicalName();
 
     private String author;
     private String authorFlairCssClass;
@@ -24,7 +21,7 @@ public class Link extends Thing {
     private String domain;
     private boolean hidden;
     private boolean isSelf;
-    private Vote likes;
+    private Reddit.Vote likes;
     private String linkFlairCssClass;
     private String linkFlairText;
     private String media;
@@ -42,8 +39,110 @@ public class Link extends Thing {
     private String title;
     private String url;
     private long edited;
-    private Distinguished distinguished;
+    private Reddit.Distinguished distinguished;
     private boolean stickied;
+
+    private List<Comment> comments;
+
+    public static Link fromJson(JSONObject rootJsonObject) throws JSONException {
+
+        Link link = new Link();
+        link.setKind(rootJsonObject.getString("kind"));
+
+        JSONObject jsonObject = rootJsonObject.getJSONObject("data");
+
+        link.setId(jsonObject.getString("id"));
+        link.setName(jsonObject.getString("name"));
+
+        link.setAuthor(jsonObject.getString("author"));
+        link.setAuthorFlairCssClass(jsonObject.getString("author_flair_css_class"));
+        link.setAuthorFlairText(jsonObject.getString("author_flair_text"));
+        link.setClicked(jsonObject.getBoolean("clicked"));
+        link.setDomain(jsonObject.getString("domain"));
+        link.setHidden(jsonObject.getBoolean("hidden"));
+        link.setSelf(jsonObject.getBoolean("is_self"));
+
+        switch (jsonObject.getString("likes")) {
+            case "null":
+                link.setLikes(Reddit.Vote.NOT_VOTED);
+                break;
+            case "true":
+                link.setLikes(Reddit.Vote.UPVOTED);
+                break;
+            case "false":
+                link.setLikes(Reddit.Vote.DOWNVOTED);
+                break;
+        }
+
+        link.setLinkFlairCssClass(jsonObject.getString("link_flair_css_class"));
+        link.setLinkFlairText(jsonObject.getString("link_flair_text"));
+        link.setMedia(jsonObject.getString("media"));
+        link.setMediaEmbed(jsonObject.getString("media_embed"));
+        link.setNumComments(jsonObject.getInt("num_comments"));
+        link.setOver18(jsonObject.getBoolean("over_18"));
+        link.setPermalink(jsonObject.getString("permalink"));
+        link.setSaved(jsonObject.getBoolean("saved"));
+        link.setScore(jsonObject.getInt("score"));
+        link.setSelfText(jsonObject.getString("selftext"));
+        link.setSelfTextHtml(jsonObject.getString("selftext_html"));
+        link.setSubreddit(jsonObject.getString("subreddit"));
+        link.setSubredditId(jsonObject.getString("subreddit_id"));
+        link.setThumbnail(jsonObject.getString("thumbnail"));
+        link.setTitle(jsonObject.getString("title"));
+        link.setUrl(jsonObject.getString("url"));
+
+        String edited = jsonObject.getString("edited");
+        switch (edited) {
+            case "true":
+                link.setEdited(1);
+                break;
+            case "false":
+                link.setEdited(0);
+                break;
+            default:
+                link.setEdited(jsonObject.getLong("edited"));
+                break;
+        }
+
+        switch (jsonObject.getString("distinguished")) {
+            case "null":
+                link.setDistinguished(Reddit.Distinguished.NOT_DISTINGUISHED);
+                break;
+            case "moderator":
+                link.setDistinguished(Reddit.Distinguished.MODERATOR);
+                break;
+            case "admin":
+                link.setDistinguished(Reddit.Distinguished.ADMIN);
+                break;
+            case "special":
+                link.setDistinguished(Reddit.Distinguished.SPECIAL);
+                break;
+        }
+
+        link.setStickied(jsonObject.getBoolean("stickied"));
+
+        return link;
+    }
+
+    public static Link fromJson(JSONArray jsonArray) throws JSONException {
+
+        Link link = fromJson(jsonArray.getJSONObject(0)
+                .getJSONObject("data")
+                .getJSONArray("children")
+                .getJSONObject(0));
+
+        List<Comment> comments = new ArrayList<>();
+
+        JSONArray arrayComments = jsonArray.getJSONObject(1).getJSONObject("data").getJSONArray("children");
+
+        for (int index = 0; index < arrayComments.length(); index++) {
+            Comment.addAllFromJson(comments, arrayComments.getJSONObject(index), 0);
+        }
+
+        link.setComments(comments);
+
+        return link;
+    }
 
     public Link() {
         super();
@@ -105,11 +204,11 @@ public class Link extends Thing {
         this.isSelf = isSelf;
     }
 
-    public Vote getLikes() {
+    public Reddit.Vote getLikes() {
         return likes;
     }
 
-    public void setLikes(Vote likes) {
+    public void setLikes(Reddit.Vote likes) {
         this.likes = likes;
     }
 
@@ -249,11 +348,11 @@ public class Link extends Thing {
         this.edited = edited;
     }
 
-    public Distinguished getDistinguished() {
+    public Reddit.Distinguished getDistinguished() {
         return distinguished;
     }
 
-    public void setDistinguished(Distinguished distinguished) {
+    public void setDistinguished(Reddit.Distinguished distinguished) {
         this.distinguished = distinguished;
     }
 
@@ -265,73 +364,11 @@ public class Link extends Thing {
         this.stickied = stickied;
     }
 
-    public static Link fromJson(JSONObject rootJsonObject) throws JSONException {
-
-        Link link = new Link();
-        link.setKind(rootJsonObject.getString("kind"));
-
-        JSONObject jsonObject = rootJsonObject.getJSONObject("data");
-
-        link.setId(jsonObject.getString("id"));
-        link.setName(jsonObject.getString("name"));
-
-        link.setAuthor(jsonObject.getString("author"));
-        link.setAuthorFlairCssClass(jsonObject.getString("author_flair_css_class"));
-        link.setAuthorFlairText(jsonObject.getString("author_flair_text"));
-        link.setClicked(jsonObject.getBoolean("clicked"));
-        link.setDomain(jsonObject.getString("domain"));
-        link.setHidden(jsonObject.getBoolean("hidden"));
-        link.setSelf(jsonObject.getBoolean("is_self"));
-
-        switch (jsonObject.getString("likes")) {
-            case "null":
-                link.setLikes(Vote.NOT_VOTED);
-                break;
-            case "true":
-                link.setLikes(Vote.UPVOTED);
-                break;
-            case "false":
-                link.setLikes(Vote.DOWNVOTED);
-                break;
-        }
-
-        link.setLinkFlairCssClass(jsonObject.getString("link_flair_css_class"));
-        link.setLinkFlairText(jsonObject.getString("link_flair_text"));
-        link.setMedia(jsonObject.getString("media"));
-        link.setMediaEmbed(jsonObject.getString("media_embed"));
-        link.setNumComments(jsonObject.getInt("num_comments"));
-        link.setOver18(jsonObject.getBoolean("over_18"));
-        link.setPermalink(jsonObject.getString("permalink"));
-        link.setSaved(jsonObject.getBoolean("saved"));
-        link.setScore(jsonObject.getInt("score"));
-        link.setSelfText(jsonObject.getString("selftext"));
-        link.setSelfTextHtml(jsonObject.getString("selftext_html"));
-        link.setSubreddit(jsonObject.getString("subreddit"));
-        link.setSubredditId(jsonObject.getString("subreddit_id"));
-        link.setThumbnail(jsonObject.getString("thumbnail"));
-        link.setTitle(jsonObject.getString("title"));
-        link.setUrl(jsonObject.getString("url"));
-
-        link.setEdited(jsonObject.getString("edited").equals("false") ? 0 : jsonObject.getLong("edited"));
-
-        switch (jsonObject.getString("distinguished")) {
-            case "null":
-                link.setDistinguished(Distinguished.NOT_DISTINGUISHED);
-                break;
-            case "moderator":
-                link.setDistinguished(Distinguished.MODERATOR);
-                break;
-            case "admin":
-                link.setDistinguished(Distinguished.ADMIN);
-                break;
-            case "special":
-                link.setDistinguished(Distinguished.SPECIAL);
-                break;
-        }
-
-        link.setStickied(jsonObject.getBoolean("stickied"));
-
-        return link;
+    public List<Comment> getComments() {
+        return comments;
     }
 
+    public void setComments(List<Comment> comments) {
+        this.comments = comments;
+    }
 }

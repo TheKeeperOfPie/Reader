@@ -99,6 +99,10 @@ Once our links are loaded, they're held inside a private Listing instance, and w
 
 Once a Link's preview thumbnail is clicked, we want to be able to expand the image/text, or go to the link if a browser is needed. We pass a custom ThreadClickListener to the adapter from our FragmentThreadList so we can be notified when a user decides to click one of the Links. Inside the ViewHolder itself, we decide whether or not the selected Link is an image or not, and we load it appropriately. If it's an image file, we make the imageFull ImageView visible and have Ion load the full URL into the ImageView. If it's a link, we use our ThreadClickListener to have our FragmentThreadList add a new FragmentWeb to the application's back stack, showing a fullscreen WebView.
 
+#### Comments
+
+To represent a Link's comment tree, we'll need to create a Comment object, which contains a List<Comment> object which contains all of its children comments, filled recursively through a static method.
+
 ### Thread List
 
 So, to start off with the thread list, we'll be using Google's new RecyclerView, which offers maximum control in editing the list entries and customizing the look and behavior. It's more complicated overall to use than a normal ListView, but the benefits will be worth it eventually.

@@ -82,6 +82,10 @@ public class Listing {
 
             switch (thing.getString("kind")) {
 
+                // TODO: Add cases for all ID36s and fix adding Comments
+
+                case "t1":
+                    things.add(Comment.fromJson(thing, 0));
                 case "t3":
                     things.add(Link.fromJson(thing));
                     break;

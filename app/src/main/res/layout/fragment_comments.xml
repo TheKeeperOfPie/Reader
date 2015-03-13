@@ -3,17 +3,19 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="com.winsonchiu.reader.FragmentThreadList"
+    tools:context="com.winsonchiu.reader.FragmentComments"
+    android:orientation="vertical"
+    android:background="@color/darkThemeBackground"
     >
 
     <android.support.v4.widget.SwipeRefreshLayout
-        android:id="@+id/swipe_refresh_thread_list"
+        android:id="@+id/swipe_refresh_comment_list"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         >
 
         <android.support.v7.widget.RecyclerView
-            android:id="@+id/recycler_thread_list"
+            android:id="@+id/recycler_comment_list"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:scrollbars="vertical"

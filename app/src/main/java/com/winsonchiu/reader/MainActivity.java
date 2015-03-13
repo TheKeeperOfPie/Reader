@@ -16,7 +16,8 @@ import android.widget.TextView;
 public class MainActivity extends ActionBarActivity
         implements NavigationDrawerFragment.NavigationDrawerCallbacks,
         FragmentThreadList.OnFragmentInteractionListener,
-        FragmentWeb.OnFragmentInteractionListener {
+        FragmentWeb.OnFragmentInteractionListener,
+        FragmentComments.OnFragmentInteractionListener {
 
     private static final String TAG = MainActivity.class.getCanonicalName();
     /**
