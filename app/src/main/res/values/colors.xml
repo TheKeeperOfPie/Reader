@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <color name="colorLight">#FFB39DDB</color>
+    <color name="colorPrimary">#FF9575CD</color>
+    <color name="colorPrimaryDark">#FF673AB7</color>
+    <color name="colorAccent">#FFFF6D00</color>
+
+    <color name="positiveScore">#FFFF8B60</color>
+    <color name="negativeScore">#FF9494FF</color>
+
+    <color name="darkThemeTextColor">#FFEEEEEE</color>
+
+    <color name="darkThemeStatusBar">#FF000000</color>
+    <color name="darkThemeToolbar">#FF212121</color>
+    <color name="darkThemeBackground">#FF303030</color>
+    <color name="darkThemeDialog">#FF424242</color>
+
+</resources>
