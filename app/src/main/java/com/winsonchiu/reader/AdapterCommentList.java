@@ -193,6 +193,8 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
 
     private void setTextViewHTML(TextView text, String html) {
         CharSequence sequence = Html.fromHtml(html);
+
+        // Trims leading and trailing whitespace
         int start = 0;
         int end = sequence.length();
         while (start < end && Character.isWhitespace(sequence.charAt(start))) {

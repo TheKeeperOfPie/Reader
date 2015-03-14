@@ -241,6 +241,15 @@ public class AdapterThreadList extends RecyclerView.Adapter<AdapterThreadList.Vi
 
     private void setTextViewHTML(TextView text, String html) {
         CharSequence sequence = Html.fromHtml(html);
+        // Trims leading and trailing whitespace
+        int start = 0;
+        int end = sequence.length();
+        while (start < end && Character.isWhitespace(sequence.charAt(start))) {
+            start++;
+        }
+        while (end > start && Character.isWhitespace(sequence.charAt(end - 1))) {
+            end--;
+        }
         SpannableStringBuilder strBuilder = new SpannableStringBuilder(sequence);
         URLSpan[] urls = strBuilder.getSpans(0, sequence.length(), URLSpan.class);
         for(URLSpan span : urls) {
