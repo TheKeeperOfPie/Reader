@@ -1,4 +1,19 @@
+buildscript {
+    repositories {
+        maven { url 'https://maven.fabric.io/public' }
+    }
+
+    dependencies {
+        classpath 'io.fabric.tools:gradle:1.+'
+    }
+}
 apply plugin: 'com.android.application'
+apply plugin: 'io.fabric'
+
+repositories {
+    maven { url 'https://maven.fabric.io/public' }
+}
+
 
 android {
     compileSdkVersion 21
@@ -8,8 +23,8 @@ android {
         applicationId "com.winsonchiu.reader"
         minSdkVersion 16
         targetSdkVersion 21
-        versionCode 3
-        versionName "0.11"
+        versionCode 4
+        versionName "0.2.0"
     }
     buildTypes {
         release {
@@ -29,6 +44,7 @@ dependencies {
     compile 'com.android.support:appcompat-v7:21.0.3@aar'
     compile 'com.android.support:recyclerview-v7:21.0.3'
     compile 'com.koushikdutta.ion:ion:2.+'
-    compile 'com.mcxiaoke.volley:library:1.0.+'
-    compile 'com.github.rjeschke:txtmark:0.11'
+    compile('com.crashlytics.sdk.android:crashlytics:2.2.2@aar') {
+        transitive = true;
+    }
 }

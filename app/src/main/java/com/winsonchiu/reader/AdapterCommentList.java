@@ -28,12 +28,10 @@ import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
-import android.widget.Toast;
 
-import com.github.rjeschke.txtmark.Processor;
+import com.koushikdutta.async.future.Future;
 import com.koushikdutta.async.future.FutureCallback;
 import com.koushikdutta.ion.Ion;
-import com.koushikdutta.ion.ProgressCallback;
 import com.koushikdutta.ion.Response;
 import com.winsonchiu.reader.data.Comment;
 import com.winsonchiu.reader.data.Link;
@@ -63,6 +61,8 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
     private String linkId;
     private Drawable drawableEmpty;
     private Drawable drawableDefault;
+
+    private Future futureImage;
 
     public AdapterCommentList(Activity activity, CommentClickListener listener,
                               String subreddit, String linkId) {
@@ -106,7 +106,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
     public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
 
         if (viewType == VIEW_LINK) {
-            return new ViewHolderHeader(LayoutInflater.from(parent.getContext()).inflate(R.layout.row_thread, parent, false));
+            return new ViewHolderHeader(LayoutInflater.from(parent.getContext()).inflate(R.layout.row_link, parent, false));
         }
 
         return new ViewHolderComment(LayoutInflater.from(parent.getContext()).inflate(R.layout.row_comment, parent, false));
@@ -131,6 +131,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
             }
             else {
                 Ion.with(viewHolderHeader.imageThreadPreview)
+                        .smartSize(true)
                         .load(thumbnail);
             }
             viewHolderHeader.textThreadTitle.setText(link.getTitle());
@@ -213,30 +214,11 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
     }
 
     public void reloadAllComments() {
-        Ion.with(activity)
-                .load("https://oauth.reddit.com" + "/r/" + subreddit + "/comments/" + linkId)
-                .addHeader(Reddit.USER_AGENT, Reddit.CUSTOM_USER_AGENT)
-                .addHeader(Reddit.AUTHORIZATION,
-                        Reddit.BEARER + PreferenceManager.getDefaultSharedPreferences(
-                                activity.getApplicationContext()).getString(AppSettings
-                                .APP_ACCESS_TOKEN, ""))
-                .addHeader("Content-Type", "application/json; charset=utf-8")
-                .asString()
-                .withResponse()
-                .setCallback(new FutureCallback<Response<String>>() {
+        Reddit.loadGet(activity,
+                "https://oauth.reddit.com" + "/r/" + subreddit + "/comments/" + linkId,
+                new FutureCallback<Response<String>>() {
                     @Override
                     public void onCompleted(Exception e, Response<String> result) {
-
-                        if (Reddit.resolveError(result.getHeaders()
-                                .code(), activity, new Reddit.ErrorListener() {
-                            @Override
-                            public void onErrorHandled() {
-                                reloadAllComments();
-                            }
-                        })) {
-                            return;
-                        }
-
                         try {
                             setLink(Link.fromJson(new JSONArray(result.getResult())));
                             listener.setRefreshing(false);
@@ -245,7 +227,11 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                             e1.printStackTrace();
                         }
                     }
-                });
+                }, 0);
+    }
+
+    public void cancelRequests() {
+        futureImage.cancel(true);
     }
 
     protected class ViewHolderHeader extends RecyclerView.ViewHolder {
@@ -283,7 +269,10 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                     imageThreadPreview.setVisibility(View.VISIBLE);
 
                     if (link.isSelf()) {
-                        setTextViewHTML(textThreadTitle, Processor.process(link.getSelfText()));
+                        String html = link.getSelfTextHtml();
+                        html = Html.fromHtml(html.trim())
+                                .toString();
+                        setTextViewHTML(textThreadTitle, html);
                     }
                     else if (!TextUtils.isEmpty(url) && !thumbnail.equals(
                             Reddit.DEFAULT) && !thumbnail.equals(Reddit.NSFW)) {
@@ -294,7 +283,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                             loadImgur(link);
                         }
                         else {
-                            boolean isImage = checkIsImage(url);
+                            boolean isImage = Reddit.checkIsImage(url);
                             if (isImage) {
                                 loadBasicImage(link);
                             }
@@ -321,14 +310,19 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                 url += "http://";
             }
 
-            if (!checkIsImage(url)) {
+            if (url.endsWith(Reddit.GIFV)) {
+                listener.loadUrl(url);
+            }
+            else if (!Reddit.checkIsImage(url)) {
                 if (url.charAt(url.length() - 1) == '/') {
                     url = url.substring(0, url.length() - 2);
                 }
                 url += ".jpg";
+                loadImage(url);
             }
-
-            loadImage(url);
+            else {
+                loadImage(url);
+            }
 
         }
 
@@ -343,21 +337,17 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
 
             if (url.endsWith(".gif")) {
                 progressImage.setVisibility(View.VISIBLE);
-                Ion.with(activity)
+                futureImage = Ion.with(activity)
                         .load(url)
-                        .progress(new ProgressCallback() {
+                        .asBitmap()
+                        .setCallback(new FutureCallback<Bitmap>() {
                             @Override
-                            public void onProgress(long downloaded, long total) {
-                                progressImage.setProgress((int) ((float) downloaded / total *
-                                        1000));
-                            }
-                        })
-                        .intoImageView(imageFull)
-                        .setCallback(new FutureCallback<ImageView>() {
-                            @Override
-                            public void onCompleted(Exception e, ImageView result) {
-                                imageFull.setVisibility(View.VISIBLE);
-                                imageThreadPreview.setVisibility(View.INVISIBLE);
+                            public void onCompleted(Exception e, Bitmap result) {
+                                if (result != null) {
+                                    imageFull.setVisibility(View.VISIBLE);
+                                    imageFull.setImageBitmap(result);
+                                    imageThreadPreview.setVisibility(View.INVISIBLE);
+                                }
                                 progressImage.setVisibility(View.GONE);
                                 Log.d(TAG, "loadBasicImage completed");
                             }
@@ -370,15 +360,8 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
 
         private void loadImage(String url) {
             progressImage.setVisibility(View.VISIBLE);
-            Ion.with(activity)
+            futureImage = Ion.with(activity)
                     .load(url)
-                    .progress(new ProgressCallback() {
-                        @Override
-                        public void onProgress(long downloaded, long total) {
-                            progressImage.setProgress((int) ((float) downloaded / total *
-                                    1000));
-                        }
-                    })
                     .asBitmap()
                     .setCallback(new FutureCallback<Bitmap>() {
                         @Override
@@ -388,20 +371,12 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                                 imageFull.setImageBitmap(result);
                                 imageThreadPreview.setVisibility(View.INVISIBLE);
                             }
-                            else {
-                                Toast.makeText(activity, "Error loading image", Toast
-                                        .LENGTH_SHORT).show();
-                            }
                             progressImage.setVisibility(View.GONE);
-                            Log.d(TAG, "loadBasicImage completed");
+                            Log.d(TAG, "loadImage completed");
                         }
                     });
         }
 
-        private boolean checkIsImage(String url) {
-            return url.endsWith(Reddit.GIF) || url.endsWith(Reddit.PNG) || url.endsWith(Reddit.JPG)
-                    || url.endsWith(Reddit.JPEG) || url.endsWith(Reddit.WEBP);
-        }
     }
 
     protected class ViewHolderComment extends RecyclerView.ViewHolder {

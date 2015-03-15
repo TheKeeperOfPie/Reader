@@ -77,6 +77,16 @@ So, the first thing we should do when starting a new project like this is the ba
 
 After those basics, we'll need to go and make our starting UI screen. For Reader, that would be the basic thread list, defaulted to /r/All, along with the navigation drawer on the left side and the Toolbar up top.
 
+### Navigation Drawer
+
+In order for the user to access the different basic screens of Reader, such as Home (their front page), Inbox, Profile, etc., we'll need to have those entries in the Navigation Drawer. For reuse purposes, the drawer is stored in a FragmentNavDrawer, which will inflate the fragment_navigation_drawer.xml layout which includes a header, some UI decoration, and of course the main list of entries. We will follow Material Design guidelines to style the drawer, with a 16:9 image up top supporting rotation of user accounts, and a series of list entries below. Each will redirect to a different Fragment. Our entries will be as follows:
+
+- Home - User's front page, or default /r/all if not logged in
+- Profile - /u/username profile page
+- Inbox - Message box, defaulted to all messages
+- Settings - Application wide settings
+
+
 ### Data Models
 
 Inorder to actually include Reddit data inside Reader, we'll need some data models to represent the various parts of the Reddit ecosystem, such as threads and comments, along with a wrapper model around each comment. The way we'll do it is just using Java objects, created from a class that handles all of our API calls. /But first, we'll have to add the following permission to our AndroidManifest.xml, to access the internet:

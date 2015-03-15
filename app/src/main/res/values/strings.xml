@@ -24,4 +24,6 @@
     <string name="content_description_button_comments">Comments</string>
     <string name="content_description_button_share">Share</string>
     <string name="content_description_button_more">More options</string>
+    <string name="content_description_image_navigation">Navigation entry icon</string>
+    <string name="content_description_image_navigation_header">Navigation header image</string>
 </resources>

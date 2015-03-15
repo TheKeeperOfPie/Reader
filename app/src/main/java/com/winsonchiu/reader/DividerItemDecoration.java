@@ -31,8 +31,8 @@ public class DividerItemDecoration extends RecyclerView.ItemDecoration {
     };
 
     public static final int HORIZONTAL_LIST = LinearLayoutManager.HORIZONTAL;
-
     public static final int VERTICAL_LIST = LinearLayoutManager.VERTICAL;
+
 
     private Drawable mDivider;
 
@@ -54,10 +54,13 @@ public class DividerItemDecoration extends RecyclerView.ItemDecoration {
 
     @Override
     public void onDraw(Canvas c, RecyclerView parent, RecyclerView.State state) {
-        if (mOrientation == VERTICAL_LIST) {
-            drawVertical(c, parent);
-        } else {
-            drawHorizontal(c, parent);
+        switch (mOrientation) {
+            case VERTICAL_LIST:
+                drawVertical(c, parent);
+                break;
+            case HORIZONTAL_LIST:
+                drawHorizontal(c, parent);
+                break;
         }
     }
 
@@ -95,10 +98,13 @@ public class DividerItemDecoration extends RecyclerView.ItemDecoration {
 
     @Override
     public void getItemOffsets(Rect outRect, View view, RecyclerView parent, RecyclerView.State state) {
-        if (mOrientation == VERTICAL_LIST) {
-            outRect.set(0, 0, 0, mDivider.getIntrinsicHeight());
-        } else {
-            outRect.set(0, 0, mDivider.getIntrinsicWidth(), 0);
+        switch (mOrientation) {
+            case VERTICAL_LIST:
+                outRect.set(0, 0, 0, mDivider.getIntrinsicHeight());
+                break;
+            case HORIZONTAL_LIST:
+                outRect.set(0, 0, mDivider.getIntrinsicWidth(), 0);
+                break;
         }
     }
 }

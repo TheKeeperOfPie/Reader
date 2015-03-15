@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    >
+
+    <FrameLayout
+        android:id="@+id/frame_full"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:clickable="false"
+        android:focusable="false"
+        android:focusableInTouchMode="false"
+        >
+
+        <ProgressBar
+            style="?android:attr/progressBarStyleLarge"
+            android:id="@+id/progress_image"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:max="1000"
+            android:visibility="gone"
+            android:indeterminate="false"
+            />
+
+        <com.winsonchiu.reader.ImageViewSquare
+            android:id="@+id/image_full"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:scaleType="centerCrop"
+            android:adjustViewBounds="true"
+            />
+
+        <android.support.v4.view.ViewPager
+            android:id="@+id/view_pager_full"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            />
+
+    </FrameLayout>
+
+    <TextView
+        android:id="@+id/text_thread_title"
+        android:minHeight="68dp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/frame_full"
+        android:layout_toStartOf="@+id/button_comments"
+        android:layout_toLeftOf="@+id/button_comments"
+        android:layout_marginStart="@dimen/activity_horizontal_margin"
+        android:layout_marginLeft="@dimen/activity_horizontal_margin"
+        android:paddingTop="@dimen/activity_vertical_margin"
+        android:paddingBottom="16dp"
+        android:textSize="14sp"
+        android:ellipsize="marquee"
+        />
+
+    <ImageButton
+        android:id="@+id/button_comments"
+        android:layout_width="56dp"
+        android:layout_height="56dp"
+        android:layout_below="@id/frame_full"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentRight="true"
+        android:contentDescription="@string/content_description_button_comments"
+        android:background="@android:color/transparent"
+        android:src="@drawable/ic_mode_comment_white_24dp"
+        android:padding="@dimen/activity_horizontal_margin"
+        />
+
+    <LinearLayout
+        android:orientation="horizontal"
+        android:id="@+id/layout_container_actions"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:layout_below="@id/text_thread_title"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentRight="true"
+        android:visibility="gone"
+        >
+
+        <ImageButton
+            android:id="@+id/button_upvote"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:contentDescription="@string/content_description_button_upvote"
+            android:background="@android:color/transparent"
+            android:src="@drawable/ic_keyboard_arrow_up_white_24dp"
+            android:padding="12dp"
+            />
+
+        <ImageButton
+            android:id="@+id/button_downvote"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:contentDescription="@string/content_description_button_downvote"
+            android:background="@android:color/transparent"
+            android:src="@drawable/ic_keyboard_arrow_down_white_24dp"
+            android:padding="12dp"
+            />
+
+        <ImageButton
+            android:id="@+id/button_share"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:contentDescription="@string/content_description_button_share"
+            android:background="@android:color/transparent"
+            android:src="@drawable/ic_share_white_24dp"
+            android:padding="12dp"
+            />
+
+        <ImageButton
+            android:id="@+id/button_more"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:contentDescription="@string/content_description_button_more"
+            android:background="@android:color/transparent"
+            android:src="@drawable/ic_more_vert_white_24dp"
+            android:padding="12dp"
+            />
+
+    </LinearLayout>
+
+</RelativeLayout>

@@ -11,21 +11,22 @@ import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarActivity;
 import android.support.v7.app.ActionBarDrawerToggle;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
-import android.widget.ListView;
+import android.view.ViewTreeObserver;
+import android.widget.ImageView;
 
 /**
  * Fragment used for managing interactions for and presentation of a navigation drawer.
  * See the <a href="https://developer.android.com/design/patterns/navigation-drawer.html#Interaction">
  * design guidelines</a> for a complete explanation of the behaviors implemented here.
  */
-public class NavigationDrawerFragment extends Fragment {
+public class FragmentNavDrawer extends Fragment {
 
     /**
      * Remember the position of the selected item.
@@ -50,14 +51,18 @@ public class NavigationDrawerFragment extends Fragment {
 
     private Activity activity;
     private DrawerLayout mDrawerLayout;
-    private ListView mDrawerListView;
     private View mFragmentContainerView;
 
     private int mCurrentSelectedPosition = 0;
     private boolean mFromSavedInstanceState;
     private boolean mUserLearnedDrawer;
 
-    public NavigationDrawerFragment() {
+    private AdapterNavDrawer adapterNavDrawer;
+    private RecyclerView recyclerNavList;
+    private LinearLayoutManager linearLayoutManager;
+    private ImageView imageNavHeader;
+
+    public FragmentNavDrawer() {
     }
 
     @Override
@@ -81,32 +86,59 @@ public class NavigationDrawerFragment extends Fragment {
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
-        // Indicate that this fragment would like to influence the set of actions in the action bar.
-        setHasOptionsMenu(true);
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        mDrawerListView = (ListView) inflater.inflate(
-                R.layout.fragment_navigation_drawer, container, false);
-        mDrawerListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                selectItem(position);
-            }
-        });
-        mDrawerListView.setAdapter(new ArrayAdapter<>(
-                activity,
-                android.R.layout.simple_list_item_activated_1,
-                android.R.id.text1,
-                new String[]{
-                        getString(R.string.title_section1),
-                        getString(R.string.title_section2),
-                        getString(R.string.title_section3),
-                }));
-        mDrawerListView.setItemChecked(mCurrentSelectedPosition, true);
-        return mDrawerListView;
+
+        View view = inflater.inflate(R.layout.fragment_navigation_drawer, container, false);
+
+        imageNavHeader = (ImageView) view.findViewById(R.id.image_nav_header);
+        imageNavHeader.setImageResource(R.color.colorPrimary);
+        imageNavHeader.getViewTreeObserver().addOnGlobalLayoutListener(
+                new ViewTreeObserver.OnGlobalLayoutListener() {
+                    @Override
+                    public void onGlobalLayout() {
+                        ViewGroup.LayoutParams layoutParams = imageNavHeader.getLayoutParams();
+                        layoutParams.height = (int) (layoutParams.width / 16f* 9f);
+                        imageNavHeader.setLayoutParams(layoutParams);
+                    }
+                });
+
+        if (adapterNavDrawer == null) {
+            adapterNavDrawer = new AdapterNavDrawer(new AdapterNavDrawer.OnEntryClickListener() {
+                @Override
+                public void onClick(NavItem navItem, int position) {
+                    selectItem(position);
+                }
+            });
+
+            adapterNavDrawer.addItem(new NavItem(R.drawable.ic_home_white_24dp, "Home"));
+            adapterNavDrawer.addItem(new NavItem(R.drawable.ic_person_white_24dp, "Profile"));
+            adapterNavDrawer.addItem(new NavItem(R.drawable.ic_inbox_white_24dp, "Inbox"));
+
+            adapterNavDrawer.registerAdapterDataObserver(new RecyclerView.AdapterDataObserver() {
+                @Override
+                public void onChanged() {
+                    super.onChanged();
+                    // Set dividing line between navigation screens and settings screen
+                    recyclerNavList.addItemDecoration(new DividerItemDecoration(activity, DividerItemDecoration.VERTICAL_LIST), 2);
+                    adapterNavDrawer.unregisterAdapterDataObserver(this);
+                }
+            });
+
+            adapterNavDrawer.addItem(new NavItem(R.drawable.ic_settings_white_24dp, "Settings"));
+        }
+
+        linearLayoutManager = new LinearLayoutManager(activity);
+
+        recyclerNavList = (RecyclerView) view.findViewById(R.id.recycler_nav_list);
+        recyclerNavList.setHasFixedSize(true);
+        recyclerNavList.setLayoutManager(linearLayoutManager);
+        recyclerNavList.setAdapter(adapterNavDrawer);
+
+        return view;
     }
 
     public boolean isDrawerOpen() {
@@ -185,9 +217,6 @@ public class NavigationDrawerFragment extends Fragment {
 
     private void selectItem(int position) {
         mCurrentSelectedPosition = position;
-        if (mDrawerListView != null) {
-            mDrawerListView.setItemChecked(position, true);
-        }
         if (mDrawerLayout != null) {
             mDrawerLayout.closeDrawer(mFragmentContainerView);
         }
@@ -209,9 +238,9 @@ public class NavigationDrawerFragment extends Fragment {
 
     @Override
     public void onDetach() {
-        super.onDetach();
         mCallbacks = null;
         activity = null;
+        super.onDetach();
     }
 
     @Override

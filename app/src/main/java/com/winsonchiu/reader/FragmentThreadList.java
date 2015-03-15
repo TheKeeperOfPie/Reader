@@ -3,9 +3,9 @@ package com.winsonchiu.reader;
 import android.app.Activity;
 import android.app.Fragment;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.DefaultItemAnimator;
-import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.SearchView;
 import android.util.Log;
@@ -46,9 +46,10 @@ public class FragmentThreadList extends Fragment {
     private OnFragmentInteractionListener mListener;
 
     private RecyclerView recyclerThreadList;
-    private AdapterThreadList adapterThreadList;
+    private AdapterLink adapterLink;
     private SwipeRefreshLayout swipeRefreshThreadList;
-    private LinearLayoutManager linearLayoutManager;
+    private RecyclerView.LayoutManager layoutManager;
+    private ControllerLinks controllerLinks;
 
     /**
      * Use this factory method to create a new instance of
@@ -109,7 +110,23 @@ public class FragmentThreadList extends Fragment {
             @Override
             public boolean onQueryTextSubmit(String query) {
                 Log.d(TAG, "Query entered");
-                adapterThreadList.setParameters(query, "hot");
+                switch (query) {
+                    case "SETGRID":
+                        PreferenceManager.getDefaultSharedPreferences(
+                                activity.getApplicationContext())
+                                .edit()
+                                .putString("interface_mode", "GRID").commit();
+                        break;
+                    case "SETLIST":
+                        PreferenceManager.getDefaultSharedPreferences(
+                                activity.getApplicationContext())
+                                .edit()
+                                .putString("interface_mode", "LIST").commit();
+                        break;
+                    default:
+                        controllerLinks.setParameters(query, "hot");
+                        break;
+                }
                 itemSearch.collapseActionView();
                 return true;
             }
@@ -139,58 +156,79 @@ public class FragmentThreadList extends Fragment {
         swipeRefreshThreadList.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
-                adapterThreadList.reloadAllLinks();
+                controllerLinks.reloadAllLinks();
             }
         });
 
-        linearLayoutManager = new LinearLayoutManager(activity);
-        recyclerThreadList = (RecyclerView) view.findViewById(R.id.recycler_thread_list);
-        recyclerThreadList.setHasFixedSize(true);
-        recyclerThreadList.setLayoutManager(linearLayoutManager);
-        recyclerThreadList.setItemAnimator(new DefaultItemAnimator());
-        recyclerThreadList.addItemDecoration(
-                new DividerItemDecoration(activity, DividerItemDecoration.VERTICAL_LIST));
+        if (controllerLinks == null) {
+            controllerLinks = new ControllerLinks(activity,
+                    new ControllerLinks.LinkClickListener() {
+                        @Override
+                        public void onClickComments(Link link) {
+                            getFragmentManager().beginTransaction().add(R.id.frame_fragment, FragmentComments
+                                    .newInstance(link.getSubreddit(), link.getId()), "fragmentComments").addToBackStack(null)
+                                    .commit();
+                        }
 
-        if (adapterThreadList == null) {
-            adapterThreadList = new AdapterThreadList(activity, new AdapterThreadList.ThreadClickListener() {
-                @Override
-                public void onClickComments(Link link) {
-                    getFragmentManager().beginTransaction().add(R.id.frame_fragment, FragmentComments
-                            .newInstance(link.getSubreddit(), link.getId()), "fragmentComments").addToBackStack(null)
-                            .commit();
-                }
+                        @Override
+                        public void loadUrl(String url) {
+                            getFragmentManager().beginTransaction().add(R.id.frame_fragment, FragmentWeb
+                                    .newInstance(url, ""), "fragmentWeb").addToBackStack(null)
+                                    .commit();
+                        }
 
-                @Override
-                public void loadUrl(String url) {
-                    getFragmentManager().beginTransaction().add(R.id.frame_fragment, FragmentWeb
-                            .newInstance(url, ""), "fragmentWeb").addToBackStack(null)
-                            .commit();
-                }
+                        @Override
+                        public void onFullLoaded(int position) {
+                            layoutManager.smoothScrollToPosition(recyclerThreadList, null, position);
+                        }
 
-                @Override
-                public void onFullLoaded(int position) {
-                    linearLayoutManager.scrollToPositionWithOffset(position, 0);
-                }
+                        @Override
+                        public void setRefreshing(boolean refreshing) {
+                            swipeRefreshThreadList.setRefreshing(refreshing);
+                        }
 
-                @Override
-                public void setRefreshing(boolean refreshing) {
-                    swipeRefreshThreadList.setRefreshing(refreshing);
-                }
+                        @Override
+                        public void setToolbarTitle(String title) {
+                            mListener.setToolbarTitle(title);
+                        }
 
-                @Override
-                public void setToolbarTitle(String title) {
-                    mListener.setToolbarTitle(title);
-                }
-            }, "all", "hot");
+                        @Override
+                        public void notifyDataSetChanged() {
+                            adapterLink.notifyDataSetChanged();
+                        }
+
+                        @Override
+                        public void notifyItemRangeInserted(int startPosition, int endPosition) {
+                            adapterLink.notifyItemRangeInserted(startPosition, endPosition);
+                        }
+                    }, "all", "hot");
         }
-        adapterThreadList.setActivity(activity);
+        controllerLinks.setActivity(activity);
 
-        recyclerThreadList.setAdapter(adapterThreadList);
+        if (adapterLink == null) {
+            if (PreferenceManager.getDefaultSharedPreferences(activity.getApplicationContext()).getString("interface_mode", "").equals("GRID")) {
+                adapterLink = new AdapterLinkGrid(activity, controllerLinks);
+            }
+            else {
+                adapterLink = new AdapterLinkList(activity, controllerLinks);
+            }
+        }
+        adapterLink.setActivity(activity);
+        layoutManager = adapterLink.getLayoutManager();
+
+        recyclerThreadList = (RecyclerView) view.findViewById(R.id.recycler_thread_list);
+        recyclerThreadList.setItemAnimator(new DefaultItemAnimator());
+        if (adapterLink.getItemDecoration() != null) {
+            recyclerThreadList.addItemDecoration(adapterLink.getItemDecoration());
+        }
+        recyclerThreadList.setLayoutManager(layoutManager);
+        recyclerThreadList.setAdapter(adapterLink);
+        recyclerThreadList.setHasFixedSize(true);
         recyclerThreadList.getViewTreeObserver().addOnGlobalLayoutListener(
                 new ViewTreeObserver.OnGlobalLayoutListener() {
                     @Override
                     public void onGlobalLayout() {
-                        adapterThreadList.setViewHeight(recyclerThreadList.getHeight());
+                        adapterLink.setViewHeight(recyclerThreadList.getHeight());
                         recyclerThreadList.getViewTreeObserver().removeOnGlobalLayoutListener(this);
                     }
                 });
@@ -221,7 +259,7 @@ public class FragmentThreadList extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
-        adapterThreadList.setLoading(false);
+        controllerLinks.setLoading(false);
     }
 
     @Override
