@@ -70,25 +70,23 @@ public class Reddit {
     private static final String GRANT_TYPE = "grant_type";
     private static final String DEVICE_ID = "device_id";
     private static final String DURATION = "duration";
+    private static final String EXPIRES_IN = "expires_in";
 
     public static boolean needsToken(Context context, int iteration) {
 
         SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context.getApplicationContext());
 
         return preferences.getLong(AppSettings.EXPIRE_TIME,
-                Long.MAX_VALUE) < System.currentTimeMillis() || preferences.getString(
-                AppSettings.APP_ACCESS_TOKEN, "")
-                .equals("");
+                Long.MAX_VALUE) < System.currentTimeMillis() || "".equals(preferences.getString(
+                AppSettings.APP_ACCESS_TOKEN, ""));
 
     }
 
     public static void fetchToken(Context context, final ErrorListener listener) {
 
-        Ion.getDefault(context).configure().setLogging("ION", Log.VERBOSE);
-
         final SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context.getApplicationContext());
 
-        if (preferences.getString(AppSettings.DEVICE_ID, "").equals("")) {
+        if ("".equals(preferences.getString(AppSettings.DEVICE_ID, ""))) {
             preferences.edit().putString(AppSettings.DEVICE_ID, UUID.randomUUID().toString()).commit();
         }
 
@@ -120,7 +118,9 @@ public class Reddit {
                         try {
                             JSONObject jsonObject = new JSONObject(result.getResult());
                             preferences.edit().putString(AppSettings.APP_ACCESS_TOKEN, jsonObject.getString(ACCESS_TOKEN)).commit();
-                            preferences.edit().putLong(AppSettings.EXPIRE_TIME, System.currentTimeMillis() + jsonObject.getLong("expires_in") * SEC_TO_MS).commit();
+                            preferences.edit().putLong(AppSettings.EXPIRE_TIME,
+                                    System.currentTimeMillis() + jsonObject.getLong(
+                                            EXPIRES_IN) * SEC_TO_MS).commit();
                         }
                         catch (JSONException e1) {
                             e1.printStackTrace();
@@ -192,6 +192,36 @@ public class Reddit {
             strBuilder.removeSpan(span);
         }
         return strBuilder;
+    }
+
+    public static boolean placeFormattedUrl(Link link) {
+
+        String url = link.getUrl();
+        if (!url.contains("http")) {
+            url += "http://";
+        }
+        // TODO: Add support for popular image domains
+        String domain = link.getDomain();
+        if (domain.contains("imgur")) {
+            if (url.endsWith(Reddit.GIFV)) {
+                return false;
+            }
+            else if (!Reddit.checkIsImage(url)) {
+                if (url.charAt(url.length() - 1) == '/') {
+                    url = url.substring(0, url.length() - 2);
+                }
+                url += ".jpg";
+            }
+        }
+        else {
+            boolean isImage = Reddit.checkIsImage(url);
+            if (!isImage) {
+                return false;
+            }
+        }
+
+        link.setUrl(url);
+        return true;
     }
 
     public interface UrlClickListener {

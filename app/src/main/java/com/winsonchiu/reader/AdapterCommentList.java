@@ -231,7 +231,9 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
     }
 
     public void cancelRequests() {
-        futureImage.cancel(true);
+        if (futureImage != null) {
+            futureImage.cancel(true);
+        }
     }
 
     protected class ViewHolderHeader extends RecyclerView.ViewHolder {

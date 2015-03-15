@@ -77,7 +77,7 @@ public class AdapterLinkList extends AdapterLink {
 
         Link link = controllerLinks.getLink(position);
         // TODO: Set after redraw to scale view properly
-        viewHolder.imageFull.setMaxHeight(viewHeight - viewHolder.itemView.getHeight());
+//        viewHolder.imageFull.setMaxHeight(viewHeight - viewHolder.itemView.getHeight());
         viewHolder.progressImage.setVisibility(View.GONE);
         viewHolder.imageFull.setVisibility(View.GONE);
         viewHolder.imageThreadPreview.setImageBitmap(null);
@@ -155,21 +155,11 @@ public class AdapterLinkList extends AdapterLink {
                         controllerLinks.getListener().onFullLoaded(getPosition());
                     }
                     else if (!TextUtils.isEmpty(url)) {
-
-                        // TODO: Add support for popular image domains
-                        String domain = link.getDomain();
-                        if (domain.contains("imgur")) {
-                            loadImgur(link);
+                        if (Reddit.placeFormattedUrl(link)) {
+                            loadImage(link.getUrl());
                         }
                         else {
-                            boolean isImage = Reddit.checkIsImage(url);
-                            if (isImage) {
-                                loadBasicImage(link);
-                            }
-                            else {
-                                Log.d(TAG, "loadUrl: " + url);
-                                controllerLinks.getListener().loadUrl(url);
-                            }
+                            controllerLinks.getListener().loadUrl(url);
                         }
                     }
                 }
@@ -192,73 +182,6 @@ public class AdapterLinkList extends AdapterLink {
             this.itemView.setOnClickListener(clickListenerLink);
             this.textThreadTitle.setOnClickListener(clickListenerLink);
             this.textThreadInfo.setOnClickListener(clickListenerLink);
-        }
-
-        private void loadGfycat(Link link) {
-            // TODO: Add support for Gfycat
-        }
-
-        private void loadImgur(Link link) {
-            // TODO: Add support for Imgur
-
-            Log.d(TAG, "loadImgur: " + link.getUrl());
-
-            String url = link.getUrl();
-            if (!url.contains("http")) {
-                url += "http://";
-            }
-
-            if (url.endsWith(Reddit.GIFV)) {
-                controllerLinks.getListener().loadUrl(url);
-            }
-            else if (!Reddit.checkIsImage(url)) {
-                if (url.charAt(url.length() - 1) == '/') {
-                    url = url.substring(0, url.length() - 2);
-                }
-                url += ".jpg";
-                loadImage(url);
-            }
-            else {
-                loadImage(url);
-            }
-
-        }
-
-        private void loadBasicImage(final Link link) {
-
-            Log.d(TAG, "loadBasicImage: " + link.getUrl());
-
-            String url = link.getUrl();
-            if (!url.contains("http")) {
-                url += "http://";
-            }
-
-            if (url.endsWith(".gif")) {
-                progressImage.setVisibility(View.VISIBLE);
-                Ion.with(activity)
-                        .load(url)
-                        .asBitmap()
-                        .setCallback(new FutureCallback<Bitmap>() {
-                            @Override
-                            public void onCompleted(Exception e, Bitmap result) {
-                                if (result != null) {
-                                    imageFull.setVisibility(View.VISIBLE);
-                                    imageFull.setImageBitmap(result);
-                                    imageThreadPreview.setVisibility(View.INVISIBLE);
-                                    controllerLinks.getListener()
-                                            .onFullLoaded(getPosition());
-                                }
-                                else {
-                                    Toast.makeText(activity, "Error loading image", Toast.LENGTH_SHORT).show();
-                                }
-                                progressImage.setVisibility(View.GONE);
-                                Log.d(TAG, "loadBasicImage completed");
-                            }
-                        });
-            }
-            else {
-                loadImage(url);
-            }
         }
 
         private void loadImage(String url) {

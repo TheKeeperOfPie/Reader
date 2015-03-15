@@ -15,6 +15,10 @@ public class AppSettings {
     public static final String DEVICE_ID = "deviceId";
     public static final String EXPIRE_TIME = "expireTime";
 
+    public static final String INTERFACE_MODE = "interfaceMode";
+    public static final String MODE_LIST = "List";
+    public static final String MODE_GRID = "Grid";
+
     public static boolean initPrefs(Context context) {
 
         SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context.getApplicationContext());

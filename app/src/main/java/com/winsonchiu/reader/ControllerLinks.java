@@ -34,13 +34,11 @@ public class ControllerLinks {
         super();
         this.activity = activity;
         this.listener = listener;
-        this.subreddit = subreddit;
-        this.sort = sort;
         listingLinks = new Listing();
         Resources resources = activity.getResources();
         this.drawableEmpty = resources.getDrawable(R.drawable.ic_web_white_24dp);
         this.drawableDefault = resources.getDrawable(R.drawable.ic_textsms_white_24dp);
-        reloadAllLinks();
+        setParameters(subreddit, sort);
     }
 
     public void setParameters(String subreddit, String sort) {

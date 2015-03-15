@@ -51,7 +51,7 @@ public class MainActivity extends ActionBarActivity
         toolbar.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                MenuItem itemSearch = toolbar.getMenu().findItem(R.id.action_search);
+                MenuItem itemSearch = toolbar.getMenu().findItem(R.id.item_search);
                 if (itemSearch != null) {
                     itemSearch.expandActionView();
                     ((SearchView) itemSearch.getActionView()).setQuery(toolbar.getTitle().toString().replaceAll("/r/", ""), false);

@@ -2,12 +2,15 @@ package com.winsonchiu.reader;
 
 import android.app.Activity;
 import android.app.Fragment;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.DefaultItemAnimator;
+import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.SearchView;
+import android.support.v7.widget.StaggeredGridLayoutManager;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
@@ -50,6 +53,7 @@ public class FragmentThreadList extends Fragment {
     private SwipeRefreshLayout swipeRefreshThreadList;
     private RecyclerView.LayoutManager layoutManager;
     private ControllerLinks controllerLinks;
+    private MenuItem itemInterface;
 
     /**
      * Use this factory method to create a new instance of
@@ -89,7 +93,19 @@ public class FragmentThreadList extends Fragment {
 
         inflater.inflate(R.menu.menu_thread_list, menu);
 
-        final MenuItem itemSearch = menu.findItem(R.id.action_search);
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(activity.getApplicationContext());
+
+        itemInterface = menu.findItem(R.id.item_interface);
+        switch (preferences.getString(AppSettings.INTERFACE_MODE, AppSettings.MODE_LIST)) {
+            case AppSettings.MODE_LIST:
+                itemInterface.setIcon(getResources().getDrawable(R.drawable.ic_view_list_white_24dp));
+                break;
+            case AppSettings.MODE_GRID:
+                itemInterface.setIcon(getResources().getDrawable(R.drawable.ic_view_module_white_24dp));
+                break;
+        }
+
+        final MenuItem itemSearch = menu.findItem(R.id.item_search);
 
         final SearchView searchView = (SearchView) itemSearch.getActionView();
 
@@ -110,23 +126,7 @@ public class FragmentThreadList extends Fragment {
             @Override
             public boolean onQueryTextSubmit(String query) {
                 Log.d(TAG, "Query entered");
-                switch (query) {
-                    case "SETGRID":
-                        PreferenceManager.getDefaultSharedPreferences(
-                                activity.getApplicationContext())
-                                .edit()
-                                .putString("interface_mode", "GRID").commit();
-                        break;
-                    case "SETLIST":
-                        PreferenceManager.getDefaultSharedPreferences(
-                                activity.getApplicationContext())
-                                .edit()
-                                .putString("interface_mode", "LIST").commit();
-                        break;
-                    default:
-                        controllerLinks.setParameters(query, "hot");
-                        break;
-                }
+                controllerLinks.setParameters(query, "hot");
                 itemSearch.collapseActionView();
                 return true;
             }
@@ -144,6 +144,55 @@ public class FragmentThreadList extends Fragment {
         searchView.setSubmitButtonEnabled(true);
 
         super.onCreateOptionsMenu(menu, inflater);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(
+                activity.getApplicationContext());
+
+
+        switch (item.getItemId()) {
+
+            case R.id.item_interface:
+                if (AppSettings.MODE_LIST.equals(
+                        preferences.getString(AppSettings.INTERFACE_MODE, AppSettings.MODE_LIST))) {
+                    resetAdapter(new AdapterLinkGrid(activity, controllerLinks));
+                    item.setIcon(getResources().getDrawable(R.drawable.ic_view_module_white_24dp));
+                    preferences.edit().putString(AppSettings.INTERFACE_MODE, AppSettings.MODE_GRID).commit();
+                }
+                else {
+                    resetAdapter(new AdapterLinkList(activity, controllerLinks));
+                    item.setIcon(getResources().getDrawable(R.drawable.ic_view_list_white_24dp));
+                    preferences.edit().putString(AppSettings.INTERFACE_MODE, AppSettings.MODE_LIST).commit();
+                }
+                break;
+
+        }
+
+        return super.onOptionsItemSelected(item);
+    }
+
+    private void resetAdapter(AdapterLink newAdapter) {
+        int[] currentPosition = new int[2];
+        if (layoutManager instanceof LinearLayoutManager) {
+            currentPosition[0] = ((LinearLayoutManager) layoutManager).findFirstVisibleItemPosition();
+        }
+        else if (layoutManager instanceof StaggeredGridLayoutManager) {
+            ((StaggeredGridLayoutManager) layoutManager).findFirstCompletelyVisibleItemPositions(currentPosition);
+        }
+
+        recyclerThreadList.removeItemDecoration(adapterLink.getItemDecoration());
+        adapterLink = newAdapter;
+        layoutManager = adapterLink.getLayoutManager();
+        if (adapterLink.getItemDecoration() != null) {
+            recyclerThreadList.addItemDecoration(adapterLink.getItemDecoration());
+        }
+        recyclerThreadList.setLayoutManager(layoutManager);
+        recyclerThreadList.setAdapter(adapterLink);
+        layoutManager.scrollToPosition(currentPosition[0]);
+        adapterLink.setViewHeight(recyclerThreadList.getHeight());
     }
 
     @Override
@@ -206,11 +255,13 @@ public class FragmentThreadList extends Fragment {
         controllerLinks.setActivity(activity);
 
         if (adapterLink == null) {
-            if (PreferenceManager.getDefaultSharedPreferences(activity.getApplicationContext()).getString("interface_mode", "").equals("GRID")) {
-                adapterLink = new AdapterLinkGrid(activity, controllerLinks);
+            if (AppSettings.MODE_LIST.equals(
+                    PreferenceManager.getDefaultSharedPreferences(activity.getApplicationContext())
+                            .getString(AppSettings.INTERFACE_MODE, AppSettings.MODE_LIST))) {
+                adapterLink = new AdapterLinkList(activity, controllerLinks);
             }
             else {
-                adapterLink = new AdapterLinkList(activity, controllerLinks);
+                adapterLink = new AdapterLinkGrid(activity, controllerLinks);
             }
         }
         adapterLink.setActivity(activity);

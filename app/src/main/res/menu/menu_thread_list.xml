@@ -5,12 +5,20 @@
     >
 
     <item
-        android:id="@+id/action_search"
+        android:id="@+id/item_search"
         android:title="@string/action_search"
         android:icon="@drawable/ic_search_white_24dp"
         android:orderInCategory="100"
         app:actionViewClass="android.support.v7.widget.SearchView"
         app:showAsAction="collapseActionView|ifRoom"
+        />
+
+    <item
+        android:id="@+id/item_interface"
+        android:title="@string/action_search"
+        android:icon="@drawable/ic_view_list_white_24dp"
+        android:orderInCategory="200"
+        app:showAsAction="always"
         />
 
 </menu>

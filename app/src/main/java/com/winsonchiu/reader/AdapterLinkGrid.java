@@ -1,7 +1,9 @@
 package com.winsonchiu.reader;
 
 import android.app.Activity;
+import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
+import android.support.v7.graphics.Palette;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.StaggeredGridLayoutManager;
 import android.text.method.LinkMovementMethod;
@@ -13,7 +15,9 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
+import com.koushikdutta.async.future.FutureCallback;
 import com.koushikdutta.ion.Ion;
 import com.winsonchiu.reader.data.Link;
 import com.winsonchiu.reader.data.Reddit;
@@ -27,6 +31,10 @@ public class AdapterLinkGrid extends AdapterLink {
 
     private ControllerLinks controllerLinks;
     private DividerItemDecoration itemDecoration;
+    private int defaultColor;
+    private int deviceWidth;
+    private int[] firstPositions;
+    private int[] lastPositions;
 
     public AdapterLinkGrid(Activity activity, ControllerLinks controllerLinks) {
         this.controllerLinks = controllerLinks;
@@ -36,8 +44,12 @@ public class AdapterLinkGrid extends AdapterLink {
     @Override
     public void setActivity(Activity activity) {
         super.setActivity(activity);
+        this.deviceWidth = activity.getResources().getDisplayMetrics().widthPixels;
         this.layoutManager = new StaggeredGridLayoutManager(2, StaggeredGridLayoutManager.VERTICAL);
+        this.firstPositions = new int[2];
+        this.lastPositions = new int[2];
         this.itemDecoration = null;
+        this.defaultColor = activity.getResources().getColor(R.color.darkThemeBackground);
     }
 
     @Override
@@ -51,36 +63,69 @@ public class AdapterLinkGrid extends AdapterLink {
     }
 
     @Override
-    public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
+    public void onBindViewHolder(RecyclerView.ViewHolder holder, final int position) {
 
-        ViewHolder viewHolder = (ViewHolder) holder;
+        final ViewHolder viewHolder = (ViewHolder) holder;
 
         if (!controllerLinks.isLoading() && position > controllerLinks.size() - 5) {
             controllerLinks.loadMoreLinks();
         }
 
-        Link link = controllerLinks.getLink(position);
+        final Link link = controllerLinks.getLink(position);
         // TODO: Set after redraw to scale view properly
-        viewHolder.imageFull.setMaxHeight(viewHeight - viewHolder.itemView.getHeight());
+        ((StaggeredGridLayoutManager.LayoutParams) viewHolder.itemView.getLayoutParams()).setFullSpan(false);
         viewHolder.progressImage.setVisibility(View.GONE);
 
         Drawable drawable = controllerLinks.getDrawableForLink(link);
         if (drawable == null) {
-            if (Reddit.checkIsImage(link.getUrl())) {
-                Ion.with(viewHolder.imageFull)
-                        .smartSize(true)
-                        .load(link.getThumbnail());
-                Ion.with(viewHolder.imageFull)
-                        .crossfade(true)
-                        .smartSize(true)
-                        .load(link.getUrl());
-            }
-            else {
-                viewHolder.imageFull.setImageResource(R.drawable.ic_more_vert_white_24dp);
-            }
+            viewHolder.imageFull.setVisibility(View.VISIBLE);
+            Ion.with(activity)
+                    .load(link.getThumbnail())
+                    .asBitmap()
+                    .setCallback(new FutureCallback<Bitmap>() {
+                        @Override
+                        public void onCompleted(Exception e, Bitmap result) {
+                            viewHolder.imageFull.setImageBitmap(result);
+                            viewHolder.itemView.setBackgroundColor(Palette.generate(result)
+                                    .getVibrantColor(defaultColor));
+                            if (Reddit.placeFormattedUrl(link)) {
+                                Ion.with(activity)
+                                        .load(link.getUrl())
+                                        .asBitmap()
+                                        .setCallback(new FutureCallback<Bitmap>() {
+                                            @Override
+                                            public void onCompleted(Exception e, Bitmap result) {
+                                                if (result != null) {
+                                                    ((StaggeredGridLayoutManager) layoutManager).findFirstVisibleItemPositions(
+                                                            firstPositions);
+                                                    ((StaggeredGridLayoutManager) layoutManager).findLastVisibleItemPositions(
+                                                            lastPositions);
+                                                    int firstPosition = firstPositions[0] < firstPositions[1] ? firstPositions[0] : firstPositions[1];
+                                                    int lastPosition = lastPositions[0] > lastPositions[1] ? lastPositions[0] : lastPositions[1];
+                                                    if (position >= firstPosition && position <= lastPosition) {
+                                                        viewHolder.imageFull.setImageBitmap(result);
+                                                    }
+                                                    else {
+                                                        viewHolder.itemView.setBackgroundColor(defaultColor);
+                                                        viewHolder.imageFull.setVisibility(View.GONE);
+                                                    }
+                                                }
+                                                else {
+                                                    viewHolder.itemView.setBackgroundColor(defaultColor);
+                                                    viewHolder.imageFull.setVisibility(View.GONE);
+                                                }
+                                            }
+                                        });
+                            }
+                            else {
+                                viewHolder.itemView.setBackgroundColor(defaultColor);
+                                viewHolder.imageFull.setVisibility(View.GONE);
+                            }
+                        }
+                    });
         }
         else {
-            viewHolder.imageFull.setImageDrawable(drawable);
+            viewHolder.imageFull.setVisibility(View.GONE);
         }
 
         viewHolder.textThreadTitle.setText(link.getTitle());
@@ -116,7 +161,10 @@ public class AdapterLinkGrid extends AdapterLink {
             this.imageFull.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    controllerLinks.getListener().onClickComments(controllerLinks.getLink(getPosition()));
+                    StaggeredGridLayoutManager.LayoutParams layoutParams = (StaggeredGridLayoutManager.LayoutParams) ViewHolder.this.itemView.getLayoutParams();
+                    layoutParams.setFullSpan(true);
+                    ViewHolder.this.itemView.setLayoutParams(layoutParams);
+                    controllerLinks.getListener().onFullLoaded(getPosition());
                 }
             });
 
@@ -175,6 +223,7 @@ public class AdapterLinkGrid extends AdapterLink {
                     layoutContainerActions.setVisibility(
                             layoutContainerActions.getVisibility() == View.VISIBLE ? View.GONE :
                                     View.VISIBLE);
+                    Toast.makeText(activity, "URL: " + controllerLinks.getLink(getPosition()).getUrl(), Toast.LENGTH_SHORT).show();
                 }
             };
             this.itemView.setOnClickListener(clickListenerLink);
