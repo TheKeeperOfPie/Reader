@@ -24,6 +24,13 @@
             android:visibility="gone"
             />
 
+        <VideoView
+            android:id="@+id/video_full"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:visibility="gone"
+            />
+
         <android.support.v4.view.ViewPager
             android:id="@+id/view_pager_full"
             android:layout_width="match_parent"
@@ -33,7 +40,7 @@
     </FrameLayout>
 
     <ImageView
-        android:id="@+id/image_thread_preview"
+        android:id="@+id/image_preview"
         android:layout_width="40dp"
         android:layout_height="40dp"
         android:layout_below="@id/frame_full"
@@ -49,9 +56,9 @@
         android:id="@+id/progress_image"
         android:layout_width="40dp"
         android:layout_height="40dp"
-        android:layout_alignTop="@id/image_thread_preview"
-        android:layout_alignStart="@id/image_thread_preview"
-        android:layout_alignLeft="@id/image_thread_preview"
+        android:layout_alignTop="@id/image_preview"
+        android:layout_alignStart="@id/image_preview"
+        android:layout_alignLeft="@id/image_preview"
         android:max="1000"
         android:visibility="gone"
         android:indeterminate="false"
@@ -62,8 +69,8 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_below="@id/frame_full"
-        android:layout_toEndOf="@+id/image_thread_preview"
-        android:layout_toRightOf="@+id/image_thread_preview"
+        android:layout_toEndOf="@+id/image_preview"
+        android:layout_toRightOf="@+id/image_preview"
         android:layout_toStartOf="@+id/button_comments"
         android:layout_toLeftOf="@+id/button_comments"
         android:layout_marginStart="@dimen/activity_horizontal_margin"

@@ -250,8 +250,8 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
             super(itemView);
 
             this.progressImage = (ProgressBar) itemView.findViewById(R.id.progress_image);
-            this.imageFull = (ImageView) itemView.findViewById(R.id.image_full);
-            this.imageThreadPreview = (ImageView) itemView.findViewById(R.id.image_thread_preview);
+            this.imageFull = (ImageView) itemView.findViewById(R.id.image_preview);
+            this.imageThreadPreview = (ImageView) itemView.findViewById(R.id.image_preview);
             this.textThreadTitle = (TextView) itemView.findViewById(R.id.text_thread_title);
             // TODO: Remove and replace with a real TextView that holds self_text
             this.textThreadTitle.setMovementMethod(LinkMovementMethod.getInstance());

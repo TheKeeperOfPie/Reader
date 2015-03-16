@@ -4,6 +4,8 @@ import android.app.Activity;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
+import android.media.MediaPlayer;
+import android.net.Uri;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.text.Html;
@@ -20,9 +22,11 @@ import android.view.ViewGroup;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.MediaController;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.widget.VideoView;
 
 import com.koushikdutta.async.future.FutureCallback;
 import com.koushikdutta.ion.Ion;
@@ -77,9 +81,11 @@ public class AdapterLinkList extends AdapterLink {
 
         Link link = controllerLinks.getLink(position);
         // TODO: Set after redraw to scale view properly
-//        viewHolder.imageFull.setMaxHeight(viewHeight - viewHolder.itemView.getHeight());
+//        viewHolder.imagePreview.setMaxHeight(viewHeight - viewHolder.itemView.getHeight());
         viewHolder.progressImage.setVisibility(View.GONE);
         viewHolder.imageFull.setVisibility(View.GONE);
+        viewHolder.videoFull.setVisibility(View.GONE);
+        viewHolder.videoFull.setOnCompletionListener(null);
         viewHolder.imageThreadPreview.setImageBitmap(null);
         viewHolder.imageThreadPreview.setVisibility(View.VISIBLE);
 
@@ -110,8 +116,10 @@ public class AdapterLinkList extends AdapterLink {
 
     public class ViewHolder extends RecyclerView.ViewHolder {
 
+        protected MediaController mediaController;
         protected ProgressBar progressImage;
         protected ImageView imageFull;
+        protected VideoView videoFull;
         protected ImageView imageThreadPreview;
         protected TextView textThreadTitle;
         protected TextView textThreadInfo;
@@ -124,7 +132,17 @@ public class AdapterLinkList extends AdapterLink {
 
             this.progressImage = (ProgressBar) itemView.findViewById(R.id.progress_image);
             this.imageFull = (ImageView) itemView.findViewById(R.id.image_full);
-            this.imageThreadPreview = (ImageView) itemView.findViewById(R.id.image_thread_preview);
+            this.mediaController = new MediaController(itemView.getContext());
+            this.videoFull = (VideoView) itemView.findViewById(R.id.video_full);
+            this.videoFull.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
+                @Override
+                public void onPrepared(MediaPlayer mp) {
+                    mediaController.hide();
+                }
+            });
+            this.mediaController.setAnchorView(videoFull);
+            this.videoFull.setMediaController(mediaController);
+            this.imageThreadPreview = (ImageView) itemView.findViewById(R.id.image_preview);
             this.textThreadTitle = (TextView) itemView.findViewById(R.id.text_thread_title);
             // TODO: Remove and replace with a real TextView that holds self_text
             this.textThreadTitle.setMovementMethod(LinkMovementMethod.getInstance());
@@ -155,7 +173,22 @@ public class AdapterLinkList extends AdapterLink {
                         controllerLinks.getListener().onFullLoaded(getPosition());
                     }
                     else if (!TextUtils.isEmpty(url)) {
-                        if (Reddit.placeFormattedUrl(link)) {
+                        if (url.contains(Reddit.GIFV)) {
+                            Uri uri = Uri.parse(url.replaceAll(".gifv", ".mp4"));
+                            videoFull.setVideoURI(uri);
+                            videoFull.getLayoutParams().height = ViewHolder.this.itemView.getWidth() / 16 * 9;
+                            videoFull.setVisibility(View.VISIBLE);
+                            videoFull.invalidate();
+                            videoFull.requestFocus();
+                            videoFull.start();
+                            videoFull.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+                                @Override
+                                public void onCompletion(MediaPlayer mp) {
+                                    videoFull.start();
+                                }
+                            });
+                        }
+                        else if (Reddit.placeFormattedUrl(link)) {
                             loadImage(link.getUrl());
                         }
                         else {

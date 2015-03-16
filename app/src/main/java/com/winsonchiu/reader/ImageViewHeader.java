@@ -1,6 +1,5 @@
 package com.winsonchiu.reader;
 
-import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.content.Context;
 import android.os.Build;
@@ -8,28 +7,29 @@ import android.util.AttributeSet;
 import android.widget.ImageView;
 
 /**
- * Created by TheKeeperOfPie on 3/14/2015.
+ * Created by TheKeeperOfPie on 3/15/2015.
  */
-public class ImageViewSquare extends ImageView {
-    public ImageViewSquare(Context context) {
+public class ImageViewHeader extends ImageView {
+
+    public ImageViewHeader(Context context) {
         super(context);
     }
 
-    public ImageViewSquare(Context context, AttributeSet attrs) {
+    public ImageViewHeader(Context context, AttributeSet attrs) {
         super(context, attrs);
     }
 
-    public ImageViewSquare(Context context, AttributeSet attrs, int defStyleAttr) {
+    public ImageViewHeader(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
     }
 
     @TargetApi(Build.VERSION_CODES.LOLLIPOP)
-    public ImageViewSquare(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {
+    public ImageViewHeader(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {
         super(context, attrs, defStyleAttr, defStyleRes);
     }
 
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-        super.onMeasure(widthMeasureSpec, widthMeasureSpec);
+        super.onMeasure(widthMeasureSpec, (int) (widthMeasureSpec / 16f * 9f));
     }
 }

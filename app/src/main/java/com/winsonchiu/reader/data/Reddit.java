@@ -90,9 +90,6 @@ public class Reddit {
             preferences.edit().putString(AppSettings.DEVICE_ID, UUID.randomUUID().toString()).commit();
         }
 
-        String creds = String.format("%s:%s", "zo7k-Nsh7vgn-Q", "");
-        String auth = "Basic " + Base64.encodeToString(creds.getBytes(), Base64.DEFAULT);
-
         HashMap<String, String> params = new HashMap<>();
         params.put(REDIRECT_URI, "https://com.winsonchiu.reader");
         params.put(GRANT_TYPE, INSTALLED_CLIENT_GRANT);
@@ -101,6 +98,7 @@ public class Reddit {
 
         Ion.with(context)
                 .load("POST", APP_ONLY_URL)
+                .setLogging("ION", Log.VERBOSE)
                 .userAgent(CUSTOM_USER_AGENT)
                 .basicAuthentication("zo7k-Nsh7vgn-Q", "")
                 .addHeader(CONTENT_TYPE, "application/x-www-form-urlencoded; charset=utf-8")
@@ -114,6 +112,10 @@ public class Reddit {
                 .setCallback(new FutureCallback<Response<String>>() {
                     @Override
                     public void onCompleted(Exception e, Response<String> result) {
+                        if (result == null) {
+                            return;
+                        }
+
                         Log.d(TAG, "fetchToken response: " + result.getResult());
                         try {
                             JSONObject jsonObject = new JSONObject(result.getResult());
@@ -152,7 +154,15 @@ public class Reddit {
                 .addHeader("Content-Type", "application/json; charset=utf-8")
                 .asString()
                 .withResponse()
-                .setCallback(callback);
+                .setCallback(new FutureCallback<Response<String>>() {
+                    @Override
+                    public void onCompleted(Exception e, Response<String> result) {
+                        // TODO: Handle this more elegantly
+                        if (result != null) {
+                            callback.onCompleted(e, result);
+                        }
+                    }
+                });
     }
 
     private static String getAuthorizationHeader(Context context) {
@@ -204,6 +214,9 @@ public class Reddit {
         String domain = link.getDomain();
         if (domain.contains("imgur")) {
             if (url.endsWith(Reddit.GIFV)) {
+                return false;
+            }
+            else if (url.contains(".com/a/") || url.contains(".com/gallery/")) {
                 return false;
             }
             else if (!Reddit.checkIsImage(url)) {

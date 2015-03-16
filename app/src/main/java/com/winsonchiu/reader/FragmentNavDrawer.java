@@ -96,15 +96,6 @@ public class FragmentNavDrawer extends Fragment {
 
         imageNavHeader = (ImageView) view.findViewById(R.id.image_nav_header);
         imageNavHeader.setImageResource(R.color.colorPrimary);
-        imageNavHeader.getViewTreeObserver().addOnGlobalLayoutListener(
-                new ViewTreeObserver.OnGlobalLayoutListener() {
-                    @Override
-                    public void onGlobalLayout() {
-                        ViewGroup.LayoutParams layoutParams = imageNavHeader.getLayoutParams();
-                        layoutParams.height = (int) (layoutParams.width / 16f* 9f);
-                        imageNavHeader.setLayoutParams(layoutParams);
-                    }
-                });
 
         if (adapterNavDrawer == null) {
             adapterNavDrawer = new AdapterNavDrawer(new AdapterNavDrawer.OnEntryClickListener() {
@@ -117,17 +108,6 @@ public class FragmentNavDrawer extends Fragment {
             adapterNavDrawer.addItem(new NavItem(R.drawable.ic_home_white_24dp, "Home"));
             adapterNavDrawer.addItem(new NavItem(R.drawable.ic_person_white_24dp, "Profile"));
             adapterNavDrawer.addItem(new NavItem(R.drawable.ic_inbox_white_24dp, "Inbox"));
-
-            adapterNavDrawer.registerAdapterDataObserver(new RecyclerView.AdapterDataObserver() {
-                @Override
-                public void onChanged() {
-                    super.onChanged();
-                    // Set dividing line between navigation screens and settings screen
-                    recyclerNavList.addItemDecoration(new DividerItemDecoration(activity, DividerItemDecoration.VERTICAL_LIST), 2);
-                    adapterNavDrawer.unregisterAdapterDataObserver(this);
-                }
-            });
-
             adapterNavDrawer.addItem(new NavItem(R.drawable.ic_settings_white_24dp, "Settings"));
         }
 

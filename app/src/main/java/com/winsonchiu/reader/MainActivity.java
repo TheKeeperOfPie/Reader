@@ -35,7 +35,6 @@ public class MainActivity extends ActionBarActivity
     private CharSequence mTitle;
     private int oldPosition = -1;
     private Toolbar toolbar;
-    private TextView textTitle;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -82,24 +81,9 @@ public class MainActivity extends ActionBarActivity
         oldPosition = position;
     }
 
-    public void onSectionAttached(int number) {
-        switch (number) {
-            case 1:
-                mTitle = getString(R.string.title_section1);
-                break;
-            case 2:
-                mTitle = getString(R.string.title_section2);
-                break;
-            case 3:
-                mTitle = getString(R.string.title_section3);
-                break;
-        }
-    }
-
     public void restoreActionBar() {
         setToolbarTitle(mTitle);
     }
-
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {

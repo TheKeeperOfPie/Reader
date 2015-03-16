@@ -3,7 +3,8 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_margin="2dp"
+    android:layout_margin="4dp"
+    android:background="@color/darkThemeDialog"
     >
 
     <FrameLayout
@@ -22,15 +23,28 @@
             android:layout_height="wrap_content"
             android:max="1000"
             android:visibility="gone"
-            android:indeterminate="false"
+            android:indeterminate="true"
+            />
+
+        <WebView
+            android:id="@+id/web_full"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
             />
 
         <ImageView
-            android:id="@+id/image_full"
+            android:id="@+id/image_preview"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:scaleType="fitCenter"
+            android:scaleType="centerCrop"
             android:adjustViewBounds="true"
+            />
+
+        <VideoView
+            android:id="@+id/video_full"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:visibility="gone"
             />
 
         <android.support.v4.view.ViewPager

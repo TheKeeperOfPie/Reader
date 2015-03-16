@@ -74,6 +74,10 @@ public class ControllerLinks {
         Reddit.loadGet(activity, url, new FutureCallback<Response<String>>() {
             @Override
             public void onCompleted(Exception e, Response<String> result) {
+                // TODO: Catch null errors in parent method call
+                if (result == null) {
+                    return;
+                }
                 Log.d(TAG, "Result: " + result.getResult());
 
                 try {
@@ -97,7 +101,7 @@ public class ControllerLinks {
             return;
         }
         setLoading(true);
-        String url = "https://oauth.reddit.com" + "/r/" + subreddit + "/" + sort + "?" + "after=" + listingLinks.getAfter();
+        String url = "https://oauth.reddit.com" + "/r/" + subreddit + "/" + sort + "?after=" + listingLinks.getAfter() + "&showAll=true";
 
         Reddit.loadGet(activity, url, new FutureCallback<Response<String>>() {
             @Override

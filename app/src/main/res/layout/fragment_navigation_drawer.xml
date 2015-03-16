@@ -8,7 +8,7 @@
     tools:context=".NavigationDrawerFragment"
     >
 
-    <ImageView
+    <com.winsonchiu.reader.ImageViewHeader
         android:id="@+id/image_nav_header"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
