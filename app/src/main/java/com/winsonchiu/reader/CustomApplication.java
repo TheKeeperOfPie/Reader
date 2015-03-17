@@ -12,6 +12,6 @@ public class CustomApplication extends Application {
     @Override
     public void onCreate() {
         AppSettings.initPrefs(getApplicationContext());
-        Reddit.fetchToken(getApplicationContext(), null);
+        Reddit.getInstance(getApplicationContext()).fetchToken(null);
     }
 }

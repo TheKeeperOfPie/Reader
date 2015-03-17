@@ -15,13 +15,10 @@
         android:focusableInTouchMode="false"
         >
 
-        <ImageView
-            android:id="@+id/image_full"
+        <WebView
+            android:id="@+id/web_full"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:scaleType="fitCenter"
-            android:adjustViewBounds="true"
-            android:visibility="gone"
             />
 
         <VideoView
@@ -35,6 +32,7 @@
             android:id="@+id/view_pager_full"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:visibility="gone"
             />
 
     </FrameLayout>

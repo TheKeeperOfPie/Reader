@@ -6,8 +6,10 @@ import android.graphics.drawable.Drawable;
 import android.text.TextUtils;
 import android.util.Log;
 
-import com.koushikdutta.async.future.FutureCallback;
-import com.koushikdutta.ion.Response;
+import com.android.volley.Response.ErrorListener;
+import com.android.volley.Response.Listener;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.ImageLoader;
 import com.winsonchiu.reader.data.Link;
 import com.winsonchiu.reader.data.Listing;
 import com.winsonchiu.reader.data.Reddit;
@@ -29,10 +31,12 @@ public class ControllerLinks {
     private String subreddit = "";
     private Drawable drawableEmpty;
     private Drawable drawableDefault;
+    private Reddit reddit;
 
     public ControllerLinks(Activity activity, LinkClickListener listener, String subreddit, String sort) {
         super();
         this.activity = activity;
+        this.reddit = Reddit.getInstance(activity);
         this.listener = listener;
         listingLinks = new Listing();
         Resources resources = activity.getResources();
@@ -71,27 +75,32 @@ public class ControllerLinks {
     public void reloadAllLinks() {
         setLoading(true);
         String url = "https://oauth.reddit.com" + "/r/" + subreddit + "/" + sort;
-        Reddit.loadGet(activity, url, new FutureCallback<Response<String>>() {
-            @Override
-            public void onCompleted(Exception e, Response<String> result) {
-                // TODO: Catch null errors in parent method call
-                if (result == null) {
-                    return;
-                }
-                Log.d(TAG, "Result: " + result.getResult());
+        reddit.loadGet(activity, url, new Listener<String>() {
+                    @Override
+                    public void onResponse(String response) {
+                        // TODO: Catch null errors in parent method call
+                        if (response == null) {
+                            return;
+                        }
+                        Log.d(TAG, "Result: " + response);
 
-                try {
-                    listingLinks = Listing.fromJson(new JSONObject(result.getResult()));
-                    listener.notifyDataSetChanged();
-                    listener.onFullLoaded(0);
-                }
-                catch (JSONException exception) {
-                    exception.printStackTrace();
-                }
-                finally {
-                    setLoading(false);
-                }
-            }
+                        try {
+                            listingLinks = Listing.fromJson(new JSONObject(response));
+                            listener.notifyDataSetChanged();
+                            listener.onFullLoaded(0);
+                        }
+                        catch (JSONException exception) {
+                            exception.printStackTrace();
+                        }
+                        finally {
+                            setLoading(false);
+                        }
+                    }
+                }, new ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+
+                    }
         }, 0);
         Log.d(TAG, "reloadAllLinks");
     }
@@ -103,28 +112,44 @@ public class ControllerLinks {
         setLoading(true);
         String url = "https://oauth.reddit.com" + "/r/" + subreddit + "/" + sort + "?after=" + listingLinks.getAfter() + "&showAll=true";
 
-        Reddit.loadGet(activity, url, new FutureCallback<Response<String>>() {
-            @Override
-            public void onCompleted(Exception e, Response<String> result) {
-                try {
-                    int startPosition = listingLinks.getChildren()
-                            .size();
-                    Listing listing = Listing.fromJson(new JSONObject(result.getResult()));
-                    listingLinks.addChildren(listing.getChildren());
-                    listingLinks.setAfter(listing.getAfter());
-                    listener.notifyItemRangeInserted(startPosition, listingLinks.getChildren()
-                            .size() - 1);
-                }
-                catch (JSONException exception) {
-                    exception.printStackTrace();
-                }
-                finally {
-                    setLoading(false);
-                }
-            }
-        }, 0);
+        reddit.loadGet(activity, url,
+                new Listener<String>() {
+                    @Override
+                    public void onResponse(String response) {
+
+
+                        try {
+                            int startPosition = listingLinks.getChildren()
+                                    .size();
+                            Listing listing = Listing.fromJson(new JSONObject(response));
+                            listingLinks.addChildren(listing.getChildren());
+                            listingLinks.setAfter(listing.getAfter());
+                            listener.notifyItemRangeInserted(startPosition,
+                                    listingLinks.getChildren()
+                                            .size() - 1);
+                        }
+                        catch (JSONException exception) {
+                            exception.printStackTrace();
+                        }
+                        finally {
+                            setLoading(false);
+                        }
+                    }
+                }, new ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+
+                    }
+                }, 0);
     }
 
+    public ImageLoader.ImageContainer loadImage(String url, ImageLoader.ImageListener imageListener) {
+        return reddit.getImageLoader().get(url, imageListener);
+    }
+
+    public void loadImage(String url, ImageViewNetwork imageView) {
+        imageView.setImageUrl(url, reddit.getImageLoader());
+    }
 
     public void setLoading(boolean loading) {
         isLoading = loading;

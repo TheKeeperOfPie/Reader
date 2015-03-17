@@ -98,10 +98,10 @@ public class FragmentThreadList extends Fragment {
         itemInterface = menu.findItem(R.id.item_interface);
         switch (preferences.getString(AppSettings.INTERFACE_MODE, AppSettings.MODE_LIST)) {
             case AppSettings.MODE_LIST:
-                itemInterface.setIcon(getResources().getDrawable(R.drawable.ic_view_list_white_24dp));
+                itemInterface.setIcon(getResources().getDrawable(R.drawable.ic_view_module_white_24dp));
                 break;
             case AppSettings.MODE_GRID:
-                itemInterface.setIcon(getResources().getDrawable(R.drawable.ic_view_module_white_24dp));
+                itemInterface.setIcon(getResources().getDrawable(R.drawable.ic_view_list_white_24dp));
                 break;
         }
 
@@ -159,12 +159,13 @@ public class FragmentThreadList extends Fragment {
                 if (AppSettings.MODE_LIST.equals(
                         preferences.getString(AppSettings.INTERFACE_MODE, AppSettings.MODE_LIST))) {
                     resetAdapter(new AdapterLinkGrid(activity, controllerLinks));
-                    item.setIcon(getResources().getDrawable(R.drawable.ic_view_module_white_24dp));
-                    preferences.edit().putString(AppSettings.INTERFACE_MODE, AppSettings.MODE_GRID).commit();
+                    item.setIcon(getResources().getDrawable(R.drawable.ic_view_list_white_24dp));
+                    preferences.edit().putString(AppSettings.INTERFACE_MODE, AppSettings.MODE_GRID)
+                            .commit();
                 }
                 else {
                     resetAdapter(new AdapterLinkList(activity, controllerLinks));
-                    item.setIcon(getResources().getDrawable(R.drawable.ic_view_list_white_24dp));
+                    item.setIcon(getResources().getDrawable(R.drawable.ic_view_module_white_24dp));
                     preferences.edit().putString(AppSettings.INTERFACE_MODE, AppSettings.MODE_LIST).commit();
                 }
                 break;

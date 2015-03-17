@@ -16,23 +16,13 @@
         android:focusableInTouchMode="false"
         >
 
-        <ProgressBar
-            style="?android:attr/progressBarStyleLarge"
-            android:id="@+id/progress_image"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:max="1000"
-            android:visibility="gone"
-            android:indeterminate="true"
-            />
-
         <WebView
             android:id="@+id/web_full"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             />
 
-        <ImageView
+        <com.winsonchiu.reader.ImageViewSquare
             android:id="@+id/image_preview"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -51,6 +41,18 @@
             android:id="@+id/view_pager_full"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:visibility="gone"
+            />
+
+        <ProgressBar
+            style="?android:attr/progressBarStyleLarge"
+            android:id="@+id/progress_image"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_gravity="center"
+            android:max="1000"
+            android:visibility="gone"
+            android:indeterminate="true"
             />
 
     </FrameLayout>

@@ -99,7 +99,7 @@ To access Reddit's APIs, we'll need to use OAuth 2.0, which requires registering
 
 Since we don't have a login system yet, we'll need to request a temporary token for the app to use, checking to refresh this token if we get a network error, or if the time has expired. We'll store the token and the check values inside a SharedPreferences instance global to our app, retrieved from PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).
 
-We'll be using the Ion library for basic POST/GET requests and for image loading, as it offers several easy to use features and image caching. There are some basic headers we need to send with our Reddit requests, such as a User-Agent and Authorization, which for now will be our application access token.
+We will be using Google's Volley library, wrapped in a static singleton class Reddit, with helper methods to make API calls. There are also some basic headers we need to send with our Reddit requests, such as a User-Agent and Authorization, which for now will be our application access token.
 
 #### Links
 
@@ -109,7 +109,9 @@ To allow separate UIs for viewing the various sets of data, we are going to hide
 
 The class will hold a listener reference, which will be supplied by the adapter/Fragment to allow callbacks to occur from the data, such as notifyDataSetChanged() and notifyItemRangeInserted(). Our primary UI adapter, AdapterLinkList will show a list entry based UI, while AdapterLinkGrid will show a staggered grid layout. They will create unique ViewHolders representing the different UIs, but will bind their data through the controllerLinks reference they hold.
 
-Once a link's preview thumbnail is clicked inside either UI, we want to be able to expand the image/text, or go to the link if a browser is needed. We pass the touch event to the ViewHolder, which either loads the image if the UI calls for such implementation, or passes the event upwards to the controllerLinks so that a FragmentWeb, for example, could handle it. If it's an image file, we make the imageFull ImageView visible and have Ion load the full URL into the ImageView. If it's a link, we use our we send the event up and load a FragmentWeb with the URL.
+In the adapter's onBindViewHolder, we use Volley to load the link's thumbnail, or full image for the grid, but we have to make sure to check that the Bitmap isn't null in the ImageListener, as Volley calls the onResponse method twice if the image doesn't exist in the cache. The first time, the bitmap will be null, while the second time will actual contain the bitmap pulled from the network.
+
+Once a link's preview thumbnail is clicked inside either UI, we want to be able to expand the image/text, or go to the link if a browser is needed. We pass the touch event to the ViewHolder, which either loads the image if the UI calls for such implementation, or passes the event upwards to the controllerLinks so that a FragmentWeb, for example, could handle it. If it's an image file, we make the imageFull ImageView visible and load the full URL into the ImageView. If it's a link, we use our we send the event up and load a FragmentWeb with the URL.
 
 #### Comments
 

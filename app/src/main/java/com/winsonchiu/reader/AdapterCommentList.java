@@ -29,10 +29,10 @@ import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
+import com.android.volley.VolleyError;
 import com.koushikdutta.async.future.Future;
 import com.koushikdutta.async.future.FutureCallback;
 import com.koushikdutta.ion.Ion;
-import com.koushikdutta.ion.Response;
 import com.winsonchiu.reader.data.Comment;
 import com.winsonchiu.reader.data.Link;
 import com.winsonchiu.reader.data.Reddit;
@@ -63,12 +63,13 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
     private Drawable drawableDefault;
 
     private Future futureImage;
+    private Reddit reddit;
 
     public AdapterCommentList(Activity activity, CommentClickListener listener,
                               String subreddit, String linkId) {
         this.preferences = PreferenceManager.getDefaultSharedPreferences(
                 activity.getApplicationContext());
-        this.activity = activity;
+        setActivity(activity);
         this.listener = listener;
         this.indentWidth = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 8, activity.getResources().getDisplayMetrics());
         this.subreddit = subreddit;
@@ -84,6 +85,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
 
     public void setActivity(Activity activity) {
         this.activity = activity;
+        reddit = Reddit.getInstance(activity);
     }
 
     public void setLink(Link link) {
@@ -214,18 +216,23 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
     }
 
     public void reloadAllComments() {
-        Reddit.loadGet(activity,
+        reddit.loadGet(activity,
                 "https://oauth.reddit.com" + "/r/" + subreddit + "/comments/" + linkId,
-                new FutureCallback<Response<String>>() {
+                new com.android.volley.Response.Listener<String>() {
                     @Override
-                    public void onCompleted(Exception e, Response<String> result) {
+                    public void onResponse(String response) {
                         try {
-                            setLink(Link.fromJson(new JSONArray(result.getResult())));
+                            setLink(Link.fromJson(new JSONArray(response)));
                             listener.setRefreshing(false);
                         }
                         catch (JSONException e1) {
                             e1.printStackTrace();
                         }
+                    }
+                }, new com.android.volley.Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+
                     }
                 }, 0);
     }

@@ -3,6 +3,7 @@ package com.winsonchiu.reader;
 import android.app.Activity;
 import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
+import android.media.ThumbnailUtils;
 import android.support.v7.graphics.Palette;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.StaggeredGridLayoutManager;
@@ -18,6 +19,8 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.ImageLoader;
 import com.koushikdutta.async.future.FutureCallback;
 import com.koushikdutta.ion.Ion;
 import com.winsonchiu.reader.data.Link;
@@ -73,45 +76,75 @@ public class AdapterLinkGrid extends AdapterLink {
         }
 
         final Link link = controllerLinks.getLink(position);
-        // TODO: Set after redraw to scale view properly
         ((StaggeredGridLayoutManager.LayoutParams) viewHolder.itemView.getLayoutParams()).setFullSpan(false);
-        viewHolder.progressImage.setVisibility(View.GONE);
-        viewHolder.webFull.setVisibility(View.GONE);
-        viewHolder.imagePreview.setVisibility(View.GONE);
-        viewHolder.imagePreview.setImageResource(android.R.color.transparent);
-        viewHolder.itemView.setBackgroundColor(defaultColor);
 
         Drawable drawable = controllerLinks.getDrawableForLink(link);
         if (drawable == null && Reddit.placeFormattedUrl(link)) {
             viewHolder.imagePreview.setVisibility(View.VISIBLE);
             viewHolder.progressImage.setVisibility(View.VISIBLE);
-            Ion.with(activity)
-                    .load(link.getThumbnail())
-                    .asBitmap()
-                    .setCallback(new FutureCallback<Bitmap>() {
-                        @Override
-                        public void onCompleted(Exception e, Bitmap result) {
-                            Palette palette = Palette.generate(result);
-                            viewHolder.itemView.setBackgroundColor(palette.getVibrantColor(palette.getDarkVibrantColor(defaultColor)));
-                            Ion.with(activity)
-                                    .load(link.getUrl())
-                                    .asBitmap()
-                                    .setCallback(new FutureCallback<Bitmap>() {
-                                        @Override
-                                        public void onCompleted(Exception e, Bitmap result) {
-                                            if (result != null && link.getId().equals(controllerLinks.getLink(viewHolder.getPosition()).getId())) {
-                                                viewHolder.imagePreview.setImageBitmap(result);
-                                            }
-                                            viewHolder.progressImage.setVisibility(View.GONE);
-                                        }
-                                    });
-                        }
-                    });
+            controllerLinks.loadImage(link.getThumbnail(), new ImageLoader.ImageListener() {
+                @Override
+                public void onResponse(ImageLoader.ImageContainer response, boolean isImmediate) {
+                    if (response.getBitmap() == null) {
+                        this.onErrorResponse(null);
+                        return;
+                    }
+                    Palette palette = Palette.generate(response.getBitmap());
+                    viewHolder.itemView.setBackgroundColor(
+                            palette.getVibrantColor(palette.getDarkVibrantColor(defaultColor)));
+                    viewHolder.imagePreview.setTag(controllerLinks.loadImage(link.getUrl(),
+                            new ImageLoader.ImageListener() {
+                                @Override
+                                public void onResponse(ImageLoader.ImageContainer response,
+                                                       boolean isImmediate) {
+                                    if (response.getBitmap() != null) {
+                                        viewHolder.imagePreview.setImageBitmap(
+                                                ThumbnailUtils.extractThumbnail(
+                                                        response.getBitmap(),
+                                                        viewHolder.imagePreview.getWidth(),
+                                                        viewHolder.imagePreview.getWidth()));
+                                        viewHolder.progressImage.setVisibility(View.GONE);
+                                    }
+                                }
+
+                                @Override
+                                public void onErrorResponse(VolleyError error) {
+
+                                }
+                            }));
+                }
+
+                @Override
+                public void onErrorResponse(VolleyError error) {
+
+                }
+            });
+        }
+        else {
+            viewHolder.imagePreview.setVisibility(View.GONE);
         }
         viewHolder.imagePreview.invalidate();
 
         viewHolder.textThreadTitle.setText(link.getTitle());
         viewHolder.layoutContainerActions.setVisibility(View.GONE);
+    }
+
+    @Override
+    public void onViewRecycled(RecyclerView.ViewHolder holder) {
+
+        final ViewHolder viewHolder = (ViewHolder) holder;
+
+        if (viewHolder.imagePreview.getTag() != null) {
+            ((ImageLoader.ImageContainer) viewHolder.imagePreview.getTag()).cancelRequest();
+        }
+
+        viewHolder.webFull.setVisibility(View.GONE);
+        viewHolder.imagePreview.setVisibility(View.GONE);
+        viewHolder.imagePreview.setImageBitmap(null);
+        viewHolder.itemView.setBackgroundColor(defaultColor);
+        viewHolder.progressImage.setVisibility(View.GONE);
+
+        super.onViewRecycled(holder);
     }
 
     @Override
@@ -134,6 +167,9 @@ public class AdapterLinkGrid extends AdapterLink {
 
             this.progressImage = (ProgressBar) itemView.findViewById(R.id.progress_image);
             this.webFull = (WebView) itemView.findViewById(R.id.web_full);
+            this.webFull.getSettings().setUseWideViewPort(true);
+            this.webFull.getSettings().setBuiltInZoomControls(true);
+            this.webFull.setBackgroundColor(0x000000);
             this.imagePreview = (ImageView) itemView.findViewById(R.id.image_preview);
             this.textThreadTitle = (TextView) itemView.findViewById(R.id.text_thread_title);
             // TODO: Remove and replace with a real TextView that holds self_text
@@ -149,55 +185,14 @@ public class AdapterLinkGrid extends AdapterLink {
                     StaggeredGridLayoutManager.LayoutParams layoutParams = (StaggeredGridLayoutManager.LayoutParams) viewHolder.itemView.getLayoutParams();
                     layoutParams.setFullSpan(true);
                     viewHolder.itemView.setLayoutParams(layoutParams);
-                    webFull.loadUrl(controllerLinks.getLink(getPosition()).getUrl());
+
                     imagePreview.setVisibility(View.GONE);
                     webFull.setVisibility(View.VISIBLE);
+                    webFull.loadData(Reddit.getImageHtml(controllerLinks.getLink(getPosition()).getUrl()), "text/html", "UTF-8");
                     controllerLinks.getListener().onFullLoaded(getPosition());
                 }
             });
 
-//            this.imageThreadPreview.setOnClickListener(new View.OnClickListener() {
-//                @Override
-//                public void onClick(View v) {
-//                    Link link = controllerLinks.getLink(getPosition());
-//                    String url = link.getUrl();
-//                    imagePreview.setImageBitmap(null);
-//                    imagePreview.setVisibility(View.GONE);
-//                    imageThreadPreview.setVisibility(View.VISIBLE);
-//
-//                    if (link.isSelf()) {
-//                        String html = link.getSelfTextHtml();
-//                        html = Html.fromHtml(html.trim())
-//                                .toString();
-//                        textThreadTitle.setText(Reddit.formatHtml(html,
-//                                new Reddit.UrlClickListener() {
-//                                    @Override
-//                                    public void onUrlClick(String url) {
-//                                        controllerLinks.getListener().loadUrl(url);
-//                                    }
-//                                }));
-//                        controllerLinks.getListener().onFullLoaded(getPosition());
-//                    }
-//                    else if (!TextUtils.isEmpty(url)) {
-//
-//                        // TODO: Add support for popular image domains
-//                        String domain = link.getDomain();
-//                        if (domain.contains("imgur")) {
-//                            loadImgur(link);
-//                        }
-//                        else {
-//                            boolean isImage = Reddit.checkIsImage(url);
-//                            if (isImage) {
-//                                loadBasicImage(link);
-//                            }
-//                            else {
-//                                Log.d(TAG, "loadUrl: " + url);
-//                                controllerLinks.getListener().loadUrl(url);
-//                            }
-//                        }
-//                    }
-//                }
-//            });
             this.buttonComments.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {

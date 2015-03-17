@@ -12,15 +12,23 @@ import android.util.Base64;
 import android.util.Log;
 import android.view.View;
 
-import com.koushikdutta.async.future.FutureCallback;
-import com.koushikdutta.ion.Ion;
-import com.koushikdutta.ion.Response;
+import com.android.volley.AuthFailureError;
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response.ErrorListener;
+import com.android.volley.Response.Listener;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.ImageLoader;
+import com.android.volley.toolbox.StringRequest;
+import com.android.volley.toolbox.Volley;
 import com.winsonchiu.reader.AppSettings;
+import com.winsonchiu.reader.LruCacheBitmap;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -72,7 +80,29 @@ public class Reddit {
     private static final String DURATION = "duration";
     private static final String EXPIRES_IN = "expires_in";
 
-    public static boolean needsToken(Context context, int iteration) {
+    private static Reddit reddit;
+    private RequestQueue requestQueue;
+    private ImageLoader imageLoader;
+    private SharedPreferences preferences;
+
+    private Reddit(Context context) {
+        requestQueue = Volley.newRequestQueue(context.getApplicationContext());
+        imageLoader = new ImageLoader(requestQueue, new LruCacheBitmap(context.getApplicationContext()));
+        preferences = PreferenceManager.getDefaultSharedPreferences(context.getApplicationContext());
+    }
+
+    public static Reddit getInstance(Context context) {
+        if (reddit == null) {
+            reddit = new Reddit(context);
+        }
+        return reddit;
+    }
+
+    public ImageLoader getImageLoader() {
+        return imageLoader;
+    }
+
+    public boolean needsToken(Context context, int iteration) {
 
         SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context.getApplicationContext());
 
@@ -82,43 +112,26 @@ public class Reddit {
 
     }
 
-    public static void fetchToken(Context context, final ErrorListener listener) {
-
-        final SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context.getApplicationContext());
+    public void fetchToken(final RedditErrorListener listener) {
 
         if ("".equals(preferences.getString(AppSettings.DEVICE_ID, ""))) {
             preferences.edit().putString(AppSettings.DEVICE_ID, UUID.randomUUID().toString()).commit();
         }
 
-        HashMap<String, String> params = new HashMap<>();
+        final HashMap<String, String> params = new HashMap<>();
         params.put(REDIRECT_URI, "https://com.winsonchiu.reader");
         params.put(GRANT_TYPE, INSTALLED_CLIENT_GRANT);
         params.put(DEVICE_ID, preferences.getString(AppSettings.DEVICE_ID, UUID.randomUUID()
                 .toString()));
 
-        Ion.with(context)
-                .load("POST", APP_ONLY_URL)
-                .setLogging("ION", Log.VERBOSE)
-                .userAgent(CUSTOM_USER_AGENT)
-                .basicAuthentication("zo7k-Nsh7vgn-Q", "")
-                .addHeader(CONTENT_TYPE, "application/x-www-form-urlencoded; charset=utf-8")
-                .setBodyParameter(REDIRECT_URI, "https://com.winsonchiu.reader")
-                .setBodyParameter(GRANT_TYPE, INSTALLED_CLIENT_GRANT)
-                .setBodyParameter(DEVICE_ID, preferences.getString(AppSettings.DEVICE_ID,
-                        UUID.randomUUID()
-                                .toString()))
-                .asString()
-                .withResponse()
-                .setCallback(new FutureCallback<Response<String>>() {
+        requestQueue.add(new StringRequest(Request.Method.POST, APP_ONLY_URL,
+                new Listener<String>() {
                     @Override
-                    public void onCompleted(Exception e, Response<String> result) {
-                        if (result == null) {
-                            return;
-                        }
+                    public void onResponse(String response) {
 
-                        Log.d(TAG, "fetchToken response: " + result.getResult());
+                        Log.d(TAG, "fetchToken response: " + response);
                         try {
-                            JSONObject jsonObject = new JSONObject(result.getResult());
+                            JSONObject jsonObject = new JSONObject(response);
                             preferences.edit().putString(AppSettings.APP_ACCESS_TOKEN, jsonObject.getString(ACCESS_TOKEN)).commit();
                             preferences.edit().putLong(AppSettings.EXPIRE_TIME,
                                     System.currentTimeMillis() + jsonObject.getLong(
@@ -132,43 +145,111 @@ public class Reddit {
                             listener.onErrorHandled();
                         }
                     }
+                }, new com.android.volley.Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+
+                    }
+                }) {
+
+                    @Override
+                    protected Map<String, String> getParams() throws AuthFailureError {
+                        return params;
+                    }
+
+                    @Override
+                    public Map<String, String> getHeaders() throws AuthFailureError {
+                        HashMap<String, String> headers = new HashMap<>(3);
+                        String creds = String.format("%s:%s", "zo7k-Nsh7vgn-Q", "");
+                        String auth = "Basic " + Base64.encodeToString(creds.getBytes(), Base64.DEFAULT);
+                        headers.put(USER_AGENT, CUSTOM_USER_AGENT);
+                        headers.put(AUTHORIZATION, auth);
+                        headers.put("Content-Type", "application/json; charset=utf-8");
+                        return headers;
+                    }
                 });
+
+//        Ion.with(context)
+//                .load("POST", APP_ONLY_URL)
+//                .setLogging("ION", Log.VERBOSE)
+//                .userAgent(CUSTOM_USER_AGENT)
+//                .basicAuthentication("zo7k-Nsh7vgn-Q", "")
+//                .addHeader(CONTENT_TYPE, "application/x-www-form-urlencoded; charset=utf-8")
+//                .setBodyParameter(REDIRECT_URI, "https://com.winsonchiu.reader")
+//                .setBodyParameter(GRANT_TYPE, INSTALLED_CLIENT_GRANT)
+//                .setBodyParameter(DEVICE_ID, preferences.getString(AppSettings.DEVICE_ID,
+//                        UUID.randomUUID()
+//                                .toString()))
+//                .asString()
+//                .withResponse()
+//                .setCallback(new FutureCallback<Response<String>>() {
+//                    @Override
+//                    public void onCompleted(Exception e, Response<String> result) {
+//                        if (result == null) {
+//                            return;
+//                        }
+//
+//                        Log.d(TAG, "fetchToken response: " + result.getResult());
+//                        try {
+//                            JSONObject jsonObject = new JSONObject(result.getResult());
+//                            preferences.edit().putString(AppSettings.APP_ACCESS_TOKEN, jsonObject.getString(ACCESS_TOKEN)).commit();
+//                            preferences.edit().putLong(AppSettings.EXPIRE_TIME,
+//                                    System.currentTimeMillis() + jsonObject.getLong(
+//                                            EXPIRES_IN) * SEC_TO_MS).commit();
+//                        }
+//                        catch (JSONException e1) {
+//                            e1.printStackTrace();
+//                        }
+//
+//                        if (listener != null) {
+//                            listener.onErrorHandled();
+//                        }
+//                    }
+//                });
     }
 
-    public static void loadGet(final Context context, final String url, final FutureCallback<Response<String>> callback, final int iteration) {
+    /**
+     * HTTP GET call to Reddit OAuth API, query parameters must exist inside url param
+     *
+     * @param context
+     * @param url
+     * @param listener
+     * @param errorListener
+     * @param iteration
+     */
+    public void loadGet(final Context context, final String url, final Listener<String> listener, final ErrorListener errorListener, final int iteration) {
+
+        if (iteration > 2) {
+            errorListener.onErrorResponse(null);
+            return;
+        }
 
         if (needsToken(context, iteration)) {
-            fetchToken(context, new ErrorListener() {
+            fetchToken(new RedditErrorListener() {
                 @Override
                 public void onErrorHandled() {
-                    loadGet(context, url, callback, iteration + 1);
+                    loadGet(context, url, listener, errorListener, iteration + 1);
                 }
             });
             return;
         }
 
-        Ion.with(context)
-                .load("GET", url)
-                .userAgent(CUSTOM_USER_AGENT)
-                .addHeader(AUTHORIZATION, getAuthorizationHeader(context))
-                .addHeader("Content-Type", "application/json; charset=utf-8")
-                .asString()
-                .withResponse()
-                .setCallback(new FutureCallback<Response<String>>() {
+        requestQueue.add(new StringRequest(Request.Method.GET, url,
+                listener, errorListener) {
                     @Override
-                    public void onCompleted(Exception e, Response<String> result) {
-                        // TODO: Handle this more elegantly
-                        if (result != null) {
-                            callback.onCompleted(e, result);
-                        }
+                    public Map<String, String> getHeaders() throws AuthFailureError {
+                        HashMap<String, String> headers = new HashMap<>(3);
+                        headers.put(USER_AGENT, CUSTOM_USER_AGENT);
+                        headers.put(AUTHORIZATION, getAuthorizationHeader());
+                        headers.put("Content-Type", "application/json; charset=utf-8");
+                        return headers;
                     }
                 });
     }
 
-    private static String getAuthorizationHeader(Context context) {
+    private String getAuthorizationHeader() {
         // TODO: Add check for user login token
-        return Reddit.BEARER + PreferenceManager.getDefaultSharedPreferences(context.getApplicationContext()).getString(AppSettings
-                .APP_ACCESS_TOKEN, "");
+        return Reddit.BEARER + preferences.getString(AppSettings.APP_ACCESS_TOKEN, "");
     }
 
     public static boolean checkIsImage(String url) {
@@ -226,22 +307,25 @@ public class Reddit {
                 url += ".jpg";
             }
         }
-        else {
-            boolean isImage = Reddit.checkIsImage(url);
-            if (!isImage) {
-                return false;
-            }
+
+        boolean isImage = Reddit.checkIsImage(url);
+        if (!isImage) {
+            return false;
         }
 
         link.setUrl(url);
         return true;
     }
 
+    public static String getImageHtml(String url) {
+        return "<html><head><meta name=\"viewport\" content=\"width=device-width, minimum-scale=0.1\"><style>img {width:100%;}</style></head><body style=\"margin: 0px;\"><img style=\"-webkit-user-select: none; cursor: zoom-in;\" src=\"" + url + "\"></body></html>";
+    }
+
     public interface UrlClickListener {
         void onUrlClick(String url);
     }
 
-    public interface ErrorListener {
+    public interface RedditErrorListener {
         void onErrorHandled();
     }
 

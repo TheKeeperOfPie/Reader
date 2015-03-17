@@ -23,8 +23,8 @@ android {
         applicationId "com.winsonchiu.reader"
         minSdkVersion 16
         targetSdkVersion 21
-        versionCode 4
-        versionName "0.2.0"
+        versionCode 5
+        versionName "0.2.1"
     }
     buildTypes {
         release {
@@ -48,4 +48,5 @@ dependencies {
         transitive = true;
     }
     compile 'com.android.support:palette-v7:21.0.3'
+    compile project(':volley')
 }
