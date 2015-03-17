@@ -246,30 +246,6 @@ public class AdapterLinkList extends AdapterLink {
             this.textThreadInfo.setOnClickListener(clickListenerLink);
         }
 
-//        private void loadImage(String url) {
-//            progressImage.setVisibility(View.VISIBLE);
-//            controllerLinks.loadImage(url, new ImageLoader.ImageListener() {
-//                @Override
-//                public void onResponse(ImageLoader.ImageContainer response, boolean isImmediate) {
-////                    imageFull.setVisibility(View.VISIBLE);
-////                    imageFull.setImageBitmap(response.getBitmap());
-//                    imagePreview.setVisibility(View.INVISIBLE);
-//                    controllerLinks.getListener()
-//                            .onFullLoaded(getPosition());
-//                    progressImage.setVisibility(View.GONE);
-//                    Log.d(TAG, "loadImage completed");
-//                }
-//
-//                @Override
-//                public void onErrorResponse(VolleyError error) {
-//                    progressImage.setVisibility(View.GONE);
-//                    Toast.makeText(activity, "Error loading image",
-//                            Toast.LENGTH_SHORT)
-//                            .show();
-//                }
-//            });
-//        }
-
     }
 
 }

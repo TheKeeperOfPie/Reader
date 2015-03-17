@@ -52,4 +52,8 @@ public class LruCacheBitmap extends LruCache<String, Bitmap> implements ImageLoa
         return screenBytes * 3;
     }
 
+    @Override
+    protected void entryRemoved(boolean evicted, String key, Bitmap oldValue, Bitmap newValue) {
+        super.entryRemoved(evicted, key, oldValue, newValue);
+    }
 }

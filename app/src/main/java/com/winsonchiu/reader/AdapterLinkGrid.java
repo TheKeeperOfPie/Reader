@@ -8,6 +8,7 @@ import android.support.v7.graphics.Palette;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.StaggeredGridLayoutManager;
 import android.text.method.LinkMovementMethod;
+import android.util.Base64;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -26,6 +27,8 @@ import com.koushikdutta.ion.Ion;
 import com.winsonchiu.reader.data.Link;
 import com.winsonchiu.reader.data.Reddit;
 
+import java.io.ByteArrayOutputStream;
+
 /**
  * Created by TheKeeperOfPie on 3/7/2015.
  */
@@ -36,9 +39,7 @@ public class AdapterLinkGrid extends AdapterLink {
     private ControllerLinks controllerLinks;
     private DividerItemDecoration itemDecoration;
     private int defaultColor;
-    private int deviceWidth;
-    private int[] firstPositions;
-    private int[] lastPositions;
+    private int thumbnailWidth;
 
     public AdapterLinkGrid(Activity activity, ControllerLinks controllerLinks) {
         this.controllerLinks = controllerLinks;
@@ -48,10 +49,8 @@ public class AdapterLinkGrid extends AdapterLink {
     @Override
     public void setActivity(Activity activity) {
         super.setActivity(activity);
-        this.deviceWidth = activity.getResources().getDisplayMetrics().widthPixels;
+        this.thumbnailWidth = activity.getResources().getDisplayMetrics().widthPixels / 2;
         this.layoutManager = new StaggeredGridLayoutManager(2, StaggeredGridLayoutManager.VERTICAL);
-        this.firstPositions = new int[2];
-        this.lastPositions = new int[2];
         this.itemDecoration = null;
         this.defaultColor = activity.getResources().getColor(R.color.darkThemeDialog);
     }
@@ -101,8 +100,8 @@ public class AdapterLinkGrid extends AdapterLink {
                                         viewHolder.imagePreview.setImageBitmap(
                                                 ThumbnailUtils.extractThumbnail(
                                                         response.getBitmap(),
-                                                        viewHolder.imagePreview.getWidth(),
-                                                        viewHolder.imagePreview.getWidth()));
+                                                        thumbnailWidth,
+                                                        thumbnailWidth));
                                         viewHolder.progressImage.setVisibility(View.GONE);
                                     }
                                 }
@@ -188,6 +187,7 @@ public class AdapterLinkGrid extends AdapterLink {
 
                     imagePreview.setVisibility(View.GONE);
                     webFull.setVisibility(View.VISIBLE);
+
                     webFull.loadData(Reddit.getImageHtml(controllerLinks.getLink(getPosition()).getUrl()), "text/html", "UTF-8");
                     controllerLinks.getListener().onFullLoaded(getPosition());
                 }
@@ -206,18 +206,6 @@ public class AdapterLinkGrid extends AdapterLink {
                     layoutContainerActions.setVisibility(
                             layoutContainerActions.getVisibility() == View.VISIBLE ? View.GONE :
                                     View.VISIBLE);
-                    Link link = controllerLinks.getLink(getPosition());
-                    Toast.makeText(activity, "isNsfw: " + link.isOver18() + " URL: " + link.getUrl() + ": " + Reddit.placeFormattedUrl(link), Toast.LENGTH_SHORT).show();
-                    Ion.with(activity)
-                            .load(controllerLinks.getLink(getPosition()).getThumbnail())
-                            .asBitmap()
-                            .setCallback(new FutureCallback<Bitmap>() {
-                                @Override
-                                public void onCompleted(Exception e, Bitmap result) {
-                                    imagePreview.setMaxHeight(imagePreview.getWidth());
-                                    imagePreview.setImageBitmap(result);
-                                }
-                            });
                 }
             };
             this.itemView.setOnClickListener(clickListenerLink);
