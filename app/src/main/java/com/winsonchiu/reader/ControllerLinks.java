@@ -33,7 +33,7 @@ public class ControllerLinks {
     private Drawable drawableDefault;
     private Reddit reddit;
 
-    public ControllerLinks(Activity activity, LinkClickListener listener, String subreddit, String sort) {
+    public ControllerLinks(Activity activity, final LinkClickListener listener, String subreddit, String sort) {
         super();
         this.activity = activity;
         this.reddit = Reddit.getInstance(activity);
@@ -177,7 +177,8 @@ public class ControllerLinks {
         void setToolbarTitle(String title);
         void notifyDataSetChanged();
         void notifyItemRangeInserted(int startPosition, int endPosition);
-
+        void setScroll(boolean scrollable);
+        boolean canScroll();
     }
 
 }

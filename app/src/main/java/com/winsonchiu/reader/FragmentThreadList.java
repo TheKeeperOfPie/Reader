@@ -54,6 +54,9 @@ public class FragmentThreadList extends Fragment {
     private RecyclerView.LayoutManager layoutManager;
     private ControllerLinks controllerLinks;
     private MenuItem itemInterface;
+    private boolean isScrollable = true;
+
+    private int spanCount = 2;
 
     /**
      * Use this factory method to create a new instance of
@@ -176,7 +179,7 @@ public class FragmentThreadList extends Fragment {
     }
 
     private void resetAdapter(AdapterLink newAdapter) {
-        int[] currentPosition = new int[2];
+        int[] currentPosition = new int[spanCount];
         if (layoutManager instanceof LinearLayoutManager) {
             currentPosition[0] = ((LinearLayoutManager) layoutManager).findFirstVisibleItemPosition();
         }
@@ -209,6 +212,28 @@ public class FragmentThreadList extends Fragment {
                 controllerLinks.reloadAllLinks();
             }
         });
+        swipeRefreshThreadList.getViewTreeObserver().addOnScrollChangedListener(
+                new ViewTreeObserver.OnScrollChangedListener() {
+                    @Override
+                    public void onScrollChanged() {
+
+                        int[] firstVisiblePositions = new int[spanCount];
+
+                        if (layoutManager instanceof LinearLayoutManager) {
+                            firstVisiblePositions[0] = ((LinearLayoutManager) layoutManager).findFirstCompletelyVisibleItemPosition();
+                        }
+                        else if (layoutManager instanceof StaggeredGridLayoutManager) {
+                            ((StaggeredGridLayoutManager) layoutManager).findFirstCompletelyVisibleItemPositions(firstVisiblePositions);
+                        }
+
+                        if (firstVisiblePositions[0] == 0) {
+                            swipeRefreshThreadList.setEnabled(true);
+                        }
+                        else {
+                            swipeRefreshThreadList.setEnabled(false);
+                        }
+                    }
+                });
 
         if (controllerLinks == null) {
             controllerLinks = new ControllerLinks(activity,
@@ -251,6 +276,16 @@ public class FragmentThreadList extends Fragment {
                         public void notifyItemRangeInserted(int startPosition, int endPosition) {
                             adapterLink.notifyItemRangeInserted(startPosition, endPosition);
                         }
+
+                        @Override
+                        public void setScroll(boolean scrollable) {
+                            isScrollable = scrollable;
+                        }
+
+                        @Override
+                        public boolean canScroll() {
+                            return isScrollable;
+                        }
                     }, "all", "hot");
         }
         controllerLinks.setActivity(activity);
@@ -270,6 +305,53 @@ public class FragmentThreadList extends Fragment {
 
         recyclerThreadList = (RecyclerView) view.findViewById(R.id.recycler_thread_list);
         recyclerThreadList.setItemAnimator(new DefaultItemAnimator());
+//        recyclerThreadList.addOnItemTouchListener(new RecyclerView.OnItemTouchListener() {
+//            @Override
+//            public boolean onInterceptTouchEvent(RecyclerView rv, MotionEvent e) {
+//
+//                for (int index = 0; index < recyclerThreadList.getChildCount(); index++) {
+//
+////                    float saveX = e.getX();
+////                    float saveY = e.getY();
+//
+//                    View view = recyclerThreadList.getChildAt(index);
+//
+////                    e.setLocation(saveX - view.getX(), saveY - view.getY());
+//
+//                    Rect rect = new Rect((int) view.getX(), (int) view.getY(), (int) view.getX() + view.getWidth(), (int) view.getY() + view.getHeight());
+//                    if (rect.contains((int) e.getX(), (int) e.getY())) {
+//                        view.dispatchTouchEvent(e);
+//                        break;
+//                    }
+//
+////                    e.setLocation(saveX, saveY);
+//                }
+//
+//                return !isScrollable;
+//            }
+//
+//            @Override
+//            public void onTouchEvent(RecyclerView rv, MotionEvent e) {
+//                for (int index = 0; index < recyclerThreadList.getChildCount(); index++) {
+//
+////                    float saveX = e.getX();
+////                    float saveY = e.getY();
+//
+//                    View view = recyclerThreadList.getChildAt(index);
+//
+////                    e.setLocation(saveX - view.getX(), saveY - view.getY());
+//
+//                    Rect rect = new Rect((int) view.getX(), (int) view.getY(), (int) view.getX() + view.getWidth(), (int) view.getY() + view.getHeight());
+//                    if (rect.contains((int) e.getX(), (int) e.getY())) {
+//                        view.dispatchTouchEvent(e);
+//                        return;
+//                    }
+//
+////                    e.setLocation(saveX, saveY);
+//
+//                }
+//            }
+//        });
         if (adapterLink.getItemDecoration() != null) {
             recyclerThreadList.addItemDecoration(adapterLink.getItemDecoration());
         }

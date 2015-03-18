@@ -1,33 +1,25 @@
 package com.winsonchiu.reader;
 
 import android.app.Activity;
-import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
 import android.media.ThumbnailUtils;
 import android.support.v7.graphics.Palette;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.StaggeredGridLayoutManager;
 import android.text.method.LinkMovementMethod;
-import android.util.Base64;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.webkit.WebView;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.ImageLoader;
-import com.koushikdutta.async.future.FutureCallback;
-import com.koushikdutta.ion.Ion;
 import com.winsonchiu.reader.data.Link;
 import com.winsonchiu.reader.data.Reddit;
-
-import java.io.ByteArrayOutputStream;
 
 /**
  * Created by TheKeeperOfPie on 3/7/2015.
@@ -72,6 +64,10 @@ public class AdapterLinkGrid extends AdapterLink {
 
         if (!controllerLinks.isLoading() && position > controllerLinks.size() - 5) {
             controllerLinks.loadMoreLinks();
+        }
+
+        if (viewHolder.imagePreview.getTag() != null) {
+            ((ImageLoader.ImageContainer) viewHolder.imagePreview.getTag()).cancelRequest();
         }
 
         final Link link = controllerLinks.getLink(position);
@@ -137,9 +133,10 @@ public class AdapterLinkGrid extends AdapterLink {
             ((ImageLoader.ImageContainer) viewHolder.imagePreview.getTag()).cancelRequest();
         }
 
+        viewHolder.webFull.resetMaxHeight();
         viewHolder.webFull.setVisibility(View.GONE);
-        viewHolder.imagePreview.setVisibility(View.GONE);
         viewHolder.imagePreview.setImageBitmap(null);
+        viewHolder.imagePreview.setVisibility(View.GONE);
         viewHolder.itemView.setBackgroundColor(defaultColor);
         viewHolder.progressImage.setVisibility(View.GONE);
 
@@ -154,21 +151,63 @@ public class AdapterLinkGrid extends AdapterLink {
     public class ViewHolder extends RecyclerView.ViewHolder {
 
         protected ProgressBar progressImage;
-        protected WebView webFull;
+        protected WebViewFixed webFull;
         protected ImageView imagePreview;
         protected TextView textThreadTitle;
         protected ImageButton buttonComments;
         protected LinearLayout layoutContainerActions;
         private View.OnClickListener clickListenerLink;
+        private float lastY;
 
         public ViewHolder(final View itemView) {
             super(itemView);
 
             this.progressImage = (ProgressBar) itemView.findViewById(R.id.progress_image);
-            this.webFull = (WebView) itemView.findViewById(R.id.web_full);
-            this.webFull.getSettings().setUseWideViewPort(true);
+            this.webFull = (WebViewFixed) itemView.findViewById(R.id.web_full);
+            this.webFull.getSettings()
+                    .setUseWideViewPort(true);
             this.webFull.getSettings().setBuiltInZoomControls(true);
+            this.webFull.getSettings().setDisplayZoomControls(false);
             this.webFull.setBackgroundColor(0x000000);
+//            this.webFull.setOnTouchListener(new View.OnTouchListener() {
+//                @Override
+//                public boolean onTouch(View v, MotionEvent event) {
+//
+//                    Log.d(TAG, "webFull onTouch");
+//                    Log.d(TAG, "X: " + event.getX());
+//                    Log.d(TAG, "Y: " + event.getY());
+//
+//                    if (event.getPointerCount() == 1 && event.getAction() == MotionEvent.ACTION_DOWN && (webFull.canScrollVertically(
+//                            1) || webFull.canScrollVertically(-1))) {
+//                        controllerLinks.getListener()
+//                                .setScroll(false);
+//                    }
+//                    else if (event.getAction() == MotionEvent.ACTION_UP) {
+//                        controllerLinks.getListener()
+//                                .setScroll(true);
+//                    }
+//
+//                    if (event.getPointerCount() == 1) {
+//                        if (lastY - event.getY() < 0) {
+//                            if (!webFull.canScrollVertically(-1)) {
+//                                controllerLinks.getListener()
+//                                        .setScroll(true);
+//                            }
+//                        }
+//                        else if (!webFull.canScrollVertically(1)) {
+//                            controllerLinks.getListener()
+//                                    .setScroll(true);
+//                        }
+//                    }
+//
+//                    Log.d(TAG, "Can scroll: " + controllerLinks.getListener()
+//                            .canScroll());
+//
+//                    lastY = event.getY();
+//
+//                    return false;
+//                }
+//            });
             this.imagePreview = (ImageView) itemView.findViewById(R.id.image_preview);
             this.textThreadTitle = (TextView) itemView.findViewById(R.id.text_thread_title);
             // TODO: Remove and replace with a real TextView that holds self_text

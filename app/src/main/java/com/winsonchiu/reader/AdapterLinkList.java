@@ -14,10 +14,11 @@ import android.text.Spanned;
 import android.text.TextUtils;
 import android.text.method.LinkMovementMethod;
 import android.text.style.ForegroundColorSpan;
+import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
-import android.webkit.WebView;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -120,8 +121,10 @@ public class AdapterLinkList extends AdapterLink {
             ((ImageLoader.ImageContainer) viewHolder.imagePreview.getTag()).cancelRequest();
         }
 
+        viewHolder.webFull.resetMaxHeight();
         viewHolder.webFull.setVisibility(View.GONE);
         viewHolder.videoFull.setVisibility(View.GONE);
+        viewHolder.imagePreview.setImageBitmap(null);
         viewHolder.imagePreview.setVisibility(View.VISIBLE);
         viewHolder.progressImage.setVisibility(View.GONE);
 
@@ -137,7 +140,7 @@ public class AdapterLinkList extends AdapterLink {
 
         protected MediaController mediaController;
         protected ProgressBar progressImage;
-        protected WebView webFull;
+        protected WebViewFixed webFull;
         protected VideoView videoFull;
         protected ImageView imagePreview;
         protected TextView textThreadTitle;
@@ -145,15 +148,55 @@ public class AdapterLinkList extends AdapterLink {
         protected ImageButton buttonComments;
         protected LinearLayout layoutContainerActions;
         private View.OnClickListener clickListenerLink;
+        private float lastY;
 
         public ViewHolder(View itemView) {
             super(itemView);
 
             this.progressImage = (ProgressBar) itemView.findViewById(R.id.progress_image);
-            this.webFull = (WebView) itemView.findViewById(R.id.web_full);
+            this.webFull = (WebViewFixed) itemView.findViewById(R.id.web_full);
             this.webFull.getSettings().setUseWideViewPort(true);
             this.webFull.getSettings().setBuiltInZoomControls(true);
+            this.webFull.getSettings().setDisplayZoomControls(false);
             this.webFull.setBackgroundColor(0x000000);
+//            this.webFull.setOnTouchListener(new View.OnTouchListener() {
+//                @Override
+//                public boolean onTouch(View v, MotionEvent event) {
+//
+//                    Log.d(TAG, "webFull onTouch");
+//                    Log.d(TAG, "X: " + event.getX());
+//                    Log.d(TAG, "Y: " + event.getY());
+//
+//                    if (event.getPointerCount() == 1 && event.getAction() == MotionEvent.ACTION_DOWN && (webFull.canScrollVertically(
+//                            1) || webFull.canScrollVertically(-1))) {
+//                        controllerLinks.getListener()
+//                                .setScroll(false);
+//                    }
+//                    else if (event.getAction() == MotionEvent.ACTION_UP) {
+//                        controllerLinks.getListener()
+//                                .setScroll(true);
+//                    }
+//
+//                    if (event.getPointerCount() == 1) {
+//                        if (lastY - event.getY() < 0) {
+//                            if (!webFull.canScrollVertically(-1)) {
+//                                controllerLinks.getListener()
+//                                        .setScroll(true);
+//                            }
+//                        }
+//                        else if (!webFull.canScrollVertically(1)) {
+//                            controllerLinks.getListener()
+//                                    .setScroll(true);
+//                        }
+//                    }
+//
+//                    Log.d(TAG, "Can scroll: " + controllerLinks.getListener().canScroll());
+//
+//                    lastY = event.getY();
+//
+//                    return false;
+//                }
+//            });
             this.mediaController = new MediaController(itemView.getContext());
             this.videoFull = (VideoView) itemView.findViewById(R.id.video_full);
             this.videoFull.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
@@ -172,9 +215,16 @@ public class AdapterLinkList extends AdapterLink {
             this.buttonComments = (ImageButton) itemView.findViewById(R.id.button_comments);
             this.layoutContainerActions = (LinearLayout) itemView.findViewById(R.id.layout_container_actions);
 
+            this.imagePreview.setOnTouchListener(new View.OnTouchListener() {
+                @Override
+                public boolean onTouch(View v, MotionEvent event) {
+                    Log.d(TAG, "imagePreview onTouch");
+                    return false;
+                }
+            });
             this.imagePreview.setOnClickListener(new View.OnClickListener() {
                 @Override
-                public void onClick(View v) {
+                public void onClick(final View v) {
                     Link link = controllerLinks.getLink(getPosition());
                     String url = link.getUrl();
                     imagePreview.setVisibility(View.VISIBLE);
@@ -229,7 +279,8 @@ public class AdapterLinkList extends AdapterLink {
             this.buttonComments.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    controllerLinks.getListener().onClickComments(controllerLinks.getLink(getPosition()));
+                    controllerLinks.getListener()
+                            .onClickComments(controllerLinks.getLink(getPosition()));
                 }
             });
 
