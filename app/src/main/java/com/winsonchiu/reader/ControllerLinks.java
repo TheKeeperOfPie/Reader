@@ -1,10 +1,19 @@
 package com.winsonchiu.reader;
 
+import android.animation.Animator;
+import android.animation.ObjectAnimator;
+import android.animation.ValueAnimator;
 import android.app.Activity;
 import android.content.res.Resources;
 import android.graphics.drawable.Drawable;
 import android.text.TextUtils;
 import android.util.Log;
+import android.util.TypedValue;
+import android.view.View;
+import android.view.ViewPropertyAnimator;
+import android.view.animation.Animation;
+import android.view.animation.ScaleAnimation;
+import android.view.animation.Transformation;
 
 import com.android.volley.Response.ErrorListener;
 import com.android.volley.Response.Listener;
@@ -23,6 +32,8 @@ import org.json.JSONObject;
 public class ControllerLinks {
 
     private static final String TAG = ControllerLinks.class.getCanonicalName();
+    private static final long EXPAND_ACTION_DURATION = 150;
+
     private Activity activity;
     private LinkClickListener listener;
     private Listing listingLinks;
@@ -127,11 +138,9 @@ public class ControllerLinks {
                             listener.notifyItemRangeInserted(startPosition,
                                     listingLinks.getChildren()
                                             .size() - 1);
-                        }
-                        catch (JSONException exception) {
+                        } catch (JSONException exception) {
                             exception.printStackTrace();
-                        }
-                        finally {
+                        } finally {
                             setLoading(false);
                         }
                     }
@@ -162,6 +171,61 @@ public class ControllerLinks {
 
     public boolean isLoading() {
         return isLoading;
+    }
+
+    public void animateExpandActions(final View view) {
+        Animation animation;
+        final int height = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 48, view.getContext().getResources().getDisplayMetrics());
+        if (view.getVisibility() == View.VISIBLE) {
+            animation = new Animation() {
+                @Override
+                protected void applyTransformation(float interpolatedTime, Transformation t) {
+                    view.getLayoutParams().height = (int) (height * (1.0f - interpolatedTime));
+                    view.requestLayout();
+                }
+
+                @Override
+                public boolean willChangeBounds() {
+                    return true;
+                }
+            };
+            animation.setAnimationListener(new Animation.AnimationListener() {
+                @Override
+                public void onAnimationStart(Animation animation) {
+
+                }
+
+                @Override
+                public void onAnimationEnd(Animation animation) {
+                    view.setVisibility(View.GONE);
+                }
+
+                @Override
+                public void onAnimationRepeat(Animation animation) {
+
+                }
+            });
+        }
+        else {
+            animation = new Animation() {
+                @Override
+                protected void applyTransformation(float interpolatedTime, Transformation t) {
+                    view.getLayoutParams().height = (int) (interpolatedTime * height);
+                    view.requestLayout();
+                }
+
+                @Override
+                public boolean willChangeBounds() {
+                    return true;
+                }
+            };
+            view.getLayoutParams().height = 0;
+            view.requestLayout();
+            view.setVisibility(View.VISIBLE);
+        }
+        animation.setDuration(EXPAND_ACTION_DURATION);
+        view.startAnimation(animation);
+        view.requestLayout();
     }
 
     public void setActivity(Activity activity) {

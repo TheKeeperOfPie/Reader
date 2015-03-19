@@ -19,6 +19,7 @@ import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.ScaleAnimation;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.ImageButton;
@@ -174,6 +175,14 @@ public class AdapterLinkList extends AdapterLink {
                     webFull.lockHeight();
                     super.onScaleChanged(view, oldScale, newScale);
                 }
+
+                @Override
+                public void onPageFinished(WebView view, String url) {
+                    ScaleAnimation scaleAnimation = new ScaleAnimation(1.0f, 1.0f, 0.0f, 1.0f);
+                    scaleAnimation.setDuration(1000);
+                    view.startAnimation(scaleAnimation);
+                    super.onPageFinished(view, url);
+                }
             });
             this.webFull.setOnTouchListener(new View.OnTouchListener() {
                 @Override
@@ -310,9 +319,7 @@ public class AdapterLinkList extends AdapterLink {
             clickListenerLink = new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    layoutContainerActions.setVisibility(
-                            layoutContainerActions.getVisibility() == View.VISIBLE ? View.GONE :
-                                    View.VISIBLE);
+                    controllerLinks.animateExpandActions(layoutContainerActions);
                 }
             };
             this.itemView.setOnClickListener(clickListenerLink);
