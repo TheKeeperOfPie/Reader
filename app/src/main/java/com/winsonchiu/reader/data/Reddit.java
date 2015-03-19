@@ -51,6 +51,10 @@ public class Reddit {
     public static final String CUSTOM_USER_AGENT = "android:com.winsonchiu.reader:v0.1 (by " +
             "/u/TheKeeperOfPie)";
 
+    public static final String GFYCAT_URL = "http://gfycat.com/cajax/get/";
+    public static final String GFYCAT_WEBM = "webmUrl";
+    public static final String GFYCAT_ITEM = "gfyItem";
+
     public static final String GIFV = ".gifv";
     public static final String GIF = ".gif";
     public static final String PNG = ".png";
@@ -102,10 +106,7 @@ public class Reddit {
         return imageLoader;
     }
 
-    public boolean needsToken(Context context, int iteration) {
-
-        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context.getApplicationContext());
-
+    public boolean needsToken() {
         return preferences.getLong(AppSettings.EXPIRE_TIME,
                 Long.MAX_VALUE) < System.currentTimeMillis() || "".equals(preferences.getString(
                 AppSettings.APP_ACCESS_TOKEN, ""));
@@ -211,24 +212,23 @@ public class Reddit {
     /**
      * HTTP GET call to Reddit OAuth API, query parameters must exist inside url param
      *
-     * @param context
      * @param url
      * @param listener
      * @param errorListener
      * @param iteration
      */
-    public void loadGet(final Context context, final String url, final Listener<String> listener, final ErrorListener errorListener, final int iteration) {
+    public void loadGet(final String url, final Listener<String> listener, final ErrorListener errorListener, final int iteration) {
 
         if (iteration > 2) {
             errorListener.onErrorResponse(null);
             return;
         }
 
-        if (needsToken(context, iteration)) {
+        if (needsToken()) {
             fetchToken(new RedditErrorListener() {
                 @Override
                 public void onErrorHandled() {
-                    loadGet(context, url, listener, errorListener, iteration + 1);
+                    loadGet(url, listener, errorListener, iteration + 1);
                 }
             });
             return;
@@ -285,7 +285,13 @@ public class Reddit {
         return strBuilder;
     }
 
-    public static boolean placeFormattedUrl(Link link) {
+    /**
+     * Sets link's URL to proper image format if applicable
+     *
+     * @param link to set URL
+     * @return try if link is image file, false otherwise
+     */
+    public static boolean placeImageUrl(Link link) {
 
         String url = link.getUrl();
         if (!url.contains("http")) {

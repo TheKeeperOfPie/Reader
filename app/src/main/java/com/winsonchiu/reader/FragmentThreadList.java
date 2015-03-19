@@ -54,7 +54,6 @@ public class FragmentThreadList extends Fragment {
     private RecyclerView.LayoutManager layoutManager;
     private ControllerLinks controllerLinks;
     private MenuItem itemInterface;
-    private boolean isScrollable = true;
 
     private int spanCount = 2;
 
@@ -196,7 +195,6 @@ public class FragmentThreadList extends Fragment {
         recyclerThreadList.setLayoutManager(layoutManager);
         recyclerThreadList.setAdapter(adapterLink);
         layoutManager.scrollToPosition(currentPosition[0]);
-        adapterLink.setViewHeight(recyclerThreadList.getHeight());
     }
 
     @Override
@@ -278,13 +276,8 @@ public class FragmentThreadList extends Fragment {
                         }
 
                         @Override
-                        public void setScroll(boolean scrollable) {
-                            isScrollable = scrollable;
-                        }
-
-                        @Override
-                        public boolean canScroll() {
-                            return isScrollable;
+                        public void requestDisallowInterceptTouchEvent(boolean disallow) {
+                            recyclerThreadList.requestDisallowInterceptTouchEvent(disallow);
                         }
                     }, "all", "hot");
         }
@@ -304,68 +297,15 @@ public class FragmentThreadList extends Fragment {
         layoutManager = adapterLink.getLayoutManager();
 
         recyclerThreadList = (RecyclerView) view.findViewById(R.id.recycler_thread_list);
+        recyclerThreadList.setScrollBarDefaultDelayBeforeFade(0);
+        recyclerThreadList.setScrollBarFadeDuration(100);
         recyclerThreadList.setItemAnimator(new DefaultItemAnimator());
-//        recyclerThreadList.addOnItemTouchListener(new RecyclerView.OnItemTouchListener() {
-//            @Override
-//            public boolean onInterceptTouchEvent(RecyclerView rv, MotionEvent e) {
-//
-//                for (int index = 0; index < recyclerThreadList.getChildCount(); index++) {
-//
-////                    float saveX = e.getX();
-////                    float saveY = e.getY();
-//
-//                    View view = recyclerThreadList.getChildAt(index);
-//
-////                    e.setLocation(saveX - view.getX(), saveY - view.getY());
-//
-//                    Rect rect = new Rect((int) view.getX(), (int) view.getY(), (int) view.getX() + view.getWidth(), (int) view.getY() + view.getHeight());
-//                    if (rect.contains((int) e.getX(), (int) e.getY())) {
-//                        view.dispatchTouchEvent(e);
-//                        break;
-//                    }
-//
-////                    e.setLocation(saveX, saveY);
-//                }
-//
-//                return !isScrollable;
-//            }
-//
-//            @Override
-//            public void onTouchEvent(RecyclerView rv, MotionEvent e) {
-//                for (int index = 0; index < recyclerThreadList.getChildCount(); index++) {
-//
-////                    float saveX = e.getX();
-////                    float saveY = e.getY();
-//
-//                    View view = recyclerThreadList.getChildAt(index);
-//
-////                    e.setLocation(saveX - view.getX(), saveY - view.getY());
-//
-//                    Rect rect = new Rect((int) view.getX(), (int) view.getY(), (int) view.getX() + view.getWidth(), (int) view.getY() + view.getHeight());
-//                    if (rect.contains((int) e.getX(), (int) e.getY())) {
-//                        view.dispatchTouchEvent(e);
-//                        return;
-//                    }
-//
-////                    e.setLocation(saveX, saveY);
-//
-//                }
-//            }
-//        });
         if (adapterLink.getItemDecoration() != null) {
             recyclerThreadList.addItemDecoration(adapterLink.getItemDecoration());
         }
         recyclerThreadList.setLayoutManager(layoutManager);
         recyclerThreadList.setAdapter(adapterLink);
         recyclerThreadList.setHasFixedSize(true);
-        recyclerThreadList.getViewTreeObserver().addOnGlobalLayoutListener(
-                new ViewTreeObserver.OnGlobalLayoutListener() {
-                    @Override
-                    public void onGlobalLayout() {
-                        adapterLink.setViewHeight(recyclerThreadList.getHeight());
-                        recyclerThreadList.getViewTreeObserver().removeOnGlobalLayoutListener(this);
-                    }
-                });
 
         return view;
     }

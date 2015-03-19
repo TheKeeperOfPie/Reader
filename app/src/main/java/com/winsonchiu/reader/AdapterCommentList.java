@@ -216,8 +216,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
     }
 
     public void reloadAllComments() {
-        reddit.loadGet(activity,
-                "https://oauth.reddit.com" + "/r/" + subreddit + "/comments/" + linkId,
+        reddit.loadGet("https://oauth.reddit.com" + "/r/" + subreddit + "/comments/" + linkId,
                 new com.android.volley.Response.Listener<String>() {
                     @Override
                     public void onResponse(String response) {

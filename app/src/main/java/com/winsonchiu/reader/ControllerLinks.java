@@ -75,7 +75,7 @@ public class ControllerLinks {
     public void reloadAllLinks() {
         setLoading(true);
         String url = "https://oauth.reddit.com" + "/r/" + subreddit + "/" + sort;
-        reddit.loadGet(activity, url, new Listener<String>() {
+        reddit.loadGet(url, new Listener<String>() {
                     @Override
                     public void onResponse(String response) {
                         // TODO: Catch null errors in parent method call
@@ -112,7 +112,7 @@ public class ControllerLinks {
         setLoading(true);
         String url = "https://oauth.reddit.com" + "/r/" + subreddit + "/" + sort + "?after=" + listingLinks.getAfter() + "&showAll=true";
 
-        reddit.loadGet(activity, url,
+        reddit.loadGet(url,
                 new Listener<String>() {
                     @Override
                     public void onResponse(String response) {
@@ -141,6 +141,10 @@ public class ControllerLinks {
 
                     }
                 }, 0);
+    }
+
+    public Reddit getReddit() {
+        return reddit;
     }
 
     public ImageLoader.ImageContainer loadImage(String url, ImageLoader.ImageListener imageListener) {
@@ -177,8 +181,7 @@ public class ControllerLinks {
         void setToolbarTitle(String title);
         void notifyDataSetChanged();
         void notifyItemRangeInserted(int startPosition, int endPosition);
-        void setScroll(boolean scrollable);
-        boolean canScroll();
+        void requestDisallowInterceptTouchEvent(boolean disallow);
     }
 
 }

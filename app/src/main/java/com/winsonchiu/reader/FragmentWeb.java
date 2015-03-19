@@ -96,6 +96,7 @@ public class FragmentWeb extends Fragment {
             public void onPageFinished(WebView view, String url) {
                 super.onPageFinished(view, url);
                 swipeRefreshWeb.setRefreshing(false);
+                webView.setBackgroundColor(0xFFFFFFFF);
             }
 
             @Override
@@ -143,6 +144,18 @@ public class FragmentWeb extends Fragment {
     public void onDetach() {
         super.onDetach();
         mListener = null;
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        webView.onResume();
+    }
+
+    @Override
+    public void onPause() {
+        webView.onPause();
+        super.onPause();
     }
 
     public boolean navigateBack() {

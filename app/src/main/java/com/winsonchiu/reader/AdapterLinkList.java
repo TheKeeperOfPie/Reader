@@ -19,6 +19,8 @@ import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.webkit.WebView;
+import android.webkit.WebViewClient;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -27,10 +29,14 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.VideoView;
 
+import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.ImageLoader;
 import com.winsonchiu.reader.data.Link;
 import com.winsonchiu.reader.data.Reddit;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 /**
  * Created by TheKeeperOfPie on 3/7/2015.
@@ -104,9 +110,10 @@ public class AdapterLinkList extends AdapterLink {
 
         viewHolder.textThreadTitle.setText(link.getTitle());
 
-        Spannable spannableInfo = new SpannableString(link.getScore() + " by " + link.getAuthor());
-        spannableInfo.setSpan(new ForegroundColorSpan(link.getScore() > 0 ? colorPositive : colorNegative), 0,
-                String.valueOf(link.getScore())
+        String subreddit = "/r/" + link.getSubreddit();
+        Spannable spannableInfo = new SpannableString(subreddit + "\n" + link.getScore() + " by " + link.getAuthor());
+        spannableInfo.setSpan(new ForegroundColorSpan(link.getScore() > 0 ? colorPositive : colorNegative), subreddit.length() + 1,
+                subreddit.length() + 1 + String.valueOf(link.getScore())
                         .length(), Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
         viewHolder.textThreadInfo.setText(spannableInfo);
         viewHolder.layoutContainerActions.setVisibility(View.GONE);
@@ -121,7 +128,9 @@ public class AdapterLinkList extends AdapterLink {
             ((ImageLoader.ImageContainer) viewHolder.imagePreview.getTag()).cancelRequest();
         }
 
+        viewHolder.webFull.onPause();
         viewHolder.webFull.resetMaxHeight();
+        viewHolder.webFull.loadUrl("about:blank");
         viewHolder.webFull.setVisibility(View.GONE);
         viewHolder.videoFull.setVisibility(View.GONE);
         viewHolder.imagePreview.setImageBitmap(null);
@@ -148,7 +157,6 @@ public class AdapterLinkList extends AdapterLink {
         protected ImageButton buttonComments;
         protected LinearLayout layoutContainerActions;
         private View.OnClickListener clickListenerLink;
-        private float lastY;
 
         public ViewHolder(View itemView) {
             super(itemView);
@@ -159,44 +167,42 @@ public class AdapterLinkList extends AdapterLink {
             this.webFull.getSettings().setBuiltInZoomControls(true);
             this.webFull.getSettings().setDisplayZoomControls(false);
             this.webFull.setBackgroundColor(0x000000);
-//            this.webFull.setOnTouchListener(new View.OnTouchListener() {
-//                @Override
-//                public boolean onTouch(View v, MotionEvent event) {
-//
-//                    Log.d(TAG, "webFull onTouch");
-//                    Log.d(TAG, "X: " + event.getX());
-//                    Log.d(TAG, "Y: " + event.getY());
-//
-//                    if (event.getPointerCount() == 1 && event.getAction() == MotionEvent.ACTION_DOWN && (webFull.canScrollVertically(
-//                            1) || webFull.canScrollVertically(-1))) {
-//                        controllerLinks.getListener()
-//                                .setScroll(false);
-//                    }
-//                    else if (event.getAction() == MotionEvent.ACTION_UP) {
-//                        controllerLinks.getListener()
-//                                .setScroll(true);
-//                    }
-//
-//                    if (event.getPointerCount() == 1) {
-//                        if (lastY - event.getY() < 0) {
-//                            if (!webFull.canScrollVertically(-1)) {
-//                                controllerLinks.getListener()
-//                                        .setScroll(true);
-//                            }
-//                        }
-//                        else if (!webFull.canScrollVertically(1)) {
-//                            controllerLinks.getListener()
-//                                    .setScroll(true);
-//                        }
-//                    }
-//
-//                    Log.d(TAG, "Can scroll: " + controllerLinks.getListener().canScroll());
-//
-//                    lastY = event.getY();
-//
-//                    return false;
-//                }
-//            });
+            this.webFull.setInitialScale(0);
+            this.webFull.setWebViewClient(new WebViewClient() {
+                @Override
+                public void onScaleChanged(WebView view, float oldScale, float newScale) {
+                    webFull.lockHeight();
+                    super.onScaleChanged(view, oldScale, newScale);
+                }
+            });
+            this.webFull.setOnTouchListener(new View.OnTouchListener() {
+                @Override
+                public boolean onTouch(View v, MotionEvent event) {
+
+                    if (event.getAction() == MotionEvent.ACTION_DOWN) {
+
+                        if ((webFull.canScrollVertically(1) && webFull.canScrollVertically(-1))) {
+                            controllerLinks.getListener()
+                                    .requestDisallowInterceptTouchEvent(true);
+                        }
+                        else {
+                            controllerLinks.getListener()
+                                    .requestDisallowInterceptTouchEvent(false);
+                            if (webFull.getScrollY() == 0) {
+                                webFull.setScrollY(1);
+                            }
+                            else {
+                                webFull.setScrollY(webFull.getScrollY() - 1);
+                            }
+                        }
+                    }
+                    else if (event.getAction() == MotionEvent.ACTION_UP) {
+                        controllerLinks.getListener().requestDisallowInterceptTouchEvent(false);
+                    }
+
+                    return false;
+                }
+            });
             this.mediaController = new MediaController(itemView.getContext());
             this.videoFull = (VideoView) itemView.findViewById(R.id.video_full);
             this.videoFull.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
@@ -246,33 +252,50 @@ public class AdapterLinkList extends AdapterLink {
                     }
                     else if (!TextUtils.isEmpty(url)) {
                         if (url.contains(Reddit.GIFV)) {
-                            Uri uri = Uri.parse(url.replaceAll(".gifv", ".mp4"));
-                            videoFull.setVideoURI(uri);
-                            videoFull.getLayoutParams().height = ViewHolder.this.itemView.getWidth() / 16 * 9;
-                            videoFull.setVisibility(View.VISIBLE);
-                            videoFull.invalidate();
-                            videoFull.requestFocus();
-                            videoFull.start();
-                            videoFull.setOnCompletionListener(
-                                    new MediaPlayer.OnCompletionListener() {
-                                        @Override
-                                        public void onCompletion(MediaPlayer mp) {
-                                            videoFull.start();
-                                        }
-                                    });
+                            loadVideo(url.replaceAll(".gifv", ".mp4"), 16f / 9f);
                         }
-                        else if (Reddit.placeFormattedUrl(link)) {
-                            webFull.setVisibility(View.VISIBLE);
+                        else if (link.getDomain().contains("gfycat")) {
+                            int startIndex = url.indexOf("gfycat.com") + 10;
+                            int lastIndex = url.lastIndexOf(".") > startIndex ? url.lastIndexOf(".") : url.length();
+                            String gfycatId = url.substring(url.indexOf("gfycat.com/") + 11, lastIndex);
+                            Log.d(TAG, "url length: " + url.length());
+                            progressImage.setVisibility(View.VISIBLE);
+                            controllerLinks.getReddit().loadGet(Reddit.GFYCAT_URL + gfycatId,
+                                    new Response.Listener<String>() {
+                                        @Override
+                                        public void onResponse(String response) {
+                                            try {
+                                                JSONObject jsonObject = new JSONObject(response).getJSONObject(Reddit.GFYCAT_ITEM);
+                                                loadVideo(jsonObject.getString(Reddit.GFYCAT_WEBM), (float) jsonObject.getInt("height") / jsonObject.getInt("width"));
+                                            }
+                                            catch (JSONException e) {
+                                                e.printStackTrace();
+                                            }
+                                            finally {
+                                                progressImage.setVisibility(View.GONE);
+                                            }
+                                        }
+                                    }, new Response.ErrorListener() {
+                                        @Override
+                                        public void onErrorResponse(VolleyError error) {
+                                            progressImage.setVisibility(View.GONE);
+                                        }
+                                    }, 0);
+                        }
+                        else if (Reddit.placeImageUrl(link)) {
+                            webFull.onResume();
+                            webFull.resetMaxHeight();
                             webFull.loadData(Reddit.getImageHtml(
                                     controllerLinks.getLink(getPosition())
                                             .getUrl()), "text/html", "UTF-8");
-                            controllerLinks.getListener()
-                                    .onFullLoaded(getPosition());
+                            webFull.setVisibility(View.VISIBLE);
                         }
                         else {
                             controllerLinks.getListener()
                                     .loadUrl(url);
                         }
+                        controllerLinks.getListener()
+                                .onFullLoaded(getPosition());
                     }
                 }
             });
@@ -295,6 +318,25 @@ public class AdapterLinkList extends AdapterLink {
             this.itemView.setOnClickListener(clickListenerLink);
             this.textThreadTitle.setOnClickListener(clickListenerLink);
             this.textThreadInfo.setOnClickListener(clickListenerLink);
+        }
+
+        private void loadVideo(String url, float heightRatio) {
+            Uri uri = Uri.parse(url);
+            videoFull.setVideoURI(uri);
+            videoFull.getLayoutParams().height = (int) (ViewHolder.this.itemView.getWidth() * heightRatio);
+            videoFull.setVisibility(View.VISIBLE);
+            videoFull.invalidate();
+            videoFull.requestFocus();
+            videoFull.start();
+            videoFull.setOnCompletionListener(
+                    new MediaPlayer.OnCompletionListener() {
+                        @Override
+                        public void onCompletion(MediaPlayer mp) {
+                            videoFull.start();
+                        }
+                    });
+            controllerLinks.getListener()
+                    .onFullLoaded(getPosition());
         }
 
     }

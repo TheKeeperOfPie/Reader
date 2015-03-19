@@ -86,6 +86,7 @@
         android:layout_alignLeft="@id/text_thread_title"
         android:layout_toStartOf="@+id/button_comments"
         android:layout_toLeftOf="@+id/button_comments"
+        android:gravity="end"
         android:textSize="12sp"
         android:paddingBottom="8dp"
         />

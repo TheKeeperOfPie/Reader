@@ -2,24 +2,37 @@ package com.winsonchiu.reader;
 
 import android.app.Activity;
 import android.graphics.drawable.Drawable;
+import android.media.MediaPlayer;
 import android.media.ThumbnailUtils;
+import android.net.Uri;
 import android.support.v7.graphics.Palette;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.StaggeredGridLayoutManager;
+import android.text.TextUtils;
 import android.text.method.LinkMovementMethod;
+import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.webkit.WebView;
+import android.webkit.WebViewClient;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.MediaController;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.widget.VideoView;
 
+import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.ImageLoader;
 import com.winsonchiu.reader.data.Link;
 import com.winsonchiu.reader.data.Reddit;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 /**
  * Created by TheKeeperOfPie on 3/7/2015.
@@ -74,7 +87,7 @@ public class AdapterLinkGrid extends AdapterLink {
         ((StaggeredGridLayoutManager.LayoutParams) viewHolder.itemView.getLayoutParams()).setFullSpan(false);
 
         Drawable drawable = controllerLinks.getDrawableForLink(link);
-        if (drawable == null && Reddit.placeFormattedUrl(link)) {
+        if (drawable == null && showThumbnail(link)) {
             viewHolder.imagePreview.setVisibility(View.VISIBLE);
             viewHolder.progressImage.setVisibility(View.VISIBLE);
             controllerLinks.loadImage(link.getThumbnail(), new ImageLoader.ImageListener() {
@@ -87,26 +100,33 @@ public class AdapterLinkGrid extends AdapterLink {
                     Palette palette = Palette.generate(response.getBitmap());
                     viewHolder.itemView.setBackgroundColor(
                             palette.getVibrantColor(palette.getDarkVibrantColor(defaultColor)));
-                    viewHolder.imagePreview.setTag(controllerLinks.loadImage(link.getUrl(),
-                            new ImageLoader.ImageListener() {
-                                @Override
-                                public void onResponse(ImageLoader.ImageContainer response,
-                                                       boolean isImmediate) {
-                                    if (response.getBitmap() != null) {
-                                        viewHolder.imagePreview.setImageBitmap(
-                                                ThumbnailUtils.extractThumbnail(
-                                                        response.getBitmap(),
-                                                        thumbnailWidth,
-                                                        thumbnailWidth));
-                                        viewHolder.progressImage.setVisibility(View.GONE);
+                    if (Reddit.placeImageUrl(link)) {
+                        viewHolder.imagePreview.setTag(controllerLinks.loadImage(link.getUrl(),
+                                new ImageLoader.ImageListener() {
+                                    @Override
+                                    public void onResponse(ImageLoader.ImageContainer response,
+                                                           boolean isImmediate) {
+                                        if (response.getBitmap() != null) {
+                                            viewHolder.imagePreview.setImageBitmap(
+                                                    ThumbnailUtils.extractThumbnail(
+                                                            response.getBitmap(),
+                                                            thumbnailWidth,
+                                                            thumbnailWidth));
+                                            viewHolder.progressImage.setVisibility(View.GONE);
+                                        }
                                     }
-                                }
 
-                                @Override
-                                public void onErrorResponse(VolleyError error) {
+                                    @Override
+                                    public void onErrorResponse(VolleyError error) {
 
-                                }
-                            }));
+                                    }
+                                }));
+                    }
+                    else {
+                        viewHolder.imagePreview.setImageBitmap(response.getBitmap());
+                        viewHolder.imagePlay.setVisibility(View.VISIBLE);
+                        viewHolder.progressImage.setVisibility(View.GONE);
+                    }
                 }
 
                 @Override
@@ -124,6 +144,11 @@ public class AdapterLinkGrid extends AdapterLink {
         viewHolder.layoutContainerActions.setVisibility(View.GONE);
     }
 
+    private boolean showThumbnail(Link link) {
+        String domain = link.getDomain();
+        return domain.contains("gfycat") || domain.contains("imgur") || Reddit.placeImageUrl(link);
+    }
+
     @Override
     public void onViewRecycled(RecyclerView.ViewHolder holder) {
 
@@ -133,8 +158,12 @@ public class AdapterLinkGrid extends AdapterLink {
             ((ImageLoader.ImageContainer) viewHolder.imagePreview.getTag()).cancelRequest();
         }
 
+        viewHolder.imagePlay.setVisibility(View.GONE);
+        viewHolder.webFull.onPause();
         viewHolder.webFull.resetMaxHeight();
+        viewHolder.webFull.loadUrl("about:blank");
         viewHolder.webFull.setVisibility(View.GONE);
+        viewHolder.videoFull.setVisibility(View.GONE);
         viewHolder.imagePreview.setImageBitmap(null);
         viewHolder.imagePreview.setVisibility(View.GONE);
         viewHolder.itemView.setBackgroundColor(defaultColor);
@@ -151,63 +180,72 @@ public class AdapterLinkGrid extends AdapterLink {
     public class ViewHolder extends RecyclerView.ViewHolder {
 
         protected ProgressBar progressImage;
+        protected ImageView imagePlay;
+        protected MediaController mediaController;
+        protected VideoView videoFull;
         protected WebViewFixed webFull;
         protected ImageView imagePreview;
         protected TextView textThreadTitle;
         protected ImageButton buttonComments;
         protected LinearLayout layoutContainerActions;
         private View.OnClickListener clickListenerLink;
-        private float lastY;
 
         public ViewHolder(final View itemView) {
             super(itemView);
 
             this.progressImage = (ProgressBar) itemView.findViewById(R.id.progress_image);
+            this.imagePlay = (ImageView) itemView.findViewById(R.id.image_play);
+            this.mediaController = new MediaController(itemView.getContext());
+            this.videoFull = (VideoView) itemView.findViewById(R.id.video_full);
+            this.videoFull.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
+                @Override
+                public void onPrepared(MediaPlayer mp) {
+                    mediaController.hide();
+                }
+            });
+            this.mediaController.setAnchorView(videoFull);
+            this.videoFull.setMediaController(mediaController);
             this.webFull = (WebViewFixed) itemView.findViewById(R.id.web_full);
             this.webFull.getSettings()
                     .setUseWideViewPort(true);
             this.webFull.getSettings().setBuiltInZoomControls(true);
             this.webFull.getSettings().setDisplayZoomControls(false);
             this.webFull.setBackgroundColor(0x000000);
-//            this.webFull.setOnTouchListener(new View.OnTouchListener() {
-//                @Override
-//                public boolean onTouch(View v, MotionEvent event) {
-//
-//                    Log.d(TAG, "webFull onTouch");
-//                    Log.d(TAG, "X: " + event.getX());
-//                    Log.d(TAG, "Y: " + event.getY());
-//
-//                    if (event.getPointerCount() == 1 && event.getAction() == MotionEvent.ACTION_DOWN && (webFull.canScrollVertically(
-//                            1) || webFull.canScrollVertically(-1))) {
-//                        controllerLinks.getListener()
-//                                .setScroll(false);
-//                    }
-//                    else if (event.getAction() == MotionEvent.ACTION_UP) {
-//                        controllerLinks.getListener()
-//                                .setScroll(true);
-//                    }
-//
-//                    if (event.getPointerCount() == 1) {
-//                        if (lastY - event.getY() < 0) {
-//                            if (!webFull.canScrollVertically(-1)) {
-//                                controllerLinks.getListener()
-//                                        .setScroll(true);
-//                            }
-//                        }
-//                        else if (!webFull.canScrollVertically(1)) {
-//                            controllerLinks.getListener()
-//                                    .setScroll(true);
-//                        }
-//                    }
-//
-//                    Log.d(TAG, "Can scroll: " + controllerLinks.getListener()
-//                            .canScroll());
-//
-//                    lastY = event.getY();
-//
-//                    return false;
-//                }
-//            });
+            this.webFull.setWebViewClient(new WebViewClient() {
+                @Override
+                public void onScaleChanged(WebView view, float oldScale, float newScale) {
+                    webFull.lockHeight();
+                    super.onScaleChanged(view, oldScale, newScale);
+                }
+            });
+            this.webFull.setOnTouchListener(new View.OnTouchListener() {
+                @Override
+                public boolean onTouch(View v, MotionEvent event) {
+
+                    if (event.getAction() == MotionEvent.ACTION_DOWN) {
+
+                        if ((webFull.canScrollVertically(1) && webFull.canScrollVertically(-1))) {
+                            controllerLinks.getListener()
+                                    .requestDisallowInterceptTouchEvent(true);
+                        }
+                        else {
+                            controllerLinks.getListener()
+                                    .requestDisallowInterceptTouchEvent(false);
+                            if (webFull.getScrollY() == 0) {
+                                webFull.setScrollY(1);
+                            }
+                            else {
+                                webFull.setScrollY(webFull.getScrollY() - 1);
+                            }
+                        }
+                    }
+                    else if (event.getAction() == MotionEvent.ACTION_UP) {
+                        controllerLinks.getListener().requestDisallowInterceptTouchEvent(false);
+                    }
+
+                    return false;
+                }
+            });
             this.imagePreview = (ImageView) itemView.findViewById(R.id.image_preview);
             this.textThreadTitle = (TextView) itemView.findViewById(R.id.text_thread_title);
             // TODO: Remove and replace with a real TextView that holds self_text
@@ -215,7 +253,6 @@ public class AdapterLinkGrid extends AdapterLink {
             this.buttonComments = (ImageButton) itemView.findViewById(R.id.button_comments);
             this.layoutContainerActions = (LinearLayout) itemView.findViewById(R.id.layout_container_actions);
 
-            // TODO: Change to load full size image inside of Fragment view without loading comments
             this.imagePreview.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
@@ -225,10 +262,64 @@ public class AdapterLinkGrid extends AdapterLink {
                     viewHolder.itemView.setLayoutParams(layoutParams);
 
                     imagePreview.setVisibility(View.GONE);
-                    webFull.setVisibility(View.VISIBLE);
+                    progressImage.setVisibility(View.GONE);
+                    imagePlay.setVisibility(View.GONE);
 
-                    webFull.loadData(Reddit.getImageHtml(controllerLinks.getLink(getPosition()).getUrl()), "text/html", "UTF-8");
-                    controllerLinks.getListener().onFullLoaded(getPosition());
+                    Link link = controllerLinks.getLink(getPosition());
+
+                    String url = link.getUrl();
+                    if (!TextUtils.isEmpty(url)) {
+                        if (url.contains(Reddit.GIFV)) {
+                            loadVideo(url.replaceAll(".gifv", ".mp4"), 16f / 9f);
+                        }
+                        else if (link.getDomain()
+                                .contains("gfycat")) {
+                            int startIndex = url.indexOf("gfycat.com") + 10;
+                            int lastIndex =
+                                    url.lastIndexOf(".") > startIndex ? url.lastIndexOf(".") :
+                                            url.length();
+                            String gfycatId = url.substring(url.indexOf("gfycat.com/") + 11,
+                                    lastIndex);
+                            Log.d(TAG, "url length: " + url.length());
+                            progressImage.setVisibility(View.VISIBLE);
+                            controllerLinks.getReddit()
+                                    .loadGet(Reddit.GFYCAT_URL + gfycatId,
+                                            new Response.Listener<String>() {
+                                                @Override
+                                                public void onResponse(String response) {
+                                                    try {
+                                                        JSONObject jsonObject = new JSONObject(
+                                                                response).getJSONObject(
+                                                                Reddit.GFYCAT_ITEM);
+                                                        loadVideo(jsonObject.getString(
+                                                                        Reddit.GFYCAT_WEBM),
+                                                                (float) jsonObject.getInt(
+                                                                        "height") / jsonObject.getInt(
+                                                                        "width"));
+                                                    }
+                                                    catch (JSONException e) {
+                                                        e.printStackTrace();
+                                                    }
+                                                    finally {
+                                                        progressImage.setVisibility(View.GONE);
+                                                    }
+                                                }
+                                            }, new Response.ErrorListener() {
+                                                @Override
+                                                public void onErrorResponse(VolleyError error) {
+                                                    progressImage.setVisibility(View.GONE);
+                                                }
+                                            }, 0);
+                        }
+                        else {
+                            webFull.resetMaxHeight();
+                            webFull.onResume();
+                            webFull.loadData(Reddit.getImageHtml(link.getUrl()), "text/html", "UTF-8");
+                            webFull.setVisibility(View.VISIBLE);
+                            controllerLinks.getListener()
+                                    .onFullLoaded(getPosition());
+                        }
+                    }
                 }
             });
 
@@ -249,6 +340,25 @@ public class AdapterLinkGrid extends AdapterLink {
             };
             this.itemView.setOnClickListener(clickListenerLink);
             this.textThreadTitle.setOnClickListener(clickListenerLink);
+        }
+
+        private void loadVideo(String url, float heightRatio) {
+            Uri uri = Uri.parse(url);
+            videoFull.setVideoURI(uri);
+            videoFull.getLayoutParams().height = (int) (ViewHolder.this.itemView.getWidth() * heightRatio);
+            videoFull.setVisibility(View.VISIBLE);
+            videoFull.invalidate();
+            videoFull.requestFocus();
+            videoFull.start();
+            videoFull.setOnCompletionListener(
+                    new MediaPlayer.OnCompletionListener() {
+                        @Override
+                        public void onCompletion(MediaPlayer mp) {
+                            videoFull.start();
+                        }
+                    });
+            controllerLinks.getListener()
+                    .onFullLoaded(getPosition());
         }
 
     }

@@ -10,15 +10,10 @@ import android.support.v7.widget.RecyclerView.LayoutManager;
 public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
     protected Activity activity;
-    protected int viewHeight;
     protected LayoutManager layoutManager;
 
     public void setActivity(Activity activity) {
         this.activity = activity;
-    }
-
-    public void setViewHeight(int viewHeight) {
-        this.viewHeight = viewHeight;
     }
 
     public LayoutManager getLayoutManager() {
