@@ -21,7 +21,9 @@ import com.android.volley.VolleyError;
 import com.android.volley.toolbox.ImageLoader;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
+import com.winsonchiu.reader.ApiKeys;
 import com.winsonchiu.reader.AppSettings;
+import com.winsonchiu.reader.BuildConfig;
 import com.winsonchiu.reader.LruCacheBitmap;
 
 import org.json.JSONException;
@@ -36,6 +38,8 @@ import java.util.UUID;
  */
 public class Reddit {
 
+;
+
     // Constant values to represent Thing states
     public enum Vote {
         NOT_VOTED, UPVOTED, DOWNVOTED
@@ -48,12 +52,15 @@ public class Reddit {
     public static final String BEARER = "Bearer ";
     public static final String CONTENT_TYPE = "Content-Type";
     public static final String USER_AGENT = "User-Agent";
-    public static final String CUSTOM_USER_AGENT = "android:com.winsonchiu.reader:v0.1 (by " +
+    public static final String CUSTOM_USER_AGENT = "android:com.winsonchiu.reader:" + BuildConfig.VERSION_NAME + " (by " +
             "/u/TheKeeperOfPie)";
 
     public static final String GFYCAT_URL = "http://gfycat.com/cajax/get/";
     public static final String GFYCAT_WEBM = "webmUrl";
     public static final String GFYCAT_ITEM = "gfyItem";
+
+    private static final String IMGUR_ALBUM_URL = "https://api.imgur.com/3/album/";
+    private static final String IMGUR_IMAGE_URL = "https://api.imgur.com/3/image/";
 
     public static final String GIFV = ".gifv";
     public static final String GIF = ".gif";
@@ -245,6 +252,48 @@ public class Reddit {
                         return headers;
                     }
                 });
+    }
+
+    public void loadImgurImage(String id, Listener<String> listener, final ErrorListener errorListener, final int iteration) {
+
+        if (iteration > 2) {
+            errorListener.onErrorResponse(null);
+            return;
+        }
+
+        requestQueue.add(new StringRequest(Request.Method.GET, IMGUR_IMAGE_URL + id,
+                listener, errorListener) {
+            @Override
+            public Map<String, String> getHeaders() throws AuthFailureError {
+                HashMap<String, String> headers = new HashMap<>(3);
+                headers.put(USER_AGENT, CUSTOM_USER_AGENT);
+                headers.put(AUTHORIZATION, ApiKeys.IMGUR_AUTHORIZATION);
+                headers.put("Content-Type", "application/json; charset=utf-8");
+                return headers;
+            }
+        });
+
+    }
+
+    public void loadImgurAlbum(String id, Listener<String> listener, final ErrorListener errorListener, final int iteration) {
+
+        if (iteration > 2) {
+            errorListener.onErrorResponse(null);
+            return;
+        }
+
+        requestQueue.add(new StringRequest(Request.Method.GET, IMGUR_ALBUM_URL + id,
+                listener, errorListener) {
+            @Override
+            public Map<String, String> getHeaders() throws AuthFailureError {
+                HashMap<String, String> headers = new HashMap<>(3);
+                headers.put(USER_AGENT, CUSTOM_USER_AGENT);
+                headers.put(AUTHORIZATION, ApiKeys.IMGUR_AUTHORIZATION);
+                headers.put("Content-Type", "application/json; charset=utf-8");
+                return headers;
+            }
+        });
+
     }
 
     private String getAuthorizationHeader() {

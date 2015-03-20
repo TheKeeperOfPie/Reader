@@ -23,8 +23,8 @@ android {
         applicationId "com.winsonchiu.reader"
         minSdkVersion 16
         targetSdkVersion 21
-        versionCode 6
-        versionName "0.3.0"
+        versionCode 7
+        versionName "0.4"
     }
     buildTypes {
         release {
@@ -41,7 +41,7 @@ android {
 
 dependencies {
     compile fileTree(include: ['*.jar'], dir: 'libs')
-    compile 'com.android.support:appcompat-v7:21.0.3@aar'
+    compile 'com.android.support:appcompat-v7:22.0.0'
     compile 'com.android.support:recyclerview-v7:21.0.3'
     compile 'com.koushikdutta.ion:ion:2.+'
     compile('com.crashlytics.sdk.android:crashlytics:2.2.2@aar') {

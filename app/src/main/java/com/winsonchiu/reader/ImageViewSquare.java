@@ -1,6 +1,5 @@
 package com.winsonchiu.reader;
 
-import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.content.Context;
 import android.os.Build;

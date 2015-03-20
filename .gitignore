@@ -14,3 +14,4 @@ gradle.properties
 gradle
 app/src/androidTest
 volley
+app/src/main/java/com/winsonchiu/reader/ApiKeys.java

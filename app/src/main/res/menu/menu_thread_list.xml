@@ -6,7 +6,7 @@
 
     <item
         android:id="@+id/item_search"
-        android:title="@string/action_search"
+        android:title="@string/item_search"
         android:icon="@drawable/ic_search_white_24dp"
         android:orderInCategory="100"
         app:actionViewClass="android.support.v7.widget.SearchView"
@@ -14,11 +14,78 @@
         />
 
     <item
-        android:id="@+id/item_interface"
-        android:title="@string/action_search"
-        android:icon="@drawable/ic_view_list_white_24dp"
+        android:id="@+id/item_sort"
+        android:title="@string/item_sort"
+        android:icon="@drawable/ic_sort_white_24dp"
         android:orderInCategory="200"
         app:showAsAction="always"
+        >
+
+        <menu>
+            <item
+                android:id="@+id/item_sort_hot"
+                android:title="@string/item_sort_hot"
+                android:orderInCategory="100"
+                />
+
+            <item
+                android:id="@+id/item_sort_new"
+                android:title="@string/item_sort_new"
+                android:orderInCategory="200"
+                />
+
+            <item
+                android:id="@+id/item_sort_top_hour"
+                android:title="@string/item_sort_top_hour"
+                android:orderInCategory="300"
+                />
+
+            <item
+                android:id="@+id/item_sort_top_day"
+                android:title="@string/item_sort_top_day"
+                android:orderInCategory="400"
+                />
+
+            <item
+                android:id="@+id/item_sort_top_week"
+                android:title="@string/item_sort_top_week"
+                android:orderInCategory="500"
+                />
+
+            <item
+                android:id="@+id/item_sort_top_month"
+                android:title="@string/item_sort_top_month"
+                android:orderInCategory="600"
+                />
+
+            <item
+                android:id="@+id/item_sort_top_year"
+                android:title="@string/item_sort_top_year"
+                android:orderInCategory="700"
+                />
+
+            <item
+                android:id="@+id/item_sort_top_all"
+                android:title="@string/item_sort_top_all"
+                android:orderInCategory="800"
+                />
+
+            <item
+                android:id="@+id/item_sort_controversial"
+                android:title="@string/item_sort_controversial"
+                android:orderInCategory="900"
+                />
+
+        </menu>
+
+    </item>
+
+    <item
+        android:id="@+id/item_interface"
+        android:title="@string/item_interface"
+        android:icon="@drawable/ic_view_list_white_24dp"
+        android:orderInCategory="300"
+        app:showAsAction="ifRoom"
         />
 
 </menu>

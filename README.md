@@ -86,6 +86,11 @@ In order for the user to access the different basic screens of Reader, such as H
 - Inbox - Message box, defaulted to all messages
 - Settings - Application wide settings
 
+### Action Bar
+
+The basics of our action bar shows the subreddit title, along with options to search, sort, and change the RecyclerView interface. We can toggle between the list and grid UIs using this MenuItem, changing the adapters from an AdapterLinkList to an AdapterLinkGrid and vice versa. As we keep the actual data manipulation in controllerLinks, switching UIs is quick and easy, just recreating a few views.
+
+The remaining two actions allowing searching for a subreddit and sorting the current subreddit by Reddit's various options, such as hot, new, and top.
 
 ### Data Models
 
@@ -112,6 +117,10 @@ The class will hold a listener reference, which will be supplied by the adapter/
 In the adapter's onBindViewHolder, we use Volley to load the link's thumbnail, or full image for the grid, but we have to make sure to check that the Bitmap isn't null in the ImageListener, as Volley calls the onResponse method twice if the image doesn't exist in the cache. The first time, the bitmap will be null, while the second time will actual contain the bitmap pulled from the network.
 
 Once a link's preview thumbnail is clicked inside either UI, we want to be able to expand the image/text, or go to the link if a browser is needed. We pass the touch event to the ViewHolder, which either loads the image if the UI calls for such implementation, or passes the event upwards to the controllerLinks so that a FragmentWeb, for example, could handle it. If it's an image file, we make the imageFull ImageView visible and load the full URL into the ImageView. If it's a link, we use our we send the event up and load a FragmentWeb with the URL.
+
+Implementing Imgur and Gfycat's APIs, we can check the link URL for Imgur albums, Imgur .gifv files, and Gfycat links, parsing them for their IDs. We can then use these IDs in an HTTP GET call to retrieve information such as width and height, as well as loading the properly formatted URL, passing into loadGifv, loadImgurAlbum, loading a raw image link into our WebView, or loading the FragmentWeb as appropriate.
+
+We use a WebView to display images to leverage the built in zoom/pan gestures and large image support, although it takes some adjustment to work properly. We need to set an OnTouchListener to each WebView which calls requestDisallowInterceptTouchEvent() on our recyclerThreadList during MOTION_DOWN and MOTION_UP events to enable/disable the RecyclerView's scrolling as necessary, otherwise it's impossible to pan upwards or downwards without moving the entire list. This solution is far from optimal, but if we want to support zooming, it's a necessary sacrifice for now, until a better solution is found.
 
 #### Comments
 

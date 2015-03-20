@@ -95,7 +95,8 @@ public class FragmentThreadList extends Fragment {
 
         inflater.inflate(R.menu.menu_thread_list, menu);
 
-        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(activity.getApplicationContext());
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(
+                activity.getApplicationContext());
 
         itemInterface = menu.findItem(R.id.item_interface);
         switch (preferences.getString(AppSettings.INTERFACE_MODE, AppSettings.MODE_LIST)) {
@@ -156,7 +157,33 @@ public class FragmentThreadList extends Fragment {
 
 
         switch (item.getItemId()) {
-
+            case R.id.item_sort_hot:
+                controllerLinks.setSort("hot");
+                break;
+            case R.id.item_sort_new:
+                controllerLinks.setSort("new");
+                break;
+            case R.id.item_sort_top_hour:
+                controllerLinks.setSort("hourtop");
+                break;
+            case R.id.item_sort_top_day:
+                controllerLinks.setSort("daytop");
+                break;
+            case R.id.item_sort_top_week:
+                controllerLinks.setSort("weektop");
+                break;
+            case R.id.item_sort_top_month:
+                controllerLinks.setSort("monthtop");
+                break;
+            case R.id.item_sort_top_year:
+                controllerLinks.setSort("yeartop");
+                break;
+            case R.id.item_sort_top_all:
+                controllerLinks.setSort("alltop");
+                break;
+            case R.id.item_sort_controversial:
+                controllerLinks.setSort("controversial");
+                break;
             case R.id.item_interface:
                 if (AppSettings.MODE_LIST.equals(
                         preferences.getString(AppSettings.INTERFACE_MODE, AppSettings.MODE_LIST))) {
@@ -278,6 +305,11 @@ public class FragmentThreadList extends Fragment {
                         @Override
                         public void requestDisallowInterceptTouchEvent(boolean disallow) {
                             recyclerThreadList.requestDisallowInterceptTouchEvent(disallow);
+                        }
+
+                        @Override
+                        public int getRecyclerHeight() {
+                            return recyclerThreadList.getHeight();
                         }
                     }, "all", "hot");
         }

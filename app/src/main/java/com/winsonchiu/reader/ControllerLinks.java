@@ -1,18 +1,16 @@
 package com.winsonchiu.reader;
 
-import android.animation.Animator;
 import android.animation.ObjectAnimator;
 import android.animation.ValueAnimator;
 import android.app.Activity;
 import android.content.res.Resources;
+import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.text.TextUtils;
 import android.util.Log;
 import android.util.TypedValue;
 import android.view.View;
-import android.view.ViewPropertyAnimator;
 import android.view.animation.Animation;
-import android.view.animation.ScaleAnimation;
 import android.view.animation.Transformation;
 
 import com.android.volley.Response.ErrorListener;
@@ -33,6 +31,8 @@ public class ControllerLinks {
 
     private static final String TAG = ControllerLinks.class.getCanonicalName();
     private static final long EXPAND_ACTION_DURATION = 150;
+    private static final long ALPHA_DURATION = 500;
+    private static final long BACKGROUND_DURATION = 500;
 
     private Activity activity;
     private LinkClickListener listener;
@@ -63,6 +63,13 @@ public class ControllerLinks {
         reloadAllLinks();
     }
 
+    public void setSort(String sort) {
+        if (!this.sort.equalsIgnoreCase(sort)) {
+            this.sort = sort;
+            reloadAllLinks();
+        }
+    }
+
     public LinkClickListener getListener() {
         return listener;
     }
@@ -85,7 +92,13 @@ public class ControllerLinks {
 
     public void reloadAllLinks() {
         setLoading(true);
-        String url = "https://oauth.reddit.com" + "/r/" + subreddit + "/" + sort;
+        String url = "https://oauth.reddit.com" + "/r/" + subreddit + "/";
+        if (sort.contains("top")) {
+            url += "top?t=" + sort.substring(0, sort.indexOf("top"));
+        }
+        else {
+            url += sort;
+        }
         reddit.loadGet(url, new Listener<String>() {
                     @Override
                     public void onResponse(String response) {
@@ -121,7 +134,15 @@ public class ControllerLinks {
             return;
         }
         setLoading(true);
-        String url = "https://oauth.reddit.com" + "/r/" + subreddit + "/" + sort + "?after=" + listingLinks.getAfter() + "&showAll=true";
+        String url = "https://oauth.reddit.com" + "/r/" + subreddit + "/";
+        if (sort.contains("top")) {
+            url += "top?t=" + sort.substring(0, sort.indexOf("top")) + "&";
+        }
+        else {
+            url += sort + "?";
+        }
+
+        url += "after=" + listingLinks.getAfter() + "&showAll=true";
 
         reddit.loadGet(url,
                 new Listener<String>() {
@@ -138,9 +159,11 @@ public class ControllerLinks {
                             listener.notifyItemRangeInserted(startPosition,
                                     listingLinks.getChildren()
                                             .size() - 1);
-                        } catch (JSONException exception) {
+                        }
+                        catch (JSONException exception) {
                             exception.printStackTrace();
-                        } finally {
+                        }
+                        finally {
                             setLoading(false);
                         }
                     }
@@ -171,6 +194,38 @@ public class ControllerLinks {
 
     public boolean isLoading() {
         return isLoading;
+    }
+
+    public void animateBackgroundColor(final View view, int start, int end) {
+        final float[] startHsv = new float[3];
+        final float[] endHsv = new float[3];
+
+        Color.colorToHSV(start, startHsv);
+        Color.colorToHSV(end, endHsv);
+
+        ValueAnimator valueAnimator = ValueAnimator.ofFloat(0.0f, 1.0f);
+        valueAnimator.setDuration(BACKGROUND_DURATION);
+
+        final float[] hsv  = new float[3];
+        
+        valueAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+            @Override
+            public void onAnimationUpdate(ValueAnimator animation) {
+                hsv[0] = startHsv[0] + (endHsv[0] - startHsv[0]) * animation.getAnimatedFraction();
+                hsv[1] = startHsv[1] + (endHsv[1] - startHsv[1]) * animation.getAnimatedFraction();
+                hsv[2] = startHsv[2] + (endHsv[2] - startHsv[2]) * animation.getAnimatedFraction();
+
+                view.setBackgroundColor(Color.HSVToColor(hsv));
+            }
+        });
+
+        valueAnimator.start();
+    }
+    
+    public void animateAlpha(View view, float start, float end) {
+        ObjectAnimator objectAnimator = ObjectAnimator.ofFloat(view, "alpha", start, end);
+        objectAnimator.setDuration(ALPHA_DURATION);
+        objectAnimator.start();
     }
 
     public void animateExpandActions(final View view) {
@@ -246,6 +301,7 @@ public class ControllerLinks {
         void notifyDataSetChanged();
         void notifyItemRangeInserted(int startPosition, int endPosition);
         void requestDisallowInterceptTouchEvent(boolean disallow);
+        int getRecyclerHeight();
     }
 
 }
