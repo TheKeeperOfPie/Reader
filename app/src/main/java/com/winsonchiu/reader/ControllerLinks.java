@@ -29,6 +29,8 @@ import org.json.JSONObject;
  */
 public class ControllerLinks {
 
+    // TODO: Check if need setActivity
+
     private static final String TAG = ControllerLinks.class.getCanonicalName();
     private static final long EXPAND_ACTION_DURATION = 150;
     private static final long ALPHA_DURATION = 500;
@@ -45,7 +47,6 @@ public class ControllerLinks {
     private Reddit reddit;
 
     public ControllerLinks(Activity activity, final LinkClickListener listener, String subreddit, String sort) {
-        super();
         this.activity = activity;
         this.reddit = Reddit.getInstance(activity);
         this.listener = listener;
@@ -197,6 +198,7 @@ public class ControllerLinks {
     }
 
     public void animateBackgroundColor(final View view, int start, int end) {
+
         final float[] startHsv = new float[3];
         final float[] endHsv = new float[3];
 
@@ -207,7 +209,7 @@ public class ControllerLinks {
         valueAnimator.setDuration(BACKGROUND_DURATION);
 
         final float[] hsv  = new float[3];
-        
+
         valueAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
             @Override
             public void onAnimationUpdate(ValueAnimator animation) {
@@ -291,7 +293,7 @@ public class ControllerLinks {
         return listingLinks.getChildren() == null ? 0 : listingLinks.getChildren().size();
     }
 
-    public interface LinkClickListener {
+    public interface LinkClickListener extends DisallowListener {
 
         void onClickComments(Link link);
         void loadUrl(String url);
@@ -300,7 +302,6 @@ public class ControllerLinks {
         void setToolbarTitle(String title);
         void notifyDataSetChanged();
         void notifyItemRangeInserted(int startPosition, int endPosition);
-        void requestDisallowInterceptTouchEvent(boolean disallow);
         int getRecyclerHeight();
     }
 

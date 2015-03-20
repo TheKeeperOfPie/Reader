@@ -1,6 +1,7 @@
 package com.winsonchiu.reader;
 
 import android.app.Activity;
+import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.media.MediaPlayer;
 import android.media.ThumbnailUtils;
@@ -24,8 +25,10 @@ import android.widget.LinearLayout;
 import android.widget.MediaController;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.widget.Toast;
 import android.widget.VideoView;
 
+import com.android.volley.Request;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.ImageLoader;
@@ -84,10 +87,6 @@ public class AdapterLinkGrid extends AdapterLink {
             controllerLinks.loadMoreLinks();
         }
 
-        if (viewHolder.imagePreview.getTag() != null) {
-            ((ImageLoader.ImageContainer) viewHolder.imagePreview.getTag()).cancelRequest();
-        }
-
         final Link link = controllerLinks.getLink(position);
         ((StaggeredGridLayoutManager.LayoutParams) viewHolder.itemView.getLayoutParams()).setFullSpan(false);
 
@@ -102,15 +101,21 @@ public class AdapterLinkGrid extends AdapterLink {
                         this.onErrorResponse(null);
                         return;
                     }
-                    Palette palette = Palette.generate(response.getBitmap());
-                    controllerLinks.animateBackgroundColor(viewHolder.itemView, defaultColor, palette.getVibrantColor(palette.getDarkVibrantColor(defaultColor)));
-                    if (Reddit.placeImageUrl(link)) {
+                    Palette.generateAsync(response.getBitmap(), new Palette.PaletteAsyncListener() {
+                        @Override
+                        public void onGenerated(Palette palette) {
+                            if (position == viewHolder.getPosition()) {
+                                controllerLinks.animateBackgroundColor(viewHolder.itemView, ((ColorDrawable) viewHolder.itemView.getBackground()).getColor(), palette.getVibrantColor(palette.getDarkVibrantColor(defaultColor)));
+                            }
+                        }
+                    });
+                    if (Reddit.placeImageUrl(link) && position == viewHolder.getPosition()) {
                         viewHolder.imagePreview.setTag(controllerLinks.loadImage(link.getUrl(),
                                 new ImageLoader.ImageListener() {
                                     @Override
                                     public void onResponse(ImageLoader.ImageContainer response,
                                                            boolean isImmediate) {
-                                        if (response.getBitmap() != null) {
+                                        if (response.getBitmap() != null && position == viewHolder.getPosition()) {
                                             viewHolder.imagePreview.setAlpha(0.0f);
                                             viewHolder.imagePreview.setImageBitmap(
                                                     ThumbnailUtils.extractThumbnail(
@@ -144,6 +149,7 @@ public class AdapterLinkGrid extends AdapterLink {
             });
         }
         else {
+            viewHolder.itemView.setBackgroundColor(defaultColor);
             viewHolder.imagePreview.setVisibility(View.GONE);
         }
         viewHolder.imagePreview.invalidate();
@@ -162,8 +168,15 @@ public class AdapterLinkGrid extends AdapterLink {
 
         final ViewHolder viewHolder = (ViewHolder) holder;
 
-        if (viewHolder.imagePreview.getTag() != null) {
-            ((ImageLoader.ImageContainer) viewHolder.imagePreview.getTag()).cancelRequest();
+        Object tag = viewHolder.imagePreview.getTag();
+
+        if (tag != null) {
+            if (tag instanceof ImageLoader.ImageContainer) {
+                ((ImageLoader.ImageContainer) tag).cancelRequest();
+            }
+            else if (tag instanceof Request) {
+                ((Request) tag).cancel();
+            }
         }
 
         viewHolder.imagePlay.setVisibility(View.GONE);
@@ -171,11 +184,11 @@ public class AdapterLinkGrid extends AdapterLink {
         viewHolder.webFull.resetMaxHeight();
         viewHolder.webFull.loadUrl("about:blank");
         viewHolder.webFull.setVisibility(View.GONE);
+        viewHolder.videoFull.stopPlayback();
         viewHolder.videoFull.setVisibility(View.GONE);
         viewHolder.viewPagerFull.setVisibility(View.GONE);
         viewHolder.imagePreview.setImageBitmap(null);
         viewHolder.imagePreview.setVisibility(View.GONE);
-        viewHolder.itemView.setBackgroundColor(defaultColor);
         viewHolder.progressImage.setVisibility(View.GONE);
 
         super.onViewRecycled(holder);
@@ -344,8 +357,6 @@ public class AdapterLinkGrid extends AdapterLink {
                         else {
                             attemptLoadImage(link);
                         }
-                        controllerLinks.getListener()
-                                .onFullLoaded(getPosition());
                     }
                 }
             });
@@ -360,6 +371,7 @@ public class AdapterLinkGrid extends AdapterLink {
             clickListenerLink = new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
+                    Toast.makeText(activity, "URL: " + controllerLinks.getLink(getPosition()).getUrl(), Toast.LENGTH_SHORT).show();
                     controllerLinks.animateExpandActions(layoutContainerActions);
                 }
             };
@@ -376,6 +388,8 @@ public class AdapterLinkGrid extends AdapterLink {
                         controllerLinks.getLink(getPosition())
                                 .getUrl()), "text/html", "UTF-8");
                 webFull.setVisibility(View.VISIBLE);
+                controllerLinks.getListener()
+                        .onFullLoaded(getPosition());
             }
             else {
                 controllerLinks.getListener().loadUrl(link.getUrl());
@@ -385,7 +399,7 @@ public class AdapterLinkGrid extends AdapterLink {
 
         private void loadAlbum(String id) {
             progressImage.setVisibility(View.VISIBLE);
-            controllerLinks.getReddit()
+            imagePreview.setTag(controllerLinks.getReddit()
                     .loadImgurAlbum(id,
                             new Response.Listener<String>() {
                                 @Override
@@ -402,11 +416,11 @@ public class AdapterLinkGrid extends AdapterLink {
                                         viewPagerFull.getLayoutParams().height = controllerLinks.getListener()
                                                 .getRecyclerHeight() - itemView.getHeight();
                                         viewPagerFull.setVisibility(View.VISIBLE);
-                                    }
-                                    catch (JSONException e) {
+                                        controllerLinks.getListener()
+                                                .onFullLoaded(getPosition());
+                                    } catch (JSONException e) {
                                         e.printStackTrace();
-                                    }
-                                    finally {
+                                    } finally {
                                         progressImage.setVisibility(View.GONE);
                                     }
                                 }
@@ -415,12 +429,12 @@ public class AdapterLinkGrid extends AdapterLink {
                                 public void onErrorResponse(VolleyError error) {
                                     progressImage.setVisibility(View.GONE);
                                 }
-                            }, 0);
+                            }, 0));
         }
 
 
         private void loadGifv(String id) {
-            controllerLinks.getReddit()
+            imagePreview.setTag(controllerLinks.getReddit()
                     .loadImgurImage(id,
                             new Response.Listener<String>() {
                                 @Override
@@ -432,11 +446,9 @@ public class AdapterLinkGrid extends AdapterLink {
                                                         "data"));
 
                                         loadVideo(image.getMp4(), (float) image.getHeight() / image.getWidth());
-                                    }
-                                    catch (JSONException e) {
+                                    } catch (JSONException e) {
                                         e.printStackTrace();
-                                    }
-                                    finally {
+                                    } finally {
                                         progressImage.setVisibility(View.GONE);
                                     }
                                 }
@@ -445,7 +457,7 @@ public class AdapterLinkGrid extends AdapterLink {
                                 public void onErrorResponse(VolleyError error) {
                                     progressImage.setVisibility(View.GONE);
                                 }
-                            }, 0);
+                            }, 0));
         }
 
 

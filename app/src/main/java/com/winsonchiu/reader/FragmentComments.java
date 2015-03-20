@@ -37,6 +37,7 @@ public class FragmentComments extends Fragment {
     private LinearLayoutManager linearLayoutManager;
     private AdapterCommentList adapterCommentList;
     private SwipeRefreshLayout swipeRefreshCommentList;
+    private ControllerComments controllerComments;
 
     /**
      * Use this factory method to create a new instance of
@@ -79,7 +80,7 @@ public class FragmentComments extends Fragment {
         swipeRefreshCommentList.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
-                adapterCommentList.reloadAllComments();
+                controllerComments.reloadAllComments();
             }
         });
 
@@ -91,23 +92,38 @@ public class FragmentComments extends Fragment {
         recyclerCommentList.addItemDecoration(
                 new DividerItemDecoration(activity, DividerItemDecoration.VERTICAL_LIST));
 
-        if (adapterCommentList == null) {
-            adapterCommentList = new AdapterCommentList(activity,
-                    new AdapterCommentList.CommentClickListener() {
-                        @Override
-                        public void loadUrl(String url) {
-                            getFragmentManager().beginTransaction().add(R.id.frame_fragment, FragmentWeb
-                                    .newInstance(url, ""), "fragmentWeb").addToBackStack(null)
-                                    .commit();
-                        }
+        controllerComments = new ControllerComments(activity, new ControllerComments.CommentClickListener() {
+            @Override
+            public void loadUrl(String url) {
+                getFragmentManager().beginTransaction().add(R.id.frame_fragment, FragmentWeb
+                        .newInstance(url, ""), "fragmentWeb").addToBackStack(null)
+                        .commit();
+            }
 
-                        @Override
-                        public void setRefreshing(boolean refreshing) {
-                            swipeRefreshCommentList.setRefreshing(refreshing);
-                        }
-                    }, subreddit, linkId);
+            @Override
+            public void setRefreshing(boolean refreshing) {
+                swipeRefreshCommentList.setRefreshing(refreshing);
+            }
+
+            @Override
+            public void notifyDataSetChanged() {
+                adapterCommentList.notifyDataSetChanged();
+            }
+
+            @Override
+            public int getRecyclerHeight() {
+                return recyclerCommentList.getHeight();
+            }
+
+            @Override
+            public void requestDisallowInterceptTouchEvent(boolean disallow) {
+                recyclerCommentList.requestDisallowInterceptTouchEvent(disallow);
+            }
+        }, subreddit, linkId);
+
+        if (adapterCommentList == null) {
+            adapterCommentList = new AdapterCommentList(activity, controllerComments);
         }
-        adapterCommentList.setActivity(activity);
 
         recyclerCommentList.setAdapter(adapterCommentList);
 

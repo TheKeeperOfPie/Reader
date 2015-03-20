@@ -138,6 +138,7 @@ public class AdapterLinkList extends AdapterLink {
         viewHolder.webFull.resetMaxHeight();
         viewHolder.webFull.loadUrl("about:blank");
         viewHolder.webFull.setVisibility(View.GONE);
+        viewHolder.videoFull.stopPlayback();
         viewHolder.videoFull.setVisibility(View.GONE);
         viewHolder.viewPagerFull.setVisibility(View.GONE);
         viewHolder.imagePreview.setImageBitmap(null);
@@ -361,7 +362,7 @@ public class AdapterLinkList extends AdapterLink {
 
         private void loadAlbum(String id) {
             progressImage.setVisibility(View.VISIBLE);
-            controllerLinks.getReddit()
+            imagePreview.setTag(controllerLinks.getReddit()
                     .loadImgurAlbum(id,
                             new Response.Listener<String>() {
                                 @Override
@@ -391,12 +392,12 @@ public class AdapterLinkList extends AdapterLink {
                                 public void onErrorResponse(VolleyError error) {
                                     progressImage.setVisibility(View.GONE);
                         }
-                    }, 0);
+                    }, 0));
         }
 
 
         private void loadGifv(String id) {
-            controllerLinks.getReddit()
+            imagePreview.setTag(controllerLinks.getReddit()
                     .loadImgurImage(id,
                     new Response.Listener<String>() {
                         @Override
@@ -421,7 +422,7 @@ public class AdapterLinkList extends AdapterLink {
                         public void onErrorResponse(VolleyError error) {
                             progressImage.setVisibility(View.GONE);
                         }
-                    }, 0);
+                    }, 0));
         }
 
 

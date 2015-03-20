@@ -1,11 +1,12 @@
 package com.winsonchiu.reader;
 
 import android.app.Activity;
-import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
-import android.preference.PreferenceManager;
+import android.media.MediaPlayer;
+import android.net.Uri;
+import android.support.v4.view.ViewPager;
 import android.support.v7.widget.RecyclerView;
 import android.text.Html;
 import android.text.Spannable;
@@ -18,17 +19,22 @@ import android.text.style.ClickableSpan;
 import android.text.style.ForegroundColorSpan;
 import android.text.style.URLSpan;
 import android.util.Log;
-import android.util.TypedValue;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.webkit.WebView;
+import android.webkit.WebViewClient;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.MediaController;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+import android.widget.VideoView;
 
+import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.koushikdutta.async.future.Future;
 import com.koushikdutta.async.future.FutureCallback;
@@ -36,9 +42,12 @@ import com.koushikdutta.ion.Ion;
 import com.winsonchiu.reader.data.Comment;
 import com.winsonchiu.reader.data.Link;
 import com.winsonchiu.reader.data.Reddit;
+import com.winsonchiu.reader.data.imgur.Album;
+import com.winsonchiu.reader.data.imgur.Image;
 
 import org.json.JSONArray;
 import org.json.JSONException;
+import org.json.JSONObject;
 
 /**
  * Created by TheKeeperOfPie on 3/12/2015.
@@ -51,48 +60,19 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
     private static final int VIEW_COMMENT = 1;
 
     private Activity activity;
-    private SharedPreferences preferences;
-    private Link link;
-    private CommentClickListener listener;
-    private int indentWidth;
+    private ControllerComments controllerComments;
     private int colorPositive;
     private int colorNegative;
-    private String subreddit;
-    private String linkId;
-    private Drawable drawableEmpty;
-    private Drawable drawableDefault;
 
     private Future futureImage;
-    private Reddit reddit;
 
-    public AdapterCommentList(Activity activity, CommentClickListener listener,
-                              String subreddit, String linkId) {
-        this.preferences = PreferenceManager.getDefaultSharedPreferences(
-                activity.getApplicationContext());
-        setActivity(activity);
-        this.listener = listener;
-        this.indentWidth = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 8, activity.getResources().getDisplayMetrics());
-        this.subreddit = subreddit;
-        this.linkId = linkId;
+    public AdapterCommentList(Activity activity, ControllerComments controllerComments) {
+        // TODO: Add setActivity
+        this.activity = activity;
+        this.controllerComments = controllerComments;
         Resources resources = activity.getResources();
-
-        this.drawableEmpty = resources.getDrawable(R.drawable.ic_web_white_24dp);
-        this.drawableDefault = resources.getDrawable(R.drawable.ic_textsms_white_24dp);
         this.colorPositive = resources.getColor(R.color.positiveScore);
         this.colorNegative = resources.getColor(R.color.negativeScore);
-        reloadAllComments();
-    }
-
-    public void setActivity(Activity activity) {
-        this.activity = activity;
-        reddit = Reddit.getInstance(activity);
-    }
-
-    public void setLink(Link link) {
-        this.link = link;
-        this.subreddit = link.getSubreddit();
-        this.linkId = link.getId();
-        notifyDataSetChanged();
     }
 
     @Override
@@ -120,19 +100,18 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
         if (holder instanceof ViewHolderHeader) {
             ViewHolderHeader viewHolderHeader = (ViewHolderHeader) holder;
 
+            Link link = controllerComments.getLink();
+
             viewHolderHeader.progressImage.setVisibility(View.GONE);
-            viewHolderHeader.imageThreadPreview.setImageBitmap(null);
-            viewHolderHeader.imageThreadPreview.setVisibility(View.VISIBLE);
+            viewHolderHeader.imagePreview.setImageBitmap(null);
+            viewHolderHeader.imagePreview.setVisibility(View.VISIBLE);
             String thumbnail = link.getThumbnail();
-            if (TextUtils.isEmpty(thumbnail)) {
-                viewHolderHeader.imageThreadPreview.setImageDrawable(drawableEmpty);
-            }
-            else if (thumbnail.equals(Reddit.SELF) || thumbnail.equals(
-                    Reddit.DEFAULT) || thumbnail.equals(Reddit.NSFW)) {
-                viewHolderHeader.imageThreadPreview.setImageDrawable(drawableDefault);
+            Drawable drawable = controllerComments.getDrawableForLink();
+            if (drawable != null) {
+                viewHolderHeader.imagePreview.setImageDrawable(drawable);
             }
             else {
-                Ion.with(viewHolderHeader.imageThreadPreview)
+                Ion.with(viewHolderHeader.imagePreview)
                         .smartSize(true)
                         .load(thumbnail);
             }
@@ -149,10 +128,10 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
 
             ViewHolderComment viewHolderComment = (ViewHolderComment) holder;
 
-            Comment comment = link.getComments().get(position - 1);
+            Comment comment = controllerComments.getComments().get(position - 1);
 
             ViewGroup.LayoutParams layoutParams = viewHolderComment.viewIndent.getLayoutParams();
-            layoutParams.width = indentWidth * comment.getLevel();
+            layoutParams.width = controllerComments.getIndentWidth(comment);
             viewHolderComment.viewIndent.setLayoutParams(layoutParams);
 
             if (TextUtils.isEmpty(comment.getBodyHtml())) {
@@ -178,7 +157,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
 
     @Override
     public int getItemCount() {
-        return link == null ? 0 : link.getComments().size() + 1;
+        return controllerComments.getLink() == null ? 0 : controllerComments.getComments().size() + 1;
     }
 
     private void makeLinkClickable(SpannableStringBuilder strBuilder, final URLSpan span) {
@@ -187,7 +166,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
         int flags = strBuilder.getSpanFlags(span);
         ClickableSpan clickable = new ClickableSpan() {
             public void onClick(View view) {
-                listener.loadUrl(span.getURL());
+                controllerComments.getListener().loadUrl(span.getURL());
             }
         };
         strBuilder.setSpan(clickable, start, end, flags);
@@ -214,28 +193,6 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
         }
         text.setText(strBuilder);
     }
-
-    public void reloadAllComments() {
-        reddit.loadGet("https://oauth.reddit.com" + "/r/" + subreddit + "/comments/" + linkId,
-                new com.android.volley.Response.Listener<String>() {
-                    @Override
-                    public void onResponse(String response) {
-                        try {
-                            setLink(Link.fromJson(new JSONArray(response)));
-                            listener.setRefreshing(false);
-                        }
-                        catch (JSONException e1) {
-                            e1.printStackTrace();
-                        }
-                    }
-                }, new com.android.volley.Response.ErrorListener() {
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
-
-                    }
-                }, 0);
-    }
-
     public void cancelRequests() {
         if (futureImage != null) {
             futureImage.cancel(true);
@@ -244,20 +201,76 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
 
     protected class ViewHolderHeader extends RecyclerView.ViewHolder {
 
+        protected MediaController mediaController;
         protected ProgressBar progressImage;
-        protected ImageView imageFull;
-        protected ImageView imageThreadPreview;
+        protected WebViewFixed webFull;
+        protected VideoView videoFull;
+        protected ViewPager viewPagerFull;
+        protected ImageView imagePreview;
         protected TextView textThreadTitle;
         protected TextView textThreadInfo;
         protected ImageButton buttonComments;
         protected LinearLayout layoutContainerActions;
+        private View.OnClickListener clickListenerLink;
 
         public ViewHolderHeader(View itemView) {
             super(itemView);
 
             this.progressImage = (ProgressBar) itemView.findViewById(R.id.progress_image);
-            this.imageFull = (ImageView) itemView.findViewById(R.id.image_preview);
-            this.imageThreadPreview = (ImageView) itemView.findViewById(R.id.image_preview);
+            this.webFull = (WebViewFixed) itemView.findViewById(R.id.web_full);
+            this.webFull.getSettings().setUseWideViewPort(true);
+            this.webFull.getSettings().setBuiltInZoomControls(true);
+            this.webFull.getSettings().setDisplayZoomControls(false);
+            this.webFull.setBackgroundColor(0x000000);
+            this.webFull.setInitialScale(0);
+            this.webFull.setWebViewClient(new WebViewClient() {
+                @Override
+                public void onScaleChanged(WebView view, float oldScale, float newScale) {
+                    webFull.lockHeight();
+                    super.onScaleChanged(view, oldScale, newScale);
+                }
+            });
+            this.webFull.setOnTouchListener(new View.OnTouchListener() {
+                @Override
+                public boolean onTouch(View v, MotionEvent event) {
+
+                    if (event.getAction() == MotionEvent.ACTION_DOWN) {
+
+                        if ((webFull.canScrollVertically(1) && webFull.canScrollVertically(-1))) {
+                            controllerComments.getListener()
+                                    .requestDisallowInterceptTouchEvent(true);
+                        }
+                        else {
+                            controllerComments.getListener()
+                                    .requestDisallowInterceptTouchEvent(false);
+                            if (webFull.getScrollY() == 0) {
+                                webFull.setScrollY(1);
+                            }
+                            else {
+                                webFull.setScrollY(webFull.getScrollY() - 1);
+                            }
+                        }
+                    }
+                    else if (event.getAction() == MotionEvent.ACTION_UP) {
+                        controllerComments.getListener()
+                                .requestDisallowInterceptTouchEvent(false);
+                    }
+
+                    return false;
+                }
+            });
+            this.mediaController = new MediaController(itemView.getContext());
+            this.videoFull = (VideoView) itemView.findViewById(R.id.video_full);
+            this.videoFull.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
+                @Override
+                public void onPrepared(MediaPlayer mp) {
+                    mediaController.hide();
+                }
+            });
+            this.mediaController.setAnchorView(videoFull);
+            this.videoFull.setMediaController(mediaController);
+            this.viewPagerFull = (ViewPager) itemView.findViewById(R.id.view_pager_full);
+            this.imagePreview = (ImageView) itemView.findViewById(R.id.image_preview);
             this.textThreadTitle = (TextView) itemView.findViewById(R.id.text_thread_title);
             // TODO: Remove and replace with a real TextView that holds self_text
             this.textThreadTitle.setMovementMethod(LinkMovementMethod.getInstance());
@@ -265,16 +278,12 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
             this.buttonComments = (ImageButton) itemView.findViewById(R.id.button_comments);
             this.buttonComments.setVisibility(View.INVISIBLE);
             this.layoutContainerActions = (LinearLayout) itemView.findViewById(R.id.layout_container_actions);
-            this.layoutContainerActions.setVisibility(View.VISIBLE);
-
-            this.imageThreadPreview.setOnClickListener(new View.OnClickListener() {
+            this.imagePreview.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
+                    Link link = controllerComments.getLink();
                     String url = link.getUrl();
-                    String thumbnail = link.getThumbnail();
-                    imageFull.setImageBitmap(null);
-                    imageFull.setVisibility(View.GONE);
-                    imageThreadPreview.setVisibility(View.VISIBLE);
+                    imagePreview.setVisibility(View.VISIBLE);
 
                     if (link.isSelf()) {
                         String html = link.getSelfTextHtml();
@@ -282,105 +291,166 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                                 .toString();
                         setTextViewHTML(textThreadTitle, html);
                     }
-                    else if (!TextUtils.isEmpty(url) && !thumbnail.equals(
-                            Reddit.DEFAULT) && !thumbnail.equals(Reddit.NSFW)) {
+                    else if (!TextUtils.isEmpty(url)) {
+                        if (link.getDomain().contains("imgur")) {
+                            int startIndex;
+                            int lastIndex;
+                            if (url.contains("imgur.com/a/")) {
+                                startIndex = url.indexOf("imgur.com/a/") + 12;
+                                int slashIndex = url.substring(startIndex)
+                                        .indexOf("/") + startIndex;
+                                lastIndex = slashIndex > startIndex ? slashIndex : url.length();
+                                String imgurId = url.substring(startIndex, lastIndex);
+                                loadAlbum(imgurId);
+                            }
+                            else if (url.contains("imgur.com/gallery/")) {
+                                startIndex = url.indexOf("imgur.com/gallery/") + 18;
+                                int slashIndex = url.substring(startIndex)
+                                        .indexOf("/") + startIndex;
+                                lastIndex = slashIndex > startIndex ? slashIndex : url.length();
+                                String imgurId = url.substring(startIndex, lastIndex);
+                                loadAlbum(imgurId);
 
-                        // TODO: Add support for popular image domains
-                        String domain = link.getDomain();
-                        if (domain.contains("imgur")) {
-                            loadImgur(link);
-                        }
-                        else {
-                            boolean isImage = Reddit.checkIsImage(url);
-                            if (isImage) {
-                                loadBasicImage(link);
+                            }
+                            else if (url.contains(Reddit.GIFV)) {
+                                startIndex = url.indexOf("imgur.com/") + 10;
+                                int dotIndex = url.substring(startIndex).indexOf(".") + startIndex;
+                                lastIndex = dotIndex > startIndex ? dotIndex : url.length();
+                                String imgurId = url.substring(startIndex, lastIndex);
+                                loadGifv(imgurId);
                             }
                             else {
-                                listener.loadUrl(url);
+                                attemptLoadImage(link);
                             }
+                        }
+                        else if (link.getDomain().contains("gfycat")) {
+                            int startIndex = url.indexOf("gfycat.com/") + 11;
+                            int dotIndex = url.substring(startIndex).lastIndexOf(".");
+                            int lastIndex = dotIndex > startIndex ? dotIndex : url.length();
+                            String gfycatId = url.substring(startIndex, lastIndex);
+                            progressImage.setVisibility(View.VISIBLE);
+                            controllerComments.getReddit().loadGet(Reddit.GFYCAT_URL + gfycatId,
+                                    new Response.Listener<String>() {
+                                        @Override
+                                        public void onResponse(String response) {
+                                            try {
+                                                JSONObject jsonObject = new JSONObject(response).getJSONObject(Reddit.GFYCAT_ITEM);
+                                                loadVideo(jsonObject.getString(Reddit.GFYCAT_WEBM), (float) jsonObject.getInt("height") / jsonObject.getInt("width"));
+                                            }
+                                            catch (JSONException e) {
+                                                e.printStackTrace();
+                                            }
+                                            finally {
+                                                progressImage.setVisibility(View.GONE);
+                                            }
+                                        }
+                                    }, new Response.ErrorListener() {
+                                        @Override
+                                        public void onErrorResponse(VolleyError error) {
+                                            progressImage.setVisibility(View.GONE);
+                                        }
+                                    }, 0);
+                        }
+                        else {
+                            attemptLoadImage(link);
                         }
                     }
                 }
             });
         }
 
-        private void loadGfycat(Link link) {
-            // TODO: Add support for Gfycat
-        }
-
-        private void loadImgur(Link link) {
-            // TODO: Add support for Imgur
-
-            Log.d(TAG, "loadImgur: " + link.getUrl());
-
-            String url = link.getUrl();
-            if (!url.contains("http")) {
-                url += "http://";
-            }
-
-            if (url.endsWith(Reddit.GIFV)) {
-                listener.loadUrl(url);
-            }
-            else if (!Reddit.checkIsImage(url)) {
-                if (url.charAt(url.length() - 1) == '/') {
-                    url = url.substring(0, url.length() - 2);
-                }
-                url += ".jpg";
-                loadImage(url);
+        private void attemptLoadImage(Link link) {
+            if (Reddit.placeImageUrl(link)) {
+                webFull.onResume();
+                webFull.resetMaxHeight();
+                webFull.loadData(Reddit.getImageHtml(
+                        controllerComments.getLink()
+                                .getUrl()), "text/html", "UTF-8");
+                webFull.setVisibility(View.VISIBLE);
             }
             else {
-                loadImage(url);
-            }
-
-        }
-
-        private void loadBasicImage(final Link link) {
-
-            Log.d(TAG, "loadBasicImage: " + link.getUrl());
-
-            String url = link.getUrl();
-            if (!url.contains("http")) {
-                url += "http://";
-            }
-
-            if (url.endsWith(".gif")) {
-                progressImage.setVisibility(View.VISIBLE);
-                futureImage = Ion.with(activity)
-                        .load(url)
-                        .asBitmap()
-                        .setCallback(new FutureCallback<Bitmap>() {
-                            @Override
-                            public void onCompleted(Exception e, Bitmap result) {
-                                if (result != null) {
-                                    imageFull.setVisibility(View.VISIBLE);
-                                    imageFull.setImageBitmap(result);
-                                    imageThreadPreview.setVisibility(View.INVISIBLE);
-                                }
-                                progressImage.setVisibility(View.GONE);
-                                Log.d(TAG, "loadBasicImage completed");
-                            }
-                        });
-            }
-            else {
-                loadImage(url);
+                controllerComments.getListener().loadUrl(link.getUrl());
             }
         }
 
-        private void loadImage(String url) {
+        private void loadAlbum(String id) {
             progressImage.setVisibility(View.VISIBLE);
-            futureImage = Ion.with(activity)
-                    .load(url)
-                    .asBitmap()
-                    .setCallback(new FutureCallback<Bitmap>() {
+            imagePreview.setTag(controllerComments.getReddit()
+                    .loadImgurAlbum(id,
+                            new Response.Listener<String>() {
+                                @Override
+                                public void onResponse(String response) {
+                                    try {
+                                        Album album = Album.fromJson(
+                                                new JSONObject(
+                                                        response).getJSONObject(
+                                                        "data"));
+
+                                        viewPagerFull.setAdapter(
+                                                new AdapterAlbum(activity, album,
+                                                        controllerComments.getListener()));
+                                        viewPagerFull.getLayoutParams().height = controllerComments.getListener()
+                                                .getRecyclerHeight() - itemView.getHeight();
+                                        viewPagerFull.setVisibility(View.VISIBLE);
+                                    }
+                                    catch (JSONException e) {
+                                        e.printStackTrace();
+                                    }
+                                    finally {
+                                        progressImage.setVisibility(View.GONE);
+                                    }
+                                }
+                            }, new Response.ErrorListener() {
+                                @Override
+                                public void onErrorResponse(VolleyError error) {
+                                    progressImage.setVisibility(View.GONE);
+                                }
+                            }, 0));
+        }
+
+
+        private void loadGifv(String id) {
+            imagePreview.setTag(controllerComments.getReddit()
+                    .loadImgurImage(id,
+                            new Response.Listener<String>() {
+                                @Override
+                                public void onResponse(String response) {
+                                    try {
+                                        Image image = Image.fromJson(
+                                                new JSONObject(
+                                                        response).getJSONObject(
+                                                        "data"));
+
+                                        loadVideo(image.getMp4(), (float) image.getHeight() / image.getWidth());
+                                    }
+                                    catch (JSONException e) {
+                                        e.printStackTrace();
+                                    }
+                                    finally {
+                                        progressImage.setVisibility(View.GONE);
+                                    }
+                                }
+                            }, new Response.ErrorListener() {
+                                @Override
+                                public void onErrorResponse(VolleyError error) {
+                                    progressImage.setVisibility(View.GONE);
+                                }
+                            }, 0));
+        }
+
+
+        private void loadVideo(String url, float heightRatio) {
+            Uri uri = Uri.parse(url);
+            videoFull.setVideoURI(uri);
+            videoFull.getLayoutParams().height = (int) (ViewHolderHeader.this.itemView.getWidth() * heightRatio);
+            videoFull.setVisibility(View.VISIBLE);
+            videoFull.invalidate();
+            videoFull.start();
+            videoFull.setOnCompletionListener(
+                    new MediaPlayer.OnCompletionListener() {
                         @Override
-                        public void onCompleted(Exception e, Bitmap result) {
-                            if (result != null) {
-                                imageFull.setVisibility(View.VISIBLE);
-                                imageFull.setImageBitmap(result);
-                                imageThreadPreview.setVisibility(View.INVISIBLE);
-                            }
-                            progressImage.setVisibility(View.GONE);
-                            Log.d(TAG, "loadImage completed");
+                        public void onCompletion(MediaPlayer mp) {
+                            videoFull.start();
                         }
                     });
         }
@@ -420,12 +490,5 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
             this.textInfo.setOnClickListener(clickListenerLink);
 
         }
-    }
-
-    public interface CommentClickListener {
-
-        void loadUrl(String url);
-        void setRefreshing(boolean refreshing);
-
     }
 }

@@ -218,17 +218,16 @@ public class Reddit {
 
     /**
      * HTTP GET call to Reddit OAuth API, query parameters must exist inside url param
-     *
-     * @param url
+     *  @param url
      * @param listener
      * @param errorListener
      * @param iteration
      */
-    public void loadGet(final String url, final Listener<String> listener, final ErrorListener errorListener, final int iteration) {
+    public Request<String> loadGet(final String url, final Listener<String> listener, final ErrorListener errorListener, final int iteration) {
 
         if (iteration > 2) {
             errorListener.onErrorResponse(null);
-            return;
+            return null;
         }
 
         if (needsToken()) {
@@ -238,10 +237,10 @@ public class Reddit {
                     loadGet(url, listener, errorListener, iteration + 1);
                 }
             });
-            return;
+            return null;
         }
 
-        requestQueue.add(new StringRequest(Request.Method.GET, url,
+        StringRequest getRequest = new StringRequest(Request.Method.GET, url,
                 listener, errorListener) {
                     @Override
                     public Map<String, String> getHeaders() throws AuthFailureError {
@@ -251,17 +250,19 @@ public class Reddit {
                         headers.put("Content-Type", "application/json; charset=utf-8");
                         return headers;
                     }
-                });
+                };
+
+        return requestQueue.add(getRequest);
     }
 
-    public void loadImgurImage(String id, Listener<String> listener, final ErrorListener errorListener, final int iteration) {
+    public Request<String> loadImgurImage(String id, Listener<String> listener, final ErrorListener errorListener, final int iteration) {
 
         if (iteration > 2) {
             errorListener.onErrorResponse(null);
-            return;
+            return null;
         }
 
-        requestQueue.add(new StringRequest(Request.Method.GET, IMGUR_IMAGE_URL + id,
+        StringRequest getRequest = new StringRequest(Request.Method.GET, IMGUR_IMAGE_URL + id,
                 listener, errorListener) {
             @Override
             public Map<String, String> getHeaders() throws AuthFailureError {
@@ -271,18 +272,20 @@ public class Reddit {
                 headers.put("Content-Type", "application/json; charset=utf-8");
                 return headers;
             }
-        });
+        };
+
+        return requestQueue.add(getRequest);
 
     }
 
-    public void loadImgurAlbum(String id, Listener<String> listener, final ErrorListener errorListener, final int iteration) {
+    public Request<String> loadImgurAlbum(String id, Listener<String> listener, final ErrorListener errorListener, final int iteration) {
 
         if (iteration > 2) {
             errorListener.onErrorResponse(null);
-            return;
+            return null;
         }
 
-        requestQueue.add(new StringRequest(Request.Method.GET, IMGUR_ALBUM_URL + id,
+        StringRequest getRequest = new StringRequest(Request.Method.GET, IMGUR_ALBUM_URL + id,
                 listener, errorListener) {
             @Override
             public Map<String, String> getHeaders() throws AuthFailureError {
@@ -292,7 +295,9 @@ public class Reddit {
                 headers.put("Content-Type", "application/json; charset=utf-8");
                 return headers;
             }
-        });
+        };
+
+        return requestQueue.add(getRequest);
 
     }
 

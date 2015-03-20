@@ -19,14 +19,14 @@ public class AdapterAlbum extends PagerAdapter {
 
     private Activity activity;
     private ArrayList<View> views;
-    private ControllerLinks.LinkClickListener linkClickListener;
+    private DisallowListener disallowListener;
     private Album album;
     private int oldPosition = -1;
 
-    public AdapterAlbum(Activity activity, Album album, ControllerLinks.LinkClickListener listener) {
+    public AdapterAlbum(Activity activity, Album album, DisallowListener listener) {
         this.activity = activity;
         this.album = album;
-        this.linkClickListener = listener;
+        this.disallowListener = listener;
         views = new ArrayList<>(album.getImagesCount());
         for (int index = 0; index < album.getImagesCount(); index++) {
             final WebViewFixed webView = (WebViewFixed) LayoutInflater.from(activity).inflate(R.layout.web_view_image, null, false);
@@ -42,10 +42,10 @@ public class AdapterAlbum extends PagerAdapter {
                     if (event.getAction() == MotionEvent.ACTION_DOWN) {
 
                         if ((webView.canScrollVertically(1) && webView.canScrollVertically(-1))) {
-                            linkClickListener.requestDisallowInterceptTouchEvent(true);
+                            disallowListener.requestDisallowInterceptTouchEvent(true);
                         }
                         else {
-                            linkClickListener.requestDisallowInterceptTouchEvent(false);
+                            disallowListener.requestDisallowInterceptTouchEvent(false);
                             if (webView.getScrollY() == 0) {
                                 webView.setScrollY(1);
                             }
@@ -55,7 +55,7 @@ public class AdapterAlbum extends PagerAdapter {
                         }
                     }
                     else if (event.getAction() == MotionEvent.ACTION_UP) {
-                        linkClickListener.requestDisallowInterceptTouchEvent(false);
+                        disallowListener.requestDisallowInterceptTouchEvent(false);
                     }
 
                     return false;
@@ -80,10 +80,10 @@ public class AdapterAlbum extends PagerAdapter {
                 if (event.getAction() == MotionEvent.ACTION_DOWN) {
 
                     if ((webView.canScrollVertically(1) && webView.canScrollVertically(-1))) {
-                        linkClickListener.requestDisallowInterceptTouchEvent(true);
+                        disallowListener.requestDisallowInterceptTouchEvent(true);
                     }
                     else {
-                        linkClickListener.requestDisallowInterceptTouchEvent(false);
+                        disallowListener.requestDisallowInterceptTouchEvent(false);
                         if (webView.getScrollY() == 0) {
                             webView.setScrollY(1);
                         }
@@ -93,7 +93,7 @@ public class AdapterAlbum extends PagerAdapter {
                     }
                 }
                 else if (event.getAction() == MotionEvent.ACTION_UP) {
-                    linkClickListener.requestDisallowInterceptTouchEvent(false);
+                    disallowListener.requestDisallowInterceptTouchEvent(false);
                 }
 
                 return false;
