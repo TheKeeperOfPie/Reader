@@ -1,7 +1,9 @@
 package com.winsonchiu.reader;
 
+import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarActivity;
 import android.support.v7.widget.SearchView;
@@ -10,6 +12,7 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.Toast;
 
 import com.crashlytics.android.Crashlytics;
 
@@ -20,7 +23,8 @@ public class MainActivity extends ActionBarActivity
         implements FragmentNavDrawer.NavigationDrawerCallbacks,
         FragmentThreadList.OnFragmentInteractionListener,
         FragmentWeb.OnFragmentInteractionListener,
-        FragmentComments.OnFragmentInteractionListener {
+        FragmentComments.OnFragmentInteractionListener,
+        FragmentAuth.OnFragmentInteractionListener {
 
     private static final String TAG = MainActivity.class.getCanonicalName();
     /**
@@ -42,7 +46,7 @@ public class MainActivity extends ActionBarActivity
         setContentView(R.layout.activity_main);
 
         mNavigationDrawerFragment = (FragmentNavDrawer)
-                getSupportFragmentManager().findFragmentById(R.id.navigation_drawer);
+                getFragmentManager().findFragmentById(R.id.navigation_drawer);
         mTitle = getTitle();
 
         toolbar = (Toolbar) findViewById(R.id.toolbar);
@@ -72,10 +76,24 @@ public class MainActivity extends ActionBarActivity
     }
 
     @Override
-    public void onNavigationDrawerItemSelected(int position) {
+    public void onNavigationDrawerItemSelected(int position, boolean force) {
         // TODO: update the main content by replacing fragments
-        if (oldPosition != position) {
-            getFragmentManager().beginTransaction().replace(R.id.frame_fragment, FragmentThreadList.newInstance("", "")).commit();
+        if (oldPosition != position | force) {
+            switch (position) {
+                case 0:
+                    getFragmentManager().beginTransaction()
+                            .replace(R.id.frame_fragment, FragmentThreadList.newInstance("", ""), FragmentThreadList.TAG)
+                            .commit();
+                    break;
+                case 3:
+                    SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(
+                            getApplicationContext());
+                    // TODO: Manually invalidate access token
+                    preferences.edit().putString(AppSettings.ACCESS_TOKEN, "").apply();
+                    preferences.edit().putString(AppSettings.REFRESH_TOKEN, "").apply();
+                    Toast.makeText(this, "Cleared refresh token", Toast.LENGTH_SHORT).show();
+                    break;
+            }
         }
         oldPosition = position;
     }
@@ -139,5 +157,19 @@ public class MainActivity extends ActionBarActivity
     @Override
     public void onFragmentInteraction(Uri uri) {
 
+    }
+
+    @Override
+    public void onAuthFinished(boolean success) {
+        onNavigationDrawerItemSelected(0, true);
+        if (success) {
+            Toast.makeText(this, "Login successful", Toast.LENGTH_SHORT)
+                    .show();
+            mNavigationDrawerFragment.loadAccountInfo();
+        }
+        else {
+            Toast.makeText(this, "Login failed", Toast.LENGTH_SHORT)
+                    .show();
+        }
     }
 }

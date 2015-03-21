@@ -22,10 +22,10 @@ android {
 
     defaultConfig {
         applicationId "com.winsonchiu.reader"
-        minSdkVersion 16
+        minSdkVersion 17
         targetSdkVersion 21
-        versionCode 7
-        versionName "0.4"
+        versionCode 8
+        versionName "0.5"
     }
     buildTypes {
         release {
@@ -44,7 +44,6 @@ dependencies {
     compile fileTree(include: ['*.jar'], dir: 'libs')
     compile 'com.android.support:appcompat-v7:22.0.0'
     compile 'com.android.support:recyclerview-v7:21.0.3'
-    compile 'com.koushikdutta.ion:ion:2.+'
     compile('com.crashlytics.sdk.android:crashlytics:2.2.2@aar') {
         transitive = true;
     }

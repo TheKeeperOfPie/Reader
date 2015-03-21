@@ -85,9 +85,15 @@ public class Listing {
                 // TODO: Add cases for all ID36s and fix adding Comments
 
                 case "t1":
-                    things.add(Comment.fromJson(thing, 0));
+                    List<Comment> comments = new ArrayList<>();
+                    Comment.addAllFromJson(comments, thing, 0);
+                    things.addAll(comments);
+                    break;
                 case "t3":
                     things.add(Link.fromJson(thing));
+                    break;
+                case "t5":
+                    things.add(Subreddit.fromJson(thing));
                     break;
 
             }

@@ -11,13 +11,16 @@ public class AppSettings {
 
     // Massive list of all possible tokens
     public static final String INITIALIZED = "initialized";
-    public static final String APP_ACCESS_TOKEN = "applicationAccessToken";
+    public static final String ACCESS_TOKEN = "accessToken";
     public static final String DEVICE_ID = "deviceId";
     public static final String EXPIRE_TIME = "expireTime";
 
     public static final String INTERFACE_MODE = "interfaceMode";
     public static final String MODE_LIST = "List";
     public static final String MODE_GRID = "Grid";
+
+    public static final String ACCOUNT_NAME = "accountName";
+    public static final String REFRESH_TOKEN = "refreshToken";
 
     public static boolean initPrefs(Context context) {
 

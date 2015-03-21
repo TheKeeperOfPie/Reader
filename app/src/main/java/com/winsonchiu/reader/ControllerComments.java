@@ -1,5 +1,6 @@
 package com.winsonchiu.reader;
 
+import android.animation.ObjectAnimator;
 import android.app.Activity;
 import android.content.SharedPreferences;
 import android.content.res.Resources;
@@ -7,22 +8,24 @@ import android.graphics.drawable.Drawable;
 import android.preference.PreferenceManager;
 import android.text.TextUtils;
 import android.util.TypedValue;
+import android.view.View;
 
 import com.android.volley.VolleyError;
+import com.android.volley.toolbox.ImageLoader;
 import com.winsonchiu.reader.data.Comment;
 import com.winsonchiu.reader.data.Link;
+import com.winsonchiu.reader.data.Listing;
 import com.winsonchiu.reader.data.Reddit;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 
-import java.util.ArrayList;
-import java.util.List;
-
 /**
  * Created by TheKeeperOfPie on 3/20/2015.
  */
 public class ControllerComments {
+
+    private static final long ALPHA_DURATION = 500;
 
     private SharedPreferences preferences;
     private CommentClickListener listener;
@@ -93,8 +96,8 @@ public class ControllerComments {
         return link;
     }
 
-    public List<Comment> getComments() {
-        return link == null ? new ArrayList<Comment>() : link.getComments();
+    public Listing getListingComments() {
+        return link == null ? new Listing() : link.getComments();
     }
 
     public int getIndentWidth(Comment comment) {
@@ -103,6 +106,16 @@ public class ControllerComments {
 
     public Reddit getReddit() {
         return reddit;
+    }
+
+    public ImageLoader.ImageContainer loadImage(String url, ImageLoader.ImageListener imageListener) {
+        return reddit.getImageLoader().get(url, imageListener);
+    }
+
+    public void animateAlpha(View view, float start, float end) {
+        ObjectAnimator objectAnimator = ObjectAnimator.ofFloat(view, "alpha", start, end);
+        objectAnimator.setDuration(ALPHA_DURATION);
+        objectAnimator.start();
     }
 
     public CommentClickListener getListener() {

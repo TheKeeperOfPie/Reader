@@ -1,25 +1,59 @@
-<LinearLayout
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:orientation="vertical"
-    android:background="@color/darkThemeBackground"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".NavigationDrawerFragment"
+    android:background="@color/darkThemeBackground"
     >
 
     <com.winsonchiu.reader.ImageViewHeader
         android:id="@+id/image_nav_header"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
         android:contentDescription="@string/content_description_image_navigation_header"
         android:src="@color/colorPrimary"
+        />
+
+    <TextView
+        android:id="@+id/text_account_name"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_above="@+id/text_account_info"
+        android:layout_toStartOf="@+id/button_account"
+        android:layout_marginStart="@dimen/activity_horizontal_margin"
+        android:textSize="14sp"
+        android:textStyle="bold"
+        />
+
+    <TextView
+        android:id="@+id/text_account_info"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignBottom="@id/image_nav_header"
+        android:layout_marginStart="@dimen/activity_horizontal_margin"
+        android:layout_marginBottom="16dp"
+        android:layout_toStartOf="@+id/button_account"
+        android:textSize="14sp"
+        />
+
+    <ImageButton
+        android:id="@+id/button_account"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignBottom="@id/image_nav_header"
+        android:layout_alignParentEnd="true"
+        android:layout_marginEnd="@dimen/activity_horizontal_margin"
+        android:layout_marginBottom="16dp"
+        android:src="@drawable/ic_arrow_drop_down_white_24dp"
+        android:background="@android:color/transparent"
         />
 
     <android.support.v7.widget.RecyclerView
         android:id="@+id/recycler_nav_list"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_height="200dp"
+        android:layout_below="@id/image_nav_header"
         />
 
-</LinearLayout>
+</RelativeLayout>

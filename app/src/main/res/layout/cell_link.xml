@@ -73,9 +73,7 @@
         android:layout_height="wrap_content"
         android:layout_below="@id/frame_full"
         android:layout_toStartOf="@+id/button_comments"
-        android:layout_toLeftOf="@+id/button_comments"
         android:layout_marginStart="@dimen/activity_horizontal_margin"
-        android:layout_marginLeft="@dimen/activity_horizontal_margin"
         android:paddingTop="@dimen/activity_vertical_margin"
         android:paddingBottom="16dp"
         android:textSize="14sp"
@@ -88,7 +86,6 @@
         android:layout_height="56dp"
         android:layout_below="@id/frame_full"
         android:layout_alignParentEnd="true"
-        android:layout_alignParentRight="true"
         android:contentDescription="@string/content_description_button_comments"
         android:background="@android:color/transparent"
         android:src="@drawable/ic_mode_comment_white_24dp"
@@ -103,7 +100,6 @@
         android:layout_below="@id/text_thread_title"
         android:layout_alignParentBottom="true"
         android:layout_alignParentEnd="true"
-        android:layout_alignParentRight="true"
         android:visibility="gone"
         >
 

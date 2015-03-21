@@ -11,6 +11,7 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.SearchView;
 import android.support.v7.widget.StaggeredGridLayoutManager;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
@@ -34,7 +35,7 @@ import com.winsonchiu.reader.data.Link;
  */
 public class FragmentThreadList extends Fragment {
 
-    private static final String TAG = FragmentThreadList.class.getCanonicalName();
+    public static final String TAG = FragmentThreadList.class.getCanonicalName();
 
     // TODO: Rename parameter arguments, choose names that match
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
@@ -48,6 +49,7 @@ public class FragmentThreadList extends Fragment {
     private Activity activity;
     private OnFragmentInteractionListener mListener;
 
+    private SharedPreferences preferences;
     private RecyclerView recyclerThreadList;
     private AdapterLink adapterLink;
     private SwipeRefreshLayout swipeRefreshThreadList;
@@ -298,8 +300,8 @@ public class FragmentThreadList extends Fragment {
                         }
 
                         @Override
-                        public void notifyItemRangeInserted(int startPosition, int endPosition) {
-                            adapterLink.notifyItemRangeInserted(startPosition, endPosition);
+                        public void notifyItemRangeInserted(int positionStart, int itemCount) {
+                            adapterLink.notifyItemRangeInserted(positionStart, itemCount);
                         }
 
                         @Override
@@ -312,6 +314,14 @@ public class FragmentThreadList extends Fragment {
                             return recyclerThreadList.getHeight();
                         }
                     }, "all", "hot");
+
+            if (TextUtils.isEmpty(preferences.getString(AppSettings.REFRESH_TOKEN, ""))) {
+                controllerLinks.reloadAllLinks();
+            }
+            else {
+                controllerLinks.loadFrontPage();
+            }
+
         }
         controllerLinks.setActivity(activity);
 
@@ -346,6 +356,7 @@ public class FragmentThreadList extends Fragment {
     public void onAttach(Activity activity) {
         super.onAttach(activity);
         this.activity = activity;
+        this.preferences = PreferenceManager.getDefaultSharedPreferences(activity.getApplicationContext());
         try {
             mListener = (OnFragmentInteractionListener) activity;
         }

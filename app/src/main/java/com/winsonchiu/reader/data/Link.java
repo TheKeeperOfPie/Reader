@@ -42,7 +42,7 @@ public class Link extends Thing {
     private Reddit.Distinguished distinguished;
     private boolean stickied;
 
-    private List<Comment> comments;
+    private Listing comments;
 
     public static Link fromJson(JSONObject rootJsonObject) throws JSONException {
 
@@ -133,13 +133,17 @@ public class Link extends Thing {
 
         List<Comment> comments = new ArrayList<>();
 
-        JSONArray arrayComments = jsonArray.getJSONObject(1).getJSONObject("data").getJSONArray("children");
+        JSONObject jsonObject = jsonArray.getJSONObject(1);
 
-        for (int index = 0; index < arrayComments.length(); index++) {
-            Comment.addAllFromJson(comments, arrayComments.getJSONObject(index), 0);
-        }
+        Listing listing = Listing.fromJson(jsonObject);
 
-        link.setComments(comments);
+//        JSONArray arrayComments = jsonArray.getJSONObject(1).getJSONObject("data").getJSONArray("children");
+//
+//        for (int index = 0; index < arrayComments.length(); index++) {
+//            Comment.addAllFromJson(comments, arrayComments.getJSONObject(index), 0);
+//        }
+
+        link.setComments(listing);
 
         return link;
     }
@@ -364,11 +368,11 @@ public class Link extends Thing {
         this.stickied = stickied;
     }
 
-    public List<Comment> getComments() {
+    public Listing getComments() {
         return comments;
     }
 
-    public void setComments(List<Comment> comments) {
+    public void setComments(Listing comments) {
         this.comments = comments;
     }
 }

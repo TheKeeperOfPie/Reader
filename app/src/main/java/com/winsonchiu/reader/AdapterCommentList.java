@@ -2,7 +2,6 @@ package com.winsonchiu.reader;
 
 import android.app.Activity;
 import android.content.res.Resources;
-import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
 import android.media.MediaPlayer;
 import android.net.Uri;
@@ -18,7 +17,6 @@ import android.text.method.LinkMovementMethod;
 import android.text.style.ClickableSpan;
 import android.text.style.ForegroundColorSpan;
 import android.text.style.URLSpan;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
@@ -36,16 +34,13 @@ import android.widget.VideoView;
 
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
-import com.koushikdutta.async.future.Future;
-import com.koushikdutta.async.future.FutureCallback;
-import com.koushikdutta.ion.Ion;
+import com.android.volley.toolbox.ImageLoader;
 import com.winsonchiu.reader.data.Comment;
 import com.winsonchiu.reader.data.Link;
 import com.winsonchiu.reader.data.Reddit;
 import com.winsonchiu.reader.data.imgur.Album;
 import com.winsonchiu.reader.data.imgur.Image;
 
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -63,8 +58,6 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
     private ControllerComments controllerComments;
     private int colorPositive;
     private int colorNegative;
-
-    private Future futureImage;
 
     public AdapterCommentList(Activity activity, ControllerComments controllerComments) {
         // TODO: Add setActivity
@@ -98,22 +91,38 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
     public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
 
         if (holder instanceof ViewHolderHeader) {
-            ViewHolderHeader viewHolderHeader = (ViewHolderHeader) holder;
+            final ViewHolderHeader viewHolderHeader = (ViewHolderHeader) holder;
 
             Link link = controllerComments.getLink();
 
             viewHolderHeader.progressImage.setVisibility(View.GONE);
             viewHolderHeader.imagePreview.setImageBitmap(null);
             viewHolderHeader.imagePreview.setVisibility(View.VISIBLE);
-            String thumbnail = link.getThumbnail();
             Drawable drawable = controllerComments.getDrawableForLink();
-            if (drawable != null) {
-                viewHolderHeader.imagePreview.setImageDrawable(drawable);
+            if (drawable == null) {
+                viewHolderHeader.imagePreview.setTag(
+                        controllerComments.loadImage(link.getThumbnail(),
+                                new ImageLoader.ImageListener() {
+                                    @Override
+                                    public void onResponse(ImageLoader.ImageContainer response,
+                                                           boolean isImmediate) {
+                                        if (response.getBitmap() != null) {
+                                            viewHolderHeader.imagePreview.setAlpha(0.0f);
+                                            viewHolderHeader.imagePreview.setImageBitmap(
+                                                    response.getBitmap());
+                                            controllerComments.animateAlpha(viewHolderHeader.imagePreview,
+                                                    0.0f, 1.0f);
+                                        }
+                                    }
+
+                                    @Override
+                                    public void onErrorResponse(VolleyError error) {
+
+                                    }
+                                }));
             }
             else {
-                Ion.with(viewHolderHeader.imagePreview)
-                        .smartSize(true)
-                        .load(thumbnail);
+                viewHolderHeader.imagePreview.setImageDrawable(drawable);
             }
             viewHolderHeader.textThreadTitle.setText(link.getTitle());
 
@@ -128,7 +137,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
 
             ViewHolderComment viewHolderComment = (ViewHolderComment) holder;
 
-            Comment comment = controllerComments.getComments().get(position - 1);
+            Comment comment = (Comment) controllerComments.getListingComments().getChildren().get(position - 1);
 
             ViewGroup.LayoutParams layoutParams = viewHolderComment.viewIndent.getLayoutParams();
             layoutParams.width = controllerComments.getIndentWidth(comment);
@@ -157,7 +166,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
 
     @Override
     public int getItemCount() {
-        return controllerComments.getLink() == null ? 0 : controllerComments.getComments().size() + 1;
+        return controllerComments.getLink() == null ? 0 : controllerComments.getListingComments().getChildren().size() + 1;
     }
 
     private void makeLinkClickable(SpannableStringBuilder strBuilder, final URLSpan span) {
@@ -192,11 +201,6 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
             makeLinkClickable(strBuilder, span);
         }
         text.setText(strBuilder);
-    }
-    public void cancelRequests() {
-        if (futureImage != null) {
-            futureImage.cancel(true);
-        }
     }
 
     protected class ViewHolderHeader extends RecyclerView.ViewHolder {

@@ -6,10 +6,10 @@ import android.preference.PreferenceManager;
 import android.text.Html;
 import android.text.Spannable;
 import android.text.SpannableStringBuilder;
+import android.text.TextUtils;
 import android.text.style.ClickableSpan;
 import android.text.style.URLSpan;
 import android.util.Base64;
-import android.util.Log;
 import android.view.View;
 
 import com.android.volley.AuthFailureError;
@@ -38,8 +38,6 @@ import java.util.UUID;
  */
 public class Reddit {
 
-;
-
     // Constant values to represent Thing states
     public enum Vote {
         NOT_VOTED, UPVOTED, DOWNVOTED
@@ -54,6 +52,8 @@ public class Reddit {
     public static final String USER_AGENT = "User-Agent";
     public static final String CUSTOM_USER_AGENT = "android:com.winsonchiu.reader:" + BuildConfig.VERSION_NAME + " (by " +
             "/u/TheKeeperOfPie)";
+    public static final String REDIRECT_URI = "https://com.winsonchiu.reader";
+    public static final String CLIENT_ID = "zo7k-Nsh7vgn-Q";
 
     public static final String GFYCAT_URL = "http://gfycat.com/cajax/get/";
     public static final String GFYCAT_WEBM = "webmUrl";
@@ -75,21 +75,26 @@ public class Reddit {
 
     private static final String TAG = Reddit.class.getCanonicalName();
 
-    private static final long SEC_TO_MS = 1000;
+    public static final long SEC_TO_MS = 1000;
 
-    private static final String APP_ONLY_URL = "https://www.reddit.com/api/v1/access_token";
-    private static final String OAUTH_BASE_URL = "https://oauth.reddit.com";
-    private static final String REQUEST_LINK = "Link";
+    public static final String ACCESS_URL = "https://www.reddit.com/api/v1/access_token";
+    // TODO: Move OAuth URL to here
 
-    // JSON fields
-    private static final String INSTALLED_CLIENT_GRANT = "https://oauth.reddit.com/grants/installed_client";
-    private static final String CLIENT_ID = "client_id";
-    private static final String REDIRECT_URI = "redirect_uri";
-    private static final String ACCESS_TOKEN = "access_token";
-    private static final String GRANT_TYPE = "grant_type";
-    private static final String DEVICE_ID = "device_id";
-    private static final String DURATION = "duration";
-    private static final String EXPIRES_IN = "expires_in";
+    private static final String USER_AUTHENTICATION_URL = "https://www.reddit.com/api/v1/authorize.compact?";
+    private static final String AUTH_SCOPES = "account,creddits,edit,flair,history,identity,livemanage,modconfig,modflair,modlog,modothers,modposts,modself,modwiki,mysubreddits,privatemessages,read,report,save,submit,subscribe,vote,wikiedit,wikiread";
+
+    // Query fields
+    public static final String INSTALLED_CLIENT_GRANT = "https://oauth.reddit.com/grants/installed_client";
+    public static final String CODE_GRANT = "authorization_code";
+    public static final String QUERY_CODE = "code";
+    public static final String QUERY_CLIENT_ID = "client_id";
+    public static final String QUERY_REDIRECT_URI = "redirect_uri";
+    public static final String QUERY_ACCESS_TOKEN = "access_token";
+    public static final String QUERY_REFRESH_TOKEN = "refresh_token";
+    public static final String QUERY_GRANT_TYPE = "grant_type";
+    public static final String QUERY_DEVICE_ID = "device_id";
+    public static final String QUERY_DURATION = "duration";
+    public static final String QUERY_EXPIRES_IN = "expires_in";
 
     private static Reddit reddit;
     private RequestQueue requestQueue;
@@ -116,104 +121,88 @@ public class Reddit {
     public boolean needsToken() {
         return preferences.getLong(AppSettings.EXPIRE_TIME,
                 Long.MAX_VALUE) < System.currentTimeMillis() || "".equals(preferences.getString(
-                AppSettings.APP_ACCESS_TOKEN, ""));
+                AppSettings.ACCESS_TOKEN, ""));
 
     }
 
-    public void fetchToken(final RedditErrorListener listener) {
+    public String getUserAuthUrl(String state) {
 
-        if ("".equals(preferences.getString(AppSettings.DEVICE_ID, ""))) {
-            preferences.edit().putString(AppSettings.DEVICE_ID, UUID.randomUUID().toString()).commit();
+        return USER_AUTHENTICATION_URL + QUERY_CLIENT_ID + "=" + CLIENT_ID + "&response_type=code&state=" + state + "&" + QUERY_REDIRECT_URI + "=" + REDIRECT_URI + "&" + QUERY_DURATION + "=permanent&scope=" + AUTH_SCOPES;
+    }
+
+    public Request<String> fetchToken(final RedditErrorListener listener) {
+
+        final HashMap<String, String> params = new HashMap<>(2);
+
+        if (TextUtils.isEmpty(preferences.getString(AppSettings.REFRESH_TOKEN, ""))) {
+            if ("".equals(preferences.getString(AppSettings.DEVICE_ID, ""))) {
+                preferences.edit().putString(AppSettings.DEVICE_ID, UUID.randomUUID().toString()).commit();
+            }
+
+            params.put(QUERY_GRANT_TYPE, INSTALLED_CLIENT_GRANT);
+            params.put(QUERY_DEVICE_ID, preferences.getString(AppSettings.DEVICE_ID, UUID.randomUUID()
+                    .toString()));
+        }
+        else {
+            params.put(QUERY_GRANT_TYPE, QUERY_REFRESH_TOKEN);
+            params.put(QUERY_REFRESH_TOKEN, preferences.getString(AppSettings.REFRESH_TOKEN, ""));
         }
 
-        final HashMap<String, String> params = new HashMap<>();
-        params.put(REDIRECT_URI, "https://com.winsonchiu.reader");
-        params.put(GRANT_TYPE, INSTALLED_CLIENT_GRANT);
-        params.put(DEVICE_ID, preferences.getString(AppSettings.DEVICE_ID, UUID.randomUUID()
-                .toString()));
-
-        requestQueue.add(new StringRequest(Request.Method.POST, APP_ONLY_URL,
-                new Listener<String>() {
-                    @Override
-                    public void onResponse(String response) {
-
-                        Log.d(TAG, "fetchToken response: " + response);
-                        try {
-                            JSONObject jsonObject = new JSONObject(response);
-                            preferences.edit().putString(AppSettings.APP_ACCESS_TOKEN, jsonObject.getString(ACCESS_TOKEN)).commit();
-                            preferences.edit().putLong(AppSettings.EXPIRE_TIME,
+        return loadPostDefault(ACCESS_URL, new Listener<String>() {
+            @Override
+            public void onResponse(String response) {
+                try {
+                    JSONObject jsonObject = new JSONObject(response);
+                    preferences.edit()
+                            .putString(AppSettings.ACCESS_TOKEN,
+                                    jsonObject.getString(QUERY_ACCESS_TOKEN))
+                            .commit();
+                    preferences.edit()
+                            .putLong(AppSettings.EXPIRE_TIME,
                                     System.currentTimeMillis() + jsonObject.getLong(
-                                            EXPIRES_IN) * SEC_TO_MS).commit();
-                        }
-                        catch (JSONException e1) {
-                            e1.printStackTrace();
-                        }
+                                            QUERY_EXPIRES_IN) * SEC_TO_MS)
+                            .commit();
+                }
+                catch (JSONException e1) {
+                    e1.printStackTrace();
+                }
 
-                        if (listener != null) {
-                            listener.onErrorHandled();
-                        }
-                    }
-                }, new com.android.volley.Response.ErrorListener() {
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
+                if (listener != null) {
+                    listener.onErrorHandled();
+                }
 
-                    }
-                }) {
+            }
+        }, new ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
 
-                    @Override
-                    protected Map<String, String> getParams() throws AuthFailureError {
-                        return params;
-                    }
+            }
+        }, params);
 
-                    @Override
-                    public Map<String, String> getHeaders() throws AuthFailureError {
-                        HashMap<String, String> headers = new HashMap<>(3);
-                        String creds = String.format("%s:%s", "zo7k-Nsh7vgn-Q", "");
-                        String auth = "Basic " + Base64.encodeToString(creds.getBytes(), Base64.DEFAULT);
-                        headers.put(USER_AGENT, CUSTOM_USER_AGENT);
-                        headers.put(AUTHORIZATION, auth);
-                        headers.put("Content-Type", "application/json; charset=utf-8");
-                        return headers;
-                    }
-                });
+    }
 
-//        Ion.with(context)
-//                .load("POST", APP_ONLY_URL)
-//                .setLogging("ION", Log.VERBOSE)
-//                .userAgent(CUSTOM_USER_AGENT)
-//                .basicAuthentication("zo7k-Nsh7vgn-Q", "")
-//                .addHeader(CONTENT_TYPE, "application/x-www-form-urlencoded; charset=utf-8")
-//                .setBodyParameter(REDIRECT_URI, "https://com.winsonchiu.reader")
-//                .setBodyParameter(GRANT_TYPE, INSTALLED_CLIENT_GRANT)
-//                .setBodyParameter(DEVICE_ID, preferences.getString(AppSettings.DEVICE_ID,
-//                        UUID.randomUUID()
-//                                .toString()))
-//                .asString()
-//                .withResponse()
-//                .setCallback(new FutureCallback<Response<String>>() {
-//                    @Override
-//                    public void onCompleted(Exception e, Response<String> result) {
-//                        if (result == null) {
-//                            return;
-//                        }
-//
-//                        Log.d(TAG, "fetchToken response: " + result.getResult());
-//                        try {
-//                            JSONObject jsonObject = new JSONObject(result.getResult());
-//                            preferences.edit().putString(AppSettings.APP_ACCESS_TOKEN, jsonObject.getString(ACCESS_TOKEN)).commit();
-//                            preferences.edit().putLong(AppSettings.EXPIRE_TIME,
-//                                    System.currentTimeMillis() + jsonObject.getLong(
-//                                            EXPIRES_IN) * SEC_TO_MS).commit();
-//                        }
-//                        catch (JSONException e1) {
-//                            e1.printStackTrace();
-//                        }
-//
-//                        if (listener != null) {
-//                            listener.onErrorHandled();
-//                        }
-//                    }
-//                });
+    public Request<String> loadPostDefault(final String url, final Listener<String> listener, final ErrorListener errorListener, final Map<String, String> params) {
+
+        StringRequest postRequest = new StringRequest(Request.Method.POST, url,
+                listener, errorListener) {
+            @Override
+            protected Map<String, String> getParams() throws AuthFailureError {
+                return params;
+            }
+
+            @Override
+            public Map<String, String> getHeaders() throws AuthFailureError {
+                HashMap<String, String> headers = new HashMap<>(3);
+                String credentials = CLIENT_ID + ":";
+                String auth = "Basic " + Base64.encodeToString(credentials.getBytes(), Base64.DEFAULT);
+                headers.put(USER_AGENT, CUSTOM_USER_AGENT);
+                headers.put(AUTHORIZATION, auth);
+                headers.put("Content-Type", "application/json; charset=utf-8");
+                return headers;
+            }
+        };
+
+        return requestQueue.add(postRequest);
     }
 
     /**
@@ -302,8 +291,7 @@ public class Reddit {
     }
 
     private String getAuthorizationHeader() {
-        // TODO: Add check for user login token
-        return Reddit.BEARER + preferences.getString(AppSettings.APP_ACCESS_TOKEN, "");
+        return Reddit.BEARER + preferences.getString(AppSettings.ACCESS_TOKEN, "");
     }
 
     public static boolean checkIsImage(String url) {

@@ -31,5 +31,6 @@ public class ImageViewHeader extends ImageView {
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         super.onMeasure(widthMeasureSpec, (int) (widthMeasureSpec / 16f * 9f));
+        setMeasuredDimension(widthMeasureSpec, (int) (widthMeasureSpec / 16f * 9f));
     }
 }

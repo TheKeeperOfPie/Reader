@@ -132,7 +132,6 @@ public class FragmentComments extends Fragment {
 
     @Override
     public void onPause() {
-        adapterCommentList.cancelRequests();
         super.onPause();
     }
 

@@ -38,6 +38,15 @@ public abstract class Thing {
     }
 
     @Override
+    public String toString() {
+        return "Thing{" +
+                "id='" + id + '\'' +
+                ", name='" + name + '\'' +
+                ", kind='" + kind + '\'' +
+                '}';
+    }
+
+    @Override
     public boolean equals(Object o) {
         if (this == o) {
             return true;

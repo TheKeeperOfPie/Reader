@@ -84,7 +84,7 @@ public class AdapterLinkList extends AdapterLink {
         final ViewHolder viewHolder = (ViewHolder) holder;
         viewHolder.imagePreview.setImageBitmap(null);
 
-        if (!controllerLinks.isLoading() && position > controllerLinks.size() - 5) {
+        if (!controllerLinks.isLoading() && position > controllerLinks.size() - 10) {
             controllerLinks.loadMoreLinks();
         }
 

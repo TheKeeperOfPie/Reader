@@ -1,11 +1,11 @@
 package com.winsonchiu.reader;
 
 import android.app.Activity;
+import android.app.Fragment;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
-import android.support.v4.app.Fragment;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBar;
@@ -14,11 +14,20 @@ import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
+import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.TextView;
+
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.winsonchiu.reader.data.Reddit;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 /**
  * Fragment used for managing interactions for and presentation of a navigation drawer.
@@ -37,6 +46,7 @@ public class FragmentNavDrawer extends Fragment {
      * expands it. This shared preference tracks this.
      */
     private static final String PREF_USER_LEARNED_DRAWER = "navigation_drawer_learned";
+    private static final String TAG = FragmentNavDrawer.class.getCanonicalName();
 
     /**
      * A pointer to the current callbacks instance (the Activity).
@@ -56,10 +66,14 @@ public class FragmentNavDrawer extends Fragment {
     private boolean mFromSavedInstanceState;
     private boolean mUserLearnedDrawer;
 
+    private SharedPreferences preferences;
     private AdapterNavDrawer adapterNavDrawer;
     private RecyclerView recyclerNavList;
     private LinearLayoutManager linearLayoutManager;
     private ImageView imageNavHeader;
+    private TextView textAccountName;
+    private TextView textAccountInfo;
+    private Reddit reddit;
 
     public FragmentNavDrawer() {
     }
@@ -94,7 +108,25 @@ public class FragmentNavDrawer extends Fragment {
         View view = inflater.inflate(R.layout.fragment_navigation_drawer, container, false);
 
         imageNavHeader = (ImageView) view.findViewById(R.id.image_nav_header);
-        imageNavHeader.setImageResource(R.color.colorPrimary);
+
+        textAccountName = (TextView) view.findViewById(R.id.text_account_name);
+        textAccountInfo = (TextView) view.findViewById(R.id.text_account_info);
+
+        View.OnClickListener clickListenerAccount = new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                onClickAccount();
+            }
+        };
+        textAccountName.setOnClickListener(clickListenerAccount);
+        textAccountInfo.setOnClickListener(clickListenerAccount);
+
+        if (TextUtils.isEmpty(preferences.getString(AppSettings.REFRESH_TOKEN, ""))) {
+            textAccountName.setText("Add Account +");
+        }
+        else {
+            loadAccountInfo();
+        }
 
         if (adapterNavDrawer == null) {
             adapterNavDrawer = new AdapterNavDrawer(new AdapterNavDrawer.OnEntryClickListener() {
@@ -118,6 +150,35 @@ public class FragmentNavDrawer extends Fragment {
         recyclerNavList.setAdapter(adapterNavDrawer);
 
         return view;
+    }
+
+    public void loadAccountInfo() {
+        reddit.loadGet("https://oauth.reddit.com" + "/api/v1/me",
+                new Response.Listener<String>() {
+                    @Override
+                    public void onResponse(String response) {
+                        try {
+                            JSONObject jsonObject = new JSONObject(response);
+                            textAccountName.setText(jsonObject.getString("name"));
+                            textAccountInfo.setText(jsonObject.getString("link_karma") + " Link " + jsonObject.getString("comment_karma") + " Comment");
+                        }
+                        catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }, new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+
+                    }
+                }, 0);
+    }
+
+    private void onClickAccount() {
+        getFragmentManager().beginTransaction()
+                .replace(R.id.frame_fragment, FragmentAuth.newInstance("", ""), FragmentAuth.TAG)
+                .commit();
+        mDrawerLayout.closeDrawer(mFragmentContainerView);
     }
 
     public boolean isDrawerOpen() {
@@ -154,7 +215,7 @@ public class FragmentNavDrawer extends Fragment {
                     return;
                 }
 
-                getActivity().supportInvalidateOptionsMenu(); // calls onPrepareOptionsMenu()
+                ((ActionBarActivity) getActivity()).supportInvalidateOptionsMenu(); // calls onPrepareOptionsMenu()
             }
 
             @Override
@@ -173,7 +234,7 @@ public class FragmentNavDrawer extends Fragment {
                     sp.edit().putBoolean(PREF_USER_LEARNED_DRAWER, true).apply();
                 }
 
-                getActivity().supportInvalidateOptionsMenu(); // calls onPrepareOptionsMenu()
+                ((ActionBarActivity) getActivity()).supportInvalidateOptionsMenu(); // calls onPrepareOptionsMenu()
             }
         };
 
@@ -200,14 +261,16 @@ public class FragmentNavDrawer extends Fragment {
             mDrawerLayout.closeDrawer(mFragmentContainerView);
         }
         if (mCallbacks != null) {
-            mCallbacks.onNavigationDrawerItemSelected(position);
+            mCallbacks.onNavigationDrawerItemSelected(position, false);
         }
     }
 
     @Override
     public void onAttach(Activity activity) {
         super.onAttach(activity);
+        this.reddit = Reddit.getInstance(activity);
         this.activity = activity;
+        preferences = PreferenceManager.getDefaultSharedPreferences(activity.getApplicationContext());
         try {
             mCallbacks = (NavigationDrawerCallbacks) activity;
         } catch (ClassCastException e) {
@@ -255,6 +318,6 @@ public class FragmentNavDrawer extends Fragment {
         /**
          * Called when an item in the navigation drawer is selected.
          */
-        void onNavigationDrawerItemSelected(int position);
+        void onNavigationDrawerItemSelected(int position, boolean force);
     }
 }
