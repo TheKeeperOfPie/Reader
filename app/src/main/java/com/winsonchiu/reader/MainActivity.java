@@ -78,7 +78,8 @@ public class MainActivity extends ActionBarActivity
     @Override
     public void onNavigationDrawerItemSelected(int position, boolean force) {
         // TODO: update the main content by replacing fragments
-        if (oldPosition != position | force) {
+        // TODO: Reimplement oldPosition check
+//        if (oldPosition != position | force) {
             switch (position) {
                 case 0:
                     getFragmentManager().beginTransaction()
@@ -94,7 +95,7 @@ public class MainActivity extends ActionBarActivity
                     Toast.makeText(this, "Cleared refresh token", Toast.LENGTH_SHORT).show();
                     break;
             }
-        }
+//        }
         oldPosition = position;
     }
 

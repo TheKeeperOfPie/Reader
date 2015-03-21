@@ -130,8 +130,10 @@ public class AdapterLinkList extends AdapterLink {
 
         final ViewHolder viewHolder = (ViewHolder) holder;
 
-        if (viewHolder.imagePreview.getTag() != null) {
-            ((ImageLoader.ImageContainer) viewHolder.imagePreview.getTag()).cancelRequest();
+        Object tag = viewHolder.imagePreview.getTag();
+
+        if (tag != null && tag instanceof ImageLoader.ImageContainer) {
+            ((ImageLoader.ImageContainer) tag).cancelRequest();
         }
 
         viewHolder.webFull.onPause();

@@ -178,6 +178,7 @@ public class AdapterLinkGrid extends AdapterLink {
                 ((Request) tag).cancel();
             }
         }
+        // TODO: Add Request cancelling for AdapterLinkList as well (not this one)
 
         viewHolder.imagePlay.setVisibility(View.GONE);
         viewHolder.webFull.onPause();
