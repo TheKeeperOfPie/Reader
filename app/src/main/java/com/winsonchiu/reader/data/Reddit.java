@@ -39,13 +39,12 @@ import java.util.UUID;
 public class Reddit {
 
     // Constant values to represent Thing states
-    public enum Vote {
-        NOT_VOTED, UPVOTED, DOWNVOTED
-    }
     public enum Distinguished {
         NOT_DISTINGUISHED, MODERATOR, ADMIN, SPECIAL
     }
 
+    // TODO: Replace instances not using this constant
+    public static final String OAUTH_URL = "https://oauth.reddit.com";
     public static final String AUTHORIZATION = "Authorization";
     public static final String BEARER = "Bearer ";
     public static final String CONTENT_TYPE = "Content-Type";
@@ -95,6 +94,9 @@ public class Reddit {
     public static final String QUERY_DEVICE_ID = "device_id";
     public static final String QUERY_DURATION = "duration";
     public static final String QUERY_EXPIRES_IN = "expires_in";
+    public static final String QUERY_ID = "id";
+    public static final String QUERY_VOTE = "dir";
+    public static final String QUERY_MODHASH = "uh";
 
     private static Reddit reddit;
     private RequestQueue requestQueue;
@@ -203,6 +205,52 @@ public class Reddit {
         };
 
         return requestQueue.add(postRequest);
+    }
+
+
+    /**
+     * HTTP POST call to Reddit OAuth API
+     *  @param url
+     * @param listener
+     * @param errorListener
+     * @param iteration
+     */
+    public Request<String> loadPost(final String url, final Listener<String> listener, final ErrorListener errorListener, final Map<String, String> params, final int iteration) {
+
+        if (iteration > 2) {
+            errorListener.onErrorResponse(null);
+            return null;
+        }
+
+        if (needsToken()) {
+            fetchToken(new RedditErrorListener() {
+                @Override
+                public void onErrorHandled() {
+                    loadPost(url, listener, errorListener, params, iteration + 1);
+                }
+            });
+            return null;
+        }
+
+        StringRequest getRequest = new StringRequest(Request.Method.POST, url,
+                listener, errorListener) {
+
+            @Override
+            protected Map<String, String> getParams() throws AuthFailureError {
+                return params;
+            }
+
+            @Override
+            public Map<String, String> getHeaders() throws AuthFailureError {
+                HashMap<String, String> headers = new HashMap<>(3);
+                headers.put(USER_AGENT, CUSTOM_USER_AGENT);
+                headers.put(AUTHORIZATION, getAuthorizationHeader());
+                headers.put("Content-Type", "application/json; charset=utf-8");
+                return headers;
+            }
+        };
+
+        return requestQueue.add(getRequest);
     }
 
     /**

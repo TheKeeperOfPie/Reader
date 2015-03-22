@@ -21,7 +21,7 @@ public class Link extends Thing {
     private String domain;
     private boolean hidden;
     private boolean isSelf;
-    private Reddit.Vote likes;
+    private int likes;
     private String linkFlairCssClass;
     private String linkFlairText;
     private String media;
@@ -64,13 +64,13 @@ public class Link extends Thing {
 
         switch (jsonObject.getString("likes")) {
             case "null":
-                link.setLikes(Reddit.Vote.NOT_VOTED);
+                link.setLikes(0);
                 break;
             case "true":
-                link.setLikes(Reddit.Vote.UPVOTED);
+                link.setLikes(1);
                 break;
             case "false":
-                link.setLikes(Reddit.Vote.DOWNVOTED);
+                link.setLikes(-1);
                 break;
         }
 
@@ -208,11 +208,11 @@ public class Link extends Thing {
         this.isSelf = isSelf;
     }
 
-    public Reddit.Vote getLikes() {
+    public int isLikes() {
         return likes;
     }
 
-    public void setLikes(Reddit.Vote likes) {
+    public void setLikes(int likes) {
         this.likes = likes;
     }
 

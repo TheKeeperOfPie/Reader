@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     >
@@ -10,7 +11,6 @@
         android:layout_width="0dp"
         android:layout_height="match_parent"
         android:layout_alignParentStart="true"
-        android:layout_alignParentLeft="true"
         />
 
     <View
@@ -20,7 +20,6 @@
         android:layout_alignTop="@+id/text_comment"
         android:layout_alignBottom="@+id/text_info"
         android:layout_toEndOf="@id/view_indent"
-        android:layout_toRightOf="@id/view_indent"
         android:background="@color/colorPrimary"
         />
 
@@ -49,14 +48,17 @@
         android:paddingEnd="8dp"
         android:paddingRight="8dp"
         android:textSize="12sp"
+        android:gravity="end"
         />
 
-    <RelativeLayout
+    <LinearLayout
+        android:orientation="horizontal"
         android:id="@+id/layout_container_actions"
-        android:layout_width="match_parent"
+        android:layout_width="wrap_content"
         android:layout_height="48dp"
+        android:layout_alignStart="@id/view_indicator"
         android:layout_below="@id/text_info"
-        android:layout_toEndOf="@id/view_indent"
+        android:layout_alignParentBottom="true"
         android:layout_alignParentEnd="true"
         android:visibility="gone"
         >
@@ -65,54 +67,95 @@
             android:id="@+id/view_indicator_container"
             android:layout_width="8dp"
             android:layout_height="48dp"
-            android:layout_alignParentStart="true"
+            android:layout_margin="0dp"
+            android:padding="0dp"
             android:background="@color/colorPrimary"
             />
 
-        <ImageButton
-            android:id="@+id/button_upvote"
-            android:layout_width="wrap_content"
-            android:layout_height="match_parent"
-            android:layout_toStartOf="@+id/button_downvote"
-            android:contentDescription="@string/content_description_button_upvote"
-            android:background="@android:color/transparent"
-            android:src="@drawable/ic_keyboard_arrow_up_white_24dp"
-            android:padding="12dp"
+        <android.support.v7.widget.Toolbar
+            android:id="@+id/toolbar_actions"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:gravity="center_vertical"
+            android:visibility="gone"
+            app:popupTheme="?android:popupMenuStyle"
             />
 
-        <ImageButton
-            android:id="@+id/button_downvote"
-            android:layout_width="wrap_content"
-            android:layout_height="match_parent"
-            android:layout_toStartOf="@+id/button_share"
-            android:contentDescription="@string/content_description_button_downvote"
-            android:background="@android:color/transparent"
-            android:src="@drawable/ic_keyboard_arrow_down_white_24dp"
-            android:padding="12dp"
-            />
+    </LinearLayout>
 
-        <ImageButton
-            android:id="@+id/button_share"
-            android:layout_width="wrap_content"
-            android:layout_height="match_parent"
-            android:layout_toStartOf="@+id/button_more"
-            android:contentDescription="@string/content_description_button_share"
-            android:background="@android:color/transparent"
-            android:src="@drawable/ic_share_white_24dp"
-            android:padding="12dp"
-            />
+    <!--<RelativeLayout-->
+        <!--android:id="@+id/layout_container_actions"-->
+        <!--android:layout_width="match_parent"-->
+        <!--android:layout_height="48dp"-->
+        <!--android:layout_below="@id/text_info"-->
+        <!--android:layout_toEndOf="@id/view_indent"-->
+        <!--android:layout_alignParentEnd="true"-->
+        <!--android:visibility="gone"-->
+        <!-->-->
 
-        <ImageButton
-            android:id="@+id/button_more"
-            android:layout_width="wrap_content"
-            android:layout_height="match_parent"
-            android:layout_alignParentEnd="true"
-            android:contentDescription="@string/content_description_button_more"
-            android:background="@android:color/transparent"
-            android:src="@drawable/ic_more_vert_white_24dp"
-            android:padding="12dp"
-            />
+        <!--<View-->
+            <!--android:id="@+id/view_indicator_container"-->
+            <!--android:layout_width="8dp"-->
+            <!--android:layout_height="48dp"-->
+            <!--android:layout_alignParentStart="true"-->
+            <!--android:background="@color/colorPrimary"-->
+            <!--/>-->
 
-    </RelativeLayout>
+        <!--<ImageButton-->
+            <!--android:id="@+id/button_collapse"-->
+            <!--android:layout_width="wrap_content"-->
+            <!--android:layout_height="match_parent"-->
+            <!--android:layout_toStartOf="@+id/button_upvote"-->
+            <!--android:contentDescription="@string/content_description_button_collapse"-->
+            <!--android:background="@android:color/transparent"-->
+            <!--android:src="@drawable/ic_arrow_drop_up_white_24dp"-->
+            <!--android:padding="12dp"-->
+            <!--/>-->
+
+        <!--<ImageButton-->
+            <!--android:id="@+id/button_upvote"-->
+            <!--android:layout_width="wrap_content"-->
+            <!--android:layout_height="match_parent"-->
+            <!--android:layout_toStartOf="@+id/button_downvote"-->
+            <!--android:contentDescription="@string/content_description_button_upvote"-->
+            <!--android:background="@android:color/transparent"-->
+            <!--android:src="@drawable/ic_keyboard_arrow_up_white_24dp"-->
+            <!--android:padding="12dp"-->
+            <!--/>-->
+
+        <!--<ImageButton-->
+            <!--android:id="@+id/button_downvote"-->
+            <!--android:layout_width="wrap_content"-->
+            <!--android:layout_height="match_parent"-->
+            <!--android:layout_toStartOf="@+id/button_share"-->
+            <!--android:contentDescription="@string/content_description_button_downvote"-->
+            <!--android:background="@android:color/transparent"-->
+            <!--android:src="@drawable/ic_keyboard_arrow_down_white_24dp"-->
+            <!--android:padding="12dp"-->
+            <!--/>-->
+
+        <!--<ImageButton-->
+            <!--android:id="@+id/button_share"-->
+            <!--android:layout_width="wrap_content"-->
+            <!--android:layout_height="match_parent"-->
+            <!--android:layout_toStartOf="@+id/button_more"-->
+            <!--android:contentDescription="@string/content_description_button_share"-->
+            <!--android:background="@android:color/transparent"-->
+            <!--android:src="@drawable/ic_share_white_24dp"-->
+            <!--android:padding="12dp"-->
+            <!--/>-->
+
+        <!--<ImageButton-->
+            <!--android:id="@+id/button_more"-->
+            <!--android:layout_width="wrap_content"-->
+            <!--android:layout_height="match_parent"-->
+            <!--android:layout_alignParentEnd="true"-->
+            <!--android:contentDescription="@string/content_description_button_more"-->
+            <!--android:background="@android:color/transparent"-->
+            <!--android:src="@drawable/ic_more_vert_white_24dp"-->
+            <!--android:padding="12dp"-->
+            <!--/>-->
+
+    <!--</RelativeLayout>-->
 
 </RelativeLayout>

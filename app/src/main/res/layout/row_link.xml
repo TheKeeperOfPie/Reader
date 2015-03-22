@@ -48,6 +48,17 @@
         android:scaleType="centerCrop"
         />
 
+    <ImageView
+        android:id="@+id/image_play"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_alignTop="@id/image_preview"
+        android:layout_alignStart="@id/image_preview"
+        android:scaleType="centerInside"
+        android:src="@drawable/ic_play_circle_outline_white_48dp"
+        android:visibility="gone"
+        />
+
     <ProgressBar
         style="?android:attr/progressBarStyleLarge"
         android:id="@+id/progress_image"

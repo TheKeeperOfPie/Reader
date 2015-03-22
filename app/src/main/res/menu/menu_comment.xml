@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    >
+
+    <item
+        android:id="@+id/item_collapse"
+        android:title="@string/item_collapse"
+        android:icon="@drawable/ic_arrow_drop_up_white_24dp"
+        android:orderInCategory="100"
+        app:showAsAction="always"
+        />
+
+    <item
+        android:id="@+id/item_upvote"
+        android:title="@string/item_upvote"
+        android:icon="@drawable/ic_keyboard_arrow_up_white_24dp"
+        android:orderInCategory="200"
+        app:showAsAction="always"
+        />
+
+    <item
+        android:id="@+id/item_downvote"
+        android:title="@string/item_downvote"
+        android:icon="@drawable/ic_keyboard_arrow_down_white_24dp"
+        android:orderInCategory="300"
+        app:showAsAction="always"
+        />
+
+    <item
+        android:id="@+id/item_share"
+        android:title="@string/item_share"
+        android:icon="@drawable/ic_share_white_24dp"
+        android:orderInCategory="400"
+        app:showAsAction="always"
+        />
+
+</menu>

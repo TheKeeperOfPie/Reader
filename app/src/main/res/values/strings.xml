@@ -37,4 +37,9 @@
     <string name="content_description_button_more">More options</string>
     <string name="content_description_image_navigation">Navigation entry icon</string>
     <string name="content_description_image_navigation_header">Navigation header image</string>
+    <string name="content_description_button_collapse">Collapse/expand comment</string>
+    <string name="item_collapse">Collapse/expand comment</string>
+    <string name="item_upvote">Upvote</string>
+    <string name="item_downvote">Downvote</string>
+    <string name="item_share">Share</string>
 </resources>

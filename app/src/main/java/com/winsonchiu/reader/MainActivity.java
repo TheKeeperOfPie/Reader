@@ -79,6 +79,7 @@ public class MainActivity extends ActionBarActivity
     public void onNavigationDrawerItemSelected(int position, boolean force) {
         // TODO: update the main content by replacing fragments
         // TODO: Reimplement oldPosition check
+        getFragmentManager().popBackStackImmediate();
 //        if (oldPosition != position | force) {
             switch (position) {
                 case 0:

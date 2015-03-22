@@ -6,7 +6,6 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.v4.widget.SwipeRefreshLayout;
-import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.SearchView;
@@ -250,7 +249,8 @@ public class FragmentThreadList extends Fragment {
                             firstVisiblePositions[0] = ((LinearLayoutManager) layoutManager).findFirstCompletelyVisibleItemPosition();
                         }
                         else if (layoutManager instanceof StaggeredGridLayoutManager) {
-                            ((StaggeredGridLayoutManager) layoutManager).findFirstCompletelyVisibleItemPositions(firstVisiblePositions);
+                            ((StaggeredGridLayoutManager) layoutManager).findFirstCompletelyVisibleItemPositions(
+                                    firstVisiblePositions);
                         }
 
                         if (firstVisiblePositions[0] == 0) {
@@ -295,13 +295,8 @@ public class FragmentThreadList extends Fragment {
                         }
 
                         @Override
-                        public void notifyDataSetChanged() {
-                            adapterLink.notifyDataSetChanged();
-                        }
-
-                        @Override
-                        public void notifyItemRangeInserted(int positionStart, int itemCount) {
-                            adapterLink.notifyItemRangeInserted(positionStart, itemCount);
+                        public AdapterLink getAdapter() {
+                            return adapterLink;
                         }
 
                         @Override
@@ -341,7 +336,6 @@ public class FragmentThreadList extends Fragment {
         recyclerThreadList = (RecyclerView) view.findViewById(R.id.recycler_thread_list);
         recyclerThreadList.setScrollBarDefaultDelayBeforeFade(0);
         recyclerThreadList.setScrollBarFadeDuration(100);
-        recyclerThreadList.setItemAnimator(new DefaultItemAnimator());
         if (adapterLink.getItemDecoration() != null) {
             recyclerThreadList.addItemDecoration(adapterLink.getItemDecoration());
         }

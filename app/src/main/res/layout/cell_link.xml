@@ -80,6 +80,19 @@
         android:ellipsize="marquee"
         />
 
+    <TextView
+        android:id="@+id/text_thread_info"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/text_thread_title"
+        android:layout_alignStart="@id/text_thread_title"
+        android:layout_toStartOf="@+id/button_comments"
+        android:gravity="end"
+        android:textSize="12sp"
+        android:paddingBottom="8dp"
+        android:visibility="gone"
+        />
+
     <ImageButton
         android:id="@+id/button_comments"
         android:layout_width="56dp"

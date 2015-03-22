@@ -27,7 +27,7 @@ public class Comment extends Thing {
     private Reddit.Distinguished distinguished;
     private long edited;
     private int gilded;
-    private Reddit.Vote likes;
+    private int likes;
     private String linkId;
     private int numReports; // May be "null"
     private String parentId;
@@ -121,13 +121,13 @@ public class Comment extends Thing {
 
         switch (jsonObject.getString("likes")) {
             case "null":
-                comment.setLikes(Reddit.Vote.NOT_VOTED);
+                comment.setLikes(0);
                 break;
             case "true":
-                comment.setLikes(Reddit.Vote.UPVOTED);
+                comment.setLikes(1);
                 break;
             case "false":
-                comment.setLikes(Reddit.Vote.DOWNVOTED);
+                comment.setLikes(-1);
                 break;
         }
 
@@ -252,11 +252,11 @@ public class Comment extends Thing {
         this.gilded = gilded;
     }
 
-    public Reddit.Vote isLikes() {
+    public int isLikes() {
         return likes;
     }
 
-    public void setLikes(Reddit.Vote likes) {
+    public void setLikes(int likes) {
         this.likes = likes;
     }
 
