@@ -82,7 +82,7 @@ public class ControllerLinks extends Controller {
 
     private void setTitle() {
         String subredditName = "Front Page";
-        if (listingSubreddits.getChildren().size() == 1) {
+        if (listingSubreddits.getChildren().size() == 1 && !((Subreddit) listingSubreddits.getChildren().get(0)).getDisplayName().equals("")) {
             subredditName = "/r/" + ((Subreddit) listingSubreddits.getChildren().get(0)).getDisplayName();
         }
 
@@ -114,7 +114,7 @@ public class ControllerLinks extends Controller {
     public void loadFrontPage() {
         // TODO: Add support for more than 100 subscribed subreddits
 
-        String url = "https://oauth.reddit.com/" + "subreddits/mine/subscriber?limit=100&show=all";
+        String url = "https://oauth.reddit.com/";// + "subreddits/mine/subscriber?limit=100&show=all";
 
         reddit.loadGet(url, new Listener<String>() {
             @Override
@@ -139,13 +139,20 @@ public class ControllerLinks extends Controller {
     public void reloadAllLinks() {
         setLoading(true);
 
-        StringBuilder builder = new StringBuilder();
-        for (Thing thing : listingSubreddits.getChildren()) {
-            builder.append(((Subreddit) thing).getDisplayName());
-            builder.append("+");
+        String url = Reddit.OAUTH_URL + "/";
+
+        if (listingSubreddits.getChildren().size() > 0 && !((Subreddit) listingSubreddits.getChildren().get(0)).getDisplayName().equals("")) {
+
+            StringBuilder builder = new StringBuilder();
+            for (Thing thing : listingSubreddits.getChildren()) {
+                builder.append(((Subreddit) thing).getDisplayName());
+                builder.append("+");
+            }
+
+            url += "r/" + builder.toString()
+                    .substring(0, builder.length() - 1) + "/";
         }
 
-        String url = "https://oauth.reddit.com" + "/r/" + builder.toString().substring(0, builder.length() - 1) + "/";
         if (sort.contains("top")) {
             url += "top?t=" + sort.substring(0, sort.indexOf("top")) + "&";
         }
@@ -191,13 +198,20 @@ public class ControllerLinks extends Controller {
             return;
         }
         setLoading(true);
-        StringBuilder builder = new StringBuilder();
-        for (Thing thing : listingSubreddits.getChildren()) {
-            builder.append(((Subreddit) thing).getDisplayName());
-            builder.append("+");
+        String url = Reddit.OAUTH_URL + "/";
+
+        if (listingSubreddits.getChildren().size() > 0 && !((Subreddit) listingSubreddits.getChildren().get(0)).getDisplayName().equals("")) {
+
+            StringBuilder builder = new StringBuilder();
+            for (Thing thing : listingSubreddits.getChildren()) {
+                builder.append(((Subreddit) thing).getDisplayName());
+                builder.append("+");
+            }
+
+            url += "r/" + builder.toString()
+                    .substring(0, builder.length() - 1) + "/";
         }
 
-        String url = "https://oauth.reddit.com" + "/r/" + builder.toString().substring(0, builder.length() - 1) + "/";
         if (sort.contains("top")) {
             url += "top?t=" + sort.substring(0, sort.indexOf("top")) + "&";
         }

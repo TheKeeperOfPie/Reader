@@ -308,14 +308,8 @@ public class FragmentThreadList extends Fragment {
                         public int getRecyclerHeight() {
                             return recyclerThreadList.getHeight();
                         }
-                    }, "all", "hot");
-
-            if (TextUtils.isEmpty(preferences.getString(AppSettings.REFRESH_TOKEN, ""))) {
-                controllerLinks.reloadAllLinks();
-            }
-            else {
-                controllerLinks.loadFrontPage();
-            }
+                    }, TextUtils.isEmpty(preferences.getString(AppSettings.REFRESH_TOKEN, "")) ? "all" : "", "hot");
+            controllerLinks.reloadAllLinks();
 
         }
         controllerLinks.setActivity(activity);
