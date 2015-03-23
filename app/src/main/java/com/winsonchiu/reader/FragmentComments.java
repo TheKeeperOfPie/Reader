@@ -37,6 +37,7 @@ public class FragmentComments extends Fragment {
     private AdapterCommentList adapterCommentList;
     private SwipeRefreshLayout swipeRefreshCommentList;
     private ControllerComments controllerComments;
+    private ControllerComments.CommentClickListener listener;
 
     /**
      * Use this factory method to create a new instance of
@@ -75,22 +76,8 @@ public class FragmentComments extends Fragment {
 
         View view = inflater.inflate(R.layout.fragment_comments, container, false);
 
-        swipeRefreshCommentList = (SwipeRefreshLayout) view.findViewById(R.id.swipe_refresh_comment_list);
-        swipeRefreshCommentList.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
-            @Override
-            public void onRefresh() {
-                controllerComments.reloadAllComments();
-            }
-        });
 
-        linearLayoutManager = new LinearLayoutManager(activity);
-        recyclerCommentList = (RecyclerView) view.findViewById(R.id.recycler_comment_list);
-        recyclerCommentList.setHasFixedSize(true);
-        recyclerCommentList.setLayoutManager(linearLayoutManager);
-        recyclerCommentList.addItemDecoration(
-                new DividerItemDecoration(activity, DividerItemDecoration.VERTICAL_LIST));
-
-        controllerComments = new ControllerComments(activity, new ControllerComments.CommentClickListener() {
+        listener = new ControllerComments.CommentClickListener() {
             @Override
             public void loadUrl(String url) {
                 getFragmentManager().beginTransaction().add(R.id.frame_fragment, FragmentWeb
@@ -117,10 +104,27 @@ public class FragmentComments extends Fragment {
             public void requestDisallowInterceptTouchEvent(boolean disallow) {
                 recyclerCommentList.requestDisallowInterceptTouchEvent(disallow);
             }
-        }, subreddit, linkId);
+        };
+
+        controllerComments = mListener.getControllerComments();
+
+        swipeRefreshCommentList = (SwipeRefreshLayout) view.findViewById(R.id.swipe_refresh_comment_list);
+        swipeRefreshCommentList.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+            @Override
+            public void onRefresh() {
+                controllerComments.reloadAllComments();
+            }
+        });
+
+        linearLayoutManager = new LinearLayoutManager(activity);
+        recyclerCommentList = (RecyclerView) view.findViewById(R.id.recycler_comment_list);
+        recyclerCommentList.setHasFixedSize(true);
+        recyclerCommentList.setLayoutManager(linearLayoutManager);
+        recyclerCommentList.addItemDecoration(
+                new DividerItemDecoration(activity, DividerItemDecoration.VERTICAL_LIST));
 
         if (adapterCommentList == null) {
-            adapterCommentList = new AdapterCommentList(activity, controllerComments);
+            adapterCommentList = new AdapterCommentList(activity, controllerComments, listener);
         }
 
         recyclerCommentList.setAdapter(adapterCommentList);
@@ -164,8 +168,7 @@ public class FragmentComments extends Fragment {
      * >Communicating with Other Fragments</a> for more information.
      */
     public interface OnFragmentInteractionListener {
-        // TODO: Update argument type and name
-        public void onFragmentInteraction(Uri uri);
+        ControllerComments getControllerComments();
     }
 
 }

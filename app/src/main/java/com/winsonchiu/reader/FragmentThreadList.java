@@ -57,6 +57,7 @@ public class FragmentThreadList extends Fragment {
     private MenuItem itemInterface;
 
     private int spanCount = 2;
+    private ControllerLinks.LinkClickListener linkClickListener;
 
     /**
      * Use this factory method to create a new instance of
@@ -188,13 +189,13 @@ public class FragmentThreadList extends Fragment {
             case R.id.item_interface:
                 if (AppSettings.MODE_LIST.equals(
                         preferences.getString(AppSettings.INTERFACE_MODE, AppSettings.MODE_LIST))) {
-                    resetAdapter(new AdapterLinkGrid(activity, controllerLinks));
+                    resetAdapter(new AdapterLinkGrid(activity, controllerLinks, linkClickListener));
                     item.setIcon(getResources().getDrawable(R.drawable.ic_view_list_white_24dp));
                     preferences.edit().putString(AppSettings.INTERFACE_MODE, AppSettings.MODE_GRID)
                             .commit();
                 }
                 else {
-                    resetAdapter(new AdapterLinkList(activity, controllerLinks));
+                    resetAdapter(new AdapterLinkList(activity, controllerLinks, linkClickListener));
                     item.setIcon(getResources().getDrawable(R.drawable.ic_view_module_white_24dp));
                     preferences.edit().putString(AppSettings.INTERFACE_MODE, AppSettings.MODE_LIST).commit();
                 }
@@ -231,6 +232,52 @@ public class FragmentThreadList extends Fragment {
 
         View view = inflater.inflate(R.layout.fragment_thread_list, container, false);
 
+        linkClickListener = new ControllerLinks.LinkClickListener() {
+            @Override
+            public void onClickComments(Link link) {
+                getFragmentManager().beginTransaction().add(R.id.frame_fragment, FragmentComments
+                        .newInstance(link.getSubreddit(), link.getId()), "fragmentComments").addToBackStack(null)
+                        .commit();
+            }
+
+            @Override
+            public void loadUrl(String url) {
+                getFragmentManager().beginTransaction().add(R.id.frame_fragment, FragmentWeb
+                        .newInstance(url, ""), "fragmentWeb").addToBackStack(null)
+                        .commit();
+            }
+
+            @Override
+            public void onFullLoaded(int position) {
+                layoutManager.smoothScrollToPosition(recyclerThreadList, null, position);
+            }
+
+            @Override
+            public void setRefreshing(boolean refreshing) {
+                swipeRefreshThreadList.setRefreshing(refreshing);
+            }
+
+            @Override
+            public void setToolbarTitle(String title) {
+                mListener.setToolbarTitle(title);
+            }
+
+            @Override
+            public AdapterLink getAdapter() {
+                return adapterLink;
+            }
+
+            @Override
+            public void requestDisallowInterceptTouchEvent(boolean disallow) {
+                recyclerThreadList.requestDisallowInterceptTouchEvent(disallow);
+            }
+
+            @Override
+            public int getRecyclerHeight() {
+                return recyclerThreadList.getHeight();
+            }
+        };
+
         swipeRefreshThreadList = (SwipeRefreshLayout) view.findViewById(R.id.swipe_refresh_thread_list);
         swipeRefreshThreadList.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
@@ -263,54 +310,9 @@ public class FragmentThreadList extends Fragment {
                 });
 
         if (controllerLinks == null) {
-            controllerLinks = new ControllerLinks(activity,
-                    new ControllerLinks.LinkClickListener() {
-                        @Override
-                        public void onClickComments(Link link) {
-                            getFragmentManager().beginTransaction().add(R.id.frame_fragment, FragmentComments
-                                    .newInstance(link.getSubreddit(), link.getId()), "fragmentComments").addToBackStack(null)
-                                    .commit();
-                        }
-
-                        @Override
-                        public void loadUrl(String url) {
-                            getFragmentManager().beginTransaction().add(R.id.frame_fragment, FragmentWeb
-                                    .newInstance(url, ""), "fragmentWeb").addToBackStack(null)
-                                    .commit();
-                        }
-
-                        @Override
-                        public void onFullLoaded(int position) {
-                            layoutManager.smoothScrollToPosition(recyclerThreadList, null, position);
-                        }
-
-                        @Override
-                        public void setRefreshing(boolean refreshing) {
-                            swipeRefreshThreadList.setRefreshing(refreshing);
-                        }
-
-                        @Override
-                        public void setToolbarTitle(String title) {
-                            mListener.setToolbarTitle(title);
-                        }
-
-                        @Override
-                        public AdapterLink getAdapter() {
-                            return adapterLink;
-                        }
-
-                        @Override
-                        public void requestDisallowInterceptTouchEvent(boolean disallow) {
-                            recyclerThreadList.requestDisallowInterceptTouchEvent(disallow);
-                        }
-
-                        @Override
-                        public int getRecyclerHeight() {
-                            return recyclerThreadList.getHeight();
-                        }
-                    }, TextUtils.isEmpty(preferences.getString(AppSettings.REFRESH_TOKEN, "")) ? "all" : "", "hot");
+            controllerLinks = mListener.getControllerLinks();
+            controllerLinks.addListener(linkClickListener);
             controllerLinks.reloadAllLinks();
-
         }
         controllerLinks.setActivity(activity);
 
@@ -318,10 +320,10 @@ public class FragmentThreadList extends Fragment {
             if (AppSettings.MODE_LIST.equals(
                     PreferenceManager.getDefaultSharedPreferences(activity.getApplicationContext())
                             .getString(AppSettings.INTERFACE_MODE, AppSettings.MODE_LIST))) {
-                adapterLink = new AdapterLinkList(activity, controllerLinks);
+                adapterLink = new AdapterLinkList(activity, controllerLinks, linkClickListener);
             }
             else {
-                adapterLink = new AdapterLinkGrid(activity, controllerLinks);
+                adapterLink = new AdapterLinkGrid(activity, controllerLinks, linkClickListener);
             }
         }
         adapterLink.setActivity(activity);
@@ -369,6 +371,7 @@ public class FragmentThreadList extends Fragment {
 
     @Override
     public void onPause() {
+        controllerLinks.removeListener(linkClickListener);
         super.onPause();
     }
 
@@ -384,6 +387,7 @@ public class FragmentThreadList extends Fragment {
      */
     public interface OnFragmentInteractionListener {
         void setToolbarTitle(CharSequence title);
+        ControllerLinks getControllerLinks();
     }
 
 }

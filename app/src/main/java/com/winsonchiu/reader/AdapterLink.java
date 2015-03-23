@@ -49,6 +49,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
     protected ControllerLinks controllerLinks;
     protected int colorPositive;
     protected int colorNegative;
+    protected ControllerLinks.LinkClickListener listener;
 
     public void setActivity(Activity activity) {
         Resources resources = activity.getResources();
@@ -57,8 +58,9 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         this.colorNegative = resources.getColor(R.color.negativeScore);
     }
 
-    public void setControllerLinks(ControllerLinks controllerLinks) {
+    public void setControllerLinks(ControllerLinks controllerLinks, ControllerLinks.LinkClickListener listener) {
         this.controllerLinks = controllerLinks;
+        this.listener = listener;
     }
 
     public LayoutManager getLayoutManager() {
@@ -119,11 +121,11 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                     if (event.getAction() == MotionEvent.ACTION_DOWN) {
 
                         if ((webFull.canScrollVertically(1) && webFull.canScrollVertically(-1))) {
-                            controllerLinks.getListener()
+                            listener
                                     .requestDisallowInterceptTouchEvent(true);
                         }
                         else {
-                            controllerLinks.getListener()
+                            listener
                                     .requestDisallowInterceptTouchEvent(false);
                             if (webFull.getScrollY() == 0) {
                                 webFull.setScrollY(1);
@@ -134,7 +136,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                         }
                     }
                     else if (event.getAction() == MotionEvent.ACTION_UP) {
-                        controllerLinks.getListener()
+                        listener
                                 .requestDisallowInterceptTouchEvent(false);
                     }
 
@@ -167,7 +169,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             buttonComments.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    controllerLinks.getListener().onClickComments(controllerLinks.getLink(getPosition()));
+                    listener.onClickComments(controllerLinks.getLink(getPosition()));
                 }
             });
 
@@ -303,11 +305,11 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                         controllerLinks.getLink(getPosition())
                                 .getUrl()), "text/html", "UTF-8");
                 webFull.setVisibility(View.VISIBLE);
-                controllerLinks.getListener()
+                listener
                         .onFullLoaded(getPosition());
             }
             else {
-                controllerLinks.getListener().loadUrl(link.getUrl());
+                listener.loadUrl(link.getUrl());
             }
         }
 
@@ -327,11 +329,11 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
 
                                         viewPagerFull.setAdapter(
                                                 new AdapterAlbum(activity, album,
-                                                        controllerLinks.getListener()));
-                                        viewPagerFull.getLayoutParams().height = controllerLinks.getListener()
+                                                        listener));
+                                        viewPagerFull.getLayoutParams().height = listener
                                                 .getRecyclerHeight() - itemView.getHeight();
                                         viewPagerFull.setVisibility(View.VISIBLE);
-                                        controllerLinks.getListener()
+                                        listener
                                                 .onFullLoaded(getPosition());
                                     } catch (JSONException e) {
                                         e.printStackTrace();
@@ -391,7 +393,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                             videoFull.start();
                         }
                     });
-            controllerLinks.getListener()
+            listener
                     .onFullLoaded(getPosition());
         }
     }

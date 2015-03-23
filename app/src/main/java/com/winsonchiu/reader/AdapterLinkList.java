@@ -26,8 +26,8 @@ public class AdapterLinkList extends AdapterLink {
 
     private DividerItemDecoration itemDecoration;
 
-    public AdapterLinkList(Activity activity, ControllerLinks controllerLinks) {
-        setControllerLinks(controllerLinks);
+    public AdapterLinkList(Activity activity, ControllerLinks controllerLinks, ControllerLinks.LinkClickListener listener) {
+        setControllerLinks(controllerLinks, listener);
         setActivity(activity);
     }
 
@@ -137,7 +137,7 @@ public class AdapterLinkList extends AdapterLink {
 
                     if (link.isSelf()) {
                         if (TextUtils.isEmpty(link.getSelfText())) {
-                            controllerLinks.getListener().onClickComments(link);
+                            listener.onClickComments(link);
                         }
                         else {
                             String html = link.getSelfTextHtml();
@@ -147,8 +147,7 @@ public class AdapterLinkList extends AdapterLink {
                                     new Reddit.UrlClickListener() {
                                         @Override
                                         public void onUrlClick(String url) {
-                                            controllerLinks.getListener()
-                                                    .loadUrl(url);
+                                            listener.loadUrl(url);
                                         }
                                     }));
                         }

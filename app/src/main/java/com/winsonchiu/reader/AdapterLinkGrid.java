@@ -30,8 +30,8 @@ public class AdapterLinkGrid extends AdapterLink {
     private int defaultColor;
     private int thumbnailWidth;
 
-    public AdapterLinkGrid(Activity activity, ControllerLinks controllerLinks) {
-        setControllerLinks(controllerLinks);
+    public AdapterLinkGrid(Activity activity, ControllerLinks controllerLinks, ControllerLinks.LinkClickListener listener) {
+        setControllerLinks(controllerLinks, listener);
         setActivity(activity);
     }
 
@@ -170,7 +170,6 @@ public class AdapterLinkGrid extends AdapterLink {
                 ((Request) tag).cancel();
             }
         }
-        // TODO: Add Request cancelling for AdapterLinkList as well (not this one)
 
         viewHolder.itemView.setBackgroundColor(defaultColor);
         viewHolder.imagePlay.setVisibility(View.GONE);

@@ -57,6 +57,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
 
     private static final int VIEW_LINK = 0;
     private static final int VIEW_COMMENT = 1;
+    private final ControllerComments.CommentClickListener listener;
 
     private Activity activity;
     private ControllerComments controllerComments;
@@ -65,10 +66,11 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
     private Drawable drawableUpvote;
     private Drawable drawableDownvote;
 
-    public AdapterCommentList(Activity activity, ControllerComments controllerComments) {
+    public AdapterCommentList(Activity activity, ControllerComments controllerComments, ControllerComments.CommentClickListener listener) {
         // TODO: Add setActivity
         this.activity = activity;
         this.controllerComments = controllerComments;
+        this.listener = listener;
         Resources resources = activity.getResources();
         this.colorPositive = resources.getColor(R.color.positiveScore);
         this.colorNegative = resources.getColor(R.color.negativeScore);
@@ -186,7 +188,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
         int flags = strBuilder.getSpanFlags(span);
         ClickableSpan clickable = new ClickableSpan() {
             public void onClick(View view) {
-                controllerComments.getListener().loadUrl(span.getURL());
+                listener.loadUrl(span.getURL());
             }
         };
         strBuilder.setSpan(clickable, start, end, flags);
@@ -266,11 +268,11 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                     if (event.getAction() == MotionEvent.ACTION_DOWN) {
 
                         if ((webFull.canScrollVertically(1) && webFull.canScrollVertically(-1))) {
-                            controllerComments.getListener()
+                            listener
                                     .requestDisallowInterceptTouchEvent(true);
                         }
                         else {
-                            controllerComments.getListener()
+                            listener
                                     .requestDisallowInterceptTouchEvent(false);
                             if (webFull.getScrollY() == 0) {
                                 webFull.setScrollY(1);
@@ -281,7 +283,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                         }
                     }
                     else if (event.getAction() == MotionEvent.ACTION_UP) {
-                        controllerComments.getListener()
+                        listener
                                 .requestDisallowInterceptTouchEvent(false);
                     }
 
@@ -327,8 +329,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                                 new Reddit.UrlClickListener() {
                                     @Override
                                     public void onUrlClick(String url) {
-                                        controllerComments.getListener()
-                                                .loadUrl(url);
+                                        listener.loadUrl(url);
                                     }
                                 }));
                     }
@@ -472,7 +473,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                 webFull.setVisibility(View.VISIBLE);
             }
             else {
-                controllerComments.getListener().loadUrl(link.getUrl());
+                listener.loadUrl(link.getUrl());
             }
         }
 
@@ -492,8 +493,8 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
 
                                         viewPagerFull.setAdapter(
                                                 new AdapterAlbum(activity, album,
-                                                        controllerComments.getListener()));
-                                        viewPagerFull.getLayoutParams().height = controllerComments.getListener()
+                                                        listener));
+                                        viewPagerFull.getLayoutParams().height = listener
                                                 .getRecyclerHeight() - itemView.getHeight();
                                         viewPagerFull.setVisibility(View.VISIBLE);
                                     } catch (JSONException e) {

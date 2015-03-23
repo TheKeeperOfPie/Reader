@@ -15,6 +15,7 @@ import android.view.View;
 import android.widget.Toast;
 
 import com.crashlytics.android.Crashlytics;
+import com.winsonchiu.reader.data.Link;
 
 import io.fabric.sdk.android.Fabric;
 
@@ -38,12 +39,17 @@ public class MainActivity extends ActionBarActivity
     private CharSequence mTitle;
     private int oldPosition = -1;
     private Toolbar toolbar;
+    private ControllerLinks controllerLinks;
+    private ControllerComments controllerComments;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         Fabric.with(this, new Crashlytics());
         setContentView(R.layout.activity_main);
+
+        controllerLinks = new ControllerLinks(this, "", "hot");
+        controllerComments = new ControllerComments(this, "", "");
 
         mNavigationDrawerFragment = (FragmentNavDrawer)
                 getFragmentManager().findFragmentById(R.id.navigation_drawer);
@@ -154,6 +160,16 @@ public class MainActivity extends ActionBarActivity
     public void setToolbarTitle(CharSequence title) {
         mTitle = title;
         toolbar.setTitle(mTitle);
+    }
+
+    @Override
+    public ControllerLinks getControllerLinks() {
+        return controllerLinks;
+    }
+
+    @Override
+    public ControllerComments getControllerComments() {
+        return controllerComments;
     }
 
     @Override

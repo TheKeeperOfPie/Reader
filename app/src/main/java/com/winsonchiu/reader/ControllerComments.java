@@ -40,8 +40,7 @@ public class ControllerComments extends Controller{
     private static final String TAG = ControllerComments.class.getCanonicalName();
 
     private Activity activity;
-    private SharedPreferences preferences;
-    private CommentClickListener listener;
+    private List<CommentClickListener> listeners;
     private Link link;
     private Listing listingComments;
     private String subreddit;
@@ -51,20 +50,28 @@ public class ControllerComments extends Controller{
     private Drawable drawableDefault;
     private Reddit reddit;
 
-    public ControllerComments(Activity activity, CommentClickListener listener, String subreddit, String linkId) {
-
+    public ControllerComments(Activity activity, String subreddit, String linkId) {
         this.activity = activity;
-        this.preferences = PreferenceManager.getDefaultSharedPreferences(
-                activity.getApplicationContext());
         this.reddit = Reddit.getInstance(activity);
-        this.listener = listener;
+        this.listeners = new ArrayList<>();
         this.indentWidth = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 8, activity.getResources().getDisplayMetrics());
         this.subreddit = subreddit;
         this.linkId = linkId;
         Resources resources = activity.getResources();
         this.drawableSelf = resources.getDrawable(R.drawable.ic_chat_white_48dp);
         this.drawableDefault = resources.getDrawable(R.drawable.ic_web_white_48dp);
-        reloadAllComments();
+    }
+
+    public void setActivity(Activity activity) {
+        this.activity = activity;
+    }
+
+    public void addListener(CommentClickListener listener) {
+        listeners.add(listener);
+    }
+
+    public void removeListener(CommentClickListener listener) {
+        listeners.remove(listener);
     }
 
     public void setLink(Link link) {
@@ -74,17 +81,25 @@ public class ControllerComments extends Controller{
         this.link = link;
         this.subreddit = link.getSubreddit();
         this.linkId = link.getId();
-        listener.getAdapter().notifyDataSetChanged();
+        for (CommentClickListener listener : listeners) {
+            listener.getAdapter().notifyDataSetChanged();
+        }
     }
 
     public void reloadAllComments() {
+        if (TextUtils.isEmpty(linkId)) {
+            return;
+        }
+
         reddit.loadGet("https://oauth.reddit.com" + "/r/" + subreddit + "/comments/" + linkId,
                 new Listener<String>() {
                     @Override
                     public void onResponse(String response) {
                         try {
                             setLink(Link.fromJson(new JSONArray(response)));
-                            listener.setRefreshing(false);
+                            for (CommentClickListener listener : listeners) {
+                                listener.setRefreshing(false);
+                            }
                         }
                         catch (JSONException e1) {
                             e1.printStackTrace();
@@ -143,31 +158,22 @@ public class ControllerComments extends Controller{
     private void expandComment(int position) {
         List<Thing> commentList = link.getComments().getChildren();
         int index = commentList.indexOf(listingComments.getChildren().get(position));
-        Log.d(TAG, "index: " + index);
         if (index < 0) {
             return;
         }
         List<Comment> commentsToInsert = new LinkedList<>();
         Comment comment = (Comment) commentList.get(index);
         while (++index < commentList.size() && ((Comment) commentList.get(index)).getLevel() != comment.getLevel()) {
-
-//            Comment next = (Comment) commentList.get(index);
-//            Log.d(TAG, "next: " + next.getBody());
-//            if (next.getLevel() == comment.getLevel()) {
-//                break;
-//            }
-
             commentsToInsert.add((Comment) commentList.get(index));
-            Log.d(TAG, "add: " + index);
         }
-        Log.d(TAG, "index: " + index);
-        Log.d(TAG, "commentsToInsert: " + commentsToInsert);
 
         for (int insertIndex = commentsToInsert.size() - 1; insertIndex >= 0; insertIndex--) {
             listingComments.getChildren().add(position + 1, commentsToInsert.get(insertIndex));
         }
 
-        listener.getAdapter().notifyDataSetChanged();
+        for (CommentClickListener listener : listeners) {
+            listener.getAdapter().notifyDataSetChanged();
+        }
     }
 
     private void collapseComment(int position) {
@@ -178,7 +184,9 @@ public class ControllerComments extends Controller{
         while (position < commentList.size() && ((Comment) commentList.get(position)).getLevel() != comment.getLevel()) {
             commentList.remove(position);
         }
-        listener.getAdapter().notifyDataSetChanged();
+        for (CommentClickListener listener : listeners) {
+            listener.getAdapter().notifyDataSetChanged();
+        }
     }
 
 
@@ -284,10 +292,6 @@ public class ControllerComments extends Controller{
         ObjectAnimator objectAnimator = ObjectAnimator.ofFloat(view, "alpha", start, end);
         objectAnimator.setDuration(ALPHA_DURATION);
         objectAnimator.start();
-    }
-
-    public CommentClickListener getListener() {
-        return listener;
     }
 
     public interface CommentClickListener extends DisallowListener {
