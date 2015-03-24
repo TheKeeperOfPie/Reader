@@ -172,17 +172,6 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                     listener.onClickComments(controllerLinks.getLink(getPosition()));
                 }
             });
-
-            clickListenerLink = new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    setVoteColors();
-                    AnimationUtils.animateExpandActions(layoutContainerActions, false);
-                }
-            };
-            textThreadTitle.setOnClickListener(clickListenerLink);
-            textThreadInfo.setOnClickListener(clickListenerLink);
-            this.itemView.setOnClickListener(clickListenerLink);
         }
 
         public void loadFull(Link link ) {

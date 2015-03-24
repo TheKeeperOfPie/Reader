@@ -8,8 +8,11 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.Animation;
 import android.view.animation.DecelerateInterpolator;
+import android.view.animation.ScaleAnimation;
 import android.view.animation.Transformation;
+import android.widget.TextView;
 
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -18,9 +21,9 @@ import java.util.List;
  */
 public class AnimationUtils {
 
-    private static final long EXPAND_ACTION_DURATION = 150;
-    private static final long ALPHA_DURATION = 500;
-    private static final long BACKGROUND_DURATION = 500;
+    public static final long EXPAND_ACTION_DURATION = 150;
+    public static final long ALPHA_DURATION = 500;
+    public static final long BACKGROUND_DURATION = 500;
 
     public static void animateBackgroundColor(final View view, int start, int end) {
 
@@ -54,6 +57,7 @@ public class AnimationUtils {
         objectAnimator.setDuration(ALPHA_DURATION);
         objectAnimator.start();
     }
+
 
     public static void animateExpandActions(final ViewGroup viewGroup, boolean skipFirst) {
 
@@ -131,4 +135,61 @@ public class AnimationUtils {
         viewGroup.requestLayout();
     }
 
+    public static void animateExpand(final View view) {
+
+        final int height = view.getMeasuredHeight();
+
+        Animation animation;
+        if (view.getVisibility() == View.VISIBLE) {
+            animation = new Animation() {
+                @Override
+                protected void applyTransformation(float interpolatedTime, Transformation t) {
+                    view.getLayoutParams().height = (int) (height * (1.0f - interpolatedTime));
+                    view.requestLayout();
+                }
+
+                @Override
+                public boolean willChangeBounds() {
+                    return true;
+                }
+            };
+            animation.setAnimationListener(new Animation.AnimationListener() {
+                @Override
+                public void onAnimationStart(Animation animation) {
+
+                }
+
+                @Override
+                public void onAnimationEnd(Animation animation) {
+                    view.setVisibility(View.GONE);
+                }
+
+                @Override
+                public void onAnimationRepeat(Animation animation) {
+
+                }
+            });
+        }
+        else {
+            animation = new Animation() {
+                @Override
+                protected void applyTransformation(float interpolatedTime, Transformation t) {
+                    view.getLayoutParams().height = (int) (interpolatedTime * height);
+                    view.requestLayout();
+                }
+
+                @Override
+                public boolean willChangeBounds() {
+                    return true;
+                }
+            };
+            view.getLayoutParams().height = 0;
+            view.requestLayout();
+            view.setVisibility(View.VISIBLE);
+        }
+        animation.setDuration(EXPAND_ACTION_DURATION);
+        animation.setInterpolator(new DecelerateInterpolator());
+        view.startAnimation(animation);
+        view.requestLayout();
+    }
 }

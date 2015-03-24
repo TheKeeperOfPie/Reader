@@ -129,6 +129,18 @@ public class AdapterLinkList extends AdapterLink {
         public ViewHolder(View itemView) {
             super(itemView);
 
+            View.OnClickListener clickListenerLink = new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    setVoteColors();
+                    AnimationUtils.animateExpandActions(layoutContainerActions, false);
+                }
+            };
+            textThreadTitle.setOnClickListener(clickListenerLink);
+            textThreadInfo.setOnClickListener(clickListenerLink);
+            this.itemView.setOnClickListener(clickListenerLink);
+
+
             this.imagePreview.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {

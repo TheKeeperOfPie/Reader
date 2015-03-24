@@ -11,6 +11,9 @@ import android.support.v7.widget.StaggeredGridLayoutManager;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.Animation;
+import android.view.animation.DecelerateInterpolator;
+import android.view.animation.ScaleAnimation;
 
 import com.android.volley.Request;
 import com.android.volley.VolleyError;
@@ -67,7 +70,6 @@ public class AdapterLinkGrid extends AdapterLink {
         }
 
         final Link link = controllerLinks.getLink(position);
-        ((StaggeredGridLayoutManager.LayoutParams) viewHolder.itemView.getLayoutParams()).setFullSpan(false);
 
         Drawable drawable = controllerLinks.getDrawableForLink(link);
         if (drawable == null && showThumbnail(link)) {
@@ -90,8 +92,8 @@ public class AdapterLinkGrid extends AdapterLink {
                                                 AnimationUtils.animateBackgroundColor(
                                                         viewHolder.itemView,
                                                         ((ColorDrawable) viewHolder.itemView.getBackground()).getColor(),
-                                                        palette.getVibrantColor(
-                                                                palette.getDarkVibrantColor(
+                                                        palette.getDarkVibrantColor(
+                                                                palette.getMutedColor(
                                                                         defaultColor)));
                                             }
                                         }
@@ -147,6 +149,7 @@ public class AdapterLinkGrid extends AdapterLink {
         viewHolder.imagePreview.invalidate();
 
         viewHolder.textThreadTitle.setText(link.getTitle());
+        viewHolder.setTextInfo();
         viewHolder.layoutContainerActions.setVisibility(View.GONE);
     }
 
@@ -171,11 +174,13 @@ public class AdapterLinkGrid extends AdapterLink {
             }
         }
 
+        ((StaggeredGridLayoutManager.LayoutParams) viewHolder.itemView.getLayoutParams()).setFullSpan(
+                false);
         viewHolder.itemView.setBackgroundColor(defaultColor);
         viewHolder.imagePlay.setVisibility(View.GONE);
         viewHolder.webFull.onPause();
         viewHolder.webFull.resetMaxHeight();
-        viewHolder.webFull.loadUrl("about:blank");
+        viewHolder.webFull.loadData("", "html", "UTF-8");
         viewHolder.webFull.setVisibility(View.GONE);
         viewHolder.videoFull.stopPlayback();
         viewHolder.videoFull.setVisibility(View.GONE);
@@ -196,6 +201,16 @@ public class AdapterLinkGrid extends AdapterLink {
 
         public ViewHolder(View itemView) {
             super(itemView);
+
+            View.OnClickListener clickListenerLink = new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    AnimationUtils.animateExpandActions(layoutContainerActions, false);
+                }
+            };
+            textThreadTitle.setOnClickListener(clickListenerLink);
+            textThreadInfo.setOnClickListener(clickListenerLink);
+            this.itemView.setOnClickListener(clickListenerLink);
 
             this.imagePreview.setOnClickListener(new View.OnClickListener() {
                 @Override
