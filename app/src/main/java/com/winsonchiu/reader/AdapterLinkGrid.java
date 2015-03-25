@@ -69,6 +69,8 @@ public class AdapterLinkGrid extends AdapterLink {
             controllerLinks.loadMoreLinks();
         }
 
+        ((StaggeredGridLayoutManager.LayoutParams) viewHolder.itemView.getLayoutParams()).setFullSpan(false);
+
         final Link link = controllerLinks.getLink(position);
 
         Drawable drawable = controllerLinks.getDrawableForLink(link);
@@ -149,7 +151,7 @@ public class AdapterLinkGrid extends AdapterLink {
         viewHolder.imagePreview.invalidate();
 
         viewHolder.textThreadTitle.setText(link.getTitle());
-        viewHolder.setTextInfo();
+//        viewHolder.setTextInfo();
         viewHolder.layoutContainerActions.setVisibility(View.GONE);
     }
 
@@ -174,8 +176,6 @@ public class AdapterLinkGrid extends AdapterLink {
             }
         }
 
-        ((StaggeredGridLayoutManager.LayoutParams) viewHolder.itemView.getLayoutParams()).setFullSpan(
-                false);
         viewHolder.itemView.setBackgroundColor(defaultColor);
         viewHolder.imagePlay.setVisibility(View.GONE);
         viewHolder.webFull.onPause();

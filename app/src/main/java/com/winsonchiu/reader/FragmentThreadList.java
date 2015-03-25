@@ -243,7 +243,7 @@ public class FragmentThreadList extends Fragment {
             @Override
             public void loadUrl(String url) {
                 getFragmentManager().beginTransaction().add(R.id.frame_fragment, FragmentWeb
-                        .newInstance(url, ""), "fragmentWeb").addToBackStack(null)
+                        .newInstance(url, ""), FragmentWeb.TAG).addToBackStack(null)
                         .commit();
             }
 
@@ -311,7 +311,6 @@ public class FragmentThreadList extends Fragment {
 
         if (controllerLinks == null) {
             controllerLinks = mListener.getControllerLinks();
-            controllerLinks.addListener(linkClickListener);
             controllerLinks.reloadAllLinks();
         }
         controllerLinks.setActivity(activity);
@@ -363,16 +362,17 @@ public class FragmentThreadList extends Fragment {
         super.onDetach();
     }
 
+
     @Override
-    public void onResume() {
-        super.onResume();
-        controllerLinks.setLoading(false);
+    public void onStart() {
+        super.onStart();
+        controllerLinks.addListener(linkClickListener);
     }
 
     @Override
-    public void onPause() {
+    public void onStop() {
         controllerLinks.removeListener(linkClickListener);
-        super.onPause();
+        super.onStop();
     }
 
     /**

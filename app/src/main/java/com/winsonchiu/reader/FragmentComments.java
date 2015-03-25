@@ -76,12 +76,11 @@ public class FragmentComments extends Fragment {
 
         View view = inflater.inflate(R.layout.fragment_comments, container, false);
 
-
         listener = new ControllerComments.CommentClickListener() {
             @Override
             public void loadUrl(String url) {
                 getFragmentManager().beginTransaction().add(R.id.frame_fragment, FragmentWeb
-                        .newInstance(url, ""), "fragmentWeb").addToBackStack(null)
+                        .newInstance(url, ""), FragmentWeb.TAG).addToBackStack(null)
                         .commit();
             }
 
@@ -104,9 +103,7 @@ public class FragmentComments extends Fragment {
             public void requestDisallowInterceptTouchEvent(boolean disallow) {
                 recyclerCommentList.requestDisallowInterceptTouchEvent(disallow);
             }
-        };
-
-        controllerComments = mListener.getControllerComments();
+        };;
 
         swipeRefreshCommentList = (SwipeRefreshLayout) view.findViewById(R.id.swipe_refresh_comment_list);
         swipeRefreshCommentList.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
@@ -123,6 +120,9 @@ public class FragmentComments extends Fragment {
         recyclerCommentList.addItemDecoration(
                 new DividerItemDecoration(activity, DividerItemDecoration.VERTICAL_LIST));
 
+        controllerComments = mListener.getControllerComments();
+        controllerComments.clear();
+
         if (adapterCommentList == null) {
             adapterCommentList = new AdapterCommentList(activity, controllerComments, listener);
         }
@@ -135,6 +135,20 @@ public class FragmentComments extends Fragment {
     @Override
     public void onPause() {
         super.onPause();
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+        controllerComments.addListener(listener);
+        controllerComments.setLinkId(subreddit, linkId);
+//        listener.getAdapter().notifyDataSetChanged();
+    }
+
+    @Override
+    public void onStop() {
+        controllerComments.removeListener(listener);
+        super.onStop();
     }
 
     @Override

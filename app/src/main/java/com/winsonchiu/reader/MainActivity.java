@@ -141,7 +141,7 @@ public class MainActivity extends ActionBarActivity
     @Override
     public void onBackPressed() {
         if (getFragmentManager().getBackStackEntryCount() > 0) {
-            FragmentWeb fragmentWeb = (FragmentWeb) getFragmentManager().findFragmentByTag("fragmentWeb");
+            FragmentWeb fragmentWeb = (FragmentWeb) getFragmentManager().findFragmentByTag(FragmentWeb.TAG);
 
             if (fragmentWeb != null && fragmentWeb.navigateBack()) {
                 return;

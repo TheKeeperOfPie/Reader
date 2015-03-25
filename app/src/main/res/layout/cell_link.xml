@@ -64,19 +64,6 @@
             android:indeterminate="true"
             />
 
-        <com.winsonchiu.reader.TextViewShadow
-            android:id="@+id/text_thread_info"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="bottom|end"
-            android:gravity="end"
-            android:textSize="12sp"
-            android:padding="@dimen/activity_horizontal_margin"
-            android:paddingBottom="8dp"
-            android:shadowColor="@android:color/black"
-            android:shadowRadius="3"
-            />
-
     </FrameLayout>
 
     <TextView
@@ -91,6 +78,19 @@
         android:paddingBottom="16dp"
         android:textSize="14sp"
         android:ellipsize="marquee"
+        />
+
+    <com.winsonchiu.reader.TextViewShadow
+        android:id="@+id/text_thread_info"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/text_thread_title"
+        android:gravity="end"
+        android:textSize="12sp"
+        android:padding="@dimen/activity_horizontal_margin"
+        android:paddingBottom="8dp"
+        android:shadowColor="@android:color/black"
+        android:shadowRadius="3"
         />
 
     <ImageButton

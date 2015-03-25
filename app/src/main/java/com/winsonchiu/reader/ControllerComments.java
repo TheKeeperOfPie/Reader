@@ -25,6 +25,7 @@ import com.winsonchiu.reader.data.Thing;
 
 import org.json.JSONArray;
 import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -86,6 +87,12 @@ public class ControllerComments extends Controller{
         }
     }
 
+    public void setLinkId(String subreddit, String linkId) {
+        this.subreddit = subreddit;
+        this.linkId = linkId;
+        reloadAllComments();
+    }
+
     public void reloadAllComments() {
         if (TextUtils.isEmpty(linkId)) {
             return;
@@ -100,8 +107,7 @@ public class ControllerComments extends Controller{
                             for (CommentClickListener listener : listeners) {
                                 listener.setRefreshing(false);
                             }
-                        }
-                        catch (JSONException e1) {
+                        } catch (JSONException e1) {
                             e1.printStackTrace();
                         }
                     }
@@ -133,6 +139,56 @@ public class ControllerComments extends Controller{
 
     public Listing getListingComments() {
         return link == null ? new Listing() : listingComments;
+    }
+
+    public void loadMoreComments(final Comment comment) {
+
+        String url = Reddit.OAUTH_URL + "/api/morechildren?link_id=" + link.getName() + "&children=";
+
+        for (String id : comment.getChildren()) {
+            url += id + ",";
+        }
+
+        url = url.substring(0, url.length() - 4);
+
+        reddit.loadGet(url,
+                new Listener<String>() {
+                    @Override
+                    public void onResponse(String response) {
+                        try {
+                            Log.d(TAG, "Response: " + response);
+                            insertComments(comment, Listing.fromJson(new JSONObject(response)));
+                            for (CommentClickListener listener : listeners) {
+                                listener.setRefreshing(false);
+                            }
+                        } catch (JSONException e1) {
+                            e1.printStackTrace();
+                        }
+                    }
+                }, new ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        Log.d(TAG, "error" + error.toString());
+                    }
+                }, 0);
+    }
+
+    public void insertComments(Comment parent, Listing listing) {
+
+        List<Thing> listComments = listing.getChildren();
+        int commentIndex = listingComments.getChildren().indexOf(parent);
+        if (commentIndex > 0) {
+            listingComments.getChildren().remove(commentIndex);
+            for (int index = listComments.size() - 1; index >= 0; index++) {
+                Comment comment = (Comment) listComments.get(index);
+                comment.setLevel(comment.getLevel() + parent.getLevel());
+                listingComments.getChildren().add(commentIndex, comment);
+            }
+        }
+        for (CommentClickListener listener : listeners) {
+            listener.getAdapter().notifyDataSetChanged();
+        }
+
     }
 
     public void toggleComment(int position) {
@@ -292,6 +348,28 @@ public class ControllerComments extends Controller{
         ObjectAnimator objectAnimator = ObjectAnimator.ofFloat(view, "alpha", start, end);
         objectAnimator.setDuration(ALPHA_DURATION);
         objectAnimator.start();
+    }
+
+    public void clear() {
+        listingComments = new Listing();
+        link = new Link();
+    }
+
+    public int getItemCount() {
+        if (link == null || listingComments == null || TextUtils.isEmpty(link.getId())) {
+            return 0;
+        }
+
+        if (listingComments.getChildren().isEmpty()) {
+            return 1;
+        }
+
+        return listingComments.getChildren().size() + 1;
+    }
+
+
+    public Comment get(int position) {
+        return (Comment) listingComments.getChildren().get(position);
     }
 
     public interface CommentClickListener extends DisallowListener {

@@ -1,11 +1,14 @@
 package com.winsonchiu.reader.data;
 
 import android.text.TextUtils;
+import android.util.Log;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 
 /**
@@ -41,6 +44,7 @@ public class Comment extends Thing {
     private String linkAuthor;
     private String linkTitle;
     private String linkUrl;
+    private List<String> children;
 
     private int level;
     private boolean isMore;
@@ -77,6 +81,12 @@ public class Comment extends Thing {
 
         if (comment.getKind().equals("more")) {
             comment.setIsMore(true);
+            List<String> children = new LinkedList<>();
+            JSONArray childrenArray = jsonObject.getJSONArray("children");
+            for (int index = 0; index < childrenArray.length(); index++) {
+                children.add(childrenArray.getString(index));
+            }
+            comment.setChildren(children);
             return comment;
         }
 
@@ -370,5 +380,13 @@ public class Comment extends Thing {
 
     public void setLevel(int level) {
         this.level = level;
+    }
+
+    public List<String> getChildren() {
+        return children;
+    }
+
+    public void setChildren(List<String> children) {
+        this.children = children;
     }
 }

@@ -147,7 +147,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
 
             ViewHolderComment viewHolderComment = (ViewHolderComment) holder;
 
-            Comment comment = (Comment) controllerComments.getListingComments().getChildren().get(position - 1);
+            Comment comment = controllerComments.get(position - 1);
 
             viewHolderComment.layoutContainerActions.setVisibility(View.GONE);
             viewHolderComment.toolbarActions.setVisibility(View.GONE);
@@ -179,7 +179,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
 
     @Override
     public int getItemCount() {
-        return controllerComments.getLink() == null ? 0 : controllerComments.getListingComments().getChildren().size() + 1;
+        return controllerComments.getItemCount();
     }
 
     private void makeLinkClickable(SpannableStringBuilder strBuilder, final URLSpan span) {
@@ -608,6 +608,13 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
             clickListenerLink = new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
+                    Comment comment = controllerComments.get(getPosition() - 1);
+                    if (comment.isMore()) {
+                        Log.d(TAG, "loadMoreComments");
+                        controllerComments.loadMoreComments(comment);
+                        return;
+                    }
+
                     setVoteColors();
                     AnimationUtils.animateExpandActions(layoutContainerActions, true);
                     AnimationUtils.animateExpandActions(toolbarActions, false);
