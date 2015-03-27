@@ -10,6 +10,7 @@ import android.widget.TextView;
 /**
  * Created by TheKeeperOfPie on 3/24/2015.
  */
+
 public class TextViewShadow extends TextView {
 
     private static final int NUM_TO_DRAW = 5;

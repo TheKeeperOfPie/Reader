@@ -249,7 +249,7 @@ public class FragmentThreadList extends Fragment {
 
             @Override
             public void onFullLoaded(int position) {
-                layoutManager.smoothScrollToPosition(recyclerThreadList, null, position);
+//                layoutManager.scrollToPosition(position);
             }
 
             @Override

@@ -146,21 +146,38 @@ public class ControllerComments extends Controller{
 
         String url = Reddit.OAUTH_URL + "/api/morechildren";
 
+
         String children = "";
-        for (String id : comment.getChildren()) {
+        List<String> childrenList = comment.getChildren();
+        Log.d(TAG, "childrenList: " + childrenList.toString());
+        if (childrenList.isEmpty()) {
+            int commentIndex = listingComments.getChildren().indexOf(comment);
+            if (commentIndex >= 0) {
+                listingComments.getChildren()
+                        .remove(commentIndex);
+                for (CommentClickListener listener : listeners) {
+                    listener.getAdapter().notifyItemRemoved(commentIndex + 1);
+                }
+            }
+            return;
+        }
+        for (String id : childrenList) {
             children += id + ",";
         }
 
-        Map<String, String> params = new HashMap<>();
+        HashMap<String, String> params = new HashMap<>();
         params.put("link_id", link.getName());
         params.put("children", children.substring(0, children.length() - 1));
         params.put("api_type", "json");
+
+        Log.d(TAG, "params: " + params.toString());
 
         reddit.loadPost(url,
                 new Listener<String>() {
                     @Override
                     public void onResponse(String response) {
                         try {
+                            Log.d(TAG, "moreComments response: " + response);
                             JSONArray jsonArray = new JSONObject(response).getJSONObject("json").getJSONObject("data").getJSONArray("things");
 
                             Listing listing = new Listing();
@@ -170,9 +187,24 @@ public class ControllerComments extends Controller{
                             for (int index = 0; index < jsonArray.length(); index++) {
                                 Comment.addAllFromJson(comments, jsonArray.getJSONObject(index), comment.getLevel());
                             }
-                            things.addAll(comments);
-                            listing.setChildren(things);
-                            insertComments(comment, listing);
+                            if (comments.isEmpty()) {
+                                int commentIndex = link.getComments().getChildren().indexOf(comment);
+                                if (commentIndex >= 0) {
+                                    link.getComments().getChildren().remove(commentIndex);
+                                }
+                                commentIndex = listingComments.getChildren().indexOf(comment);
+                                if (commentIndex >= 0) {
+                                    listingComments.getChildren().remove(commentIndex);
+                                    for (CommentClickListener listener : listeners) {
+                                        listener.getAdapter().notifyItemRemoved(commentIndex + 1);
+                                    }
+                                }
+                            }
+                            else {
+                                things.addAll(comments);
+                                listing.setChildren(things);
+                                insertComments(comment, listing);
+                            }
 
                             for (CommentClickListener listener : listeners) {
                                 listener.setRefreshing(false);
@@ -189,19 +221,32 @@ public class ControllerComments extends Controller{
                 }, params, 0);
     }
 
-    public void insertComments(Comment parent, Listing listing) {
+    public void insertComments(Comment moreComment, Listing listing) {
 
         List<Thing> listComments = listing.getChildren();
-        int commentIndex = listingComments.getChildren().indexOf(parent);
-        if (commentIndex > 0) {
+        int commentIndex = link.getComments().getChildren().indexOf(moreComment);
+        if (commentIndex >= 0) {
+            link.getComments().getChildren().remove(commentIndex);
+            for (int index = listComments.size() - 1; index >= 0; index--) {
+                Comment comment = (Comment) listComments.get(index);
+                link.getComments().getChildren().add(commentIndex, comment);
+            }
+        }
+
+        commentIndex = listingComments.getChildren().indexOf(moreComment);
+        if (commentIndex >= 0) {
             listingComments.getChildren().remove(commentIndex);
+            for (CommentClickListener listener : listeners) {
+                listener.getAdapter().notifyItemRemoved(commentIndex + 1);
+            }
+
             for (int index = listComments.size() - 1; index >= 0; index--) {
                 Comment comment = (Comment) listComments.get(index);
                 listingComments.getChildren().add(commentIndex, comment);
             }
 
             for (CommentClickListener listener : listeners) {
-                listener.getAdapter().notifyItemRangeRemoved(commentIndex, commentIndex + listComments.size());
+                listener.getAdapter().notifyItemRangeInserted(commentIndex + 1, listComments.size());
             }
         }
 

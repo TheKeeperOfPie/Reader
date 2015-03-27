@@ -5,14 +5,12 @@ import android.app.Fragment;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.widget.SwipeRefreshLayout;
+import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-
-import jp.wasabeef.recyclerview.animators.ScaleInAnimator;
-import jp.wasabeef.recyclerview.animators.SlideInLeftAnimator;
 
 
 /**
@@ -119,7 +117,7 @@ public class FragmentComments extends Fragment {
         linearLayoutManager = new LinearLayoutManager(activity);
         recyclerCommentList = (RecyclerView) view.findViewById(R.id.recycler_comment_list);
         recyclerCommentList.setHasFixedSize(true);
-        recyclerCommentList.setItemAnimator(new ItemAnimatorComment());
+        recyclerCommentList.setItemAnimator(new DefaultItemAnimator());
         recyclerCommentList.setLayoutManager(linearLayoutManager);
         recyclerCommentList.addItemDecoration(
                 new DividerItemDecoration(activity, DividerItemDecoration.VERTICAL_LIST));
