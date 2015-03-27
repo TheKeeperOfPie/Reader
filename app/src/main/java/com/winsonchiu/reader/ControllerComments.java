@@ -31,6 +31,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created by TheKeeperOfPie on 3/20/2015.
@@ -143,21 +144,36 @@ public class ControllerComments extends Controller{
 
     public void loadMoreComments(final Comment comment) {
 
-        String url = Reddit.OAUTH_URL + "/api/morechildren?link_id=" + link.getName() + "&children=";
+        String url = Reddit.OAUTH_URL + "/api/morechildren";
 
+        String children = "";
         for (String id : comment.getChildren()) {
-            url += id + ",";
+            children += id + ",";
         }
 
-        url = url.substring(0, url.length() - 4);
+        Map<String, String> params = new HashMap<>();
+        params.put("link_id", link.getName());
+        params.put("children", children.substring(0, children.length() - 1));
+        params.put("api_type", "json");
 
-        reddit.loadGet(url,
+        reddit.loadPost(url,
                 new Listener<String>() {
                     @Override
                     public void onResponse(String response) {
                         try {
-                            Log.d(TAG, "Response: " + response);
-                            insertComments(comment, Listing.fromJson(new JSONObject(response)));
+                            JSONArray jsonArray = new JSONObject(response).getJSONObject("json").getJSONObject("data").getJSONArray("things");
+
+                            Listing listing = new Listing();
+                            List<Thing> things = new ArrayList<>();
+                            List<Comment> comments = new ArrayList<>(jsonArray.length());
+
+                            for (int index = 0; index < jsonArray.length(); index++) {
+                                Comment.addAllFromJson(comments, jsonArray.getJSONObject(index), comment.getLevel());
+                            }
+                            things.addAll(comments);
+                            listing.setChildren(things);
+                            insertComments(comment, listing);
+
                             for (CommentClickListener listener : listeners) {
                                 listener.setRefreshing(false);
                             }
@@ -170,7 +186,7 @@ public class ControllerComments extends Controller{
                     public void onErrorResponse(VolleyError error) {
                         Log.d(TAG, "error" + error.toString());
                     }
-                }, 0);
+                }, params, 0);
     }
 
     public void insertComments(Comment parent, Listing listing) {
@@ -179,14 +195,14 @@ public class ControllerComments extends Controller{
         int commentIndex = listingComments.getChildren().indexOf(parent);
         if (commentIndex > 0) {
             listingComments.getChildren().remove(commentIndex);
-            for (int index = listComments.size() - 1; index >= 0; index++) {
+            for (int index = listComments.size() - 1; index >= 0; index--) {
                 Comment comment = (Comment) listComments.get(index);
-                comment.setLevel(comment.getLevel() + parent.getLevel());
                 listingComments.getChildren().add(commentIndex, comment);
             }
-        }
-        for (CommentClickListener listener : listeners) {
-            listener.getAdapter().notifyDataSetChanged();
+
+            for (CommentClickListener listener : listeners) {
+                listener.getAdapter().notifyItemRangeRemoved(commentIndex, commentIndex + listComments.size());
+            }
         }
 
     }
@@ -212,6 +228,7 @@ public class ControllerComments extends Controller{
     }
 
     private void expandComment(int position) {
+        Log.d(TAG, "expandComment: " + position);
         List<Thing> commentList = link.getComments().getChildren();
         int index = commentList.indexOf(listingComments.getChildren().get(position));
         if (index < 0) {
@@ -219,16 +236,18 @@ public class ControllerComments extends Controller{
         }
         List<Comment> commentsToInsert = new LinkedList<>();
         Comment comment = (Comment) commentList.get(index);
+        int numAdded = 0;
         while (++index < commentList.size() && ((Comment) commentList.get(index)).getLevel() != comment.getLevel()) {
             commentsToInsert.add((Comment) commentList.get(index));
         }
 
         for (int insertIndex = commentsToInsert.size() - 1; insertIndex >= 0; insertIndex--) {
             listingComments.getChildren().add(position + 1, commentsToInsert.get(insertIndex));
+            numAdded++;
         }
 
         for (CommentClickListener listener : listeners) {
-            listener.getAdapter().notifyDataSetChanged();
+            listener.getAdapter().notifyItemRangeInserted(position + 2, numAdded);
         }
     }
 
@@ -237,11 +256,13 @@ public class ControllerComments extends Controller{
         List<Thing> commentList = listingComments.getChildren();
         Comment comment = (Comment) commentList.get(position);
         position++;
+        int numRemoved = 0;
         while (position < commentList.size() && ((Comment) commentList.get(position)).getLevel() != comment.getLevel()) {
             commentList.remove(position);
+            numRemoved++;
         }
         for (CommentClickListener listener : listeners) {
-            listener.getAdapter().notifyDataSetChanged();
+            listener.getAdapter().notifyItemRangeRemoved(position + 1, numRemoved);
         }
     }
 

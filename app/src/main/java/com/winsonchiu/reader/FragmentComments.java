@@ -11,6 +11,9 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import jp.wasabeef.recyclerview.animators.ScaleInAnimator;
+import jp.wasabeef.recyclerview.animators.SlideInLeftAnimator;
+
 
 /**
  * A simple {@link Fragment} subclass.
@@ -116,6 +119,7 @@ public class FragmentComments extends Fragment {
         linearLayoutManager = new LinearLayoutManager(activity);
         recyclerCommentList = (RecyclerView) view.findViewById(R.id.recycler_comment_list);
         recyclerCommentList.setHasFixedSize(true);
+        recyclerCommentList.setItemAnimator(new ItemAnimatorComment());
         recyclerCommentList.setLayoutManager(linearLayoutManager);
         recyclerCommentList.addItemDecoration(
                 new DividerItemDecoration(activity, DividerItemDecoration.VERTICAL_LIST));

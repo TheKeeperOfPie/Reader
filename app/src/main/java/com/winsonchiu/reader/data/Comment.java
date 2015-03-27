@@ -54,7 +54,7 @@ public class Comment extends Thing {
 
         comments.add(Comment.fromJson(rootJsonObject, level));
 
-        if (rootJsonObject.getJSONObject("data").has("replies") && !TextUtils.isEmpty(rootJsonObject.getJSONObject("data").getString("replies"))) {
+        if (rootJsonObject.getJSONObject("data").has("replies") && !TextUtils.isEmpty(rootJsonObject.getJSONObject("data").getString("replies")) && !rootJsonObject.getJSONObject("data").getString("replies").equals("null")) {
             JSONArray arrayComments = rootJsonObject.getJSONObject("data")
                     .getJSONObject("replies")
                     .getJSONObject("data")

@@ -44,6 +44,7 @@ public class Reddit {
     }
 
     // TODO: Replace instances not using this constant
+    public static final String BASE_URL = "https://reddit.com";
     public static final String OAUTH_URL = "https://oauth.reddit.com";
     public static final String AUTHORIZATION = "Authorization";
     public static final String BEARER = "Bearer ";
