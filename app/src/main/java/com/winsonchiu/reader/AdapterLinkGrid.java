@@ -188,6 +188,7 @@ public class AdapterLinkGrid extends AdapterLink {
         viewHolder.imagePreview.setImageBitmap(null);
         viewHolder.imagePreview.setVisibility(View.GONE);
         viewHolder.progressImage.setVisibility(View.GONE);
+        viewHolder.textThreadSelf.setVisibility(View.GONE);
 
         super.onViewRecycled(holder);
     }
@@ -217,10 +218,8 @@ public class AdapterLinkGrid extends AdapterLink {
                 public void onClick(View v) {
 
                     ViewHolder viewHolder = ViewHolder.this;
-                    StaggeredGridLayoutManager.LayoutParams layoutParams = (StaggeredGridLayoutManager.LayoutParams) viewHolder.itemView.getLayoutParams();
-                    layoutParams.setFullSpan(true);
-                    viewHolder.itemView.setLayoutParams(layoutParams);
-                    viewHolder.itemView.requestLayout();
+                    ((StaggeredGridLayoutManager.LayoutParams) viewHolder.itemView.getLayoutParams()).setFullSpan(true);
+                    ((StaggeredGridLayoutManager) layoutManager).invalidateSpanAssignments();
 
                     imagePreview.setVisibility(View.GONE);
                     progressImage.setVisibility(View.GONE);

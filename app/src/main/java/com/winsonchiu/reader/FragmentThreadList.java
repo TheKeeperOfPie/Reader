@@ -248,8 +248,18 @@ public class FragmentThreadList extends Fragment {
             }
 
             @Override
-            public void onFullLoaded(int position) {
-//                layoutManager.scrollToPosition(position);
+            public void onFullLoaded(final int position) {
+                recyclerThreadList.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (layoutManager instanceof LinearLayoutManager) {
+                            ((LinearLayoutManager) layoutManager).scrollToPositionWithOffset(position, 0);
+                        }
+                        else if (layoutManager instanceof StaggeredGridLayoutManager) {
+                            ((StaggeredGridLayoutManager) layoutManager).scrollToPositionWithOffset(position, 0);
+                        }
+                    }
+                });
             }
 
             @Override

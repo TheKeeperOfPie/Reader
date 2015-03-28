@@ -115,6 +115,7 @@ public class AdapterLinkList extends AdapterLink {
         viewHolder.imagePreview.setImageBitmap(null);
         viewHolder.imagePreview.setVisibility(View.VISIBLE);
         viewHolder.progressImage.setVisibility(View.GONE);
+        viewHolder.textThreadSelf.setVisibility(View.GONE);
 
         super.onViewRecycled(holder);
     }
@@ -155,7 +156,8 @@ public class AdapterLinkList extends AdapterLink {
                             String html = link.getSelfTextHtml();
                             html = Html.fromHtml(html.trim())
                                     .toString();
-                            textThreadTitle.setText(Reddit.formatHtml(html,
+                            textThreadSelf.setVisibility(View.VISIBLE);
+                            textThreadSelf.setText(Reddit.formatHtml(html,
                                     new Reddit.UrlClickListener() {
                                         @Override
                                         public void onUrlClick(String url) {

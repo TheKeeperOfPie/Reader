@@ -84,11 +84,21 @@
         />
 
     <TextView
-        android:id="@+id/text_thread_info"
+        android:id="@+id/text_thread_self"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_below="@id/text_thread_title"
         android:layout_alignStart="@id/text_thread_title"
+        android:layout_toStartOf="@+id/button_comments"
+        android:textSize="12sp"
+        />
+
+    <TextView
+        android:id="@+id/text_thread_info"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/text_thread_self"
+        android:layout_alignStart="@id/text_thread_self"
         android:layout_toStartOf="@+id/button_comments"
         android:gravity="end"
         android:textSize="12sp"

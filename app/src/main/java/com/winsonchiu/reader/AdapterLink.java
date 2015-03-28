@@ -79,6 +79,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         protected VideoView videoFull;
         protected WebViewFixed webFull;
         protected TextView textThreadTitle;
+        protected TextView textThreadSelf;
         protected TextView textThreadInfo;
         protected ImageButton buttonComments;
         protected ImageButton buttonUpvote;
@@ -123,19 +124,16 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                         if ((webFull.canScrollVertically(1) && webFull.canScrollVertically(-1))) {
                             listener
                                     .requestDisallowInterceptTouchEvent(true);
-                        }
-                        else {
+                        } else {
                             listener
                                     .requestDisallowInterceptTouchEvent(false);
                             if (webFull.getScrollY() == 0) {
                                 webFull.setScrollY(1);
-                            }
-                            else {
+                            } else {
                                 webFull.setScrollY(webFull.getScrollY() - 1);
                             }
                         }
-                    }
-                    else if (event.getAction() == MotionEvent.ACTION_UP) {
+                    } else if (event.getAction() == MotionEvent.ACTION_UP) {
                         listener
                                 .requestDisallowInterceptTouchEvent(false);
                     }
@@ -147,8 +145,8 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             imagePreview = (ImageView) itemView.findViewById(R.id.image_preview);
             textThreadTitle = (TextView) itemView.findViewById(R.id.text_thread_title);
             textThreadInfo = (TextView) itemView.findViewById(R.id.text_thread_info);
-            // TODO: Remove and replace with a real TextView that holds self_text
-            textThreadTitle.setMovementMethod(LinkMovementMethod.getInstance());
+            textThreadSelf = (TextView) itemView.findViewById(R.id.text_thread_self);
+            textThreadSelf.setMovementMethod(LinkMovementMethod.getInstance());
             buttonComments = (ImageButton) itemView.findViewById(R.id.button_comments);
             layoutContainerActions = (LinearLayout) itemView.findViewById(R.id.layout_container_actions);
             buttonUpvote = (ImageButton) layoutContainerActions.findViewById(R.id.button_upvote);
@@ -175,6 +173,8 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         }
 
         public void loadFull(Link link ) {
+
+            Log.d(TAG, "loadFull: " + link.getUrl());
 
             String url = link.getUrl();
             if (!TextUtils.isEmpty(url)) {
@@ -311,6 +311,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                                 @Override
                                 public void onResponse(String response) {
                                     try {
+                                        Log.d(TAG, "loadAlbum: " + response);
                                         Album album = Album.fromJson(
                                                 new JSONObject(
                                                         response).getJSONObject(
@@ -322,8 +323,8 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                                         viewPagerFull.getLayoutParams().height = listener
                                                 .getRecyclerHeight() - itemView.getHeight();
                                         viewPagerFull.setVisibility(View.VISIBLE);
-                                        listener
-                                                .onFullLoaded(getPosition());
+                                        viewPagerFull.requestLayout();
+                                        listener.onFullLoaded(getPosition());
                                     } catch (JSONException e) {
                                         e.printStackTrace();
                                     } finally {
@@ -340,6 +341,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
 
 
         private void loadGifv(String id) {
+            Log.d(TAG, "loadGifv: " + id);
             imagePreview.setTag(controllerLinks.getReddit()
                     .loadImgurImage(id,
                             new Response.Listener<String>() {
@@ -351,7 +353,12 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                                                         response).getJSONObject(
                                                         "data"));
 
-                                        loadVideo(image.getMp4(), (float) image.getHeight() / image.getWidth());
+                                        if (!TextUtils.isEmpty(image.getMp4())) {
+                                            loadVideo(image.getMp4(), (float) image.getHeight() / image.getWidth());
+                                        }
+                                        else if (!TextUtils.isEmpty(image.getWebm())) {
+                                            loadVideo(image.getWebm(), (float) image.getHeight() / image.getWidth());
+                                        }
                                     } catch (JSONException e) {
                                         e.printStackTrace();
                                     } finally {
@@ -361,6 +368,16 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                             }, new Response.ErrorListener() {
                                 @Override
                                 public void onErrorResponse(VolleyError error) {
+                                    try {
+                                        Log.d(TAG, "onErrorResponse");
+                                        Log.d(TAG, "" + error.networkResponse.statusCode);
+                                        Log.d(TAG, error.networkResponse.headers.toString());
+                                        Log.d(TAG, new String(error.networkResponse.data));
+                                    }
+                                    catch (Throwable e) {
+
+                                    }
+                                    Log.d(TAG, "error on loadGifv");
                                     progressImage.setVisibility(View.GONE);
                                 }
                             }, 0));
