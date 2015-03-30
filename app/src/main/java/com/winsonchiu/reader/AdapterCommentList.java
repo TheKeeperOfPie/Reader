@@ -101,46 +101,56 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
     public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
 
         if (holder instanceof ViewHolderHeader) {
-            final ViewHolderHeader viewHolderHeader = (ViewHolderHeader) holder;
+            final ViewHolderHeader viewHolder = (ViewHolderHeader) holder;
+            viewHolder.imagePreview.setImageBitmap(null);
 
             Link link = controllerComments.getLink();
 
-            viewHolderHeader.progressImage.setVisibility(View.GONE);
-            viewHolderHeader.imagePreview.setImageBitmap(null);
-            viewHolderHeader.imagePreview.setVisibility(View.VISIBLE);
             Drawable drawable = controllerComments.getDrawableForLink();
             if (drawable == null) {
-                viewHolderHeader.imagePreview.setTag(
-                        controllerComments.loadImage(link.getThumbnail(),
-                                new ImageLoader.ImageListener() {
-                                    @Override
-                                    public void onResponse(ImageLoader.ImageContainer response,
-                                                           boolean isImmediate) {
-                                        if (response.getBitmap() != null) {
-                                            viewHolderHeader.imagePreview.setAlpha(0.0f);
-                                            viewHolderHeader.imagePreview.setImageBitmap(
-                                                    response.getBitmap());
-                                            controllerComments.animateAlpha(viewHolderHeader.imagePreview,
-                                                    0.0f, 1.0f);
-                                        }
-                                    }
+                viewHolder.imagePreview.setTag(
+                        controllerComments.loadImage(link.getThumbnail(), new ImageLoader.ImageListener() {
+                            @Override
+                            public void onResponse(ImageLoader.ImageContainer response,
+                                                   boolean isImmediate) {
+                                if (response.getBitmap() != null) {
+                                    viewHolder.imagePreview.setAlpha(0.0f);
+                                    viewHolder.imagePreview.setImageBitmap(response.getBitmap());
+                                    AnimationUtils.animateAlpha(viewHolder.imagePreview, 0.0f, 1.0f);
+                                }
+                            }
 
-                                    @Override
-                                    public void onErrorResponse(VolleyError error) {
+                            @Override
+                            public void onErrorResponse(VolleyError error) {
 
-                                    }
-                                }));
+                            }
+                        }));
             }
             else {
-                viewHolderHeader.imagePreview.setImageDrawable(drawable);
+                viewHolder.imagePreview.setImageDrawable(drawable);
             }
-            viewHolderHeader.textThreadTitle.setText(link.getTitle());
 
-            Spannable spannableInfo = new SpannableString(link.getScore() + " by " + link.getAuthor());
-            spannableInfo.setSpan(new ForegroundColorSpan(link.getScore() > 0 ? colorPositive : colorNegative), 0,
-                    String.valueOf(link.getScore())
-                            .length(), Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
-            viewHolderHeader.textThreadInfo.setText(spannableInfo);
+            viewHolder.textThreadTitle.setText(link.getTitle());
+            viewHolder.setTextInfo();
+            viewHolder.layoutContainerActions.setVisibility(View.GONE);
+
+
+            if (link.isSelf()) {
+                if (!TextUtils.isEmpty(link.getSelfText())) {
+                    String html = link.getSelfTextHtml();
+                    html = Html.fromHtml(html.trim())
+                            .toString();
+                    viewHolder.textThreadSelf.setVisibility(View.VISIBLE);
+                    viewHolder.textThreadSelf.setText(Reddit.formatHtml(html,
+                            new Reddit.UrlClickListener() {
+                                @Override
+                                public void onUrlClick(String url) {
+                                    listener.loadUrl(url);
+                                }
+                            }));
+                }
+            }
+
 
         }
         else {
@@ -226,6 +236,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
         protected VideoView videoFull;
         protected WebViewFixed webFull;
         protected TextView textThreadTitle;
+        protected TextView textThreadSelf;
         protected TextView textThreadInfo;
         protected ImageButton buttonComments;
         protected ImageButton buttonUpvote;
@@ -236,32 +247,32 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
         public ViewHolderHeader(final View itemView) {
             super(itemView);
 
-            this.progressImage = (ProgressBar) itemView.findViewById(R.id.progress_image);
-            this.imagePlay = (ImageView) itemView.findViewById(R.id.image_play);
-            this.mediaController = new MediaController(itemView.getContext());
-            this.videoFull = (VideoView) itemView.findViewById(R.id.video_full);
-            this.videoFull.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
+            progressImage = (ProgressBar) itemView.findViewById(R.id.progress_image);
+            imagePlay = (ImageView) itemView.findViewById(R.id.image_play);
+            mediaController = new MediaController(itemView.getContext());
+            videoFull = (VideoView) itemView.findViewById(R.id.video_full);
+            videoFull.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
                 @Override
                 public void onPrepared(MediaPlayer mp) {
                     mediaController.hide();
                 }
             });
-            this.mediaController.setAnchorView(videoFull);
-            this.videoFull.setMediaController(mediaController);
-            this.webFull = (WebViewFixed) itemView.findViewById(R.id.web_full);
-            this.webFull.getSettings()
+            mediaController.setAnchorView(videoFull);
+            videoFull.setMediaController(mediaController);
+            webFull = (WebViewFixed) itemView.findViewById(R.id.web_full);
+            webFull.getSettings()
                     .setUseWideViewPort(true);
-            this.webFull.getSettings().setBuiltInZoomControls(true);
-            this.webFull.getSettings().setDisplayZoomControls(false);
-            this.webFull.setBackgroundColor(0x000000);
-            this.webFull.setWebViewClient(new WebViewClient() {
+            webFull.getSettings().setBuiltInZoomControls(true);
+            webFull.getSettings().setDisplayZoomControls(false);
+            webFull.setBackgroundColor(0x000000);
+            webFull.setWebViewClient(new WebViewClient() {
                 @Override
                 public void onScaleChanged(WebView view, float oldScale, float newScale) {
                     webFull.lockHeight();
                     super.onScaleChanged(view, oldScale, newScale);
                 }
             });
-            this.webFull.setOnTouchListener(new View.OnTouchListener() {
+            webFull.setOnTouchListener(new View.OnTouchListener() {
                 @Override
                 public boolean onTouch(View v, MotionEvent event) {
 
@@ -290,24 +301,24 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                     return false;
                 }
             });
-            this.viewPagerFull = (ViewPager) itemView.findViewById(R.id.view_pager_full);
-            this.imagePreview = (ImageView) itemView.findViewById(R.id.image_preview);
-            this.textThreadTitle = (TextView) itemView.findViewById(R.id.text_thread_title);
-            this.textThreadInfo = (TextView) itemView.findViewById(R.id.text_thread_info);
-            // TODO: Remove and replace with a real TextView that holds self_text
-            this.textThreadTitle.setMovementMethod(LinkMovementMethod.getInstance());
-            this.buttonComments = (ImageButton) itemView.findViewById(R.id.button_comments);
-            this.buttonComments.setVisibility(View.GONE);
-            this.layoutContainerActions = (LinearLayout) itemView.findViewById(R.id.layout_container_actions);
-            this.buttonUpvote = (ImageButton) layoutContainerActions.findViewById(R.id.button_upvote);
-            this.buttonDownvote = (ImageButton) layoutContainerActions.findViewById(R.id.button_downvote);
-            this.buttonUpvote.setOnClickListener(new View.OnClickListener() {
+            viewPagerFull = (ViewPager) itemView.findViewById(R.id.view_pager_full);
+            imagePreview = (ImageView) itemView.findViewById(R.id.image_preview);
+            textThreadTitle = (TextView) itemView.findViewById(R.id.text_thread_title);
+            textThreadInfo = (TextView) itemView.findViewById(R.id.text_thread_info);
+            textThreadSelf = (TextView) itemView.findViewById(R.id.text_thread_self);
+            textThreadSelf.setMovementMethod(LinkMovementMethod.getInstance());
+            buttonComments = (ImageButton) itemView.findViewById(R.id.button_comments);
+            buttonComments.setVisibility(View.INVISIBLE);
+            layoutContainerActions = (LinearLayout) itemView.findViewById(R.id.layout_container_actions);
+            buttonUpvote = (ImageButton) layoutContainerActions.findViewById(R.id.button_upvote);
+            buttonDownvote = (ImageButton) layoutContainerActions.findViewById(R.id.button_downvote);
+            buttonUpvote.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
                     controllerComments.voteLink(ViewHolderHeader.this, 1);
                 }
             });
-            this.buttonDownvote.setOnClickListener(new View.OnClickListener() {
+            buttonDownvote.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
                     controllerComments.voteLink(ViewHolderHeader.this, -1);
@@ -315,43 +326,35 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
             });
 
 
-            this.imagePreview.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    Link link = controllerComments.getLink();
-                    imagePreview.setVisibility(View.VISIBLE);
 
-                    if (link.isSelf()) {
-                        String html = link.getSelfTextHtml();
-                        html = Html.fromHtml(html.trim())
-                                .toString();
-                        textThreadTitle.setText(Reddit.formatHtml(html,
-                                new Reddit.UrlClickListener() {
-                                    @Override
-                                    public void onUrlClick(String url) {
-                                        listener.loadUrl(url);
-                                    }
-                                }));
-                    }
-                    else {
-                        loadFull(link);
-                    }
-                }
-            });
-
-            clickListenerLink = new View.OnClickListener() {
+            View.OnClickListener clickListenerLink = new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
                     setVoteColors();
                     AnimationUtils.animateExpandActions(layoutContainerActions, false);
                 }
             };
+            textThreadTitle.setOnClickListener(clickListenerLink);
+            textThreadInfo.setOnClickListener(clickListenerLink);
             this.itemView.setOnClickListener(clickListenerLink);
-            this.textThreadTitle.setOnClickListener(clickListenerLink);
-            this.textThreadInfo.setOnClickListener(clickListenerLink);
+
+            this.imagePreview.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    Link link = controllerComments.getLink();
+                    imagePreview.setVisibility(View.VISIBLE);
+
+                    if (!link.isSelf()) {
+                        loadFull(link);
+                    }
+                }
+            });
+
         }
 
         public void loadFull(Link link ) {
+
+            Log.d(TAG, "loadFull: " + link.getUrl());
 
             String url = link.getUrl();
             if (!TextUtils.isEmpty(url)) {
@@ -486,6 +489,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                                 @Override
                                 public void onResponse(String response) {
                                     try {
+                                        Log.d(TAG, "loadAlbum: " + response);
                                         Album album = Album.fromJson(
                                                 new JSONObject(
                                                         response).getJSONObject(
@@ -497,6 +501,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                                         viewPagerFull.getLayoutParams().height = listener
                                                 .getRecyclerHeight() - itemView.getHeight();
                                         viewPagerFull.setVisibility(View.VISIBLE);
+                                        viewPagerFull.requestLayout();
                                     } catch (JSONException e) {
                                         e.printStackTrace();
                                     } finally {
@@ -513,6 +518,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
 
 
         private void loadGifv(String id) {
+            Log.d(TAG, "loadGifv: " + id);
             imagePreview.setTag(controllerComments.getReddit()
                     .loadImgurImage(id,
                             new Response.Listener<String>() {
@@ -524,7 +530,12 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                                                         response).getJSONObject(
                                                         "data"));
 
-                                        loadVideo(image.getMp4(), (float) image.getHeight() / image.getWidth());
+                                        if (!TextUtils.isEmpty(image.getMp4())) {
+                                            loadVideo(image.getMp4(), (float) image.getHeight() / image.getWidth());
+                                        }
+                                        else if (!TextUtils.isEmpty(image.getWebm())) {
+                                            loadVideo(image.getWebm(), (float) image.getHeight() / image.getWidth());
+                                        }
                                     } catch (JSONException e) {
                                         e.printStackTrace();
                                     } finally {
@@ -534,6 +545,16 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                             }, new Response.ErrorListener() {
                                 @Override
                                 public void onErrorResponse(VolleyError error) {
+                                    try {
+                                        Log.d(TAG, "onErrorResponse");
+                                        Log.d(TAG, "" + error.networkResponse.statusCode);
+                                        Log.d(TAG, error.networkResponse.headers.toString());
+                                        Log.d(TAG, new String(error.networkResponse.data));
+                                    }
+                                    catch (Throwable e) {
+
+                                    }
+                                    Log.d(TAG, "error on loadGifv");
                                     progressImage.setVisibility(View.GONE);
                                 }
                             }, 0));

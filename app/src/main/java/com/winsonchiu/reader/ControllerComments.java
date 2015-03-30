@@ -42,6 +42,7 @@ public class ControllerComments extends Controller{
     private static final String TAG = ControllerComments.class.getCanonicalName();
 
     private Activity activity;
+    private SharedPreferences preferences;
     private List<CommentClickListener> listeners;
     private Link link;
     private Listing listingComments;
@@ -54,6 +55,7 @@ public class ControllerComments extends Controller{
 
     public ControllerComments(Activity activity, String subreddit, String linkId) {
         this.activity = activity;
+        this.preferences = PreferenceManager.getDefaultSharedPreferences(activity.getApplicationContext());
         this.reddit = Reddit.getInstance(activity);
         this.listeners = new ArrayList<>();
         this.indentWidth = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 8, activity.getResources().getDisplayMetrics());
@@ -360,7 +362,11 @@ public class ControllerComments extends Controller{
         }, params, 0);
     }
 
-    public void voteComment(final AdapterCommentList.ViewHolderComment viewHolder, final int vote) {
+    public boolean voteComment(final AdapterCommentList.ViewHolderComment viewHolder, final int vote) {
+
+        if (TextUtils.isEmpty(preferences.getString(AppSettings.REFRESH_TOKEN, ""))) {
+            return false;
+        }
 
         final int position = viewHolder.getPosition();
         final Comment comment = (Comment) listingComments.getChildren().get(viewHolder.getPosition());
@@ -396,6 +402,7 @@ public class ControllerComments extends Controller{
                 }
             }
         }, params, 0);
+        return true;
     }
 
     public int getIndentWidth(Comment comment) {

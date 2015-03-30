@@ -47,7 +47,9 @@ public class Album {
         album.setCoverWidth(jsonObject.getInt("cover_width"));
         album.setCoverHeight(jsonObject.getInt("cover_height"));
         album.setAccountUrl(jsonObject.getString("account_url"));
-        album.setAccountId(jsonObject.getInt("account_id"));
+        if (!jsonObject.getString("account_id").equals("null")) {
+            album.setAccountId(jsonObject.getInt("account_id"));
+        }
         album.setPrivacy(jsonObject.getString("privacy"));
         album.setLayout(jsonObject.getString("layout"));
         album.setViews(jsonObject.getInt("views"));
