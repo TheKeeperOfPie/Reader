@@ -105,10 +105,8 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             videoFull.setMediaController(mediaController);
             webFull = (WebViewFixed) itemView.findViewById(R.id.web_full);
             webFull.getSettings().setUseWideViewPort(true);
-            webFull.getSettings().setLoadWithOverviewMode(true);
             webFull.getSettings().setBuiltInZoomControls(true);
             webFull.getSettings().setDisplayZoomControls(false);
-            webFull.getSettings().setJavaScriptEnabled(true);
             webFull.getSettings().setDomStorageEnabled(true);
             webFull.setBackgroundColor(0x000000);
             webFull.setWebViewClient(new WebViewClient() {
