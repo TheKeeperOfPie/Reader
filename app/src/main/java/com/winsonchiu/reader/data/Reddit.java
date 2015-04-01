@@ -15,6 +15,7 @@ import android.view.View;
 import com.android.volley.AuthFailureError;
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
+import com.android.volley.Response;
 import com.android.volley.Response.ErrorListener;
 import com.android.volley.Response.Listener;
 import com.android.volley.VolleyError;
@@ -394,7 +395,15 @@ public class Reddit {
             if (url.endsWith(Reddit.GIFV)) {
                 return false;
             }
-            else if (url.contains(".com/a/") || url.contains(".com/gallery/")) {
+            else if (url.contains(".com/gallery")) {
+                int startIndex = url.indexOf("imgur.com/gallery/") + 18;
+                int slashIndex = url.substring(startIndex)
+                        .indexOf("/") + startIndex;
+                int lastIndex = slashIndex > startIndex ? slashIndex : url.length();
+                String imgurId = url.substring(startIndex, lastIndex);
+                url = "https://imgur.com/" + imgurId + Reddit.JPG;
+            }
+            else if (url.contains(".com/a/")) {
                 return false;
             }
             else if (!Reddit.checkIsImage(url)) {

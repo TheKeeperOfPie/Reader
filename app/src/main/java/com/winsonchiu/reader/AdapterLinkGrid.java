@@ -43,7 +43,9 @@ public class AdapterLinkGrid extends AdapterLink {
         super.setActivity(activity);
         Resources resources = activity.getResources();
         this.thumbnailWidth = resources.getDisplayMetrics().widthPixels / 2;
-        this.layoutManager = new StaggeredGridLayoutManager(2, StaggeredGridLayoutManager.VERTICAL);
+        boolean isLandscape = resources.getDisplayMetrics().widthPixels > resources.getDisplayMetrics().heightPixels;
+
+        this.layoutManager = new StaggeredGridLayoutManager(isLandscape ? 3 : 2, StaggeredGridLayoutManager.VERTICAL);
         ((StaggeredGridLayoutManager) this.layoutManager).setGapStrategy(StaggeredGridLayoutManager.GAP_HANDLING_NONE);
         this.itemDecoration = null;
         this.defaultColor = resources.getColor(R.color.darkThemeDialog);
@@ -152,10 +154,14 @@ public class AdapterLinkGrid extends AdapterLink {
 
         viewHolder.textThreadTitle.setText(link.getTitle());
 //        viewHolder.setTextInfo();
-        viewHolder.layoutContainerActions.setVisibility(View.GONE);
+        viewHolder.toolbarActions.setVisibility(View.GONE);
+        viewHolder.toolbarActionsFull.setVisibility(View.GONE);
     }
 
     private boolean showThumbnail(Link link) {
+        if (link.getThumbnail().equals("nsfw")) {
+            return false;
+        }
         String domain = link.getDomain();
         return domain.contains("gfycat") || domain.contains("imgur") || Reddit.placeImageUrl(link);
     }
@@ -206,7 +212,7 @@ public class AdapterLinkGrid extends AdapterLink {
             View.OnClickListener clickListenerLink = new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    AnimationUtils.animateExpandActions(layoutContainerActions, false);
+                    AnimationUtils.animateExpandActions(toolbarActions, false);
                 }
             };
             textThreadTitle.setOnClickListener(clickListenerLink);

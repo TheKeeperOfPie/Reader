@@ -26,6 +26,7 @@ import com.winsonchiu.reader.data.Thing;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.w3c.dom.Text;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -54,8 +55,7 @@ public class ControllerComments extends Controller{
     private Reddit reddit;
 
     public ControllerComments(Activity activity, String subreddit, String linkId) {
-        this.activity = activity;
-        this.preferences = PreferenceManager.getDefaultSharedPreferences(activity.getApplicationContext());
+        setActivity(activity);
         this.reddit = Reddit.getInstance(activity);
         this.listeners = new ArrayList<>();
         this.indentWidth = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 8, activity.getResources().getDisplayMetrics());
@@ -68,6 +68,7 @@ public class ControllerComments extends Controller{
 
     public void setActivity(Activity activity) {
         this.activity = activity;
+        this.preferences = PreferenceManager.getDefaultSharedPreferences(activity.getApplicationContext());
     }
 
     public void addListener(CommentClickListener listener) {
@@ -101,7 +102,7 @@ public class ControllerComments extends Controller{
             return;
         }
 
-        reddit.loadGet("https://oauth.reddit.com" + "/r/" + subreddit + "/comments/" + linkId,
+        reddit.loadGet("https://oauth.reddit.com" + "/r/" + subreddit + "/comments/" + linkId + "?depth=10",
                 new Listener<String>() {
                     @Override
                     public void onResponse(String response) {
@@ -144,16 +145,16 @@ public class ControllerComments extends Controller{
         return link == null ? new Listing() : listingComments;
     }
 
-    public void loadMoreComments(final Comment comment) {
+    public void loadMoreComments(final Comment moreComment) {
 
         String url = Reddit.OAUTH_URL + "/api/morechildren";
 
 
         String children = "";
-        List<String> childrenList = comment.getChildren();
+        List<String> childrenList = moreComment.getChildren();
         Log.d(TAG, "childrenList: " + childrenList.toString());
         if (childrenList.isEmpty()) {
-            int commentIndex = listingComments.getChildren().indexOf(comment);
+            int commentIndex = listingComments.getChildren().indexOf(moreComment);
             if (commentIndex >= 0) {
                 listingComments.getChildren()
                         .remove(commentIndex);
@@ -184,17 +185,32 @@ public class ControllerComments extends Controller{
 
                             Listing listing = new Listing();
                             List<Thing> things = new ArrayList<>();
-                            List<Comment> comments = new ArrayList<>(jsonArray.length());
+                            List<Thing> comments = new ArrayList<>(jsonArray.length());
 
                             for (int index = 0; index < jsonArray.length(); index++) {
-                                Comment.addAllFromJson(comments, jsonArray.getJSONObject(index), comment.getLevel());
+                                Comment comment = Comment.fromJson(jsonArray.getJSONObject(index), moreComment.getLevel());
+
+                                int commentIndex = -1;
+
+                                for (int position = 0; position < comments.size(); position++) {
+                                    if (comments.get(position).getId().equals(comment.getParentId())) {
+                                        commentIndex = position;
+                                        break;
+                                    }
+                                }
+
+                                if (commentIndex >= 0) {
+                                    comment.setLevel(((Comment) comments.get(commentIndex))
+                                            .getLevel() + 1);
+                                }
+                                comments.add(commentIndex + 1, comment);
                             }
                             if (comments.isEmpty()) {
-                                int commentIndex = link.getComments().getChildren().indexOf(comment);
+                                int commentIndex = link.getComments().getChildren().indexOf(moreComment);
                                 if (commentIndex >= 0) {
                                     link.getComments().getChildren().remove(commentIndex);
                                 }
-                                commentIndex = listingComments.getChildren().indexOf(comment);
+                                commentIndex = listingComments.getChildren().indexOf(moreComment);
                                 if (commentIndex >= 0) {
                                     listingComments.getChildren().remove(commentIndex);
                                     for (CommentClickListener listener : listeners) {
@@ -205,7 +221,7 @@ public class ControllerComments extends Controller{
                             else {
                                 things.addAll(comments);
                                 listing.setChildren(things);
-                                insertComments(comment, listing);
+                                insertComments(moreComment, listing);
                             }
 
                             for (CommentClickListener listener : listeners) {
@@ -315,6 +331,12 @@ public class ControllerComments extends Controller{
 
 
     public void voteLink(final RecyclerView.ViewHolder viewHolder, final int vote) {
+
+        if (TextUtils.isEmpty(preferences.getString(AppSettings.REFRESH_TOKEN, null))) {
+            Toast.makeText(activity, "Must be logged in to vote", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
         final int position = viewHolder.getPosition();
 
         final int oldVote = link.isLikes();
@@ -364,7 +386,8 @@ public class ControllerComments extends Controller{
 
     public boolean voteComment(final AdapterCommentList.ViewHolderComment viewHolder, final int vote) {
 
-        if (TextUtils.isEmpty(preferences.getString(AppSettings.REFRESH_TOKEN, ""))) {
+        if (TextUtils.isEmpty(preferences.getString(AppSettings.REFRESH_TOKEN, null))) {
+            Toast.makeText(activity, "Must be logged in to vote", Toast.LENGTH_SHORT).show();
             return false;
         }
 

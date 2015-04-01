@@ -31,8 +31,11 @@ public class AdapterAlbum extends PagerAdapter {
         for (int index = 0; index < album.getImagesCount(); index++) {
             final WebViewFixed webView = (WebViewFixed) LayoutInflater.from(activity).inflate(R.layout.web_view_image, null, false);
             webView.getSettings().setUseWideViewPort(true);
+            webView.getSettings().setLoadWithOverviewMode(true);
             webView.getSettings().setBuiltInZoomControls(true);
             webView.getSettings().setDisplayZoomControls(false);
+            webView.getSettings().setJavaScriptEnabled(true);
+            webView.getSettings().setDomStorageEnabled(true);
             webView.setBackgroundColor(0xFF0000);
             webView.setInitialScale(0);
             webView.setOnTouchListener(new View.OnTouchListener() {

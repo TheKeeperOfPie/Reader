@@ -1,8 +1,10 @@
 package com.winsonchiu.reader;
 
 import android.app.Activity;
+import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.graphics.drawable.Drawable;
+import android.preference.PreferenceManager;
 import android.support.v7.widget.RecyclerView;
 import android.text.TextUtils;
 import android.util.Log;
@@ -43,9 +45,10 @@ public class ControllerLinks extends Controller {
     private Drawable drawableDefault;
     private Reddit reddit;
     private List<LinkClickListener> listeners;
+    private SharedPreferences preferences;
 
     public ControllerLinks(Activity activity, String subredditName, String sort) {
-        this.activity = activity;
+        setActivity(activity);
         this.reddit = Reddit.getInstance(activity);
         this.listeners = new ArrayList<>();
         listingLinks = new Listing();
@@ -237,6 +240,12 @@ public class ControllerLinks extends Controller {
     }
 
     public void vote(final RecyclerView.ViewHolder viewHolder, final int vote) {
+
+        if (TextUtils.isEmpty(preferences.getString(AppSettings.REFRESH_TOKEN, null))) {
+            Toast.makeText(activity, "Must be logged in to vote", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
         final int position = viewHolder.getPosition();
         final Link link = getLink(position);
 
@@ -307,6 +316,8 @@ public class ControllerLinks extends Controller {
 
     public void setActivity(Activity activity) {
         this.activity = activity;
+        this.preferences = PreferenceManager.getDefaultSharedPreferences(
+                activity.getApplicationContext());
     }
 
     public int size() {

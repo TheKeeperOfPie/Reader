@@ -1,16 +1,25 @@
 package com.winsonchiu.reader.data;
 
+import android.util.Log;
+
 /**
  * Created by TheKeeperOfPie on 3/8/2015.
  */
-public abstract class Thing {
+public class Thing {
 
+    private static final String TAG = Thing.class.getCanonicalName();
     private String id;
     private String name;
     private String kind;
 
     public Thing() {
 
+    }
+
+    public Thing(String id, String name, String kind) {
+        this.id = id;
+        this.name = name;
+        this.kind = kind;
     }
 
     public String getId() {

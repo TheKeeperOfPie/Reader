@@ -20,6 +20,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
+import android.webkit.WebView;
 
 import com.winsonchiu.reader.data.Link;
 
@@ -56,7 +57,6 @@ public class FragmentThreadList extends Fragment {
     private ControllerLinks controllerLinks;
     private MenuItem itemInterface;
 
-    private int spanCount = 2;
     private ControllerLinks.LinkClickListener linkClickListener;
 
     /**
@@ -207,7 +207,7 @@ public class FragmentThreadList extends Fragment {
     }
 
     private void resetAdapter(AdapterLink newAdapter) {
-        int[] currentPosition = new int[spanCount];
+        int[] currentPosition = new int[3];
         if (layoutManager instanceof LinearLayoutManager) {
             currentPosition[0] = ((LinearLayoutManager) layoutManager).findFirstVisibleItemPosition();
         }
@@ -295,29 +295,6 @@ public class FragmentThreadList extends Fragment {
                 controllerLinks.reloadAllLinks();
             }
         });
-        swipeRefreshThreadList.getViewTreeObserver().addOnScrollChangedListener(
-                new ViewTreeObserver.OnScrollChangedListener() {
-                    @Override
-                    public void onScrollChanged() {
-
-                        int[] firstVisiblePositions = new int[spanCount];
-
-                        if (layoutManager instanceof LinearLayoutManager) {
-                            firstVisiblePositions[0] = ((LinearLayoutManager) layoutManager).findFirstCompletelyVisibleItemPosition();
-                        }
-                        else if (layoutManager instanceof StaggeredGridLayoutManager) {
-                            ((StaggeredGridLayoutManager) layoutManager).findFirstCompletelyVisibleItemPositions(
-                                    firstVisiblePositions);
-                        }
-
-                        if (firstVisiblePositions[0] == 0) {
-                            swipeRefreshThreadList.setEnabled(true);
-                        }
-                        else {
-                            swipeRefreshThreadList.setEnabled(false);
-                        }
-                    }
-                });
 
         if (controllerLinks == null) {
             controllerLinks = mListener.getControllerLinks();

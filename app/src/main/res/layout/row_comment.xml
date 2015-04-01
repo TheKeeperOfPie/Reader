@@ -78,7 +78,6 @@
             android:layout_height="48dp"
             android:gravity="center_vertical"
             android:visibility="gone"
-            app:popupTheme="?android:popupMenuStyle"
             />
 
     </LinearLayout>

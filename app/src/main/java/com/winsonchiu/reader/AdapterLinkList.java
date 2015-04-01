@@ -86,7 +86,8 @@ public class AdapterLinkList extends AdapterLink {
 
         viewHolder.textThreadTitle.setText(link.getTitle());
         viewHolder.setTextInfo();
-        viewHolder.layoutContainerActions.setVisibility(View.GONE);
+        viewHolder.toolbarActions.setVisibility(View.GONE);
+        viewHolder.toolbarActionsFull.setVisibility(View.GONE);
     }
 
     @Override
@@ -134,7 +135,7 @@ public class AdapterLinkList extends AdapterLink {
                 @Override
                 public void onClick(View v) {
                     setVoteColors();
-                    AnimationUtils.animateExpandActions(layoutContainerActions, false);
+                    AnimationUtils.animateExpandActions(toolbarActions, false);
                 }
             };
             textThreadTitle.setOnClickListener(clickListenerLink);

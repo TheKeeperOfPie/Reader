@@ -36,6 +36,7 @@ public class FragmentWeb extends Fragment {
     private OnFragmentInteractionListener mListener;
     private WebView webView;
     private SwipeRefreshLayout swipeRefreshWeb;
+    private Activity activity;
 
     /**
      * Use this factory method to create a new instance of
@@ -89,7 +90,6 @@ public class FragmentWeb extends Fragment {
             @Override
             public void onPageStarted(WebView view, String url, Bitmap favicon) {
                 super.onPageStarted(view, url, favicon);
-                swipeRefreshWeb.setRefreshing(true);
             }
 
             @Override
@@ -97,12 +97,6 @@ public class FragmentWeb extends Fragment {
                 super.onPageFinished(view, url);
                 swipeRefreshWeb.setRefreshing(false);
                 webView.setBackgroundColor(0xFFFFFFFF);
-            }
-
-            @Override
-            public boolean shouldOverrideUrlLoading(WebView view, String url) {
-                view.loadUrl(url);
-                return true;
             }
         });
         webView.setWebChromeClient(new WebChromeClient() {
@@ -116,6 +110,10 @@ public class FragmentWeb extends Fragment {
         webView.getSettings().setBuiltInZoomControls(true);
         webView.getSettings().setDisplayZoomControls(false);
         webView.getSettings().setJavaScriptEnabled(true);
+        webView.getSettings().setDomStorageEnabled(true);
+        webView.getSettings().setDatabaseEnabled(true);
+        webView.getSettings().setAppCacheEnabled(true);
+        webView.setScrollBarStyle(View.SCROLLBARS_INSIDE_OVERLAY);
         webView.loadUrl(mParam1);
 
         return view;
@@ -131,6 +129,7 @@ public class FragmentWeb extends Fragment {
     @Override
     public void onAttach(Activity activity) {
         super.onAttach(activity);
+        this.activity = activity;
         try {
             mListener = (OnFragmentInteractionListener) activity;
         }
@@ -142,8 +141,9 @@ public class FragmentWeb extends Fragment {
 
     @Override
     public void onDetach() {
-        super.onDetach();
+        activity = null;
         mListener = null;
+        super.onDetach();
     }
 
     @Override

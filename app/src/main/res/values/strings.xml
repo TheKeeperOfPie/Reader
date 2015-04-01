@@ -42,4 +42,6 @@
     <string name="item_upvote">Upvote</string>
     <string name="item_downvote">Downvote</string>
     <string name="item_share">Share</string>
+    <string name="load_more_comments">Load more comments...</string>
+    <string name="item_web">Load in browser</string>
 </resources>

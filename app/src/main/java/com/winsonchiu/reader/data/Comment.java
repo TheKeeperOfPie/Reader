@@ -75,9 +75,24 @@ public class Comment extends Thing {
 
         JSONObject jsonObject = rootJsonObject.getJSONObject("data");
 
-        comment.setId(jsonObject.getString("id"));
+        String id = jsonObject.getString("id");
+        int indexStart = id.indexOf("_");
+        if (indexStart >= 0) {
+            comment.setId(id.substring(indexStart + 1));
+        }
+        else {
+            comment.setId(id);
+        }
         comment.setName(jsonObject.getString("name"));
-        comment.setParentId(jsonObject.getString("parent_id"));
+
+        String parentId = jsonObject.getString("parent_id");
+        indexStart = parentId.indexOf("_");
+        if (indexStart >= 0) {
+            comment.setParentId(parentId.substring(indexStart + 1));
+        }
+        else {
+            comment.setParentId(parentId);
+        }
 
         if (comment.getKind().equals("more")) {
             comment.setIsMore(true);
@@ -389,4 +404,25 @@ public class Comment extends Thing {
     public void setChildren(List<String> children) {
         this.children = children;
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+
+        Thing thing = (Thing) o;
+
+        return getId().equals(thing.getId());
+
+    }
+
+    @Override
+    public int hashCode() {
+        return getId().hashCode();
+    }
+
 }

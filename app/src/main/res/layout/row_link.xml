@@ -37,11 +37,21 @@
 
     </FrameLayout>
 
+    <android.support.v7.widget.Toolbar
+        android:id="@+id/toolbar_actions_full"
+        android:layout_width="wrap_content"
+        android:layout_height="48dp"
+        android:layout_below="@id/frame_full"
+        android:layout_centerHorizontal="true"
+        android:gravity="center"
+        android:visibility="gone"
+        />
+
     <ImageView
         android:id="@+id/image_preview"
         android:layout_width="40dp"
         android:layout_height="40dp"
-        android:layout_below="@id/frame_full"
+        android:layout_below="@id/toolbar_actions_full"
         android:layout_alignParentStart="true"
         android:layout_margin="@dimen/activity_horizontal_margin"
         android:contentDescription="@string/content_description_thread_preview"
@@ -75,7 +85,7 @@
         android:id="@+id/text_thread_title"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_below="@id/frame_full"
+        android:layout_below="@id/toolbar_actions_full"
         android:layout_toEndOf="@+id/image_preview"
         android:layout_toStartOf="@+id/button_comments"
         android:layout_marginStart="@dimen/activity_horizontal_margin"
@@ -109,7 +119,7 @@
         android:id="@+id/button_comments"
         android:layout_width="56dp"
         android:layout_height="56dp"
-        android:layout_below="@id/frame_full"
+        android:layout_below="@id/toolbar_actions_full"
         android:layout_alignParentEnd="true"
         android:contentDescription="@string/content_description_button_comments"
         android:background="@android:color/transparent"
@@ -117,57 +127,69 @@
         android:padding="@dimen/activity_horizontal_margin"
         />
 
-    <LinearLayout
-        android:orientation="horizontal"
-        android:id="@+id/layout_container_actions"
+
+    <android.support.v7.widget.Toolbar
+        android:id="@+id/toolbar_actions"
         android:layout_width="wrap_content"
         android:layout_height="48dp"
+        android:gravity="center_vertical"
         android:layout_below="@id/text_thread_info"
         android:layout_alignParentBottom="true"
         android:layout_alignParentEnd="true"
         android:visibility="gone"
-        >
+        />
 
-        <ImageButton
-            android:id="@+id/button_upvote"
-            android:layout_width="wrap_content"
-            android:layout_height="match_parent"
-            android:contentDescription="@string/content_description_button_upvote"
-            android:background="@android:color/transparent"
-            android:src="@drawable/ic_keyboard_arrow_up_white_24dp"
-            android:padding="12dp"
-            />
+    <!--<LinearLayout-->
+        <!--android:orientation="horizontal"-->
+        <!--android:id="@+id/layout_container_actions"-->
+        <!--android:layout_width="wrap_content"-->
+        <!--android:layout_height="48dp"-->
+        <!--android:layout_below="@id/text_thread_info"-->
+        <!--android:layout_alignParentBottom="true"-->
+        <!--android:layout_alignParentEnd="true"-->
+        <!--android:visibility="gone"-->
+        <!-->-->
 
-        <ImageButton
-            android:id="@+id/button_downvote"
-            android:layout_width="wrap_content"
-            android:layout_height="match_parent"
-            android:contentDescription="@string/content_description_button_downvote"
-            android:background="@android:color/transparent"
-            android:src="@drawable/ic_keyboard_arrow_down_white_24dp"
-            android:padding="12dp"
-            />
+        <!--<ImageButton-->
+            <!--android:id="@+id/button_upvote"-->
+            <!--android:layout_width="wrap_content"-->
+            <!--android:layout_height="match_parent"-->
+            <!--android:contentDescription="@string/content_description_button_upvote"-->
+            <!--android:background="@android:color/transparent"-->
+            <!--android:src="@drawable/ic_keyboard_arrow_up_white_24dp"-->
+            <!--android:padding="12dp"-->
+            <!--/>-->
 
-        <ImageButton
-            android:id="@+id/button_share"
-            android:layout_width="wrap_content"
-            android:layout_height="match_parent"
-            android:contentDescription="@string/content_description_button_share"
-            android:background="@android:color/transparent"
-            android:src="@drawable/ic_share_white_24dp"
-            android:padding="12dp"
-            />
+        <!--<ImageButton-->
+            <!--android:id="@+id/button_downvote"-->
+            <!--android:layout_width="wrap_content"-->
+            <!--android:layout_height="match_parent"-->
+            <!--android:contentDescription="@string/content_description_button_downvote"-->
+            <!--android:background="@android:color/transparent"-->
+            <!--android:src="@drawable/ic_keyboard_arrow_down_white_24dp"-->
+            <!--android:padding="12dp"-->
+            <!--/>-->
 
-        <ImageButton
-            android:id="@+id/button_more"
-            android:layout_width="wrap_content"
-            android:layout_height="match_parent"
-            android:contentDescription="@string/content_description_button_more"
-            android:background="@android:color/transparent"
-            android:src="@drawable/ic_more_vert_white_24dp"
-            android:padding="12dp"
-            />
+        <!--<ImageButton-->
+            <!--android:id="@+id/button_share"-->
+            <!--android:layout_width="wrap_content"-->
+            <!--android:layout_height="match_parent"-->
+            <!--android:contentDescription="@string/content_description_button_share"-->
+            <!--android:background="@android:color/transparent"-->
+            <!--android:src="@drawable/ic_share_white_24dp"-->
+            <!--android:padding="12dp"-->
+            <!--/>-->
 
-    </LinearLayout>
+        <!--<ImageButton-->
+            <!--android:id="@+id/button_more"-->
+            <!--android:layout_width="wrap_content"-->
+            <!--android:layout_height="match_parent"-->
+            <!--android:contentDescription="@string/content_description_button_more"-->
+            <!--android:background="@android:color/transparent"-->
+            <!--android:src="@drawable/ic_more_vert_white_24dp"-->
+            <!--android:padding="12dp"-->
+            <!--/>-->
+
+    <!--</LinearLayout>-->
 
 </RelativeLayout>
