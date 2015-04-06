@@ -1,13 +1,16 @@
 package com.winsonchiu.reader;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.content.res.Resources;
 import android.graphics.PorterDuff;
 import android.media.MediaPlayer;
 import android.net.Uri;
+import android.support.v4.view.MenuItemCompat;
 import android.support.v4.view.ViewPager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.RecyclerView.LayoutManager;
+import android.support.v7.widget.ShareActionProvider;
 import android.support.v7.widget.Toolbar;
 import android.text.Spannable;
 import android.text.SpannableString;
@@ -23,7 +26,6 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.ImageButton;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
 import android.widget.MediaController;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -31,7 +33,6 @@ import android.widget.VideoView;
 
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
-import com.winsonchiu.reader.data.AnimationUtils;
 import com.winsonchiu.reader.data.Link;
 import com.winsonchiu.reader.data.Reddit;
 import com.winsonchiu.reader.data.imgur.Album;
@@ -125,19 +126,16 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                         if ((webFull.canScrollVertically(1) && webFull.canScrollVertically(-1))) {
                             listener
                                     .requestDisallowInterceptTouchEvent(true);
-                        }
-                        else {
+                        } else {
                             listener
                                     .requestDisallowInterceptTouchEvent(false);
                             if (webFull.getScrollY() == 0) {
                                 webFull.setScrollY(1);
-                            }
-                            else {
+                            } else {
                                 webFull.setScrollY(webFull.getScrollY() - 1);
                             }
                         }
-                    }
-                    else if (event.getAction() == MotionEvent.ACTION_UP) {
+                    } else if (event.getAction() == MotionEvent.ACTION_UP) {
                         listener
                                 .requestDisallowInterceptTouchEvent(false);
                     }
@@ -189,6 +187,24 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                     return true;
                 }
             });
+
+            View.OnClickListener clickListenerLink = new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    setVoteColors();
+                    Link link = controllerLinks.getLink(getPosition());
+                    Intent shareIntent = new Intent(Intent.ACTION_SEND);
+                    shareIntent.setType("text/plain");
+                    shareIntent.putExtra(Intent.EXTRA_SUBJECT, link.getTitle());
+                    shareIntent.putExtra(Intent.EXTRA_TEXT, Reddit.BASE_URL + link.getPermalink());
+
+                    ((ShareActionProvider) MenuItemCompat.getActionProvider(toolbarActions.getMenu().findItem(R.id.item_share))).setShareIntent(shareIntent);
+                    AnimationUtils.animateExpandActions(toolbarActions, false);
+                }
+            };
+            textThreadTitle.setOnClickListener(clickListenerLink);
+            textThreadInfo.setOnClickListener(clickListenerLink);
+            this.itemView.setOnClickListener(clickListenerLink);
         }
 
         public void loadFull(Link link ) {

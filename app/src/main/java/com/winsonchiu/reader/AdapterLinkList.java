@@ -1,6 +1,7 @@
 package com.winsonchiu.reader;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.graphics.drawable.Drawable;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -9,11 +10,11 @@ import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ShareActionProvider;
 
 import com.android.volley.Request;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.ImageLoader;
-import com.winsonchiu.reader.data.AnimationUtils;
 import com.winsonchiu.reader.data.Link;
 import com.winsonchiu.reader.data.Reddit;
 
@@ -130,18 +131,6 @@ public class AdapterLinkList extends AdapterLink {
 
         public ViewHolder(View itemView) {
             super(itemView);
-
-            View.OnClickListener clickListenerLink = new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    setVoteColors();
-                    AnimationUtils.animateExpandActions(toolbarActions, false);
-                }
-            };
-            textThreadTitle.setOnClickListener(clickListenerLink);
-            textThreadInfo.setOnClickListener(clickListenerLink);
-            this.itemView.setOnClickListener(clickListenerLink);
-
 
             this.imagePreview.setOnClickListener(new View.OnClickListener() {
                 @Override

@@ -38,7 +38,6 @@ import android.widget.VideoView;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.ImageLoader;
-import com.winsonchiu.reader.data.AnimationUtils;
 import com.winsonchiu.reader.data.Comment;
 import com.winsonchiu.reader.data.Link;
 import com.winsonchiu.reader.data.Reddit;
@@ -61,6 +60,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
 
     private Activity activity;
     private ControllerComments controllerComments;
+    private int colorPrimary;
     private int colorPositive;
     private int colorNegative;
     private Drawable drawableUpvote;
@@ -72,6 +72,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
         this.controllerComments = controllerComments;
         this.listener = listener;
         Resources resources = activity.getResources();
+        this.colorPrimary = resources.getColor(R.color.colorPrimary);
         this.colorPositive = resources.getColor(R.color.positiveScore);
         this.colorNegative = resources.getColor(R.color.negativeScore);
         this.drawableUpvote = resources.getDrawable(R.drawable.ic_keyboard_arrow_up_white_24dp);
@@ -183,6 +184,9 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                                 comment.getScore() > 0 ? colorPositive : colorNegative), 0,
                         String.valueOf(comment.getScore())
                                 .length(), Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
+                if (controllerComments.getLink().getAuthor().equals(comment.getAuthor())) {
+                    spannableInfo.setSpan(new ForegroundColorSpan(colorPrimary), spannableInfo.length() - comment.getAuthor().length(), spannableInfo.length(), Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
+                }
                 viewHolderComment.textInfo.setText(spannableInfo);
             }
         }
@@ -679,7 +683,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
 
         public void setVoteColors() {
 
-            Comment comment = (Comment) controllerComments.getListingComments().getChildren().get(getPosition());
+            Comment comment = (Comment) controllerComments.getListingComments().getChildren().get(getPosition() - 1);
             switch (comment.isLikes()) {
                 case 1:
                     drawableUpvote.setColorFilter(colorPositive, PorterDuff.Mode.MULTIPLY);

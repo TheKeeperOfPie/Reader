@@ -118,6 +118,7 @@ public class FragmentComments extends Fragment {
         recyclerCommentList = (RecyclerView) view.findViewById(R.id.recycler_comment_list);
         recyclerCommentList.setHasFixedSize(true);
         recyclerCommentList.setItemAnimator(new DefaultItemAnimator());
+        recyclerCommentList.getItemAnimator().setRemoveDuration(AnimationUtils.EXPAND_ACTION_DURATION);
         recyclerCommentList.setLayoutManager(linearLayoutManager);
         recyclerCommentList.addItemDecoration(
                 new DividerItemDecoration(activity, DividerItemDecoration.VERTICAL_LIST));
@@ -144,7 +145,7 @@ public class FragmentComments extends Fragment {
         super.onStart();
         controllerComments.addListener(listener);
         controllerComments.setLinkId(subreddit, linkId);
-//        listener.getAdapter().notifyDataSetChanged();
+        listener.getAdapter().notifyDataSetChanged();
     }
 
     @Override
