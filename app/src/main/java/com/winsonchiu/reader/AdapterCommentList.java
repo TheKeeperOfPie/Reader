@@ -25,13 +25,17 @@ import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.Animation;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.MediaController;
 import android.widget.ProgressBar;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.VideoView;
 
@@ -134,7 +138,6 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
             viewHolder.textThreadTitle.setText(link.getTitle());
             viewHolder.setTextInfo();
             viewHolder.toolbarActions.setVisibility(View.GONE);
-            viewHolder.toolbarActionsFull.setVisibility(View.GONE);
 
             if (link.isSelf()) {
                 if (!TextUtils.isEmpty(link.getSelfText())) {
@@ -160,6 +163,14 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
 
             Comment comment = controllerComments.get(position - 1);
 
+            if (comment.isReplyExpanded()) {
+                viewHolderComment.editTextReply.setVisibility(View.VISIBLE);
+                viewHolderComment.buttonSendReply.setVisibility(View.VISIBLE);
+            }
+            else {
+                viewHolderComment.editTextReply.setVisibility(View.GONE);
+                viewHolderComment.buttonSendReply.setVisibility(View.GONE);
+            }
             viewHolderComment.layoutContainerActions.setVisibility(View.GONE);
             viewHolderComment.toolbarActions.setVisibility(View.GONE);
 
@@ -241,7 +252,6 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
         protected ImageView imagePreview;
         protected VideoView videoFull;
         protected WebViewFixed webFull;
-        protected Toolbar toolbarActionsFull;
         protected TextView textThreadTitle;
         protected TextView textThreadSelf;
         protected TextView textThreadInfo;
@@ -288,19 +298,16 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                         if ((webFull.canScrollVertically(1) && webFull.canScrollVertically(-1))) {
                             listener
                                     .requestDisallowInterceptTouchEvent(true);
-                        }
-                        else {
+                        } else {
                             listener
                                     .requestDisallowInterceptTouchEvent(false);
                             if (webFull.getScrollY() == 0) {
                                 webFull.setScrollY(1);
-                            }
-                            else {
+                            } else {
                                 webFull.setScrollY(webFull.getScrollY() - 1);
                             }
                         }
-                    }
-                    else if (event.getAction() == MotionEvent.ACTION_UP) {
+                    } else if (event.getAction() == MotionEvent.ACTION_UP) {
                         listener
                                 .requestDisallowInterceptTouchEvent(false);
                     }
@@ -309,19 +316,6 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                 }
             });
             viewPagerFull = (ViewPager) itemView.findViewById(R.id.view_pager_full);
-            toolbarActionsFull = (Toolbar) itemView.findViewById(R.id.toolbar_actions_full);
-            toolbarActionsFull.inflateMenu(R.menu.menu_link_full);
-            toolbarActionsFull.setOnMenuItemClickListener(new Toolbar.OnMenuItemClickListener() {
-                @Override
-                public boolean onMenuItemClick(MenuItem menuItem) {
-                    switch (menuItem.getItemId()) {
-                        case R.id.item_web:
-                            listener.loadUrl(controllerComments.getLink().getUrl());
-                            break;
-                    }
-                    return true;
-                }
-            });
             imagePreview = (ImageView) itemView.findViewById(R.id.image_preview);
             textThreadTitle = (TextView) itemView.findViewById(R.id.text_thread_title);
             textThreadInfo = (TextView) itemView.findViewById(R.id.text_thread_info);
@@ -342,6 +336,9 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                             controllerComments.voteLink(ViewHolderHeader.this, -1);
                             break;
                         case R.id.item_share:
+                            break;
+                        case R.id.item_web:
+                            listener.loadUrl(controllerComments.getLink().getUrl());
                             break;
                     }
                     return true;
@@ -504,7 +501,6 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                         controllerComments.getLink()
                                 .getUrl()), "text/html", "UTF-8");
                 webFull.setVisibility(View.VISIBLE);
-                toolbarActionsFull.setVisibility(View.VISIBLE);
             }
             else {
                 listener.loadUrl(link.getUrl());
@@ -526,7 +522,6 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                                                         response).getJSONObject(
                                                         "data"));
 
-                                        toolbarActionsFull.setVisibility(View.VISIBLE);
                                         viewPagerFull.setAdapter(
                                                 new AdapterAlbum(activity, album,
                                                         listener));
@@ -596,7 +591,6 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
         private void loadVideo(String url, float heightRatio) {
             Log.d(TAG, "loadVideo: " + url + " : " + heightRatio);
             Uri uri = Uri.parse(url);
-            toolbarActionsFull.setVisibility(View.VISIBLE);
             videoFull.setVideoURI(uri);
             videoFull.getLayoutParams().height = (int) (ViewHolderHeader.this.itemView.getWidth() * heightRatio);
             videoFull.setVisibility(View.VISIBLE);
@@ -618,6 +612,9 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
         protected View viewIndicator;
         protected TextView textComment;
         protected TextView textInfo;
+        protected RelativeLayout layoutContainerReply;
+        protected EditText editTextReply;
+        protected Button buttonSendReply;
         protected Toolbar toolbarActions;
         protected MenuItem itemCollapse;
         protected MenuItem itemUpvote;
@@ -634,6 +631,9 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
             textComment = (TextView) itemView.findViewById(R.id.text_comment);
             textComment.setMovementMethod(LinkMovementMethod.getInstance());
             textInfo = (TextView) itemView.findViewById(R.id.text_info);
+            layoutContainerReply = (RelativeLayout) itemView.findViewById(R.id.layout_container_reply);
+            editTextReply = (EditText) itemView.findViewById(R.id.edit_text_reply);
+            buttonSendReply = (Button) itemView.findViewById(R.id.button_send_reply);
             layoutContainerActions = (LinearLayout) itemView.findViewById(R.id.layout_container_actions);
             toolbarActions = (Toolbar) itemView.findViewById(R.id.toolbar_actions);
             toolbarActions.inflateMenu(R.menu.menu_comment);
@@ -649,6 +649,15 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                             break;
                         case R.id.item_downvote:
                             controllerComments.voteComment(ViewHolderComment.this, -1);
+                            break;
+                        case R.id.item_reply:
+                            Comment comment = controllerComments.get(getPosition() - 1);
+                            if (!comment.isReplyExpanded()) {
+                                editTextReply.requestFocus();
+                            }
+                            comment.setReplyExpanded(!comment.isReplyExpanded());
+                            AnimationUtils.animateExpand(editTextReply);
+                            AnimationUtils.animateExpand(buttonSendReply);
                             break;
                         case R.id.item_share:
                             break;

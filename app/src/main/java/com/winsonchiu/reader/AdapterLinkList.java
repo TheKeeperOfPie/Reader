@@ -88,7 +88,6 @@ public class AdapterLinkList extends AdapterLink {
         viewHolder.textThreadTitle.setText(link.getTitle());
         viewHolder.setTextInfo();
         viewHolder.toolbarActions.setVisibility(View.GONE);
-        viewHolder.toolbarActionsFull.setVisibility(View.GONE);
     }
 
     @Override

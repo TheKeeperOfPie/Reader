@@ -49,6 +49,7 @@ public class Comment extends Thing {
     private int level;
     private boolean isMore;
     private List<Comment> replies;
+    private boolean replyExpanded;
 
     public static void addAllFromJson(List<Comment> comments, JSONObject rootJsonObject, int level) throws JSONException {
 
@@ -425,4 +426,11 @@ public class Comment extends Thing {
         return getId().hashCode();
     }
 
+    public boolean isReplyExpanded() {
+        return replyExpanded;
+    }
+
+    public void setReplyExpanded(boolean replyExpanded) {
+        this.replyExpanded = replyExpanded;
+    }
 }

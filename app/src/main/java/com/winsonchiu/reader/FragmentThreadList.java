@@ -223,7 +223,7 @@ public class FragmentThreadList extends Fragment {
         }
         recyclerThreadList.setLayoutManager(layoutManager);
         recyclerThreadList.setAdapter(adapterLink);
-        layoutManager.scrollToPosition(currentPosition[0]);
+        recyclerThreadList.scrollToPosition(currentPosition[0]);
     }
 
     @Override
@@ -252,12 +252,13 @@ public class FragmentThreadList extends Fragment {
                 recyclerThreadList.post(new Runnable() {
                     @Override
                     public void run() {
-                        if (layoutManager instanceof LinearLayoutManager) {
-                            ((LinearLayoutManager) layoutManager).scrollToPositionWithOffset(position, 0);
-                        }
-                        else if (layoutManager instanceof StaggeredGridLayoutManager) {
-                            ((StaggeredGridLayoutManager) layoutManager).scrollToPositionWithOffset(position, 0);
-                        }
+                        recyclerThreadList.scrollToPosition(position);
+//                        if (layoutManager instanceof LinearLayoutManager) {
+//                            ((LinearLayoutManager) layoutManager).scrollToPositionWithOffset(position, 0);
+//                        }
+//                        else if (layoutManager instanceof StaggeredGridLayoutManager) {
+//                            ((StaggeredGridLayoutManager) layoutManager).scrollToPositionWithOffset(position, 0);
+//                        }
                     }
                 });
             }
@@ -280,6 +281,7 @@ public class FragmentThreadList extends Fragment {
             @Override
             public void requestDisallowInterceptTouchEvent(boolean disallow) {
                 recyclerThreadList.requestDisallowInterceptTouchEvent(disallow);
+                swipeRefreshThreadList.requestDisallowInterceptTouchEvent(disallow);
             }
 
             @Override

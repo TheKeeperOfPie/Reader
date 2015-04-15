@@ -153,7 +153,6 @@ public class AdapterLinkGrid extends AdapterLink {
         viewHolder.textThreadTitle.setText(link.getTitle());
 //        viewHolder.setTextInfo();
         viewHolder.toolbarActions.setVisibility(View.GONE);
-        viewHolder.toolbarActionsFull.setVisibility(View.GONE);
     }
 
     private boolean showThumbnail(Link link) {

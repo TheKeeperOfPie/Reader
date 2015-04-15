@@ -3,6 +3,7 @@ package com.winsonchiu.reader;
 import android.animation.ObjectAnimator;
 import android.animation.ValueAnimator;
 import android.graphics.Color;
+import android.util.Log;
 import android.util.TypedValue;
 import android.view.View;
 import android.view.ViewGroup;
@@ -24,6 +25,7 @@ public class AnimationUtils {
     public static final long EXPAND_ACTION_DURATION = 150;
     public static final long ALPHA_DURATION = 500;
     public static final long BACKGROUND_DURATION = 500;
+    private static final String TAG = AnimationUtils.class.getCanonicalName();
 
     public static void animateBackgroundColor(final View view, int start, int end) {
 
@@ -137,10 +139,13 @@ public class AnimationUtils {
 
     public static void animateExpand(final View view) {
 
+        view.measure(View.MeasureSpec.AT_MOST, View.MeasureSpec.UNSPECIFIED);
         final int height = view.getMeasuredHeight();
 
+        Log.d(TAG, "animatedExpand target height: " + height);
+
         Animation animation;
-        if (view.getVisibility() == View.VISIBLE) {
+        if (view.isShown()) {
             animation = new Animation() {
                 @Override
                 protected void applyTransformation(float interpolatedTime, Transformation t) {

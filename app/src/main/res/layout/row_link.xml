@@ -37,21 +37,11 @@
 
     </FrameLayout>
 
-    <android.support.v7.widget.Toolbar
-        android:id="@+id/toolbar_actions_full"
-        android:layout_width="wrap_content"
-        android:layout_height="48dp"
-        android:layout_below="@id/frame_full"
-        android:layout_centerHorizontal="true"
-        android:gravity="center"
-        android:visibility="gone"
-        />
-
     <ImageView
         android:id="@+id/image_preview"
         android:layout_width="40dp"
         android:layout_height="40dp"
-        android:layout_below="@id/toolbar_actions_full"
+        android:layout_below="@id/frame_full"
         android:layout_alignParentStart="true"
         android:layout_margin="@dimen/activity_horizontal_margin"
         android:contentDescription="@string/content_description_thread_preview"
@@ -85,7 +75,7 @@
         android:id="@+id/text_thread_title"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_below="@id/toolbar_actions_full"
+        android:layout_below="@id/frame_full"
         android:layout_toEndOf="@+id/image_preview"
         android:layout_toStartOf="@+id/button_comments"
         android:layout_marginStart="@dimen/activity_horizontal_margin"
@@ -119,7 +109,7 @@
         android:id="@+id/button_comments"
         android:layout_width="56dp"
         android:layout_height="56dp"
-        android:layout_below="@id/toolbar_actions_full"
+        android:layout_below="@id/frame_full"
         android:layout_alignParentEnd="true"
         android:contentDescription="@string/content_description_button_comments"
         android:background="@android:color/transparent"

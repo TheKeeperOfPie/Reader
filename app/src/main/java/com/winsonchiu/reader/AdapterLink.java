@@ -81,7 +81,6 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         protected ImageView imagePreview;
         protected VideoView videoFull;
         protected WebViewFixed webFull;
-        protected Toolbar toolbarActionsFull;
         protected TextView textThreadTitle;
         protected TextView textThreadSelf;
         protected TextView textThreadInfo;
@@ -144,19 +143,6 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                 }
             });
             viewPagerFull = (ViewPager) itemView.findViewById(R.id.view_pager_full);
-            toolbarActionsFull = (Toolbar) itemView.findViewById(R.id.toolbar_actions_full);
-            toolbarActionsFull.inflateMenu(R.menu.menu_link_full);
-            toolbarActionsFull.setOnMenuItemClickListener(new Toolbar.OnMenuItemClickListener() {
-                @Override
-                public boolean onMenuItemClick(MenuItem menuItem) {
-                    switch (menuItem.getItemId()) {
-                        case R.id.item_web:
-                            listener.loadUrl(controllerLinks.getLink(getPosition()).getUrl());
-                            break;
-                    }
-                    return true;
-                }
-            });
             imagePreview = (ImageView) itemView.findViewById(R.id.image_preview);
             textThreadTitle = (TextView) itemView.findViewById(R.id.text_thread_title);
             textThreadInfo = (TextView) itemView.findViewById(R.id.text_thread_info);
@@ -182,6 +168,9 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                             controllerLinks.vote(ViewHolderBase.this, -1);
                             break;
                         case R.id.item_share:
+                            break;
+                        case R.id.item_web:
+                            listener.loadUrl(controllerLinks.getLink(getPosition()).getUrl());
                             break;
                     }
                     return true;
@@ -322,7 +311,6 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                         controllerLinks.getLink(getPosition())
                                 .getUrl()), "text/html", "UTF-8");
                 webFull.setVisibility(View.VISIBLE);
-                toolbarActionsFull.setVisibility(View.VISIBLE);
                 listener
                         .onFullLoaded(getPosition());
             }
@@ -346,7 +334,6 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                                                         response).getJSONObject(
                                                         "data"));
 
-                                        toolbarActionsFull.setVisibility(View.VISIBLE);
                                         viewPagerFull.setAdapter(
                                                 new AdapterAlbum(activity, album,
                                                         listener));
@@ -417,7 +404,6 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         private void loadVideo(String url, float heightRatio) {
             Log.d(TAG, "loadVideo: " + url + " : " + heightRatio);
             Uri uri = Uri.parse(url);
-            toolbarActionsFull.setVisibility(View.VISIBLE);
             videoFull.setVideoURI(uri);
             videoFull.getLayoutParams().height = (int) (ViewHolderBase.this.itemView.getWidth() * heightRatio);
             videoFull.setVisibility(View.VISIBLE);

@@ -44,4 +44,6 @@
     <string name="item_share">Share</string>
     <string name="load_more_comments">Load more comments...</string>
     <string name="item_web">Load in browser</string>
+    <string name="item_reply">Reply</string>
+    <string name="button_send">Send</string>
 </resources>
