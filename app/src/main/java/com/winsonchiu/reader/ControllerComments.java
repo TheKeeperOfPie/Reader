@@ -37,7 +37,7 @@ import java.util.Map;
 /**
  * Created by TheKeeperOfPie on 3/20/2015.
  */
-public class ControllerComments extends Controller{
+public class ControllerComments implements Controller {
 
     private static final long ALPHA_DURATION = 500;
     private static final String TAG = ControllerComments.class.getCanonicalName();
@@ -123,7 +123,7 @@ public class ControllerComments extends Controller{
                 }, 0);
     }
 
-    public Drawable getDrawableForLink() {
+    public Drawable getDrawableForLink(Link link) {
         String thumbnail = link.getThumbnail();
 
         if (link.isSelf()) {
@@ -135,10 +135,6 @@ public class ControllerComments extends Controller{
         }
 
         return null;
-    }
-
-    public Link getLink() {
-        return link;
     }
 
     public Listing getListingComments() {
@@ -430,6 +426,11 @@ public class ControllerComments extends Controller{
 
     public int getIndentWidth(Comment comment) {
         return indentWidth * comment.getLevel();
+    }
+
+    @Override
+    public Link getLink(int position) {
+        return link;
     }
 
     public Reddit getReddit() {

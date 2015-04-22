@@ -1,7 +1,6 @@
 package com.winsonchiu.reader;
 
 import android.app.Activity;
-import android.content.Intent;
 import android.content.res.Resources;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
@@ -12,9 +11,7 @@ import android.support.v7.widget.StaggeredGridLayoutManager;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ShareActionProvider;
 
-import com.android.volley.Request;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.ImageLoader;
 import com.winsonchiu.reader.data.Link;
@@ -23,7 +20,7 @@ import com.winsonchiu.reader.data.Reddit;
 /**
  * Created by TheKeeperOfPie on 3/7/2015.
  */
-public class AdapterLinkGrid extends AdapterLink {
+public class AdapterLinkGrid extends AdapterLink implements ControllerLinks.ListenerCallback {
 
     private static final String TAG = AdapterLinkGrid.class.getCanonicalName();
 
@@ -56,106 +53,21 @@ public class AdapterLinkGrid extends AdapterLink {
 
     @Override
     public ViewHolder onCreateViewHolder(ViewGroup viewGroup, int i) {
-        return new ViewHolder(LayoutInflater.from(viewGroup.getContext()).inflate(R.layout.cell_link, viewGroup, false));
+        return new ViewHolder(LayoutInflater.from(viewGroup.getContext()).inflate(R.layout.cell_link, viewGroup, false), this, defaultColor, thumbnailWidth);
     }
 
     @Override
     public void onBindViewHolder(RecyclerView.ViewHolder holder, final int position) {
 
-        final ViewHolder viewHolder = (ViewHolder) holder;
-        viewHolder.imagePreview.setImageBitmap(null);
-
         if (!controllerLinks.isLoading() && position > controllerLinks.size() - 10) {
             controllerLinks.loadMoreLinks();
         }
 
-        ((StaggeredGridLayoutManager.LayoutParams) viewHolder.itemView.getLayoutParams()).setFullSpan(false);
-
-        final Link link = controllerLinks.getLink(position);
-
-        Drawable drawable = controllerLinks.getDrawableForLink(link);
-        if (drawable == null && showThumbnail(link)) {
-            viewHolder.imagePreview.setVisibility(View.VISIBLE);
-            viewHolder.progressImage.setVisibility(View.VISIBLE);
-            viewHolder.imagePreview.setTag(
-                    controllerLinks.loadImage(link.getThumbnail(), new ImageLoader.ImageListener() {
-                        @Override
-                        public void onResponse(ImageLoader.ImageContainer response,
-                                               boolean isImmediate) {
-                            if (response.getBitmap() == null) {
-                                this.onErrorResponse(null);
-                                return;
-                            }
-                            Palette.generateAsync(response.getBitmap(),
-                                    new Palette.PaletteAsyncListener() {
-                                        @Override
-                                        public void onGenerated(Palette palette) {
-                                            if (position == viewHolder.getPosition()) {
-                                                AnimationUtils.animateBackgroundColor(
-                                                        viewHolder.itemView,
-                                                        ((ColorDrawable) viewHolder.itemView.getBackground()).getColor(),
-                                                        palette.getDarkVibrantColor(
-                                                                palette.getMutedColor(
-                                                                        defaultColor)));
-                                            }
-                                        }
-                                    });
-                            if (Reddit.placeImageUrl(
-                                    link) && position == viewHolder.getPosition()) {
-                                viewHolder.imagePreview.setTag(
-                                        controllerLinks.loadImage(link.getUrl(),
-                                                new ImageLoader.ImageListener() {
-                                                    @Override
-                                                    public void onResponse(ImageLoader.ImageContainer response,
-                                                                           boolean isImmediate) {
-                                                        if (response.getBitmap() != null && position == viewHolder.getPosition()) {
-                                                            viewHolder.imagePreview.setAlpha(0.0f);
-                                                            viewHolder.imagePreview.setImageBitmap(
-                                                                    ThumbnailUtils.extractThumbnail(
-                                                                            response.getBitmap(),
-                                                                            thumbnailWidth,
-                                                                            thumbnailWidth));
-                                                            AnimationUtils.animateAlpha(
-                                                                    viewHolder.imagePreview, 0.0f,
-                                                                    1.0f);
-                                                            viewHolder.progressImage.setVisibility(
-                                                                    View.GONE);
-                                                        }
-                                                    }
-
-                                                    @Override
-                                                    public void onErrorResponse(VolleyError error) {
-
-                                                    }
-                                                }));
-                            }
-                            else {
-                                viewHolder.imagePreview.setAlpha(0.0f);
-                                viewHolder.imagePreview.setImageBitmap(response.getBitmap());
-                                AnimationUtils.animateAlpha(viewHolder.imagePreview, 0.0f, 1.0f);
-                                viewHolder.imagePlay.setVisibility(View.VISIBLE);
-                                viewHolder.progressImage.setVisibility(View.GONE);
-                            }
-                        }
-
-                        @Override
-                        public void onErrorResponse(VolleyError error) {
-
-                        }
-                    }));
-        }
-        else {
-            viewHolder.itemView.setBackgroundColor(defaultColor);
-            viewHolder.imagePreview.setVisibility(View.GONE);
-        }
-        viewHolder.imagePreview.invalidate();
-
-        viewHolder.textThreadTitle.setText(link.getTitle());
-//        viewHolder.setTextInfo();
-        viewHolder.toolbarActions.setVisibility(View.GONE);
+        final ViewHolder viewHolder = (ViewHolder) holder;
+        viewHolder.onBind(position);
     }
 
-    private boolean showThumbnail(Link link) {
+    public static boolean showThumbnail(Link link) {
         if (link.getThumbnail().equals("nsfw")) {
             return false;
         }
@@ -168,30 +80,9 @@ public class AdapterLinkGrid extends AdapterLink {
 
         final ViewHolder viewHolder = (ViewHolder) holder;
 
-        Object tag = viewHolder.imagePreview.getTag();
-
-        if (tag != null) {
-            if (tag instanceof ImageLoader.ImageContainer) {
-                ((ImageLoader.ImageContainer) tag).cancelRequest();
-            }
-            else if (tag instanceof Request) {
-                ((Request) tag).cancel();
-            }
-        }
-
         viewHolder.itemView.setBackgroundColor(defaultColor);
         viewHolder.imagePlay.setVisibility(View.GONE);
-        viewHolder.webFull.onPause();
-        viewHolder.webFull.resetMaxHeight();
-        viewHolder.webFull.loadData("", "html", "UTF-8");
-        viewHolder.webFull.setVisibility(View.GONE);
-        viewHolder.videoFull.stopPlayback();
-        viewHolder.videoFull.setVisibility(View.GONE);
-        viewHolder.viewPagerFull.setVisibility(View.GONE);
-        viewHolder.imagePreview.setImageBitmap(null);
-        viewHolder.imagePreview.setVisibility(View.GONE);
-        viewHolder.progressImage.setVisibility(View.GONE);
-        viewHolder.textThreadSelf.setVisibility(View.GONE);
+        viewHolder.onRecycle();
 
         super.onViewRecycled(holder);
     }
@@ -201,27 +92,171 @@ public class AdapterLinkGrid extends AdapterLink {
         return controllerLinks.size();
     }
 
-    protected class ViewHolder extends AdapterLink.ViewHolderBase {
+    @Override
+    public ControllerLinks.LinkClickListener getListener() {
+        return listener;
+    }
 
-        public ViewHolder(View itemView) {
-            super(itemView);
+    @Override
+    public ControllerLinks getController() {
+        return controllerLinks;
+    }
+
+    @Override
+    public int getColorPositive() {
+        return colorPositive;
+    }
+
+    @Override
+    public int getColorNegative() {
+        return colorNegative;
+    }
+
+    @Override
+    public Activity getActivity() {
+        return activity;
+    }
+
+    @Override
+    public float getItemWidth() {
+        return itemWidth;
+    }
+
+    @Override
+    public RecyclerView.LayoutManager getLayoutManager() {
+        return layoutManager;
+    }
+
+    protected static class ViewHolder extends AdapterLink.ViewHolderBase {
+
+        private final int defaultColor;
+        private final int thumbnailWidth;
+
+        public ViewHolder(View itemView, ControllerLinks.ListenerCallback listenerCallback, int defaultColor, int thumbnailWidth) {
+            super(itemView, listenerCallback);
+            this.defaultColor = defaultColor;
+            this.thumbnailWidth = thumbnailWidth;
 
             this.imagePreview.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
 
                     ViewHolder viewHolder = ViewHolder.this;
-                    ((StaggeredGridLayoutManager.LayoutParams) viewHolder.itemView.getLayoutParams()).setFullSpan(true);
-                    ((StaggeredGridLayoutManager) layoutManager).invalidateSpanAssignments();
+
+                    if (callback.getLayoutManager() instanceof StaggeredGridLayoutManager) {
+                        ((StaggeredGridLayoutManager.LayoutParams) viewHolder.itemView.getLayoutParams()).setFullSpan(
+                                true);
+                        ((StaggeredGridLayoutManager) callback.getLayoutManager()).invalidateSpanAssignments();
+                    }
 
                     imagePreview.setVisibility(View.GONE);
                     progressImage.setVisibility(View.GONE);
                     imagePlay.setVisibility(View.GONE);
 
-                    loadFull(controllerLinks.getLink(getPosition()));
+                    loadFull(callback.getController()
+                            .getLink(getPosition()));
                 }
             });
 
+        }
+
+        @Override
+        public void onBind(final int position) {
+            super.onBind(position);
+
+            imagePreview.setImageBitmap(null);
+
+            ((StaggeredGridLayoutManager.LayoutParams) itemView.getLayoutParams()).setFullSpan(
+                    false);
+
+            final Link link = callback.getController().getLink(position);
+
+            Drawable drawable = callback.getController().getDrawableForLink(link);
+            if (drawable == null && showThumbnail(link)) {
+                imagePreview.setVisibility(View.VISIBLE);
+                progressImage.setVisibility(View.VISIBLE);
+                imagePreview.setTag(
+                        callback.getController()
+                                .getReddit().getImageLoader().get(link.getThumbnail(), new ImageLoader.ImageListener() {
+                                    @Override
+                                    public void onResponse(ImageLoader.ImageContainer response,
+                                                           boolean isImmediate) {
+                                        if (response.getBitmap() == null) {
+                                            this.onErrorResponse(null);
+                                            return;
+                                        }
+                                        Palette.generateAsync(response.getBitmap(),
+                                                new Palette.PaletteAsyncListener() {
+                                                    @Override
+                                                    public void onGenerated(Palette palette) {
+                                                        if (position == getPosition()) {
+                                                            AnimationUtils.animateBackgroundColor(
+                                                                    itemView,
+                                                                    ((ColorDrawable) itemView.getBackground()).getColor(),
+                                                                    palette.getDarkVibrantColor(
+                                                                            palette.getMutedColor(
+                                                                                    defaultColor)));
+                                                        }
+                                                    }
+                                                });
+                                        if (Reddit.placeImageUrl(
+                                                link) && position == getPosition()) {
+                                            imagePreview.setTag(
+                                                    callback.getController()
+                                                            .getReddit().getImageLoader().get(link.getUrl(),
+                                                                    new ImageLoader.ImageListener() {
+                                                                        @Override
+                                                                        public void onResponse(
+                                                                                ImageLoader.ImageContainer response,
+                                                                                boolean isImmediate) {
+                                                                            if (response.getBitmap() != null && position == getPosition()) {
+                                                                                imagePreview.setAlpha(
+                                                                                        0.0f);
+                                                                                imagePreview.setImageBitmap(
+                                                                                        ThumbnailUtils.extractThumbnail(
+                                                                                                response.getBitmap(),
+                                                                                                thumbnailWidth,
+                                                                                                thumbnailWidth));
+                                                                                AnimationUtils.animateAlpha(
+                                                                                        imagePreview,
+                                                                                        0.0f,
+                                                                                        1.0f);
+                                                                                progressImage.setVisibility(
+                                                                                        View.GONE);
+                                                                            }
+                                                                        }
+
+                                                                        @Override
+                                                                        public void onErrorResponse(
+                                                                                VolleyError error) {
+
+                                                                        }
+                                                                    }));
+                                        }
+                                        else {
+                                            imagePreview.setAlpha(0.0f);
+                                            imagePreview.setImageBitmap(response.getBitmap());
+                                            AnimationUtils.animateAlpha(imagePreview, 0.0f, 1.0f);
+                                            imagePlay.setVisibility(View.VISIBLE);
+                                            progressImage.setVisibility(View.GONE);
+                                        }
+                                    }
+
+                                    @Override
+                                    public void onErrorResponse(VolleyError error) {
+
+                                    }
+                                }));
+            }
+            else {
+                itemView.setBackgroundColor(defaultColor);
+                imagePreview.setVisibility(View.GONE);
+            }
+            imagePreview.invalidate();
+
+            textThreadTitle.setText(link.getTitle());
+//        setTextInfo();
+            toolbarActions.setVisibility(View.GONE);
         }
     }
 

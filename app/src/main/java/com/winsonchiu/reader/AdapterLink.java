@@ -33,8 +33,10 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.VideoView;
 
+import com.android.volley.Request;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
+import com.android.volley.toolbox.ImageLoader;
 import com.winsonchiu.reader.data.Link;
 import com.winsonchiu.reader.data.Reddit;
 import com.winsonchiu.reader.data.imgur.Album;
@@ -56,14 +58,15 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
     protected int colorNegative;
     protected float itemWidth;
     protected ControllerLinks.LinkClickListener listener;
-    private int ACTION_MENU_SIZE = 4;
+    private static int ACTION_MENU_SIZE = 4;
 
     public void setActivity(Activity activity) {
         Resources resources = activity.getResources();
         this.activity = activity;
         this.colorPositive = resources.getColor(R.color.positiveScore);
         this.colorNegative = resources.getColor(R.color.negativeScore);
-        this.itemWidth = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 48, resources.getDisplayMetrics());
+        this.itemWidth = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 48,
+                resources.getDisplayMetrics());
     }
 
     public void setControllerLinks(ControllerLinks controllerLinks, ControllerLinks.LinkClickListener listener) {
@@ -77,7 +80,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
 
     public abstract RecyclerView.ItemDecoration getItemDecoration();
 
-    protected class ViewHolderBase extends RecyclerView.ViewHolder {
+    protected static class ViewHolderBase extends RecyclerView.ViewHolder {
 
         protected MediaController mediaController;
         protected ProgressBar progressImage;
@@ -91,10 +94,11 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         protected TextView textThreadInfo;
         protected ImageButton buttonComments;
         protected Toolbar toolbarActions;
-        private View.OnClickListener clickListenerLink;
+        protected ControllerLinks.ListenerCallback callback;
 
-        public ViewHolderBase(final View itemView) {
+        public ViewHolderBase(final View itemView, ControllerLinks.ListenerCallback listenerCallback) {
             super(itemView);
+            this.callback = listenerCallback;
 
             progressImage = (ProgressBar) itemView.findViewById(R.id.progress_image);
             imagePlay = (ImageView) itemView.findViewById(R.id.image_play);
@@ -128,10 +132,10 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                     if (event.getAction() == MotionEvent.ACTION_DOWN) {
 
                         if ((webFull.canScrollVertically(1) && webFull.canScrollVertically(-1))) {
-                            listener
+                            callback.getListener()
                                     .requestDisallowInterceptTouchEvent(true);
                         } else {
-                            listener
+                            callback.getListener()
                                     .requestDisallowInterceptTouchEvent(false);
                             if (webFull.getScrollY() == 0) {
                                 webFull.setScrollY(1);
@@ -140,7 +144,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                             }
                         }
                     } else if (event.getAction() == MotionEvent.ACTION_UP) {
-                        listener
+                        callback.getListener()
                                 .requestDisallowInterceptTouchEvent(false);
                     }
 
@@ -157,7 +161,9 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             buttonComments.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    listener.onClickComments(controllerLinks.getLink(getPosition()));
+                    callback.getListener().onClickComments(
+                            callback.getController()
+                                    .getLink(getPosition()));
                 }
             });
             toolbarActions = (Toolbar) itemView.findViewById(R.id.toolbar_actions);
@@ -167,42 +173,55 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                 public boolean onMenuItemClick(MenuItem menuItem) {
                     switch (menuItem.getItemId()) {
                         case R.id.item_upvote:
-                            controllerLinks.vote(ViewHolderBase.this, 1);
+                            callback.getController()
+                                    .voteLink(ViewHolderBase.this, 1);
                             break;
                         case R.id.item_downvote:
-                            controllerLinks.vote(ViewHolderBase.this, -1);
+                            callback.getController()
+                                    .voteLink(ViewHolderBase.this, -1);
                             break;
                         case R.id.item_share:
                             break;
                         case R.id.item_web:
-                            listener.loadUrl(controllerLinks.getLink(getPosition()).getUrl());
+                            ViewHolderBase.this.callback.getListener()
+                                    .loadUrl(
+                                            callback.getController()
+                                                    .getLink(getPosition())
+                                                    .getUrl());
                             break;
                     }
                     return true;
                 }
             });
-            toolbarActions.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
-                @Override
-                public void onGlobalLayout() {
-                    int maxNum = (int) (itemView.getWidth() / itemWidth);
+            toolbarActions.getViewTreeObserver().addOnGlobalLayoutListener(
+                    new ViewTreeObserver.OnGlobalLayoutListener() {
+                        @Override
+                        public void onGlobalLayout() {
+                            int maxNum = (int) (itemView.getWidth() / callback.getItemWidth());
 
-                    for (int index = 0; index < ACTION_MENU_SIZE; index++) {
-                        if (index <= maxNum) {
-                            toolbarActions.getMenu().getItem(index).setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+                            for (int index = 0; index < ACTION_MENU_SIZE; index++) {
+                                if (index <= maxNum) {
+                                    toolbarActions.getMenu()
+                                            .getItem(index)
+                                            .setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+                                }
+                                else {
+                                    toolbarActions.getMenu()
+                                            .getItem(index)
+                                            .setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
+                                }
+                            }
+                            toolbarActions.getViewTreeObserver()
+                                    .removeOnGlobalLayoutListener(this);
                         }
-                        else {
-                            toolbarActions.getMenu().getItem(index).setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
-                        }
-                    }
-                    toolbarActions.getViewTreeObserver().removeOnGlobalLayoutListener(this);
-                }
-            });
+                    });
 
             View.OnClickListener clickListenerLink = new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
                     setVoteColors();
-                    Link link = controllerLinks.getLink(getPosition());
+                    Link link = callback.getController()
+                            .getLink(getPosition());
                     Intent shareIntent = new Intent(Intent.ACTION_SEND);
                     shareIntent.setType("text/plain");
                     shareIntent.putExtra(Intent.EXTRA_SUBJECT, link.getTitle());
@@ -255,7 +274,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                     int lastIndex = dotIndex > startIndex ? dotIndex : url.length();
                     String gfycatId = url.substring(startIndex, lastIndex);
                     progressImage.setVisibility(View.VISIBLE);
-                    controllerLinks.getReddit()
+                    callback.getController().getReddit()
                             .loadGet(Reddit.GFYCAT_URL + gfycatId,
                                     new Response.Listener<String>() {
                                         @Override
@@ -290,16 +309,17 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
 
         public void setVoteColors() {
 
-            Link link = controllerLinks.getLink(getPosition());
+            Link link = callback.getController()
+                    .getLink(getPosition());
             switch (link.isLikes()) {
                 case 1:
                     toolbarActions.getMenu().findItem(R.id.item_upvote).getIcon().setColorFilter(
-                            colorPositive, PorterDuff.Mode.MULTIPLY);
+                            callback.getColorPositive(), PorterDuff.Mode.MULTIPLY);
                     toolbarActions.getMenu().findItem(R.id.item_downvote).getIcon().clearColorFilter();
                     break;
                 case -1:
                     toolbarActions.getMenu().findItem(R.id.item_downvote).getIcon().setColorFilter(
-                            colorNegative, PorterDuff.Mode.MULTIPLY);
+                            callback.getColorNegative(), PorterDuff.Mode.MULTIPLY);
                     toolbarActions.getMenu().findItem(R.id.item_upvote).getIcon().clearColorFilter();
                     break;
                 case 0:
@@ -310,12 +330,13 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         }
 
         public void setTextInfo() {
-            Link link = controllerLinks.getLink(getPosition());
+            Link link = callback.getController()
+                    .getLink(getPosition());
 
             String subreddit = "/r/" + link.getSubreddit();
             Spannable spannableInfo = new SpannableString(subreddit + "\n" + link.getScore() + " by " + link.getAuthor());
             spannableInfo.setSpan(
-                    new ForegroundColorSpan(link.getScore() > 0 ? colorPositive : colorNegative),
+                    new ForegroundColorSpan(link.getScore() > 0 ? callback.getColorPositive() : callback.getColorNegative()),
                     subreddit.length() + 1,
                     subreddit.length() + 1 + String.valueOf(link.getScore())
                             .length(), Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
@@ -329,21 +350,23 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                 webFull.onResume();
                 webFull.resetMaxHeight();
                 webFull.loadData(Reddit.getImageHtml(
-                        controllerLinks.getLink(getPosition())
+                        callback.getController()
+                                .getLink(getPosition())
                                 .getUrl()), "text/html", "UTF-8");
                 webFull.setVisibility(View.VISIBLE);
-                listener
+                callback.getListener()
                         .onFullLoaded(getPosition());
             }
             else {
-                listener.loadUrl(link.getUrl());
+                callback.getListener().loadUrl(link.getUrl());
             }
         }
 
 
         private void loadAlbum(String id) {
             progressImage.setVisibility(View.VISIBLE);
-            imagePreview.setTag(controllerLinks.getReddit()
+            imagePreview.setTag(callback.getController()
+                    .getReddit()
                     .loadImgurAlbum(id,
                             new Response.Listener<String>() {
                                 @Override
@@ -356,16 +379,19 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                                                         "data"));
 
                                         viewPagerFull.setAdapter(
-                                                new AdapterAlbum(activity, album,
-                                                        listener));
-                                        viewPagerFull.getLayoutParams().height = listener
+                                                new AdapterAlbum(callback.getActivity(), album,
+                                                        callback.getListener()));
+                                        viewPagerFull.getLayoutParams().height = callback.getListener()
                                                 .getRecyclerHeight() - itemView.getHeight();
                                         viewPagerFull.setVisibility(View.VISIBLE);
                                         viewPagerFull.requestLayout();
-                                        listener.onFullLoaded(getPosition());
-                                    } catch (JSONException e) {
+                                        callback.getListener()
+                                                .onFullLoaded(getPosition());
+                                    }
+                                    catch (JSONException e) {
                                         e.printStackTrace();
-                                    } finally {
+                                    }
+                                    finally {
                                         progressImage.setVisibility(View.GONE);
                                     }
                                 }
@@ -380,7 +406,8 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
 
         private void loadGifv(String id) {
             Log.d(TAG, "loadGifv: " + id);
-            imagePreview.setTag(controllerLinks.getReddit()
+            imagePreview.setTag(callback.getController()
+                    .getReddit()
                     .loadImgurImage(id,
                             new Response.Listener<String>() {
                                 @Override
@@ -392,14 +419,18 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                                                         "data"));
 
                                         if (!TextUtils.isEmpty(image.getMp4())) {
-                                            loadVideo(image.getMp4(), (float) image.getHeight() / image.getWidth());
+                                            loadVideo(image.getMp4(),
+                                                    (float) image.getHeight() / image.getWidth());
                                         }
                                         else if (!TextUtils.isEmpty(image.getWebm())) {
-                                            loadVideo(image.getWebm(), (float) image.getHeight() / image.getWidth());
+                                            loadVideo(image.getWebm(),
+                                                    (float) image.getHeight() / image.getWidth());
                                         }
-                                    } catch (JSONException e) {
+                                    }
+                                    catch (JSONException e) {
                                         e.printStackTrace();
-                                    } finally {
+                                    }
+                                    finally {
                                         progressImage.setVisibility(View.GONE);
                                     }
                                 }
@@ -437,8 +468,38 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                             videoFull.start();
                         }
                     });
-            listener
+            callback.getListener()
                     .onFullLoaded(getPosition());
+        }
+
+        public void onRecycle() {
+
+            Object tag = imagePreview.getTag();
+
+            if (tag != null) {
+                if (tag instanceof ImageLoader.ImageContainer) {
+                    ((ImageLoader.ImageContainer) tag).cancelRequest();
+                }
+                else if (tag instanceof Request) {
+                    ((Request) tag).cancel();
+                }
+            }
+
+            webFull.onPause();
+            webFull.resetMaxHeight();
+            webFull.loadUrl("about:blank");
+            webFull.setVisibility(View.GONE);
+            videoFull.stopPlayback();
+            videoFull.setVisibility(View.GONE);
+            viewPagerFull.setVisibility(View.GONE);
+            imagePreview.setImageBitmap(null);
+            imagePreview.setVisibility(View.VISIBLE);
+            progressImage.setVisibility(View.GONE);
+            textThreadSelf.setVisibility(View.GONE);
+        }
+
+        public void onBind(int position) {
+
         }
     }
 

@@ -1,7 +1,6 @@
 package com.winsonchiu.reader;
 
 import android.app.Activity;
-import android.content.Intent;
 import android.graphics.drawable.Drawable;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -10,9 +9,7 @@ import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ShareActionProvider;
 
-import com.android.volley.Request;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.ImageLoader;
 import com.winsonchiu.reader.data.Link;
@@ -21,7 +18,7 @@ import com.winsonchiu.reader.data.Reddit;
 /**
  * Created by TheKeeperOfPie on 3/7/2015.
  */
-public class AdapterLinkList extends AdapterLink {
+public class AdapterLinkList extends AdapterLink implements ControllerLinks.ListenerCallback {
 
     private static final String TAG = AdapterLinkList.class.getCanonicalName();
 
@@ -46,48 +43,18 @@ public class AdapterLinkList extends AdapterLink {
 
     @Override
     public ViewHolder onCreateViewHolder(ViewGroup viewGroup, int i) {
-        return new ViewHolder(LayoutInflater.from(viewGroup.getContext()).inflate(R.layout.row_link, viewGroup, false));
+        return new ViewHolder(LayoutInflater.from(viewGroup.getContext()).inflate(R.layout.row_link, viewGroup, false), this);
     }
 
     @Override
     public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
 
-        final ViewHolder viewHolder = (ViewHolder) holder;
-        viewHolder.imagePreview.setImageBitmap(null);
-
-        if (!controllerLinks.isLoading() && position > controllerLinks.size() - 10) {
+        if (controllerLinks.isLoading() && position > controllerLinks.size() - 10) {
             controllerLinks.loadMoreLinks();
         }
 
-        Link link = controllerLinks.getLink(position);
-
-        Drawable drawable = controllerLinks.getDrawableForLink(link);
-        if (drawable == null) {
-            viewHolder.imagePreview.setTag(
-                    controllerLinks.loadImage(link.getThumbnail(), new ImageLoader.ImageListener() {
-                        @Override
-                        public void onResponse(ImageLoader.ImageContainer response,
-                                               boolean isImmediate) {
-                            if (response.getBitmap() != null) {
-                                viewHolder.imagePreview.setAlpha(0.0f);
-                                viewHolder.imagePreview.setImageBitmap(response.getBitmap());
-                                AnimationUtils.animateAlpha(viewHolder.imagePreview, 0.0f, 1.0f);
-                            }
-                        }
-
-                        @Override
-                        public void onErrorResponse(VolleyError error) {
-
-                        }
-                    }));
-        }
-        else {
-            viewHolder.imagePreview.setImageDrawable(drawable);
-        }
-
-        viewHolder.textThreadTitle.setText(link.getTitle());
-        viewHolder.setTextInfo();
-        viewHolder.toolbarActions.setVisibility(View.GONE);
+        final ViewHolder viewHolder = (ViewHolder) holder;
+        viewHolder.onBind(position);
     }
 
     @Override
@@ -95,28 +62,7 @@ public class AdapterLinkList extends AdapterLink {
 
         final ViewHolder viewHolder = (ViewHolder) holder;
 
-        Object tag = viewHolder.imagePreview.getTag();
-
-        if (tag != null) {
-            if (tag instanceof ImageLoader.ImageContainer) {
-                ((ImageLoader.ImageContainer) tag).cancelRequest();
-            }
-            else if (tag instanceof Request) {
-                ((Request) tag).cancel();
-            }
-        }
-
-        viewHolder.webFull.onPause();
-        viewHolder.webFull.resetMaxHeight();
-        viewHolder.webFull.loadUrl("about:blank");
-        viewHolder.webFull.setVisibility(View.GONE);
-        viewHolder.videoFull.stopPlayback();
-        viewHolder.videoFull.setVisibility(View.GONE);
-        viewHolder.viewPagerFull.setVisibility(View.GONE);
-        viewHolder.imagePreview.setImageBitmap(null);
-        viewHolder.imagePreview.setVisibility(View.VISIBLE);
-        viewHolder.progressImage.setVisibility(View.GONE);
-        viewHolder.textThreadSelf.setVisibility(View.GONE);
+        viewHolder.onRecycle();
 
         super.onViewRecycled(holder);
     }
@@ -126,20 +72,55 @@ public class AdapterLinkList extends AdapterLink {
         return controllerLinks.size();
     }
 
-    protected class ViewHolder extends AdapterLink.ViewHolderBase {
+    @Override
+    public ControllerLinks.LinkClickListener getListener() {
+        return listener;
+    }
 
-        public ViewHolder(View itemView) {
-            super(itemView);
+    @Override
+    public ControllerLinks getController() {
+        return controllerLinks;
+    }
+
+    @Override
+    public int getColorPositive() {
+        return colorPositive;
+    }
+
+    @Override
+    public int getColorNegative() {
+        return colorNegative;
+    }
+
+    @Override
+    public Activity getActivity() {
+        return activity;
+    }
+
+    @Override
+    public float getItemWidth() {
+        return itemWidth;
+    }
+
+    @Override
+    public RecyclerView.LayoutManager getLayoutManager() {
+        return layoutManager;
+    }
+
+    protected static class ViewHolder extends AdapterLink.ViewHolderBase {
+
+        public ViewHolder(View itemView, final ControllerLinks.ListenerCallback callback) {
+            super(itemView, callback);
 
             this.imagePreview.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    Link link = controllerLinks.getLink(getPosition());
+                    Link link = callback.getController().getLink(getPosition());
                     imagePreview.setVisibility(View.VISIBLE);
 
                     if (link.isSelf()) {
                         if (TextUtils.isEmpty(link.getSelfText())) {
-                            listener.onClickComments(link);
+                            callback.getListener().onClickComments(link);
                         }
                         else {
                             String html = link.getSelfTextHtml();
@@ -150,7 +131,7 @@ public class AdapterLinkList extends AdapterLink {
                                     new Reddit.UrlClickListener() {
                                         @Override
                                         public void onUrlClick(String url) {
-                                            listener.loadUrl(url);
+                                            callback.getListener().loadUrl(url);
                                         }
                                     }));
                         }
@@ -160,6 +141,46 @@ public class AdapterLinkList extends AdapterLink {
                     }
                 }
             });
+        }
+
+        @Override
+        public void onBind(int position) {
+            super.onBind(position);
+            imagePreview.setImageBitmap(null);
+
+            Link link = callback.getController()
+                    .getLink(position);
+
+            Drawable drawable = callback.getController().getDrawableForLink(link);
+            if (drawable == null) {
+                imagePreview.setTag(
+                        callback.getController()
+                                .getReddit().getImageLoader().get(link.getThumbnail(),
+                                new ImageLoader.ImageListener() {
+                                    @Override
+                                    public void onResponse(ImageLoader.ImageContainer response,
+                                                           boolean isImmediate) {
+                                        if (response.getBitmap() != null) {
+                                            imagePreview.setAlpha(0.0f);
+                                            imagePreview.setImageBitmap(response.getBitmap());
+                                            AnimationUtils.animateAlpha(imagePreview, 0.0f, 1.0f);
+                                        }
+                                    }
+
+                                    @Override
+                                    public void onErrorResponse(VolleyError error) {
+
+                                    }
+                                }));
+            }
+            else {
+                imagePreview.setImageDrawable(drawable);
+            }
+
+            textThreadTitle.setText(link.getTitle());
+            setTextInfo();
+            toolbarActions.setVisibility(View.GONE);
+
         }
     }
 

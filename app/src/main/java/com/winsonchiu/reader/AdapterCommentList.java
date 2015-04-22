@@ -56,7 +56,8 @@ import org.json.JSONObject;
  * Created by TheKeeperOfPie on 3/12/2015.
  */
 
-public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
+public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHolder>
+        implements ControllerLinks.ListenerCallback {
 
     private static final String TAG = AdapterCommentList.class.getCanonicalName();
 
@@ -69,13 +70,14 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
 
     private Activity activity;
     private ControllerComments controllerComments;
+    private ControllerLinks.LinkClickListener linkClickListener;
     private int colorPrimary;
     private int colorPositive;
     private int colorNegative;
     private Drawable drawableUpvote;
     private Drawable drawableDownvote;
 
-    public AdapterCommentList(Activity activity, ControllerComments controllerComments, ControllerComments.CommentClickListener listener) {
+    public AdapterCommentList(Activity activity, ControllerComments controllerComments, final ControllerComments.CommentClickListener listener) {
         // TODO: Add setActivity
         this.activity = activity;
         this.controllerComments = controllerComments;
@@ -86,7 +88,49 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
         this.colorNegative = resources.getColor(R.color.negativeScore);
         this.drawableUpvote = resources.getDrawable(R.drawable.ic_keyboard_arrow_up_white_24dp);
         this.drawableDownvote = resources.getDrawable(R.drawable.ic_keyboard_arrow_down_white_24dp);
-        this.itemWidth = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 48, resources.getDisplayMetrics());
+        this.itemWidth = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 48,
+                resources.getDisplayMetrics());
+        linkClickListener = new ControllerLinks.LinkClickListener() {
+            @Override
+            public void onClickComments(Link link) {
+                // Not required
+            }
+
+            @Override
+            public void loadUrl(String url) {
+                listener.loadUrl(url);
+            }
+
+            @Override
+            public void onFullLoaded(int position) {
+                // Not required
+            }
+
+            @Override
+            public void setRefreshing(boolean refreshing) {
+                // Not required
+            }
+
+            @Override
+            public void setToolbarTitle(String title) {
+                // Not required
+            }
+
+            @Override
+            public AdapterLink getAdapter() {
+                return null;
+            }
+
+            @Override
+            public int getRecyclerHeight() {
+                return listener.getRecyclerHeight();
+            }
+
+            @Override
+            public void requestDisallowInterceptTouchEvent(boolean disallow) {
+                listener.requestDisallowInterceptTouchEvent(disallow);
+            }
+        };
     }
 
     @Override
@@ -102,7 +146,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
     public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
 
         if (viewType == VIEW_LINK) {
-            return new ViewHolderHeader(LayoutInflater.from(parent.getContext()).inflate(R.layout.row_link, parent, false));
+            return new AdapterLinkList.ViewHolder(LayoutInflater.from(parent.getContext()).inflate(R.layout.row_link, parent, false), this);
         }
 
         return new ViewHolderComment(LayoutInflater.from(parent.getContext()).inflate(R.layout.row_comment, parent, false));
@@ -111,57 +155,11 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
     @Override
     public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
 
-        if (holder instanceof ViewHolderHeader) {
-            final ViewHolderHeader viewHolder = (ViewHolderHeader) holder;
-            viewHolder.imagePreview.setImageBitmap(null);
-
-            Link link = controllerComments.getLink();
-
-            Drawable drawable = controllerComments.getDrawableForLink();
-            if (drawable == null) {
-                viewHolder.imagePreview.setTag(
-                        controllerComments.loadImage(link.getThumbnail(), new ImageLoader.ImageListener() {
-                            @Override
-                            public void onResponse(ImageLoader.ImageContainer response,
-                                                   boolean isImmediate) {
-                                if (response.getBitmap() != null) {
-                                    viewHolder.imagePreview.setAlpha(0.0f);
-                                    viewHolder.imagePreview.setImageBitmap(response.getBitmap());
-                                    AnimationUtils.animateAlpha(viewHolder.imagePreview, 0.0f, 1.0f);
-                                }
-                            }
-
-                            @Override
-                            public void onErrorResponse(VolleyError error) {
-
-                            }
-                        }));
-            }
-            else {
-                viewHolder.imagePreview.setImageDrawable(drawable);
-            }
-
-            viewHolder.textThreadTitle.setText(link.getTitle());
-            viewHolder.setTextInfo();
-            viewHolder.toolbarActions.setVisibility(View.GONE);
-
-            if (link.isSelf()) {
-                if (!TextUtils.isEmpty(link.getSelfText())) {
-                    String html = link.getSelfTextHtml();
-                    html = Html.fromHtml(html.trim())
-                            .toString();
-                    viewHolder.textThreadSelf.setVisibility(View.VISIBLE);
-                    viewHolder.textThreadSelf.setText(Reddit.formatHtml(html,
-                            new Reddit.UrlClickListener() {
-                                @Override
-                                public void onUrlClick(String url) {
-                                    listener.loadUrl(url);
-                                }
-                            }));
-                }
-            }
-
-
+        if (holder instanceof AdapterLinkList.ViewHolder) {
+            ((AdapterLinkList.ViewHolder) holder).onBind(position);
+        }
+        else if (holder instanceof AdapterLinkGrid.ViewHolder) {
+            ((AdapterLinkGrid.ViewHolder) holder).onBind(position);
         }
         else {
 
@@ -202,7 +200,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                                 comment.getScore() > 0 ? colorPositive : colorNegative), 0,
                         String.valueOf(comment.getScore())
                                 .length(), Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
-                if (controllerComments.getLink().getAuthor().equals(comment.getAuthor())) {
+                if (controllerComments.getLink(0).getAuthor().equals(comment.getAuthor())) {
                     spannableInfo.setSpan(new ForegroundColorSpan(colorPrimary), spannableInfo.length() - comment.getAuthor().length(), spannableInfo.length(), Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
                 }
                 viewHolderComment.textInfo.setText(spannableInfo);
@@ -250,386 +248,39 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
         text.setText(strBuilder);
     }
 
-    // TODO: Abstract Link ViewHolder or find a different way to prevent duplicate code (maybe a shared Listener/Callback?)
-    protected class ViewHolderHeader extends RecyclerView.ViewHolder {
+    @Override
+    public ControllerLinks.LinkClickListener getListener() {
+        return linkClickListener;
+    }
 
-        protected MediaController mediaController;
-        protected ProgressBar progressImage;
-        protected ViewPager viewPagerFull;
-        protected ImageView imagePlay;
-        protected ImageView imagePreview;
-        protected VideoView videoFull;
-        protected WebViewFixed webFull;
-        protected TextView textThreadTitle;
-        protected TextView textThreadSelf;
-        protected TextView textThreadInfo;
-        protected ImageButton buttonComments;
-        protected Toolbar toolbarActions;
-        private View.OnClickListener clickListenerLink;
+    @Override
+    public Controller getController() {
+        return controllerComments;
+    }
 
-        public ViewHolderHeader(final View itemView) {
-            super(itemView);
+    @Override
+    public int getColorPositive() {
+        return colorPositive;
+    }
 
-            progressImage = (ProgressBar) itemView.findViewById(R.id.progress_image);
-            imagePlay = (ImageView) itemView.findViewById(R.id.image_play);
-            mediaController = new MediaController(itemView.getContext());
-            videoFull = (VideoView) itemView.findViewById(R.id.video_full);
-            videoFull.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
-                @Override
-                public void onPrepared(MediaPlayer mp) {
-                    mediaController.hide();
-                }
-            });
-            mediaController.setAnchorView(videoFull);
-            videoFull.setMediaController(mediaController);
-            webFull = (WebViewFixed) itemView.findViewById(R.id.web_full);
-            webFull.getSettings().setUseWideViewPort(true);
-            webFull.getSettings().setLoadWithOverviewMode(true);
-            webFull.getSettings().setBuiltInZoomControls(true);
-            webFull.getSettings().setDisplayZoomControls(false);
-            webFull.getSettings().setJavaScriptEnabled(true);
-            webFull.getSettings().setDomStorageEnabled(true);
-            webFull.setBackgroundColor(0x000000);
-            webFull.setWebViewClient(new WebViewClient() {
-                @Override
-                public void onScaleChanged(WebView view, float oldScale, float newScale) {
-                    webFull.lockHeight();
-                    super.onScaleChanged(view, oldScale, newScale);
-                }
-            });
-            webFull.setOnTouchListener(new View.OnTouchListener() {
-                @Override
-                public boolean onTouch(View v, MotionEvent event) {
+    @Override
+    public int getColorNegative() {
+        return colorNegative;
+    }
 
-                    if (event.getAction() == MotionEvent.ACTION_DOWN) {
+    @Override
+    public Activity getActivity() {
+        return activity;
+    }
 
-                        if ((webFull.canScrollVertically(1) && webFull.canScrollVertically(-1))) {
-                            listener
-                                    .requestDisallowInterceptTouchEvent(true);
-                        } else {
-                            listener
-                                    .requestDisallowInterceptTouchEvent(false);
-                            if (webFull.getScrollY() == 0) {
-                                webFull.setScrollY(1);
-                            } else {
-                                webFull.setScrollY(webFull.getScrollY() - 1);
-                            }
-                        }
-                    } else if (event.getAction() == MotionEvent.ACTION_UP) {
-                        listener
-                                .requestDisallowInterceptTouchEvent(false);
-                    }
+    @Override
+    public float getItemWidth() {
+        return itemWidth;
+}
 
-                    return false;
-                }
-            });
-            viewPagerFull = (ViewPager) itemView.findViewById(R.id.view_pager_full);
-            imagePreview = (ImageView) itemView.findViewById(R.id.image_preview);
-            textThreadTitle = (TextView) itemView.findViewById(R.id.text_thread_title);
-            textThreadInfo = (TextView) itemView.findViewById(R.id.text_thread_info);
-            textThreadSelf = (TextView) itemView.findViewById(R.id.text_thread_self);
-            textThreadSelf.setMovementMethod(LinkMovementMethod.getInstance());
-            buttonComments = (ImageButton) itemView.findViewById(R.id.button_comments);
-            buttonComments.setVisibility(View.INVISIBLE);
-            toolbarActions = (Toolbar) itemView.findViewById(R.id.toolbar_actions);
-            toolbarActions.inflateMenu(R.menu.menu_link);
-            toolbarActions.setOnMenuItemClickListener(new Toolbar.OnMenuItemClickListener() {
-                @Override
-                public boolean onMenuItemClick(MenuItem menuItem) {
-                    switch (menuItem.getItemId()) {
-                        case R.id.item_upvote:
-                            controllerComments.voteLink(ViewHolderHeader.this, 1);
-                            break;
-                        case R.id.item_downvote:
-                            controllerComments.voteLink(ViewHolderHeader.this, -1);
-                            break;
-                        case R.id.item_share:
-                            break;
-                        case R.id.item_web:
-                            listener.loadUrl(controllerComments.getLink().getUrl());
-                            break;
-                    }
-                    return true;
-                }
-            });
-            toolbarActions.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
-                @Override
-                public void onGlobalLayout() {
-                    int maxNum = (int) (itemView.getWidth() / itemWidth);
-
-                    for (int index = 0; index < LINK_MENU_SIZE; index++) {
-                        if (index <= maxNum) {
-                            toolbarActions.getMenu().getItem(index).setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
-                        }
-                        else {
-                            toolbarActions.getMenu().getItem(index).setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
-                        }
-                    }
-                    toolbarActions.getViewTreeObserver().removeOnGlobalLayoutListener(this);
-                }
-            });
-
-
-
-            View.OnClickListener clickListenerLink = new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    setVoteColors();
-                    AnimationUtils.animateExpandActions(toolbarActions, false);
-                }
-            };
-            textThreadTitle.setOnClickListener(clickListenerLink);
-            textThreadInfo.setOnClickListener(clickListenerLink);
-            this.itemView.setOnClickListener(clickListenerLink);
-
-            this.imagePreview.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    Link link = controllerComments.getLink();
-                    imagePreview.setVisibility(View.VISIBLE);
-
-                    if (!link.isSelf()) {
-                        loadFull(link);
-                    }
-                }
-            });
-
-        }
-
-        public void loadFull(Link link ) {
-
-            Log.d(TAG, "loadFull: " + link.getUrl());
-
-            String url = link.getUrl();
-            if (!TextUtils.isEmpty(url)) {
-                if (link.getDomain()
-                        .contains("imgur")) {
-                    int startIndex;
-                    int lastIndex;
-                    if (url.contains("imgur.com/a/")) {
-                        startIndex = url.indexOf("imgur.com/a/") + 12;
-                        int slashIndex = url.substring(startIndex)
-                                .indexOf("/") + startIndex;
-                        lastIndex = slashIndex > startIndex ? slashIndex : url.length();
-                        String imgurId = url.substring(startIndex, lastIndex);
-                        loadAlbum(imgurId);
-                    }
-                    else if (url.contains("imgur.com/gallery/")) {
-                        startIndex = url.indexOf("imgur.com/gallery/") + 18;
-                        int slashIndex = url.substring(startIndex)
-                                .indexOf("/") + startIndex;
-                        lastIndex = slashIndex > startIndex ? slashIndex : url.length();
-                        String imgurId = url.substring(startIndex, lastIndex);
-                        loadAlbum(imgurId);
-
-                    }
-                    else if (url.contains(Reddit.GIFV)) {
-                        startIndex = url.indexOf("imgur.com/") + 10;
-                        int dotIndex = url.substring(startIndex)
-                                .indexOf(".") + startIndex;
-                        lastIndex = dotIndex > startIndex ? dotIndex : url.length();
-                        String imgurId = url.substring(startIndex, lastIndex);
-                        loadGifv(imgurId);
-                    }
-                    else {
-                        attemptLoadImage(link);
-                    }
-                }
-                else if (link.getDomain()
-                        .contains("gfycat")) {
-                    int startIndex = url.indexOf("gfycat.com/") + 11;
-                    int dotIndex = url.substring(startIndex)
-                            .indexOf(".");
-                    int lastIndex = dotIndex > startIndex ? dotIndex : url.length();
-                    String gfycatId = url.substring(startIndex, lastIndex);
-                    progressImage.setVisibility(View.VISIBLE);
-                    controllerComments.getReddit()
-                            .loadGet(Reddit.GFYCAT_URL + gfycatId,
-                                    new Response.Listener<String>() {
-                                        @Override
-                                        public void onResponse(String response) {
-                                            try {
-                                                JSONObject jsonObject = new JSONObject(
-                                                        response).getJSONObject(Reddit.GFYCAT_ITEM);
-                                                loadVideo(jsonObject.getString(Reddit.GFYCAT_WEBM),
-                                                        (float) jsonObject.getInt(
-                                                                "height") / jsonObject.getInt(
-                                                                "width"));
-                                            }
-                                            catch (JSONException e) {
-                                                e.printStackTrace();
-                                            }
-                                            finally {
-                                                progressImage.setVisibility(View.GONE);
-                                            }
-                                        }
-                                    }, new Response.ErrorListener() {
-                                        @Override
-                                        public void onErrorResponse(VolleyError error) {
-                                            progressImage.setVisibility(View.GONE);
-                                        }
-                                    }, 0);
-                }
-                else {
-                    attemptLoadImage(link);
-                }
-            }
-        }
-
-        public void setVoteColors() {
-
-            Link link = controllerComments.getLink();
-            switch (link.isLikes()) {
-                case 1:
-                    toolbarActions.getMenu()
-                            .findItem(R.id.item_upvote)
-                            .getIcon()
-                            .setColorFilter(
-                                    colorPositive, PorterDuff.Mode.MULTIPLY);
-                    toolbarActions.getMenu().findItem(R.id.item_downvote).getIcon().clearColorFilter();
-                    break;
-                case -1:
-                    toolbarActions.getMenu().findItem(R.id.item_downvote)
-                            .getIcon()
-                            .setColorFilter(
-                                    colorNegative, PorterDuff.Mode.MULTIPLY);
-                    toolbarActions.getMenu().findItem(R.id.item_upvote).getIcon().clearColorFilter();
-                    break;
-                case 0:
-                    toolbarActions.getMenu().findItem(R.id.item_upvote).getIcon().clearColorFilter();
-                    toolbarActions.getMenu().findItem(R.id.item_downvote).getIcon().clearColorFilter();
-                    break;
-            }
-        }
-
-        public void setTextInfo() {
-            Link link = controllerComments.getLink();
-
-            String subreddit = "/r/" + link.getSubreddit();
-            Spannable spannableInfo = new SpannableString(subreddit + "\n" + link.getScore() + " by " + link.getAuthor());
-            spannableInfo.setSpan(
-                    new ForegroundColorSpan(link.getScore() > 0 ? colorPositive : colorNegative),
-                    subreddit.length() + 1,
-                    subreddit.length() + 1 + String.valueOf(link.getScore())
-                            .length(), Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
-            textThreadInfo.setText(spannableInfo);
-        }
-
-
-        private void attemptLoadImage(Link link) {
-
-            if (Reddit.placeImageUrl(link)) {
-                webFull.onResume();
-                webFull.resetMaxHeight();
-                webFull.loadData(Reddit.getImageHtml(
-                        controllerComments.getLink()
-                                .getUrl()), "text/html", "UTF-8");
-                webFull.setVisibility(View.VISIBLE);
-            }
-            else {
-                listener.loadUrl(link.getUrl());
-            }
-        }
-
-
-        private void loadAlbum(String id) {
-            progressImage.setVisibility(View.VISIBLE);
-            imagePreview.setTag(controllerComments.getReddit()
-                    .loadImgurAlbum(id,
-                            new Response.Listener<String>() {
-                                @Override
-                                public void onResponse(String response) {
-                                    try {
-                                        Log.d(TAG, "loadAlbum: " + response);
-                                        Album album = Album.fromJson(
-                                                new JSONObject(
-                                                        response).getJSONObject(
-                                                        "data"));
-
-                                        viewPagerFull.setAdapter(
-                                                new AdapterAlbum(activity, album,
-                                                        listener));
-                                        viewPagerFull.getLayoutParams().height = listener
-                                                .getRecyclerHeight() - itemView.getHeight();
-                                        viewPagerFull.setVisibility(View.VISIBLE);
-                                        viewPagerFull.requestLayout();
-                                    } catch (JSONException e) {
-                                        e.printStackTrace();
-                                    } finally {
-                                        progressImage.setVisibility(View.GONE);
-                                    }
-                                }
-                            }, new Response.ErrorListener() {
-                                @Override
-                                public void onErrorResponse(VolleyError error) {
-                                    progressImage.setVisibility(View.GONE);
-                                }
-                            }, 0));
-        }
-
-
-        private void loadGifv(String id) {
-            Log.d(TAG, "loadGifv: " + id);
-            imagePreview.setTag(controllerComments.getReddit()
-                    .loadImgurImage(id,
-                            new Response.Listener<String>() {
-                                @Override
-                                public void onResponse(String response) {
-                                    try {
-                                        Image image = Image.fromJson(
-                                                new JSONObject(
-                                                        response).getJSONObject(
-                                                        "data"));
-
-                                        if (!TextUtils.isEmpty(image.getMp4())) {
-                                            loadVideo(image.getMp4(), (float) image.getHeight() / image.getWidth());
-                                        }
-                                        else if (!TextUtils.isEmpty(image.getWebm())) {
-                                            loadVideo(image.getWebm(), (float) image.getHeight() / image.getWidth());
-                                        }
-                                    }
-                                    catch (JSONException e) {
-                                        e.printStackTrace();
-                                    }
-                                    finally {
-                                        progressImage.setVisibility(View.GONE);
-                                    }
-                                }
-                            }, new Response.ErrorListener() {
-                                @Override
-                                public void onErrorResponse(VolleyError error) {
-                                    try {
-                                        Log.d(TAG, "onErrorResponse");
-                                        Log.d(TAG, "" + error.networkResponse.statusCode);
-                                        Log.d(TAG, error.networkResponse.headers.toString());
-                                        Log.d(TAG, new String(error.networkResponse.data));
-                                    }
-                                    catch (Throwable e) {
-
-                                    }
-                                    Log.d(TAG, "error on loadGifv");
-                                    progressImage.setVisibility(View.GONE);
-                                }
-                            }, 0));
-        }
-
-
-        private void loadVideo(String url, float heightRatio) {
-            Log.d(TAG, "loadVideo: " + url + " : " + heightRatio);
-            Uri uri = Uri.parse(url);
-            videoFull.setVideoURI(uri);
-            videoFull.getLayoutParams().height = (int) (ViewHolderHeader.this.itemView.getWidth() * heightRatio);
-            videoFull.setVisibility(View.VISIBLE);
-            videoFull.invalidate();
-            videoFull.start();
-            videoFull.setOnCompletionListener(
-                    new MediaPlayer.OnCompletionListener() {
-                        @Override
-                        public void onCompletion(MediaPlayer mp) {
-                            videoFull.start();
-                        }
-                    });
-        }
+    @Override
+    public RecyclerView.LayoutManager getLayoutManager() {
+        return null;
     }
 
     protected class ViewHolderComment extends RecyclerView.ViewHolder {

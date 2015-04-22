@@ -30,7 +30,7 @@ import java.util.List;
 /**
  * Created by TheKeeperOfPie on 3/14/2015.
  */
-public class ControllerLinks extends Controller {
+public class ControllerLinks implements Controller {
 
     // TODO: Check if need setActivity
 
@@ -149,34 +149,35 @@ public class ControllerLinks extends Controller {
         url += "limit=50&showAll=true";
 
         reddit.loadGet(url, new Listener<String>() {
-                    @Override
-                    public void onResponse(String response) {
-                        // TODO: Catch null errors in parent method call
-                        if (response == null) {
-                            return;
-                        }
-                        Log.d(TAG, "Result: " + response);
-
-                        try {
-                            listingLinks = Listing.fromJson(new JSONObject(response));
-                            for (LinkClickListener listener : listeners) {
-                                listener.getAdapter().notifyDataSetChanged();
-                                listener.onFullLoaded(0);
-                            }
-                            setTitle();
-                        }
-                        catch (JSONException exception) {
-                            exception.printStackTrace();
-                        }
-                        finally {
-                            setLoading(false);
-                        }
-                    }
-                }, new ErrorListener() {
             @Override
-                    public void onErrorResponse(VolleyError error) {
+            public void onResponse(String response) {
+                // TODO: Catch null errors in parent method call
+                if (response == null) {
+                    return;
+                }
+                Log.d(TAG, "Result: " + response);
 
+                try {
+                    listingLinks = Listing.fromJson(new JSONObject(response));
+                    for (LinkClickListener listener : listeners) {
+                        listener.getAdapter()
+                                .notifyDataSetChanged();
+                        listener.onFullLoaded(0);
                     }
+                    setTitle();
+                }
+                catch (JSONException exception) {
+                    exception.printStackTrace();
+                }
+                finally {
+                    setLoading(false);
+                }
+            }
+        }, new ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+
+            }
         }, 0);
         Log.d(TAG, "reloadAllLinks");
     }
@@ -239,7 +240,7 @@ public class ControllerLinks extends Controller {
                 }, 0);
     }
 
-    public void vote(final RecyclerView.ViewHolder viewHolder, final int vote) {
+    public void voteLink(final RecyclerView.ViewHolder viewHolder, final int vote) {
 
         if (TextUtils.isEmpty(preferences.getString(AppSettings.REFRESH_TOKEN, null))) {
             Toast.makeText(activity, "Must be logged in to vote", Toast.LENGTH_SHORT).show();
@@ -313,7 +314,6 @@ public class ControllerLinks extends Controller {
         return isLoading;
     }
 
-
     public void setActivity(Activity activity) {
         this.activity = activity;
         this.preferences = PreferenceManager.getDefaultSharedPreferences(
@@ -333,6 +333,16 @@ public class ControllerLinks extends Controller {
         void setToolbarTitle(String title);
         AdapterLink getAdapter();
         int getRecyclerHeight();
+    }
+
+    public interface ListenerCallback {
+        LinkClickListener getListener();
+        Controller getController();
+        int getColorPositive();
+        int getColorNegative();
+        Activity getActivity();
+        float getItemWidth();
+        RecyclerView.LayoutManager getLayoutManager();
     }
 
 }
