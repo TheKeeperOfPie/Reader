@@ -44,15 +44,14 @@ public class Reddit {
         NOT_DISTINGUISHED, MODERATOR, ADMIN, SPECIAL
     }
 
-    // TODO: Replace instances not using this constant
     public static final String BASE_URL = "https://reddit.com";
     public static final String OAUTH_URL = "https://oauth.reddit.com";
     public static final String AUTHORIZATION = "Authorization";
     public static final String BEARER = "Bearer ";
     public static final String CONTENT_TYPE = "Content-Type";
+    public static final String CONTENT_TYPE_APP_JSON = "application/json; charset=utf-8";
     public static final String USER_AGENT = "User-Agent";
-    public static final String CUSTOM_USER_AGENT = "android:com.winsonchiu.reader:" + BuildConfig.VERSION_NAME + " (by " +
-            "/u/TheKeeperOfPie)";
+    public static final String CUSTOM_USER_AGENT = "android:com.winsonchiu.reader:" + BuildConfig.VERSION_NAME + " (by /u/TheKeeperOfPie)";
     public static final String REDIRECT_URI = "https://com.winsonchiu.reader";
     public static final String CLIENT_ID = "zo7k-Nsh7vgn-Q";
 
@@ -85,7 +84,7 @@ public class Reddit {
     private static final String AUTH_SCOPES = "account,creddits,edit,flair,history,identity,livemanage,modconfig,modflair,modlog,modothers,modposts,modself,modwiki,mysubreddits,privatemessages,read,report,save,submit,subscribe,vote,wikiedit,wikiread";
 
     // Query fields
-    public static final String INSTALLED_CLIENT_GRANT = "https://oauth.reddit.com/grants/installed_client";
+    public static final String INSTALLED_CLIENT_GRANT = Reddit.OAUTH_URL + "/grants/installed_client";
     public static final String CODE_GRANT = "authorization_code";
     public static final String QUERY_CODE = "code";
     public static final String QUERY_CLIENT_ID = "client_id";
@@ -201,7 +200,7 @@ public class Reddit {
                 String auth = "Basic " + Base64.encodeToString(credentials.getBytes(), Base64.DEFAULT);
                 headers.put(USER_AGENT, CUSTOM_USER_AGENT);
                 headers.put(AUTHORIZATION, auth);
-                headers.put("Content-Type", "application/json; charset=utf-8");
+                headers.put(CONTENT_TYPE, CONTENT_TYPE_APP_JSON);
                 return headers;
             }
         };
@@ -247,7 +246,7 @@ public class Reddit {
                 HashMap<String, String> headers = new HashMap<>(3);
                 headers.put(USER_AGENT, CUSTOM_USER_AGENT);
                 headers.put(AUTHORIZATION, getAuthorizationHeader());
-                headers.put("Content-Type", "application/json; charset=utf-8");
+                headers.put(CONTENT_TYPE, CONTENT_TYPE_APP_JSON);
                 return headers;
             }
         };
@@ -286,7 +285,7 @@ public class Reddit {
                         HashMap<String, String> headers = new HashMap<>(3);
                         headers.put(USER_AGENT, CUSTOM_USER_AGENT);
                         headers.put(AUTHORIZATION, getAuthorizationHeader());
-                        headers.put("Content-Type", "application/json; charset=utf-8");
+                        headers.put(CONTENT_TYPE, CONTENT_TYPE_APP_JSON);
                         return headers;
                     }
                 };
@@ -308,7 +307,7 @@ public class Reddit {
                 HashMap<String, String> headers = new HashMap<>(3);
                 headers.put(USER_AGENT, CUSTOM_USER_AGENT);
                 headers.put(AUTHORIZATION, ApiKeys.IMGUR_AUTHORIZATION);
-                headers.put("Content-Type", "application/json; charset=utf-8");
+                headers.put(CONTENT_TYPE, CONTENT_TYPE_APP_JSON);
                 return headers;
             }
         };
@@ -331,7 +330,7 @@ public class Reddit {
                 HashMap<String, String> headers = new HashMap<>(3);
                 headers.put(USER_AGENT, CUSTOM_USER_AGENT);
                 headers.put(AUTHORIZATION, ApiKeys.IMGUR_AUTHORIZATION);
-                headers.put("Content-Type", "application/json; charset=utf-8");
+                headers.put(CONTENT_TYPE, CONTENT_TYPE_APP_JSON);
                 return headers;
             }
         };

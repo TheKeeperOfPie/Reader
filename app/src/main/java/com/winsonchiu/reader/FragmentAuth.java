@@ -23,6 +23,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.HashMap;
+import java.util.UUID;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -78,7 +79,7 @@ public class FragmentAuth extends Fragment {
             mParam1 = getArguments().getString(ARG_PARAM1);
             mParam2 = getArguments().getString(ARG_PARAM2);
         }
-        state = "randomstring";// UUID.randomUUID().toString();
+        state = UUID.randomUUID().toString();
     }
 
     @Override

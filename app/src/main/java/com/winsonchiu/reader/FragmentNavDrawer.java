@@ -153,7 +153,7 @@ public class FragmentNavDrawer extends Fragment {
     }
 
     public void loadAccountInfo() {
-        reddit.loadGet("https://oauth.reddit.com" + "/api/v1/me",
+        reddit.loadGet(Reddit.OAUTH_URL + "/api/v1/me",
                 new Response.Listener<String>() {
                     @Override
                     public void onResponse(String response) {

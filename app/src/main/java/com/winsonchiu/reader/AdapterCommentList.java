@@ -20,12 +20,13 @@ import android.text.style.ClickableSpan;
 import android.text.style.ForegroundColorSpan;
 import android.text.style.URLSpan;
 import android.util.Log;
+import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.animation.Animation;
+import android.view.ViewTreeObserver;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.Button;
@@ -54,13 +55,17 @@ import org.json.JSONObject;
 /**
  * Created by TheKeeperOfPie on 3/12/2015.
  */
+
 public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
     private static final String TAG = AdapterCommentList.class.getCanonicalName();
 
     private static final int VIEW_LINK = 0;
     private static final int VIEW_COMMENT = 1;
+    private static final int LINK_MENU_SIZE = 4;
+    private static final int COMMENT_MENU_SIZE = 5;
     private final ControllerComments.CommentClickListener listener;
+    private final float itemWidth;
 
     private Activity activity;
     private ControllerComments controllerComments;
@@ -81,6 +86,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
         this.colorNegative = resources.getColor(R.color.negativeScore);
         this.drawableUpvote = resources.getDrawable(R.drawable.ic_keyboard_arrow_up_white_24dp);
         this.drawableDownvote = resources.getDrawable(R.drawable.ic_keyboard_arrow_down_white_24dp);
+        this.itemWidth = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 48, resources.getDisplayMetrics());
     }
 
     @Override
@@ -166,13 +172,14 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
             if (comment.isReplyExpanded()) {
                 viewHolderComment.editTextReply.setVisibility(View.VISIBLE);
                 viewHolderComment.buttonSendReply.setVisibility(View.VISIBLE);
+                viewHolderComment.layoutContainerActions.setVisibility(View.VISIBLE);
+                viewHolderComment.toolbarActions.setVisibility(View.VISIBLE);
             }
             else {
                 viewHolderComment.editTextReply.setVisibility(View.GONE);
                 viewHolderComment.buttonSendReply.setVisibility(View.GONE);
-            }
-            viewHolderComment.layoutContainerActions.setVisibility(View.GONE);
-            viewHolderComment.toolbarActions.setVisibility(View.GONE);
+                viewHolderComment.toolbarActions.setVisibility(View.GONE);
+            };
 
             ViewGroup.LayoutParams layoutParams = viewHolderComment.viewIndent.getLayoutParams();
             layoutParams.width = controllerComments.getIndentWidth(comment);
@@ -243,6 +250,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
         text.setText(strBuilder);
     }
 
+    // TODO: Abstract Link ViewHolder or find a different way to prevent duplicate code (maybe a shared Listener/Callback?)
     protected class ViewHolderHeader extends RecyclerView.ViewHolder {
 
         protected MediaController mediaController;
@@ -342,6 +350,22 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                             break;
                     }
                     return true;
+                }
+            });
+            toolbarActions.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+                @Override
+                public void onGlobalLayout() {
+                    int maxNum = (int) (itemView.getWidth() / itemWidth);
+
+                    for (int index = 0; index < LINK_MENU_SIZE; index++) {
+                        if (index <= maxNum) {
+                            toolbarActions.getMenu().getItem(index).setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+                        }
+                        else {
+                            toolbarActions.getMenu().getItem(index).setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
+                        }
+                    }
+                    toolbarActions.getViewTreeObserver().removeOnGlobalLayoutListener(this);
                 }
             });
 
@@ -563,9 +587,11 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                                         else if (!TextUtils.isEmpty(image.getWebm())) {
                                             loadVideo(image.getWebm(), (float) image.getHeight() / image.getWidth());
                                         }
-                                    } catch (JSONException e) {
+                                    }
+                                    catch (JSONException e) {
                                         e.printStackTrace();
-                                    } finally {
+                                    }
+                                    finally {
                                         progressImage.setVisibility(View.GONE);
                                     }
                                 }
@@ -623,7 +649,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
         protected LinearLayout layoutContainerActions;
         private View.OnClickListener clickListenerLink;
 
-        public ViewHolderComment(View itemView) {
+        public ViewHolderComment(final View itemView) {
             super(itemView);
 
             viewIndent = itemView.findViewById(R.id.view_indent);
@@ -663,6 +689,22 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                             break;
                     }
                     return true;
+                }
+            });
+            toolbarActions.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+                @Override
+                public void onGlobalLayout() {
+                    int maxNum = (int) (itemView.getWidth() / itemWidth);
+
+                    for (int index = 0; index < COMMENT_MENU_SIZE; index++) {
+                        if (index <= maxNum) {
+                            toolbarActions.getMenu().getItem(index).setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+                        }
+                        else {
+                            toolbarActions.getMenu().getItem(index).setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
+                        }
+                    }
+                    toolbarActions.getViewTreeObserver().removeOnGlobalLayoutListener(this);
                 }
             });
             itemUpvote = toolbarActions.getMenu().findItem(R.id.item_upvote);

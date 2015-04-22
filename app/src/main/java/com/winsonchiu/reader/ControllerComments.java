@@ -102,7 +102,7 @@ public class ControllerComments extends Controller{
             return;
         }
 
-        reddit.loadGet("https://oauth.reddit.com" + "/r/" + subreddit + "/comments/" + linkId + "?depth=10",
+        reddit.loadGet(Reddit.OAUTH_URL + "/r/" + subreddit + "/comments/" + linkId + "?depth=10",
                 new Listener<String>() {
                     @Override
                     public void onResponse(String response) {

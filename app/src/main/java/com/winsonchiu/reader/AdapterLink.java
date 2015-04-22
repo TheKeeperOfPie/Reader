@@ -19,9 +19,11 @@ import android.text.TextUtils;
 import android.text.method.LinkMovementMethod;
 import android.text.style.ForegroundColorSpan;
 import android.util.Log;
+import android.util.TypedValue;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewTreeObserver;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.ImageButton;
@@ -52,13 +54,16 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
     protected ControllerLinks controllerLinks;
     protected int colorPositive;
     protected int colorNegative;
+    protected float itemWidth;
     protected ControllerLinks.LinkClickListener listener;
+    private int ACTION_MENU_SIZE = 4;
 
     public void setActivity(Activity activity) {
         Resources resources = activity.getResources();
         this.activity = activity;
         this.colorPositive = resources.getColor(R.color.positiveScore);
         this.colorNegative = resources.getColor(R.color.negativeScore);
+        this.itemWidth = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 48, resources.getDisplayMetrics());
     }
 
     public void setControllerLinks(ControllerLinks controllerLinks, ControllerLinks.LinkClickListener listener) {
@@ -174,6 +179,22 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                             break;
                     }
                     return true;
+                }
+            });
+            toolbarActions.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+                @Override
+                public void onGlobalLayout() {
+                    int maxNum = (int) (itemView.getWidth() / itemWidth);
+
+                    for (int index = 0; index < ACTION_MENU_SIZE; index++) {
+                        if (index <= maxNum) {
+                            toolbarActions.getMenu().getItem(index).setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+                        }
+                        else {
+                            toolbarActions.getMenu().getItem(index).setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
+                        }
+                    }
+                    toolbarActions.getViewTreeObserver().removeOnGlobalLayoutListener(this);
                 }
             });
 

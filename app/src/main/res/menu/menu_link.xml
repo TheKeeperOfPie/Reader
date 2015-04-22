@@ -21,19 +21,19 @@
         />
 
     <item
-        android:id="@+id/item_share"
-        android:title="@string/item_share"
-        android:icon="@drawable/ic_share_white_24dp"
+        android:id="@+id/item_web"
+        android:title="@string/item_web"
+        android:icon="@drawable/ic_web_white_48dp"
         android:orderInCategory="300"
-        app:actionProviderClass="com.winsonchiu.reader.CustomShareActionProvider"
         app:showAsAction="ifRoom"
         />
 
     <item
-        android:id="@+id/item_web"
-        android:title="@string/item_web"
-        android:icon="@drawable/ic_web_white_48dp"
-        android:orderInCategory="100"
+        android:id="@+id/item_share"
+        android:title="@string/item_share"
+        android:icon="@drawable/ic_share_white_24dp"
+        android:orderInCategory="400"
+        app:actionProviderClass="com.winsonchiu.reader.CustomShareActionProvider"
         app:showAsAction="ifRoom"
         />
 
