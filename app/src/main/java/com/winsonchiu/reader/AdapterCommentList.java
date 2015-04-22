@@ -1,12 +1,11 @@
 package com.winsonchiu.reader;
 
 import android.app.Activity;
+import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.graphics.PorterDuff;
 import android.graphics.drawable.Drawable;
-import android.media.MediaPlayer;
-import android.net.Uri;
-import android.support.v4.view.ViewPager;
+import android.preference.PreferenceManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.text.Html;
@@ -23,34 +22,28 @@ import android.util.Log;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
-import android.webkit.WebView;
-import android.webkit.WebViewClient;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.ImageButton;
-import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.MediaController;
-import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
-import android.widget.VideoView;
+import android.widget.Toast;
 
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
-import com.android.volley.toolbox.ImageLoader;
 import com.winsonchiu.reader.data.Comment;
 import com.winsonchiu.reader.data.Link;
 import com.winsonchiu.reader.data.Reddit;
-import com.winsonchiu.reader.data.imgur.Album;
-import com.winsonchiu.reader.data.imgur.Image;
+import com.winsonchiu.reader.data.User;
 
 import org.json.JSONException;
 import org.json.JSONObject;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Created by TheKeeperOfPie on 3/12/2015.
@@ -64,9 +57,10 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
     private static final int VIEW_LINK = 0;
     private static final int VIEW_COMMENT = 1;
     private static final int LINK_MENU_SIZE = 4;
-    private static final int COMMENT_MENU_SIZE = 5;
+    private static final int COMMENT_MENU_SIZE = 6;
     private final ControllerComments.CommentClickListener listener;
     private final float itemWidth;
+    private User user;
 
     private Activity activity;
     private ControllerComments controllerComments;
@@ -76,12 +70,14 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
     private int colorNegative;
     private Drawable drawableUpvote;
     private Drawable drawableDownvote;
+    private SharedPreferences preferences;
 
     public AdapterCommentList(Activity activity, ControllerComments controllerComments, final ControllerComments.CommentClickListener listener) {
         // TODO: Add setActivity
         this.activity = activity;
         this.controllerComments = controllerComments;
         this.listener = listener;
+        this.preferences = PreferenceManager.getDefaultSharedPreferences(activity);
         Resources resources = activity.getResources();
         this.colorPrimary = resources.getColor(R.color.colorPrimary);
         this.colorPositive = resources.getColor(R.color.positiveScore);
@@ -90,7 +86,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
         this.drawableDownvote = resources.getDrawable(R.drawable.ic_keyboard_arrow_down_white_24dp);
         this.itemWidth = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 48,
                 resources.getDisplayMetrics());
-        linkClickListener = new ControllerLinks.LinkClickListener() {
+        this.linkClickListener = new ControllerLinks.LinkClickListener() {
             @Override
             public void onClickComments(Link link) {
                 // Not required
@@ -131,6 +127,17 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                 listener.requestDisallowInterceptTouchEvent(disallow);
             }
         };
+        this.user = new User();
+
+        if (!TextUtils.isEmpty(preferences.getString(AppSettings.ACCOUNT_JSON, ""))) {
+            try {
+                this.user = User.fromJson(
+                        new JSONObject(preferences.getString(AppSettings.ACCOUNT_JSON, "")));
+            }
+            catch (JSONException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     @Override
@@ -310,16 +317,67 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
             textInfo = (TextView) itemView.findViewById(R.id.text_info);
             layoutContainerReply = (RelativeLayout) itemView.findViewById(R.id.layout_container_reply);
             editTextReply = (EditText) itemView.findViewById(R.id.edit_text_reply);
-            buttonSendReply = (Button) itemView.findViewById(R.id.button_send_reply);
             layoutContainerActions = (LinearLayout) itemView.findViewById(R.id.layout_container_actions);
+            buttonSendReply = (Button) itemView.findViewById(R.id.button_send_reply);
+            buttonSendReply.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    if (TextUtils.isEmpty(preferences.getString(AppSettings.REFRESH_TOKEN, ""))) {
+                        Toast.makeText(activity, "Must be logged in to reply", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+
+                    if (!TextUtils.isEmpty(editTextReply.getText())) {
+                        Comment comment = controllerComments.get(getAdapterPosition() - 1);
+                        final int commentIndex = getAdapterPosition() - 1;
+                        final int parentLevel = comment.getLevel();
+                        Map<String, String> params = new HashMap<>();
+                        params.put("api_type", "json");
+                        params.put("text", editTextReply.getText()
+                                .toString());
+                        params.put("thing_id", comment.getName());
+
+                        // TODO: Move add to immediate on button click, check if failed afterwards
+                        controllerComments.getReddit()
+                                .loadPost(Reddit.OAUTH_URL + "/api/comment",
+                                        new Response.Listener<String>() {
+                                            @Override
+                                            public void onResponse(String response) {
+                                                try {
+                                                    JSONObject jsonObject = new JSONObject(response);
+                                                    Comment comment = Comment.fromJson(
+                                                            jsonObject.getJSONObject("json")
+                                                                    .getJSONObject("data")
+                                                                    .getJSONArray("things")
+                                                                    .getJSONObject(0), parentLevel + 1);
+                                                    controllerComments.insertComment(commentIndex, comment);
+                                                }
+                                                catch (JSONException e) {
+                                                    e.printStackTrace();
+                                                }
+                                            }
+                                        }, new Response.ErrorListener() {
+                                            @Override
+                                            public void onErrorResponse(VolleyError error) {
+
+                                            }
+                                        }, params, 0);
+                        comment.setReplyExpanded(!comment.isReplyExpanded());
+                        AnimationUtils.animateExpand(editTextReply);
+                        AnimationUtils.animateExpand(buttonSendReply);
+                    }
+                }
+            });
             toolbarActions = (Toolbar) itemView.findViewById(R.id.toolbar_actions);
             toolbarActions.inflateMenu(R.menu.menu_comment);
             toolbarActions.setOnMenuItemClickListener(new Toolbar.OnMenuItemClickListener() {
                 @Override
                 public boolean onMenuItemClick(MenuItem menuItem) {
+                    Comment comment;
+                    final int commentIndex = getAdapterPosition() - 1;
                     switch (menuItem.getItemId()) {
                         case R.id.item_collapse:
-                            controllerComments.toggleComment(getPosition() - 1);
+                            controllerComments.toggleComment(commentIndex);
                             break;
                         case R.id.item_upvote:
                             controllerComments.voteComment(ViewHolderComment.this, 1);
@@ -328,15 +386,36 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                             controllerComments.voteComment(ViewHolderComment.this, -1);
                             break;
                         case R.id.item_reply:
-                            Comment comment = controllerComments.get(getPosition() - 1);
+                            comment = controllerComments.get(commentIndex);
                             if (!comment.isReplyExpanded()) {
                                 editTextReply.requestFocus();
+                                editTextReply.setText(null);
                             }
                             comment.setReplyExpanded(!comment.isReplyExpanded());
                             AnimationUtils.animateExpand(editTextReply);
                             AnimationUtils.animateExpand(buttonSendReply);
                             break;
                         case R.id.item_share:
+                            break;
+                        case R.id.item_delete:
+                            comment = controllerComments.get(commentIndex);
+
+                            Map<String, String> params = new HashMap<>();
+                            params.put("id", comment.getName());
+
+                            controllerComments.getReddit()
+                                    .loadPost(Reddit.OAUTH_URL + "/api/del",
+                                            new Response.Listener<String>() {
+                                                @Override
+                                                public void onResponse(String response) {
+                                                    controllerComments.removeComment(commentIndex);
+                                                }
+                                            }, new Response.ErrorListener() {
+                                                @Override
+                                                public void onErrorResponse(VolleyError error) {
+
+                                                }
+                                            }, params, 0);
                             break;
                     }
                     return true;
@@ -345,16 +424,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
             toolbarActions.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
                 @Override
                 public void onGlobalLayout() {
-                    int maxNum = (int) (itemView.getWidth() / itemWidth);
-
-                    for (int index = 0; index < COMMENT_MENU_SIZE; index++) {
-                        if (index <= maxNum) {
-                            toolbarActions.getMenu().getItem(index).setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
-                        }
-                        else {
-                            toolbarActions.getMenu().getItem(index).setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
-                        }
-                    }
+                    setToolbarMenuVisibility();
                     toolbarActions.getViewTreeObserver().removeOnGlobalLayoutListener(this);
                 }
             });
@@ -364,12 +434,17 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
             clickListenerLink = new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    Comment comment = controllerComments.get(getPosition() - 1);
+                    Comment comment = controllerComments.get(getAdapterPosition() - 1);
                     if (comment.isMore()) {
                         Log.d(TAG, "loadMoreComments");
                         controllerComments.loadMoreComments(comment);
                         return;
                     }
+
+                    boolean isAuthor = comment.getAuthor().equals(user.getName());
+
+                    toolbarActions.getMenu().findItem(R.id.item_delete).setEnabled(isAuthor);
+                    toolbarActions.getMenu().findItem(R.id.item_delete).setVisible(isAuthor);
 
                     setVoteColors();
                     AnimationUtils.animateExpandActions(layoutContainerActions, true);
@@ -383,9 +458,22 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
 
         }
 
+        private void setToolbarMenuVisibility() {
+            int maxNum = (int) (itemView.getWidth() / itemWidth);
+
+            for (int index = 0; index < COMMENT_MENU_SIZE; index++) {
+                if (index < maxNum) {
+                    toolbarActions.getMenu().getItem(index).setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+                }
+                else {
+                    toolbarActions.getMenu().getItem(index).setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
+                }
+            }
+        }
+
         public void setVoteColors() {
 
-            Comment comment = (Comment) controllerComments.getListingComments().getChildren().get(getPosition() - 1);
+            Comment comment = (Comment) controllerComments.getListingComments().getChildren().get(getAdapterPosition() - 1);
             switch (comment.isLikes()) {
                 case 1:
                     drawableUpvote.setColorFilter(colorPositive, PorterDuff.Mode.MULTIPLY);

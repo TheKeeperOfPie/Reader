@@ -247,7 +247,7 @@ public class ControllerLinks implements Controller {
             return;
         }
 
-        final int position = viewHolder.getPosition();
+        final int position = viewHolder.getAdapterPosition();
         final Link link = getLink(position);
 
         final int oldVote = link.isLikes();
@@ -262,7 +262,7 @@ public class ControllerLinks implements Controller {
         params.put(Reddit.QUERY_VOTE, String.valueOf(newVote));
 
         link.setLikes(newVote);
-        if (position == viewHolder.getPosition()) {
+        if (position == viewHolder.getAdapterPosition()) {
             if (viewHolder instanceof AdapterLinkList.ViewHolder) {
                 ((AdapterLinkList.ViewHolder) viewHolder).setVoteColors();
                 ((AdapterLinkList.ViewHolder) viewHolder).setTextInfo();
@@ -282,7 +282,7 @@ public class ControllerLinks implements Controller {
                         .show();
 
                 link.setLikes(oldVote);
-                if (position == viewHolder.getPosition()) {
+                if (position == viewHolder.getAdapterPosition()) {
                     if (viewHolder instanceof AdapterLinkList.ViewHolder) {
                         ((AdapterLinkList.ViewHolder) viewHolder).setVoteColors();
                         ((AdapterLinkList.ViewHolder) viewHolder).setTextInfo();

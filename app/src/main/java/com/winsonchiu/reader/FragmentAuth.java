@@ -127,7 +127,23 @@ public class FragmentAuth extends Fragment {
                                                 System.currentTimeMillis() + jsonObject.getLong(
                                                         Reddit.QUERY_EXPIRES_IN) * Reddit.SEC_TO_MS)
                                         .commit();
-                                mListener.onAuthFinished(true);
+                                reddit.loadGet(Reddit.OAUTH_URL + "/api/v1/me",
+                                        new Response.Listener<String>() {
+                                            @Override
+                                            public void onResponse(String response) {
+                                                preferences.edit()
+                                                        .putString(AppSettings.ACCOUNT_JSON,
+                                                                response)
+                                                        .commit();
+                                                mListener.onAuthFinished(true);
+                                            }
+                                        }, new Response.ErrorListener() {
+                                            @Override
+                                            public void onErrorResponse(VolleyError error) {
+                                                // TODO: Check user info error
+                                                mListener.onAuthFinished(true);
+                                            }
+                                        }, 0);
                             }
                             catch (JSONException e1) {
                                 e1.printStackTrace();

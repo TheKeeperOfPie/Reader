@@ -1,6 +1,8 @@
 package com.winsonchiu.reader;
 
 import android.app.Activity;
+import android.graphics.Bitmap;
+import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -115,8 +117,7 @@ public class AdapterLinkList extends AdapterLink implements ControllerLinks.List
             this.imagePreview.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    Link link = callback.getController().getLink(getPosition());
-                    imagePreview.setVisibility(View.VISIBLE);
+                    Link link = callback.getController().getLink(getAdapterPosition());
 
                     if (link.isSelf()) {
                         if (TextUtils.isEmpty(link.getSelfText())) {
@@ -146,6 +147,13 @@ public class AdapterLinkList extends AdapterLink implements ControllerLinks.List
         @Override
         public void onBind(int position) {
             super.onBind(position);
+
+            if (imagePreview.getDrawable() instanceof BitmapDrawable) {
+                Bitmap bitmap = ((BitmapDrawable) imagePreview.getDrawable()).getBitmap();
+                if (bitmap != null) {
+                    bitmap.recycle();
+                }
+            }
             imagePreview.setImageBitmap(null);
 
             Link link = callback.getController()

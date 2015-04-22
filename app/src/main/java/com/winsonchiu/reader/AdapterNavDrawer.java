@@ -57,7 +57,7 @@ public class AdapterNavDrawer extends RecyclerView.Adapter<AdapterNavDrawer.View
             this.itemView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    listener.onClick(listNavItem.get(getPosition()), getPosition());
+                    listener.onClick(listNavItem.get(getAdapterPosition()), getAdapterPosition());
                 }
             });
         }

@@ -3,7 +3,9 @@ package com.winsonchiu.reader;
 import android.app.Activity;
 import android.content.Intent;
 import android.content.res.Resources;
+import android.graphics.Bitmap;
 import android.graphics.PorterDuff;
+import android.graphics.drawable.BitmapDrawable;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.support.v4.view.MenuItemCompat;
@@ -163,7 +165,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                 public void onClick(View v) {
                     callback.getListener().onClickComments(
                             callback.getController()
-                                    .getLink(getPosition()));
+                                    .getLink(getAdapterPosition()));
                 }
             });
             toolbarActions = (Toolbar) itemView.findViewById(R.id.toolbar_actions);
@@ -186,7 +188,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                             ViewHolderBase.this.callback.getListener()
                                     .loadUrl(
                                             callback.getController()
-                                                    .getLink(getPosition())
+                                                    .getLink(getAdapterPosition())
                                                     .getUrl());
                             break;
                     }
@@ -197,20 +199,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                     new ViewTreeObserver.OnGlobalLayoutListener() {
                         @Override
                         public void onGlobalLayout() {
-                            int maxNum = (int) (itemView.getWidth() / callback.getItemWidth());
-
-                            for (int index = 0; index < ACTION_MENU_SIZE; index++) {
-                                if (index <= maxNum) {
-                                    toolbarActions.getMenu()
-                                            .getItem(index)
-                                            .setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
-                                }
-                                else {
-                                    toolbarActions.getMenu()
-                                            .getItem(index)
-                                            .setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
-                                }
-                            }
+                            setToolbarMenuVisibility();
                             toolbarActions.getViewTreeObserver()
                                     .removeOnGlobalLayoutListener(this);
                         }
@@ -221,12 +210,13 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                 public void onClick(View v) {
                     setVoteColors();
                     Link link = callback.getController()
-                            .getLink(getPosition());
+                            .getLink(getAdapterPosition());
                     Intent shareIntent = new Intent(Intent.ACTION_SEND);
                     shareIntent.setType("text/plain");
                     shareIntent.putExtra(Intent.EXTRA_SUBJECT, link.getTitle());
                     shareIntent.putExtra(Intent.EXTRA_TEXT, Reddit.BASE_URL + link.getPermalink());
 
+                    setToolbarMenuVisibility();
                     ((ShareActionProvider) MenuItemCompat.getActionProvider(toolbarActions.getMenu().findItem(R.id.item_share))).setShareIntent(shareIntent);
                     AnimationUtils.animateExpandActions(toolbarActions, false);
                 }
@@ -310,7 +300,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         public void setVoteColors() {
 
             Link link = callback.getController()
-                    .getLink(getPosition());
+                    .getLink(getAdapterPosition());
             switch (link.isLikes()) {
                 case 1:
                     toolbarActions.getMenu().findItem(R.id.item_upvote).getIcon().setColorFilter(
@@ -331,7 +321,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
 
         public void setTextInfo() {
             Link link = callback.getController()
-                    .getLink(getPosition());
+                    .getLink(getAdapterPosition());
 
             String subreddit = "/r/" + link.getSubreddit();
             Spannable spannableInfo = new SpannableString(subreddit + "\n" + link.getScore() + " by " + link.getAuthor());
@@ -351,11 +341,11 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                 webFull.resetMaxHeight();
                 webFull.loadData(Reddit.getImageHtml(
                         callback.getController()
-                                .getLink(getPosition())
+                                .getLink(getAdapterPosition())
                                 .getUrl()), "text/html", "UTF-8");
                 webFull.setVisibility(View.VISIBLE);
                 callback.getListener()
-                        .onFullLoaded(getPosition());
+                        .onFullLoaded(getAdapterPosition());
             }
             else {
                 callback.getListener().loadUrl(link.getUrl());
@@ -386,7 +376,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                                         viewPagerFull.setVisibility(View.VISIBLE);
                                         viewPagerFull.requestLayout();
                                         callback.getListener()
-                                                .onFullLoaded(getPosition());
+                                                .onFullLoaded(getAdapterPosition());
                                     }
                                     catch (JSONException e) {
                                         e.printStackTrace();
@@ -469,8 +459,26 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                         }
                     });
             callback.getListener()
-                    .onFullLoaded(getPosition());
+                    .onFullLoaded(getAdapterPosition());
         }
+
+        public void setToolbarMenuVisibility() {
+            int maxNum = (int) (itemView.getWidth() / callback.getItemWidth());
+
+            for (int index = 0; index < ACTION_MENU_SIZE; index++) {
+                if (index < maxNum - 1) {
+                    toolbarActions.getMenu()
+                            .getItem(index)
+                            .setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+                }
+                else {
+                    toolbarActions.getMenu()
+                            .getItem(index)
+                            .setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
+                }
+            }
+        }
+
 
         public void onRecycle() {
 

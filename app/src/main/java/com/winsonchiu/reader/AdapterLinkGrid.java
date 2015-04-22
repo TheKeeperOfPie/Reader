@@ -2,15 +2,20 @@ package com.winsonchiu.reader;
 
 import android.app.Activity;
 import android.content.res.Resources;
+import android.graphics.Bitmap;
+import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.media.ThumbnailUtils;
 import android.support.v7.graphics.Palette;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.StaggeredGridLayoutManager;
+import android.text.Html;
+import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.ImageLoader;
@@ -131,11 +136,14 @@ public class AdapterLinkGrid extends AdapterLink implements ControllerLinks.List
 
         private final int defaultColor;
         private final int thumbnailWidth;
+        protected ImageView imageThumbnail;
 
         public ViewHolder(View itemView, ControllerLinks.ListenerCallback listenerCallback, int defaultColor, int thumbnailWidth) {
             super(itemView, listenerCallback);
             this.defaultColor = defaultColor;
             this.thumbnailWidth = thumbnailWidth;
+
+            this.imageThumbnail = (ImageView) itemView.findViewById(R.id.image_thumbnail);
 
             this.imagePreview.setOnClickListener(new View.OnClickListener() {
                 @Override
@@ -154,7 +162,50 @@ public class AdapterLinkGrid extends AdapterLink implements ControllerLinks.List
                     imagePlay.setVisibility(View.GONE);
 
                     loadFull(callback.getController()
-                            .getLink(getPosition()));
+                            .getLink(getAdapterPosition()));
+
+                    viewHolder.itemView.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            setToolbarMenuVisibility();
+                        }
+                    });
+                }
+            });
+
+            this.imageThumbnail.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    Link link = callback.getController().getLink(getAdapterPosition());
+
+                    if (link.isSelf()) {
+                        if (TextUtils.isEmpty(link.getSelfText())) {
+                            callback.getListener().onClickComments(link);
+                        }
+                        else {
+                            ViewHolder viewHolder = ViewHolder.this;
+                            if (callback.getLayoutManager() instanceof StaggeredGridLayoutManager) {
+                                ((StaggeredGridLayoutManager.LayoutParams) viewHolder.itemView.getLayoutParams()).setFullSpan(
+                                        true);
+                                ((StaggeredGridLayoutManager) callback.getLayoutManager()).invalidateSpanAssignments();
+                            }
+
+                            String html = link.getSelfTextHtml();
+                            html = Html.fromHtml(html.trim())
+                                    .toString();
+                            textThreadSelf.setVisibility(View.VISIBLE);
+                            textThreadSelf.setText(Reddit.formatHtml(html,
+                                    new Reddit.UrlClickListener() {
+                                        @Override
+                                        public void onUrlClick(String url) {
+                                            callback.getListener().loadUrl(url);
+                                        }
+                                    }));
+                        }
+                    }
+                    else {
+                        loadFull(link);
+                    }
                 }
             });
 
@@ -164,6 +215,12 @@ public class AdapterLinkGrid extends AdapterLink implements ControllerLinks.List
         public void onBind(final int position) {
             super.onBind(position);
 
+            if (imagePreview.getDrawable() instanceof BitmapDrawable) {
+                Bitmap bitmap = ((BitmapDrawable) imagePreview.getDrawable()).getBitmap();
+                if (bitmap != null) {
+                    bitmap.recycle();
+                }
+            }
             imagePreview.setImageBitmap(null);
 
             ((StaggeredGridLayoutManager.LayoutParams) itemView.getLayoutParams()).setFullSpan(
@@ -172,8 +229,15 @@ public class AdapterLinkGrid extends AdapterLink implements ControllerLinks.List
             final Link link = callback.getController().getLink(position);
 
             Drawable drawable = callback.getController().getDrawableForLink(link);
-            if (drawable == null && showThumbnail(link)) {
+            if (drawable != null) {
+                itemView.setBackgroundColor(defaultColor);
+                imagePreview.setVisibility(View.GONE);
+                imageThumbnail.setVisibility(View.VISIBLE);
+                imageThumbnail.setImageDrawable(drawable);
+            }
+            else if (showThumbnail(link)) {
                 imagePreview.setVisibility(View.VISIBLE);
+                imageThumbnail.setVisibility(View.GONE);
                 progressImage.setVisibility(View.VISIBLE);
                 imagePreview.setTag(
                         callback.getController()
@@ -185,11 +249,11 @@ public class AdapterLinkGrid extends AdapterLink implements ControllerLinks.List
                                             this.onErrorResponse(null);
                                             return;
                                         }
-                                        Palette.generateAsync(response.getBitmap(),
+                                        Palette.from(response.getBitmap()).generate(
                                                 new Palette.PaletteAsyncListener() {
                                                     @Override
                                                     public void onGenerated(Palette palette) {
-                                                        if (position == getPosition()) {
+                                                        if (position == getAdapterPosition()) {
                                                             AnimationUtils.animateBackgroundColor(
                                                                     itemView,
                                                                     ((ColorDrawable) itemView.getBackground()).getColor(),
@@ -200,7 +264,7 @@ public class AdapterLinkGrid extends AdapterLink implements ControllerLinks.List
                                                     }
                                                 });
                                         if (Reddit.placeImageUrl(
-                                                link) && position == getPosition()) {
+                                                link) && position == getAdapterPosition()) {
                                             imagePreview.setTag(
                                                     callback.getController()
                                                             .getReddit().getImageLoader().get(link.getUrl(),
@@ -209,7 +273,7 @@ public class AdapterLinkGrid extends AdapterLink implements ControllerLinks.List
                                                                         public void onResponse(
                                                                                 ImageLoader.ImageContainer response,
                                                                                 boolean isImmediate) {
-                                                                            if (response.getBitmap() != null && position == getPosition()) {
+                                                                            if (response.getBitmap() != null && position == getAdapterPosition()) {
                                                                                 imagePreview.setAlpha(
                                                                                         0.0f);
                                                                                 imagePreview.setImageBitmap(
@@ -251,8 +315,30 @@ public class AdapterLinkGrid extends AdapterLink implements ControllerLinks.List
             else {
                 itemView.setBackgroundColor(defaultColor);
                 imagePreview.setVisibility(View.GONE);
+                imageThumbnail.setVisibility(View.VISIBLE);
+                imagePreview.setTag(
+                        callback.getController()
+                                .getReddit()
+                                .getImageLoader()
+                                .get(link.getThumbnail(), new ImageLoader.ImageListener() {
+                                    @Override
+                                    public void onResponse(ImageLoader.ImageContainer response,
+                                                           boolean isImmediate) {
+                                        if (response.getBitmap() == null) {
+                                            this.onErrorResponse(null);
+                                            return;
+                                        }
+                                        if (position == getAdapterPosition()) {
+                                            imageThumbnail.setImageBitmap(response.getBitmap());
+                                        }
+                                    }
+
+                                    @Override
+                                    public void onErrorResponse(VolleyError error) {
+
+                                    }
+                                }));
             }
-            imagePreview.invalidate();
 
             textThreadTitle.setText(link.getTitle());
 //        setTextInfo();

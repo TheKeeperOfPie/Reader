@@ -5,7 +5,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.v4.widget.DrawerLayout;
-import android.support.v7.app.ActionBarActivity;
+import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.SearchView;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
@@ -15,12 +15,11 @@ import android.view.View;
 import android.widget.Toast;
 
 import com.crashlytics.android.Crashlytics;
-import com.winsonchiu.reader.data.Link;
 
 import io.fabric.sdk.android.Fabric;
 
 
-public class MainActivity extends ActionBarActivity
+public class MainActivity extends AppCompatActivity
         implements FragmentNavDrawer.NavigationDrawerCallbacks,
         FragmentThreadList.OnFragmentInteractionListener,
         FragmentWeb.OnFragmentInteractionListener,
@@ -62,7 +61,15 @@ public class MainActivity extends ActionBarActivity
                 MenuItem itemSearch = toolbar.getMenu().findItem(R.id.item_search);
                 if (itemSearch != null) {
                     itemSearch.expandActionView();
-                    ((SearchView) itemSearch.getActionView()).setQuery(toolbar.getTitle().toString().replaceAll("/r/", ""), false);
+                    SearchView searchView = ((SearchView) itemSearch.getActionView());
+                    if (searchView.getQuery().equals("Front Page")) {
+                        searchView.setQuery("", false);
+                    }
+                    else {
+                        searchView.setQuery(toolbar.getTitle()
+                                .toString()
+                                .replaceAll("/r/", ""), false);
+                    }
                 }
             }
         });
@@ -99,6 +106,7 @@ public class MainActivity extends ActionBarActivity
                     // TODO: Manually invalidate access token
                     preferences.edit().putString(AppSettings.ACCESS_TOKEN, "").apply();
                     preferences.edit().putString(AppSettings.REFRESH_TOKEN, "").apply();
+                    preferences.edit().putString(AppSettings.ACCOUNT_JSON, "").apply();
                     Toast.makeText(this, "Cleared refresh token", Toast.LENGTH_SHORT).show();
                     break;
             }

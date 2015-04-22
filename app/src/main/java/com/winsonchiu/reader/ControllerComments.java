@@ -68,7 +68,8 @@ public class ControllerComments implements Controller {
 
     public void setActivity(Activity activity) {
         this.activity = activity;
-        this.preferences = PreferenceManager.getDefaultSharedPreferences(activity.getApplicationContext());
+        this.preferences = PreferenceManager.getDefaultSharedPreferences(
+                activity.getApplicationContext());
     }
 
     public void addListener(CommentClickListener listener) {
@@ -111,7 +112,8 @@ public class ControllerComments implements Controller {
                             for (CommentClickListener listener : listeners) {
                                 listener.setRefreshing(false);
                             }
-                        } catch (JSONException e1) {
+                        }
+                        catch (JSONException e1) {
                             e1.printStackTrace();
                         }
                     }
@@ -266,6 +268,22 @@ public class ControllerComments implements Controller {
 
     }
 
+    public void insertComment(int commentIndex, Comment comment) {
+        link.getComments().getChildren().add(commentIndex, comment);
+        listingComments.getChildren().add(commentIndex, comment);
+        for (CommentClickListener listener : listeners) {
+            listener.getAdapter().notifyItemInserted(commentIndex + 1);
+        }
+    }
+
+    public void removeComment(int commentIndex) {
+        link.getComments().getChildren().remove(commentIndex);
+        listingComments.getChildren().remove(commentIndex);
+        for (CommentClickListener listener : listeners) {
+            listener.getAdapter().notifyItemRemoved(commentIndex + 1);
+        }
+    }
+
     public void toggleComment(int position) {
 
         if (position == listingComments.getChildren().size() - 1) {
@@ -325,7 +343,6 @@ public class ControllerComments implements Controller {
         }
     }
 
-
     public void voteLink(final RecyclerView.ViewHolder viewHolder, final int vote) {
 
         if (TextUtils.isEmpty(preferences.getString(AppSettings.REFRESH_TOKEN, null))) {
@@ -333,7 +350,7 @@ public class ControllerComments implements Controller {
             return;
         }
 
-        final int position = viewHolder.getPosition();
+        final int position = viewHolder.getAdapterPosition();
 
         final int oldVote = link.isLikes();
         int newVote = 0;
@@ -347,7 +364,7 @@ public class ControllerComments implements Controller {
         params.put(Reddit.QUERY_VOTE, String.valueOf(newVote));
 
         link.setLikes(newVote);
-        if (position == viewHolder.getPosition()) {
+        if (position == viewHolder.getAdapterPosition()) {
             if (viewHolder instanceof AdapterLinkList.ViewHolder) {
                 ((AdapterLinkList.ViewHolder) viewHolder).setVoteColors();
                 ((AdapterLinkList.ViewHolder) viewHolder).setTextInfo();
@@ -367,7 +384,7 @@ public class ControllerComments implements Controller {
                         .show();
 
                 link.setLikes(oldVote);
-                if (position == viewHolder.getPosition()) {
+                if (position == viewHolder.getAdapterPosition()) {
                     if (viewHolder instanceof AdapterLinkList.ViewHolder) {
                         ((AdapterLinkList.ViewHolder) viewHolder).setVoteColors();
                         ((AdapterLinkList.ViewHolder) viewHolder).setTextInfo();
@@ -387,8 +404,8 @@ public class ControllerComments implements Controller {
             return false;
         }
 
-        final int position = viewHolder.getPosition();
-        final Comment comment = (Comment) listingComments.getChildren().get(viewHolder.getPosition());
+        final int position = viewHolder.getAdapterPosition();
+        final Comment comment = (Comment) listingComments.getChildren().get(viewHolder.getAdapterPosition());
 
         final int oldVote = comment.isLikes();
         int newVote = 0;
@@ -402,7 +419,7 @@ public class ControllerComments implements Controller {
         params.put(Reddit.QUERY_VOTE, String.valueOf(newVote));
 
         comment.setLikes(newVote);
-        if (position == viewHolder.getPosition()) {
+        if (position == viewHolder.getAdapterPosition()) {
             viewHolder.setVoteColors();
         }
         reddit.loadPost(Reddit.OAUTH_URL + "/api/vote", new Listener<String>() {
@@ -416,7 +433,7 @@ public class ControllerComments implements Controller {
                         .show();
 
                 comment.setLikes(oldVote);
-                if (position == viewHolder.getPosition()) {
+                if (position == viewHolder.getAdapterPosition()) {
                     viewHolder.setVoteColors();
                 }
             }

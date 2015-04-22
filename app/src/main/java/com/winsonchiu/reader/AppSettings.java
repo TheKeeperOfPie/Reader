@@ -19,7 +19,7 @@ public class AppSettings {
     public static final String MODE_LIST = "List";
     public static final String MODE_GRID = "Grid";
 
-    public static final String ACCOUNT_NAME = "accountName";
+    public static final String ACCOUNT_JSON = "accountJson";
     public static final String REFRESH_TOKEN = "refreshToken";
 
     public static boolean initPrefs(Context context) {

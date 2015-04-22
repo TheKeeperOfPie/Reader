@@ -11,6 +11,7 @@ import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarActivity;
 import android.support.v7.app.ActionBarDrawerToggle;
+import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
@@ -215,7 +216,7 @@ public class FragmentNavDrawer extends Fragment {
                     return;
                 }
 
-                ((ActionBarActivity) getActivity()).supportInvalidateOptionsMenu(); // calls onPrepareOptionsMenu()
+                ((AppCompatActivity) getActivity()).supportInvalidateOptionsMenu(); // calls onPrepareOptionsMenu()
             }
 
             @Override
@@ -234,7 +235,7 @@ public class FragmentNavDrawer extends Fragment {
                     sp.edit().putBoolean(PREF_USER_LEARNED_DRAWER, true).apply();
                 }
 
-                ((ActionBarActivity) getActivity()).supportInvalidateOptionsMenu(); // calls onPrepareOptionsMenu()
+                ((AppCompatActivity) getActivity()).supportInvalidateOptionsMenu(); // calls onPrepareOptionsMenu()
             }
         };
 

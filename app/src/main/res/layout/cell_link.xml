@@ -66,12 +66,24 @@
 
     </FrameLayout>
 
+    <com.winsonchiu.reader.ImageViewSquare
+        android:id="@+id/image_thumbnail"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_below="@id/frame_full"
+        android:layout_alignParentStart="true"
+        android:layout_margin="@dimen/activity_horizontal_margin"
+        android:scaleType="centerCrop"
+        android:contentDescription="@string/content_description_thread_preview"
+        android:visibility="gone"
+        />
+
     <TextView
         android:id="@+id/text_thread_title"
         android:minHeight="68dp"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_below="@id/frame_full"
+        android:layout_below="@id/image_thumbnail"
         android:layout_toStartOf="@+id/button_comments"
         android:layout_marginStart="@dimen/activity_horizontal_margin"
         android:paddingTop="@dimen/activity_vertical_margin"
@@ -120,7 +132,6 @@
         android:id="@+id/toolbar_actions"
         android:layout_width="match_parent"
         android:layout_height="48dp"
-        android:gravity="center_vertical"
         android:layout_below="@id/text_thread_info"
         android:layout_alignParentBottom="true"
         android:layout_alignParentEnd="true"
