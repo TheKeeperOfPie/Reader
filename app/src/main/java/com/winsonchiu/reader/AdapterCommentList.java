@@ -60,6 +60,8 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
     private static final int COMMENT_MENU_SIZE = 6;
     private final ControllerComments.CommentClickListener listener;
     private final float itemWidth;
+    private final int colorDefault;
+    private final int thumbnailWidth;
     private User user;
 
     private Activity activity;
@@ -71,9 +73,12 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
     private Drawable drawableUpvote;
     private Drawable drawableDownvote;
     private SharedPreferences preferences;
+    private boolean isGrid;
+    private boolean isInitialized;
 
-    public AdapterCommentList(Activity activity, ControllerComments controllerComments, final ControllerComments.CommentClickListener listener) {
+    public AdapterCommentList(Activity activity, ControllerComments controllerComments, final ControllerComments.CommentClickListener listener, boolean isGrid) {
         // TODO: Add setActivity
+        this.isGrid = isGrid;
         this.activity = activity;
         this.controllerComments = controllerComments;
         this.listener = listener;
@@ -82,13 +87,15 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
         this.colorPrimary = resources.getColor(R.color.colorPrimary);
         this.colorPositive = resources.getColor(R.color.positiveScore);
         this.colorNegative = resources.getColor(R.color.negativeScore);
+        this.colorDefault = resources.getColor(R.color.darkThemeDialog);
         this.drawableUpvote = resources.getDrawable(R.drawable.ic_keyboard_arrow_up_white_24dp);
         this.drawableDownvote = resources.getDrawable(R.drawable.ic_keyboard_arrow_down_white_24dp);
+        this.thumbnailWidth = resources.getDisplayMetrics().widthPixels / 2;
         this.itemWidth = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 48,
                 resources.getDisplayMetrics());
         this.linkClickListener = new ControllerLinks.LinkClickListener() {
             @Override
-            public void onClickComments(Link link) {
+            public void onClickComments(Link link, RecyclerView.ViewHolder viewHolder) {
                 // Not required
             }
 
@@ -153,6 +160,9 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
     public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
 
         if (viewType == VIEW_LINK) {
+            if (isGrid) {
+                return new AdapterLinkGrid.ViewHolder(LayoutInflater.from(parent.getContext()).inflate(R.layout.cell_link, parent, false), this, colorDefault, thumbnailWidth);
+            }
             return new AdapterLinkList.ViewHolder(LayoutInflater.from(parent.getContext()).inflate(R.layout.row_link, parent, false), this);
         }
 
@@ -164,9 +174,17 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
 
         if (holder instanceof AdapterLinkList.ViewHolder) {
             ((AdapterLinkList.ViewHolder) holder).onBind(position);
+//            if (!isInitialized) {
+//                ((AdapterLinkList.ViewHolder) holder).imagePreview.callOnClick();
+//                isInitialized = true;
+//            }
         }
         else if (holder instanceof AdapterLinkGrid.ViewHolder) {
             ((AdapterLinkGrid.ViewHolder) holder).onBind(position);
+//            if (!isInitialized) {
+//                ((AdapterLinkGrid.ViewHolder) holder).imagePreview.callOnClick();
+//                isInitialized = true;
+//            }
         }
         else {
 
@@ -178,12 +196,11 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                 viewHolderComment.editTextReply.setVisibility(View.VISIBLE);
                 viewHolderComment.buttonSendReply.setVisibility(View.VISIBLE);
                 viewHolderComment.layoutContainerActions.setVisibility(View.VISIBLE);
-                viewHolderComment.toolbarActions.setVisibility(View.VISIBLE);
             }
             else {
                 viewHolderComment.editTextReply.setVisibility(View.GONE);
                 viewHolderComment.buttonSendReply.setVisibility(View.GONE);
-                viewHolderComment.toolbarActions.setVisibility(View.GONE);
+                viewHolderComment.layoutContainerActions.setVisibility(View.GONE);
             };
 
             ViewGroup.LayoutParams layoutParams = viewHolderComment.viewIndent.getLayoutParams();
@@ -288,6 +305,10 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
     @Override
     public RecyclerView.LayoutManager getLayoutManager() {
         return null;
+    }
+
+    public void setIsGrid(boolean isGrid) {
+        this.isGrid = isGrid;
     }
 
     protected class ViewHolderComment extends RecyclerView.ViewHolder {

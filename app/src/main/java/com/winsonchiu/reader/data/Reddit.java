@@ -15,7 +15,6 @@ import android.view.View;
 import com.android.volley.AuthFailureError;
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
-import com.android.volley.Response;
 import com.android.volley.Response.ErrorListener;
 import com.android.volley.Response.Listener;
 import com.android.volley.VolleyError;
@@ -78,7 +77,6 @@ public class Reddit {
     public static final long SEC_TO_MS = 1000;
 
     public static final String ACCESS_URL = "https://www.reddit.com/api/v1/access_token";
-    // TODO: Move OAuth URL to here
 
     private static final String USER_AUTHENTICATION_URL = "https://www.reddit.com/api/v1/authorize.compact?";
     private static final String AUTH_SCOPES = "account,creddits,edit,flair,history,identity,livemanage,modconfig,modflair,modlog,modothers,modposts,modself,modwiki,mysubreddits,privatemessages,read,report,save,submit,subscribe,vote,wikiedit,wikiread";

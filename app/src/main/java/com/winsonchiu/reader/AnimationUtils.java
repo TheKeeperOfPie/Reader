@@ -9,11 +9,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.Animation;
 import android.view.animation.DecelerateInterpolator;
-import android.view.animation.ScaleAnimation;
 import android.view.animation.Transformation;
-import android.widget.TextView;
 
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 

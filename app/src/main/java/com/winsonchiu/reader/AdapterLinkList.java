@@ -1,8 +1,6 @@
 package com.winsonchiu.reader;
 
 import android.app.Activity;
-import android.graphics.Bitmap;
-import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -111,6 +109,8 @@ public class AdapterLinkList extends AdapterLink implements ControllerLinks.List
 
     protected static class ViewHolder extends AdapterLink.ViewHolderBase {
 
+        protected String currentThumbnailLink;
+
         public ViewHolder(View itemView, final ControllerLinks.ListenerCallback callback) {
             super(itemView, callback);
 
@@ -119,22 +119,32 @@ public class AdapterLinkList extends AdapterLink implements ControllerLinks.List
                 public void onClick(View v) {
                     Link link = callback.getController().getLink(getAdapterPosition());
 
+                    // TODO: Abstract to remove code duplication
                     if (link.isSelf()) {
+                        if (textThreadSelf.isShown()) {
+                            textThreadSelf.setVisibility(View.GONE);
+                            return;
+                        }
                         if (TextUtils.isEmpty(link.getSelfText())) {
-                            callback.getListener().onClickComments(link);
+                            callback.getListener().onClickComments(link, ViewHolder.this);
                         }
                         else {
-                            String html = link.getSelfTextHtml();
-                            html = Html.fromHtml(html.trim())
-                                    .toString();
-                            textThreadSelf.setVisibility(View.VISIBLE);
-                            textThreadSelf.setText(Reddit.formatHtml(html,
-                                    new Reddit.UrlClickListener() {
-                                        @Override
-                                        public void onUrlClick(String url) {
-                                            callback.getListener().loadUrl(url);
-                                        }
-                                    }));
+                            if (textThreadSelf.isShown()) {
+                                textThreadSelf.setVisibility(View.GONE);
+                            }
+                            else {
+                                String html = link.getSelfTextHtml();
+                                html = Html.fromHtml(html.trim())
+                                        .toString();
+                                textThreadSelf.setVisibility(View.VISIBLE);
+                                textThreadSelf.setText(Reddit.formatHtml(html,
+                                        new Reddit.UrlClickListener() {
+                                            @Override
+                                            public void onUrlClick(String url) {
+                                                callback.getListener().loadUrl(url);
+                                            }
+                                        }));
+                            }
                         }
                     }
                     else {
@@ -148,30 +158,27 @@ public class AdapterLinkList extends AdapterLink implements ControllerLinks.List
         public void onBind(int position) {
             super.onBind(position);
 
-            if (imagePreview.getDrawable() instanceof BitmapDrawable) {
-                Bitmap bitmap = ((BitmapDrawable) imagePreview.getDrawable()).getBitmap();
-                if (bitmap != null) {
-                    bitmap.recycle();
-                }
-            }
-            imagePreview.setImageBitmap(null);
-
-            Link link = callback.getController()
+            final Link link = callback.getController()
                     .getLink(position);
 
             Drawable drawable = callback.getController().getDrawableForLink(link);
             if (drawable == null) {
-                imagePreview.setTag(
-                        callback.getController()
-                                .getReddit().getImageLoader().get(link.getThumbnail(),
+                imageContainer = callback.getController()
+                        .getReddit().getImageLoader().get(link.getThumbnail(),
                                 new ImageLoader.ImageListener() {
                                     @Override
                                     public void onResponse(ImageLoader.ImageContainer response,
                                                            boolean isImmediate) {
                                         if (response.getBitmap() != null) {
-                                            imagePreview.setAlpha(0.0f);
-                                            imagePreview.setImageBitmap(response.getBitmap());
-                                            AnimationUtils.animateAlpha(imagePreview, 0.0f, 1.0f);
+                                            currentThumbnailLink = link.getThumbnail();
+                                            if (isImmediate) {
+                                                imagePreview.setImageBitmap(response.getBitmap());
+                                            }
+                                            else {
+                                                imagePreview.setAlpha(0.0f);
+                                                imagePreview.setImageBitmap(response.getBitmap());
+                                                AnimationUtils.animateAlpha(imagePreview, 0.0f, 1.0f);
+                                            }
                                         }
                                     }
 
@@ -179,7 +186,7 @@ public class AdapterLinkList extends AdapterLink implements ControllerLinks.List
                                     public void onErrorResponse(VolleyError error) {
 
                                     }
-                                }));
+                                });
             }
             else {
                 imagePreview.setImageDrawable(drawable);

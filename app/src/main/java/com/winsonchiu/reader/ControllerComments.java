@@ -26,13 +26,11 @@ import com.winsonchiu.reader.data.Thing;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.w3c.dom.Text;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Created by TheKeeperOfPie on 3/20/2015.
@@ -82,7 +80,13 @@ public class ControllerComments implements Controller {
 
     public void setLink(Link link) {
         Listing listing = new Listing();
-        listing.setChildren(new ArrayList<>(link.getComments().getChildren()));
+        // TODO: Make this logic cleaner
+        if (link.getComments() != null) {
+            listing.setChildren(new ArrayList<>(link.getComments().getChildren()));
+        }
+        else {
+            listing.setChildren(new ArrayList<Thing>());
+        }
         this.listingComments = listing;
         this.link = link;
         this.subreddit = link.getSubreddit();
@@ -132,7 +136,7 @@ public class ControllerComments implements Controller {
             return drawableSelf;
         }
 
-        if (TextUtils.isEmpty(thumbnail) || thumbnail.equals(Reddit.DEFAULT)) {
+        if (TextUtils.isEmpty(thumbnail) || thumbnail.equals(Reddit.DEFAULT) || thumbnail.equals(Reddit.NSFW)) {
             return drawableDefault;
         }
 
@@ -470,14 +474,24 @@ public class ControllerComments implements Controller {
     }
 
     public int getItemCount() {
-        if (link == null || listingComments == null || TextUtils.isEmpty(link.getId())) {
-            return 0;
+
+        if (link == null) {
+            Log.d(TAG, "link null");
+        }
+        else {
+            Log.d(TAG, "link ID: " + link.getId());
         }
 
-        if (listingComments.getChildren().isEmpty()) {
+        if (link == null || TextUtils.isEmpty(link.getId())) {
+            Log.d(TAG, "return 0");
+            return 0;
+        }
+        if (listingComments == null || listingComments.getChildren().isEmpty()) {
+            Log.d(TAG, "return 1");
             return 1;
         }
 
+        Log.d(TAG, "return normal");
         return listingComments.getChildren().size() + 1;
     }
 

@@ -1,10 +1,13 @@
 package com.winsonchiu.reader;
 
+import android.animation.ObjectAnimator;
+import android.animation.ValueAnimator;
 import android.app.Activity;
 import android.app.Fragment;
 import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
+import android.support.v4.graphics.ColorUtils;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -82,7 +85,6 @@ public class FragmentWeb extends Fragment {
                 webView.reload();
             }
         });
-        swipeRefreshWeb.setRefreshing(true);
 
         webView = (WebView) view.findViewById(R.id.web);
         webView.setBackgroundColor(getResources().getColor(R.color.darkThemeBackground));
@@ -103,6 +105,7 @@ public class FragmentWeb extends Fragment {
             @Override
             public void onProgressChanged(WebView view, int newProgress) {
                 super.onProgressChanged(view, newProgress);
+                webView.setBackgroundColor(ColorUtils.setAlphaComponent(0xFFFFFFFF, (int) (newProgress / 100f * 255)));
             }
         });
         webView.getSettings().setUseWideViewPort(true);
@@ -114,7 +117,14 @@ public class FragmentWeb extends Fragment {
         webView.getSettings().setDatabaseEnabled(true);
         webView.getSettings().setAppCacheEnabled(true);
         webView.setScrollBarStyle(View.SCROLLBARS_INSIDE_OVERLAY);
-        webView.loadUrl(mParam1);
+
+        swipeRefreshWeb.post(new Runnable() {
+            @Override
+            public void run() {
+                swipeRefreshWeb.setRefreshing(true);
+                webView.loadUrl(mParam1);
+            }
+        });
 
         return view;
     }

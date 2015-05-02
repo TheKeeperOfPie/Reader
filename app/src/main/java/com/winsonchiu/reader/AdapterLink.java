@@ -3,9 +3,7 @@ package com.winsonchiu.reader;
 import android.app.Activity;
 import android.content.Intent;
 import android.content.res.Resources;
-import android.graphics.Bitmap;
 import android.graphics.PorterDuff;
-import android.graphics.drawable.BitmapDrawable;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.support.v4.view.MenuItemCompat;
@@ -97,6 +95,8 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         protected ImageButton buttonComments;
         protected Toolbar toolbarActions;
         protected ControllerLinks.ListenerCallback callback;
+        protected ImageLoader.ImageContainer imageContainer;
+        protected Request request;
 
         public ViewHolderBase(final View itemView, ControllerLinks.ListenerCallback listenerCallback) {
             super(itemView);
@@ -165,7 +165,8 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                 public void onClick(View v) {
                     callback.getListener().onClickComments(
                             callback.getController()
-                                    .getLink(getAdapterPosition()));
+                                    .getLink(getAdapterPosition()), ViewHolderBase.this);
+                    videoFull.pause();
                 }
             });
             toolbarActions = (Toolbar) itemView.findViewById(R.id.toolbar_actions);
@@ -217,18 +218,24 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                     shareIntent.putExtra(Intent.EXTRA_TEXT, Reddit.BASE_URL + link.getPermalink());
 
                     setToolbarMenuVisibility();
-                    ((ShareActionProvider) MenuItemCompat.getActionProvider(toolbarActions.getMenu().findItem(R.id.item_share))).setShareIntent(shareIntent);
+                    ShareActionProvider shareActionProvider = (ShareActionProvider) MenuItemCompat.getActionProvider(toolbarActions.getMenu().findItem(R.id.item_share));
+                    if (shareActionProvider != null) {
+                        shareActionProvider.setShareIntent(shareIntent);
+                    }
                     AnimationUtils.animateExpandActions(toolbarActions, false);
                 }
             };
             textThreadTitle.setOnClickListener(clickListenerLink);
             textThreadInfo.setOnClickListener(clickListenerLink);
+            textThreadSelf.setOnClickListener(clickListenerLink);
             this.itemView.setOnClickListener(clickListenerLink);
         }
 
         public void loadFull(Link link ) {
 
             Log.d(TAG, "loadFull: " + link.getUrl());
+
+            // TODO: Toggle visibility of web and video views
 
             String url = link.getUrl();
             if (!TextUtils.isEmpty(url)) {
@@ -355,7 +362,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
 
         private void loadAlbum(String id) {
             progressImage.setVisibility(View.VISIBLE);
-            imagePreview.setTag(callback.getController()
+            request = callback.getController()
                     .getReddit()
                     .loadImgurAlbum(id,
                             new Response.Listener<String>() {
@@ -390,13 +397,13 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                                 public void onErrorResponse(VolleyError error) {
                                     progressImage.setVisibility(View.GONE);
                                 }
-                            }, 0));
+                            }, 0);
         }
 
 
         private void loadGifv(String id) {
             Log.d(TAG, "loadGifv: " + id);
-            imagePreview.setTag(callback.getController()
+            request = callback.getController()
                     .getReddit()
                     .loadImgurImage(id,
                             new Response.Listener<String>() {
@@ -439,7 +446,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                                     Log.d(TAG, "error on loadGifv");
                                     progressImage.setVisibility(View.GONE);
                                 }
-                            }, 0));
+                            }, 0);
         }
 
 
@@ -482,15 +489,11 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
 
         public void onRecycle() {
 
-            Object tag = imagePreview.getTag();
-
-            if (tag != null) {
-                if (tag instanceof ImageLoader.ImageContainer) {
-                    ((ImageLoader.ImageContainer) tag).cancelRequest();
-                }
-                else if (tag instanceof Request) {
-                    ((Request) tag).cancel();
-                }
+            if (imageContainer != null) {
+                imageContainer.cancelRequest();
+            }
+            if (request != null) {
+                request.cancel();
             }
 
             webFull.onPause();
@@ -500,14 +503,13 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             videoFull.stopPlayback();
             videoFull.setVisibility(View.GONE);
             viewPagerFull.setVisibility(View.GONE);
-            imagePreview.setImageBitmap(null);
             imagePreview.setVisibility(View.VISIBLE);
             progressImage.setVisibility(View.GONE);
             textThreadSelf.setVisibility(View.GONE);
         }
 
         public void onBind(int position) {
-
+            imagePreview.setImageBitmap(null);
         }
     }
 

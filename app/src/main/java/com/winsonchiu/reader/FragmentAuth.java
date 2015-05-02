@@ -17,6 +17,7 @@ import android.webkit.WebViewClient;
 
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
+import com.winsonchiu.reader.data.Listing;
 import com.winsonchiu.reader.data.Reddit;
 
 import org.json.JSONException;
@@ -135,6 +136,18 @@ public class FragmentAuth extends Fragment {
                                                         .putString(AppSettings.ACCOUNT_JSON,
                                                                 response)
                                                         .commit();
+                                                reddit.loadGet(Reddit.OAUTH_URL + "/subreddits/mine/subscriber?limit=100&show=all", new Response.Listener<String>() {
+                                                    @Override
+                                                    public void onResponse(String response) {
+                                                        preferences.edit().putString(AppSettings.SUBSCRIBED_SUBREDDITS, response).commit();
+                                                        Log.d(TAG, "subscribed response: " + response);
+                                                    }
+                                                }, new Response.ErrorListener() {
+                                                    @Override
+                                                    public void onErrorResponse(VolleyError error) {
+
+                                                    }
+                                                }, 0);
                                                 mListener.onAuthFinished(true);
                                             }
                                         }, new Response.ErrorListener() {

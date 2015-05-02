@@ -115,7 +115,7 @@ public class ControllerLinks implements Controller {
             return drawableSelf;
         }
 
-        if (TextUtils.isEmpty(thumbnail) || thumbnail.equals(Reddit.DEFAULT)) {
+        if (TextUtils.isEmpty(thumbnail) || thumbnail.equals(Reddit.DEFAULT) || thumbnail.equals(Reddit.NSFW)) {
             return drawableDefault;
         }
 
@@ -326,7 +326,7 @@ public class ControllerLinks implements Controller {
 
     public interface LinkClickListener extends DisallowListener {
 
-        void onClickComments(Link link);
+        void onClickComments(Link link, RecyclerView.ViewHolder viewHolder);
         void loadUrl(String url);
         void onFullLoaded(int position);
         void setRefreshing(boolean refreshing);

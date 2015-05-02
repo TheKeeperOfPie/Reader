@@ -20,6 +20,7 @@ public class AppSettings {
     public static final String MODE_GRID = "Grid";
 
     public static final String ACCOUNT_JSON = "accountJson";
+    public static final String SUBSCRIBED_SUBREDDITS = "subscribedSubreddits";
     public static final String REFRESH_TOKEN = "refreshToken";
 
     public static boolean initPrefs(Context context) {

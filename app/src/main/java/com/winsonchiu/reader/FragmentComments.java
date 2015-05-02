@@ -2,7 +2,6 @@ package com.winsonchiu.reader;
 
 import android.app.Activity;
 import android.app.Fragment;
-import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.DefaultItemAnimator;
@@ -26,6 +25,7 @@ public class FragmentComments extends Fragment {
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
     private static final String ARG_PARAM1 = "param1";
     private static final String ARG_PARAM2 = "param2";
+    private static final String ARG_IS_GRID = "isGrid";
 
     // TODO: Rename and change types of parameters
     private String subreddit;
@@ -39,6 +39,7 @@ public class FragmentComments extends Fragment {
     private SwipeRefreshLayout swipeRefreshCommentList;
     private ControllerComments controllerComments;
     private ControllerComments.CommentClickListener listener;
+    private RecyclerView.ViewHolder viewHolder;
 
     /**
      * Use this factory method to create a new instance of
@@ -49,11 +50,12 @@ public class FragmentComments extends Fragment {
      * @return A new instance of fragment FragmentComments.
      */
     // TODO: Rename and change types and number of parameters
-    public static FragmentComments newInstance(String param1, String param2) {
+    public static FragmentComments newInstance(String param1, String param2, boolean isGrid) {
         FragmentComments fragment = new FragmentComments();
         Bundle args = new Bundle();
         args.putString(ARG_PARAM1, param1);
         args.putString(ARG_PARAM2, param2);
+        args.putBoolean(ARG_IS_GRID, isGrid);
         fragment.setArguments(args);
         return fragment;
     }
@@ -124,10 +126,9 @@ public class FragmentComments extends Fragment {
                 new DividerItemDecoration(activity, DividerItemDecoration.VERTICAL_LIST));
 
         controllerComments = mListener.getControllerComments();
-        controllerComments.clear();
 
         if (adapterCommentList == null) {
-            adapterCommentList = new AdapterCommentList(activity, controllerComments, listener);
+            adapterCommentList = new AdapterCommentList(activity, controllerComments, listener, getArguments().getBoolean(ARG_IS_GRID, false ));
         }
 
         recyclerCommentList.setAdapter(adapterCommentList);

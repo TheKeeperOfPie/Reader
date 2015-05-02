@@ -1,7 +1,5 @@
 package com.winsonchiu.reader.data;
 
-import android.util.Log;
-
 /**
  * Created by TheKeeperOfPie on 3/8/2015.
  */

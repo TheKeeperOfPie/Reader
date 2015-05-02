@@ -4,6 +4,7 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:minHeight="72dp"
+    android:background="@color/darkThemeBackground"
     >
 
     <FrameLayout
@@ -73,6 +74,7 @@
 
     <TextView
         android:id="@+id/text_thread_title"
+        android:minHeight="48dp"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_below="@id/frame_full"
@@ -80,6 +82,7 @@
         android:layout_toStartOf="@+id/button_comments"
         android:layout_marginStart="@dimen/activity_horizontal_margin"
         android:paddingTop="@dimen/activity_vertical_margin"
+        android:paddingBottom="8dp"
         android:textSize="16sp"
         />
 
@@ -89,8 +92,9 @@
         android:layout_height="wrap_content"
         android:layout_below="@id/text_thread_title"
         android:layout_alignStart="@id/text_thread_title"
-        android:layout_toStartOf="@+id/button_comments"
+        android:layout_marginEnd="@dimen/activity_horizontal_margin"
         android:textSize="12sp"
+        android:visibility="gone"
         />
 
     <TextView
@@ -99,7 +103,8 @@
         android:layout_height="wrap_content"
         android:layout_below="@id/text_thread_self"
         android:layout_alignStart="@id/text_thread_self"
-        android:layout_toStartOf="@+id/button_comments"
+        android:layout_marginEnd="@dimen/activity_horizontal_margin"
+        android:layout_alignParentEnd="true"
         android:gravity="end"
         android:textSize="12sp"
         android:paddingBottom="8dp"

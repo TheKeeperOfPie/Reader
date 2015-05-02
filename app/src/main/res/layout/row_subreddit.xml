@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:minHeight="72dp"
+    android:background="@color/darkThemeBackground"
+    >
+
+    <TextView
+        android:id="@+id/text_subreddit_title"
+        android:minHeight="48dp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/activity_horizontal_margin"
+        android:textSize="16sp"
+        />
+
+    <TextView
+        android:id="@+id/text_subreddit_info"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/text_thread_self"
+        android:layout_alignStart="@id/text_thread_self"
+        android:layout_marginEnd="@dimen/activity_horizontal_margin"
+        android:layout_alignParentEnd="true"
+        android:gravity="end"
+        android:textSize="12sp"
+        android:paddingBottom="8dp"
+        android:visibility="gone"
+        />
+
+</RelativeLayout>
