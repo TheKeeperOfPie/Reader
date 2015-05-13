@@ -189,6 +189,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
         else {
 
             ViewHolderComment viewHolderComment = (ViewHolderComment) holder;
+            viewHolderComment.toolbarActions.setVisibility(View.GONE);
 
             Comment comment = controllerComments.get(position - 1);
 
@@ -470,7 +471,6 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                     setVoteColors();
                     AnimationUtils.animateExpandActions(layoutContainerActions, true);
                     AnimationUtils.animateExpandActions(toolbarActions, false);
-                    viewIndicator.invalidate();
                 }
             };
             textComment.setOnClickListener(clickListenerLink);

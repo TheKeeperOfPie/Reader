@@ -274,7 +274,10 @@ public class AdapterLinkGrid extends AdapterLink implements ControllerLinks.List
                                 catch (IllegalArgumentException e) {
                                     e.printStackTrace();
                                 }
-                                DataUtils.setNewImageBitmap(imagePreview, response.getBitmap());
+//                                DataUtils.setNewImageBitmap(imagePreview, response.getBitmap());
+                                CustomApplication.getRefWatcher(callback.getActivity()).watch(response.getBitmap());
+                                imageUrl = link.getThumbnail();
+                                imagePreview.setImageBitmap(response.getBitmap());
                                 if (Reddit.placeImageUrl(
                                         link) && position == getAdapterPosition()) {
                                     imageContainer = callback.getController()
@@ -288,8 +291,14 @@ public class AdapterLinkGrid extends AdapterLink implements ControllerLinks.List
                                                             if (response.getBitmap() != null && position == getAdapterPosition()) {
                                                                 imagePreview.setAlpha(
                                                                         0.0f);
-                                                                DataUtils.setNewImageBitmap(imagePreview,
-                                                                        ThumbnailUtils.extractThumbnail(
+//                                                                DataUtils.setNewImageBitmap(imagePreview,
+//                                                                        ThumbnailUtils.extractThumbnail(
+//                                                                                response.getBitmap(),
+//                                                                                thumbnailWidth,
+//                                                                                thumbnailWidth));
+                                                                CustomApplication.getRefWatcher(callback.getActivity()).watch(response.getBitmap());
+                                                                imageUrl = link.getUrl();
+                                                                imagePreview.setImageBitmap(ThumbnailUtils.extractThumbnail(
                                                                                 response.getBitmap(),
                                                                                 thumbnailWidth,
                                                                                 thumbnailWidth));
@@ -311,7 +320,10 @@ public class AdapterLinkGrid extends AdapterLink implements ControllerLinks.List
                                 }
                                 else {
                                     imagePreview.setAlpha(0.0f);
-                                    DataUtils.setNewImageBitmap(imagePreview, response.getBitmap());
+//                                    DataUtils.setNewImageBitmap(imagePreview, response.getBitmap());
+                                    CustomApplication.getRefWatcher(callback.getActivity()).watch(response.getBitmap());
+                                    imageUrl = link.getThumbnail();
+                                    imagePreview.setImageBitmap(response.getBitmap());
                                     AnimationUtils.animateAlpha(imagePreview, 0.0f, 1.0f);
                                     imagePlay.setVisibility(View.VISIBLE);
                                     progressImage.setVisibility(View.GONE);
@@ -340,7 +352,9 @@ public class AdapterLinkGrid extends AdapterLink implements ControllerLinks.List
                                     return;
                                 }
                                 if (position == getAdapterPosition()) {
+                                    imageUrl = link.getThumbnail();
                                     imagePreview.setImageBitmap(response.getBitmap());
+                                    CustomApplication.getRefWatcher(callback.getActivity()).watch(response.getBitmap());
                                 }
                             }
 

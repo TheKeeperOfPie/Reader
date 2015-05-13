@@ -4,6 +4,8 @@ import android.app.Activity;
 import android.content.Intent;
 import android.content.res.Resources;
 import android.graphics.PorterDuff;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.support.v4.view.MenuItemCompat;
@@ -97,6 +99,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         protected ControllerLinks.ListenerCallback callback;
         protected ImageLoader.ImageContainer imageContainer;
         protected Request request;
+        protected String imageUrl;
 
         public ViewHolderBase(final View itemView, ControllerLinks.ListenerCallback listenerCallback) {
             super(itemView);
@@ -498,7 +501,6 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
 
             webFull.onPause();
             webFull.resetMaxHeight();
-            webFull.loadUrl("about:blank");
             webFull.setVisibility(View.GONE);
             videoFull.stopPlayback();
             videoFull.setVisibility(View.GONE);
@@ -506,10 +508,20 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             imagePreview.setVisibility(View.VISIBLE);
             progressImage.setVisibility(View.GONE);
             textThreadSelf.setVisibility(View.GONE);
+
+            if (!TextUtils.isEmpty(imageUrl) && !callback.getController().getReddit().getImageLoader().isCached(imageUrl, 0, 0)) {
+                Drawable drawable = imagePreview.getDrawable();
+                if (drawable instanceof BitmapDrawable && ((BitmapDrawable) drawable).getBitmap() != null) {
+                    ((BitmapDrawable) drawable).getBitmap().recycle();
+                }
+                imageUrl = null;
+            }
+            imagePreview.setImageBitmap(null);
+
         }
 
         public void onBind(int position) {
-            imagePreview.setImageBitmap(null);
+
         }
     }
 

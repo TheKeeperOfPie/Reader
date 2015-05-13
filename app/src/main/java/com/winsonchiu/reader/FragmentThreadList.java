@@ -109,6 +109,7 @@ public class FragmentThreadList extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
         if (getArguments() != null) {
             mParam1 = getArguments().getString(ARG_PARAM1);
             mParam2 = getArguments().getString(ARG_PARAM2);
@@ -306,6 +307,11 @@ public class FragmentThreadList extends Fragment {
             @Override
             public void onClickComments(final Link link, final RecyclerView.ViewHolder viewHolder) {
                 mListener.getControllerComments().setLink(link);
+
+                if (viewHolder instanceof AdapterLinkGrid.ViewHolder) {
+                    ((StaggeredGridLayoutManager.LayoutParams) viewHolder.itemView.getLayoutParams()).setFullSpan(
+                            true);
+                }
 
                 final float viewStartY = viewHolder.itemView.getY();
                 final float viewStartPaddingBottom = viewHolder.itemView.getPaddingBottom();
@@ -509,6 +515,12 @@ public class FragmentThreadList extends Fragment {
     public void onStop() {
         mListener.getControllerLinks().removeListener(linkClickListener);
         super.onStop();
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        CustomApplication.getRefWatcher(getActivity()).watch(this);
     }
 
     /**

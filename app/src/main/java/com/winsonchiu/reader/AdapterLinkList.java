@@ -109,8 +109,6 @@ public class AdapterLinkList extends AdapterLink implements ControllerLinks.List
 
     protected static class ViewHolder extends AdapterLink.ViewHolderBase {
 
-        protected String currentThumbnailLink;
-
         public ViewHolder(View itemView, final ControllerLinks.ListenerCallback callback) {
             super(itemView, callback);
 
@@ -170,7 +168,7 @@ public class AdapterLinkList extends AdapterLink implements ControllerLinks.List
                                     public void onResponse(ImageLoader.ImageContainer response,
                                                            boolean isImmediate) {
                                         if (response.getBitmap() != null) {
-                                            currentThumbnailLink = link.getThumbnail();
+                                            imageUrl = link.getThumbnail();
                                             if (isImmediate) {
                                                 imagePreview.setImageBitmap(response.getBitmap());
                                             }

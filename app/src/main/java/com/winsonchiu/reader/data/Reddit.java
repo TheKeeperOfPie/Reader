@@ -101,10 +101,12 @@ public class Reddit {
     private RequestQueue requestQueue;
     private ImageLoader imageLoader;
     private SharedPreferences preferences;
+    private LruCacheBitmap lruCacheBitmap;
 
     private Reddit(Context context) {
         requestQueue = Volley.newRequestQueue(context.getApplicationContext());
-        imageLoader = new ImageLoader(requestQueue, new LruCacheBitmap(context.getApplicationContext()));
+        lruCacheBitmap = new LruCacheBitmap(context.getApplicationContext());
+        imageLoader = new ImageLoader(requestQueue, lruCacheBitmap);
         preferences = PreferenceManager.getDefaultSharedPreferences(context.getApplicationContext());
     }
 
@@ -113,6 +115,10 @@ public class Reddit {
             reddit = new Reddit(context);
         }
         return reddit;
+    }
+
+    public LruCacheBitmap getCache() {
+        return lruCacheBitmap;
     }
 
     public ImageLoader getImageLoader() {

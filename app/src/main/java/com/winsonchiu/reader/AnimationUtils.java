@@ -71,7 +71,7 @@ public class AnimationUtils {
                 viewGroup.getContext()
                         .getResources()
                         .getDisplayMetrics());
-        if (viewGroup.getVisibility() == View.VISIBLE) {
+        if (viewGroup.isShown()) {
             animation = new Animation() {
                 @Override
                 protected void applyTransformation(float interpolatedTime, Transformation t) {

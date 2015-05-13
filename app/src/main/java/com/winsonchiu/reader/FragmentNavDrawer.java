@@ -312,6 +312,12 @@ public class FragmentNavDrawer extends Fragment {
         return ((ActionBarActivity) getActivity()).getSupportActionBar();
     }
 
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        CustomApplication.getRefWatcher(getActivity()).watch(this);
+    }
+
     /**
      * Callbacks interface that all activities using this fragment must implement.
      */

@@ -7,6 +7,8 @@ import android.util.LruCache;
 
 import com.android.volley.toolbox.ImageLoader;
 
+import java.lang.ref.WeakReference;
+
 /**
  * Created by TheKeeperOfPie on 3/16/2015.
  */
@@ -27,7 +29,7 @@ public class LruCacheBitmap extends LruCache<String, Bitmap> implements ImageLoa
 
     @Override
     protected int sizeOf(String key, Bitmap value) {
-        return value.getRowBytes() * value.getHeight();
+        return value.getByteCount();
     }
 
     @Override
