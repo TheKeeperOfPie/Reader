@@ -126,6 +126,8 @@ public class FragmentThreadList extends Fragment {
         SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(
                 activity.getApplicationContext());
 
+        menu.findItem(R.id.item_sort_hot).setChecked(true);
+
         itemInterface = menu.findItem(R.id.item_interface);
         switch (preferences.getString(AppSettings.INTERFACE_MODE, AppSettings.MODE_LIST)) {
             case AppSettings.MODE_LIST:
@@ -161,7 +163,8 @@ public class FragmentThreadList extends Fragment {
             public boolean onSuggestionClick(int position) {
                 Cursor cursor = (Cursor) cursorAdapter.getItem(position);
                 String subreddit = cursor.getString(cursor.getColumnIndex("subreddit"));
-                mListener.getControllerLinks().setParameters(subreddit, "hot");
+//                mListener.getControllerLinks().setParameters(subreddit, "hot");
+                searchView.setQuery(subreddit, true);
                 return false;
             }
         });
@@ -184,7 +187,7 @@ public class FragmentThreadList extends Fragment {
                 Log.d(TAG, "Query entered");
                 mListener.getControllerLinks().setParameters(query, "hot");
                 itemSearch.collapseActionView();
-                return true;
+                return false;
             }
 
             @Override
@@ -228,7 +231,7 @@ public class FragmentThreadList extends Fragment {
         SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(
                 activity.getApplicationContext());
 
-
+        item.setChecked(true);
         switch (item.getItemId()) {
             case R.id.item_sort_hot:
                 mListener.getControllerLinks().setSort("hot");
@@ -430,6 +433,14 @@ public class FragmentThreadList extends Fragment {
             }
         });
 
+        swipeRefreshThreadList.post(new Runnable() {
+            @Override
+            public void run() {
+                swipeRefreshThreadList.setRefreshing(true);
+                mListener.getControllerLinks().reloadAllLinks();
+            }
+        });
+
         if (adapterLink == null) {
             if (AppSettings.MODE_LIST.equals(
                     PreferenceManager.getDefaultSharedPreferences(activity.getApplicationContext())
@@ -479,6 +490,7 @@ public class FragmentThreadList extends Fragment {
         recyclerThreadList.setAdapter(adapterLink);
         recyclerThreadList.setHasFixedSize(true);
 
+        mListener.getControllerLinks().addListener(linkClickListener);
         return view;
     }
 
@@ -508,7 +520,12 @@ public class FragmentThreadList extends Fragment {
     public void onStart() {
         super.onStart();
         mListener.getControllerLinks().addListener(linkClickListener);
-        mListener.getControllerLinks().reloadAllLinks();
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        swipeRefreshThreadList.setRefreshing(mListener.getControllerLinks().isLoading());
     }
 
     @Override

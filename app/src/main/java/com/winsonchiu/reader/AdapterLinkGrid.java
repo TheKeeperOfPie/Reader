@@ -17,6 +17,7 @@ import android.widget.ImageView;
 
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.ImageLoader;
+import com.squareup.picasso.Picasso;
 import com.winsonchiu.reader.data.Link;
 import com.winsonchiu.reader.data.Reddit;
 
@@ -229,6 +230,7 @@ public class AdapterLinkGrid extends AdapterLink implements ControllerLinks.List
                         false);
             }
 
+            setTextInfo();
             toolbarActions.setVisibility(View.GONE);
             itemView.setBackgroundColor(defaultColor);
 
@@ -365,7 +367,7 @@ public class AdapterLinkGrid extends AdapterLink implements ControllerLinks.List
                         });
             }
 
-            textThreadTitle.setText(link.getTitle());
+            textThreadTitle.setText(link.getTitle().trim());
         }
     }
 

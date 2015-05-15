@@ -64,20 +64,32 @@
             android:indeterminate="true"
             />
 
+
+        <com.winsonchiu.reader.ImageViewSquare
+            android:id="@+id/image_thumbnail"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_gravity="start|bottom"
+            android:layout_marginTop="@dimen/activity_horizontal_margin"
+            android:layout_marginStart="@dimen/activity_horizontal_margin"
+            android:layout_marginEnd="@dimen/activity_horizontal_margin"
+            android:scaleType="centerCrop"
+            android:contentDescription="@string/content_description_thread_preview"
+            android:visibility="gone"
+            />
+
     </FrameLayout>
 
-    <com.winsonchiu.reader.ImageViewSquare
-        android:id="@+id/image_thumbnail"
-        android:layout_width="40dp"
-        android:layout_height="40dp"
-        android:layout_below="@id/frame_full"
-        android:layout_alignParentStart="true"
-        android:layout_marginTop="@dimen/activity_horizontal_margin"
-        android:layout_marginStart="@dimen/activity_horizontal_margin"
-        android:layout_marginEnd="@dimen/activity_horizontal_margin"
-        android:scaleType="centerCrop"
-        android:contentDescription="@string/content_description_thread_preview"
-        android:visibility="gone"
+    <ImageButton
+        android:id="@+id/button_comments"
+        android:layout_width="56dp"
+        android:layout_height="56dp"
+        android:layout_alignEnd="@id/frame_full"
+        android:layout_alignBottom="@id/frame_full"
+        android:contentDescription="@string/content_description_button_comments"
+        android:background="@android:color/transparent"
+        android:src="@drawable/ic_mode_comment_white_24dp"
+        android:padding="@dimen/activity_horizontal_margin"
         />
 
     <TextView
@@ -85,9 +97,9 @@
         android:minHeight="68dp"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_below="@id/image_thumbnail"
-        android:layout_toStartOf="@+id/button_comments"
+        android:layout_below="@id/frame_full"
         android:layout_marginStart="@dimen/activity_horizontal_margin"
+        android:layout_marginEnd="@dimen/activity_horizontal_margin"
         android:paddingTop="@dimen/activity_vertical_margin"
         android:paddingBottom="8dp"
         android:textSize="14sp"
@@ -99,7 +111,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_below="@id/text_thread_title"
-        android:layout_alignStart="@id/text_thread_title"
+        android:layout_marginStart="@dimen/activity_horizontal_margin"
         android:layout_marginEnd="@dimen/activity_horizontal_margin"
         android:textSize="12sp"
         />
@@ -109,25 +121,13 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_below="@id/text_thread_self"
-        android:padding="@dimen/activity_horizontal_margin"
-        android:paddingBottom="8dp"
+        android:layout_alignParentEnd="true"
+        android:layout_marginEnd="@dimen/activity_horizontal_margin"
+        android:layout_marginBottom="@dimen/activity_vertical_margin"
         android:gravity="end"
         android:textSize="12sp"
         android:shadowColor="@android:color/black"
         android:shadowRadius="3"
-        android:visibility="gone"
-        />
-
-    <ImageButton
-        android:id="@+id/button_comments"
-        android:layout_width="56dp"
-        android:layout_height="56dp"
-        android:layout_below="@id/frame_full"
-        android:layout_alignParentEnd="true"
-        android:contentDescription="@string/content_description_button_comments"
-        android:background="@android:color/transparent"
-        android:src="@drawable/ic_mode_comment_white_24dp"
-        android:padding="@dimen/activity_horizontal_margin"
         />
 
     <android.support.v7.widget.Toolbar

@@ -9,6 +9,7 @@ import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Toast;
 
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.ImageLoader;
@@ -49,7 +50,7 @@ public class AdapterLinkList extends AdapterLink implements ControllerLinks.List
     @Override
     public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
 
-        if (controllerLinks.isLoading() && position > controllerLinks.size() - 10) {
+        if (!controllerLinks.isLoading() && position > controllerLinks.size() - 10) {
             controllerLinks.loadMoreLinks();
         }
 
@@ -190,7 +191,7 @@ public class AdapterLinkList extends AdapterLink implements ControllerLinks.List
                 imagePreview.setImageDrawable(drawable);
             }
 
-            textThreadTitle.setText(link.getTitle());
+            textThreadTitle.setText(link.getTitle().trim());
             setTextInfo();
             toolbarActions.setVisibility(View.GONE);
 

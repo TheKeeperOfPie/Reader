@@ -50,5 +50,6 @@ dependencies {
     }
     compile 'com.android.support:palette-v7:22.1.0'
     compile project(':volley')
+    compile 'com.squareup.picasso:picasso:2.5.2'
     compile 'com.squareup.leakcanary:leakcanary-android:1.3'
 }

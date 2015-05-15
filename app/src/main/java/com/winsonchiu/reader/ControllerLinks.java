@@ -25,7 +25,9 @@ import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Created by TheKeeperOfPie on 3/14/2015.
@@ -44,13 +46,13 @@ public class ControllerLinks implements Controller {
     private Drawable drawableSelf;
     private Drawable drawableDefault;
     private Reddit reddit;
-    private List<LinkClickListener> listeners;
+    private Set<LinkClickListener> listeners;
     private SharedPreferences preferences;
 
     public ControllerLinks(Activity activity, String subredditName, String sort) {
         setActivity(activity);
         this.reddit = Reddit.getInstance(activity);
-        this.listeners = new ArrayList<>();
+        this.listeners = new HashSet<>();
         listingLinks = new Listing();
         Resources resources = activity.getResources();
         this.drawableSelf = resources.getDrawable(R.drawable.ic_chat_white_48dp);
@@ -235,7 +237,7 @@ public class ControllerLinks implements Controller {
                 }, new ErrorListener() {
                     @Override
                     public void onErrorResponse(VolleyError error) {
-
+                        Toast.makeText(activity, "Error loading links", Toast.LENGTH_SHORT).show();
                     }
                 }, 0);
     }
