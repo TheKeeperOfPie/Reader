@@ -39,7 +39,7 @@
     </FrameLayout>
 
     <ImageView
-        android:id="@+id/image_preview"
+        android:id="@+id/image_thumbnail"
         android:layout_width="40dp"
         android:layout_height="40dp"
         android:layout_below="@id/frame_full"
@@ -53,8 +53,8 @@
         android:id="@+id/image_play"
         android:layout_width="40dp"
         android:layout_height="40dp"
-        android:layout_alignTop="@id/image_preview"
-        android:layout_alignStart="@id/image_preview"
+        android:layout_alignTop="@id/image_thumbnail"
+        android:layout_alignStart="@id/image_thumbnail"
         android:scaleType="centerInside"
         android:src="@drawable/ic_play_circle_outline_white_48dp"
         android:visibility="gone"
@@ -65,8 +65,8 @@
         android:id="@+id/progress_image"
         android:layout_width="40dp"
         android:layout_height="40dp"
-        android:layout_alignTop="@id/image_preview"
-        android:layout_alignStart="@id/image_preview"
+        android:layout_alignTop="@id/image_thumbnail"
+        android:layout_alignStart="@id/image_thumbnail"
         android:max="1000"
         android:visibility="gone"
         android:indeterminate="false"
@@ -78,12 +78,12 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_below="@id/frame_full"
-        android:layout_toEndOf="@+id/image_preview"
+        android:layout_toEndOf="@+id/image_thumbnail"
         android:layout_toStartOf="@+id/button_comments"
         android:layout_marginStart="@dimen/activity_horizontal_margin"
         android:paddingTop="@dimen/activity_vertical_margin"
         android:paddingBottom="8dp"
-        android:textSize="16sp"
+        android:textSize="14sp"
         />
 
     <TextView

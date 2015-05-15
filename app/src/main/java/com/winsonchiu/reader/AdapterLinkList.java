@@ -4,15 +4,12 @@ import android.app.Activity;
 import android.graphics.drawable.Drawable;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.text.Html;
-import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
 import com.squareup.picasso.Picasso;
 import com.winsonchiu.reader.data.Link;
-import com.winsonchiu.reader.data.Reddit;
 
 /**
  * Created by TheKeeperOfPie on 3/7/2015.
@@ -110,45 +107,6 @@ public class AdapterLinkList extends AdapterLink implements ControllerLinks.List
 
         public ViewHolder(View itemView, final ControllerLinks.ListenerCallback callback) {
             super(itemView, callback);
-
-            this.imagePreview.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    Link link = callback.getController().getLink(getAdapterPosition());
-
-                    // TODO: Abstract to remove code duplication
-                    if (link.isSelf()) {
-                        if (textThreadSelf.isShown()) {
-                            textThreadSelf.setVisibility(View.GONE);
-                            return;
-                        }
-                        if (TextUtils.isEmpty(link.getSelfText())) {
-                            callback.getListener().onClickComments(link, ViewHolder.this);
-                        }
-                        else {
-                            if (textThreadSelf.isShown()) {
-                                textThreadSelf.setVisibility(View.GONE);
-                            }
-                            else {
-                                String html = link.getSelfTextHtml();
-                                html = Html.fromHtml(html.trim())
-                                        .toString();
-                                textThreadSelf.setVisibility(View.VISIBLE);
-                                textThreadSelf.setText(Reddit.formatHtml(html,
-                                        new Reddit.UrlClickListener() {
-                                            @Override
-                                            public void onUrlClick(String url) {
-                                                callback.getListener().loadUrl(url);
-                                            }
-                                        }));
-                            }
-                        }
-                    }
-                    else {
-                        loadFull(link);
-                    }
-                }
-            });
         }
 
         @Override
@@ -163,10 +121,10 @@ public class AdapterLinkList extends AdapterLink implements ControllerLinks.List
             if (drawable == null) {
                 Picasso.with(callback.getActivity())
                         .load(link.getThumbnail())
-                        .into(imagePreview);
+                        .into(imageThumbnail);
             }
             else {
-                imagePreview.setImageDrawable(drawable);
+                imageThumbnail.setImageDrawable(drawable);
             }
 
             textThreadTitle.setText(link.getTitle().trim());

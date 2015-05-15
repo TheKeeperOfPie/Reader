@@ -28,8 +28,10 @@ import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Created by TheKeeperOfPie on 3/20/2015.
@@ -41,7 +43,7 @@ public class ControllerComments implements Controller {
 
     private Activity activity;
     private SharedPreferences preferences;
-    private List<CommentClickListener> listeners;
+    private Set<CommentClickListener> listeners;
     private Link link;
     private Listing listingComments;
     private String subreddit;
@@ -54,7 +56,7 @@ public class ControllerComments implements Controller {
     public ControllerComments(Activity activity, String subreddit, String linkId) {
         setActivity(activity);
         this.reddit = Reddit.getInstance(activity);
-        this.listeners = new ArrayList<>();
+        this.listeners = new HashSet<>();
         this.indentWidth = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 8, activity.getResources().getDisplayMetrics());
         this.subreddit = subreddit;
         this.linkId = linkId;
@@ -114,6 +116,7 @@ public class ControllerComments implements Controller {
                             setLink(Link.fromJson(new JSONArray(response)));
                             for (CommentClickListener listener : listeners) {
                                 listener.setRefreshing(false);
+                                listener.getAdapter().notifyDataSetChanged();
                             }
                         }
                         catch (JSONException e1) {
@@ -153,7 +156,6 @@ public class ControllerComments implements Controller {
 
         String children = "";
         List<String> childrenList = moreComment.getChildren();
-        Log.d(TAG, "childrenList: " + childrenList.toString());
         if (childrenList.isEmpty()) {
             int commentIndex = listingComments.getChildren().indexOf(moreComment);
             if (commentIndex >= 0) {
@@ -173,8 +175,6 @@ public class ControllerComments implements Controller {
         params.put("link_id", link.getName());
         params.put("children", children.substring(0, children.length() - 1));
         params.put("api_type", "json");
-
-        Log.d(TAG, "params: " + params.toString());
 
         reddit.loadPost(url,
                 new Listener<String>() {
@@ -287,11 +287,17 @@ public class ControllerComments implements Controller {
         }
     }
 
-    public void toggleComment(int position) {
+    /**
+     * Toggles children of comment
+     *
+     * @param position
+     * @return true if comment is now expanded, false if collapsed
+     */
+    public boolean toggleComment(int position) {
 
         if (position == listingComments.getChildren().size() - 1) {
             expandComment(position);
-            return;
+            return true;
         }
 
         List<Thing> commentList = listingComments.getChildren();
@@ -300,15 +306,18 @@ public class ControllerComments implements Controller {
 
         if (comment.getLevel() == nextComment.getLevel()) {
             expandComment(position);
+            return true;
         }
         else if (comment.getLevel() < nextComment.getLevel()){
             collapseComment(position);
+            return false;
         }
+
+        throw new IllegalStateException("Comment level invalid");
 
     }
 
     private void expandComment(int position) {
-        Log.d(TAG, "expandComment: " + position);
         List<Thing> commentList = link.getComments().getChildren();
         int index = commentList.indexOf(listingComments.getChildren().get(position));
         if (index < 0) {
@@ -470,29 +479,39 @@ public class ControllerComments implements Controller {
 
     public int getItemCount() {
 
-        if (link == null) {
-            Log.d(TAG, "link null");
-        }
-        else {
-            Log.d(TAG, "link ID: " + link.getId());
-        }
-
         if (link == null || TextUtils.isEmpty(link.getId())) {
-            Log.d(TAG, "return 0");
             return 0;
         }
         if (listingComments == null || listingComments.getChildren().isEmpty()) {
-            Log.d(TAG, "return 1");
             return 1;
         }
 
-        Log.d(TAG, "return normal");
         return listingComments.getChildren().size() + 1;
     }
 
 
     public Comment get(int position) {
         return (Comment) listingComments.getChildren().get(position);
+    }
+
+    public boolean isCommentExpanded(int position) {
+
+        if (position == listingComments.getChildren().size() - 1) {
+            return false;
+        }
+
+        List<Thing> commentList = listingComments.getChildren();
+        Comment comment = (Comment) commentList.get(position);
+        Comment nextComment = (Comment) commentList.get(position + 1);
+
+        if (comment.getLevel() == nextComment.getLevel()) {
+            return false;
+        }
+        else if (comment.getLevel() < nextComment.getLevel()){
+            return true;
+        }
+
+        throw new IllegalStateException("Comment level invalid");
     }
 
     public interface CommentClickListener extends DisallowListener {

@@ -116,6 +116,14 @@ public class FragmentComments extends Fragment {
                 controllerComments.reloadAllComments();
             }
         });
+        swipeRefreshCommentList.post(new Runnable() {
+            @Override
+            public void run() {
+                swipeRefreshCommentList.setRefreshing(true);
+                controllerComments.setLinkId(subreddit, linkId);
+//                listener.getAdapter().notifyDataSetChanged();
+            }
+        });
 
         linearLayoutManager = new LinearLayoutManager(activity);
         recyclerCommentList = (RecyclerView) view.findViewById(R.id.recycler_comment_list);
@@ -129,10 +137,11 @@ public class FragmentComments extends Fragment {
         controllerComments = mListener.getControllerComments();
 
         if (adapterCommentList == null) {
-            adapterCommentList = new AdapterCommentList(activity, controllerComments, listener, getArguments().getBoolean(ARG_IS_GRID, false ));
+            adapterCommentList = new AdapterCommentList(activity, controllerComments, listener, getArguments().getBoolean(ARG_IS_GRID, false));
         }
 
         recyclerCommentList.setAdapter(adapterCommentList);
+        controllerComments.addListener(listener);
 
         return view;
     }
@@ -146,8 +155,6 @@ public class FragmentComments extends Fragment {
     public void onStart() {
         super.onStart();
         controllerComments.addListener(listener);
-        controllerComments.setLinkId(subreddit, linkId);
-        listener.getAdapter().notifyDataSetChanged();
     }
 
     @Override

@@ -7,7 +7,7 @@
     <item
         android:id="@+id/item_collapse"
         android:title="@string/item_collapse"
-        android:icon="@drawable/ic_arrow_drop_up_white_24dp"
+        android:icon="@drawable/ic_arrow_drop_down_white_24dp"
         android:orderInCategory="100"
         app:showAsAction="always"
         />

@@ -13,6 +13,11 @@ public class CustomShareActionProvider extends ShareActionProvider {
         super(context);
     }
 
+
+    /*
+        Return null to force menu item to use assign icon.
+        Looks prettier.
+     */
     @Override
     public View onCreateActionView() {
         return null;

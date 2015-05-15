@@ -37,4 +37,12 @@
         app:showAsAction="ifRoom"
         />
 
+    <item
+        android:id="@+id/item_download"
+        android:title="@string/item_download"
+        android:icon="@drawable/ic_file_download_white_24dp"
+        android:orderInCategory="500"
+        app:showAsAction="ifRoom"
+        />
+
 </menu>

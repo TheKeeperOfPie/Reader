@@ -254,6 +254,18 @@ public class FragmentNavDrawer extends Fragment {
         });
 
         mDrawerLayout.setDrawerListener(mDrawerToggle);
+
+        toolbar.setNavigationOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mCallbacks.onNavigationClick();
+            }
+        });
+
+    }
+
+    public void setNavigationAnimation(float value) {
+        mDrawerToggle.onDrawerSlide(mDrawerLayout, value);
     }
 
     private void selectItem(int position) {
@@ -263,6 +275,15 @@ public class FragmentNavDrawer extends Fragment {
         }
         if (mCallbacks != null) {
             mCallbacks.onNavigationDrawerItemSelected(position, false);
+        }
+    }
+
+    public void setDrawer(boolean open) {
+        if (open) {
+            mDrawerLayout.openDrawer(GravityCompat.START);
+        }
+        else {
+            mDrawerLayout.closeDrawer(GravityCompat.START);
         }
     }
 
@@ -326,5 +347,6 @@ public class FragmentNavDrawer extends Fragment {
          * Called when an item in the navigation drawer is selected.
          */
         void onNavigationDrawerItemSelected(int position, boolean force);
+        void onNavigationClick();
     }
 }

@@ -11,20 +11,16 @@ import android.support.v7.widget.Toolbar;
 import android.text.Html;
 import android.text.Spannable;
 import android.text.SpannableString;
-import android.text.SpannableStringBuilder;
 import android.text.Spanned;
 import android.text.TextUtils;
 import android.text.method.LinkMovementMethod;
-import android.text.style.ClickableSpan;
 import android.text.style.ForegroundColorSpan;
-import android.text.style.URLSpan;
 import android.text.util.Linkify;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.ViewTreeObserver;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
@@ -42,6 +38,7 @@ import com.winsonchiu.reader.data.User;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -67,6 +64,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
     private Activity activity;
     private ControllerComments controllerComments;
     private ControllerLinks.LinkClickListener linkClickListener;
+    private int colorAccent;
     private int colorPrimary;
     private int colorPositive;
     private int colorNegative;
@@ -77,13 +75,13 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
     private boolean isInitialized;
 
     public AdapterCommentList(Activity activity, ControllerComments controllerComments, final ControllerComments.CommentClickListener listener, boolean isGrid) {
-        // TODO: Add setActivity
         this.isGrid = isGrid;
         this.activity = activity;
         this.controllerComments = controllerComments;
         this.listener = listener;
         this.preferences = PreferenceManager.getDefaultSharedPreferences(activity);
         Resources resources = activity.getResources();
+        this.colorAccent = resources.getColor(R.color.colorAccent);
         this.colorPrimary = resources.getColor(R.color.colorPrimary);
         this.colorPositive = resources.getColor(R.color.positiveScore);
         this.colorNegative = resources.getColor(R.color.negativeScore);
@@ -176,7 +174,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
             ((AdapterLinkList.ViewHolder) holder).onBind(position);
             if (!isInitialized) {
                 if (controllerComments.getLink(0).isSelf()) {
-                    ((AdapterLinkList.ViewHolder) holder).imagePreview.callOnClick();
+                    ((AdapterLinkList.ViewHolder) holder).imageThumbnail.callOnClick();
                 }
                 isInitialized = true;
             }
@@ -185,7 +183,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
             ((AdapterLinkGrid.ViewHolder) holder).onBind(position);
             if (!isInitialized) {
                 if (controllerComments.getLink(0).isSelf()) {
-                    ((AdapterLinkGrid.ViewHolder) holder).imagePreview.callOnClick();
+                    ((AdapterLinkGrid.ViewHolder) holder).imageThumbnail.callOnClick();
                 }
                 isInitialized = true;
             }
@@ -238,14 +236,17 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                 Linkify.addLinks(viewHolderComment.textComment, Linkify.ALL);
 
                 Spannable spannableInfo = new SpannableString(
-                        comment.getScore() + " by " + comment.getAuthor());
+                        comment.getScore() + " by " + comment.getAuthor() + " on " + new Date(comment.getCreatedUtc()).toString());
                 spannableInfo.setSpan(new ForegroundColorSpan(
                                 comment.getScore() > 0 ? colorPositive : colorNegative), 0,
                         String.valueOf(comment.getScore())
                                 .length(), Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
-                if (controllerComments.getLink(0).getAuthor().equals(comment.getAuthor())) {
-                    spannableInfo.setSpan(new ForegroundColorSpan(colorPrimary), spannableInfo.length() - comment.getAuthor().length(), spannableInfo.length(), Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
-                }
+
+                int colorAuthor = controllerComments.getLink(0).getAuthor().equals(comment.getAuthor()) ? colorAccent : colorPrimary;
+
+                int indexFirst = String.valueOf(comment.getScore()).length() + 4;
+                spannableInfo.setSpan(new ForegroundColorSpan(colorAuthor), indexFirst, indexFirst + comment.getAuthor().length(), Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
+
                 viewHolderComment.textInfo.setText(spannableInfo);
             }
         }
@@ -351,12 +352,12 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                                             public void onResponse(String response) {
                                                 try {
                                                     JSONObject jsonObject = new JSONObject(response);
-                                                    Comment comment = Comment.fromJson(
+                                                    Comment newComment = Comment.fromJson(
                                                             jsonObject.getJSONObject("json")
                                                                     .getJSONObject("data")
                                                                     .getJSONArray("things")
                                                                     .getJSONObject(0), parentLevel + 1);
-                                                    controllerComments.insertComment(commentIndex, comment);
+                                                    controllerComments.insertComment(commentIndex, newComment);
                                                 }
                                                 catch (JSONException e) {
                                                     e.printStackTrace();
@@ -383,7 +384,12 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                     final int commentIndex = getAdapterPosition() - 1;
                     switch (menuItem.getItemId()) {
                         case R.id.item_collapse:
-                            controllerComments.toggleComment(commentIndex);
+                            if (controllerComments.toggleComment(commentIndex)) {
+                                menuItem.setIcon(R.drawable.ic_arrow_drop_up_white_24dp);
+                            }
+                            else {
+                                menuItem.setIcon(R.drawable.ic_arrow_drop_down_white_24dp);
+                            }
                             break;
                         case R.id.item_upvote:
                             controllerComments.voteComment(ViewHolderComment.this, 1);
@@ -427,13 +433,6 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                     return true;
                 }
             });
-            toolbarActions.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
-                @Override
-                public void onGlobalLayout() {
-                    setToolbarMenuVisibility();
-                    toolbarActions.getViewTreeObserver().removeOnGlobalLayoutListener(this);
-                }
-            });
             itemUpvote = toolbarActions.getMenu().findItem(R.id.item_upvote);
             itemDownvote = toolbarActions.getMenu().findItem(R.id.item_downvote);
 
@@ -448,6 +447,13 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
 
                     boolean isAuthor = comment.getAuthor().equals(user.getName());
 
+                    if (controllerComments.isCommentExpanded(getAdapterPosition() - 1)) {
+                        toolbarActions.getMenu().findItem(R.id.item_collapse).setIcon(R.drawable.ic_arrow_drop_up_white_24dp);
+                    }
+                    else {
+                        toolbarActions.getMenu().findItem(R.id.item_collapse).setIcon(R.drawable.ic_arrow_drop_down_white_24dp);
+                    }
+
                     toolbarActions.getMenu().findItem(R.id.item_delete).setEnabled(isAuthor);
                     toolbarActions.getMenu().findItem(R.id.item_delete).setVisible(isAuthor);
 
@@ -460,6 +466,12 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
             textInfo.setOnClickListener(clickListenerLink);
             this.itemView.setOnClickListener(clickListenerLink);
 
+            toolbarActions.post(new Runnable() {
+                @Override
+                public void run() {
+                    setToolbarMenuVisibility();
+                }
+            });
         }
 
         private void setToolbarMenuVisibility() {

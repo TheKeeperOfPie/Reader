@@ -1,6 +1,7 @@
 package com.winsonchiu.reader.data;
 
 import android.text.TextUtils;
+import android.util.Log;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -37,6 +38,8 @@ public class Comment extends Thing {
     private boolean scoreHidden;
     private String subreddit;
     private String subredditId;
+    private long created;
+    private long createdUtc;
 
     // May not be present
     private String linkAuthor;
@@ -67,6 +70,8 @@ public class Comment extends Thing {
     }
 
     public static Comment fromJson(JSONObject rootJsonObject, int level) throws JSONException {
+
+        Log.d(TAG, "Comment: " + rootJsonObject.toString());
 
         Comment comment = new Comment();
         comment.setLevel(level);
@@ -103,6 +108,8 @@ public class Comment extends Thing {
             comment.setChildren(children);
             return comment;
         }
+        comment.setCreated(jsonObject.getLong("created"));
+        comment.setCreatedUtc(jsonObject.getLong("created_utc"));
 
         comment.setApprovedBy(jsonObject.getString("approved_by"));
         comment.setAuthor(jsonObject.getString("author"));
@@ -430,5 +437,21 @@ public class Comment extends Thing {
 
     public void setReplyExpanded(boolean replyExpanded) {
         this.replyExpanded = replyExpanded;
+    }
+
+    public long getCreated() {
+        return created;
+    }
+
+    public void setCreated(long created) {
+        this.created = created;
+    }
+
+    public long getCreatedUtc() {
+        return createdUtc;
+    }
+
+    public void setCreatedUtc(long createdUtc) {
+        this.createdUtc = createdUtc;
     }
 }

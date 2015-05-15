@@ -166,6 +166,23 @@ public class MainActivity extends AppCompatActivity
         oldPosition = position;
     }
 
+    @Override
+    public void onNavigationClick() {
+        Log.d(TAG, "Back stack count: " + getFragmentManager().getBackStackEntryCount());
+        if (getFragmentManager().getBackStackEntryCount() > 0) {
+            getFragmentManager().popBackStack();
+            mNavigationDrawerFragment.setNavigationAnimation(0.0f);
+        }
+        else {
+            if (mNavigationDrawerFragment.isDrawerOpen()) {
+                mNavigationDrawerFragment.setDrawer(false);
+            }
+            else {
+                mNavigationDrawerFragment.setDrawer(true);
+            }
+        }
+    }
+
     public void restoreActionBar() {
         setToolbarTitle(mTitle);
     }
@@ -268,8 +285,8 @@ public class MainActivity extends AppCompatActivity
     }
 
     @Override
-    public void onFragmentInteraction(Uri uri) {
-
+    public void setNavigationAnimation(float value) {
+        mNavigationDrawerFragment.setNavigationAnimation(value);
     }
 
     @Override

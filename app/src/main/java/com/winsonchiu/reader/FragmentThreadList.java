@@ -118,7 +118,7 @@ public class FragmentThreadList extends Fragment {
     }
 
     @Override
-    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+    public void onCreateOptionsMenu(final Menu menu, MenuInflater inflater) {
 
         inflater.inflate(R.menu.menu_thread_list, menu);
 
@@ -162,7 +162,6 @@ public class FragmentThreadList extends Fragment {
             public boolean onSuggestionClick(int position) {
                 Cursor cursor = (Cursor) cursorAdapter.getItem(position);
                 String subreddit = cursor.getString(cursor.getColumnIndex("subreddit"));
-//                mListener.getControllerLinks().setParameters(subreddit, "hot");
                 searchView.setQuery(subreddit, true);
                 return false;
             }
@@ -184,7 +183,10 @@ public class FragmentThreadList extends Fragment {
             @Override
             public boolean onQueryTextSubmit(String query) {
                 Log.d(TAG, "Query entered");
+                // TODO: Save sort state for individual subreddits
+                // TODO: Possibly add sort indicator on menu icon
                 mListener.getControllerLinks().setParameters(query, "hot");
+                menu.findItem(R.id.item_sort_hot).setChecked(true);
                 itemSearch.collapseActionView();
                 return false;
             }

@@ -46,4 +46,5 @@
     <string name="item_web">Load in browser</string>
     <string name="item_reply">Reply</string>
     <string name="button_send">Send</string>
+    <string name="item_download">Download</string>
 </resources>

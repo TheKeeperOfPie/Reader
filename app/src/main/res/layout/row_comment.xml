@@ -33,7 +33,7 @@
         android:paddingLeft="8dp"
         android:paddingEnd="8dp"
         android:paddingRight="8dp"
-        android:textSize="14sp"
+        android:textSize="12sp"
         />
 
     <TextView
@@ -42,13 +42,13 @@
         android:layout_height="wrap_content"
         android:layout_below="@id/text_comment"
         android:layout_alignStart="@id/text_comment"
-        android:paddingTop="4dp"
+        android:paddingTop="6dp"
         android:paddingBottom="4dp"
         android:paddingLeft="8dp"
         android:paddingEnd="8dp"
         android:paddingRight="8dp"
         android:textSize="12sp"
-        android:gravity="end"
+        android:gravity="start"
         />
 
     <LinearLayout

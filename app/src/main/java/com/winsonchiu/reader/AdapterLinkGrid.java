@@ -135,15 +135,17 @@ public class AdapterLinkGrid extends AdapterLink implements ControllerLinks.List
         private final int defaultColor;
         private final int thumbnailWidth;
         protected ImageView imageThumbnail;
+        protected ImageView imageFull;
 
         public ViewHolder(View itemView, ControllerLinks.ListenerCallback listenerCallback, int defaultColor, int thumbnailWidth) {
             super(itemView, listenerCallback);
             this.defaultColor = defaultColor;
             this.thumbnailWidth = thumbnailWidth;
 
+            this.imageFull = (ImageView) itemView.findViewById(R.id.image_full);
             this.imageThumbnail = (ImageView) itemView.findViewById(R.id.image_thumbnail);
 
-            this.imagePreview.setOnClickListener(new View.OnClickListener() {
+            this.imageFull.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
 
@@ -155,7 +157,7 @@ public class AdapterLinkGrid extends AdapterLink implements ControllerLinks.List
                         ((StaggeredGridLayoutManager) callback.getLayoutManager()).invalidateSpanAssignments();
                     }
 
-                    imagePreview.setVisibility(View.GONE);
+                    imageFull.setVisibility(View.GONE);
                     progressImage.setVisibility(View.GONE);
                     imagePlay.setVisibility(View.GONE);
 
@@ -177,46 +179,6 @@ public class AdapterLinkGrid extends AdapterLink implements ControllerLinks.List
 
                 }
             });
-            this.imageThumbnail.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    Link link = callback.getController().getLink(getAdapterPosition());
-
-                    if (link.isSelf()) {
-                        if (textThreadSelf.isShown()) {
-                            textThreadSelf.setVisibility(View.GONE);
-                            return;
-                        }
-                        if (TextUtils.isEmpty(link.getSelfText())) {
-                            callback.getListener().onClickComments(link, ViewHolder.this);
-                        }
-                        else {
-                            ViewHolder viewHolder = ViewHolder.this;
-                            if (callback.getLayoutManager() instanceof StaggeredGridLayoutManager) {
-                                ((StaggeredGridLayoutManager.LayoutParams) viewHolder.itemView.getLayoutParams()).setFullSpan(
-                                        true);
-                                ((StaggeredGridLayoutManager) callback.getLayoutManager()).invalidateSpanAssignments();
-                            }
-
-                            String html = link.getSelfTextHtml();
-                            html = Html.fromHtml(html.trim())
-                                    .toString();
-                            textThreadSelf.setVisibility(View.VISIBLE);
-                            textThreadSelf.setText(Reddit.formatHtml(html,
-                                    new Reddit.UrlClickListener() {
-                                        @Override
-                                        public void onUrlClick(String url) {
-                                            callback.getListener().loadUrl(url);
-                                        }
-                                    }));
-                        }
-                    }
-                    else {
-                        loadFull(link);
-                    }
-                }
-            });
-
         }
 
         @Override
@@ -231,12 +193,13 @@ public class AdapterLinkGrid extends AdapterLink implements ControllerLinks.List
             setTextInfo();
             toolbarActions.setVisibility(View.GONE);
             itemView.setBackgroundColor(defaultColor);
+            imagePlay.setVisibility(View.GONE);
 
             final Link link = callback.getController().getLink(position);
 
             Drawable drawable = callback.getController().getDrawableForLink(link);
             if (drawable != null) {
-                imagePreview.setVisibility(View.GONE);
+                imageFull.setVisibility(View.GONE);
                 imageThumbnail.setVisibility(View.VISIBLE);
                 imageThumbnail.setImageDrawable(drawable);
             }
@@ -244,7 +207,7 @@ public class AdapterLinkGrid extends AdapterLink implements ControllerLinks.List
                 loadThumbnail(link, position);
             }
             else {
-                imagePreview.setVisibility(View.GONE);
+                imageFull.setVisibility(View.GONE);
                 imageThumbnail.setVisibility(View.VISIBLE);
                 Picasso.with(callback.getActivity())
                         .load(link.getThumbnail())
@@ -257,17 +220,17 @@ public class AdapterLinkGrid extends AdapterLink implements ControllerLinks.List
 
         private void loadThumbnail(final Link link, final int position) {
 
-            imagePreview.setVisibility(View.VISIBLE);
+            imageFull.setVisibility(View.VISIBLE);
             imageThumbnail.setVisibility(View.GONE);
             progressImage.setVisibility(View.VISIBLE);
 
             Picasso.with(callback.getActivity())
                     .load(link.getThumbnail())
-                    .into(imagePreview,
+                    .into(imageFull,
                           new Callback() {
                               @Override
                               public void onSuccess() {
-                                  Drawable drawable = imagePreview.getDrawable();
+                                  Drawable drawable = imageFull.getDrawable();
                                   if (drawable instanceof BitmapDrawable) {
                                       CustomApplication.getRefWatcher(callback.getActivity()).watch(((BitmapDrawable) drawable).getBitmap());
                                       Palette.from(((BitmapDrawable) drawable).getBitmap())
@@ -294,7 +257,7 @@ public class AdapterLinkGrid extends AdapterLink implements ControllerLinks.List
                                               .load(link.getUrl())
                                               .resize(thumbnailWidth, thumbnailWidth)
                                               .centerCrop()
-                                              .into(imagePreview, new Callback() {
+                                              .into(imageFull, new Callback() {
                                                   @Override
                                                   public void onSuccess() {
                                                       progressImage.setVisibility(
