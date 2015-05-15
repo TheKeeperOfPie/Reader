@@ -1,20 +1,31 @@
 package com.winsonchiu.reader;
 
+import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.PatternMatcher;
 import android.preference.PreferenceManager;
+import android.provider.Browser;
 import android.support.v4.widget.DrawerLayout;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.SearchView;
 import android.support.v7.widget.Toolbar;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.webkit.URLUtil;
 import android.widget.Toast;
 
 import com.crashlytics.android.Crashlytics;
+
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.util.regex.Pattern;
 
 import io.fabric.sdk.android.Fabric;
 
@@ -58,11 +69,13 @@ public class MainActivity extends AppCompatActivity
         toolbar.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                MenuItem itemSearch = toolbar.getMenu().findItem(R.id.item_search);
+                MenuItem itemSearch = toolbar.getMenu()
+                        .findItem(R.id.item_search);
                 if (itemSearch != null) {
                     itemSearch.expandActionView();
                     SearchView searchView = ((SearchView) itemSearch.getActionView());
-                    if (searchView.getQuery().equals("Front Page")) {
+                    if (searchView.getQuery()
+                            .equals("Front Page")) {
                         searchView.setQuery("", false);
                     }
                     else {
@@ -80,6 +93,45 @@ public class MainActivity extends AppCompatActivity
                 R.id.navigation_drawer,
                 (DrawerLayout) findViewById(R.id.drawer_layout),
                 toolbar);
+
+        if (Intent.ACTION_VIEW.equals(getIntent().getAction())) {
+            Log.d(TAG, "load intent: " + getIntent().toString());
+            String urlString = getIntent().getDataString();
+            if (URLUtil.isValidUrl(urlString)) {
+                try {
+                    URL url = new URL(urlString);
+                    String path = url.getPath();
+                    Log.d(TAG, "Path: " + path);
+                    int indexFirstSlash = path.indexOf("/", 1);
+                    int indexSecondSlash = path.indexOf("/", indexFirstSlash + 1);
+                    if (indexFirstSlash < 0) {
+                        controllerLinks.setParameters("", "hot");
+                        return;
+                    }
+                    String subreddit = path.substring(indexFirstSlash + 1, indexSecondSlash > 0 ? indexSecondSlash : path.length());
+
+                    Log.d(TAG, "Subreddit: " + subreddit);
+
+                    if (url.getPath().contains("comments")) {
+                        int indexComments = path.indexOf("comments") + 8;
+                        String id = path.substring(indexComments, path.indexOf("/", indexComments) > -1 ? path.indexOf("/", indexComments) : path.length());
+                        FragmentComments fragmentComments = FragmentComments.newInstance(subreddit, id, false);
+
+                        getFragmentManager().beginTransaction().add(R.id.frame_fragment, fragmentComments, "fragmentComments").addToBackStack(null)
+                                .commit();
+                    }
+                    else {
+                        int indexSort = path.indexOf("/", subreddit.length() + 1);
+                        String sort = indexSort > -1 ? path.substring(subreddit.length() + 1, indexSort) : "hot";
+                        controllerLinks.setParameters(subreddit, "hot");
+                        Log.d(TAG, "Sort: " + sort);
+                    }
+                }
+                catch (MalformedURLException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
 
     }
 
@@ -159,9 +211,44 @@ public class MainActivity extends AppCompatActivity
             Log.d(TAG, "popBackStack");
         }
         else {
-            super.onBackPressed();
+            if (getFragmentManager().getBackStackEntryCount() <= 1) {
+                new AlertDialog.Builder(this)
+                        .setMessage("Exit Reader?")
+                        .setPositiveButton("Yes",
+                                new DialogInterface.OnClickListener() {
+                                    @Override
+                                    public void onClick(
+                                            DialogInterface dialog,
+                                            int which) {
+                                        MainActivity.super.onBackPressed();
+                                    }
+                                })
+                        .setNegativeButton("No", null)
+                        .show();
+
+            }
+            else {
+                super.onBackPressed();
+            }
         }
 
+    }
+
+    @Override
+    public void startActivity(Intent intent) {
+        if (Intent.ACTION_VIEW.equals(intent.getAction()) && TextUtils.equals(
+                getApplicationContext().getPackageName(), intent.getStringExtra(
+                        Browser.EXTRA_APPLICATION_ID))) {
+            String url = intent.getDataString();
+            if (URLUtil.isValidUrl(url)) {
+                getFragmentManager().beginTransaction().add(R.id.frame_fragment, FragmentWeb
+                        .newInstance(url, ""), FragmentWeb.TAG).addToBackStack(null)
+                        .commit();
+            }
+        }
+        else {
+            super.startActivity(intent);
+        }
     }
 
     @Override

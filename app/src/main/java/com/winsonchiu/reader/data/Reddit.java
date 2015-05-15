@@ -18,13 +18,11 @@ import com.android.volley.RequestQueue;
 import com.android.volley.Response.ErrorListener;
 import com.android.volley.Response.Listener;
 import com.android.volley.VolleyError;
-import com.android.volley.toolbox.ImageLoader;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 import com.winsonchiu.reader.ApiKeys;
 import com.winsonchiu.reader.AppSettings;
 import com.winsonchiu.reader.BuildConfig;
-import com.winsonchiu.reader.LruCacheBitmap;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -59,6 +57,7 @@ public class Reddit {
     public static final String GFYCAT_ITEM = "gfyItem";
 
     private static final String IMGUR_ALBUM_URL = "https://api.imgur.com/3/album/";
+    private static final String IMGUR_GALLERY_URL = "https://api.imgur.com/3/gallery/";
     private static final String IMGUR_IMAGE_URL = "https://api.imgur.com/3/image/";
 
     public static final String GIFV = ".gifv";
@@ -99,14 +98,10 @@ public class Reddit {
 
     private static Reddit reddit;
     private RequestQueue requestQueue;
-    private ImageLoader imageLoader;
     private SharedPreferences preferences;
-    private LruCacheBitmap lruCacheBitmap;
 
     private Reddit(Context context) {
         requestQueue = Volley.newRequestQueue(context.getApplicationContext());
-        lruCacheBitmap = new LruCacheBitmap(context.getApplicationContext());
-        imageLoader = new ImageLoader(requestQueue, lruCacheBitmap);
         preferences = PreferenceManager.getDefaultSharedPreferences(context.getApplicationContext());
     }
 
@@ -115,14 +110,6 @@ public class Reddit {
             reddit = new Reddit(context);
         }
         return reddit;
-    }
-
-    public LruCacheBitmap getCache() {
-        return lruCacheBitmap;
-    }
-
-    public ImageLoader getImageLoader() {
-        return imageLoader;
     }
 
     public boolean needsToken() {
@@ -162,12 +149,12 @@ public class Reddit {
                     JSONObject jsonObject = new JSONObject(response);
                     preferences.edit()
                             .putString(AppSettings.ACCESS_TOKEN,
-                                    jsonObject.getString(QUERY_ACCESS_TOKEN))
+                                       jsonObject.getString(QUERY_ACCESS_TOKEN))
                             .commit();
                     preferences.edit()
                             .putLong(AppSettings.EXPIRE_TIME,
-                                    System.currentTimeMillis() + jsonObject.getLong(
-                                            QUERY_EXPIRES_IN) * SEC_TO_MS)
+                                     System.currentTimeMillis() + jsonObject.getLong(
+                                             QUERY_EXPIRES_IN) * SEC_TO_MS)
                             .commit();
                 }
                 catch (JSONException e1) {
@@ -328,7 +315,30 @@ public class Reddit {
         }
 
         StringRequest getRequest = new StringRequest(Request.Method.GET, IMGUR_ALBUM_URL + id,
-                listener, errorListener) {
+                                                     listener, errorListener) {
+            @Override
+            public Map<String, String> getHeaders() throws AuthFailureError {
+                HashMap<String, String> headers = new HashMap<>(3);
+                headers.put(USER_AGENT, CUSTOM_USER_AGENT);
+                headers.put(AUTHORIZATION, ApiKeys.IMGUR_AUTHORIZATION);
+                headers.put(CONTENT_TYPE, CONTENT_TYPE_APP_JSON);
+                return headers;
+            }
+        };
+
+        return requestQueue.add(getRequest);
+
+    }
+
+    public Request<String> loadImgurGallery(String id, Listener<String> listener, final ErrorListener errorListener, final int iteration) {
+
+        if (iteration > 2) {
+            errorListener.onErrorResponse(null);
+            return null;
+        }
+
+        StringRequest getRequest = new StringRequest(Request.Method.GET, IMGUR_ALBUM_URL + id,
+                                                     listener, errorListener) {
             @Override
             public Map<String, String> getHeaders() throws AuthFailureError {
                 HashMap<String, String> headers = new HashMap<>(3);
@@ -384,7 +394,7 @@ public class Reddit {
      * Sets link's URL to proper image format if applicable
      *
      * @param link to set URL
-     * @return try if link is image file, false otherwise
+     * @return try if link is single image file, false otherwise
      */
     public static boolean placeImageUrl(Link link) {
 
@@ -399,12 +409,7 @@ public class Reddit {
                 return false;
             }
             else if (url.contains(".com/gallery")) {
-                int startIndex = url.indexOf("imgur.com/gallery/") + 18;
-                int slashIndex = url.substring(startIndex)
-                        .indexOf("/") + startIndex;
-                int lastIndex = slashIndex > startIndex ? slashIndex : url.length();
-                String imgurId = url.substring(startIndex, lastIndex);
-                url = "https://imgur.com/" + imgurId + Reddit.JPG;
+                return false;
             }
             else if (url.contains(".com/a/")) {
                 return false;

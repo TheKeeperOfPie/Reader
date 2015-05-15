@@ -1,7 +1,5 @@
 package com.winsonchiu.reader;
 
-import android.animation.ObjectAnimator;
-import android.animation.ValueAnimator;
 import android.app.Activity;
 import android.app.Fragment;
 import android.graphics.Bitmap;

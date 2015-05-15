@@ -16,7 +16,6 @@ import android.widget.Toast;
 import com.android.volley.Response.ErrorListener;
 import com.android.volley.Response.Listener;
 import com.android.volley.VolleyError;
-import com.android.volley.toolbox.ImageLoader;
 import com.winsonchiu.reader.data.Comment;
 import com.winsonchiu.reader.data.Link;
 import com.winsonchiu.reader.data.Listing;
@@ -456,10 +455,6 @@ public class ControllerComments implements Controller {
 
     public Reddit getReddit() {
         return reddit;
-    }
-
-    public ImageLoader.ImageContainer loadImage(String url, ImageLoader.ImageListener imageListener) {
-        return reddit.getImageLoader().get(url, imageListener);
     }
 
     public void animateAlpha(View view, float start, float end) {

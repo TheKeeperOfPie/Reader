@@ -18,7 +18,7 @@ import android.text.method.LinkMovementMethod;
 import android.text.style.ClickableSpan;
 import android.text.style.ForegroundColorSpan;
 import android.text.style.URLSpan;
-import android.util.Log;
+import android.text.util.Linkify;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
@@ -174,17 +174,21 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
 
         if (holder instanceof AdapterLinkList.ViewHolder) {
             ((AdapterLinkList.ViewHolder) holder).onBind(position);
-//            if (!isInitialized) {
-//                ((AdapterLinkList.ViewHolder) holder).imagePreview.callOnClick();
-//                isInitialized = true;
-//            }
+            if (!isInitialized) {
+                if (controllerComments.getLink(0).isSelf()) {
+                    ((AdapterLinkList.ViewHolder) holder).imagePreview.callOnClick();
+                }
+                isInitialized = true;
+            }
         }
         else if (holder instanceof AdapterLinkGrid.ViewHolder) {
             ((AdapterLinkGrid.ViewHolder) holder).onBind(position);
-//            if (!isInitialized) {
-//                ((AdapterLinkGrid.ViewHolder) holder).imagePreview.callOnClick();
-//                isInitialized = true;
-//            }
+            if (!isInitialized) {
+                if (controllerComments.getLink(0).isSelf()) {
+                    ((AdapterLinkGrid.ViewHolder) holder).imagePreview.callOnClick();
+                }
+                isInitialized = true;
+            }
         }
         else {
 
@@ -217,7 +221,21 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                 html = Html.fromHtml(html.trim())
                         .toString();
 
-                setTextViewHTML(viewHolderComment.textComment, html);
+                CharSequence sequence = Html.fromHtml(html);
+
+                // Trims leading and trailing whitespace
+                int start = 0;
+                int end = sequence.length();
+                while (start < end && Character.isWhitespace(sequence.charAt(start))) {
+                    start++;
+                }
+                while (end > start && Character.isWhitespace(sequence.charAt(end - 1))) {
+                    end--;
+                }
+                sequence = sequence.subSequence(start, end);
+
+                viewHolderComment.textComment.setText(sequence);
+                Linkify.addLinks(viewHolderComment.textComment, Linkify.ALL);
 
                 Spannable spannableInfo = new SpannableString(
                         comment.getScore() + " by " + comment.getAuthor());
@@ -237,40 +255,6 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
     @Override
     public int getItemCount() {
         return controllerComments.getItemCount();
-    }
-
-    private void makeLinkClickable(SpannableStringBuilder strBuilder, final URLSpan span) {
-        int start = strBuilder.getSpanStart(span);
-        int end = strBuilder.getSpanEnd(span);
-        int flags = strBuilder.getSpanFlags(span);
-        ClickableSpan clickable = new ClickableSpan() {
-            public void onClick(View view) {
-                listener.loadUrl(span.getURL());
-            }
-        };
-        strBuilder.setSpan(clickable, start, end, flags);
-        strBuilder.removeSpan(span);
-    }
-
-    private void setTextViewHTML(TextView text, String html) {
-        CharSequence sequence = Html.fromHtml(html);
-
-        // Trims leading and trailing whitespace
-        int start = 0;
-        int end = sequence.length();
-        while (start < end && Character.isWhitespace(sequence.charAt(start))) {
-            start++;
-        }
-        while (end > start && Character.isWhitespace(sequence.charAt(end - 1))) {
-            end--;
-        }
-        sequence = sequence.subSequence(start, end);
-        SpannableStringBuilder strBuilder = new SpannableStringBuilder(sequence);
-        URLSpan[] urls = strBuilder.getSpans(0, sequence.length(), URLSpan.class);
-        for(URLSpan span : urls) {
-            makeLinkClickable(strBuilder, span);
-        }
-        text.setText(strBuilder);
     }
 
     @Override
@@ -458,7 +442,6 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                 public void onClick(View v) {
                     Comment comment = controllerComments.get(getAdapterPosition() - 1);
                     if (comment.isMore()) {
-                        Log.d(TAG, "loadMoreComments");
                         controllerComments.loadMoreComments(comment);
                         return;
                     }

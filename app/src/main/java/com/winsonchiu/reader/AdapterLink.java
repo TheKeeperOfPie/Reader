@@ -4,8 +4,6 @@ import android.app.Activity;
 import android.content.Intent;
 import android.content.res.Resources;
 import android.graphics.PorterDuff;
-import android.graphics.drawable.BitmapDrawable;
-import android.graphics.drawable.Drawable;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.support.v4.view.MenuItemCompat;
@@ -101,7 +99,8 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         protected Request request;
         protected String imageUrl;
 
-        public ViewHolderBase(final View itemView, ControllerLinks.ListenerCallback listenerCallback) {
+        public ViewHolderBase(final View itemView,
+                              ControllerLinks.ListenerCallback listenerCallback) {
             super(itemView);
             this.callback = listenerCallback;
 
@@ -118,10 +117,14 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             mediaController.setAnchorView(videoFull);
             videoFull.setMediaController(mediaController);
             webFull = (WebViewFixed) itemView.findViewById(R.id.web_full);
-            webFull.getSettings().setUseWideViewPort(true);
-            webFull.getSettings().setBuiltInZoomControls(true);
-            webFull.getSettings().setDisplayZoomControls(false);
-            webFull.getSettings().setDomStorageEnabled(true);
+            webFull.getSettings()
+                    .setUseWideViewPort(true);
+            webFull.getSettings()
+                    .setBuiltInZoomControls(true);
+            webFull.getSettings()
+                    .setDisplayZoomControls(false);
+            webFull.getSettings()
+                    .setDomStorageEnabled(true);
             webFull.setBackgroundColor(0x000000);
             webFull.setWebViewClient(new WebViewClient() {
                 @Override
@@ -139,16 +142,19 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                         if ((webFull.canScrollVertically(1) && webFull.canScrollVertically(-1))) {
                             callback.getListener()
                                     .requestDisallowInterceptTouchEvent(true);
-                        } else {
+                        }
+                        else {
                             callback.getListener()
                                     .requestDisallowInterceptTouchEvent(false);
                             if (webFull.getScrollY() == 0) {
                                 webFull.setScrollY(1);
-                            } else {
+                            }
+                            else {
                                 webFull.setScrollY(webFull.getScrollY() - 1);
                             }
                         }
-                    } else if (event.getAction() == MotionEvent.ACTION_UP) {
+                    }
+                    else if (event.getAction() == MotionEvent.ACTION_UP) {
                         callback.getListener()
                                 .requestDisallowInterceptTouchEvent(false);
                     }
@@ -166,9 +172,10 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             buttonComments.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    callback.getListener().onClickComments(
-                            callback.getController()
-                                    .getLink(getAdapterPosition()), ViewHolderBase.this);
+                    callback.getListener()
+                            .onClickComments(
+                                    callback.getController()
+                                            .getLink(getAdapterPosition()), ViewHolderBase.this);
                     videoFull.pause();
                 }
             });
@@ -199,15 +206,16 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                     return true;
                 }
             });
-            toolbarActions.getViewTreeObserver().addOnGlobalLayoutListener(
-                    new ViewTreeObserver.OnGlobalLayoutListener() {
-                        @Override
-                        public void onGlobalLayout() {
-                            setToolbarMenuVisibility();
-                            toolbarActions.getViewTreeObserver()
-                                    .removeOnGlobalLayoutListener(this);
-                        }
-                    });
+            toolbarActions.getViewTreeObserver()
+                    .addOnGlobalLayoutListener(
+                            new ViewTreeObserver.OnGlobalLayoutListener() {
+                                @Override
+                                public void onGlobalLayout() {
+                                    setToolbarMenuVisibility();
+                                    toolbarActions.getViewTreeObserver()
+                                            .removeOnGlobalLayoutListener(this);
+                                }
+                            });
 
             View.OnClickListener clickListenerLink = new View.OnClickListener() {
                 @Override
@@ -221,7 +229,9 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                     shareIntent.putExtra(Intent.EXTRA_TEXT, Reddit.BASE_URL + link.getPermalink());
 
                     setToolbarMenuVisibility();
-                    ShareActionProvider shareActionProvider = (ShareActionProvider) MenuItemCompat.getActionProvider(toolbarActions.getMenu().findItem(R.id.item_share));
+                    ShareActionProvider shareActionProvider = (ShareActionProvider) MenuItemCompat.getActionProvider(
+                            toolbarActions.getMenu()
+                                    .findItem(R.id.item_share));
                     if (shareActionProvider != null) {
                         shareActionProvider.setShareIntent(shareIntent);
                     }
@@ -234,7 +244,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             this.itemView.setOnClickListener(clickListenerLink);
         }
 
-        public void loadFull(Link link ) {
+        public void loadFull(Link link) {
 
             Log.d(TAG, "loadFull: " + link.getUrl());
 
@@ -253,6 +263,14 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                         lastIndex = slashIndex > startIndex ? slashIndex : url.length();
                         String imgurId = url.substring(startIndex, lastIndex);
                         loadAlbum(imgurId);
+                    }
+                    else if (url.contains("imgur.com/gallery/")) {
+                        startIndex = url.indexOf("imgur.com/gallery/") + 18;
+                        int slashIndex = url.substring(startIndex)
+                                .indexOf("/") + startIndex;
+                        lastIndex = slashIndex > startIndex ? slashIndex : url.length();
+                        String imgurId = url.substring(startIndex, lastIndex);
+                        loadGallery(imgurId);
                     }
                     else if (url.contains(Reddit.GIFV)) {
                         startIndex = url.indexOf("imgur.com/") + 10;
@@ -362,6 +380,46 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             }
         }
 
+        private void loadGallery(String id) {
+            progressImage.setVisibility(View.VISIBLE);
+            request = callback.getController()
+                    .getReddit()
+                    .loadImgurGallery(id,
+                                      new Response.Listener<String>() {
+                                          @Override
+                                          public void onResponse(String response) {
+                                              try {
+                                                  Log.d(TAG, "loadGallery: " + response);
+                                                  Album album = Album.fromJson(
+                                                          new JSONObject(
+                                                                  response).getJSONObject(
+                                                                  "data"));
+
+                                                  viewPagerFull.setAdapter(
+                                                          new AdapterAlbum(callback.getActivity(),
+                                                                           album,
+                                                                           callback.getListener()));
+                                                  viewPagerFull.getLayoutParams().height = callback.getListener()
+                                                          .getRecyclerHeight() - itemView.getHeight();
+                                                  viewPagerFull.setVisibility(View.VISIBLE);
+                                                  viewPagerFull.requestLayout();
+                                                  callback.getListener()
+                                                          .onFullLoaded(getAdapterPosition());
+                                              }
+                                              catch (JSONException e) {
+                                                  e.printStackTrace();
+                                              }
+                                              finally {
+                                                  progressImage.setVisibility(View.GONE);
+                                              }
+                                          }
+                                      }, new Response.ErrorListener() {
+                                @Override
+                                public void onErrorResponse(VolleyError error) {
+                                    progressImage.setVisibility(View.GONE);
+                                }
+                            }, 0);
+        }
 
         private void loadAlbum(String id) {
             progressImage.setVisibility(View.VISIBLE);
@@ -438,7 +496,6 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                                 @Override
                                 public void onErrorResponse(VolleyError error) {
                                     try {
-                                        Log.d(TAG, "onErrorResponse");
                                         Log.d(TAG, "" + error.networkResponse.statusCode);
                                         Log.d(TAG, error.networkResponse.headers.toString());
                                         Log.d(TAG, new String(error.networkResponse.data));
@@ -451,7 +508,6 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                                 }
                             }, 0);
         }
-
 
         private void loadVideo(String url, float heightRatio) {
             Log.d(TAG, "loadVideo: " + url + " : " + heightRatio);
@@ -509,13 +565,13 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             progressImage.setVisibility(View.GONE);
             textThreadSelf.setVisibility(View.GONE);
 
-            if (!TextUtils.isEmpty(imageUrl) && !callback.getController().getReddit().getImageLoader().isCached(imageUrl, 0, 0)) {
-                Drawable drawable = imagePreview.getDrawable();
-                if (drawable instanceof BitmapDrawable && ((BitmapDrawable) drawable).getBitmap() != null) {
-                    ((BitmapDrawable) drawable).getBitmap().recycle();
-                }
-                imageUrl = null;
-            }
+//            if (!TextUtils.isEmpty(imageUrl) && !callback.getController().getReddit().getImageLoader().isCached(imageUrl, 0, 0)) {
+//                Drawable drawable = imagePreview.getDrawable();
+//                if (drawable instanceof BitmapDrawable && ((BitmapDrawable) drawable).getBitmap() != null) {
+//                    ((BitmapDrawable) drawable).getBitmap().recycle();
+//                }
+//                imageUrl = null;
+//            }
             imagePreview.setImageBitmap(null);
 
         }

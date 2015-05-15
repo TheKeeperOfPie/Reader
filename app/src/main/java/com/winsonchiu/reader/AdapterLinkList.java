@@ -9,10 +9,8 @@ import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Toast;
 
-import com.android.volley.VolleyError;
-import com.android.volley.toolbox.ImageLoader;
+import com.squareup.picasso.Picasso;
 import com.winsonchiu.reader.data.Link;
 import com.winsonchiu.reader.data.Reddit;
 
@@ -160,32 +158,12 @@ public class AdapterLinkList extends AdapterLink implements ControllerLinks.List
             final Link link = callback.getController()
                     .getLink(position);
 
-            Drawable drawable = callback.getController().getDrawableForLink(link);
+            Drawable drawable = callback.getController()
+                    .getDrawableForLink(link);
             if (drawable == null) {
-                imageContainer = callback.getController()
-                        .getReddit().getImageLoader().get(link.getThumbnail(),
-                                new ImageLoader.ImageListener() {
-                                    @Override
-                                    public void onResponse(ImageLoader.ImageContainer response,
-                                                           boolean isImmediate) {
-                                        if (response.getBitmap() != null) {
-                                            imageUrl = link.getThumbnail();
-                                            if (isImmediate) {
-                                                imagePreview.setImageBitmap(response.getBitmap());
-                                            }
-                                            else {
-                                                imagePreview.setAlpha(0.0f);
-                                                imagePreview.setImageBitmap(response.getBitmap());
-                                                AnimationUtils.animateAlpha(imagePreview, 0.0f, 1.0f);
-                                            }
-                                        }
-                                    }
-
-                                    @Override
-                                    public void onErrorResponse(VolleyError error) {
-
-                                    }
-                                });
+                Picasso.with(callback.getActivity())
+                        .load(link.getThumbnail())
+                        .into(imagePreview);
             }
             else {
                 imagePreview.setImageDrawable(drawable);

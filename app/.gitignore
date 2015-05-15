@@ -1,3 +1,4 @@
 /build
 
 src/main/java/com/winsonchiu/reader/ApiKeys.java
+src/main/res/values/strings_ignore.xml

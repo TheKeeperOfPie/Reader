@@ -13,7 +13,6 @@ import android.widget.Toast;
 import com.android.volley.Response.ErrorListener;
 import com.android.volley.Response.Listener;
 import com.android.volley.VolleyError;
-import com.android.volley.toolbox.ImageLoader;
 import com.winsonchiu.reader.data.Link;
 import com.winsonchiu.reader.data.Listing;
 import com.winsonchiu.reader.data.Reddit;
@@ -213,31 +212,34 @@ public class ControllerLinks implements Controller {
         url += "limit=50&after=" + listingLinks.getAfter() + "&showAll=true";
 
         reddit.loadGet(url,
-                new Listener<String>() {
-                    @Override
-                    public void onResponse(String response) {
-                        try {
-                            int positionStart = listingLinks.getChildren()
-                                    .size();
-                            Listing listing = Listing.fromJson(new JSONObject(response));
-                            listingLinks.addChildren(listing.getChildren());
-                            listingLinks.setAfter(listing.getAfter());
-                            for (LinkClickListener listener : listeners) {
-                                listener.getAdapter()
-                                        .notifyItemRangeInserted(positionStart,
-                                                listingLinks.getChildren()
-                                                        .size() - positionStart);
-                            }
-                        } catch (JSONException exception) {
-                            exception.printStackTrace();
-                        } finally {
-                            setLoading(false);
-                        }
-                    }
-                }, new ErrorListener() {
+                       new Listener<String>() {
+                           @Override
+                           public void onResponse(String response) {
+                               try {
+                                   int positionStart = listingLinks.getChildren()
+                                           .size();
+                                   Listing listing = Listing.fromJson(new JSONObject(response));
+                                   listingLinks.addChildren(listing.getChildren());
+                                   listingLinks.setAfter(listing.getAfter());
+                                   for (LinkClickListener listener : listeners) {
+                                       listener.getAdapter()
+                                               .notifyItemRangeInserted(positionStart,
+                                                                        listingLinks.getChildren()
+                                                                                .size() - positionStart);
+                                   }
+                               }
+                               catch (JSONException exception) {
+                                   exception.printStackTrace();
+                               }
+                               finally {
+                                   setLoading(false);
+                               }
+                           }
+                       }, new ErrorListener() {
                     @Override
                     public void onErrorResponse(VolleyError error) {
-                        Toast.makeText(activity, "Error loading links", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(activity, "Error loading links", Toast.LENGTH_SHORT)
+                                .show();
                     }
                 }, 0);
     }
@@ -299,10 +301,6 @@ public class ControllerLinks implements Controller {
 
     public Reddit getReddit() {
         return reddit;
-    }
-
-    public ImageLoader.ImageContainer loadImage(String url, ImageLoader.ImageListener imageListener) {
-        return reddit.getImageLoader().get(url, imageListener);
     }
 
     public void setLoading(boolean loading) {

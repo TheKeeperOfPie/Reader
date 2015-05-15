@@ -4,7 +4,6 @@ import android.app.Application;
 import android.content.Context;
 
 import com.squareup.leakcanary.LeakCanary;
-import com.squareup.leakcanary.LeakTrace;
 import com.squareup.leakcanary.RefWatcher;
 import com.winsonchiu.reader.data.Reddit;
 

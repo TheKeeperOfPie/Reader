@@ -2,9 +2,9 @@ package com.winsonchiu.reader;
 
 import android.app.Activity;
 import android.content.res.Resources;
+import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
-import android.media.ThumbnailUtils;
 import android.support.v7.graphics.Palette;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.StaggeredGridLayoutManager;
@@ -15,8 +15,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 
-import com.android.volley.VolleyError;
-import com.android.volley.toolbox.ImageLoader;
+import com.squareup.picasso.Callback;
 import com.squareup.picasso.Picasso;
 import com.winsonchiu.reader.data.Link;
 import com.winsonchiu.reader.data.Reddit;
@@ -136,7 +135,6 @@ public class AdapterLinkGrid extends AdapterLink implements ControllerLinks.List
         private final int defaultColor;
         private final int thumbnailWidth;
         protected ImageView imageThumbnail;
-        protected String currentThumbnailLink;
 
         public ViewHolder(View itemView, ControllerLinks.ListenerCallback listenerCallback, int defaultColor, int thumbnailWidth) {
             super(itemView, listenerCallback);
@@ -243,131 +241,85 @@ public class AdapterLinkGrid extends AdapterLink implements ControllerLinks.List
                 imageThumbnail.setImageDrawable(drawable);
             }
             else if (showThumbnail(link)) {
-                imagePreview.setVisibility(View.VISIBLE);
-                imageThumbnail.setVisibility(View.GONE);
-                progressImage.setVisibility(View.VISIBLE);
-                imageContainer = callback.getController()
-                        .getReddit().getImageLoader().get(link.getThumbnail(), new ImageLoader.ImageListener() {
-                            @Override
-                            public void onResponse(ImageLoader.ImageContainer response,
-                                                   boolean isImmediate) {
-                                imageContainer = response;
-                                if (response.getBitmap() == null) {
-                                    this.onErrorResponse(null);
-                                    return;
-                                }
-                                currentThumbnailLink = link.getThumbnail();
-                                try {
-                                    Palette.from(response.getBitmap()).generate(
-                                            new Palette.PaletteAsyncListener() {
-                                                @Override
-                                                public void onGenerated(Palette palette) {
-                                                    if (position == getAdapterPosition()) {
-                                                        AnimationUtils.animateBackgroundColor(
-                                                                itemView,
-                                                                ((ColorDrawable) itemView.getBackground()).getColor(),
-                                                                palette.getDarkVibrantColor(
-                                                                        palette.getMutedColor(
-                                                                                defaultColor)));
-                                                    }
-                                                }
-                                            });
-                                }
-                                catch (IllegalArgumentException e) {
-                                    e.printStackTrace();
-                                }
-//                                DataUtils.setNewImageBitmap(imagePreview, response.getBitmap());
-                                CustomApplication.getRefWatcher(callback.getActivity()).watch(response.getBitmap());
-                                imageUrl = link.getThumbnail();
-                                imagePreview.setImageBitmap(response.getBitmap());
-                                if (Reddit.placeImageUrl(
-                                        link) && position == getAdapterPosition()) {
-                                    imageContainer = callback.getController()
-                                            .getReddit().getImageLoader().get(link.getUrl(),
-                                                    new ImageLoader.ImageListener() {
-                                                        @Override
-                                                        public void onResponse(
-                                                                ImageLoader.ImageContainer response,
-                                                                boolean isImmediate) {
-                                                            imageContainer = response;
-                                                            if (response.getBitmap() != null && position == getAdapterPosition()) {
-                                                                imagePreview.setAlpha(
-                                                                        0.0f);
-//                                                                DataUtils.setNewImageBitmap(imagePreview,
-//                                                                        ThumbnailUtils.extractThumbnail(
-//                                                                                response.getBitmap(),
-//                                                                                thumbnailWidth,
-//                                                                                thumbnailWidth));
-                                                                CustomApplication.getRefWatcher(callback.getActivity()).watch(response.getBitmap());
-                                                                imageUrl = link.getUrl();
-                                                                imagePreview.setImageBitmap(ThumbnailUtils.extractThumbnail(
-                                                                                response.getBitmap(),
-                                                                                thumbnailWidth,
-                                                                                thumbnailWidth));
-                                                                AnimationUtils.animateAlpha(
-                                                                        imagePreview,
-                                                                        0.0f,
-                                                                        1.0f);
-                                                                progressImage.setVisibility(
-                                                                        View.GONE);
-                                                            }
-                                                        }
-
-                                                        @Override
-                                                        public void onErrorResponse(
-                                                                VolleyError error) {
-
-                                                        }
-                                                    });
-                                }
-                                else {
-                                    imagePreview.setAlpha(0.0f);
-//                                    DataUtils.setNewImageBitmap(imagePreview, response.getBitmap());
-                                    CustomApplication.getRefWatcher(callback.getActivity()).watch(response.getBitmap());
-                                    imageUrl = link.getThumbnail();
-                                    imagePreview.setImageBitmap(response.getBitmap());
-                                    AnimationUtils.animateAlpha(imagePreview, 0.0f, 1.0f);
-                                    imagePlay.setVisibility(View.VISIBLE);
-                                    progressImage.setVisibility(View.GONE);
-                                }
-                            }
-
-                            @Override
-                            public void onErrorResponse(VolleyError error) {
-
-                            }
-                        });
+                loadThumbnail(link, position);
             }
             else {
                 imagePreview.setVisibility(View.GONE);
                 imageThumbnail.setVisibility(View.VISIBLE);
-                imageContainer = callback.getController()
-                        .getReddit()
-                        .getImageLoader()
-                        .get(link.getThumbnail(), new ImageLoader.ImageListener() {
-                            @Override
-                            public void onResponse(ImageLoader.ImageContainer response,
-                                                   boolean isImmediate) {
-                                imageContainer = response;
-                                if (response.getBitmap() == null) {
-                                    this.onErrorResponse(null);
-                                    return;
-                                }
-                                if (position == getAdapterPosition()) {
-                                    imageUrl = link.getThumbnail();
-                                    imagePreview.setImageBitmap(response.getBitmap());
-                                    CustomApplication.getRefWatcher(callback.getActivity()).watch(response.getBitmap());
-                                }
-                            }
-
-                            @Override
-                            public void onErrorResponse(VolleyError error) {
-
-                            }
-                        });
+                Picasso.with(callback.getActivity())
+                        .load(link.getThumbnail())
+                        .into(imageThumbnail);
             }
 
-            textThreadTitle.setText(link.getTitle().trim());
+            textThreadTitle.setText(link.getTitle()
+                                            .trim());
+        }
+
+        private void loadThumbnail(final Link link, final int position) {
+
+            imagePreview.setVisibility(View.VISIBLE);
+            imageThumbnail.setVisibility(View.GONE);
+            progressImage.setVisibility(View.VISIBLE);
+
+            Picasso.with(callback.getActivity())
+                    .load(link.getThumbnail())
+                    .into(imagePreview,
+                          new Callback() {
+                              @Override
+                              public void onSuccess() {
+                                  Drawable drawable = imagePreview.getDrawable();
+                                  if (drawable instanceof BitmapDrawable) {
+                                      CustomApplication.getRefWatcher(callback.getActivity()).watch(((BitmapDrawable) drawable).getBitmap());
+                                      Palette.from(((BitmapDrawable) drawable).getBitmap())
+                                              .generate(
+                                                      new Palette.PaletteAsyncListener() {
+                                                          @Override
+                                                          public void onGenerated(Palette palette) {
+                                                              if (position == getAdapterPosition()) {
+                                                                  AnimationUtils.animateBackgroundColor(
+                                                                          itemView,
+                                                                          ((ColorDrawable) itemView.getBackground()).getColor(),
+                                                                          palette.getDarkVibrantColor(
+                                                                                  palette.getMutedColor(
+                                                                                          defaultColor)));
+                                                              }
+                                                          }
+                                                      });
+                                  }
+
+                                  imageUrl = link.getThumbnail();
+                                  if (Reddit.placeImageUrl(
+                                          link) && position == getAdapterPosition()) {
+                                      Picasso.with(callback.getActivity())
+                                              .load(link.getUrl())
+                                              .resize(thumbnailWidth, thumbnailWidth)
+                                              .centerCrop()
+                                              .into(imagePreview, new Callback() {
+                                                  @Override
+                                                  public void onSuccess() {
+                                                      progressImage.setVisibility(
+                                                              View.GONE);
+                                                  }
+
+                                                  @Override
+                                                  public void onError() {
+
+                                                  }
+                                              });
+
+                                  }
+                                  else {
+                                      imagePlay.setVisibility(View.VISIBLE);
+                                      progressImage.setVisibility(View.GONE);
+                                  }
+                              }
+
+                              @Override
+                              public void onError() {
+
+                              }
+                          });
+
         }
     }
 

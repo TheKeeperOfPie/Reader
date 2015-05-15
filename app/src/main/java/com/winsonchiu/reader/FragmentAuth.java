@@ -17,7 +17,6 @@ import android.webkit.WebViewClient;
 
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
-import com.winsonchiu.reader.data.Listing;
 import com.winsonchiu.reader.data.Reddit;
 
 import org.json.JSONException;
