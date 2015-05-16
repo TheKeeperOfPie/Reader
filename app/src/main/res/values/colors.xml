@@ -9,7 +9,8 @@
     <color name="positiveScore">#FFFF8B60</color>
     <color name="negativeScore">#FF9494FF</color>
 
-    <color name="darkThemeTextColor">#FFEEEEEE</color>
+    <color name="darkThemeTextColor">#FFFFFFFF</color>
+    <color name="darkThemeTextColorMuted">#FFCCCCCC</color>
 
     <color name="darkThemeStatusBar">#FF000000</color>
     <color name="darkThemeToolbar">#FF212121</color>

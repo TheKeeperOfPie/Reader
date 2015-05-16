@@ -69,7 +69,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
     protected int colorNegative;
     protected float itemWidth;
     protected ControllerLinks.LinkClickListener listener;
-    private static int ACTION_MENU_SIZE = 4;
+    private static int ACTION_MENU_SIZE = 5;
 
     public void setActivity(Activity activity) {
         Resources resources = activity.getResources();

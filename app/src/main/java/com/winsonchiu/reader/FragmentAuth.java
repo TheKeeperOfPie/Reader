@@ -79,7 +79,8 @@ public class FragmentAuth extends Fragment {
             mParam1 = getArguments().getString(ARG_PARAM1);
             mParam2 = getArguments().getString(ARG_PARAM2);
         }
-        state = UUID.randomUUID().toString();
+        state = UUID.randomUUID()
+                .toString();
     }
 
     @Override
@@ -127,35 +128,7 @@ public class FragmentAuth extends Fragment {
                                                 System.currentTimeMillis() + jsonObject.getLong(
                                                         Reddit.QUERY_EXPIRES_IN) * Reddit.SEC_TO_MS)
                                         .commit();
-                                reddit.loadGet(Reddit.OAUTH_URL + "/api/v1/me",
-                                        new Response.Listener<String>() {
-                                            @Override
-                                            public void onResponse(String response) {
-                                                preferences.edit()
-                                                        .putString(AppSettings.ACCOUNT_JSON,
-                                                                response)
-                                                        .commit();
-                                                reddit.loadGet(Reddit.OAUTH_URL + "/subreddits/mine/subscriber?limit=100&show=all", new Response.Listener<String>() {
-                                                    @Override
-                                                    public void onResponse(String response) {
-                                                        preferences.edit().putString(AppSettings.SUBSCRIBED_SUBREDDITS, response).commit();
-                                                        Log.d(TAG, "subscribed response: " + response);
-                                                    }
-                                                }, new Response.ErrorListener() {
-                                                    @Override
-                                                    public void onErrorResponse(VolleyError error) {
-
-                                                    }
-                                                }, 0);
-                                                mListener.onAuthFinished(true);
-                                            }
-                                        }, new Response.ErrorListener() {
-                                            @Override
-                                            public void onErrorResponse(VolleyError error) {
-                                                // TODO: Check user info error
-                                                mListener.onAuthFinished(true);
-                                            }
-                                        }, 0);
+                                loadSubredditList();
                             }
                             catch (JSONException e1) {
                                 e1.printStackTrace();
@@ -187,10 +160,51 @@ public class FragmentAuth extends Fragment {
         return view;
     }
 
+    private void loadSubredditList() {
+        // TODO: Support loading moderated, contributor, and multiple pages using after
+        reddit.loadGet(Reddit.OAUTH_URL + "/api/v1/me",
+                new Response.Listener<String>() {
+                    @Override
+                    public void onResponse(String response) {
+                        preferences.edit()
+                                .putString(AppSettings.ACCOUNT_JSON,
+                                        response)
+                                .commit();
+                        reddit.loadGet(
+                                Reddit.OAUTH_URL + "/subreddits/mine/subscriber?limit=100&show=all",
+                                new Response.Listener<String>() {
+                                    @Override
+                                    public void onResponse(String response) {
+                                        preferences.edit()
+                                                .putString(
+                                                        AppSettings.SUBSCRIBED_SUBREDDITS,
+                                                        response)
+                                                .commit();
+                                        Log.d(TAG,
+                                                "subscribed response: " + response);
+                                    }
+                                }, new Response.ErrorListener() {
+                                    @Override
+                                    public void onErrorResponse(VolleyError error) {
+
+                                    }
+                                }, 0);
+                        mListener.onAuthFinished(true);
+                    }
+                }, new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        // TODO: Check user info error
+                        mListener.onAuthFinished(true);
+                    }
+                }, 0);
+    }
+
     @Override
     public void onAttach(Activity activity) {
         super.onAttach(activity);
-        preferences = PreferenceManager.getDefaultSharedPreferences(activity.getApplicationContext());
+        preferences = PreferenceManager.getDefaultSharedPreferences(
+                activity.getApplicationContext());
         reddit = Reddit.getInstance(activity);
         try {
             mListener = (OnFragmentInteractionListener) activity;
@@ -222,7 +236,8 @@ public class FragmentAuth extends Fragment {
     @Override
     public void onDestroy() {
         super.onDestroy();
-        CustomApplication.getRefWatcher(getActivity()).watch(this);
+        CustomApplication.getRefWatcher(getActivity())
+                .watch(this);
     }
 
     /**
@@ -230,7 +245,7 @@ public class FragmentAuth extends Fragment {
      * fragment to allow an interaction in this fragment to be communicated
      * to the activity and potentially other fragments contained in that
      * activity.
-     * <p>
+     * <p/>
      * See the Android Training lesson <a href=
      * "http://developer.android.com/training/basics/fragments/communicating.html"
      * >Communicating with Other Fragments</a> for more information.

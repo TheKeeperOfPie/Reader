@@ -31,7 +31,7 @@ import java.util.Set;
 /**
  * Created by TheKeeperOfPie on 3/14/2015.
  */
-public class ControllerLinks implements Controller {
+public class ControllerLinks implements ControllerLinksBase {
 
     // TODO: Check if need setActivity
 
@@ -337,7 +337,7 @@ public class ControllerLinks implements Controller {
 
     public interface ListenerCallback {
         LinkClickListener getListener();
-        Controller getController();
+        ControllerLinksBase getController();
         int getColorPositive();
         int getColorNegative();
         Activity getActivity();

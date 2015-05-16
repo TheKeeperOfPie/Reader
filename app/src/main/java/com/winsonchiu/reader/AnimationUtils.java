@@ -3,6 +3,7 @@ package com.winsonchiu.reader;
 import android.animation.ObjectAnimator;
 import android.animation.ValueAnimator;
 import android.graphics.Color;
+import android.support.v4.graphics.ColorUtils;
 import android.util.Log;
 import android.util.TypedValue;
 import android.view.View;
@@ -24,7 +25,27 @@ public class AnimationUtils {
     public static final long BACKGROUND_DURATION = 500;
     private static final String TAG = AnimationUtils.class.getCanonicalName();
 
-    public static void animateBackgroundColor(final View view, int start, int end) {
+    public static void animateBackgroundColor(final View view, final int start, final int end) {
+
+        ValueAnimator valueAnimator = ValueAnimator.ofInt(0, 255);
+        valueAnimator.setDuration(BACKGROUND_DURATION);
+
+        valueAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+            @Override
+            public void onAnimationUpdate(ValueAnimator animation) {
+                int foreground = ColorUtils.setAlphaComponent(end,
+                        (Integer) animation.getAnimatedValue());
+                int background = ColorUtils.setAlphaComponent(start,
+                        255 - (Integer) animation.getAnimatedValue());
+
+                view.setBackgroundColor(ColorUtils.compositeColors(foreground, background));
+            }
+        });
+
+        valueAnimator.start();
+    }
+
+    public static void animateBackgroundColorHsv(final View view, int start, int end) {
 
         final float[] startHsv = new float[3];
         final float[] endHsv = new float[3];

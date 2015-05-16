@@ -8,8 +8,6 @@ import android.graphics.drawable.Drawable;
 import android.support.v7.graphics.Palette;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.StaggeredGridLayoutManager;
-import android.text.Html;
-import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -29,9 +27,11 @@ public class AdapterLinkGrid extends AdapterLink implements ControllerLinks.List
 
     private DividerItemDecoration itemDecoration;
     private int defaultColor;
-    private int thumbnailWidth;
+    private int thumbnailSize;
 
-    public AdapterLinkGrid(Activity activity, ControllerLinks controllerLinks, ControllerLinks.LinkClickListener listener) {
+    public AdapterLinkGrid(Activity activity,
+                           ControllerLinks controllerLinks,
+                           ControllerLinks.LinkClickListener listener) {
         setControllerLinks(controllerLinks, listener);
         setActivity(activity);
     }
@@ -40,11 +40,13 @@ public class AdapterLinkGrid extends AdapterLink implements ControllerLinks.List
     public void setActivity(Activity activity) {
         super.setActivity(activity);
         Resources resources = activity.getResources();
-        this.thumbnailWidth = resources.getDisplayMetrics().widthPixels / 2;
+        this.thumbnailSize = resources.getDisplayMetrics().widthPixels / 2;
         boolean isLandscape = resources.getDisplayMetrics().widthPixels > resources.getDisplayMetrics().heightPixels;
 
-        this.layoutManager = new StaggeredGridLayoutManager(isLandscape ? 3 : 2, StaggeredGridLayoutManager.VERTICAL);
-        ((StaggeredGridLayoutManager) this.layoutManager).setGapStrategy(StaggeredGridLayoutManager.GAP_HANDLING_NONE);
+        this.layoutManager = new StaggeredGridLayoutManager(isLandscape ? 3 : 2,
+                StaggeredGridLayoutManager.VERTICAL);
+        ((StaggeredGridLayoutManager) this.layoutManager).setGapStrategy(
+                StaggeredGridLayoutManager.GAP_HANDLING_NONE);
         this.itemDecoration = null;
         this.defaultColor = resources.getColor(R.color.darkThemeDialog);
     }
@@ -56,7 +58,8 @@ public class AdapterLinkGrid extends AdapterLink implements ControllerLinks.List
 
     @Override
     public ViewHolder onCreateViewHolder(ViewGroup viewGroup, int i) {
-        return new ViewHolder(LayoutInflater.from(viewGroup.getContext()).inflate(R.layout.cell_link, viewGroup, false), this, defaultColor, thumbnailWidth);
+        return new ViewHolder(LayoutInflater.from(viewGroup.getContext())
+                .inflate(R.layout.cell_link, viewGroup, false), this, defaultColor, thumbnailSize);
     }
 
     @Override
@@ -71,7 +74,8 @@ public class AdapterLinkGrid extends AdapterLink implements ControllerLinks.List
     }
 
     public static boolean showThumbnail(Link link) {
-        if (link.getThumbnail().equals("nsfw")) {
+        if (link.getThumbnail()
+                .equals("nsfw")) {
             return false;
         }
         String domain = link.getDomain();
@@ -133,14 +137,17 @@ public class AdapterLinkGrid extends AdapterLink implements ControllerLinks.List
     protected static class ViewHolder extends AdapterLink.ViewHolderBase {
 
         private final int defaultColor;
-        private final int thumbnailWidth;
+        private final int thumbnailSize;
         protected ImageView imageThumbnail;
         protected ImageView imageFull;
 
-        public ViewHolder(View itemView, ControllerLinks.ListenerCallback listenerCallback, int defaultColor, int thumbnailWidth) {
+        public ViewHolder(View itemView,
+                          ControllerLinks.ListenerCallback listenerCallback,
+                          int defaultColor,
+                          int thumbnailSize) {
             super(itemView, listenerCallback);
             this.defaultColor = defaultColor;
-            this.thumbnailWidth = thumbnailWidth;
+            this.thumbnailSize = thumbnailSize;
 
             this.imageFull = (ImageView) itemView.findViewById(R.id.image_full);
             this.imageThumbnail = (ImageView) itemView.findViewById(R.id.image_thumbnail);
@@ -195,9 +202,11 @@ public class AdapterLinkGrid extends AdapterLink implements ControllerLinks.List
             itemView.setBackgroundColor(defaultColor);
             imagePlay.setVisibility(View.GONE);
 
-            final Link link = callback.getController().getLink(position);
+            final Link link = callback.getController()
+                    .getLink(position);
 
-            Drawable drawable = callback.getController().getDrawableForLink(link);
+            Drawable drawable = callback.getController()
+                    .getDrawableForLink(link);
             if (drawable != null) {
                 imageFull.setVisibility(View.GONE);
                 imageThumbnail.setVisibility(View.VISIBLE);
@@ -215,7 +224,7 @@ public class AdapterLinkGrid extends AdapterLink implements ControllerLinks.List
             }
 
             textThreadTitle.setText(link.getTitle()
-                                            .trim());
+                    .trim());
         }
 
         private void loadThumbnail(final Link link, final int position) {
@@ -227,61 +236,60 @@ public class AdapterLinkGrid extends AdapterLink implements ControllerLinks.List
             Picasso.with(callback.getActivity())
                     .load(link.getThumbnail())
                     .into(imageFull,
-                          new Callback() {
-                              @Override
-                              public void onSuccess() {
-                                  Drawable drawable = imageFull.getDrawable();
-                                  if (drawable instanceof BitmapDrawable) {
-                                      CustomApplication.getRefWatcher(callback.getActivity()).watch(((BitmapDrawable) drawable).getBitmap());
-                                      Palette.from(((BitmapDrawable) drawable).getBitmap())
-                                              .generate(
-                                                      new Palette.PaletteAsyncListener() {
-                                                          @Override
-                                                          public void onGenerated(Palette palette) {
-                                                              if (position == getAdapterPosition()) {
-                                                                  AnimationUtils.animateBackgroundColor(
-                                                                          itemView,
-                                                                          ((ColorDrawable) itemView.getBackground()).getColor(),
-                                                                          palette.getDarkVibrantColor(
-                                                                                  palette.getMutedColor(
-                                                                                          defaultColor)));
-                                                              }
-                                                          }
-                                                      });
-                                  }
+                            new Callback() {
+                                @Override
+                                public void onSuccess() {
+                                    Drawable drawable = imageFull.getDrawable();
+                                    if (drawable instanceof BitmapDrawable) {
+                                        Palette.from(((BitmapDrawable) drawable).getBitmap())
+                                                .generate(
+                                                        new Palette.PaletteAsyncListener() {
+                                                            @Override
+                                                            public void onGenerated(Palette palette) {
+                                                                if (position == getAdapterPosition()) {
+                                                                    AnimationUtils.animateBackgroundColor(
+                                                                            itemView,
+                                                                            ((ColorDrawable) itemView.getBackground()).getColor(),
+                                                                            palette.getDarkVibrantColor(
+                                                                                    palette.getMutedColor(
+                                                                                            defaultColor)));
+                                                                }
+                                                            }
+                                                        });
+                                    }
 
-                                  imageUrl = link.getThumbnail();
-                                  if (Reddit.placeImageUrl(
-                                          link) && position == getAdapterPosition()) {
-                                      Picasso.with(callback.getActivity())
-                                              .load(link.getUrl())
-                                              .resize(thumbnailWidth, thumbnailWidth)
-                                              .centerCrop()
-                                              .into(imageFull, new Callback() {
-                                                  @Override
-                                                  public void onSuccess() {
-                                                      progressImage.setVisibility(
-                                                              View.GONE);
-                                                  }
+                                    imageUrl = link.getThumbnail();
+                                    if (Reddit.placeImageUrl(
+                                            link) && position == getAdapterPosition()) {
+                                        Picasso.with(callback.getActivity())
+                                                .load(link.getUrl())
+                                                .resize(thumbnailSize, thumbnailSize)
+                                                .centerCrop()
+                                                .into(imageFull, new Callback() {
+                                                    @Override
+                                                    public void onSuccess() {
+                                                        progressImage.setVisibility(
+                                                                View.GONE);
+                                                    }
 
-                                                  @Override
-                                                  public void onError() {
+                                                    @Override
+                                                    public void onError() {
 
-                                                  }
-                                              });
+                                                    }
+                                                });
 
-                                  }
-                                  else {
-                                      imagePlay.setVisibility(View.VISIBLE);
-                                      progressImage.setVisibility(View.GONE);
-                                  }
-                              }
+                                    }
+                                    else {
+                                        imagePlay.setVisibility(View.VISIBLE);
+                                        progressImage.setVisibility(View.GONE);
+                                    }
+                                }
 
-                              @Override
-                              public void onError() {
+                                @Override
+                                public void onError() {
 
-                              }
-                          });
+                                }
+                            });
 
         }
     }

@@ -82,6 +82,7 @@ public class FragmentThreadList extends Fragment {
     private CursorAdapter cursorAdapter;
     private Listing subreddits;
     private AdapterSubscriptions adapterSubcriptions;
+    private MenuItem itemSearch;
 
     /**
      * Use this factory method to create a new instance of
@@ -119,7 +120,9 @@ public class FragmentThreadList extends Fragment {
 
     @Override
     public void onCreateOptionsMenu(final Menu menu, MenuInflater inflater) {
+        super.onCreateOptionsMenu(menu, inflater);
 
+        menu.clear();
         inflater.inflate(R.menu.menu_thread_list, menu);
 
         SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(
@@ -130,14 +133,14 @@ public class FragmentThreadList extends Fragment {
         itemInterface = menu.findItem(R.id.item_interface);
         switch (preferences.getString(AppSettings.INTERFACE_MODE, AppSettings.MODE_LIST)) {
             case AppSettings.MODE_LIST:
-                itemInterface.setIcon(getResources().getDrawable(R.drawable.ic_view_module_white_24dp));
+                itemInterface.setIcon(R.drawable.ic_view_module_white_24dp);
                 break;
             case AppSettings.MODE_GRID:
-                itemInterface.setIcon(getResources().getDrawable(R.drawable.ic_view_list_white_24dp));
+                itemInterface.setIcon(R.drawable.ic_view_list_white_24dp);
                 break;
         }
 
-        final MenuItem itemSearch = menu.findItem(R.id.item_search);
+        itemSearch = menu.findItem(R.id.item_search);
 
         final SearchView searchView = (SearchView) itemSearch.getActionView();
 
@@ -185,8 +188,10 @@ public class FragmentThreadList extends Fragment {
                 Log.d(TAG, "Query entered");
                 // TODO: Save sort state for individual subreddits
                 // TODO: Possibly add sort indicator on menu icon
-                mListener.getControllerLinks().setParameters(query, "hot");
-                menu.findItem(R.id.item_sort_hot).setChecked(true);
+                mListener.getControllerLinks()
+                        .setParameters(query, "hot");
+                menu.findItem(R.id.item_sort_hot)
+                        .setChecked(true);
                 itemSearch.collapseActionView();
                 return false;
             }
@@ -200,8 +205,9 @@ public class FragmentThreadList extends Fragment {
                 if (subreddits == null || TextUtils.isEmpty(newText)) {
                     return true;
                 }
-                String query = newText.toLowerCase().replaceAll(" ", "");
-                MatrixCursor cursor = new MatrixCursor(new String[]{BaseColumns._ID, "subreddit" });
+                String query = newText.toLowerCase()
+                        .replaceAll(" ", "");
+                MatrixCursor cursor = new MatrixCursor(new String[]{BaseColumns._ID, "subreddit"});
                 List<Object[]> trailingResults = new LinkedList<>();
                 List<Thing> children = subreddits.getChildren();
                 for (int index = 0; index < children.size(); index++) {
@@ -222,8 +228,6 @@ public class FragmentThreadList extends Fragment {
             }
         });
         searchView.setSubmitButtonEnabled(true);
-
-        super.onCreateOptionsMenu(menu, inflater);
     }
 
     @Override
@@ -236,31 +240,40 @@ public class FragmentThreadList extends Fragment {
         switch (item.getItemId()) {
             case R.id.item_sort_hot:
                 mListener.getControllerLinks().setSort("hot");
-                break;
+                flashSearchView();
+                return true;
             case R.id.item_sort_new:
                 mListener.getControllerLinks().setSort("new");
-                break;
+                flashSearchView();
+                return true;
             case R.id.item_sort_top_hour:
                 mListener.getControllerLinks().setSort("hourtop");
-                break;
+                flashSearchView();
+                return true;
             case R.id.item_sort_top_day:
                 mListener.getControllerLinks().setSort("daytop");
-                break;
+                flashSearchView();
+                return true;
             case R.id.item_sort_top_week:
                 mListener.getControllerLinks().setSort("weektop");
-                break;
+                flashSearchView();
+                return true;
             case R.id.item_sort_top_month:
                 mListener.getControllerLinks().setSort("monthtop");
-                break;
+                flashSearchView();
+                return true;
             case R.id.item_sort_top_year:
                 mListener.getControllerLinks().setSort("yeartop");
-                break;
+                flashSearchView();
+                return true;
             case R.id.item_sort_top_all:
                 mListener.getControllerLinks().setSort("alltop");
-                break;
+                flashSearchView();
+                return true;
             case R.id.item_sort_controversial:
                 mListener.getControllerLinks().setSort("controversial");
-                break;
+                flashSearchView();
+                return true;
             case R.id.item_interface:
                 if (AppSettings.MODE_LIST.equals(
                         preferences.getString(AppSettings.INTERFACE_MODE, AppSettings.MODE_LIST))) {
@@ -274,11 +287,22 @@ public class FragmentThreadList extends Fragment {
                     item.setIcon(getResources().getDrawable(R.drawable.ic_view_module_white_24dp));
                     preferences.edit().putString(AppSettings.INTERFACE_MODE, AppSettings.MODE_LIST).commit();
                 }
-                break;
+                return true;
 
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    /*
+        Workaround for Android's drag-to-select menu bug, where the
+        menu becomes unusable after a drag gesture
+     */
+    public void flashSearchView() {
+        if (itemSearch != null) {
+            itemSearch.expandActionView();
+            itemSearch.collapseActionView();
+        }
     }
 
     private void resetAdapter(AdapterLink newAdapter) {
@@ -526,7 +550,8 @@ public class FragmentThreadList extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
-        swipeRefreshThreadList.setRefreshing(mListener.getControllerLinks().isLoading());
+        swipeRefreshThreadList.setRefreshing(mListener.getControllerLinks()
+                .isLoading());
     }
 
     @Override

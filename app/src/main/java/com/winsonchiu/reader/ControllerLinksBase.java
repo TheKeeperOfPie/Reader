@@ -9,7 +9,7 @@ import com.winsonchiu.reader.data.Reddit;
 /**
  * Created by TheKeeperOfPie on 3/21/2015.
  */
-public interface Controller {
+public interface ControllerLinksBase {
 
     Link getLink(int position);
     Reddit getReddit();

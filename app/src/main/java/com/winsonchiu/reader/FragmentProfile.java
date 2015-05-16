@@ -1,46 +1,55 @@
 package com.winsonchiu.reader;
 
 import android.app.Activity;
-import android.app.Fragment;
+import android.content.SharedPreferences;
+import android.net.Uri;
 import android.os.Bundle;
+import android.app.Fragment;
+import android.preference.PreferenceManager;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+
+import com.winsonchiu.reader.data.Link;
+import com.winsonchiu.reader.data.User;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 
 /**
  * A simple {@link Fragment} subclass.
  * Activities that contain this fragment must implement the
- * {@link FragmentComments.OnFragmentInteractionListener} interface
+ * {@link FragmentProfile.OnFragmentInteractionListener} interface
  * to handle interaction events.
- * Use the {@link FragmentComments#newInstance} factory method to
+ * Use the {@link FragmentProfile#newInstance} factory method to
  * create an instance of this fragment.
  */
-public class FragmentComments extends Fragment {
+public class FragmentProfile extends Fragment {
     // TODO: Rename parameter arguments, choose names that match
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
     private static final String ARG_PARAM1 = "param1";
     private static final String ARG_PARAM2 = "param2";
-    private static final String ARG_IS_GRID = "isGrid";
-    private static final String TAG = FragmentComments.class.getCanonicalName();
+    public static final String TAG = FragmentProfile.class.getCanonicalName();
 
     // TODO: Rename and change types of parameters
-    private String subreddit;
-    private String linkId;
+    private String mParam1;
+    private String mParam2;
 
     private OnFragmentInteractionListener mListener;
-    private RecyclerView recyclerCommentList;
     private Activity activity;
+    private ControllerProfile controllerProfile;
+    private ControllerProfile.ItemClickListener listener;
+    private SwipeRefreshLayout swipeRefreshProfile;
+    private RecyclerView recyclerProfile;
     private LinearLayoutManager linearLayoutManager;
-    private AdapterCommentList adapterCommentList;
-    private SwipeRefreshLayout swipeRefreshCommentList;
-    private ControllerComments controllerComments;
-    private ControllerComments.CommentClickListener listener;
-    private RecyclerView.ViewHolder viewHolder;
+    private User user;
+    private AdapterProfile adapterProfile;
 
     /**
      * Use this factory method to create a new instance of
@@ -48,20 +57,19 @@ public class FragmentComments extends Fragment {
      *
      * @param param1 Parameter 1.
      * @param param2 Parameter 2.
-     * @return A new instance of fragment FragmentComments.
+     * @return A new instance of fragment FragmentProfile.
      */
     // TODO: Rename and change types and number of parameters
-    public static FragmentComments newInstance(String param1, String param2, boolean isGrid) {
-        FragmentComments fragment = new FragmentComments();
+    public static FragmentProfile newInstance(String param1, String param2) {
+        FragmentProfile fragment = new FragmentProfile();
         Bundle args = new Bundle();
         args.putString(ARG_PARAM1, param1);
         args.putString(ARG_PARAM2, param2);
-        args.putBoolean(ARG_IS_GRID, isGrid);
         fragment.setArguments(args);
         return fragment;
     }
 
-    public FragmentComments() {
+    public FragmentProfile() {
         // Required empty public constructor
     }
 
@@ -69,97 +77,119 @@ public class FragmentComments extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         if (getArguments() != null) {
-            subreddit = getArguments().getString(ARG_PARAM1);
-            linkId = getArguments().getString(ARG_PARAM2);
+            mParam1 = getArguments().getString(ARG_PARAM1);
+            mParam2 = getArguments().getString(ARG_PARAM2);
         }
-        mListener.setNavigationAnimation(1.0f);
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(activity.getApplicationContext());
+        this.user = new User();
+
+        if (!TextUtils.isEmpty(preferences.getString(AppSettings.ACCOUNT_JSON, ""))) {
+            try {
+                this.user = User.fromJson(
+                        new JSONObject(preferences.getString(AppSettings.ACCOUNT_JSON, "")));
+            }
+            catch (JSONException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
 
-        View view = inflater.inflate(R.layout.fragment_comments, container, false);
+        View view = inflater.inflate(R.layout.fragment_profile, container, false);
 
-        listener = new ControllerComments.CommentClickListener() {
+        listener = new ControllerProfile.ItemClickListener() {
+            @Override
+            public void onClickComments(Link link, RecyclerView.ViewHolder viewHolder) {
+
+            }
+
             @Override
             public void loadUrl(String url) {
-                getFragmentManager().beginTransaction().add(R.id.frame_fragment, FragmentWeb
-                        .newInstance(url, ""), FragmentWeb.TAG).addToBackStack(null)
-                        .commit();
+
+            }
+
+            @Override
+            public void onFullLoaded(int position) {
+
             }
 
             @Override
             public void setRefreshing(boolean refreshing) {
-                swipeRefreshCommentList.setRefreshing(refreshing);
+                swipeRefreshProfile.setRefreshing(refreshing);
             }
 
             @Override
-            public AdapterCommentList getAdapter() {
-                return adapterCommentList;
+            public void setToolbarTitle(String title) {
+
+            }
+
+            @Override
+            public AdapterProfile getAdapter() {
+                return adapterProfile;
             }
 
             @Override
             public int getRecyclerHeight() {
-                return recyclerCommentList.getHeight();
+                return recyclerProfile.getHeight();
             }
 
             @Override
             public void requestDisallowInterceptTouchEvent(boolean disallow) {
-                recyclerCommentList.requestDisallowInterceptTouchEvent(disallow);
+
             }
         };
 
-        swipeRefreshCommentList = (SwipeRefreshLayout) view.findViewById(R.id.swipe_refresh_comment_list);
-        swipeRefreshCommentList.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+        swipeRefreshProfile = (SwipeRefreshLayout) view.findViewById(R.id.swipe_refresh_profile);
+        swipeRefreshProfile.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
-                controllerComments.reloadAllComments();
+                controllerProfile.reload();
             }
         });
-        swipeRefreshCommentList.post(new Runnable() {
+        swipeRefreshProfile.post(new Runnable() {
             @Override
             public void run() {
-                swipeRefreshCommentList.setRefreshing(true);
-                controllerComments.setLinkId(subreddit, linkId);
+                swipeRefreshProfile.setRefreshing(true);
+                controllerProfile.setUser(user.getName());
             }
         });
 
         linearLayoutManager = new LinearLayoutManager(activity);
-        recyclerCommentList = (RecyclerView) view.findViewById(R.id.recycler_comment_list);
-        recyclerCommentList.setHasFixedSize(true);
-        recyclerCommentList.setItemAnimator(new DefaultItemAnimator());
-        recyclerCommentList.getItemAnimator().setRemoveDuration(AnimationUtils.EXPAND_ACTION_DURATION);
-        recyclerCommentList.setLayoutManager(linearLayoutManager);
-        recyclerCommentList.addItemDecoration(
+        recyclerProfile = (RecyclerView) view.findViewById(R.id.recycler_profile);
+        recyclerProfile.setHasFixedSize(true);
+        recyclerProfile.setItemAnimator(new DefaultItemAnimator());
+        recyclerProfile.getItemAnimator().setRemoveDuration(AnimationUtils.EXPAND_ACTION_DURATION);
+        recyclerProfile.setLayoutManager(linearLayoutManager);
+        recyclerProfile.addItemDecoration(
                 new DividerItemDecoration(activity, DividerItemDecoration.VERTICAL_LIST));
 
-        controllerComments = mListener.getControllerComments();
+        // TODO: Move to MainActivity
+//        controllerProfile = mListener.getControllerProfile();
+        controllerProfile = new ControllerProfile(activity);
 
-        if (adapterCommentList == null) {
-            adapterCommentList = new AdapterCommentList(activity, controllerComments, listener, getArguments().getBoolean(ARG_IS_GRID, false));
+        if (adapterProfile == null) {
+            adapterProfile = new AdapterProfile(activity, controllerProfile, listener);
         }
 
-        recyclerCommentList.setAdapter(adapterCommentList);
-        controllerComments.addListener(listener);
+        recyclerProfile.setAdapter(adapterProfile);
+        controllerProfile.addListener(listener);
 
         return view;
-    }
 
-    @Override
-    public void onPause() {
-        super.onPause();
     }
 
     @Override
     public void onStart() {
         super.onStart();
-        controllerComments.addListener(listener);
+        controllerProfile.addListener(listener);
     }
 
     @Override
     public void onStop() {
-        controllerComments.removeListener(listener);
+        controllerProfile.removeListener(listener);
         super.onStop();
     }
 
@@ -178,15 +208,9 @@ public class FragmentComments extends Fragment {
 
     @Override
     public void onDetach() {
+        super.onDetach();
         mListener = null;
         activity = null;
-        super.onDetach();
-    }
-
-    @Override
-    public void onDestroy() {
-        super.onDestroy();
-        CustomApplication.getRefWatcher(getActivity()).watch(this);
     }
 
     /**
@@ -200,9 +224,7 @@ public class FragmentComments extends Fragment {
      * >Communicating with Other Fragments</a> for more information.
      */
     public interface OnFragmentInteractionListener {
-        void setNavigationAnimation(float value);
-        void setToolbarTitle(CharSequence title);
-        ControllerComments getControllerComments();
+        // TODO: Update argument type and name
     }
 
 }

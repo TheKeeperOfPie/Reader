@@ -3,9 +3,7 @@ package com.winsonchiu.reader;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.net.Uri;
 import android.os.Bundle;
-import android.os.PatternMatcher;
 import android.preference.PreferenceManager;
 import android.provider.Browser;
 import android.support.v4.widget.DrawerLayout;
@@ -25,7 +23,6 @@ import com.crashlytics.android.Crashlytics;
 
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.regex.Pattern;
 
 import io.fabric.sdk.android.Fabric;
 
@@ -35,7 +32,8 @@ public class MainActivity extends AppCompatActivity
         FragmentThreadList.OnFragmentInteractionListener,
         FragmentWeb.OnFragmentInteractionListener,
         FragmentComments.OnFragmentInteractionListener,
-        FragmentAuth.OnFragmentInteractionListener {
+        FragmentAuth.OnFragmentInteractionListener,
+        FragmentProfile.OnFragmentInteractionListener {
 
     private static final String TAG = MainActivity.class.getCanonicalName();
     /**
@@ -150,6 +148,11 @@ public class MainActivity extends AppCompatActivity
                 case 0:
                     getFragmentManager().beginTransaction()
                             .replace(R.id.frame_fragment, FragmentThreadList.newInstance("", ""), FragmentThreadList.TAG)
+                            .commit();
+                    break;
+                case 1:
+                    getFragmentManager().beginTransaction()
+                            .replace(R.id.frame_fragment, FragmentProfile.newInstance("", ""), FragmentProfile.TAG)
                             .commit();
                     break;
                 case 3:

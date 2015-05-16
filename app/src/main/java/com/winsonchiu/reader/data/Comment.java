@@ -57,13 +57,15 @@ public class Comment extends Thing {
         comments.add(Comment.fromJson(rootJsonObject, level));
 
         if (rootJsonObject.getJSONObject("data").has("replies") && !TextUtils.isEmpty(rootJsonObject.getJSONObject("data").getString("replies")) && !rootJsonObject.getJSONObject("data").getString("replies").equals("null")) {
-            JSONArray arrayComments = rootJsonObject.getJSONObject("data")
+            JSONObject data = rootJsonObject.getJSONObject("data")
                     .getJSONObject("replies")
-                    .getJSONObject("data")
-                    .getJSONArray("children");
+                    .getJSONObject("data");
 
-            for (int index = 0; index < arrayComments.length(); index++) {
-                Comment.addAllFromJson(comments, arrayComments.getJSONObject(index), level + 1);
+            if (data.has("children")) {
+                JSONArray arrayComments = data.getJSONArray("children");
+                for (int index = 0; index < arrayComments.length(); index++) {
+                    Comment.addAllFromJson(comments, arrayComments.getJSONObject(index), level + 1);
+                }
             }
         }
 

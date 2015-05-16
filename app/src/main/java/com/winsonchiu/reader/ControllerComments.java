@@ -21,6 +21,7 @@ import com.winsonchiu.reader.data.Link;
 import com.winsonchiu.reader.data.Listing;
 import com.winsonchiu.reader.data.Reddit;
 import com.winsonchiu.reader.data.Thing;
+import com.winsonchiu.reader.data.User;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -36,7 +37,7 @@ import java.util.Set;
 /**
  * Created by TheKeeperOfPie on 3/20/2015.
  */
-public class ControllerComments implements Controller {
+public class ControllerComments implements ControllerLinksBase, ControllerCommentsBase {
 
     private static final long ALPHA_DURATION = 500;
     private static final String TAG = ControllerComments.class.getCanonicalName();
@@ -116,7 +117,8 @@ public class ControllerComments implements Controller {
                             setLink(Link.fromJson(new JSONArray(response)));
                             for (CommentClickListener listener : listeners) {
                                 listener.setRefreshing(false);
-                                listener.getAdapter().notifyDataSetChanged();
+                                listener.getAdapter()
+                                        .notifyDataSetChanged();
                             }
                         }
                         catch (JSONException e1) {
@@ -131,6 +133,7 @@ public class ControllerComments implements Controller {
                 }, 0);
     }
 
+    @Override
     public Drawable getDrawableForLink(Link link) {
         String thumbnail = link.getThumbnail();
 
@@ -145,10 +148,7 @@ public class ControllerComments implements Controller {
         return null;
     }
 
-    public Listing getListingComments() {
-        return link == null ? new Listing() : listingComments;
-    }
-
+    @Override
     public void loadMoreComments(final Comment moreComment) {
 
         String url = Reddit.OAUTH_URL + "/api/morechildren";
@@ -240,6 +240,7 @@ public class ControllerComments implements Controller {
                 }, params, 0);
     }
 
+    @Override
     public void insertComments(Comment moreComment, Listing listing) {
 
         List<Thing> listComments = listing.getChildren();
@@ -271,6 +272,7 @@ public class ControllerComments implements Controller {
 
     }
 
+    @Override
     public void insertComment(int commentIndex, Comment comment) {
         link.getComments().getChildren().add(commentIndex, comment);
         listingComments.getChildren().add(commentIndex, comment);
@@ -279,6 +281,7 @@ public class ControllerComments implements Controller {
         }
     }
 
+    @Override
     public void removeComment(int commentIndex) {
         link.getComments().getChildren().remove(commentIndex);
         listingComments.getChildren().remove(commentIndex);
@@ -287,6 +290,7 @@ public class ControllerComments implements Controller {
         }
     }
 
+    @Override
     /**
      * Toggles children of comment
      *
@@ -317,7 +321,8 @@ public class ControllerComments implements Controller {
 
     }
 
-    private void expandComment(int position) {
+    @Override
+    public void expandComment(int position) {
         List<Thing> commentList = link.getComments().getChildren();
         int index = commentList.indexOf(listingComments.getChildren().get(position));
         if (index < 0) {
@@ -340,7 +345,8 @@ public class ControllerComments implements Controller {
         }
     }
 
-    private void collapseComment(int position) {
+    @Override
+    public void collapseComment(int position) {
 
         List<Thing> commentList = listingComments.getChildren();
         Comment comment = (Comment) commentList.get(position);
@@ -355,6 +361,52 @@ public class ControllerComments implements Controller {
         }
     }
 
+    @Override
+    public boolean voteComment(final AdapterCommentList.ViewHolderComment viewHolder, final int vote) {
+
+        if (TextUtils.isEmpty(preferences.getString(AppSettings.REFRESH_TOKEN, null))) {
+            Toast.makeText(activity, "Must be logged in to vote", Toast.LENGTH_SHORT).show();
+            return false;
+        }
+
+        final int position = viewHolder.getAdapterPosition();
+        final Comment comment = (Comment) listingComments.getChildren().get(viewHolder.getAdapterPosition());
+
+        final int oldVote = comment.isLikes();
+        int newVote = 0;
+
+        if (comment.isLikes() != vote) {
+            newVote = vote;
+        }
+
+        HashMap<String, String> params = new HashMap<>(2);
+        params.put(Reddit.QUERY_ID, comment.getName());
+        params.put(Reddit.QUERY_VOTE, String.valueOf(newVote));
+
+        comment.setLikes(newVote);
+        if (position == viewHolder.getAdapterPosition()) {
+            viewHolder.setVoteColors();
+        }
+        reddit.loadPost(Reddit.OAUTH_URL + "/api/vote", new Listener<String>() {
+            @Override
+            public void onResponse(String response) {
+            }
+        }, new ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                Toast.makeText(activity, "Error voting", Toast.LENGTH_SHORT)
+                        .show();
+
+                comment.setLikes(oldVote);
+                if (position == viewHolder.getAdapterPosition()) {
+                    viewHolder.setVoteColors();
+                }
+            }
+        }, params, 0);
+        return true;
+    }
+
+    @Override
     public void voteLink(final RecyclerView.ViewHolder viewHolder, final int vote) {
 
         if (TextUtils.isEmpty(preferences.getString(AppSettings.REFRESH_TOKEN, null))) {
@@ -409,50 +461,7 @@ public class ControllerComments implements Controller {
         }, params, 0);
     }
 
-    public boolean voteComment(final AdapterCommentList.ViewHolderComment viewHolder, final int vote) {
-
-        if (TextUtils.isEmpty(preferences.getString(AppSettings.REFRESH_TOKEN, null))) {
-            Toast.makeText(activity, "Must be logged in to vote", Toast.LENGTH_SHORT).show();
-            return false;
-        }
-
-        final int position = viewHolder.getAdapterPosition();
-        final Comment comment = (Comment) listingComments.getChildren().get(viewHolder.getAdapterPosition());
-
-        final int oldVote = comment.isLikes();
-        int newVote = 0;
-
-        if (comment.isLikes() != vote) {
-            newVote = vote;
-        }
-
-        HashMap<String, String> params = new HashMap<>(2);
-        params.put(Reddit.QUERY_ID, comment.getName());
-        params.put(Reddit.QUERY_VOTE, String.valueOf(newVote));
-
-        comment.setLikes(newVote);
-        if (position == viewHolder.getAdapterPosition()) {
-            viewHolder.setVoteColors();
-        }
-        reddit.loadPost(Reddit.OAUTH_URL + "/api/vote", new Listener<String>() {
-            @Override
-            public void onResponse(String response) {
-            }
-        }, new ErrorListener() {
-            @Override
-            public void onErrorResponse(VolleyError error) {
-                Toast.makeText(activity, "Error voting", Toast.LENGTH_SHORT)
-                        .show();
-
-                comment.setLikes(oldVote);
-                if (position == viewHolder.getAdapterPosition()) {
-                    viewHolder.setVoteColors();
-                }
-            }
-        }, params, 0);
-        return true;
-    }
-
+    @Override
     public int getIndentWidth(Comment comment) {
         return indentWidth * comment.getLevel();
     }
@@ -462,6 +471,7 @@ public class ControllerComments implements Controller {
         return link;
     }
 
+    @Override
     public Reddit getReddit() {
         return reddit;
     }
@@ -489,11 +499,12 @@ public class ControllerComments implements Controller {
         return listingComments.getChildren().size() + 1;
     }
 
-
+    @Override
     public Comment get(int position) {
         return (Comment) listingComments.getChildren().get(position);
     }
 
+    @Override
     public boolean isCommentExpanded(int position) {
 
         if (position == listingComments.getChildren().size() - 1) {
@@ -514,6 +525,11 @@ public class ControllerComments implements Controller {
         throw new IllegalStateException("Comment level invalid");
     }
 
+    @Override
+    public Link getMainLink() {
+        return link;
+    }
+
     public interface CommentClickListener extends DisallowListener {
 
         void loadUrl(String url);
@@ -521,4 +537,20 @@ public class ControllerComments implements Controller {
         AdapterCommentList getAdapter();
         int getRecyclerHeight();
     }
+
+    public interface ListenerCallback {
+        CommentClickListener getCommentClickListener();
+        ControllerCommentsBase getControllerComments();
+        SharedPreferences getPreferences();
+        User getUser();
+        int getColorMuted();
+        int getColorAccent();
+        int getColorPrimary();
+        int getColorPositive();
+        int getColorNegative();
+        int getColorDefault();
+        Activity getActivity();
+        float getItemWidth();
+    }
+
 }
