@@ -132,6 +132,16 @@ public class AdapterLinkGrid extends AdapterLink implements ControllerLinks.List
     }
 
     @Override
+    public int getColorText() {
+        return colorText;
+    }
+
+    @Override
+    public int getColorTextAlert() {
+        return colorTextAlert;
+    }
+
+    @Override
     public Activity getActivity() {
         return activity;
     }
@@ -224,7 +234,6 @@ public class AdapterLinkGrid extends AdapterLink implements ControllerLinks.List
                         false);
             }
 
-            setTextInfo();
             textTimestamp.setVisibility(View.GONE);
             toolbarActions.setVisibility(View.GONE);
             itemView.setBackgroundColor(defaultColor);
@@ -252,6 +261,9 @@ public class AdapterLinkGrid extends AdapterLink implements ControllerLinks.List
             }
 
             textThreadTitle.setText(Html.fromHtml(link.getTitle()).toString());
+            textThreadTitle.setTextColor(
+                    link.isOver18() ? callback.getColorTextAlert() : callback.getColorText());
+            setTextInfo();
         }
 
         private void loadThumbnail(final Link link, final int position) {

@@ -64,6 +64,8 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
     protected int colorPositive;
     protected int colorNegative;
     protected int colorMuted;
+    protected int colorText;
+    protected int colorTextAlert;
     protected float itemWidth;
     protected ControllerLinks.LinkClickListener listener;
     private static int ACTION_MENU_SIZE = 5;
@@ -74,6 +76,8 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         this.colorPositive = resources.getColor(R.color.positiveScore);
         this.colorNegative = resources.getColor(R.color.negativeScore);
         this.colorMuted = resources.getColor(R.color.darkThemeTextColorMuted);
+        this.colorText = resources.getColor(R.color.darkThemeTextColor);
+        this.colorTextAlert = resources.getColor(R.color.darkThemeTextColorAlert);
         this.itemWidth = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 48,
                 resources.getDisplayMetrics());
     }
@@ -383,14 +387,22 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                     String html = link.getSelfTextHtml();
                     html = Html.fromHtml(html.trim())
                             .toString();
+
+                    CharSequence sequence = Html.fromHtml(html);
+
+                    // Trims leading and trailing whitespace
+                    int start = 0;
+                    int end = sequence.length();
+                    while (start < end && Character.isWhitespace(sequence.charAt(start))) {
+                        start++;
+                    }
+                    while (end > start && Character.isWhitespace(sequence.charAt(end - 1))) {
+                        end--;
+                    }
+                    sequence = sequence.subSequence(start, end);
+
                     textThreadSelf.setVisibility(View.VISIBLE);
-                    textThreadSelf.setText(Reddit.formatHtml(html,
-                            new Reddit.UrlClickListener() {
-                                @Override
-                                public void onUrlClick(String url) {
-                                    callback.getListener().loadUrl(url);
-                                }
-                            }));
+                    textThreadSelf.setText(sequence);
                 }
             }
             else {
@@ -428,7 +440,6 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         public void setTextInfo() {
 
         }
-
 
         private void attemptLoadImage(Link link) {
 
@@ -581,8 +592,8 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             Log.d(TAG, "loadVideo: " + url + " : " + heightRatio);
             Uri uri = Uri.parse(url);
             videoFull.setVideoURI(uri);
-            videoFull.getLayoutParams().height = (int) (ViewHolderBase.this.itemView.getWidth() * heightRatio);
             videoFull.setVisibility(View.VISIBLE);
+            videoFull.getLayoutParams().height = (int) (ViewHolderBase.this.itemView.getWidth() * heightRatio);
             videoFull.invalidate();
             videoFull.start();
             videoFull.setOnCompletionListener(

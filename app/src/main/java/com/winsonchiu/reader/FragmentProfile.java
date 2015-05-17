@@ -69,7 +69,6 @@ public class FragmentProfile extends Fragment {
 
     private OnFragmentInteractionListener mListener;
     private Activity activity;
-    private ControllerProfile controllerProfile;
     private ControllerProfile.ItemClickListener listener;
     private SwipeRefreshLayout swipeRefreshProfile;
     private RecyclerView recyclerProfile;
@@ -77,6 +76,7 @@ public class FragmentProfile extends Fragment {
     private User user;
     private AdapterProfile adapterProfile;
     private SharedPreferences preferences;
+    private MenuItem itemSearch;
 
     /**
      * Use this factory method to create a new instance of
@@ -118,7 +118,10 @@ public class FragmentProfile extends Fragment {
         menu.clear();
         inflater.inflate(R.menu.menu_profile, menu);
 
-        final MenuItem itemSearch = menu.findItem(R.id.item_search);
+        menu.findItem(R.id.item_sort_hot)
+                .setChecked(true);
+
+        itemSearch = menu.findItem(R.id.item_search);
 
         final SearchView searchView = (SearchView) itemSearch.getActionView();
 
@@ -138,7 +141,7 @@ public class FragmentProfile extends Fragment {
         searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
             @Override
             public boolean onQueryTextSubmit(String query) {
-                controllerProfile.loadUser(query);
+                mListener.getControllerProfile().loadUser(query);
                 itemSearch.collapseActionView();
                 return false;
             }
@@ -154,6 +157,68 @@ public class FragmentProfile extends Fragment {
         });
         searchView.setSubmitButtonEnabled(true);
 
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+
+        item.setChecked(true);
+        switch (item.getItemId()) {
+            case R.id.item_sort_hot:
+                mListener.getControllerProfile()
+                        .setSort("hot");
+                flashSearchView();
+                return true;
+            case R.id.item_sort_new:
+                mListener.getControllerProfile()
+                        .setSort("new");
+                flashSearchView();
+                return true;
+            case R.id.item_sort_top_hour:
+                mListener.getControllerProfile()
+                        .setSort("hourtop");
+                flashSearchView();
+                return true;
+            case R.id.item_sort_top_day:
+                mListener.getControllerProfile()
+                        .setSort("daytop");
+                flashSearchView();
+                return true;
+            case R.id.item_sort_top_week:
+                mListener.getControllerProfile()
+                        .setSort("weektop");
+                flashSearchView();
+                return true;
+            case R.id.item_sort_top_month:
+                mListener.getControllerProfile()
+                        .setSort("monthtop");
+                flashSearchView();
+                return true;
+            case R.id.item_sort_top_year:
+                mListener.getControllerProfile()
+                        .setSort("yeartop");
+                flashSearchView();
+                return true;
+            case R.id.item_sort_top_all:
+                mListener.getControllerProfile()
+                        .setSort("alltop");
+                flashSearchView();
+                return true;
+            case R.id.item_sort_controversial:
+                mListener.getControllerProfile()
+                        .setSort("controversial");
+                flashSearchView();
+                return true;
+
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+    private void flashSearchView() {
+        if (itemSearch != null) {
+            itemSearch.expandActionView();
+            itemSearch.collapseActionView();
+        }
     }
 
     @Override
@@ -211,7 +276,9 @@ public class FragmentProfile extends Fragment {
                     public void onAnimationEnd(Animation animation) {
                         FragmentComments fragmentComments = FragmentComments.newInstance(link.getSubreddit(), link.getId(), viewHolder instanceof AdapterLinkGrid.ViewHolder);
 
-                        getFragmentManager().beginTransaction().add(R.id.frame_fragment, fragmentComments, "fragmentComments").addToBackStack(null)
+                        getFragmentManager().beginTransaction()
+                                .add(R.id.frame_fragment, fragmentComments, FragmentComments.TAG)
+                                .addToBackStack(null)
                                 .commit();
 
                         viewHolder.itemView.postDelayed(new Runnable() {
@@ -234,7 +301,8 @@ public class FragmentProfile extends Fragment {
 
             @Override
             public void loadUrl(String url) {
-                getFragmentManager().beginTransaction().add(R.id.frame_fragment, FragmentWeb
+                getFragmentManager().beginTransaction()
+                        .add(R.id.frame_fragment, FragmentWeb
                         .newInstance(url, ""), FragmentWeb.TAG).addToBackStack(null)
                         .commit();
             }
@@ -280,7 +348,7 @@ public class FragmentProfile extends Fragment {
         swipeRefreshProfile.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
-                controllerProfile.reload();
+                mListener.getControllerProfile().reload();
             }
         });
 
@@ -293,16 +361,12 @@ public class FragmentProfile extends Fragment {
         recyclerProfile.addItemDecoration(
                 new DividerItemDecoration(activity, DividerItemDecoration.VERTICAL_LIST));
 
-        // TODO: Move to MainActivity
-//        controllerProfile = mListener.getControllerProfile();
-        controllerProfile = new ControllerProfile(activity);
-
         if (adapterProfile == null) {
-            adapterProfile = new AdapterProfile(activity, controllerProfile, listener);
+            adapterProfile = new AdapterProfile(activity, mListener.getControllerProfile(), listener);
         }
 
         recyclerProfile.setAdapter(adapterProfile);
-        controllerProfile.addListener(listener);
+        mListener.getControllerProfile().addListener(listener);
 
         return view;
 
@@ -324,7 +388,7 @@ public class FragmentProfile extends Fragment {
                 @Override
                 public void run() {
                     swipeRefreshProfile.setRefreshing(true);
-                    controllerProfile.setUser(user);
+                    mListener.getControllerProfile().setUser(user);
                 }
             });
         }
@@ -333,12 +397,12 @@ public class FragmentProfile extends Fragment {
     @Override
     public void onStart() {
         super.onStart();
-        controllerProfile.addListener(listener);
+        mListener.getControllerProfile().addListener(listener);
     }
 
     @Override
     public void onStop() {
-        controllerProfile.removeListener(listener);
+        mListener.getControllerProfile().removeListener(listener);
         super.onStop();
     }
 
@@ -376,6 +440,7 @@ public class FragmentProfile extends Fragment {
         // TODO: Update argument type and name
         void setToolbarTitle(CharSequence title);
         ControllerComments getControllerComments();
+        ControllerProfile getControllerProfile();
     }
 
 }

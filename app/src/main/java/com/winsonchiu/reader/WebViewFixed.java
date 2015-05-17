@@ -4,6 +4,7 @@ import android.annotation.TargetApi;
 import android.content.Context;
 import android.os.Build;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.webkit.WebView;
 
 /**
@@ -49,8 +50,10 @@ public class WebViewFixed extends WebView {
 
     public void lockHeight() {
         if (maxHeight == Integer.MAX_VALUE) {
-            maxHeight = getMeasuredHeight();
-            setMeasuredDimension(getMeasuredWidth(), maxHeight);
+            maxHeight = AnimationUtils.getMeasuredHeight(this);
         }
+        setMeasuredDimension(getMeasuredWidth(), maxHeight);
+        getLayoutParams().height = maxHeight;
+        requestLayout();
     }
 }

@@ -49,6 +49,7 @@ public class MainActivity extends AppCompatActivity
     private Toolbar toolbar;
     private ControllerLinks controllerLinks;
     private ControllerComments controllerComments;
+    private ControllerProfile controllerProfile;
     private SharedPreferences sharedPreferences;
 
     @Override
@@ -62,6 +63,9 @@ public class MainActivity extends AppCompatActivity
         }
         if (controllerComments == null) {
             controllerComments = new ControllerComments(this, "", "");
+        }
+        if (controllerProfile == null) {
+            controllerProfile = new ControllerProfile(this);
         }
         setContentView(R.layout.activity_main);
 
@@ -78,8 +82,7 @@ public class MainActivity extends AppCompatActivity
                 if (itemSearch != null) {
                     itemSearch.expandActionView();
                     SearchView searchView = ((SearchView) itemSearch.getActionView());
-                    if (searchView.getQuery()
-                            .equals("Front Page")) {
+                    if ("Front Page".equals(getTitle())) {
                         searchView.setQuery("", false);
                     }
                     else {
@@ -112,21 +115,29 @@ public class MainActivity extends AppCompatActivity
                         controllerLinks.setParameters("", "hot");
                         return;
                     }
-                    String subreddit = path.substring(indexFirstSlash + 1, indexSecondSlash > 0 ? indexSecondSlash : path.length());
+                    String subreddit = path.substring(indexFirstSlash + 1,
+                            indexSecondSlash > 0 ? indexSecondSlash : path.length());
 
                     Log.d(TAG, "Subreddit: " + subreddit);
 
-                    if (url.getPath().contains("comments")) {
+                    if (path.contains("comments")) {
                         int indexComments = path.indexOf("comments") + 8;
-                        String id = path.substring(indexComments, path.indexOf("/", indexComments) > -1 ? path.indexOf("/", indexComments) : path.length());
-                        FragmentComments fragmentComments = FragmentComments.newInstance(subreddit, id, false);
+                        String id = path.substring(indexComments,
+                                path.indexOf("/", indexComments) > -1 ?
+                                        path.indexOf("/", indexComments) : path.length());
+                        FragmentComments fragmentComments = FragmentComments.newInstance(subreddit,
+                                id, false);
 
-                        getFragmentManager().beginTransaction().add(R.id.frame_fragment, fragmentComments, "fragmentComments").addToBackStack(null)
+                        getFragmentManager().beginTransaction()
+                                .add(R.id.frame_fragment, fragmentComments, FragmentComments.TAG)
+                                .addToBackStack(null)
                                 .commit();
                     }
                     else {
                         int indexSort = path.indexOf("/", subreddit.length() + 1);
-                        String sort = indexSort > -1 ? path.substring(subreddit.length() + 1, indexSort) : "hot";
+                        String sort =
+                                indexSort > -1 ? path.substring(subreddit.length() + 1, indexSort) :
+                                        "hot";
                         controllerLinks.setParameters(subreddit, "hot");
                         Log.d(TAG, "Sort: " + sort);
                     }
@@ -150,30 +161,38 @@ public class MainActivity extends AppCompatActivity
         // TODO: Reimplement oldPosition check
         getFragmentManager().popBackStackImmediate();
 //        if (oldPosition != position | force) {
-            switch (position) {
-                case 0:
-                    getFragmentManager().beginTransaction()
-                            .replace(R.id.frame_fragment,
-                                    FragmentThreadList.newInstance("", ""),
-                                    FragmentThreadList.TAG)
-                            .commit();
-                    controllerLinks.loadFrontPage("hot");
-                    break;
-                case 1:
-                    getFragmentManager().beginTransaction()
-                            .replace(R.id.frame_fragment, FragmentProfile.newInstance("", ""), FragmentProfile.TAG)
-                            .commit();
-                    break;
-                case 3:
-                    SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(
-                            getApplicationContext());
-                    // TODO: Manually invalidate access token
-                    preferences.edit().putString(AppSettings.ACCESS_TOKEN, "").apply();
-                    preferences.edit().putString(AppSettings.REFRESH_TOKEN, "").apply();
-                    preferences.edit().putString(AppSettings.ACCOUNT_JSON, "").apply();
-                    Toast.makeText(this, "Cleared refresh token", Toast.LENGTH_SHORT).show();
-                    break;
-            }
+        switch (position) {
+            case 0:
+                getFragmentManager().beginTransaction()
+                        .replace(R.id.frame_fragment,
+                                FragmentThreadList.newInstance("", ""),
+                                FragmentThreadList.TAG)
+                        .commit();
+                controllerLinks.loadFrontPage("hot");
+                break;
+            case 1:
+                getFragmentManager().beginTransaction()
+                        .replace(R.id.frame_fragment, FragmentProfile.newInstance("", ""),
+                                FragmentProfile.TAG)
+                        .commit();
+                break;
+            case 3:
+                SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(
+                        getApplicationContext());
+                // TODO: Manually invalidate access token
+                preferences.edit()
+                        .putString(AppSettings.ACCESS_TOKEN, "")
+                        .apply();
+                preferences.edit()
+                        .putString(AppSettings.REFRESH_TOKEN, "")
+                        .apply();
+                preferences.edit()
+                        .putString(AppSettings.ACCOUNT_JSON, "")
+                        .apply();
+                Toast.makeText(this, "Cleared refresh token", Toast.LENGTH_SHORT)
+                        .show();
+                break;
+        }
 //        }
         oldPosition = position;
     }
@@ -230,7 +249,8 @@ public class MainActivity extends AppCompatActivity
     @Override
     public void onBackPressed() {
         if (getFragmentManager().getBackStackEntryCount() > 0) {
-            FragmentWeb fragmentWeb = (FragmentWeb) getFragmentManager().findFragmentByTag(FragmentWeb.TAG);
+            FragmentWeb fragmentWeb = (FragmentWeb) getFragmentManager().findFragmentByTag(
+                    FragmentWeb.TAG);
 
             if (fragmentWeb != null && fragmentWeb.navigateBack()) {
                 return;
@@ -265,14 +285,73 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     public void startActivity(Intent intent) {
+        Log.d(TAG, "startActivity: " + intent.toString());
+
         if (Intent.ACTION_VIEW.equals(intent.getAction()) && TextUtils.equals(
                 getApplicationContext().getPackageName(), intent.getStringExtra(
                         Browser.EXTRA_APPLICATION_ID))) {
-            String url = intent.getDataString();
-            if (URLUtil.isValidUrl(url)) {
-                getFragmentManager().beginTransaction().add(R.id.frame_fragment, FragmentWeb
-                        .newInstance(url, ""), FragmentWeb.TAG).addToBackStack(null)
+            String urlString = intent.getDataString();
+            if (URLUtil.isValidUrl(urlString)) {
+                getFragmentManager().beginTransaction()
+                        .add(R.id.frame_fragment, FragmentWeb
+                                .newInstance(urlString, ""), FragmentWeb.TAG)
+                        .addToBackStack(null)
                         .commit();
+            }
+            else if (urlString.startsWith("/r/")) {
+                Log.d(TAG, "Path: " + urlString);
+                int indexFirstSlash = urlString.indexOf("/", 1);
+                int indexSecondSlash = urlString.indexOf("/", indexFirstSlash + 1);
+                if (indexFirstSlash < 0) {
+                    controllerLinks.setParameters("", "hot");
+                    return;
+                }
+                String subreddit = urlString.substring(indexFirstSlash + 1,
+                        indexSecondSlash > 0 ? indexSecondSlash : urlString.length());
+
+                Log.d(TAG, "Subreddit: " + subreddit);
+
+                if (urlString.contains("wiki")) {
+                    urlString = "https://reddit.com" + urlString;
+                    if (URLUtil.isValidUrl(urlString)) {
+                        getFragmentManager().beginTransaction()
+                                .add(R.id.frame_fragment, FragmentWeb.newInstance(urlString, ""),
+                                        FragmentWeb.TAG)
+                                .addToBackStack(null)
+                                .commit();
+                    }
+                }
+                else if (urlString
+                        .contains("comments")) {
+                    int indexComments = urlString.indexOf("comments") + 8;
+                    String id = urlString.substring(indexComments,
+                            urlString.indexOf("/", indexComments) > -1 ?
+                                    urlString.indexOf("/", indexComments) : urlString.length());
+                    FragmentComments fragmentComments = FragmentComments.newInstance(subreddit,
+                            id, false);
+
+                    getFragmentManager().beginTransaction()
+                            .add(R.id.frame_fragment, fragmentComments, FragmentComments.TAG)
+                            .addToBackStack(null)
+                            .commit();
+                }
+                else {
+                    int indexSort = urlString.indexOf("/", subreddit.length() + 1);
+                    String sort =
+                            indexSort > -1 ?
+                                    urlString.substring(subreddit.length() + 1, indexSort) :
+                                    "hot";
+                    controllerLinks.setParameters(subreddit, "hot");
+                    Log.d(TAG, "Sort: " + sort);
+                }
+            }
+            else if (urlString.startsWith("/u/")) {
+                getFragmentManager().beginTransaction()
+                        .replace(R.id.frame_fragment, FragmentProfile.newInstance("", ""),
+                                FragmentProfile.TAG)
+                        .addToBackStack(null)
+                        .commit();
+                controllerProfile.loadUser(urlString.substring(3, urlString.length()));
             }
         }
         else {
@@ -294,6 +373,11 @@ public class MainActivity extends AppCompatActivity
     @Override
     public ControllerComments getControllerComments() {
         return controllerComments;
+    }
+
+    @Override
+    public ControllerProfile getControllerProfile() {
+        return controllerProfile;
     }
 
     @Override

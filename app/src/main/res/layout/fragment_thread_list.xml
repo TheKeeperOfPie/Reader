@@ -1,4 +1,5 @@
-<FrameLayout
+<android.support.v4.widget.DrawerLayout
+    android:id="@+id/drawer_layout"
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
@@ -22,4 +23,23 @@
 
     </android.support.v4.widget.SwipeRefreshLayout>
 
-</FrameLayout>
+    <ScrollView
+        android:layout_width="@dimen/navigation_drawer_width"
+        android:layout_height="match_parent"
+        android:layout_gravity="end"
+        android:background="@color/darkThemeBackground"
+        >
+
+        <TextView
+            android:id="@+id/text_sidebar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="@dimen/activity_horizontal_margin"
+            android:layout_marginEnd="@dimen/activity_horizontal_margin"
+            android:layout_marginTop="16dp"
+            android:layout_marginBottom="16dp"
+            />
+
+    </ScrollView>
+
+</android.support.v4.widget.DrawerLayout>

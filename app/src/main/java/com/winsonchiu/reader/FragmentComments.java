@@ -28,7 +28,7 @@ public class FragmentComments extends Fragment {
     private static final String ARG_PARAM1 = "param1";
     private static final String ARG_PARAM2 = "param2";
     private static final String ARG_IS_GRID = "isGrid";
-    private static final String TAG = FragmentComments.class.getCanonicalName();
+    public static final String TAG = FragmentComments.class.getCanonicalName();
 
     // TODO: Rename and change types of parameters
     private String subreddit;

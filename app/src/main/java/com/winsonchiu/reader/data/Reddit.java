@@ -52,7 +52,7 @@ public class Reddit {
     public static final String REDIRECT_URI = "https://com.winsonchiu.reader";
     public static final String CLIENT_ID = "zo7k-Nsh7vgn-Q";
 
-    public static final String GFYCAT_URL = "http://gfycat.com/cajax/getComment/";
+    public static final String GFYCAT_URL = "http://gfycat.com/cajax/get/";
     public static final String GFYCAT_WEBM = "webmUrl";
     public static final String GFYCAT_ITEM = "gfyItem";
 
@@ -360,34 +360,6 @@ public class Reddit {
     public static boolean checkIsImage(String url) {
         return url.endsWith(GIF) || url.endsWith(PNG) || url.endsWith(JPG)
                 || url.endsWith(JPEG) || url.endsWith(WEBP);
-    }
-
-    public static Spannable formatHtml(String html, final UrlClickListener listener) {
-        CharSequence sequence = Html.fromHtml(html);
-        // Trims leading and trailing whitespace
-        int start = 0;
-        int end = sequence.length();
-        while (start < end && Character.isWhitespace(sequence.charAt(start))) {
-            start++;
-        }
-        while (end > start && Character.isWhitespace(sequence.charAt(end - 1))) {
-            end--;
-        }
-        SpannableStringBuilder strBuilder = new SpannableStringBuilder(sequence);
-        URLSpan[] urls = strBuilder.getSpans(0, sequence.length(), URLSpan.class);
-        for (final URLSpan span : urls) {
-            int spanStart = strBuilder.getSpanStart(span);
-            int spanEnd = strBuilder.getSpanEnd(span);
-            int flags = strBuilder.getSpanFlags(span);
-            ClickableSpan clickable = new ClickableSpan() {
-                public void onClick(View view) {
-                    listener.onUrlClick(span.getURL());
-                }
-            };
-            strBuilder.setSpan(clickable, spanStart, spanEnd, flags);
-            strBuilder.removeSpan(span);
-        }
-        return strBuilder;
     }
 
     /**

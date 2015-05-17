@@ -88,6 +88,9 @@ public class ControllerLinks implements ControllerLinksBase {
     }
 
     public void loadFrontPage(String sort) {
+        for (LinkClickListener listener : listeners) {
+            listener.setRefreshing(true);
+        }
         this.sort = sort;
         listingSubreddits = new Listing();
         reloadAllLinks();
@@ -170,6 +173,7 @@ public class ControllerLinks implements ControllerLinksBase {
                         listener.getAdapter()
                                 .notifyDataSetChanged();
                         listener.onFullLoaded(0);
+                        listener.loadSideBar(listingSubreddits);
                     }
                     setTitle();
                 }
@@ -339,6 +343,8 @@ public class ControllerLinks implements ControllerLinksBase {
         void setToolbarTitle(String title);
         AdapterLink getAdapter();
         int getRecyclerHeight();
+
+        void loadSideBar(Listing listingSubreddits);
     }
 
     public interface ListenerCallback {
@@ -347,6 +353,8 @@ public class ControllerLinks implements ControllerLinksBase {
         int getColorPositive();
         int getColorNegative();
         int getColorMuted();
+        int getColorText();
+        int getColorTextAlert();
         Activity getActivity();
         float getItemWidth();
         RecyclerView.LayoutManager getLayoutManager();

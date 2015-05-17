@@ -9,13 +9,16 @@ import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.provider.BaseColumns;
 import android.support.v4.widget.CursorAdapter;
+import android.support.v4.widget.DrawerLayout;
 import android.support.v4.widget.SimpleCursorAdapter;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.SearchView;
 import android.support.v7.widget.StaggeredGridLayoutManager;
+import android.text.Html;
 import android.text.TextUtils;
+import android.text.method.LinkMovementMethod;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
@@ -29,6 +32,7 @@ import android.view.animation.AnimationSet;
 import android.view.animation.LinearInterpolator;
 import android.view.animation.Transformation;
 import android.view.animation.TranslateAnimation;
+import android.widget.TextView;
 
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
@@ -41,7 +45,6 @@ import com.winsonchiu.reader.data.Thing;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -61,7 +64,8 @@ public class FragmentThreadList extends Fragment {
     // TODO: Rename parameter arguments, choose names that match
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
     private static final String ARG_PARAM1 = "param1";
-    private static final String ARG_PARAM2 = "param2";;
+    private static final String ARG_PARAM2 = "param2";
+    ;
 
     // TODO: Rename and change types of parameters
     private String mParam1;
@@ -82,6 +86,8 @@ public class FragmentThreadList extends Fragment {
     private Listing subreddits;
     private AdapterSubscriptions adapterSubcriptions;
     private MenuItem itemSearch;
+    private TextView textSidebar;
+    private DrawerLayout drawerLayout;
 
     /**
      * Use this factory method to create a new instance of
@@ -127,7 +133,8 @@ public class FragmentThreadList extends Fragment {
         SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(
                 activity.getApplicationContext());
 
-        menu.findItem(R.id.item_sort_hot).setChecked(true);
+        menu.findItem(R.id.item_sort_hot)
+                .setChecked(true);
 
         itemInterface = menu.findItem(R.id.item_interface);
         switch (preferences.getString(AppSettings.INTERFACE_MODE, AppSettings.MODE_LIST)) {
@@ -143,15 +150,17 @@ public class FragmentThreadList extends Fragment {
 
         final SearchView searchView = (SearchView) itemSearch.getActionView();
 
-        final String[] from = new String[] {"subreddit"};
-        final int[] to = new int[] {android.R.id.text1};
+        final String[] from = new String[]{"subreddit"};
+        final int[] to = new int[]{android.R.id.text1};
         try {
-            subreddits = Listing.fromJson(new JSONObject(preferences.getString(AppSettings.SUBSCRIBED_SUBREDDITS, "")));
+            subreddits = Listing.fromJson(
+                    new JSONObject(preferences.getString(AppSettings.SUBSCRIBED_SUBREDDITS, "")));
         }
         catch (JSONException e) {
             e.printStackTrace();
         }
-        cursorAdapter = new SimpleCursorAdapter(activity, android.R.layout.simple_list_item_1, null, from, to, CursorAdapter.FLAG_REGISTER_CONTENT_OBSERVER);
+        cursorAdapter = new SimpleCursorAdapter(activity, android.R.layout.simple_list_item_1, null,
+                from, to, CursorAdapter.FLAG_REGISTER_CONTENT_OBSERVER);
 
         searchView.setSuggestionsAdapter(cursorAdapter);
         searchView.setOnSuggestionListener(new SearchView.OnSuggestionListener() {
@@ -238,53 +247,67 @@ public class FragmentThreadList extends Fragment {
         item.setChecked(true);
         switch (item.getItemId()) {
             case R.id.item_sort_hot:
-                mListener.getControllerLinks().setSort("hot");
+                mListener.getControllerLinks()
+                        .setSort("hot");
                 flashSearchView();
                 return true;
             case R.id.item_sort_new:
-                mListener.getControllerLinks().setSort("new");
+                mListener.getControllerLinks()
+                        .setSort("new");
                 flashSearchView();
                 return true;
             case R.id.item_sort_top_hour:
-                mListener.getControllerLinks().setSort("hourtop");
+                mListener.getControllerLinks()
+                        .setSort("hourtop");
                 flashSearchView();
                 return true;
             case R.id.item_sort_top_day:
-                mListener.getControllerLinks().setSort("daytop");
+                mListener.getControllerLinks()
+                        .setSort("daytop");
                 flashSearchView();
                 return true;
             case R.id.item_sort_top_week:
-                mListener.getControllerLinks().setSort("weektop");
+                mListener.getControllerLinks()
+                        .setSort("weektop");
                 flashSearchView();
                 return true;
             case R.id.item_sort_top_month:
-                mListener.getControllerLinks().setSort("monthtop");
+                mListener.getControllerLinks()
+                        .setSort("monthtop");
                 flashSearchView();
                 return true;
             case R.id.item_sort_top_year:
-                mListener.getControllerLinks().setSort("yeartop");
+                mListener.getControllerLinks()
+                        .setSort("yeartop");
                 flashSearchView();
                 return true;
             case R.id.item_sort_top_all:
-                mListener.getControllerLinks().setSort("alltop");
+                mListener.getControllerLinks()
+                        .setSort("alltop");
                 flashSearchView();
                 return true;
             case R.id.item_sort_controversial:
-                mListener.getControllerLinks().setSort("controversial");
+                mListener.getControllerLinks()
+                        .setSort("controversial");
                 flashSearchView();
                 return true;
             case R.id.item_interface:
                 if (AppSettings.MODE_LIST.equals(
                         preferences.getString(AppSettings.INTERFACE_MODE, AppSettings.MODE_LIST))) {
-                    resetAdapter(new AdapterLinkGrid(activity, mListener.getControllerLinks(), linkClickListener));
+                    resetAdapter(new AdapterLinkGrid(activity, mListener.getControllerLinks(),
+                            linkClickListener));
                     item.setIcon(getResources().getDrawable(R.drawable.ic_view_list_white_24dp));
-                    preferences.edit().putString(AppSettings.INTERFACE_MODE, AppSettings.MODE_GRID)
+                    preferences.edit()
+                            .putString(AppSettings.INTERFACE_MODE, AppSettings.MODE_GRID)
                             .commit();
                 }
                 else {
-                    resetAdapter(new AdapterLinkList(activity, mListener.getControllerLinks(), linkClickListener));
+                    resetAdapter(new AdapterLinkList(activity, mListener.getControllerLinks(),
+                            linkClickListener));
                     item.setIcon(getResources().getDrawable(R.drawable.ic_view_module_white_24dp));
-                    preferences.edit().putString(AppSettings.INTERFACE_MODE, AppSettings.MODE_LIST).commit();
+                    preferences.edit()
+                            .putString(AppSettings.INTERFACE_MODE, AppSettings.MODE_LIST)
+                            .commit();
                 }
                 return true;
 
@@ -310,7 +333,8 @@ public class FragmentThreadList extends Fragment {
             currentPosition[0] = ((LinearLayoutManager) layoutManager).findFirstVisibleItemPosition();
         }
         else if (layoutManager instanceof StaggeredGridLayoutManager) {
-            ((StaggeredGridLayoutManager) layoutManager).findFirstCompletelyVisibleItemPositions(currentPosition);
+            ((StaggeredGridLayoutManager) layoutManager).findFirstCompletelyVisibleItemPositions(
+                    currentPosition);
         }
 
         recyclerThreadList.removeItemDecoration(adapterLink.getItemDecoration());
@@ -333,7 +357,8 @@ public class FragmentThreadList extends Fragment {
         linkClickListener = new ControllerLinks.LinkClickListener() {
             @Override
             public void onClickComments(final Link link, final RecyclerView.ViewHolder viewHolder) {
-                mListener.getControllerComments().setLink(link);
+                mListener.getControllerComments()
+                        .setLink(link);
 
                 if (viewHolder instanceof AdapterLinkGrid.ViewHolder) {
                     ((StaggeredGridLayoutManager.LayoutParams) viewHolder.itemView.getLayoutParams()).setFullSpan(
@@ -344,14 +369,19 @@ public class FragmentThreadList extends Fragment {
                 final float viewStartPaddingBottom = viewHolder.itemView.getPaddingBottom();
                 final float screenHeight = getResources().getDisplayMetrics().heightPixels;
 
-                long duration = (long) Math.abs(viewStartY / screenHeight * AnimationUtils.MOVE_DURATION);
-                TranslateAnimation translateAnimation = new TranslateAnimation(0, 0, 0, -viewStartY);
+                long duration = (long) Math.abs(
+                        viewStartY / screenHeight * AnimationUtils.MOVE_DURATION);
+                TranslateAnimation translateAnimation = new TranslateAnimation(0, 0, 0,
+                        -viewStartY);
 
                 Animation heightAnimation = new Animation() {
                     @Override
                     protected void applyTransformation(float interpolatedTime, Transformation t) {
                         super.applyTransformation(interpolatedTime, t);
-                        viewHolder.itemView.setPadding(viewHolder.itemView.getPaddingLeft(), viewHolder.itemView.getPaddingTop(), viewHolder.itemView.getPaddingRight(), (int) (viewStartPaddingBottom + interpolatedTime * screenHeight));
+                        viewHolder.itemView.setPadding(viewHolder.itemView.getPaddingLeft(),
+                                viewHolder.itemView.getPaddingTop(),
+                                viewHolder.itemView.getPaddingRight(),
+                                (int) (viewStartPaddingBottom + interpolatedTime * screenHeight));
                     }
 
                     @Override
@@ -376,15 +406,22 @@ public class FragmentThreadList extends Fragment {
 
                     @Override
                     public void onAnimationEnd(Animation animation) {
-                        FragmentComments fragmentComments = FragmentComments.newInstance(link.getSubreddit(), link.getId(), viewHolder instanceof AdapterLinkGrid.ViewHolder);
+                        FragmentComments fragmentComments = FragmentComments.newInstance(
+                                link.getSubreddit(), link.getId(),
+                                viewHolder instanceof AdapterLinkGrid.ViewHolder);
 
-                        getFragmentManager().beginTransaction().add(R.id.frame_fragment, fragmentComments, "fragmentComments").addToBackStack(null)
+                        getFragmentManager().beginTransaction()
+                                .add(R.id.frame_fragment, fragmentComments, FragmentComments.TAG)
+                                .addToBackStack(null)
                                 .commit();
 
                         viewHolder.itemView.postDelayed(new Runnable() {
                             @Override
                             public void run() {
-                                viewHolder.itemView.setPadding(viewHolder.itemView.getPaddingLeft(), viewHolder.itemView.getPaddingTop(), viewHolder.itemView.getPaddingRight(), (int) viewStartPaddingBottom);
+                                viewHolder.itemView.setPadding(viewHolder.itemView.getPaddingLeft(),
+                                        viewHolder.itemView.getPaddingTop(),
+                                        viewHolder.itemView.getPaddingRight(),
+                                        (int) viewStartPaddingBottom);
                                 viewHolder.itemView.clearAnimation();
                             }
                         }, 150);
@@ -401,8 +438,10 @@ public class FragmentThreadList extends Fragment {
 
             @Override
             public void loadUrl(String url) {
-                getFragmentManager().beginTransaction().add(R.id.frame_fragment, FragmentWeb
-                        .newInstance(url, ""), FragmentWeb.TAG).addToBackStack(null)
+                getFragmentManager().beginTransaction()
+                        .add(R.id.frame_fragment, FragmentWeb
+                                .newInstance(url, ""), FragmentWeb.TAG)
+                        .addToBackStack(null)
                         .commit();
             }
 
@@ -413,10 +452,12 @@ public class FragmentThreadList extends Fragment {
                     @Override
                     public void run() {
                         if (layoutManager instanceof LinearLayoutManager) {
-                            ((LinearLayoutManager) layoutManager).scrollToPositionWithOffset(position, 0);
+                            ((LinearLayoutManager) layoutManager).scrollToPositionWithOffset(
+                                    position, 0);
                         }
                         else if (layoutManager instanceof StaggeredGridLayoutManager) {
-                            ((StaggeredGridLayoutManager) layoutManager).scrollToPositionWithOffset(position, 0);
+                            ((StaggeredGridLayoutManager) layoutManager).scrollToPositionWithOffset(
+                                    position, 0);
                         }
                     }
                 });
@@ -449,9 +490,50 @@ public class FragmentThreadList extends Fragment {
             public int getRecyclerHeight() {
                 return recyclerThreadList.getHeight();
             }
+
+            @Override
+            public void loadSideBar(Listing listingSubreddits) {
+                if (listingSubreddits.getChildren()
+                        .size() == 1) {
+                    Subreddit subreddit = ((Subreddit) listingSubreddits.getChildren()
+                            .get(0));
+                    mListener.getControllerLinks()
+                            .getReddit()
+                            .loadGet(
+                                    Reddit.OAUTH_URL + "/r/" + subreddit.getDisplayName() + "/about",
+                                    new Response.Listener<String>() {
+                                        @Override
+                                        public void onResponse(String response) {
+                                            try {
+                                                Subreddit loadedSubreddit = Subreddit.fromJson(
+                                                        new JSONObject(response));
+                                                String html = Html.fromHtml(
+                                                        loadedSubreddit.getDescriptionHtml())
+                                                        .toString();
+                                                CharSequence sequence = Html.fromHtml(html);
+                                                textSidebar.setText(sequence);
+                                                drawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED);
+                                            }
+                                            catch (JSONException e) {
+                                                e.printStackTrace();
+                                            }
+                                        }
+                                    }, new Response.ErrorListener() {
+                                        @Override
+                                        public void onErrorResponse(VolleyError error) {
+
+                                        }
+                                    }, 0);
+                }
+                else {
+                    textSidebar.setText(null);
+                    drawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED);
+                }
+            }
         };
 
-        swipeRefreshThreadList = (SwipeRefreshLayout) view.findViewById(R.id.swipe_refresh_thread_list);
+        swipeRefreshThreadList = (SwipeRefreshLayout) view.findViewById(
+                R.id.swipe_refresh_thread_list);
         swipeRefreshThreadList.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
@@ -463,10 +545,12 @@ public class FragmentThreadList extends Fragment {
             if (AppSettings.MODE_LIST.equals(
                     PreferenceManager.getDefaultSharedPreferences(activity.getApplicationContext())
                             .getString(AppSettings.INTERFACE_MODE, AppSettings.MODE_LIST))) {
-                adapterLink = new AdapterLinkList(activity, mListener.getControllerLinks(), linkClickListener);
+                adapterLink = new AdapterLinkList(activity, mListener.getControllerLinks(),
+                        linkClickListener);
             }
             else {
-                adapterLink = new AdapterLinkGrid(activity, mListener.getControllerLinks(), linkClickListener);
+                adapterLink = new AdapterLinkGrid(activity, mListener.getControllerLinks(),
+                        linkClickListener);
             }
         }
         adapterLink.setActivity(activity);
@@ -486,7 +570,13 @@ public class FragmentThreadList extends Fragment {
         recyclerThreadList.setAdapter(adapterLink);
         recyclerThreadList.setHasFixedSize(true);
 
-        mListener.getControllerLinks().addListener(linkClickListener);
+        drawerLayout = (DrawerLayout) view.findViewById(R.id.drawer_layout);
+
+        textSidebar = (TextView) view.findViewById(R.id.text_sidebar);
+        textSidebar.setMovementMethod(LinkMovementMethod.getInstance());
+
+        mListener.getControllerLinks()
+                .addListener(linkClickListener);
         return view;
     }
 
@@ -509,7 +599,8 @@ public class FragmentThreadList extends Fragment {
     public void onAttach(Activity activity) {
         super.onAttach(activity);
         this.activity = activity;
-        this.preferences = PreferenceManager.getDefaultSharedPreferences(activity.getApplicationContext());
+        this.preferences = PreferenceManager.getDefaultSharedPreferences(
+                activity.getApplicationContext());
         try {
             mListener = (OnFragmentInteractionListener) activity;
         }
@@ -530,7 +621,8 @@ public class FragmentThreadList extends Fragment {
     @Override
     public void onStart() {
         super.onStart();
-        mListener.getControllerLinks().addListener(linkClickListener);
+        mListener.getControllerLinks()
+                .addListener(linkClickListener);
     }
 
     @Override
@@ -538,19 +630,22 @@ public class FragmentThreadList extends Fragment {
         super.onResume();
         swipeRefreshThreadList.setRefreshing(mListener.getControllerLinks()
                 .isLoading());
-        mListener.getControllerLinks().setTitle();
+        mListener.getControllerLinks()
+                .setTitle();
     }
 
     @Override
     public void onStop() {
-        mListener.getControllerLinks().removeListener(linkClickListener);
+        mListener.getControllerLinks()
+                .removeListener(linkClickListener);
         super.onStop();
     }
 
     @Override
     public void onDestroy() {
         super.onDestroy();
-        CustomApplication.getRefWatcher(getActivity()).watch(this);
+        CustomApplication.getRefWatcher(getActivity())
+                .watch(this);
     }
 
     /**

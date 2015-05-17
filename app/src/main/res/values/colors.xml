@@ -10,6 +10,7 @@
     <color name="negativeScore">#FF9494FF</color>
 
     <color name="darkThemeTextColor">#FFFFFFFF</color>
+    <color name="darkThemeTextColorAlert">#FFEF5350</color>
     <color name="darkThemeTextColorMuted">#FFCCCCCC</color>
 
     <color name="darkThemeStatusBar">#FF000000</color>

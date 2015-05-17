@@ -34,6 +34,7 @@ import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.winsonchiu.reader.data.Comment;
 import com.winsonchiu.reader.data.Link;
+import com.winsonchiu.reader.data.Listing;
 import com.winsonchiu.reader.data.Reddit;
 import com.winsonchiu.reader.data.User;
 
@@ -70,6 +71,8 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
     private int colorPositive;
     private int colorNegative;
     private int colorDefault;
+    private int colorText;
+    private int colorTextAlert;
     private int thumbnailWidth;
     private SharedPreferences preferences;
     private boolean isGrid;
@@ -88,6 +91,8 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
         this.colorPositive = resources.getColor(R.color.positiveScore);
         this.colorNegative = resources.getColor(R.color.negativeScore);
         this.colorDefault = resources.getColor(R.color.darkThemeDialog);
+        this.colorText = resources.getColor(R.color.darkThemeTextColor);
+        this.colorTextAlert = resources.getColor(R.color.darkThemeTextColorAlert);
         this.thumbnailWidth = resources.getDisplayMetrics().widthPixels / 2;
         this.itemWidth = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 48,
                 resources.getDisplayMetrics());
@@ -125,6 +130,11 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
             @Override
             public int getRecyclerHeight() {
                 return listener.getRecyclerHeight();
+            }
+
+            @Override
+            public void loadSideBar(Listing listingSubreddits) {
+
             }
 
             @Override
@@ -214,6 +224,16 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
     @Override
     public int getColorMuted() {
         return colorMuted;
+    }
+
+    @Override
+    public int getColorText() {
+        return colorText;
+    }
+
+    @Override
+    public int getColorTextAlert() {
+        return colorTextAlert;
     }
 
     @Override
@@ -434,20 +454,19 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                                                     Map<String, String> params = new HashMap<>();
                                                     params.put("id", comment.getName());
 
-                                                    // TODO: Uncomment this
-//                                                    callback.getControllerComments().getReddit()
-//                                                            .loadPost(Reddit.OAUTH_URL + "/api/del",
-//                                                                    new Response.Listener<String>() {
-//                                                                        @Override
-//                                                                        public void onResponse(String response) {
-//                                                                            callback.getControllerComments().removeComment(commentIndex);
-//                                                                        }
-//                                                                    }, new Response.ErrorListener() {
-//                                                                        @Override
-//                                                                        public void onErrorResponse(VolleyError error) {
-//
-//                                                                        }
-//                                                                    }, params, 0);
+                                                    callback.getControllerComments().getReddit()
+                                                            .loadPost(Reddit.OAUTH_URL + "/api/del",
+                                                                    new Response.Listener<String>() {
+                                                                        @Override
+                                                                        public void onResponse(String response) {
+                                                                            callback.getControllerComments().removeComment(commentIndex);
+                                                                        }
+                                                                    }, new Response.ErrorListener() {
+                                                                        @Override
+                                                                        public void onErrorResponse(VolleyError error) {
+
+                                                                        }
+                                                                    }, params, 0);
                                                 }
                                             })
                                     .setNegativeButton("No", null)
@@ -555,7 +574,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                 layoutContainerActions.setVisibility(View.GONE);
             }
 
-            int alphaLevel = comment.getLevel() * 255 / 10;
+            int alphaLevel = comment.getLevel() * 255 / 9;
 
             int overlayColor = ColorUtils.setAlphaComponent(0xFF000000, alphaLevel <= 255 ? alphaLevel : 255);
 

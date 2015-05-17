@@ -46,6 +46,7 @@ public class ControllerProfile implements ControllerLinksBase, ControllerComment
     private Comment topComment;
     private User user;
     private String page;
+    private String sort;
 
     public ControllerProfile(Activity activity) {
         data = new Listing();
@@ -59,6 +60,7 @@ public class ControllerProfile implements ControllerLinksBase, ControllerComment
         topComment = new Comment();
         user = new User();
         page = "Overview";
+        sort = "hot";
     }
 
     public void addListener(ItemClickListener listener) {
@@ -128,14 +130,29 @@ public class ControllerProfile implements ControllerLinksBase, ControllerComment
     public void setUser(User user) {
         this.user = user;
         for (ControllerProfile.ItemClickListener listener : listeners) {
-            listener.setToolbarTitle("/u/" + user.getName());
+//            listener.setToolbarTitle("/u/" + user.getName());
+            listener.setToolbarTitle(page);
         }
+        sort = "hot";
         reload();
     }
 
     public void reload() {
 
-        reddit.loadGet(Reddit.OAUTH_URL + "/user/" + user.getName() + "/" + page.toLowerCase(),
+        for (ControllerProfile.ItemClickListener listener : listeners) {
+            listener.setRefreshing(true);
+        }
+
+        String url = Reddit.OAUTH_URL + "/user/" + user.getName() + "/" + page.toLowerCase() + "?sort=";
+
+        if (sort.contains("top")) {
+            url += "top&t=" + sort.substring(0, sort.indexOf("top"));
+        }
+        else {
+            url += sort;
+        }
+
+        reddit.loadGet(url,
                 new Response.Listener<String>() {
                     @Override
                     public void onResponse(String response) {
@@ -150,7 +167,8 @@ public class ControllerProfile implements ControllerLinksBase, ControllerComment
 
                             topLink = null;
                             topComment = null;
-                            if (!TextUtils.isEmpty(user.getName()) && page.equalsIgnoreCase("Overview")) {
+                            if (!TextUtils.isEmpty(user.getName()) && page.equalsIgnoreCase(
+                                    "Overview")) {
                                 loadTopEntries();
                             }
                         }
@@ -350,6 +368,15 @@ public class ControllerProfile implements ControllerLinksBase, ControllerComment
                             public void onErrorResponse(VolleyError error) {
                             }
                         }, 0);
+    }
+
+    public void setSort(String sort) {
+        this.sort = sort;
+        reload();
+    }
+
+    public String getSort() {
+        return sort;
     }
 
     public interface ItemClickListener extends DisallowListener {

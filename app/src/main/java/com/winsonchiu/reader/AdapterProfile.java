@@ -18,6 +18,7 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import com.winsonchiu.reader.data.Link;
+import com.winsonchiu.reader.data.Listing;
 import com.winsonchiu.reader.data.User;
 
 import java.util.Date;
@@ -40,6 +41,8 @@ public class AdapterProfile extends RecyclerView.Adapter<RecyclerView.ViewHolder
     private int colorPositive;
     private int colorNegative;
     private int colorDefault;
+    private int colorText;
+    private int colorTextAlert;
     private Drawable drawableUpvote;
     private Drawable drawableDownvote;
     private SharedPreferences preferences;
@@ -60,6 +63,8 @@ public class AdapterProfile extends RecyclerView.Adapter<RecyclerView.ViewHolder
         this.colorPositive = resources.getColor(R.color.positiveScore);
         this.colorNegative = resources.getColor(R.color.negativeScore);
         this.colorDefault = resources.getColor(R.color.darkThemeDialog);
+        this.colorText = resources.getColor(R.color.darkThemeTextColor);
+        this.colorTextAlert = resources.getColor(R.color.darkThemeTextColorAlert);
         this.drawableUpvote = resources.getDrawable(R.drawable.ic_keyboard_arrow_up_white_24dp);
         this.drawableDownvote = resources.getDrawable(R.drawable.ic_keyboard_arrow_down_white_24dp);
         this.itemWidth = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 48,
@@ -113,6 +118,11 @@ public class AdapterProfile extends RecyclerView.Adapter<RecyclerView.ViewHolder
                     }
 
                     @Override
+                    public void loadSideBar(Listing listingSubreddits) {
+
+                    }
+
+                    @Override
                     public void requestDisallowInterceptTouchEvent(boolean disallow) {
 
                     }
@@ -137,6 +147,16 @@ public class AdapterProfile extends RecyclerView.Adapter<RecyclerView.ViewHolder
             @Override
             public int getColorMuted() {
                 return colorMuted;
+            }
+
+            @Override
+            public int getColorText() {
+                return colorText;
+            }
+
+            @Override
+            public int getColorTextAlert() {
+                return colorTextAlert;
             }
 
             @Override
