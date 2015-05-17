@@ -32,26 +32,35 @@ public class User {
 
         User user = new User();
 
-        user.setHasMail(rootJsonObject.getBoolean("has_mail"));
         user.setName(rootJsonObject.getString("name"));
         user.setCreated(rootJsonObject.getLong("created"));
         user.setHideFromRobots(rootJsonObject.getBoolean("hide_from_robots"));
-        user.setGoldCreddits(rootJsonObject.getInt("gold_creddits"));
         user.setCreatedUtc(rootJsonObject.getLong("created_utc"));
-        user.setHasModMail(rootJsonObject.getBoolean("has_mod_mail"));
         user.setLinkKarma(rootJsonObject.getInt("link_karma"));
         user.setCommentKarma(rootJsonObject.getInt("comment_karma"));
-        user.setOver18(rootJsonObject.getBoolean("over_18"));
         user.setIsGold(rootJsonObject.getBoolean("is_gold"));
         user.setIsMod(rootJsonObject.getBoolean("is_mod"));
-
-        if (!rootJsonObject.getString("gold_expiration").equals("null")) {
-            user.setGoldExpiration(rootJsonObject.getLong("gold_expiration"));
-        }
-
         user.setHasVerifiedEmail(rootJsonObject.getBoolean("has_verified_email"));
         user.setId(rootJsonObject.getString("id"));
-        user.setInboxCount(rootJsonObject.getInt("inbox_count"));
+
+        if (rootJsonObject.has("gold_expiration") && !rootJsonObject.getString("gold_expiration").equals("null")) {
+            user.setGoldExpiration(rootJsonObject.getLong("gold_expiration"));
+        }
+        if (rootJsonObject.has("has_mail")) {
+            user.setHasMail(rootJsonObject.getBoolean("has_mail"));
+        }
+        if (rootJsonObject.has("inbox_count")) {
+            user.setInboxCount(rootJsonObject.getInt("inbox_count"));
+        }
+        if (rootJsonObject.has("gold_creddits")) {
+            user.setGoldCreddits(rootJsonObject.getInt("gold_creddits"));
+        }
+        if (rootJsonObject.has("has_mod_mail")) {
+            user.setHasModMail(rootJsonObject.getBoolean("has_mod_mail"));
+        }
+        if (rootJsonObject.has("over_18")) {
+            user.setOver18(rootJsonObject.getBoolean("over_18"));
+        }
 
         return user;
     }

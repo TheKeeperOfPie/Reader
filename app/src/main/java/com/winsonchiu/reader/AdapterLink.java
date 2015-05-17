@@ -17,12 +17,8 @@ import android.support.v7.widget.ShareActionProvider;
 import android.support.v7.widget.StaggeredGridLayoutManager;
 import android.support.v7.widget.Toolbar;
 import android.text.Html;
-import android.text.Spannable;
-import android.text.SpannableString;
-import android.text.Spanned;
 import android.text.TextUtils;
 import android.text.method.LinkMovementMethod;
-import android.text.style.ForegroundColorSpan;
 import android.util.Log;
 import android.util.TypedValue;
 import android.view.MenuItem;
@@ -67,6 +63,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
     protected ControllerLinks controllerLinks;
     protected int colorPositive;
     protected int colorNegative;
+    protected int colorMuted;
     protected float itemWidth;
     protected ControllerLinks.LinkClickListener listener;
     private static int ACTION_MENU_SIZE = 5;
@@ -76,6 +73,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         this.activity = activity;
         this.colorPositive = resources.getColor(R.color.positiveScore);
         this.colorNegative = resources.getColor(R.color.negativeScore);
+        this.colorMuted = resources.getColor(R.color.darkThemeTextColorMuted);
         this.itemWidth = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 48,
                 resources.getDisplayMetrics());
     }
@@ -103,6 +101,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         protected TextView textThreadTitle;
         protected TextView textThreadSelf;
         protected TextView textThreadInfo;
+        protected TextView textTimestamp;
         protected ImageButton buttonComments;
         protected Toolbar toolbarActions;
         protected ControllerLinks.ListenerCallback callback;
@@ -179,6 +178,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             textThreadInfo = (TextView) itemView.findViewById(R.id.text_thread_info);
             textThreadSelf = (TextView) itemView.findViewById(R.id.text_thread_self);
             textThreadSelf.setMovementMethod(LinkMovementMethod.getInstance());
+            textTimestamp = (TextView) itemView.findViewById(R.id.text_timestamp);
             buttonComments = (ImageButton) itemView.findViewById(R.id.button_comments);
             buttonComments.setOnClickListener(new View.OnClickListener() {
                 @Override
@@ -187,7 +187,6 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                             .onClickComments(
                                     callback.getController()
                                             .getLink(getAdapterPosition()), ViewHolderBase.this);
-                    videoFull.pause();
                 }
             });
             toolbarActions = (Toolbar) itemView.findViewById(R.id.toolbar_actions);
@@ -254,6 +253,8 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                     }
 
                     AnimationUtils.animateExpandActions(toolbarActions, false);
+                    AnimationUtils.animateExpand(textTimestamp,
+                            AnimationUtils.getMeasuredHeight(textTimestamp));
                 }
             };
 
@@ -425,17 +426,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         }
 
         public void setTextInfo() {
-            Link link = callback.getController()
-                    .getLink(getAdapterPosition());
 
-            String subreddit = "/r/" + link.getSubreddit();
-            Spannable spannableInfo = new SpannableString(subreddit + "\n" + link.getScore() + " by " + link.getAuthor());
-            spannableInfo.setSpan(
-                    new ForegroundColorSpan(link.getScore() > 0 ? callback.getColorPositive() : callback.getColorNegative()),
-                    subreddit.length() + 1,
-                    subreddit.length() + 1 + String.valueOf(link.getScore())
-                            .length(), Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
-            textThreadInfo.setText(spannableInfo);
         }
 
 

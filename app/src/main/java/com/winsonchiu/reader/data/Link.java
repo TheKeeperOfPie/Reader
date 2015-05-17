@@ -14,33 +14,35 @@ public class Link extends Thing {
 
     private static final String TAG = Link.class.getCanonicalName();
 
-    private String author;
-    private String authorFlairCssClass;
-    private String authorFlairText;
+    private String author = "";
+    private String authorFlairCssClass = "";
+    private String authorFlairText = "";
     private boolean clicked;
-    private String domain;
+    private String domain = "";
     private boolean hidden;
     private boolean isSelf;
     private int likes;
-    private String linkFlairCssClass;
-    private String linkFlairText;
-    private String media;
-    private String mediaEmbed;
+    private String linkFlairCssClass = "";
+    private String linkFlairText = "";
+    private String media = "";
+    private String mediaEmbed = "";
     private int numComments;
     private boolean over18;
-    private String permalink;
+    private String permalink = "";
     private boolean saved;
     private int score;
-    private String selfText;
-    private String selfTextHtml;
-    private String subreddit;
-    private String subredditId;
-    private String thumbnail;
-    private String title;
-    private String url;
+    private String selfText = "";
+    private String selfTextHtml = "";
+    private String subreddit = "";
+    private String subredditId = "";
+    private String thumbnail = "";
+    private String title = "";
+    private String url = "";
     private long edited;
     private Reddit.Distinguished distinguished;
     private boolean stickied;
+    private long created;
+    private long createdUtc;
 
     private Listing comments;
 
@@ -53,6 +55,8 @@ public class Link extends Thing {
 
         link.setId(jsonObject.getString("id"));
         link.setName(jsonObject.getString("name"));
+        link.setCreated(jsonObject.getLong("created"));
+        link.setCreatedUtc(jsonObject.getLong("created_utc"));
 
         link.setAuthor(jsonObject.getString("author"));
         link.setAuthorFlairCssClass(jsonObject.getString("author_flair_css_class"));
@@ -374,5 +378,21 @@ public class Link extends Thing {
 
     public void setComments(Listing comments) {
         this.comments = comments;
+    }
+
+    public long getCreated() {
+        return created;
+    }
+
+    public void setCreated(long created) {
+        this.created = created;
+    }
+
+    public long getCreatedUtc() {
+        return createdUtc;
+    }
+
+    public void setCreatedUtc(long createdUtc) {
+        this.createdUtc = createdUtc;
     }
 }

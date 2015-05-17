@@ -49,15 +49,21 @@ public class MainActivity extends AppCompatActivity
     private Toolbar toolbar;
     private ControllerLinks controllerLinks;
     private ControllerComments controllerComments;
+    private SharedPreferences sharedPreferences;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         Fabric.with(this, new Crashlytics());
-        setContentView(R.layout.activity_main);
+        sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
 
-        controllerLinks = new ControllerLinks(this, "", "hot");
-        controllerComments = new ControllerComments(this, "", "");
+        if (controllerLinks == null) {
+            controllerLinks = new ControllerLinks(this, "", "hot");
+        }
+        if (controllerComments == null) {
+            controllerComments = new ControllerComments(this, "", "");
+        }
+        setContentView(R.layout.activity_main);
 
         mNavigationDrawerFragment = (FragmentNavDrawer)
                 getFragmentManager().findFragmentById(R.id.navigation_drawer);
@@ -147,8 +153,11 @@ public class MainActivity extends AppCompatActivity
             switch (position) {
                 case 0:
                     getFragmentManager().beginTransaction()
-                            .replace(R.id.frame_fragment, FragmentThreadList.newInstance("", ""), FragmentThreadList.TAG)
+                            .replace(R.id.frame_fragment,
+                                    FragmentThreadList.newInstance("", ""),
+                                    FragmentThreadList.TAG)
                             .commit();
+                    controllerLinks.loadFrontPage("hot");
                     break;
                 case 1:
                     getFragmentManager().beginTransaction()

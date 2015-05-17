@@ -87,6 +87,12 @@ public class ControllerLinks implements ControllerLinksBase {
         reloadAllLinks();
     }
 
+    public void loadFrontPage(String sort) {
+        this.sort = sort;
+        listingSubreddits = new Listing();
+        reloadAllLinks();
+    }
+
     public void setSort(String sort) {
         if (!this.sort.equalsIgnoreCase(sort)) {
             this.sort = sort;
@@ -94,7 +100,7 @@ public class ControllerLinks implements ControllerLinksBase {
         }
     }
 
-    private void setTitle() {
+    public void setTitle() {
         String subredditName = "Front Page";
         if (listingSubreddits.getChildren().size() > 0) {
             subredditName = "/r/" + ((Subreddit) listingSubreddits.getChildren().get(0)).getDisplayName();
@@ -340,6 +346,7 @@ public class ControllerLinks implements ControllerLinksBase {
         ControllerLinksBase getController();
         int getColorPositive();
         int getColorNegative();
+        int getColorMuted();
         Activity getActivity();
         float getItemWidth();
         RecyclerView.LayoutManager getLayoutManager();

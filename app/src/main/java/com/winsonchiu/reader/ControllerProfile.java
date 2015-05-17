@@ -14,6 +14,7 @@ import com.winsonchiu.reader.data.Link;
 import com.winsonchiu.reader.data.Listing;
 import com.winsonchiu.reader.data.Reddit;
 import com.winsonchiu.reader.data.Thing;
+import com.winsonchiu.reader.data.User;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -29,18 +30,22 @@ import java.util.Set;
 public class ControllerProfile implements ControllerLinksBase, ControllerCommentsBase {
 
     public static final int VIEW_TYPE_HEADER = 0;
-    public static final int VIEW_TYPE_LINK = 1;
-    public static final int VIEW_TYPE_COMMENT = 2;
+    public static final int VIEW_TYPE_HEADER_TEXT = 1;
+    public static final int VIEW_TYPE_LINK = 2;
+    public static final int VIEW_TYPE_COMMENT = 3;
 
     private static final String TAG = ControllerProfile.class.getCanonicalName();
 
     private Set<ItemClickListener> listeners;
     private Listing data;
     private Reddit reddit;
-    private String username;
     private Drawable drawableSelf;
     private Drawable drawableDefault;
     private Link link;
+    private Link topLink;
+    private Comment topComment;
+    private User user;
+    private String page;
 
     public ControllerProfile(Activity activity) {
         data = new Listing();
@@ -50,6 +55,10 @@ public class ControllerProfile implements ControllerLinksBase, ControllerComment
         this.drawableSelf = resources.getDrawable(R.drawable.ic_chat_white_48dp);
         this.drawableDefault = resources.getDrawable(R.drawable.ic_web_white_48dp);
         link = new Link();
+        topLink = new Link();
+        topComment = new Comment();
+        user = new User();
+        page = "Overview";
     }
 
     public void addListener(ItemClickListener listener) {
@@ -87,12 +96,19 @@ public class ControllerProfile implements ControllerLinksBase, ControllerComment
 
     @Override
     public Link getLink(int position) {
-        return (Link) data.getChildren().get(position - 1);
+        if (position == 2) {
+            return topLink;
+        }
+        return (Link) data.getChildren().get(position - 6);
     }
 
     @Override
-    public Comment get(int position) {
-        return (Comment) data.getChildren().get(position - 1);
+    public Comment getComment(int position) {
+        if (position == 4) {
+            return topComment;
+        }
+
+        return (Comment) data.getChildren().get(position - 6);
     }
 
     @Override
@@ -100,15 +116,26 @@ public class ControllerProfile implements ControllerLinksBase, ControllerComment
         return reddit;
     }
 
-    public void setUser(String username) {
-        this.username = username;
-        link.setAuthor(username);
+    public void setPage(String page) {
+        this.page = page;
+        reload();
+    }
+
+    public String getPage() {
+        return page;
+    }
+
+    public void setUser(User user) {
+        this.user = user;
+        for (ControllerProfile.ItemClickListener listener : listeners) {
+            listener.setToolbarTitle("/u/" + user.getName());
+        }
         reload();
     }
 
     public void reload() {
 
-        reddit.loadGet(Reddit.OAUTH_URL + "/user/" + username + "/overview",
+        reddit.loadGet(Reddit.OAUTH_URL + "/user/" + user.getName() + "/" + page.toLowerCase(),
                 new Response.Listener<String>() {
                     @Override
                     public void onResponse(String response) {
@@ -116,10 +143,88 @@ public class ControllerProfile implements ControllerLinksBase, ControllerComment
                         try {
                             setData(Listing.fromJson(new JSONObject(response)));
                             for (ControllerProfile.ItemClickListener listener : listeners) {
-                                listener.setRefreshing(false);
-                                listener.getAdapter()
-                                        .notifyDataSetChanged();
+                                listener.setRefreshing(
+                                        false);
+                                listener.resetRecycler();
                             }
+
+                            topLink = null;
+                            topComment = null;
+                            if (!TextUtils.isEmpty(user.getName()) && page.equalsIgnoreCase("Overview")) {
+                                loadTopEntries();
+                            }
+                        }
+                        catch (JSONException e1) {
+                            e1.printStackTrace();
+                        }
+                    }
+                }, new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        setData(new Listing());
+                        for (ControllerProfile.ItemClickListener listener : listeners) {
+                            listener.setRefreshing(
+                                    false);
+                            listener.resetRecycler();
+                        }
+                    }
+                }, 0);
+    }
+
+    private void loadTopEntries() {
+        reddit.loadGet(
+                Reddit.OAUTH_URL + "/user/" + user.getName() + "/submitted?sort=top&limit=1&",
+                new Response.Listener<String>() {
+                    @Override
+                    public void onResponse(String response) {
+                        Log.d(TAG, "Submitted onResponse: " + response);
+                        try {
+                            Listing listingLink = Listing.fromJson(
+                                    new JSONObject(response));
+                            if (!listingLink.getChildren().isEmpty()) {
+                                topLink = (Link) listingLink.getChildren()
+                                        .get(0);
+                                for (ControllerProfile.ItemClickListener listener : listeners) {
+                                    listener.setRefreshing(false);
+                                    listener.getAdapter()
+                                            .notifyItemChanged(2);
+                                }
+                            }
+
+                            reddit.loadGet(
+                                    Reddit.OAUTH_URL + "/user/" + user.getName() + "/comments?sort=top&limit=1&",
+                                    new Response.Listener<String>() {
+                                        @Override
+                                        public void onResponse(String response) {
+                                            Log.d(TAG,
+                                                    "onResponse: " + response);
+                                            try {
+                                                Listing listingComment = Listing.fromJson(
+                                                        new JSONObject(
+                                                                response));
+                                                if (!listingComment.getChildren().isEmpty()) {
+                                                    topComment = null;
+                                                    topComment = (Comment) listingComment.getChildren()
+                                                            .get(0);
+                                                    for (ControllerProfile.ItemClickListener listener : listeners) {
+                                                        listener.setRefreshing(
+                                                                false);
+                                                        listener.getAdapter()
+                                                                .notifyItemChanged(
+                                                                        4);
+                                                    }
+                                                }
+                                            }
+                                            catch (JSONException e1) {
+                                                e1.printStackTrace();
+                                            }
+                                        }
+                                    }, new Response.ErrorListener() {
+                                        @Override
+                                        public void onErrorResponse(VolleyError error) {
+
+                                        }
+                                    }, 0);
                         }
                         catch (JSONException e1) {
                             e1.printStackTrace();
@@ -131,7 +236,6 @@ public class ControllerProfile implements ControllerLinksBase, ControllerComment
 
                     }
                 }, 0);
-
     }
 
     @Override
@@ -218,6 +322,36 @@ public class ControllerProfile implements ControllerLinksBase, ControllerComment
         this.data = data;
     }
 
+    public User getUser() {
+        return user;
+    }
+
+    public void loadUser(String query) {
+
+        for (ControllerProfile.ItemClickListener listener : listeners) {
+            listener.setRefreshing(true);
+        }
+
+        reddit.loadGet(Reddit.OAUTH_URL + "/user/" + query + "/about",
+                        new Response.Listener<String>() {
+                            @Override
+                            public void onResponse(String response) {
+                                try {
+                                    Log.d(TAG, "User FragmentProfile onResponse: " + new JSONObject(response).getJSONObject("data").toString());
+                                    user = User.fromJson(new JSONObject(response).getJSONObject("data"));
+                                }
+                                catch (JSONException e) {
+                                    e.printStackTrace();
+                                }
+                                setUser(user);
+                            }
+                        }, new Response.ErrorListener() {
+                            @Override
+                            public void onErrorResponse(VolleyError error) {
+                            }
+                        }, 0);
+    }
+
     public interface ItemClickListener extends DisallowListener {
 
         void onClickComments(Link link, RecyclerView.ViewHolder viewHolder);
@@ -227,17 +361,16 @@ public class ControllerProfile implements ControllerLinksBase, ControllerComment
         void setToolbarTitle(String title);
         AdapterProfile getAdapter();
         int getRecyclerHeight();
+        void resetRecycler();
     }
 
     public interface ListenerCallback {
         ItemClickListener getListener();
-        ControllerLinksBase getController();
+        ControllerProfile getController();
         int getColorPositive();
         int getColorNegative();
         Activity getActivity();
         float getItemWidth();
-        RecyclerView.LayoutManager getLayoutManager();
     }
-
 
 }

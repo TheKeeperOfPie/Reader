@@ -1,11 +1,14 @@
 package com.winsonchiu.reader;
 
 import android.app.Activity;
+import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.graphics.PorterDuff;
 import android.graphics.drawable.Drawable;
 import android.preference.PreferenceManager;
+import android.support.v4.graphics.ColorUtils;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.text.Html;
@@ -322,8 +325,9 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                     }
 
                     if (!TextUtils.isEmpty(editTextReply.getText())) {
-                        Comment comment = callback.getControllerComments().get(getAdapterPosition() - 1);
-                        final int commentIndex = getAdapterPosition() - 1;
+                        Comment comment = callback.getControllerComments().getComment(
+                                getAdapterPosition());
+                        final int commentIndex = getAdapterPosition();
                         final int parentLevel = comment.getLevel();
                         Map<String, String> params = new HashMap<>();
                         params.put("api_type", "json");
@@ -368,8 +372,8 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
             toolbarActions.setOnMenuItemClickListener(new Toolbar.OnMenuItemClickListener() {
                 @Override
                 public boolean onMenuItemClick(MenuItem menuItem) {
-                    Comment comment;
-                    final int commentIndex = getAdapterPosition() - 1;
+                    final Comment comment;
+                    final int commentIndex = getAdapterPosition();
                     switch (menuItem.getItemId()) {
                         case R.id.item_collapse:
                             if (callback.getControllerComments().toggleComment(commentIndex)) {
@@ -386,36 +390,68 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                             callback.getControllerComments().voteComment(ViewHolderComment.this, -1);
                             break;
                         case R.id.item_reply:
-                            comment = callback.getControllerComments().get(commentIndex);
+                            comment = callback.getControllerComments().getComment(commentIndex);
                             if (!comment.isReplyExpanded()) {
                                 editTextReply.requestFocus();
                                 editTextReply.setText(null);
                             }
                             comment.setReplyExpanded(!comment.isReplyExpanded());
                             AnimationUtils.animateExpand(editTextReply);
-                            AnimationUtils.animateExpand(buttonSendReply);
+                            AnimationUtils.animateExpand(buttonSendReply,
+                                    AnimationUtils.getMeasuredHeight(buttonSendReply));
                             break;
                         case R.id.item_share:
                             break;
                         case R.id.item_delete:
-                            comment = callback.getControllerComments().get(commentIndex);
+                            comment = callback.getControllerComments().getComment(commentIndex);
+                            String html = comment.getBodyHtml();
+                            html = Html.fromHtml(html.trim())
+                                    .toString();
 
-                            Map<String, String> params = new HashMap<>();
-                            params.put("id", comment.getName());
+                            CharSequence sequence = Html.fromHtml(html);
 
-                            callback.getControllerComments().getReddit()
-                                    .loadPost(Reddit.OAUTH_URL + "/api/del",
-                                            new Response.Listener<String>() {
+                            // Trims leading and trailing whitespace
+                            int start = 0;
+                            int end = sequence.length();
+                            while (start < end && Character.isWhitespace(sequence.charAt(start))) {
+                                start++;
+                            }
+                            while (end > start && Character.isWhitespace(sequence.charAt(end - 1))) {
+                                end--;
+                            }
+                            sequence = sequence.subSequence(start, end);
+
+                            new AlertDialog.Builder(callback.getActivity())
+                                    .setTitle("Delete comment?")
+                                    .setMessage(sequence)
+                                    .setPositiveButton("Yes",
+                                            new DialogInterface.OnClickListener() {
                                                 @Override
-                                                public void onResponse(String response) {
-                                                    callback.getControllerComments().removeComment(commentIndex);
-                                                }
-                                            }, new Response.ErrorListener() {
-                                                @Override
-                                                public void onErrorResponse(VolleyError error) {
+                                                public void onClick(
+                                                        DialogInterface dialog,
+                                                        int which) {
 
+                                                    Map<String, String> params = new HashMap<>();
+                                                    params.put("id", comment.getName());
+
+                                                    // TODO: Uncomment this
+//                                                    callback.getControllerComments().getReddit()
+//                                                            .loadPost(Reddit.OAUTH_URL + "/api/del",
+//                                                                    new Response.Listener<String>() {
+//                                                                        @Override
+//                                                                        public void onResponse(String response) {
+//                                                                            callback.getControllerComments().removeComment(commentIndex);
+//                                                                        }
+//                                                                    }, new Response.ErrorListener() {
+//                                                                        @Override
+//                                                                        public void onErrorResponse(VolleyError error) {
+//
+//                                                                        }
+//                                                                    }, params, 0);
                                                 }
-                                            }, params, 0);
+                                            })
+                                    .setNegativeButton("No", null)
+                                    .show();
                             break;
                     }
                     return true;
@@ -427,7 +463,8 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
             clickListenerLink = new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    Comment comment = callback.getControllerComments().get(getAdapterPosition() - 1);
+                    Comment comment = callback.getControllerComments().getComment(
+                            getAdapterPosition());
                     if (comment.isMore()) {
                         callback.getControllerComments().loadMoreComments(comment);
                         return;
@@ -435,7 +472,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
 
                     boolean isAuthor = comment.getAuthor().equals(callback.getUser().getName());
 
-                    if (callback.getControllerComments().isCommentExpanded(getAdapterPosition() - 1)) {
+                    if (callback.getControllerComments().isCommentExpanded(getAdapterPosition())) {
                         toolbarActions.getMenu().findItem(R.id.item_collapse).setIcon(R.drawable.ic_arrow_drop_up_white_24dp);
                     }
                     else {
@@ -477,7 +514,8 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
 
         public void setVoteColors() {
 
-            Comment comment = (Comment) callback.getControllerComments().get(getAdapterPosition() - 1);
+            Comment comment = callback.getControllerComments().getComment(
+                    getAdapterPosition());
             switch (comment.isLikes()) {
                 case 1:
                     drawableUpvote.setColorFilter(callback.getColorPositive(), PorterDuff.Mode.MULTIPLY);
@@ -504,7 +542,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
 
             toolbarActions.setVisibility(View.GONE);
 
-            Comment comment = callback.getControllerComments().get(position - 1);
+            Comment comment = callback.getControllerComments().getComment(position);
 
             if (comment.isReplyExpanded()) {
                 editTextReply.setVisibility(View.VISIBLE);
@@ -515,7 +553,13 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                 editTextReply.setVisibility(View.GONE);
                 buttonSendReply.setVisibility(View.GONE);
                 layoutContainerActions.setVisibility(View.GONE);
-            };
+            }
+
+            int alphaLevel = comment.getLevel() * 255 / 10;
+
+            int overlayColor = ColorUtils.setAlphaComponent(0xFF000000, alphaLevel <= 255 ? alphaLevel : 255);
+
+            viewIndicator.setBackgroundColor(ColorUtils.compositeColors(overlayColor, callback.getColorPrimary()));
 
             ViewGroup.LayoutParams layoutParams = viewIndent.getLayoutParams();
             layoutParams.width = callback.getControllerComments().getIndentWidth(comment);

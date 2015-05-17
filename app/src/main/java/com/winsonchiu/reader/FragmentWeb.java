@@ -71,7 +71,6 @@ public class FragmentWeb extends Fragment {
             mParam1 = getArguments().getString(ARG_PARAM1);
             mParam2 = getArguments().getString(ARG_PARAM2);
         }
-        mListener.setNavigationAnimation(1.0f);
         setHasOptionsMenu(true);
     }
 
@@ -156,6 +155,7 @@ public class FragmentWeb extends Fragment {
             throw new ClassCastException(activity.toString()
                     + " must implement OnFragmentInteractionListener");
         }
+        mListener.setNavigationAnimation(1.0f);
     }
 
     @Override

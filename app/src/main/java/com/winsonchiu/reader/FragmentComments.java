@@ -8,6 +8,8 @@ import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
@@ -72,7 +74,14 @@ public class FragmentComments extends Fragment {
             subreddit = getArguments().getString(ARG_PARAM1);
             linkId = getArguments().getString(ARG_PARAM2);
         }
-        mListener.setNavigationAnimation(1.0f);
+        setHasOptionsMenu(true);
+    }
+
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        super.onCreateOptionsMenu(menu, inflater);
+        menu.clear();
+        inflater.inflate(R.menu.menu_comments, menu);
     }
 
     @Override
@@ -117,13 +126,6 @@ public class FragmentComments extends Fragment {
                 controllerComments.reloadAllComments();
             }
         });
-        swipeRefreshCommentList.post(new Runnable() {
-            @Override
-            public void run() {
-                swipeRefreshCommentList.setRefreshing(true);
-                controllerComments.setLinkId(subreddit, linkId);
-            }
-        });
 
         linearLayoutManager = new LinearLayoutManager(activity);
         recyclerCommentList = (RecyclerView) view.findViewById(R.id.recycler_comment_list);
@@ -144,6 +146,19 @@ public class FragmentComments extends Fragment {
         controllerComments.addListener(listener);
 
         return view;
+    }
+
+    @Override
+    public void onActivityCreated(Bundle savedInstanceState) {
+        super.onActivityCreated(savedInstanceState);
+
+        swipeRefreshCommentList.post(new Runnable() {
+            @Override
+            public void run() {
+                swipeRefreshCommentList.setRefreshing(true);
+                controllerComments.setLinkId(subreddit, linkId);
+            }
+        });
     }
 
     @Override
@@ -174,6 +189,7 @@ public class FragmentComments extends Fragment {
             throw new ClassCastException(activity.toString()
                     + " must implement OnFragmentInteractionListener");
         }
+        mListener.setNavigationAnimation(1.0f);
     }
 
     @Override

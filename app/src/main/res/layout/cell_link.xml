@@ -129,11 +129,24 @@
         android:shadowRadius="3"
         />
 
+    <TextView
+        android:id="@+id/text_timestamp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/text_thread_info"
+        android:layout_marginEnd="@dimen/activity_horizontal_margin"
+        android:layout_alignParentEnd="true"
+        android:gravity="end"
+        android:textSize="12sp"
+        android:textColor="@color/darkThemeTextColorMuted"
+        android:visibility="gone"
+        />
+
     <android.support.v7.widget.Toolbar
         android:id="@+id/toolbar_actions"
         android:layout_width="match_parent"
         android:layout_height="48dp"
-        android:layout_below="@id/text_thread_info"
+        android:layout_below="@id/text_timestamp"
         android:layout_alignParentBottom="true"
         android:layout_alignParentEnd="true"
         android:visibility="gone"

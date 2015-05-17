@@ -274,6 +274,7 @@ public class ControllerComments implements ControllerLinksBase, ControllerCommen
 
     @Override
     public void insertComment(int commentIndex, Comment comment) {
+        commentIndex = commentIndex - 1;
         link.getComments().getChildren().add(commentIndex, comment);
         listingComments.getChildren().add(commentIndex, comment);
         for (CommentClickListener listener : listeners) {
@@ -299,6 +300,8 @@ public class ControllerComments implements ControllerLinksBase, ControllerCommen
      */
     public boolean toggleComment(int position) {
 
+        position = position - 1;
+
         if (position == listingComments.getChildren().size() - 1) {
             expandComment(position);
             return true;
@@ -317,7 +320,7 @@ public class ControllerComments implements ControllerLinksBase, ControllerCommen
             return false;
         }
 
-        throw new IllegalStateException("Comment level invalid");
+        return false;
 
     }
 
@@ -347,7 +350,6 @@ public class ControllerComments implements ControllerLinksBase, ControllerCommen
 
     @Override
     public void collapseComment(int position) {
-
         List<Thing> commentList = listingComments.getChildren();
         Comment comment = (Comment) commentList.get(position);
         position++;
@@ -500,12 +502,13 @@ public class ControllerComments implements ControllerLinksBase, ControllerCommen
     }
 
     @Override
-    public Comment get(int position) {
-        return (Comment) listingComments.getChildren().get(position);
+    public Comment getComment(int position) {
+        return (Comment) listingComments.getChildren().get(position - 1);
     }
 
     @Override
     public boolean isCommentExpanded(int position) {
+        position = position - 1;
 
         if (position == listingComments.getChildren().size() - 1) {
             return false;
@@ -522,7 +525,7 @@ public class ControllerComments implements ControllerLinksBase, ControllerCommen
             return true;
         }
 
-        throw new IllegalStateException("Comment level invalid");
+        return false;
     }
 
     @Override

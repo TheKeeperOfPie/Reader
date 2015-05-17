@@ -52,7 +52,7 @@ public class Reddit {
     public static final String REDIRECT_URI = "https://com.winsonchiu.reader";
     public static final String CLIENT_ID = "zo7k-Nsh7vgn-Q";
 
-    public static final String GFYCAT_URL = "http://gfycat.com/cajax/get/";
+    public static final String GFYCAT_URL = "http://gfycat.com/cajax/getComment/";
     public static final String GFYCAT_WEBM = "webmUrl";
     public static final String GFYCAT_ITEM = "gfyItem";
 

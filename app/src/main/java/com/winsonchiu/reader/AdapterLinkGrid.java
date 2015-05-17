@@ -8,6 +8,11 @@ import android.graphics.drawable.Drawable;
 import android.support.v7.graphics.Palette;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.StaggeredGridLayoutManager;
+import android.text.Html;
+import android.text.Spannable;
+import android.text.SpannableString;
+import android.text.Spanned;
+import android.text.style.ForegroundColorSpan;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -17,6 +22,8 @@ import com.squareup.picasso.Callback;
 import com.squareup.picasso.Picasso;
 import com.winsonchiu.reader.data.Link;
 import com.winsonchiu.reader.data.Reddit;
+
+import java.util.Date;
 
 /**
  * Created by TheKeeperOfPie on 3/7/2015.
@@ -120,6 +127,11 @@ public class AdapterLinkGrid extends AdapterLink implements ControllerLinks.List
     }
 
     @Override
+    public int getColorMuted() {
+        return colorMuted;
+    }
+
+    @Override
     public Activity getActivity() {
         return activity;
     }
@@ -186,6 +198,21 @@ public class AdapterLinkGrid extends AdapterLink implements ControllerLinks.List
 
                 }
             });
+            buttonComments.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    if (videoFull.isPlaying()) {
+                        videoFull.stopPlayback();
+                        videoFull.setVisibility(View.GONE);
+                        imageFull.setVisibility(View.VISIBLE);
+                        imagePlay.setVisibility(View.VISIBLE);
+                    }
+                    callback.getListener()
+                            .onClickComments(
+                                    callback.getController()
+                                            .getLink(getAdapterPosition()), ViewHolder.this);
+                }
+            });
         }
 
         @Override
@@ -198,6 +225,7 @@ public class AdapterLinkGrid extends AdapterLink implements ControllerLinks.List
             }
 
             setTextInfo();
+            textTimestamp.setVisibility(View.GONE);
             toolbarActions.setVisibility(View.GONE);
             itemView.setBackgroundColor(defaultColor);
             imagePlay.setVisibility(View.GONE);
@@ -223,8 +251,7 @@ public class AdapterLinkGrid extends AdapterLink implements ControllerLinks.List
                         .into(imageThumbnail);
             }
 
-            textThreadTitle.setText(link.getTitle()
-                    .trim());
+            textThreadTitle.setText(Html.fromHtml(link.getTitle()).toString());
         }
 
         private void loadThumbnail(final Link link, final int position) {
@@ -291,6 +318,29 @@ public class AdapterLinkGrid extends AdapterLink implements ControllerLinks.List
                                 }
                             });
 
+        }
+
+        @Override
+        public void setTextInfo() {
+            super.setTextInfo();
+
+            Link link = callback.getController()
+                    .getLink(getAdapterPosition());
+
+            String subreddit = "/r/" + link.getSubreddit();
+            int scoreLength = String.valueOf(link.getScore())
+                    .length();
+
+            Spannable spannableInfo = new SpannableString(subreddit + "\n" + link.getScore() + " by " + link.getAuthor());
+            spannableInfo.setSpan(new ForegroundColorSpan(callback.getColorMuted()), 0, subreddit.length(), Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
+            spannableInfo.setSpan(
+                    new ForegroundColorSpan(link.getScore() > 0 ? callback.getColorPositive() : callback.getColorNegative()),
+                    subreddit.length() + 1,
+                    subreddit.length() + 1 + scoreLength, Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
+            spannableInfo.setSpan(new ForegroundColorSpan(callback.getColorMuted()), subreddit.length() + 1 + scoreLength, spannableInfo.length(), Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
+            textThreadInfo.setText(spannableInfo);
+
+            textTimestamp.setText(new Date(link.getCreatedUtc()).toString());
         }
     }
 

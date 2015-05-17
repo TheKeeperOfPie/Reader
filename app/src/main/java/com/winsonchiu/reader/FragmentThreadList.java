@@ -62,7 +62,6 @@ public class FragmentThreadList extends Fragment {
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
     private static final String ARG_PARAM1 = "param1";
     private static final String ARG_PARAM2 = "param2";;
-    private static final long MOVE_DURATION = 350;
 
     // TODO: Rename and change types of parameters
     private String mParam1;
@@ -345,7 +344,7 @@ public class FragmentThreadList extends Fragment {
                 final float viewStartPaddingBottom = viewHolder.itemView.getPaddingBottom();
                 final float screenHeight = getResources().getDisplayMetrics().heightPixels;
 
-                long duration = (long) Math.abs(viewStartY / screenHeight * MOVE_DURATION);
+                long duration = (long) Math.abs(viewStartY / screenHeight * AnimationUtils.MOVE_DURATION);
                 TranslateAnimation translateAnimation = new TranslateAnimation(0, 0, 0, -viewStartY);
 
                 Animation heightAnimation = new Animation() {
@@ -430,7 +429,9 @@ public class FragmentThreadList extends Fragment {
 
             @Override
             public void setToolbarTitle(String title) {
-                mListener.setToolbarTitle(title);
+                if (mListener != null) {
+                    mListener.setToolbarTitle(title);
+                }
             }
 
             @Override
@@ -454,18 +455,10 @@ public class FragmentThreadList extends Fragment {
         swipeRefreshThreadList.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
-                mListener.getControllerLinks().reloadAllLinks();
+                mListener.getControllerLinks()
+                        .reloadAllLinks();
             }
         });
-
-        swipeRefreshThreadList.post(new Runnable() {
-            @Override
-            public void run() {
-                swipeRefreshThreadList.setRefreshing(true);
-                mListener.getControllerLinks().reloadAllLinks();
-            }
-        });
-
         if (adapterLink == null) {
             if (AppSettings.MODE_LIST.equals(
                     PreferenceManager.getDefaultSharedPreferences(activity.getApplicationContext())
@@ -481,28 +474,6 @@ public class FragmentThreadList extends Fragment {
 
         if (adapterSubcriptions == null) {
             adapterSubcriptions = new AdapterSubscriptions();
-            mListener.getControllerLinks().getReddit().loadGet(Reddit.OAUTH_URL + "/subreddits/mine/subscriber", new Response.Listener<String>() {
-                @Override
-                public void onResponse(String response) {
-                    Listing listing = null;
-                    try {
-                        listing = Listing.fromJson(new JSONObject(response));
-                        List<Subreddit> subreddits = new ArrayList<Subreddit>(listing.getChildren().size());
-                        for (Thing thing : listing.getChildren()) {
-                            subreddits.add((Subreddit) thing);
-                        }
-                        adapterSubcriptions.setSubreddits(subreddits);
-                    }
-                    catch (JSONException e) {
-                        e.printStackTrace();
-                    }
-                }
-            }, new Response.ErrorListener() {
-                @Override
-                public void onErrorResponse(VolleyError error) {
-
-                }
-            }, 0);
         }
 
         recyclerThreadList = (RecyclerView) view.findViewById(R.id.recycler_thread_list);
@@ -517,6 +488,21 @@ public class FragmentThreadList extends Fragment {
 
         mListener.getControllerLinks().addListener(linkClickListener);
         return view;
+    }
+
+    @Override
+    public void onActivityCreated(Bundle savedInstanceState) {
+        super.onActivityCreated(savedInstanceState);
+
+        swipeRefreshThreadList.post(new Runnable() {
+            @Override
+            public void run() {
+                swipeRefreshThreadList.setRefreshing(true);
+                mListener.getControllerLinks()
+                        .reloadAllLinks();
+
+            }
+        });
     }
 
     @Override
@@ -535,9 +521,9 @@ public class FragmentThreadList extends Fragment {
 
     @Override
     public void onDetach() {
+        super.onDetach();
         mListener = null;
         activity = null;
-        super.onDetach();
     }
 
 
@@ -552,6 +538,7 @@ public class FragmentThreadList extends Fragment {
         super.onResume();
         swipeRefreshThreadList.setRefreshing(mListener.getControllerLinks()
                 .isLoading());
+        mListener.getControllerLinks().setTitle();
     }
 
     @Override

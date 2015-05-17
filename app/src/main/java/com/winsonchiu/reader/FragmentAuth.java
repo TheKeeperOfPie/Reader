@@ -166,6 +166,7 @@ public class FragmentAuth extends Fragment {
                 new Response.Listener<String>() {
                     @Override
                     public void onResponse(String response) {
+                        Log.d(TAG, "User onResponse: " + response);
                         preferences.edit()
                                 .putString(AppSettings.ACCOUNT_JSON,
                                         response)

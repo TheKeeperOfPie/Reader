@@ -2,15 +2,22 @@ package com.winsonchiu.reader;
 
 import android.animation.ObjectAnimator;
 import android.animation.ValueAnimator;
+import android.content.Context;
 import android.graphics.Color;
+import android.graphics.Point;
 import android.support.v4.graphics.ColorUtils;
+import android.text.Layout;
+import android.text.StaticLayout;
 import android.util.Log;
 import android.util.TypedValue;
+import android.view.Display;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowManager;
 import android.view.animation.Animation;
 import android.view.animation.DecelerateInterpolator;
 import android.view.animation.Transformation;
+import android.widget.TextView;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -23,6 +30,7 @@ public class AnimationUtils {
     public static final long EXPAND_ACTION_DURATION = 150;
     public static final long ALPHA_DURATION = 500;
     public static final long BACKGROUND_DURATION = 500;
+    public static final long MOVE_DURATION = 350;
     private static final String TAG = AnimationUtils.class.getCanonicalName();
 
     public static void animateBackgroundColor(final View view, final int start, final int end) {
@@ -155,6 +163,64 @@ public class AnimationUtils {
         viewGroup.requestLayout();
     }
 
+    public static void animateExpand(final View view, final int height) {
+
+        Log.d(TAG, "animatedExpand target height: " + height);
+
+        Animation animation;
+        if (view.isShown()) {
+            animation = new Animation() {
+                @Override
+                protected void applyTransformation(float interpolatedTime, Transformation t) {
+                    view.getLayoutParams().height = (int) (height * (1.0f - interpolatedTime));
+                    view.requestLayout();
+                }
+
+                @Override
+                public boolean willChangeBounds() {
+                    return true;
+                }
+            };
+            animation.setAnimationListener(new Animation.AnimationListener() {
+                @Override
+                public void onAnimationStart(Animation animation) {
+
+                }
+
+                @Override
+                public void onAnimationEnd(Animation animation) {
+                    view.setVisibility(View.GONE);
+                }
+
+                @Override
+                public void onAnimationRepeat(Animation animation) {
+
+                }
+            });
+        }
+        else {
+            animation = new Animation() {
+                @Override
+                protected void applyTransformation(float interpolatedTime, Transformation t) {
+                    view.getLayoutParams().height = (int) (interpolatedTime * height);
+                    view.requestLayout();
+                }
+
+                @Override
+                public boolean willChangeBounds() {
+                    return true;
+                }
+            };
+            view.getLayoutParams().height = 0;
+            view.requestLayout();
+            view.setVisibility(View.VISIBLE);
+        }
+        animation.setDuration(EXPAND_ACTION_DURATION);
+        animation.setInterpolator(new DecelerateInterpolator());
+        view.startAnimation(animation);
+        view.requestLayout();
+    }
+
     public static void animateExpand(final View view) {
 
         view.measure(View.MeasureSpec.AT_MOST, View.MeasureSpec.UNSPECIFIED);
@@ -214,5 +280,25 @@ public class AnimationUtils {
         animation.setInterpolator(new DecelerateInterpolator());
         view.startAnimation(animation);
         view.requestLayout();
+    }
+
+    /*
+     * Code taken from http://stackoverflow.com/questions/19908003/getting-height-of-text-view-before-rendering-to-layout
+     *
+     * by support_ms and Hugo Gresse
+     */
+    public static int getMeasuredHeight(View view) {
+        WindowManager windowManager =
+                (WindowManager) view.getContext().getSystemService(Context.WINDOW_SERVICE);
+        Display display = windowManager.getDefaultDisplay();
+
+        Point size = new Point();
+        display.getSize(size);
+        int deviceWidth = size.x;
+
+        int widthMeasureSpec = View.MeasureSpec.makeMeasureSpec(deviceWidth, View.MeasureSpec.AT_MOST);
+        int heightMeasureSpec = View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED);
+        view.measure(widthMeasureSpec, heightMeasureSpec);
+        return view.getMeasuredHeight();
     }
 }

@@ -19,32 +19,32 @@ public class Comment extends Thing {
 
     private Comment parent;
 
-    private String approvedBy;
-    private String author;
-    private String authorFlairCssClass;
-    private String authorFlairText;
-    private String bannedBy;
-    private String body;
-    private String bodyHtml;
+    private String approvedBy = "";
+    private String author = "";
+    private String authorFlairCssClass = "";
+    private String authorFlairText = "";
+    private String bannedBy = "";
+    private String body = "";
+    private String bodyHtml = "";
     private Reddit.Distinguished distinguished;
     private long edited;
     private int gilded;
     private int likes;
-    private String linkId;
+    private String linkId = "";
     private int numReports; // May be "null"
-    private String parentId;
+    private String parentId = "";
     private boolean saved;
     private int score;
     private boolean scoreHidden;
-    private String subreddit;
-    private String subredditId;
+    private String subreddit = "";
+    private String subredditId = "";
     private long created;
     private long createdUtc;
 
     // May not be present
-    private String linkAuthor;
-    private String linkTitle;
-    private String linkUrl;
+    private String linkAuthor = "";
+    private String linkTitle = "";
+    private String linkUrl = "";
     private List<String> children;
 
     private int level;
