@@ -13,9 +13,8 @@ public class CustomShareActionProvider extends ShareActionProvider {
         super(context);
     }
 
-
     /*
-        Return null to force menu item to use assign icon.
+        Return null to force menu item to use assigned icon.
         Looks prettier.
      */
     @Override

@@ -130,6 +130,8 @@ public class MainActivity extends AppCompatActivity
         try {
             URL url = new URL(urlString);
 
+            // TODO: Implement a history stack inside the Controllers
+
             if (!url.getHost().contains("reddit")) {
                 getFragmentManager().beginTransaction()
                         .add(R.id.frame_fragment, FragmentWeb
@@ -157,13 +159,19 @@ public class MainActivity extends AppCompatActivity
                 int indexFourthSlash = path.indexOf("/", indexComments + 1);
                 String id = path.substring(indexComments, indexFourthSlash > -1 ? indexFourthSlash : path.length());
                 Log.d(TAG, "Comments ID: " + id);
-                FragmentComments fragmentComments = FragmentComments.newInstance(subreddit,
-                        id, false);
 
-                getFragmentManager().beginTransaction()
-                        .add(R.id.frame_fragment, fragmentComments, FragmentComments.TAG)
-                        .addToBackStack(null)
-                        .commit();
+                if (getFragmentManager().findFragmentByTag(FragmentComments.TAG) == null) {
+                    FragmentComments fragmentComments = FragmentComments.newInstance(subreddit,
+                            id, false);
+
+                    getFragmentManager().beginTransaction()
+                            .add(R.id.frame_fragment, fragmentComments, FragmentComments.TAG)
+                            .addToBackStack(null)
+                            .commit();
+                }
+                else {
+                    controllerComments.setLinkId(subreddit, id);
+                }
             }
             else if (path.contains("/u/")) {
                 int indexUser = path.indexOf("/u/") + 3;
