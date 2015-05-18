@@ -5,38 +5,11 @@
     android:layout_height="match_parent"
     >
 
-    <View
-        android:id="@+id/view_divider"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_alignParentTop="true"
-        android:background="?android:listDivider"
-        />
-
-    <View
-        android:id="@+id/view_indent"
-        android:layout_width="0dp"
-        android:layout_height="match_parent"
-        android:layout_below="@id/view_divider"
-        android:layout_alignParentStart="true"
-        />
-
-    <View
-        android:id="@+id/view_indicator"
-        android:layout_width="8dp"
-        android:layout_height="match_parent"
-        android:layout_alignTop="@+id/text_comment"
-        android:layout_alignBottom="@+id/text_info"
-        android:layout_toEndOf="@id/view_indent"
-        android:background="@color/colorPrimary"
-        />
-
     <TextView
-        android:id="@+id/text_comment"
+        android:id="@+id/text_message"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentTop="true"
-        android:layout_toEndOf="@id/view_indicator"
         android:paddingTop="4dp"
         android:paddingLeft="8dp"
         android:paddingEnd="8dp"
@@ -48,8 +21,7 @@
         android:id="@+id/text_info"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_below="@id/text_comment"
-        android:layout_alignStart="@id/text_comment"
+        android:layout_below="@id/text_message"
         android:paddingTop="6dp"
         android:paddingBottom="4dp"
         android:paddingLeft="8dp"
@@ -59,41 +31,20 @@
         android:gravity="start"
         />
 
-    <LinearLayout
-        android:orientation="horizontal"
-        android:id="@+id/layout_container_actions"
+    <android.support.v7.widget.Toolbar
+        android:id="@+id/toolbar_actions"
         android:layout_width="match_parent"
         android:layout_height="48dp"
-        android:layout_alignStart="@id/view_indicator"
         android:layout_below="@id/text_info"
+        android:gravity="end"
         android:visibility="gone"
-        >
-
-        <View
-            android:id="@+id/view_indicator_container"
-            android:layout_width="8dp"
-            android:layout_height="48dp"
-            android:layout_margin="0dp"
-            android:padding="0dp"
-            android:background="@color/colorPrimary"
-            />
-
-        <android.support.v7.widget.Toolbar
-            android:id="@+id/toolbar_actions"
-            android:layout_width="match_parent"
-            android:layout_height="48dp"
-            android:gravity="end"
-            android:visibility="gone"
-            />
-
-    </LinearLayout>
+        />
 
     <RelativeLayout
         android:id="@+id/layout_container_reply"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignStart="@id/view_indicator"
-        android:layout_below="@id/layout_container_actions"
+        android:layout_below="@id/toolbar_actions"
         android:layout_alignParentBottom="true"
         android:layout_alignParentEnd="true"
         >

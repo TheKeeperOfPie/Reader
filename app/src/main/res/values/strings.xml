@@ -47,4 +47,8 @@
     <string name="item_reply">Reply</string>
     <string name="button_send">Send</string>
     <string name="item_download">Download</string>
+    <string name="empty_thread_list">Error loading subreddit</string>
+    <string name="username">Username</string>
+    <string name="search_in_page">Search in page</string>
+    <string name="content_description_button_open">Open</string>
 </resources>

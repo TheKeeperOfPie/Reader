@@ -15,6 +15,8 @@ import java.util.List;
  */
 public class Comment extends Thing {
 
+    public static final String HTML_DELETED = "<div class=\\\"md\\\"><p>[deleted]</p></div>";
+
     private static final String TAG = Comment.class.getCanonicalName();
 
     private Comment parent;
@@ -56,7 +58,7 @@ public class Comment extends Thing {
 
         comments.add(Comment.fromJson(rootJsonObject, level));
 
-        if (rootJsonObject.getJSONObject("data").has("replies") && !TextUtils.isEmpty(rootJsonObject.getJSONObject("data").getString("replies")) && !rootJsonObject.getJSONObject("data").getString("replies").equals("null")) {
+        if (rootJsonObject.getJSONObject("data").has("replies") && !TextUtils.isEmpty(rootJsonObject.getJSONObject("data").optString("replies")) && !rootJsonObject.getJSONObject("data").optString("replies").equals("null")) {
             JSONObject data = rootJsonObject.getJSONObject("data")
                     .getJSONObject("replies")
                     .getJSONObject("data");
@@ -77,11 +79,11 @@ public class Comment extends Thing {
 
         Comment comment = new Comment();
         comment.setLevel(level);
-        comment.setKind(rootJsonObject.getString("kind"));
+        comment.setKind(rootJsonObject.optString("kind"));
 
         JSONObject jsonObject = rootJsonObject.getJSONObject("data");
 
-        String id = jsonObject.getString("id");
+        String id = jsonObject.optString("id");
         int indexStart = id.indexOf("_");
         if (indexStart >= 0) {
             comment.setId(id.substring(indexStart + 1));
@@ -89,9 +91,9 @@ public class Comment extends Thing {
         else {
             comment.setId(id);
         }
-        comment.setName(jsonObject.getString("name"));
+        comment.setName(jsonObject.optString("name"));
 
-        String parentId = jsonObject.getString("parent_id");
+        String parentId = jsonObject.optString("parent_id");
         indexStart = parentId.indexOf("_");
         if (indexStart >= 0) {
             comment.setParentId(parentId.substring(indexStart + 1));
@@ -105,24 +107,26 @@ public class Comment extends Thing {
             List<String> children = new LinkedList<>();
             JSONArray childrenArray = jsonObject.getJSONArray("children");
             for (int index = 0; index < childrenArray.length(); index++) {
-                children.add(childrenArray.getString(index));
+                children.add(childrenArray.optString(index));
             }
             comment.setChildren(children);
             return comment;
         }
-        comment.setCreated(jsonObject.getLong("created"));
-        comment.setCreatedUtc(jsonObject.getLong("created_utc"));
 
-        comment.setApprovedBy(jsonObject.getString("approved_by"));
-        comment.setAuthor(jsonObject.getString("author"));
-        comment.setAuthorFlairCssClass(jsonObject.getString("author_flair_css_class"));
-        comment.setAuthorFlairText(jsonObject.getString("author_flair_text"));
-        comment.setBannedBy(jsonObject.getString("banned_by"));
-        comment.setBody(jsonObject.getString("body"));
-        comment.setBodyHtml(jsonObject.getString("body_html"));
+        // Timestamps multiplied by 1000 as Java uses milliseconds and Reddit uses seconds
+        comment.setCreated(jsonObject.optLong("created") * 1000);
+        comment.setCreatedUtc(jsonObject.optLong("created_utc") * 1000);
+
+        comment.setApprovedBy(jsonObject.optString("approved_by"));
+        comment.setAuthor(jsonObject.optString("author"));
+        comment.setAuthorFlairCssClass(jsonObject.optString("author_flair_css_class"));
+        comment.setAuthorFlairText(jsonObject.optString("author_flair_text"));
+        comment.setBannedBy(jsonObject.optString("banned_by"));
+        comment.setBody(jsonObject.optString("body"));
+        comment.setBodyHtml(jsonObject.optString("body_html"));
 
 
-        switch (jsonObject.getString("distinguished")) {
+        switch (jsonObject.optString("distinguished")) {
             case "null":
                 comment.setDistinguished(Reddit.Distinguished.NOT_DISTINGUISHED);
                 break;
@@ -137,7 +141,7 @@ public class Comment extends Thing {
                 break;
         }
 
-        String edited = jsonObject.getString("edited");
+        String edited = jsonObject.optString("edited");
         switch (edited) {
             case "true":
                 comment.setEdited(1);
@@ -146,13 +150,13 @@ public class Comment extends Thing {
                 comment.setEdited(0);
                 break;
             default:
-                comment.setEdited(jsonObject.getLong("edited"));
+                comment.setEdited(jsonObject.optLong("edited") * 1000);
                 break;
         }
 
-        comment.setGilded(jsonObject.getInt("gilded"));
+        comment.setGilded(jsonObject.optInt("gilded"));
 
-        switch (jsonObject.getString("likes")) {
+        switch (jsonObject.optString("likes")) {
             case "null":
                 comment.setLikes(0);
                 break;
@@ -164,26 +168,17 @@ public class Comment extends Thing {
                 break;
         }
 
-        comment.setLinkId(jsonObject.getString("link_id"));
+        comment.setLinkId(jsonObject.optString("link_id"));
+        comment.setNumReports(jsonObject.optInt("num_reports"));
+        comment.setSaved(jsonObject.optBoolean("saved"));
+        comment.setScore(jsonObject.optInt("score"));
+        comment.setScoreHidden(jsonObject.optBoolean("score_hidden"));
+        comment.setSubreddit(jsonObject.optString("subreddit"));
+        comment.setSubredditId(jsonObject.optString("subreddit_id"));
 
-        if (jsonObject.getString("num_reports").equals("null")) {
-            comment.setNumReports(0);
-        }
-        else {
-            comment.setNumReports(jsonObject.getInt("num_reports"));
-        }
-        comment.setSaved(jsonObject.getBoolean("saved"));
-        comment.setScore(jsonObject.getInt("score"));
-        comment.setScoreHidden(jsonObject.getBoolean("score_hidden"));
-        comment.setSubreddit(jsonObject.getString("subreddit"));
-        comment.setSubredditId(jsonObject.getString("subreddit_id"));
-
-        comment.setLinkAuthor(jsonObject.has("link_author") ? jsonObject.getString("link_author") :
-                "");
-        comment.setLinkTitle(jsonObject.has("link_title") ? jsonObject.getString("link_title") :
-                "");
-        comment.setLinkUrl(jsonObject.has("link_url") ? jsonObject.getString("link_url") :
-                "");
+        comment.setLinkAuthor(jsonObject.optString("link_author"));
+        comment.setLinkTitle(jsonObject.optString("link_title"));
+        comment.setLinkUrl(jsonObject.optString("link_url"));
 
 //        JSONArray arrayReplies = jsonObject.getJSONArray("replies");
 //        ArrayList<Comment> listReplies = new ArrayList<>(arrayReplies.length());

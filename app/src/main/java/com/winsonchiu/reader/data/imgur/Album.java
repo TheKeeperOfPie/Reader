@@ -39,37 +39,36 @@ public class Album {
 
         Album album = new Album();
 
-        album.setId(jsonObject.getString("id"));
-        album.setTitle(jsonObject.getString("title"));
-        album.setDescription(jsonObject.getString("description"));
-        album.setDateTime(jsonObject.getInt("datetime"));
-        album.setCover(jsonObject.getString("cover"));
-        album.setCoverWidth(jsonObject.getInt("cover_width"));
-        album.setCoverHeight(jsonObject.getInt("cover_height"));
-        album.setAccountUrl(jsonObject.getString("account_url"));
-        if (!jsonObject.getString("account_id").equals("null")) {
-            album.setAccountId(jsonObject.getInt("account_id"));
-        }
-        album.setPrivacy(jsonObject.getString("privacy"));
-        album.setLayout(jsonObject.getString("layout"));
-        album.setViews(jsonObject.getInt("views"));
-        album.setLink(jsonObject.getString("link"));
-        album.setFavorite(jsonObject.getBoolean("favorite"));
-
-        if (!jsonObject.getString("nsfw").equals("null")) {
-            album.setNsfw(jsonObject.getBoolean("nsfw"));
-        }
-
-        album.setSection(jsonObject.getString("section"));
-        album.setImagesCount(jsonObject.getInt("images_count"));
+        album.setId(jsonObject.optString("id"));
+        album.setTitle(jsonObject.optString("title"));
+        album.setDescription(jsonObject.optString("description"));
+        album.setDateTime(jsonObject.optInt("datetime"));
+        album.setCover(jsonObject.optString("cover"));
+        album.setCoverWidth(jsonObject.optInt("cover_width"));
+        album.setCoverHeight(jsonObject.optInt("cover_height"));
+        album.setAccountUrl(jsonObject.optString("account_url"));
+        album.setAccountId(jsonObject.optInt("account_id"));
+        album.setPrivacy(jsonObject.optString("privacy"));
+        album.setLayout(jsonObject.optString("layout"));
+        album.setViews(jsonObject.optInt("views"));
+        album.setLink(jsonObject.optString("link"));
+        album.setFavorite(jsonObject.optBoolean("favorite"));
+        album.setNsfw(jsonObject.optBoolean("nsfw"));
+        album.setSection(jsonObject.optString("section"));
 
         List<Image> images = new ArrayList<>(album.getImagesCount());
 
-        JSONArray imageArray = jsonObject.getJSONArray("images");
-        for (int index = 0; index < imageArray.length(); index++) {
-            images.add(Image.fromJson(imageArray.getJSONObject(index)));
+        if (jsonObject.has("images")) {
+            JSONArray imageArray = jsonObject.getJSONArray("images");
+            for (int index = 0; index < imageArray.length(); index++) {
+                images.add(Image.fromJson(imageArray.getJSONObject(index)));
+            }
+        }
+        else {
+            images.add(Image.fromJson(jsonObject));
         }
 
+        album.setImagesCount(images.size());
         album.setImages(images);
 
         return album;

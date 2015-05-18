@@ -8,6 +8,7 @@ import android.text.Html;
 import android.text.Spannable;
 import android.text.SpannableString;
 import android.text.Spanned;
+import android.text.TextUtils;
 import android.text.style.ForegroundColorSpan;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -68,11 +69,6 @@ public class AdapterLinkList extends AdapterLink implements ControllerLinks.List
         viewHolder.onRecycle();
 
         super.onViewRecycled(holder);
-    }
-
-    @Override
-    public int getItemCount() {
-        return controllerLinks.size();
     }
 
     @Override
@@ -149,8 +145,9 @@ public class AdapterLinkList extends AdapterLink implements ControllerLinks.List
         public void onBind(int position) {
             super.onBind(position);
 
-            textTimestamp.setVisibility(View.GONE);
+            textHidden.setVisibility(View.GONE);
             toolbarActions.setVisibility(View.GONE);
+            imageThumbnail.setVisibility(View.VISIBLE);
 
             final Link link = callback.getController()
                     .getLink(position);
@@ -166,20 +163,26 @@ public class AdapterLinkList extends AdapterLink implements ControllerLinks.List
                 imageThumbnail.setImageDrawable(drawable);
             }
 
-            textThreadTitle.setText(Html.fromHtml(link.getTitle())
-                    .toString());
-            textThreadTitle.setTextColor(
-                    link.isOver18() ? callback.getColorTextAlert() : callback.getColorText());
-            setTextInfo();
+            setTextInfo(link);
 
         }
 
         @Override
-        public void setTextInfo() {
-            super.setTextInfo();
+        public void setTextInfo(Link link) {
+            super.setTextInfo(link);
 
-            Link link = callback.getController()
-                    .getLink(getAdapterPosition());
+            if (!TextUtils.isEmpty(link.getLinkFlairText())) {
+                textThreadFlair.setVisibility(View.VISIBLE);
+                textThreadFlair.setText(link.getLinkFlairText());
+            }
+            else {
+                textThreadFlair.setVisibility(View.GONE);
+            }
+
+            textThreadTitle.setText(Html.fromHtml(link.getTitle())
+                    .toString());
+            textThreadTitle.setTextColor(
+                    link.isOver18() ? callback.getColorTextAlert() : callback.getColorText());
 
             String subreddit = "/r/" + link.getSubreddit();
             int scoreLength = String.valueOf(link.getScore())
@@ -194,7 +197,8 @@ public class AdapterLinkList extends AdapterLink implements ControllerLinks.List
             spannableInfo.setSpan(new ForegroundColorSpan(callback.getColorMuted()), subreddit.length() + 1 + scoreLength, spannableInfo.length(), Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
             textThreadInfo.setText(spannableInfo);
 
-            textTimestamp.setText(new Date(link.getCreatedUtc()).toString());
+            textHidden.setText(new Date(
+                    link.getCreatedUtc()).toString() + "\n" + link.getNumComments() + " comments");
         }
     }
 

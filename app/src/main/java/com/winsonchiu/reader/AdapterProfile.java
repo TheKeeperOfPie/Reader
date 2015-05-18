@@ -123,6 +123,11 @@ public class AdapterProfile extends RecyclerView.Adapter<RecyclerView.ViewHolder
                     }
 
                     @Override
+                    public void setEmptyView(boolean visible) {
+                        // TODO: Implement empty view for profile
+                    }
+
+                    @Override
                     public void requestDisallowInterceptTouchEvent(boolean disallow) {
 
                     }
@@ -318,7 +323,7 @@ public class AdapterProfile extends RecyclerView.Adapter<RecyclerView.ViewHolder
                 break;
             case 1:
                 ViewHolderText viewHolderTextLink = (ViewHolderText) holder;
-                viewHolderTextLink.onBind("Top Link");
+                viewHolderTextLink.onBind("Top Post");
                 break;
             case 2:
                 AdapterLinkList.ViewHolder viewHolderLinkTop = (AdapterLinkList.ViewHolder) holder;

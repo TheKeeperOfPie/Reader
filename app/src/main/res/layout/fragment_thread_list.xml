@@ -7,21 +7,39 @@
     tools:context="com.winsonchiu.reader.FragmentThreadList"
     >
 
-    <android.support.v4.widget.SwipeRefreshLayout
-        android:id="@+id/swipe_refresh_thread_list"
+    <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         >
 
-        <android.support.v7.widget.RecyclerView
-            android:id="@+id/recycler_thread_list"
+        <com.winsonchiu.reader.CustomSwipeRefreshLayout
+            android:id="@+id/swipe_refresh_thread_list"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:scrollbars="vertical"
-            android:scrollbarFadeDuration="200"
+            android:layout_alignParentTop="true"
+            >
+
+            <android.support.v7.widget.RecyclerView
+                android:id="@+id/recycler_thread_list"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:scrollbars="vertical"
+                android:scrollbarFadeDuration="200"
+                />
+
+        </com.winsonchiu.reader.CustomSwipeRefreshLayout>
+
+        <TextView
+            android:id="@+id/text_empty"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_centerHorizontal="true"
+            android:layout_alignParentTop="true"
+            android:text="@string/empty_thread_list"
+            android:visibility="gone"
             />
 
-    </android.support.v4.widget.SwipeRefreshLayout>
+    </RelativeLayout>
 
     <ScrollView
         android:layout_width="@dimen/navigation_drawer_width"

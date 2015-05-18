@@ -6,7 +6,7 @@
     tools:context="com.winsonchiu.reader.FragmentProfile"
     >
 
-    <android.support.v4.widget.SwipeRefreshLayout
+    <com.winsonchiu.reader.CustomSwipeRefreshLayout
         android:id="@+id/swipe_refresh_profile"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -20,6 +20,6 @@
             android:scrollbarFadeDuration="200"
             />
 
-    </android.support.v4.widget.SwipeRefreshLayout>
+    </com.winsonchiu.reader.CustomSwipeRefreshLayout>
 
 </RelativeLayout>

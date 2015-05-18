@@ -29,8 +29,8 @@ import java.util.List;
 public interface ControllerCommentsBase extends ControllerLinksBase {
 
     void insertComments(Comment moreComment, Listing listing);
-    void insertComment(int commentIndex, Comment comment);
-    void removeComment(int commentIndex);
+    void insertComment(Comment comment);
+    void deleteComment(Comment comment);
 
     /**
      * Toggles children of comment

@@ -32,35 +32,25 @@ public class User {
 
         User user = new User();
 
-        user.setName(rootJsonObject.getString("name"));
-        user.setCreated(rootJsonObject.getLong("created"));
-        user.setHideFromRobots(rootJsonObject.getBoolean("hide_from_robots"));
-        user.setCreatedUtc(rootJsonObject.getLong("created_utc"));
-        user.setLinkKarma(rootJsonObject.getInt("link_karma"));
-        user.setCommentKarma(rootJsonObject.getInt("comment_karma"));
-        user.setIsGold(rootJsonObject.getBoolean("is_gold"));
-        user.setIsMod(rootJsonObject.getBoolean("is_mod"));
-        user.setHasVerifiedEmail(rootJsonObject.getBoolean("has_verified_email"));
-        user.setId(rootJsonObject.getString("id"));
+        user.setName(rootJsonObject.optString("name"));
+        user.setHideFromRobots(rootJsonObject.optBoolean("hide_from_robots"));
 
-        if (rootJsonObject.has("gold_expiration") && !rootJsonObject.getString("gold_expiration").equals("null")) {
-            user.setGoldExpiration(rootJsonObject.getLong("gold_expiration"));
-        }
-        if (rootJsonObject.has("has_mail")) {
-            user.setHasMail(rootJsonObject.getBoolean("has_mail"));
-        }
-        if (rootJsonObject.has("inbox_count")) {
-            user.setInboxCount(rootJsonObject.getInt("inbox_count"));
-        }
-        if (rootJsonObject.has("gold_creddits")) {
-            user.setGoldCreddits(rootJsonObject.getInt("gold_creddits"));
-        }
-        if (rootJsonObject.has("has_mod_mail")) {
-            user.setHasModMail(rootJsonObject.getBoolean("has_mod_mail"));
-        }
-        if (rootJsonObject.has("over_18")) {
-            user.setOver18(rootJsonObject.getBoolean("over_18"));
-        }
+        // Timestamps multiplied by 1000 as Java uses milliseconds and Reddit uses seconds
+        user.setCreated(rootJsonObject.optLong("created") * 1000);
+        user.setCreatedUtc(rootJsonObject.optLong("created_utc") * 1000);
+        user.setGoldExpiration(rootJsonObject.optLong("gold_expiration") * 1000);
+
+        user.setLinkKarma(rootJsonObject.optInt("link_karma"));
+        user.setCommentKarma(rootJsonObject.optInt("comment_karma"));
+        user.setIsGold(rootJsonObject.optBoolean("is_gold"));
+        user.setIsMod(rootJsonObject.optBoolean("is_mod"));
+        user.setHasVerifiedEmail(rootJsonObject.optBoolean("has_verified_email"));
+        user.setId(rootJsonObject.optString("id"));
+        user.setHasMail(rootJsonObject.optBoolean("has_mail"));
+        user.setInboxCount(rootJsonObject.optInt("inbox_count"));
+        user.setGoldCreddits(rootJsonObject.optInt("gold_creddits"));
+        user.setHasModMail(rootJsonObject.optBoolean("has_mod_mail"));
+        user.setOver18(rootJsonObject.optBoolean("over_18"));
 
         return user;
     }

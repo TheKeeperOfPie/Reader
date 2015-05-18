@@ -223,10 +223,7 @@ public class AnimationUtils {
 
     public static void animateExpand(final View view) {
 
-        view.measure(View.MeasureSpec.AT_MOST, View.MeasureSpec.UNSPECIFIED);
-        final int height = view.getMeasuredHeight();
-
-        Log.d(TAG, "animatedExpand target height: " + height);
+        final int height = getMeasuredHeight(view);
 
         Animation animation;
         if (view.isShown()) {

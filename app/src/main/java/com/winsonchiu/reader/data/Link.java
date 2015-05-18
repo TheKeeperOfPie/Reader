@@ -49,24 +49,26 @@ public class Link extends Thing {
     public static Link fromJson(JSONObject rootJsonObject) throws JSONException {
 
         Link link = new Link();
-        link.setKind(rootJsonObject.getString("kind"));
+        link.setKind(rootJsonObject.optString("kind"));
 
         JSONObject jsonObject = rootJsonObject.getJSONObject("data");
 
-        link.setId(jsonObject.getString("id"));
-        link.setName(jsonObject.getString("name"));
-        link.setCreated(jsonObject.getLong("created"));
-        link.setCreatedUtc(jsonObject.getLong("created_utc"));
+        link.setId(jsonObject.optString("id"));
+        link.setName(jsonObject.optString("name"));
 
-        link.setAuthor(jsonObject.getString("author"));
-        link.setAuthorFlairCssClass(jsonObject.getString("author_flair_css_class"));
-        link.setAuthorFlairText(jsonObject.getString("author_flair_text"));
-        link.setClicked(jsonObject.getBoolean("clicked"));
-        link.setDomain(jsonObject.getString("domain"));
-        link.setHidden(jsonObject.getBoolean("hidden"));
-        link.setSelf(jsonObject.getBoolean("is_self"));
+        // Timestamps multiplied by 1000 as Java uses milliseconds and Reddit uses seconds
+        link.setCreated(jsonObject.optLong("created") * 1000);
+        link.setCreatedUtc(jsonObject.optLong("created_utc") * 1000);
 
-        switch (jsonObject.getString("likes")) {
+        link.setAuthor(jsonObject.optString("author"));
+        link.setAuthorFlairCssClass(jsonObject.optString("author_flair_css_class"));
+        link.setAuthorFlairText(jsonObject.optString("author_flair_text"));
+        link.setClicked(jsonObject.optBoolean("clicked"));
+        link.setDomain(jsonObject.optString("domain"));
+        link.setHidden(jsonObject.optBoolean("hidden"));
+        link.setSelf(jsonObject.optBoolean("is_self"));
+
+        switch (jsonObject.optString("likes")) {
             case "null":
                 link.setLikes(0);
                 break;
@@ -78,24 +80,27 @@ public class Link extends Thing {
                 break;
         }
 
-        link.setLinkFlairCssClass(jsonObject.getString("link_flair_css_class"));
-        link.setLinkFlairText(jsonObject.getString("link_flair_text"));
-        link.setMedia(jsonObject.getString("media"));
-        link.setMediaEmbed(jsonObject.getString("media_embed"));
-        link.setNumComments(jsonObject.getInt("num_comments"));
-        link.setOver18(jsonObject.getBoolean("over_18"));
-        link.setPermalink(jsonObject.getString("permalink"));
-        link.setSaved(jsonObject.getBoolean("saved"));
-        link.setScore(jsonObject.getInt("score"));
-        link.setSelfText(jsonObject.getString("selftext"));
-        link.setSelfTextHtml(jsonObject.getString("selftext_html"));
-        link.setSubreddit(jsonObject.getString("subreddit"));
-        link.setSubredditId(jsonObject.getString("subreddit_id"));
-        link.setThumbnail(jsonObject.getString("thumbnail"));
-        link.setTitle(jsonObject.getString("title"));
-        link.setUrl(jsonObject.getString("url"));
+        link.setLinkFlairCssClass(jsonObject.optString("link_flair_css_class"));
+        link.setLinkFlairText(jsonObject.optString("link_flair_text"));
+        if (link.getLinkFlairText().equals("null")) {
+            link.setLinkFlairText("");
+        }
+        link.setMedia(jsonObject.optString("media"));
+        link.setMediaEmbed(jsonObject.optString("media_embed"));
+        link.setNumComments(jsonObject.optInt("num_comments"));
+        link.setOver18(jsonObject.optBoolean("over_18"));
+        link.setPermalink(jsonObject.optString("permalink"));
+        link.setSaved(jsonObject.optBoolean("saved"));
+        link.setScore(jsonObject.optInt("score"));
+        link.setSelfText(jsonObject.optString("selftext"));
+        link.setSelfTextHtml(jsonObject.optString("selftext_html"));
+        link.setSubreddit(jsonObject.optString("subreddit"));
+        link.setSubredditId(jsonObject.optString("subreddit_id"));
+        link.setThumbnail(jsonObject.optString("thumbnail"));
+        link.setTitle(jsonObject.optString("title"));
+        link.setUrl(jsonObject.optString("url"));
 
-        String edited = jsonObject.getString("edited");
+        String edited = jsonObject.optString("edited");
         switch (edited) {
             case "true":
                 link.setEdited(1);
@@ -104,11 +109,11 @@ public class Link extends Thing {
                 link.setEdited(0);
                 break;
             default:
-                link.setEdited(jsonObject.getLong("edited"));
+                link.setEdited(jsonObject.optLong("edited") * 1000);
                 break;
         }
 
-        switch (jsonObject.getString("distinguished")) {
+        switch (jsonObject.optString("distinguished")) {
             case "null":
                 link.setDistinguished(Reddit.Distinguished.NOT_DISTINGUISHED);
                 break;
@@ -123,7 +128,7 @@ public class Link extends Thing {
                 break;
         }
 
-        link.setStickied(jsonObject.getBoolean("stickied"));
+        link.setStickied(jsonObject.optBoolean("stickied"));
 
         return link;
     }

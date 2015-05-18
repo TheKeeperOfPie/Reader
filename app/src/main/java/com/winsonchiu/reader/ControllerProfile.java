@@ -282,13 +282,18 @@ public class ControllerProfile implements ControllerLinksBase, ControllerComment
     }
 
     @Override
-    public void insertComment(int commentIndex, Comment comment) {
-        // Not implemented
+    public void insertComment(Comment comment) {
+
     }
 
     @Override
-    public void removeComment(int commentIndex) {
-        // Not implemented
+    public void deleteComment(Comment comment) {
+        int commentIndex = data.getChildren().indexOf(comment);
+        data.getChildren().remove(commentIndex);
+
+        for (ControllerProfile.ItemClickListener listener : listeners) {
+            listener.getAdapter().notifyItemRemoved(commentIndex + 6);
+        }
     }
 
     @Override
@@ -389,6 +394,7 @@ public class ControllerProfile implements ControllerLinksBase, ControllerComment
         AdapterProfile getAdapter();
         int getRecyclerHeight();
         void resetRecycler();
+        void setSwipeRefreshEnabled(boolean enabled);
     }
 
     public interface ListenerCallback {

@@ -160,29 +160,27 @@ public class ControllerLinks implements ControllerLinksBase {
 
         reddit.loadGet(url, new Listener<String>() {
             @Override
-            public void onResponse(String response) {
+            public void onResponse(final String response) {
                 // TODO: Catch null errors in parent method call
                 if (response == null) {
                     return;
                 }
                 Log.d(TAG, "Result: " + response);
-
                 try {
                     listingLinks = Listing.fromJson(new JSONObject(response));
-                    for (LinkClickListener listener : listeners) {
-                        listener.getAdapter()
-                                .notifyDataSetChanged();
-                        listener.onFullLoaded(0);
-                        listener.loadSideBar(listingSubreddits);
-                    }
-                    setTitle();
                 }
-                catch (JSONException exception) {
-                    exception.printStackTrace();
+                catch (JSONException e) {
+                    e.printStackTrace();
                 }
-                finally {
-                    setLoading(false);
+
+                for (LinkClickListener listener : listeners) {
+                    listener.getAdapter().notifyDataSetChanged();
+                    listener.onFullLoaded(0);
+                    listener.loadSideBar(listingSubreddits);
+                    listener.setEmptyView(listingLinks.getChildren().isEmpty());
                 }
+                setTitle();
+                setLoading(false);
             }
         }, new ErrorListener() {
             @Override
@@ -279,7 +277,7 @@ public class ControllerLinks implements ControllerLinksBase {
         if (position == viewHolder.getAdapterPosition()) {
             if (viewHolder instanceof AdapterLinkList.ViewHolder) {
                 ((AdapterLinkList.ViewHolder) viewHolder).setVoteColors();
-                ((AdapterLinkList.ViewHolder) viewHolder).setTextInfo();
+                ((AdapterLinkList.ViewHolder) viewHolder).setTextInfo(link);
             }
             else if (viewHolder instanceof AdapterLinkGrid.ViewHolder) {
                 ((AdapterLinkGrid.ViewHolder) viewHolder).setVoteColors();
@@ -299,7 +297,7 @@ public class ControllerLinks implements ControllerLinksBase {
                 if (position == viewHolder.getAdapterPosition()) {
                     if (viewHolder instanceof AdapterLinkList.ViewHolder) {
                         ((AdapterLinkList.ViewHolder) viewHolder).setVoteColors();
-                        ((AdapterLinkList.ViewHolder) viewHolder).setTextInfo();
+                        ((AdapterLinkList.ViewHolder) viewHolder).setTextInfo(link);
                     }
                     else if (viewHolder instanceof AdapterLinkGrid.ViewHolder) {
                         ((AdapterLinkGrid.ViewHolder) viewHolder).setVoteColors();
@@ -343,8 +341,8 @@ public class ControllerLinks implements ControllerLinksBase {
         void setToolbarTitle(String title);
         AdapterLink getAdapter();
         int getRecyclerHeight();
-
         void loadSideBar(Listing listingSubreddits);
+        void setEmptyView(boolean visible);
     }
 
     public interface ListenerCallback {

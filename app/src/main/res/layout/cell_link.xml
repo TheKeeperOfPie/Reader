@@ -14,6 +14,7 @@
         android:clickable="false"
         android:focusable="false"
         android:focusableInTouchMode="false"
+        android:layout_marginBottom="@dimen/activity_vertical_margin"
         >
 
         <com.winsonchiu.reader.WebViewFixed
@@ -87,22 +88,37 @@
         android:layout_alignEnd="@id/frame_full"
         android:layout_alignBottom="@id/frame_full"
         android:contentDescription="@string/content_description_button_comments"
-        android:background="@android:color/transparent"
+        android:background="@drawable/background_comment_cell"
         android:src="@drawable/ic_mode_comment_white_24dp"
         android:padding="@dimen/activity_horizontal_margin"
         />
 
-    <TextView
-        android:id="@+id/text_thread_title"
+    <com.winsonchiu.reader.TextViewShadow
+        android:id="@+id/text_thread_flair"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_below="@id/frame_full"
         android:layout_marginStart="@dimen/activity_horizontal_margin"
         android:layout_marginEnd="@dimen/activity_horizontal_margin"
-        android:paddingTop="@dimen/activity_vertical_margin"
+        android:textSize="12sp"
+        android:textColor="@color/colorAccent"
+        android:ellipsize="marquee"
+        android:shadowColor="@color/darkThemeDialog"
+        android:shadowRadius="3"
+        />
+
+    <com.winsonchiu.reader.TextViewShadow
+        android:id="@+id/text_thread_title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/text_thread_flair"
+        android:layout_marginStart="@dimen/activity_horizontal_margin"
+        android:layout_marginEnd="@dimen/activity_horizontal_margin"
         android:paddingBottom="8dp"
         android:textSize="14sp"
         android:ellipsize="marquee"
+        android:shadowColor="@color/darkThemeDialog"
+        android:shadowRadius="3"
         />
 
     <TextView
@@ -113,6 +129,7 @@
         android:layout_marginStart="@dimen/activity_horizontal_margin"
         android:layout_marginEnd="@dimen/activity_horizontal_margin"
         android:textSize="12sp"
+        android:paddingBottom="8dp"
         />
 
     <com.winsonchiu.reader.TextViewShadow
@@ -125,12 +142,12 @@
         android:layout_marginBottom="@dimen/activity_vertical_margin"
         android:gravity="end"
         android:textSize="12sp"
-        android:shadowColor="@android:color/black"
+        android:shadowColor="@color/darkThemeDialog"
         android:shadowRadius="3"
         />
 
-    <TextView
-        android:id="@+id/text_timestamp"
+    <com.winsonchiu.reader.TextViewShadow
+        android:id="@+id/text_hidden"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_below="@id/text_thread_info"
@@ -140,13 +157,15 @@
         android:textSize="12sp"
         android:textColor="@color/darkThemeTextColorMuted"
         android:visibility="gone"
+        android:shadowColor="@color/darkThemeDialog"
+        android:shadowRadius="3"
         />
 
     <android.support.v7.widget.Toolbar
         android:id="@+id/toolbar_actions"
         android:layout_width="match_parent"
         android:layout_height="48dp"
-        android:layout_below="@id/text_timestamp"
+        android:layout_below="@id/text_hidden"
         android:layout_alignParentBottom="true"
         android:layout_alignParentEnd="true"
         android:visibility="gone"

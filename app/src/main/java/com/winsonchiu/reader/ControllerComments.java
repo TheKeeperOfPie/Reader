@@ -106,6 +106,7 @@ public class ControllerComments implements ControllerLinksBase, ControllerCommen
 
     public void reloadAllComments() {
         if (TextUtils.isEmpty(linkId)) {
+            setRefreshing(false);
             return;
         }
 
@@ -113,10 +114,11 @@ public class ControllerComments implements ControllerLinksBase, ControllerCommen
                 new Listener<String>() {
                     @Override
                     public void onResponse(String response) {
+                        Log.d(TAG, "reloadAllComments onResponse: " + response);
                         try {
                             setLink(Link.fromJson(new JSONArray(response)));
+                            setRefreshing(false);
                             for (CommentClickListener listener : listeners) {
-                                listener.setRefreshing(false);
                                 listener.getAdapter()
                                         .notifyDataSetChanged();
                             }
@@ -128,9 +130,15 @@ public class ControllerComments implements ControllerLinksBase, ControllerCommen
                 }, new ErrorListener() {
                     @Override
                     public void onErrorResponse(VolleyError error) {
-
+                        Log.d(TAG, "reloadAllComments onErrorResponse: " + error.toString());
                     }
                 }, 0);
+    }
+
+    private void setRefreshing(boolean refreshing) {
+        for (CommentClickListener listener : listeners) {
+            listener.setRefreshing(refreshing);
+        }
     }
 
     @Override
@@ -225,9 +233,7 @@ public class ControllerComments implements ControllerLinksBase, ControllerCommen
                                 insertComments(moreComment, listing);
                             }
 
-                            for (CommentClickListener listener : listeners) {
-                                listener.setRefreshing(false);
-                            }
+                            setRefreshing(false);
                         } catch (JSONException e1) {
                             e1.printStackTrace();
                         }
@@ -273,21 +279,55 @@ public class ControllerComments implements ControllerLinksBase, ControllerCommen
     }
 
     @Override
-    public void insertComment(int commentIndex, Comment comment) {
-        commentIndex = commentIndex - 1;
-        link.getComments().getChildren().add(commentIndex, comment);
-        listingComments.getChildren().add(commentIndex, comment);
-        for (CommentClickListener listener : listeners) {
-            listener.getAdapter().notifyItemInserted(commentIndex + 1);
+    public void insertComment(Comment comment) {
+
+        Comment parentComment = new Comment();
+        parentComment.setId(comment.getParentId());
+
+        int commentIndex = link.getComments().getChildren().indexOf(parentComment);
+        if (commentIndex > -1) {
+            link.getComments()
+                    .getChildren()
+                    .add(commentIndex + 1, comment);
+        }
+
+        commentIndex = listingComments.getChildren().indexOf(parentComment);
+        if (commentIndex > -1) {
+            listingComments.getChildren()
+                    .add(commentIndex + 1, comment);
+
+            // TODO: Fix index offset as this will not work with Profile page
+            for (CommentClickListener listener : listeners) {
+                listener.getAdapter().notifyItemInserted(commentIndex + 2);
+            }
         }
     }
 
     @Override
-    public void removeComment(int commentIndex) {
-        link.getComments().getChildren().remove(commentIndex);
-        listingComments.getChildren().remove(commentIndex);
-        for (CommentClickListener listener : listeners) {
-            listener.getAdapter().notifyItemRemoved(commentIndex + 1);
+    public void deleteComment(Comment comment) {
+
+        int commentIndex = link.getComments().getChildren().indexOf(comment);
+        if (commentIndex > -1) {
+            Comment newComment = (Comment) link.getComments()
+                    .getChildren()
+                    .get(commentIndex);
+            newComment.setBodyHtml(Comment.HTML_DELETED);
+            newComment.setAuthor("[deleted]");
+//            link.getComments().getChildren().set(commentIndex, newComment);
+        }
+
+        commentIndex = listingComments.getChildren().indexOf(comment);
+        if (commentIndex > -1) {
+            Comment newComment = (Comment) listingComments
+                    .getChildren()
+                    .get(commentIndex);
+            newComment.setBodyHtml(Comment.HTML_DELETED);
+            newComment.setAuthor("[deleted]");
+//            listingComments.getChildren().set(commentIndex, newComment);
+
+            for (CommentClickListener listener : listeners) {
+                listener.getAdapter().notifyItemChanged(commentIndex + 1);
+            }
         }
     }
 
@@ -433,7 +473,7 @@ public class ControllerComments implements ControllerLinksBase, ControllerCommen
         if (position == viewHolder.getAdapterPosition()) {
             if (viewHolder instanceof AdapterLinkList.ViewHolder) {
                 ((AdapterLinkList.ViewHolder) viewHolder).setVoteColors();
-                ((AdapterLinkList.ViewHolder) viewHolder).setTextInfo();
+                ((AdapterLinkList.ViewHolder) viewHolder).setTextInfo(link);
             }
             else if (viewHolder instanceof AdapterLinkGrid.ViewHolder) {
                 ((AdapterLinkGrid.ViewHolder) viewHolder).setVoteColors();
@@ -453,7 +493,7 @@ public class ControllerComments implements ControllerLinksBase, ControllerCommen
                 if (position == viewHolder.getAdapterPosition()) {
                     if (viewHolder instanceof AdapterLinkList.ViewHolder) {
                         ((AdapterLinkList.ViewHolder) viewHolder).setVoteColors();
-                        ((AdapterLinkList.ViewHolder) viewHolder).setTextInfo();
+                        ((AdapterLinkList.ViewHolder) viewHolder).setTextInfo(link);
                     }
                     else if (viewHolder instanceof AdapterLinkGrid.ViewHolder) {
                         ((AdapterLinkGrid.ViewHolder) viewHolder).setVoteColors();

@@ -68,9 +68,9 @@ public class Listing {
         Listing listing = new Listing();
         JSONObject jsonObject = rootJsonObject.getJSONObject("data");
 
-        listing.setBefore(jsonObject.getString("before"));
-        listing.setAfter(jsonObject.getString("after"));
-        listing.setModHash(jsonObject.getString("modhash"));
+        listing.setBefore(jsonObject.optString("before"));
+        listing.setAfter(jsonObject.optString("after"));
+        listing.setModHash(jsonObject.optString("modhash"));
 
         JSONArray jsonArray = jsonObject.getJSONArray("children");
 
@@ -80,7 +80,7 @@ public class Listing {
 
             JSONObject thing = jsonArray.getJSONObject(index);
 
-            switch (thing.getString("kind")) {
+            switch (thing.optString("kind")) {
 
                 // TODO: Add cases for all ID36s and fix adding Comments
 
@@ -91,6 +91,9 @@ public class Listing {
                     break;
                 case "t3":
                     things.add(Link.fromJson(thing));
+                    break;
+                case "t4":
+                    things.add(Message.fromJson(thing));
                     break;
                 case "t5":
                     things.add(Subreddit.fromJson(thing));

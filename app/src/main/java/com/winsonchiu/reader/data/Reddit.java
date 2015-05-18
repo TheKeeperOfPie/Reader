@@ -337,7 +337,7 @@ public class Reddit {
             return null;
         }
 
-        StringRequest getRequest = new StringRequest(Request.Method.GET, IMGUR_ALBUM_URL + id,
+        StringRequest getRequest = new StringRequest(Request.Method.GET, IMGUR_GALLERY_URL + id,
                                                      listener, errorListener) {
             @Override
             public Map<String, String> getHeaders() throws AuthFailureError {
@@ -377,7 +377,10 @@ public class Reddit {
         // TODO: Add support for popular image domains
         String domain = link.getDomain();
         if (domain.contains("imgur")) {
-            if (url.endsWith(Reddit.GIFV)) {
+            if (url.contains(",")) {
+                return false;
+            }
+            else if (url.endsWith(Reddit.GIFV)) {
                 return false;
             }
             else if (url.contains(".com/gallery")) {

@@ -36,35 +36,26 @@ public class Image {
     public static Image fromJson(JSONObject jsonObject) throws JSONException {
         Image image = new Image();
 
-        image.setId(jsonObject.getString("id"));
-        image.setTitle(jsonObject.getString("title"));
-        image.setDescription(jsonObject.getString("description"));
-        image.setDateTime(jsonObject.getInt("datetime"));
-        image.setType(jsonObject.getString("type"));
-        image.setAnimated(jsonObject.getBoolean("animated"));
-        image.setWidth(jsonObject.getInt("width"));
-        image.setHeight(jsonObject.getInt("height"));
-        image.setSize(jsonObject.getInt("size"));
-        image.setViews(jsonObject.getInt("views"));
-        image.setBandwidth(jsonObject.getInt("bandwidth"));
-        image.setFavorite(jsonObject.getBoolean("favorite"));
-
-        if (!jsonObject.getString("nsfw").equals("null")) {
-            image.setNsfw(jsonObject.getBoolean("nsfw"));
-        }
-
-        image.setSection(jsonObject.getString("section"));
-        image.setAccountUrl(jsonObject.getString("account_url"));
-
-        if (!jsonObject.getString("account_id").equals("null")) {
-            image.setAccountId(jsonObject.getInt("account_id"));
-        }
-
-        image.setLink(jsonObject.getString("link"));
-
-        image.setGifv(jsonObject.has("gifv") ? jsonObject.getString("gifv") : "");
-        image.setMp4(jsonObject.has("mp4") ? jsonObject.getString("mp4") : "");
-        image.setWebm(jsonObject.has("webm") ? jsonObject.getString("webm") : "");
+        image.setId(jsonObject.optString("id"));
+        image.setTitle(jsonObject.optString("title"));
+        image.setDescription(jsonObject.optString("description"));
+        image.setDateTime(jsonObject.optInt("datetime"));
+        image.setType(jsonObject.optString("type"));
+        image.setAnimated(jsonObject.optBoolean("animated"));
+        image.setWidth(jsonObject.optInt("width"));
+        image.setHeight(jsonObject.optInt("height"));
+        image.setSize(jsonObject.optInt("size"));
+        image.setViews(jsonObject.optInt("views"));
+        image.setBandwidth(jsonObject.optInt("bandwidth"));
+        image.setFavorite(jsonObject.optBoolean("favorite"));
+        image.setNsfw(jsonObject.optBoolean("nsfw"));
+        image.setSection(jsonObject.optString("section"));
+        image.setAccountUrl(jsonObject.optString("account_url"));
+        image.setAccountId(jsonObject.optInt("account_id"));
+        image.setLink(jsonObject.optString("link"));
+        image.setGifv(jsonObject.optString("gifv"));
+        image.setMp4(jsonObject.optString("mp4"));
+        image.setWebm(jsonObject.optString("webm"));
 
         return image;
     }

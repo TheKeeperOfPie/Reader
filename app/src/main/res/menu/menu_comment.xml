@@ -44,13 +44,4 @@
         app:showAsAction="ifRoom"
         />
 
-    <item
-        android:id="@+id/item_share"
-        android:title="@string/item_share"
-        android:icon="@drawable/ic_share_white_24dp"
-        android:orderInCategory="600"
-        android:actionProviderClass="android.widget.ShareActionProvider"
-        app:showAsAction="ifRoom"
-        />
-
 </menu>

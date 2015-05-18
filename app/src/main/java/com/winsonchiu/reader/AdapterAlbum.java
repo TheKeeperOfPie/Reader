@@ -2,6 +2,7 @@ package com.winsonchiu.reader;
 
 import android.app.Activity;
 import android.support.v4.view.PagerAdapter;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
@@ -17,6 +18,7 @@ import java.util.ArrayList;
  */
 public class AdapterAlbum extends PagerAdapter {
 
+    private static final String TAG = AdapterAlbum.class.getCanonicalName();
     private Activity activity;
     private ArrayList<View> views;
     private DisallowListener disallowListener;
@@ -70,6 +72,7 @@ public class AdapterAlbum extends PagerAdapter {
 
     @Override
     public Object instantiateItem(ViewGroup container, int position) {
+
         final WebViewFixed webView = (WebViewFixed) LayoutInflater.from(activity).inflate(R.layout.web_view_image, container, false);
         webView.getSettings().setUseWideViewPort(true);
         webView.getSettings().setBuiltInZoomControls(true);

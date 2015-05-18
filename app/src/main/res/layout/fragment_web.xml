@@ -7,7 +7,7 @@
     android:background="@color/darkThemeBackground"
     >
 
-    <android.support.v4.widget.SwipeRefreshLayout
+    <com.winsonchiu.reader.CustomSwipeRefreshLayout
         android:id="@+id/swipe_refresh_web"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -19,6 +19,6 @@
             android:layout_height="match_parent"
             />
 
-    </android.support.v4.widget.SwipeRefreshLayout>
+    </com.winsonchiu.reader.CustomSwipeRefreshLayout>
 
 </FrameLayout>

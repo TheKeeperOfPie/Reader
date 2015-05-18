@@ -133,8 +133,8 @@ public class FragmentComments extends Fragment {
         recyclerCommentList.setItemAnimator(new DefaultItemAnimator());
         recyclerCommentList.getItemAnimator().setRemoveDuration(AnimationUtils.EXPAND_ACTION_DURATION);
         recyclerCommentList.setLayoutManager(linearLayoutManager);
-        recyclerCommentList.addItemDecoration(
-                new DividerItemDecoration(activity, DividerItemDecoration.VERTICAL_LIST));
+//        recyclerCommentList.addItemDecoration(
+//                new DividerItemDecoration(activity, DividerItemDecoration.VERTICAL_LIST));
 
         controllerComments = mListener.getControllerComments();
 
@@ -194,6 +194,7 @@ public class FragmentComments extends Fragment {
 
     @Override
     public void onDetach() {
+        mListener.setNavigationAnimation(0.0f);
         mListener = null;
         activity = null;
         super.onDetach();
@@ -202,7 +203,7 @@ public class FragmentComments extends Fragment {
     @Override
     public void onDestroy() {
         super.onDestroy();
-        CustomApplication.getRefWatcher(getActivity()).watch(this);
+//        CustomApplication.getRefWatcher(getActivity()).watch(this);
     }
 
     /**

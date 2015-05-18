@@ -93,6 +93,11 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
 
     public abstract RecyclerView.ItemDecoration getItemDecoration();
 
+    @Override
+    public int getItemCount() {
+        return controllerLinks.size();
+    }
+
     protected static class ViewHolderBase extends RecyclerView.ViewHolder {
 
         protected MediaController mediaController;
@@ -102,10 +107,11 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         protected ImageView imageThumbnail;
         protected VideoView videoFull;
         protected WebViewFixed webFull;
+        protected TextView textThreadFlair;
         protected TextView textThreadTitle;
         protected TextView textThreadSelf;
         protected TextView textThreadInfo;
-        protected TextView textTimestamp;
+        protected TextView textHidden;
         protected ImageButton buttonComments;
         protected Toolbar toolbarActions;
         protected ControllerLinks.ListenerCallback callback;
@@ -178,11 +184,12 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             });
             viewPagerFull = (ViewPager) itemView.findViewById(R.id.view_pager_full);
             imageThumbnail = (ImageView) itemView.findViewById(R.id.image_thumbnail);
+            textThreadFlair = (TextView) itemView.findViewById(R.id.text_thread_flair);
             textThreadTitle = (TextView) itemView.findViewById(R.id.text_thread_title);
             textThreadInfo = (TextView) itemView.findViewById(R.id.text_thread_info);
             textThreadSelf = (TextView) itemView.findViewById(R.id.text_thread_self);
             textThreadSelf.setMovementMethod(LinkMovementMethod.getInstance());
-            textTimestamp = (TextView) itemView.findViewById(R.id.text_timestamp);
+            textHidden = (TextView) itemView.findViewById(R.id.text_hidden);
             buttonComments = (ImageButton) itemView.findViewById(R.id.button_comments);
             buttonComments.setOnClickListener(new View.OnClickListener() {
                 @Override
@@ -257,8 +264,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                     }
 
                     AnimationUtils.animateExpandActions(toolbarActions, false);
-                    AnimationUtils.animateExpand(textTimestamp,
-                            AnimationUtils.getMeasuredHeight(textTimestamp));
+                    AnimationUtils.animateExpand(textHidden);
                 }
             };
 
@@ -266,6 +272,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             this.imageThumbnail.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
+//                    imageThumbnail.setVisibility(View.GONE);
                     Link link = callback.getController().getLink(getAdapterPosition());
                     onClickThumbnail(link);
                 }
@@ -437,7 +444,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             }
         }
 
-        public void setTextInfo() {
+        public void setTextInfo(Link link) {
 
         }
 
@@ -468,7 +475,6 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                                 @Override
                                 public void onResponse(String response) {
                                     try {
-                                        Log.d(TAG, "loadGallery: " + response);
                                         Album album = Album.fromJson(
                                                 new JSONObject(
                                                         response).getJSONObject(
@@ -496,6 +502,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                                 @Override
                                 public void onErrorResponse(VolleyError error) {
                                     progressImage.setVisibility(View.GONE);
+                                    Log.d(TAG, "loadGallery error: " + error.toString());
                                 }
                             }, 0);
         }

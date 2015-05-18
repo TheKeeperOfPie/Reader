@@ -19,7 +19,10 @@ import android.view.View;
 import android.webkit.URLUtil;
 import android.widget.Toast;
 
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
 import com.crashlytics.android.Crashlytics;
+import com.winsonchiu.reader.data.Reddit;
 
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -33,7 +36,8 @@ public class MainActivity extends AppCompatActivity
         FragmentWeb.OnFragmentInteractionListener,
         FragmentComments.OnFragmentInteractionListener,
         FragmentAuth.OnFragmentInteractionListener,
-        FragmentProfile.OnFragmentInteractionListener {
+        FragmentProfile.OnFragmentInteractionListener,
+        FragmentInbox.OnFragmentInteractionListener {
 
     private static final String TAG = MainActivity.class.getCanonicalName();
     /**
@@ -50,6 +54,8 @@ public class MainActivity extends AppCompatActivity
     private ControllerLinks controllerLinks;
     private ControllerComments controllerComments;
     private ControllerProfile controllerProfile;
+    private ControllerInbox controllerInbox;
+    private ControllerSubreddits controllerSubreddits;
     private SharedPreferences sharedPreferences;
 
     @Override
@@ -67,6 +73,12 @@ public class MainActivity extends AppCompatActivity
         if (controllerProfile == null) {
             controllerProfile = new ControllerProfile(this);
         }
+        if (controllerInbox == null) {
+            controllerInbox = new ControllerInbox(this);
+        }
+        if (controllerSubreddits == null) {
+            controllerSubreddits = new ControllerSubreddits(this);
+        }
         setContentView(R.layout.activity_main);
 
         mNavigationDrawerFragment = (FragmentNavDrawer)
@@ -82,7 +94,7 @@ public class MainActivity extends AppCompatActivity
                 if (itemSearch != null) {
                     itemSearch.expandActionView();
                     SearchView searchView = ((SearchView) itemSearch.getActionView());
-                    if ("Front Page".equals(getTitle())) {
+                    if ("Front Page".equals(toolbar.getTitle())) {
                         searchView.setQuery("", false);
                     }
                     else {
@@ -105,49 +117,84 @@ public class MainActivity extends AppCompatActivity
             Log.d(TAG, "load intent: " + getIntent().toString());
             String urlString = getIntent().getDataString();
             if (URLUtil.isValidUrl(urlString)) {
-                try {
-                    URL url = new URL(urlString);
-                    String path = url.getPath();
-                    Log.d(TAG, "Path: " + path);
-                    int indexFirstSlash = path.indexOf("/", 1);
-                    int indexSecondSlash = path.indexOf("/", indexFirstSlash + 1);
-                    if (indexFirstSlash < 0) {
-                        controllerLinks.setParameters("", "hot");
-                        return;
-                    }
-                    String subreddit = path.substring(indexFirstSlash + 1,
-                            indexSecondSlash > 0 ? indexSecondSlash : path.length());
-
-                    Log.d(TAG, "Subreddit: " + subreddit);
-
-                    if (path.contains("comments")) {
-                        int indexComments = path.indexOf("comments") + 8;
-                        String id = path.substring(indexComments,
-                                path.indexOf("/", indexComments) > -1 ?
-                                        path.indexOf("/", indexComments) : path.length());
-                        FragmentComments fragmentComments = FragmentComments.newInstance(subreddit,
-                                id, false);
-
-                        getFragmentManager().beginTransaction()
-                                .add(R.id.frame_fragment, fragmentComments, FragmentComments.TAG)
-                                .addToBackStack(null)
-                                .commit();
-                    }
-                    else {
-                        int indexSort = path.indexOf("/", subreddit.length() + 1);
-                        String sort =
-                                indexSort > -1 ? path.substring(subreddit.length() + 1, indexSort) :
-                                        "hot";
-                        controllerLinks.setParameters(subreddit, "hot");
-                        Log.d(TAG, "Sort: " + sort);
-                    }
-                }
-                catch (MalformedURLException e) {
-                    e.printStackTrace();
-                }
+                parseUrl(urlString);
+            }
+            else {
+                Log.d(TAG, "Not valid URL: " + urlString);
             }
         }
 
+    }
+
+    private void parseUrl(String urlString) {
+        try {
+            URL url = new URL(urlString);
+
+            if (!url.getHost().contains("reddit")) {
+                getFragmentManager().beginTransaction()
+                        .add(R.id.frame_fragment, FragmentWeb
+                                .newInstance(urlString, ""), FragmentWeb.TAG)
+                        .addToBackStack(null)
+                        .commit();
+                return;
+            }
+
+            String path = url.getPath();
+            Log.d(TAG, "Path: " + path);
+            int indexFirstSlash = path.indexOf("/", 1);
+            int indexSecondSlash = path.indexOf("/", indexFirstSlash + 1);
+            if (indexFirstSlash < 0) {
+                controllerLinks.setParameters("", "hot");
+                return;
+            }
+            String subreddit = path.substring(indexFirstSlash + 1,
+                    indexSecondSlash > 0 ? indexSecondSlash : path.length());
+
+            Log.d(TAG, "Subreddit: " + subreddit);
+
+            if (path.contains("comments")) {
+                int indexComments = path.indexOf("comments") + 9;
+                int indexFourthSlash = path.indexOf("/", indexComments + 1);
+                String id = path.substring(indexComments, indexFourthSlash > -1 ? indexFourthSlash : path.length());
+                Log.d(TAG, "Comments ID: " + id);
+                FragmentComments fragmentComments = FragmentComments.newInstance(subreddit,
+                        id, false);
+
+                getFragmentManager().beginTransaction()
+                        .add(R.id.frame_fragment, fragmentComments, FragmentComments.TAG)
+                        .addToBackStack(null)
+                        .commit();
+            }
+            else if (path.contains("/u/")) {
+                int indexUser = path.indexOf("/u/") + 3;
+                getFragmentManager().beginTransaction()
+                        .replace(R.id.frame_fragment, FragmentProfile.newInstance("", ""),
+                                FragmentProfile.TAG)
+                        .addToBackStack(null)
+                        .commit();
+                controllerProfile.loadUser(urlString.substring(indexUser, path.indexOf("/", indexUser)));
+            }
+            else if (path.contains("/user/")) {
+                int indexUser = path.indexOf("/user/") + 6;
+                getFragmentManager().beginTransaction()
+                        .replace(R.id.frame_fragment, FragmentProfile.newInstance("", ""),
+                                FragmentProfile.TAG)
+                        .addToBackStack(null)
+                        .commit();
+                controllerProfile.loadUser(urlString.substring(indexUser, path.indexOf("/", indexUser)));
+            }
+            else {
+                int indexSort = path.indexOf("/", subreddit.length() + 1);
+                String sort =
+                        indexSort > -1 ? path.substring(subreddit.length() + 1, indexSort) :
+                                "hot";
+                controllerLinks.setParameters(subreddit, "hot");
+                Log.d(TAG, "Sort: " + sort);
+            }
+        }
+        catch (MalformedURLException e) {
+            e.printStackTrace();
+        }
     }
 
     @Override
@@ -163,17 +210,27 @@ public class MainActivity extends AppCompatActivity
 //        if (oldPosition != position | force) {
         switch (position) {
             case 0:
-                getFragmentManager().beginTransaction()
-                        .replace(R.id.frame_fragment,
-                                FragmentThreadList.newInstance("", ""),
-                                FragmentThreadList.TAG)
-                        .commit();
-                controllerLinks.loadFrontPage("hot");
+                if (getFragmentManager().findFragmentByTag(FragmentThreadList.TAG) != null) {
+                    controllerLinks.loadFrontPage("hot");
+                }
+                else {
+                    getFragmentManager().beginTransaction()
+                            .replace(R.id.frame_fragment,
+                                    FragmentThreadList.newInstance("", ""),
+                                    FragmentThreadList.TAG)
+                            .commit();
+                }
                 break;
             case 1:
                 getFragmentManager().beginTransaction()
                         .replace(R.id.frame_fragment, FragmentProfile.newInstance("", ""),
                                 FragmentProfile.TAG)
+                        .commit();
+                break;
+            case 2:
+                getFragmentManager().beginTransaction()
+                        .replace(R.id.frame_fragment, FragmentInbox.newInstance("", ""),
+                                FragmentInbox.TAG)
                         .commit();
                 break;
             case 3:
@@ -188,6 +245,9 @@ public class MainActivity extends AppCompatActivity
                         .apply();
                 preferences.edit()
                         .putString(AppSettings.ACCOUNT_JSON, "")
+                        .apply();
+                preferences.edit()
+                        .putString(AppSettings.SUBSCRIBED_SUBREDDITS, "")
                         .apply();
                 Toast.makeText(this, "Cleared refresh token", Toast.LENGTH_SHORT)
                         .show();
@@ -291,67 +351,11 @@ public class MainActivity extends AppCompatActivity
                 getApplicationContext().getPackageName(), intent.getStringExtra(
                         Browser.EXTRA_APPLICATION_ID))) {
             String urlString = intent.getDataString();
+            if (urlString.startsWith("/r/") || urlString.startsWith("/u/")) {
+                urlString = "https://reddit.com" + urlString;
+            }
             if (URLUtil.isValidUrl(urlString)) {
-                getFragmentManager().beginTransaction()
-                        .add(R.id.frame_fragment, FragmentWeb
-                                .newInstance(urlString, ""), FragmentWeb.TAG)
-                        .addToBackStack(null)
-                        .commit();
-            }
-            else if (urlString.startsWith("/r/")) {
-                Log.d(TAG, "Path: " + urlString);
-                int indexFirstSlash = urlString.indexOf("/", 1);
-                int indexSecondSlash = urlString.indexOf("/", indexFirstSlash + 1);
-                if (indexFirstSlash < 0) {
-                    controllerLinks.setParameters("", "hot");
-                    return;
-                }
-                String subreddit = urlString.substring(indexFirstSlash + 1,
-                        indexSecondSlash > 0 ? indexSecondSlash : urlString.length());
-
-                Log.d(TAG, "Subreddit: " + subreddit);
-
-                if (urlString.contains("wiki")) {
-                    urlString = "https://reddit.com" + urlString;
-                    if (URLUtil.isValidUrl(urlString)) {
-                        getFragmentManager().beginTransaction()
-                                .add(R.id.frame_fragment, FragmentWeb.newInstance(urlString, ""),
-                                        FragmentWeb.TAG)
-                                .addToBackStack(null)
-                                .commit();
-                    }
-                }
-                else if (urlString
-                        .contains("comments")) {
-                    int indexComments = urlString.indexOf("comments") + 8;
-                    String id = urlString.substring(indexComments,
-                            urlString.indexOf("/", indexComments) > -1 ?
-                                    urlString.indexOf("/", indexComments) : urlString.length());
-                    FragmentComments fragmentComments = FragmentComments.newInstance(subreddit,
-                            id, false);
-
-                    getFragmentManager().beginTransaction()
-                            .add(R.id.frame_fragment, fragmentComments, FragmentComments.TAG)
-                            .addToBackStack(null)
-                            .commit();
-                }
-                else {
-                    int indexSort = urlString.indexOf("/", subreddit.length() + 1);
-                    String sort =
-                            indexSort > -1 ?
-                                    urlString.substring(subreddit.length() + 1, indexSort) :
-                                    "hot";
-                    controllerLinks.setParameters(subreddit, "hot");
-                    Log.d(TAG, "Sort: " + sort);
-                }
-            }
-            else if (urlString.startsWith("/u/")) {
-                getFragmentManager().beginTransaction()
-                        .replace(R.id.frame_fragment, FragmentProfile.newInstance("", ""),
-                                FragmentProfile.TAG)
-                        .addToBackStack(null)
-                        .commit();
-                controllerProfile.loadUser(urlString.substring(3, urlString.length()));
+                parseUrl(urlString);
             }
         }
         else {
@@ -371,8 +375,18 @@ public class MainActivity extends AppCompatActivity
     }
 
     @Override
+    public ControllerInbox getControllerInbox() {
+        return controllerInbox;
+    }
+
+    @Override
     public ControllerComments getControllerComments() {
         return controllerComments;
+    }
+
+    @Override
+    public ControllerSubreddits getControllerSubreddits() {
+        return controllerSubreddits;
     }
 
     @Override

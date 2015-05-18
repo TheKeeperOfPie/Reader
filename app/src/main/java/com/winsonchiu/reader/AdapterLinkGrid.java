@@ -12,7 +12,9 @@ import android.text.Html;
 import android.text.Spannable;
 import android.text.SpannableString;
 import android.text.Spanned;
+import android.text.TextUtils;
 import android.text.style.ForegroundColorSpan;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -102,11 +104,6 @@ public class AdapterLinkGrid extends AdapterLink implements ControllerLinks.List
     }
 
     @Override
-    public int getItemCount() {
-        return controllerLinks.size();
-    }
-
-    @Override
     public ControllerLinks.LinkClickListener getListener() {
         return listener;
     }
@@ -160,7 +157,6 @@ public class AdapterLinkGrid extends AdapterLink implements ControllerLinks.List
 
         private final int defaultColor;
         private final int thumbnailSize;
-        protected ImageView imageThumbnail;
         protected ImageView imageFull;
 
         public ViewHolder(View itemView,
@@ -172,8 +168,6 @@ public class AdapterLinkGrid extends AdapterLink implements ControllerLinks.List
             this.thumbnailSize = thumbnailSize;
 
             this.imageFull = (ImageView) itemView.findViewById(R.id.image_full);
-            this.imageThumbnail = (ImageView) itemView.findViewById(R.id.image_thumbnail);
-
             this.imageFull.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
@@ -234,13 +228,16 @@ public class AdapterLinkGrid extends AdapterLink implements ControllerLinks.List
                         false);
             }
 
-            textTimestamp.setVisibility(View.GONE);
+            textHidden.setVisibility(View.GONE);
             toolbarActions.setVisibility(View.GONE);
             itemView.setBackgroundColor(defaultColor);
             imagePlay.setVisibility(View.GONE);
 
             final Link link = callback.getController()
                     .getLink(position);
+
+            Log.d(TAG, "onBind: " + link.getUrl());
+            Log.d(TAG, "thumbnail: " + link.getThumbnail());
 
             Drawable drawable = callback.getController()
                     .getDrawableForLink(link);
@@ -250,9 +247,11 @@ public class AdapterLinkGrid extends AdapterLink implements ControllerLinks.List
                 imageThumbnail.setImageDrawable(drawable);
             }
             else if (showThumbnail(link)) {
+                Log.d(TAG, "showThumbnail true: " + link.getUrl());
                 loadThumbnail(link, position);
             }
             else {
+                Log.d(TAG, "showThumbnail false: " + link.getUrl());
                 imageFull.setVisibility(View.GONE);
                 imageThumbnail.setVisibility(View.VISIBLE);
                 Picasso.with(callback.getActivity())
@@ -260,10 +259,7 @@ public class AdapterLinkGrid extends AdapterLink implements ControllerLinks.List
                         .into(imageThumbnail);
             }
 
-            textThreadTitle.setText(Html.fromHtml(link.getTitle()).toString());
-            textThreadTitle.setTextColor(
-                    link.isOver18() ? callback.getColorTextAlert() : callback.getColorText());
-            setTextInfo();
+            setTextInfo(link);
         }
 
         private void loadThumbnail(final Link link, final int position) {
@@ -304,6 +300,8 @@ public class AdapterLinkGrid extends AdapterLink implements ControllerLinks.List
                                                 .load(link.getUrl())
                                                 .resize(thumbnailSize, thumbnailSize)
                                                 .centerCrop()
+//                                                .noPlaceholder()
+//                                                .noFade()
                                                 .into(imageFull, new Callback() {
                                                     @Override
                                                     public void onSuccess() {
@@ -333,11 +331,21 @@ public class AdapterLinkGrid extends AdapterLink implements ControllerLinks.List
         }
 
         @Override
-        public void setTextInfo() {
-            super.setTextInfo();
+        public void setTextInfo(Link link) {
+            super.setTextInfo(link);
 
-            Link link = callback.getController()
-                    .getLink(getAdapterPosition());
+            if (!TextUtils.isEmpty(link.getLinkFlairText())) {
+                textThreadFlair.setVisibility(View.VISIBLE);
+                textThreadFlair.setText(link.getLinkFlairText());
+            }
+            else {
+                textThreadFlair.setVisibility(View.GONE);
+            }
+
+            textThreadTitle.setText(Html.fromHtml(link.getTitle())
+                    .toString());
+            textThreadTitle.setTextColor(
+                    link.isOver18() ? callback.getColorTextAlert() : callback.getColorText());
 
             String subreddit = "/r/" + link.getSubreddit();
             int scoreLength = String.valueOf(link.getScore())
@@ -352,7 +360,7 @@ public class AdapterLinkGrid extends AdapterLink implements ControllerLinks.List
             spannableInfo.setSpan(new ForegroundColorSpan(callback.getColorMuted()), subreddit.length() + 1 + scoreLength, spannableInfo.length(), Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
             textThreadInfo.setText(spannableInfo);
 
-            textTimestamp.setText(new Date(link.getCreatedUtc()).toString());
+            textHidden.setText(new Date(link.getCreatedUtc()).toString() + ", " + link.getNumComments() + " comments");
         }
     }
 

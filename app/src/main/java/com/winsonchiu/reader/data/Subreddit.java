@@ -1,6 +1,8 @@
 package com.winsonchiu.reader.data;
 
 import android.support.annotation.Nullable;
+import android.support.v4.text.TextUtilsCompat;
+import android.text.TextUtils;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -52,72 +54,70 @@ public class Subreddit extends Thing {
     public static Subreddit fromJson(JSONObject rootJsonObject) throws JSONException {
 
         Subreddit subreddit = new Subreddit();
-        subreddit.setKind(rootJsonObject.getString("kind"));
+        subreddit.setKind(rootJsonObject.optString("kind"));
 
         JSONObject jsonObject = rootJsonObject.getJSONObject("data");
 
-        subreddit.setId(jsonObject.getString("id"));
-        subreddit.setName(jsonObject.getString("name"));
+        subreddit.setId(jsonObject.optString("id"));
+        subreddit.setName(jsonObject.optString("name"));
 
-        if (!jsonObject.getString("accounts_active").equals("null")) {
-            subreddit.setAccountsActive(jsonObject.getInt("accounts_active"));
-        }
-        subreddit.setBannerImg(jsonObject.getString("banner_img"));
+        subreddit.setAccountsActive(jsonObject.optInt("accounts_active"));
+        subreddit.setBannerImg(jsonObject.optString("banner_img"));
 
-        if (!jsonObject.getString("banner_size").equals("null")) {
+        if (!jsonObject.optString("banner_size").equals("null")) {
             JSONArray jsonArray = jsonObject.getJSONArray("banner_size");
             int[] array = new int[jsonArray.length()];
             for (int index = 0; index < jsonArray.length(); index++) {
-                array[index] = jsonArray.getInt(index);
+                array[index] = jsonArray.optInt(index);
             }
             subreddit.setBannerSize(array);
         }
 
-        subreddit.setCollapseDeletedComments(jsonObject.getBoolean("collapse_deleted_comments"));
-        subreddit.setDescription(jsonObject.getString("description"));
-        subreddit.setDescriptionHtml(jsonObject.getString("description_html"));
-        subreddit.setDisplayName(jsonObject.getString("display_name"));
-        subreddit.setHeaderImg(jsonObject.getString("header_img"));
+        subreddit.setCollapseDeletedComments(jsonObject.optBoolean("collapse_deleted_comments"));
+        subreddit.setDescription(jsonObject.optString("description"));
+        subreddit.setDescriptionHtml(jsonObject.optString("description_html"));
+        subreddit.setDisplayName(jsonObject.optString("display_name"));
+        subreddit.setHeaderImg(jsonObject.optString("header_img"));
 
-        if (!jsonObject.getString("header_size").equals("null")) {
+        if (!jsonObject.optString("header_size").equals("null")) {
             JSONArray jsonArray = jsonObject.getJSONArray("header_size");
             int[] array = new int[jsonArray.length()];
             for (int index = 0; index < jsonArray.length(); index++) {
-                array[index] = jsonArray.getInt(index);
+                array[index] = jsonArray.optInt(index);
             }
             subreddit.setHeaderSize(array);
         }
 
-        subreddit.setHeaderTitle(jsonObject.getString("header_title"));
-        subreddit.setHideAds(jsonObject.getBoolean("hide_ads"));
-        subreddit.setIconImg(jsonObject.getString("icon_img"));
+        subreddit.setHeaderTitle(jsonObject.optString("header_title"));
+        subreddit.setHideAds(jsonObject.optBoolean("hide_ads"));
+        subreddit.setIconImg(jsonObject.optString("icon_img"));
 
-        if (!jsonObject.getString("icon_size").equals("null")) {
+        if (!jsonObject.optString("icon_size").equals("null")) {
             JSONArray jsonArray = jsonObject.getJSONArray("icon_size");
             int[] array = new int[jsonArray.length()];
             for (int index = 0; index < jsonArray.length(); index++) {
-                array[index] = jsonArray.getInt(index);
+                array[index] = jsonArray.optInt(index);
             }
             subreddit.setIconSize(array);
         }
 
-        subreddit.setOver18(jsonObject.getBoolean("over18"));
-        subreddit.setPublicDescription(jsonObject.getString("public_description"));
-        subreddit.setPublicDescriptionHtml(jsonObject.getString("public_description_html"));
-        subreddit.setPublicTraffic(jsonObject.getBoolean("public_traffic"));
-        subreddit.setSubscribers(jsonObject.getLong("subscribers"));
-        subreddit.setSubmissionType(jsonObject.getString("submission_type"));
-        subreddit.setSubmitLinkLabel(jsonObject.getString("submit_link_label"));
-        subreddit.setSubmitText(jsonObject.getString("submit_text"));
-        subreddit.setSubmitTextLabel(jsonObject.getString("submit_text_label"));
-        subreddit.setSubmitTextHtml(jsonObject.getString("submit_text_html"));
-        subreddit.setSubredditType(jsonObject.getString("subreddit_type"));
-        subreddit.setTitle(jsonObject.getString("title"));
-        subreddit.setUrl(jsonObject.getString("url"));
-        subreddit.setUserIsBanned(jsonObject.getBoolean("user_is_banned"));
-        subreddit.setUserIsContributor(jsonObject.getBoolean("user_is_contributor"));
-        subreddit.setUserIsModerator(jsonObject.getBoolean("user_is_moderator"));
-        subreddit.setUserIsSubscriber(jsonObject.getBoolean("user_is_subscriber"));
+        subreddit.setOver18(jsonObject.optBoolean("over18"));
+        subreddit.setPublicDescription(jsonObject.optString("public_description"));
+        subreddit.setPublicDescriptionHtml(jsonObject.optString("public_description_html"));
+        subreddit.setPublicTraffic(jsonObject.optBoolean("public_traffic"));
+        subreddit.setSubscribers(jsonObject.optLong("subscribers"));
+        subreddit.setSubmissionType(jsonObject.optString("submission_type"));
+        subreddit.setSubmitLinkLabel(jsonObject.optString("submit_link_label"));
+        subreddit.setSubmitText(jsonObject.optString("submit_text"));
+        subreddit.setSubmitTextLabel(jsonObject.optString("submit_text_label"));
+        subreddit.setSubmitTextHtml(jsonObject.optString("submit_text_html"));
+        subreddit.setSubredditType(jsonObject.optString("subreddit_type"));
+        subreddit.setTitle(jsonObject.optString("title"));
+        subreddit.setUrl(jsonObject.optString("url"));
+        subreddit.setUserIsBanned(jsonObject.optBoolean("user_is_banned"));
+        subreddit.setUserIsContributor(jsonObject.optBoolean("user_is_contributor"));
+        subreddit.setUserIsModerator(jsonObject.optBoolean("user_is_moderator"));
+        subreddit.setUserIsSubscriber(jsonObject.optBoolean("user_is_subscriber"));
 
         return subreddit;
     }

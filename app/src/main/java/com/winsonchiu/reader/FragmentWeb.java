@@ -6,6 +6,9 @@ import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.support.v4.graphics.ColorUtils;
 import android.support.v4.widget.SwipeRefreshLayout;
+import android.support.v7.widget.SearchView;
+import android.util.Log;
+import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -78,6 +81,23 @@ public class FragmentWeb extends Fragment {
         super.onCreateOptionsMenu(menu, inflater);
         menu.clear();
         inflater.inflate(R.menu.menu_web, menu);
+
+        final SearchView searchView = (SearchView) menu.findItem(R.id.item_search).getActionView();
+
+        searchView.setQueryHint(getString(R.string.search_in_page));
+        searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+            @Override
+            public boolean onQueryTextSubmit(String query) {
+                webView.findAllAsync(query);
+                return false;
+            }
+
+            @Override
+            public boolean onQueryTextChange(String newText) {
+                return false;
+            }
+        });
+        searchView.setSubmitButtonEnabled(true);
     }
 
     @Override
@@ -187,7 +207,7 @@ public class FragmentWeb extends Fragment {
     @Override
     public void onDestroy() {
         super.onDestroy();
-        CustomApplication.getRefWatcher(getActivity()).watch(this);
+//        CustomApplication.getRefWatcher(getActivity()).watch(this);
     }
 
     /**

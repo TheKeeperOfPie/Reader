@@ -57,7 +57,9 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
     private static final int VIEW_LINK = 0;
     private static final int VIEW_COMMENT = 1;
     private static final int LINK_MENU_SIZE = 4;
-    private static final int COMMENT_MENU_SIZE = 6;
+    private static final int COMMENT_MENU_SIZE = 5;
+    private static final int MAX_ALPHA = 180;
+    private static final int ALPHA_LEVELS = 8;
     private final ControllerComments.CommentClickListener listener;
     private final float itemWidth;
     private User user;
@@ -135,6 +137,11 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
             @Override
             public void loadSideBar(Listing listingSubreddits) {
 
+            }
+
+            @Override
+            public void setEmptyView(boolean visible) {
+                // Not required
             }
 
             @Override
@@ -368,8 +375,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                                                                     .getJSONObject("data")
                                                                     .getJSONArray("things")
                                                                     .getJSONObject(0), parentLevel + 1);
-                                                    callback.getControllerComments().insertComment(
-                                                            commentIndex, newComment);
+                                                    callback.getControllerComments().insertComment(newComment);
                                                 }
                                                 catch (JSONException e) {
                                                     e.printStackTrace();
@@ -417,10 +423,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                             }
                             comment.setReplyExpanded(!comment.isReplyExpanded());
                             AnimationUtils.animateExpand(editTextReply);
-                            AnimationUtils.animateExpand(buttonSendReply,
-                                    AnimationUtils.getMeasuredHeight(buttonSendReply));
-                            break;
-                        case R.id.item_share:
+                            AnimationUtils.animateExpand(buttonSendReply);
                             break;
                         case R.id.item_delete:
                             comment = callback.getControllerComments().getComment(commentIndex);
@@ -451,6 +454,9 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                                                         DialogInterface dialog,
                                                         int which) {
 
+                                                    callback.getControllerComments().deleteComment(
+                                                            comment);
+
                                                     Map<String, String> params = new HashMap<>();
                                                     params.put("id", comment.getName());
 
@@ -459,7 +465,6 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                                                                     new Response.Listener<String>() {
                                                                         @Override
                                                                         public void onResponse(String response) {
-                                                                            callback.getControllerComments().removeComment(commentIndex);
                                                                         }
                                                                     }, new Response.ErrorListener() {
                                                                         @Override
@@ -574,9 +579,9 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                 layoutContainerActions.setVisibility(View.GONE);
             }
 
-            int alphaLevel = comment.getLevel() * 255 / 9;
+            int alphaLevel = comment.getLevel() * MAX_ALPHA / ALPHA_LEVELS;
 
-            int overlayColor = ColorUtils.setAlphaComponent(0xFF000000, alphaLevel <= 255 ? alphaLevel : 255);
+            int overlayColor = ColorUtils.setAlphaComponent(0xFF000000, alphaLevel <= MAX_ALPHA ? alphaLevel : 255);
 
             viewIndicator.setBackgroundColor(ColorUtils.compositeColors(overlayColor, callback.getColorPrimary()));
 
