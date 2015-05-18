@@ -43,6 +43,7 @@ public class FragmentWeb extends Fragment {
     private WebView webView;
     private SwipeRefreshLayout swipeRefreshWeb;
     private Activity activity;
+    private MenuItem itemSearch;
 
     /**
      * Use this factory method to create a new instance of
@@ -82,7 +83,9 @@ public class FragmentWeb extends Fragment {
         menu.clear();
         inflater.inflate(R.menu.menu_web, menu);
 
-        final SearchView searchView = (SearchView) menu.findItem(R.id.item_search).getActionView();
+        itemSearch = menu.findItem(R.id.item_search);
+
+        SearchView searchView = (SearchView) itemSearch.getActionView();
 
         searchView.setQueryHint(getString(R.string.search_in_page));
         searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
@@ -98,6 +101,14 @@ public class FragmentWeb extends Fragment {
             }
         });
         searchView.setSubmitButtonEnabled(true);
+    }
+
+    @Override
+    public void onDestroyOptionsMenu() {
+        SearchView searchView = (SearchView) itemSearch.getActionView();
+        searchView.setOnQueryTextListener(null);
+        itemSearch = null;
+        super.onDestroyOptionsMenu();
     }
 
     @Override
@@ -207,7 +218,7 @@ public class FragmentWeb extends Fragment {
     @Override
     public void onDestroy() {
         super.onDestroy();
-//        CustomApplication.getRefWatcher(getActivity()).watch(this);
+        CustomApplication.getRefWatcher(getActivity()).watch(this);
     }
 
     /**

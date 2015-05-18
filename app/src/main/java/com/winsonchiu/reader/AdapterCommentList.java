@@ -311,6 +311,8 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
 
         protected View viewIndent;
         protected View viewIndicator;
+        protected View viewIndicatorContainer;
+        protected View viewIndicatorContainerReply;
         protected TextView textComment;
         protected TextView textInfo;
         protected RelativeLayout layoutContainerReply;
@@ -336,6 +338,8 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
             this.drawableDownvote = resources.getDrawable(R.drawable.ic_keyboard_arrow_down_white_24dp);
             viewIndent = itemView.findViewById(R.id.view_indent);
             viewIndicator = itemView.findViewById(R.id.view_indicator);
+            viewIndicatorContainer = itemView.findViewById(R.id.view_indicator_container);
+            viewIndicatorContainerReply = itemView.findViewById(R.id.view_indicator_container_reply);
             textComment = (TextView) itemView.findViewById(R.id.text_comment);
             textComment.setMovementMethod(LinkMovementMethod.getInstance());
             textInfo = (TextView) itemView.findViewById(R.id.text_info);
@@ -581,9 +585,13 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
 
             int alphaLevel = comment.getLevel() * MAX_ALPHA / ALPHA_LEVELS;
 
-            int overlayColor = ColorUtils.setAlphaComponent(0xFF000000, alphaLevel <= MAX_ALPHA ? alphaLevel : 255);
+            int overlayColor = ColorUtils.setAlphaComponent(0xFF000000, alphaLevel <= MAX_ALPHA ? alphaLevel : MAX_ALPHA);
+            int indicatorColor = ColorUtils.compositeColors(overlayColor,
+                    callback.getColorPrimary());
 
-            viewIndicator.setBackgroundColor(ColorUtils.compositeColors(overlayColor, callback.getColorPrimary()));
+            viewIndicator.setBackgroundColor(indicatorColor);
+            viewIndicatorContainer.setBackgroundColor(indicatorColor);
+            viewIndicatorContainerReply.setBackgroundColor(indicatorColor);
 
             ViewGroup.LayoutParams layoutParams = viewIndent.getLayoutParams();
             layoutParams.width = callback.getControllerComments().getIndentWidth(comment);

@@ -204,11 +204,20 @@ public class FragmentThreadList extends Fragment {
                 }
                 String query = newText.toLowerCase()
                         .replaceAll(" ", "");
-                mListener.getControllerSubreddits().setQuery(query);
+                mListener.getControllerSubreddits()
+                        .setQuery(query);
                 return false;
             }
         });
         searchView.setSubmitButtonEnabled(true);
+    }
+
+    @Override
+    public void onDestroyOptionsMenu() {
+        SearchView searchView = (SearchView) itemSearch.getActionView();
+        searchView.setOnQueryTextListener(null);
+        itemSearch = null;
+        super.onDestroyOptionsMenu();
     }
 
     @Override
@@ -672,8 +681,7 @@ public class FragmentThreadList extends Fragment {
     @Override
     public void onDestroy() {
         super.onDestroy();
-//        CustomApplication.getRefWatcher(getActivity())
-//                .watch(this);
+        CustomApplication.getRefWatcher(getActivity()).watch(this);
     }
 
     /**

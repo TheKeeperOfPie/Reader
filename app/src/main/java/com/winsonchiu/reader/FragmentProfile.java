@@ -162,6 +162,14 @@ public class FragmentProfile extends Fragment {
     }
 
     @Override
+    public void onDestroyOptionsMenu() {
+        SearchView searchView = (SearchView) itemSearch.getActionView();
+        searchView.setOnQueryTextListener(null);
+        itemSearch = null;
+        super.onDestroyOptionsMenu();
+    }
+
+    @Override
     public boolean onOptionsItemSelected(MenuItem item) {
 
         item.setChecked(true);
@@ -450,6 +458,12 @@ public class FragmentProfile extends Fragment {
         super.onDetach();
         mListener = null;
         activity = null;
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        CustomApplication.getRefWatcher(getActivity()).watch(this);
     }
 
     /**

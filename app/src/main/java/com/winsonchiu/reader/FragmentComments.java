@@ -203,7 +203,8 @@ public class FragmentComments extends Fragment {
     @Override
     public void onDestroy() {
         super.onDestroy();
-//        CustomApplication.getRefWatcher(getActivity()).watch(this);
+        CustomApplication.getRefWatcher(getActivity())
+                .watch(this);
     }
 
     /**
