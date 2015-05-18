@@ -3,17 +3,21 @@
 A Reddit client created to practice good UI/UX design
 
 ## Screenshots
-<b>Starting view and thread list</b>
+<b>Thread list</b>
 
-<img src="/Assets/Screenshots/Expanded Item.png" width="400px"/>
-
-<b>Navigation drawer</b>
-
-<img src="/Assets/Screenshots/Nav Drawer.png" width="400px"/>
+<img src="/Assets/Screenshots/thread_list.png" width="500px"/>
 
 <b>Comment thread</b>
 
-<img src="/Assets/Screenshots/Comment Thread.png" width="400px"/>
+<img src="/Assets/Screenshots/comments.png" width="500px"/>
+
+<b>Subreddit list</b>
+
+<img src="/Assets/Screenshots/subreddit_search.png" width="500px"/>
+
+<b>Aww</b>
+
+<img src="/Assets/Screenshots/grid_view_aww.png" width="500px"/>
 
 ## Objectives
 
