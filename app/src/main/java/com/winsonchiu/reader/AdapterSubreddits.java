@@ -103,8 +103,9 @@ public class AdapterSubreddits extends RecyclerView.Adapter<AdapterSubreddits.Vi
             View.OnClickListener onClickListener = new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    AnimationUtils.animateExpand(textDescription);
-                    AnimationUtils.animateExpand(textInfo);
+
+                    AnimationUtils.animateExpand(textDescription, 1.0f);
+                    AnimationUtils.animateExpand(textInfo, 1.0f);
                 }
             };
 

@@ -114,6 +114,11 @@ public class FragmentComments extends Fragment {
             }
 
             @Override
+            public int getRecyclerWidth() {
+                return recyclerCommentList.getWidth();
+            }
+
+            @Override
             public void requestDisallowInterceptTouchEvent(boolean disallow) {
                 recyclerCommentList.requestDisallowInterceptTouchEvent(disallow);
             }
@@ -203,8 +208,8 @@ public class FragmentComments extends Fragment {
     @Override
     public void onDestroy() {
         super.onDestroy();
-        CustomApplication.getRefWatcher(getActivity())
-                .watch(this);
+//        CustomApplication.getRefWatcher(getActivity())
+//                .watch(this);
     }
 
     /**

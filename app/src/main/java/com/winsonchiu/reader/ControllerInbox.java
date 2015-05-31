@@ -291,6 +291,7 @@ public class ControllerInbox implements ControllerCommentsBase {
         int getRecyclerHeight();
         void resetRecycler();
         void setSwipeRefreshEnabled(boolean enabled);
+        int getRecyclerWidth();
     }
 
     public interface ListenerCallback {

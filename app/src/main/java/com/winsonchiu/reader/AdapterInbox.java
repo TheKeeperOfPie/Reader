@@ -121,6 +121,11 @@ public class AdapterInbox extends RecyclerView.Adapter<RecyclerView.ViewHolder>
                     }
 
                     @Override
+                    public int getRecyclerWidth() {
+                        return listener.getRecyclerWidth();
+                    }
+
+                    @Override
                     public void requestDisallowInterceptTouchEvent(boolean disallow) {
 
                     }
@@ -343,8 +348,8 @@ public class AdapterInbox extends RecyclerView.Adapter<RecyclerView.ViewHolder>
                                             }
                                         }, params, 0);
                         message.setReplyExpanded(!message.isReplyExpanded());
-                        AnimationUtils.animateExpand(editTextReply);
-                        AnimationUtils.animateExpand(buttonSendReply);
+                        AnimationUtils.animateExpand(editTextReply, 1.0f);
+                        AnimationUtils.animateExpand(buttonSendReply, 1.0f);
                     }
                 }
             });
@@ -362,8 +367,9 @@ public class AdapterInbox extends RecyclerView.Adapter<RecyclerView.ViewHolder>
                                 editTextReply.setText(null);
                             }
                             message.setReplyExpanded(!message.isReplyExpanded());
-                            AnimationUtils.animateExpand(editTextReply);
-                            AnimationUtils.animateExpand(buttonSendReply);
+
+                            AnimationUtils.animateExpand(editTextReply, 1.0f);
+                            AnimationUtils.animateExpand(buttonSendReply, 1.0f);
                             break;
                     }
                     return true;

@@ -159,6 +159,8 @@
         android:visibility="gone"
         android:shadowColor="@color/darkThemeDialog"
         android:shadowRadius="3"
+        android:ellipsize="none"
+        android:scrollHorizontally="false"
         />
 
     <android.support.v7.widget.Toolbar

@@ -373,6 +373,11 @@ public class FragmentProfile extends Fragment {
             }
 
             @Override
+            public int getRecyclerWidth() {
+                return recyclerProfile.getWidth();
+            }
+
+            @Override
             public void requestDisallowInterceptTouchEvent(boolean disallow) {
 
             }
@@ -463,7 +468,7 @@ public class FragmentProfile extends Fragment {
     @Override
     public void onDestroy() {
         super.onDestroy();
-        CustomApplication.getRefWatcher(getActivity()).watch(this);
+//        CustomApplication.getRefWatcher(getActivity()).watch(this);
     }
 
     /**

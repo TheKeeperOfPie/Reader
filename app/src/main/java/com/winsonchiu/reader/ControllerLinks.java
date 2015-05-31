@@ -343,6 +343,7 @@ public class ControllerLinks implements ControllerLinksBase {
         int getRecyclerHeight();
         void loadSideBar(Listing listingSubreddits);
         void setEmptyView(boolean visible);
+        int getRecyclerWidth();
     }
 
     public interface ListenerCallback {

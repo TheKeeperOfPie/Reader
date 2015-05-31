@@ -579,6 +579,7 @@ public class ControllerComments implements ControllerLinksBase, ControllerCommen
         void setRefreshing(boolean refreshing);
         AdapterCommentList getAdapter();
         int getRecyclerHeight();
+        int getRecyclerWidth();
     }
 
     public interface ListenerCallback {
