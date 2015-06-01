@@ -53,33 +53,6 @@ public class AnimationUtils {
         valueAnimator.start();
     }
 
-    public static void animateBackgroundColorHsv(final View view, int start, int end) {
-
-        final float[] startHsv = new float[3];
-        final float[] endHsv = new float[3];
-
-        Color.colorToHSV(start, startHsv);
-        Color.colorToHSV(end, endHsv);
-
-        ValueAnimator valueAnimator = ValueAnimator.ofFloat(0.0f, 1.0f);
-        valueAnimator.setDuration(BACKGROUND_DURATION);
-
-        final float[] hsv = new float[3];
-
-        valueAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
-            @Override
-            public void onAnimationUpdate(ValueAnimator animation) {
-                hsv[0] = startHsv[0] + (endHsv[0] - startHsv[0]) * animation.getAnimatedFraction();
-                hsv[1] = startHsv[1] + (endHsv[1] - startHsv[1]) * animation.getAnimatedFraction();
-                hsv[2] = startHsv[2] + (endHsv[2] - startHsv[2]) * animation.getAnimatedFraction();
-
-                view.setBackgroundColor(Color.HSVToColor(hsv));
-            }
-        });
-
-        valueAnimator.start();
-    }
-
     public static void animateAlpha(View view, float start, float end) {
         ObjectAnimator objectAnimator = ObjectAnimator.ofFloat(view, "alpha", start, end);
         objectAnimator.setDuration(ALPHA_DURATION);
