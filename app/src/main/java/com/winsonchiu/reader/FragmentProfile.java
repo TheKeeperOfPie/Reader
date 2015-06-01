@@ -373,6 +373,11 @@ public class FragmentProfile extends Fragment {
             }
 
             @Override
+            public int getRecyclerWidth() {
+                return recyclerProfile.getWidth();
+            }
+
+            @Override
             public void requestDisallowInterceptTouchEvent(boolean disallow) {
 
             }

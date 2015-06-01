@@ -163,67 +163,9 @@ public class AnimationUtils {
         viewGroup.requestLayout();
     }
 
-    public static void animateExpand(final View view, final int height) {
+    public static void animateExpand(final View view, float ratio) {
 
-        Log.d(TAG, "animatedExpand target height: " + height);
-
-        Animation animation;
-        if (view.isShown()) {
-            animation = new Animation() {
-                @Override
-                protected void applyTransformation(float interpolatedTime, Transformation t) {
-                    view.getLayoutParams().height = (int) (height * (1.0f - interpolatedTime));
-                    view.requestLayout();
-                }
-
-                @Override
-                public boolean willChangeBounds() {
-                    return true;
-                }
-            };
-            animation.setAnimationListener(new Animation.AnimationListener() {
-                @Override
-                public void onAnimationStart(Animation animation) {
-
-                }
-
-                @Override
-                public void onAnimationEnd(Animation animation) {
-                    view.setVisibility(View.GONE);
-                }
-
-                @Override
-                public void onAnimationRepeat(Animation animation) {
-
-                }
-            });
-        }
-        else {
-            animation = new Animation() {
-                @Override
-                protected void applyTransformation(float interpolatedTime, Transformation t) {
-                    view.getLayoutParams().height = (int) (interpolatedTime * height);
-                    view.requestLayout();
-                }
-
-                @Override
-                public boolean willChangeBounds() {
-                    return true;
-                }
-            };
-            view.getLayoutParams().height = 0;
-            view.requestLayout();
-            view.setVisibility(View.VISIBLE);
-        }
-        animation.setDuration(EXPAND_ACTION_DURATION);
-        animation.setInterpolator(new DecelerateInterpolator());
-        view.startAnimation(animation);
-        view.requestLayout();
-    }
-
-    public static void animateExpand(final View view) {
-
-        final int height = getMeasuredHeight(view);
+        final int height = getMeasuredHeight(view, ratio);
 
         Animation animation;
         if (view.isShown()) {
@@ -284,14 +226,16 @@ public class AnimationUtils {
      *
      * by support_ms and Hugo Gresse
      */
-    public static int getMeasuredHeight(View view) {
+    public static int getMeasuredHeight(View view, float widthRatio) {
         WindowManager windowManager =
                 (WindowManager) view.getContext().getSystemService(Context.WINDOW_SERVICE);
         Display display = windowManager.getDefaultDisplay();
 
         Point size = new Point();
         display.getSize(size);
-        int deviceWidth = size.x;
+        int deviceWidth = (int) (size.x * widthRatio);
+
+        Log.d(TAG, "getMeasuredHeight deviceWidth: " + deviceWidth);
 
         int widthMeasureSpec = View.MeasureSpec.makeMeasureSpec(deviceWidth, View.MeasureSpec.AT_MOST);
         int heightMeasureSpec = View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED);

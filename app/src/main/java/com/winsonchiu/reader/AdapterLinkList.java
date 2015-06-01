@@ -198,7 +198,7 @@ public class AdapterLinkList extends AdapterLink implements ControllerLinks.List
             textThreadInfo.setText(spannableInfo);
 
             textHidden.setText(new Date(
-                    link.getCreatedUtc()).toString() + "\n" + link.getNumComments() + " comments");
+                    link.getCreatedUtc()).toString() + ", " + link.getNumComments() + " comments");
         }
     }
 

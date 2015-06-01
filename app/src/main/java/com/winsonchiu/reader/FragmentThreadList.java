@@ -534,6 +534,11 @@ public class FragmentThreadList extends Fragment {
             public void setEmptyView(boolean visible) {
                 textEmpty.setVisibility(visible ? View.VISIBLE : View.GONE);
             }
+
+            @Override
+            public int getRecyclerWidth() {
+                return recyclerThreadList.getWidth();
+            }
         };
 
         subredditListener = new ControllerSubreddits.SubredditListener() {
@@ -552,6 +557,11 @@ public class FragmentThreadList extends Fragment {
             public AdapterSubreddits getAdapter() {
                 Log.d(TAG, "AdapterSubreddits getAdapter");
                 return adapterSubreddits;
+            }
+
+            @Override
+            public int getRecyclerWidth() {
+                return recyclerThreadList.getWidth();
             }
 
             @Override

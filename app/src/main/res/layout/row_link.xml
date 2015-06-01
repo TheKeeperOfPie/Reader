@@ -107,14 +107,13 @@
 
     <TextView
         android:id="@+id/text_thread_title"
-        android:minHeight="56dp"
+        android:minHeight="40dp"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_below="@id/text_thread_flair"
         android:layout_toEndOf="@+id/image_thumbnail"
         android:layout_toStartOf="@+id/button_comments"
         android:layout_marginStart="@dimen/activity_horizontal_margin"
-        android:paddingBottom="8dp"
         android:textSize="15sp"
         />
 
@@ -125,8 +124,9 @@
         android:layout_below="@id/text_thread_title"
         android:layout_marginStart="@dimen/activity_horizontal_margin"
         android:layout_marginEnd="@dimen/activity_horizontal_margin"
+        android:layout_marginTop="8dp"
+        android:layout_marginBottom="8dp"
         android:textSize="12sp"
-        android:paddingBottom="8dp"
         android:visibility="gone"
         />
 

@@ -217,6 +217,11 @@ public class FragmentInbox extends Fragment {
             }
 
             @Override
+            public int getRecyclerWidth() {
+                return recyclerInbox.getWidth();
+            }
+
+            @Override
             public void requestDisallowInterceptTouchEvent(boolean disallow) {
 
             }

@@ -153,6 +153,7 @@ public class ControllerSubreddits {
     public interface SubredditListener extends DisallowListener {
         void onClickSubreddit(Subreddit subreddit);
         AdapterSubreddits getAdapter();
+        int getRecyclerWidth();
     }
 
     public interface ListenerCallback {

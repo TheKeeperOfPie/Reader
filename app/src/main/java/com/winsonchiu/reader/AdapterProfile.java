@@ -128,6 +128,11 @@ public class AdapterProfile extends RecyclerView.Adapter<RecyclerView.ViewHolder
                     }
 
                     @Override
+                    public int getRecyclerWidth() {
+                        return listener.getRecyclerWidth();
+                    }
+
+                    @Override
                     public void requestDisallowInterceptTouchEvent(boolean disallow) {
 
                     }
@@ -202,6 +207,11 @@ public class AdapterProfile extends RecyclerView.Adapter<RecyclerView.ViewHolder
                     @Override
                     public int getRecyclerHeight() {
                         return listener.getRecyclerHeight();
+                    }
+
+                    @Override
+                    public int getRecyclerWidth() {
+                        return listener.getRecyclerWidth();
                     }
 
                     @Override

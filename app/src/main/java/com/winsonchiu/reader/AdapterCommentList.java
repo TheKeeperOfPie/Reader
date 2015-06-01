@@ -145,6 +145,11 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
             }
 
             @Override
+            public int getRecyclerWidth() {
+                return listener.getRecyclerWidth();
+            }
+
+            @Override
             public void requestDisallowInterceptTouchEvent(boolean disallow) {
                 listener.requestDisallowInterceptTouchEvent(disallow);
             }
@@ -392,8 +397,11 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                                             }
                                         }, params, 0);
                         comment.setReplyExpanded(!comment.isReplyExpanded());
-                        AnimationUtils.animateExpand(editTextReply);
-                        AnimationUtils.animateExpand(buttonSendReply);
+                        int width = callback.getCommentClickListener().getRecyclerWidth();
+                        float ratio = (width - callback.getControllerComments().getIndentWidth(comment)) / width;
+
+                        AnimationUtils.animateExpand(editTextReply, ratio);
+                        AnimationUtils.animateExpand(buttonSendReply, ratio);
                     }
                 }
             });
@@ -426,8 +434,10 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                                 editTextReply.setText(null);
                             }
                             comment.setReplyExpanded(!comment.isReplyExpanded());
-                            AnimationUtils.animateExpand(editTextReply);
-                            AnimationUtils.animateExpand(buttonSendReply);
+                            int width = callback.getCommentClickListener().getRecyclerWidth();
+                            float ratio = (width - callback.getControllerComments().getIndentWidth(comment)) / width;
+                            AnimationUtils.animateExpand(editTextReply, ratio);
+                            AnimationUtils.animateExpand(buttonSendReply, ratio);
                             break;
                         case R.id.item_delete:
                             comment = callback.getControllerComments().getComment(commentIndex);
@@ -511,6 +521,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                     toolbarActions.getMenu().findItem(R.id.item_delete).setVisible(isAuthor);
 
                     setVoteColors();
+
                     AnimationUtils.animateExpandActions(layoutContainerActions, true);
                     AnimationUtils.animateExpandActions(toolbarActions, false);
                 }

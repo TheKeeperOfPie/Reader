@@ -264,7 +264,11 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                     }
 
                     AnimationUtils.animateExpandActions(toolbarActions, false);
-                    AnimationUtils.animateExpand(textHidden);
+
+                    float ratio = ViewHolderBase.this instanceof AdapterLinkList.ViewHolder ? 1.0f : 0.5f;
+                    Log.d(TAG, "ratio: " + ratio);
+
+                    AnimationUtils.animateExpand(textHidden, ratio);
                 }
             };
 
