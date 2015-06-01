@@ -6,23 +6,34 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.provider.Browser;
+import android.support.design.widget.AppBarLayout;
+import android.support.design.widget.CoordinatorLayout;
+import android.support.design.widget.NavigationView;
+import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
+import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.SearchView;
 import android.support.v7.widget.Toolbar;
 import android.text.TextUtils;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.webkit.URLUtil;
+import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.crashlytics.android.Crashlytics;
 import com.winsonchiu.reader.data.Reddit;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -31,8 +42,7 @@ import io.fabric.sdk.android.Fabric;
 
 
 public class MainActivity extends AppCompatActivity
-        implements FragmentNavDrawer.NavigationDrawerCallbacks,
-        FragmentThreadList.OnFragmentInteractionListener,
+        implements FragmentThreadList.OnFragmentInteractionListener,
         FragmentWeb.OnFragmentInteractionListener,
         FragmentComments.OnFragmentInteractionListener,
         FragmentAuth.OnFragmentInteractionListener,
@@ -40,16 +50,9 @@ public class MainActivity extends AppCompatActivity
         FragmentInbox.OnFragmentInteractionListener {
 
     private static final String TAG = MainActivity.class.getCanonicalName();
-    /**
-     * Fragment managing the behaviors, interactions and presentation of the navigation drawer.
-     */
-    private FragmentNavDrawer mNavigationDrawerFragment;
 
-    /**
-     * Used to store the last screen title. For use in {@link #restoreActionBar()}.
-     */
     private CharSequence mTitle;
-    private int oldPosition = -1;
+    private int oldId = -1;
     private Toolbar toolbar;
     private ControllerLinks controllerLinks;
     private ControllerComments controllerComments;
@@ -57,6 +60,14 @@ public class MainActivity extends AppCompatActivity
     private ControllerInbox controllerInbox;
     private ControllerSubreddits controllerSubreddits;
     private SharedPreferences sharedPreferences;
+
+    private ActionBarDrawerToggle mDrawerToggle;
+    private DrawerLayout mDrawerLayout;
+    private NavigationView viewNavigation;
+
+    private ImageView imageNavHeader;
+    private TextView textAccountName;
+    private TextView textAccountInfo;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -81,10 +92,6 @@ public class MainActivity extends AppCompatActivity
         }
         setContentView(R.layout.activity_main);
 
-        mNavigationDrawerFragment = (FragmentNavDrawer)
-                getFragmentManager().findFragmentById(R.id.navigation_drawer);
-        mTitle = getTitle();
-
         toolbar = (Toolbar) findViewById(R.id.toolbar);
         toolbar.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -105,13 +112,53 @@ public class MainActivity extends AppCompatActivity
                 }
             }
         });
+        toolbar.setNavigationOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                onNavigationClick();
+            }
+        });
         setSupportActionBar(toolbar);
 
-        // Set up the drawer.
-        mNavigationDrawerFragment.setUp(
-                R.id.navigation_drawer,
-                (DrawerLayout) findViewById(R.id.drawer_layout),
-                toolbar);
+        inflateNavigationDrawer();
+
+        mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
+
+        // set a custom shadow that overlays the main content when the drawer opens
+        mDrawerLayout.setDrawerShadow(R.drawable.drawer_shadow, GravityCompat.START);
+        // set up the drawer's list view with items and click listener
+
+        // ActionBarDrawerToggle ties together the the proper interactions
+        // between the navigation drawer and the action bar app icon.
+        mDrawerToggle = new ActionBarDrawerToggle(
+                this,
+                mDrawerLayout,
+                toolbar,
+                R.string.navigation_drawer_open,
+                R.string.navigation_drawer_close) {
+            @Override
+            public void onDrawerClosed(View drawerView) {
+                super.onDrawerClosed(drawerView);
+                supportInvalidateOptionsMenu(); // calls onPrepareOptionsMenu()
+            }
+
+            @Override
+            public void onDrawerOpened(View drawerView) {
+                super.onDrawerOpened(drawerView);
+                supportInvalidateOptionsMenu(); // calls onPrepareOptionsMenu()
+            }
+        };
+
+        // Defer code dependent on restoration of previous instance state.
+        mDrawerLayout.post(new Runnable() {
+            @Override
+            public void run() {
+                mDrawerToggle.syncState();
+            }
+        });
+
+        mDrawerLayout.setDrawerListener(mDrawerToggle);
+        mTitle = getTitle();
 
         if (Intent.ACTION_VIEW.equals(getIntent().getAction())) {
             Log.d(TAG, "load intent: " + getIntent().toString());
@@ -124,6 +171,132 @@ public class MainActivity extends AppCompatActivity
             }
         }
 
+        selectNavigationItem(R.id.item_home);
+
+    }
+
+    private void inflateNavigationDrawer() {
+        viewNavigation = (NavigationView) findViewById(R.id.navigation);
+
+        View viewHeader = LayoutInflater.from(this).inflate(R.layout.header_navigation,
+                viewNavigation, false);
+
+
+        imageNavHeader = (ImageView) viewHeader.findViewById(R.id.image_nav_header);
+        textAccountName = (TextView) viewHeader.findViewById(R.id.text_account_name);
+        textAccountInfo = (TextView) viewHeader.findViewById(R.id.text_account_info);
+
+        View.OnClickListener clickListenerAccount = new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                onClickAccount();
+            }
+        };
+        textAccountName.setOnClickListener(clickListenerAccount);
+        textAccountInfo.setOnClickListener(clickListenerAccount);
+
+        if (TextUtils.isEmpty(sharedPreferences.getString(AppSettings.REFRESH_TOKEN, ""))) {
+            textAccountName.setText(R.string.add_account);
+        }
+        else {
+            loadAccountInfo();
+        }
+
+        viewNavigation.addHeaderView(viewHeader);
+        viewNavigation.setNavigationItemSelectedListener(
+                new NavigationView.OnNavigationItemSelectedListener() {
+                    @Override
+                    public boolean onNavigationItemSelected(MenuItem menuItem) {
+                        selectNavigationItem(menuItem.getItemId());
+                        return true;
+                    }
+                });
+
+    }
+
+    private void selectNavigationItem(int id) {
+        getFragmentManager().popBackStackImmediate();
+        switch (id) {
+            case R.id.item_home:
+                if (getFragmentManager().findFragmentByTag(FragmentThreadList.TAG) != null) {
+                    controllerLinks.loadFrontPage("hot");
+                }
+                else {
+                    getFragmentManager().beginTransaction()
+                            .replace(R.id.frame_fragment,
+                                    FragmentThreadList.newInstance("", ""),
+                                    FragmentThreadList.TAG)
+                            .commit();
+                }
+                break;
+            case R.id.item_profile:
+                getFragmentManager().beginTransaction()
+                        .replace(R.id.frame_fragment,
+                                FragmentProfile.newInstance("", ""),
+                                FragmentProfile.TAG)
+                        .commit();
+                break;
+            case R.id.item_inbox:
+                getFragmentManager().beginTransaction()
+                        .replace(R.id.frame_fragment,
+                                FragmentInbox.newInstance("", ""),
+                                FragmentInbox.TAG)
+                        .commit();
+                break;
+            case R.id.item_settings:
+                SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(
+                        getApplicationContext());
+                // TODO: Manually invalidate access token
+                preferences.edit()
+                        .putString(AppSettings.ACCESS_TOKEN, "")
+                        .apply();
+                preferences.edit()
+                        .putString(AppSettings.REFRESH_TOKEN, "")
+                        .apply();
+                preferences.edit()
+                        .putString(AppSettings.ACCOUNT_JSON, "")
+                        .apply();
+                preferences.edit()
+                        .putString(AppSettings.SUBSCRIBED_SUBREDDITS, "")
+                        .apply();
+                Toast.makeText(MainActivity.this, "Cleared refresh token", Toast.LENGTH_SHORT)
+                        .show();
+                break;
+        }
+
+        oldId = id;
+        mDrawerLayout.closeDrawer(GravityCompat.START);
+    }
+
+    public void loadAccountInfo() {
+        Reddit.getInstance(this).loadGet(Reddit.OAUTH_URL + "/api/v1/me",
+                new Response.Listener<String>() {
+                    @Override
+                    public void onResponse(String response) {
+                        try {
+                            JSONObject jsonObject = new JSONObject(response);
+                            textAccountName.setText(jsonObject.getString("name"));
+                            textAccountInfo.setText(jsonObject.getString(
+                                    "link_karma") + " Link " + jsonObject.getString(
+                                    "comment_karma") + " Comment");
+                        }
+                        catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }, new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+
+                    }
+                }, 0);
+    }
+
+    private void onClickAccount() {
+        getFragmentManager().beginTransaction()
+                .replace(R.id.frame_fragment, FragmentAuth.newInstance("", ""), FragmentAuth.TAG)
+                .commit();
+        mDrawerLayout.closeDrawer(GravityCompat.START);
     }
 
     private void parseUrl(String urlString) {
@@ -205,79 +378,18 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
-    @Override
-    protected void onPostCreate(Bundle savedInstanceState) {
-        super.onPostCreate(savedInstanceState);
-    }
-
-    @Override
-    public void onNavigationDrawerItemSelected(int position, boolean force) {
-        // TODO: update the main content by replacing fragments
-        // TODO: Reimplement oldPosition check
-        getFragmentManager().popBackStackImmediate();
-//        if (oldPosition != position | force) {
-        switch (position) {
-            case 0:
-                if (getFragmentManager().findFragmentByTag(FragmentThreadList.TAG) != null) {
-                    controllerLinks.loadFrontPage("hot");
-                }
-                else {
-                    getFragmentManager().beginTransaction()
-                            .replace(R.id.frame_fragment,
-                                    FragmentThreadList.newInstance("", ""),
-                                    FragmentThreadList.TAG)
-                            .commit();
-                }
-                break;
-            case 1:
-                getFragmentManager().beginTransaction()
-                        .replace(R.id.frame_fragment, FragmentProfile.newInstance("", ""),
-                                FragmentProfile.TAG)
-                        .commit();
-                break;
-            case 2:
-                getFragmentManager().beginTransaction()
-                        .replace(R.id.frame_fragment, FragmentInbox.newInstance("", ""),
-                                FragmentInbox.TAG)
-                        .commit();
-                break;
-            case 3:
-                SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(
-                        getApplicationContext());
-                // TODO: Manually invalidate access token
-                preferences.edit()
-                        .putString(AppSettings.ACCESS_TOKEN, "")
-                        .apply();
-                preferences.edit()
-                        .putString(AppSettings.REFRESH_TOKEN, "")
-                        .apply();
-                preferences.edit()
-                        .putString(AppSettings.ACCOUNT_JSON, "")
-                        .apply();
-                preferences.edit()
-                        .putString(AppSettings.SUBSCRIBED_SUBREDDITS, "")
-                        .apply();
-                Toast.makeText(this, "Cleared refresh token", Toast.LENGTH_SHORT)
-                        .show();
-                break;
-        }
-//        }
-        oldPosition = position;
-    }
-
-    @Override
     public void onNavigationClick() {
         Log.d(TAG, "Back stack count: " + getFragmentManager().getBackStackEntryCount());
         if (getFragmentManager().getBackStackEntryCount() > 0) {
             getFragmentManager().popBackStack();
-            mNavigationDrawerFragment.setNavigationAnimation(0.0f);
+            mDrawerToggle.onDrawerSlide(mDrawerLayout, 0.0f);
         }
         else {
-            if (mNavigationDrawerFragment.isDrawerOpen()) {
-                mNavigationDrawerFragment.setDrawer(false);
+            if (mDrawerLayout.isDrawerOpen(GravityCompat.START)) {
+                mDrawerLayout.closeDrawer(GravityCompat.START);
             }
             else {
-                mNavigationDrawerFragment.setDrawer(true);
+                mDrawerLayout.openDrawer(GravityCompat.START);
             }
         }
     }
@@ -288,7 +400,7 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        if (!mNavigationDrawerFragment.isDrawerOpen()) {
+        if (!mDrawerLayout.isDrawerOpen(GravityCompat.START)) {
             // Only show items in the action bar relevant to this screen
             // if the drawer is not showing. Otherwise, let the drawer
             // decide what to show in the action bar.
@@ -404,16 +516,16 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     public void setNavigationAnimation(float value) {
-        mNavigationDrawerFragment.setNavigationAnimation(value);
+        mDrawerToggle.onDrawerSlide(mDrawerLayout, value);
     }
 
     @Override
     public void onAuthFinished(boolean success) {
-        onNavigationDrawerItemSelected(0, true);
+        selectNavigationItem(R.id.item_home);
         if (success) {
             Toast.makeText(this, "Login successful", Toast.LENGTH_SHORT)
                     .show();
-            mNavigationDrawerFragment.loadAccountInfo();
+            loadAccountInfo();
         }
         else {
             Toast.makeText(this, "Login failed", Toast.LENGTH_SHORT)

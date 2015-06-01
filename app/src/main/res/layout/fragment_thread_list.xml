@@ -1,4 +1,4 @@
-<android.support.v4.widget.DrawerLayout
+<com.winsonchiu.reader.CustomDrawerLayout
     android:id="@+id/drawer_layout"
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
@@ -60,4 +60,4 @@
 
     </ScrollView>
 
-</android.support.v4.widget.DrawerLayout>
+</com.winsonchiu.reader.CustomDrawerLayout>

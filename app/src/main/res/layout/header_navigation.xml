@@ -49,11 +49,4 @@
         android:background="@android:color/transparent"
         />
 
-    <android.support.v7.widget.RecyclerView
-        android:id="@+id/recycler_nav_list"
-        android:layout_width="match_parent"
-        android:layout_height="200dp"
-        android:layout_below="@id/image_nav_header"
-        />
-
 </RelativeLayout>
