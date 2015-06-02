@@ -1,10 +1,12 @@
 package com.winsonchiu.reader;
 
 import android.app.Activity;
+import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
+import android.preference.PreferenceManager;
 import android.support.v7.graphics.Palette;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.StaggeredGridLayoutManager;
@@ -30,13 +32,14 @@ import java.util.Date;
 /**
  * Created by TheKeeperOfPie on 3/7/2015.
  */
-public class AdapterLinkGrid extends AdapterLink implements ControllerLinks.ListenerCallback {
+public class AdapterLinkGrid extends AdapterLink {
 
     private static final String TAG = AdapterLinkGrid.class.getCanonicalName();
 
     private DividerItemDecoration itemDecoration;
     private int defaultColor;
     private int thumbnailSize;
+    private SharedPreferences preferences;
 
     public AdapterLinkGrid(Activity activity,
                            ControllerLinks controllerLinks,
@@ -48,6 +51,7 @@ public class AdapterLinkGrid extends AdapterLink implements ControllerLinks.List
     @Override
     public void setActivity(Activity activity) {
         super.setActivity(activity);
+        preferences = PreferenceManager.getDefaultSharedPreferences(activity);
         Resources resources = activity.getResources();
         this.thumbnailSize = resources.getDisplayMetrics().widthPixels / 2;
         boolean isLandscape = resources.getDisplayMetrics().widthPixels > resources.getDisplayMetrics().heightPixels;
@@ -109,48 +113,13 @@ public class AdapterLinkGrid extends AdapterLink implements ControllerLinks.List
     }
 
     @Override
-    public ControllerLinks getController() {
-        return controllerLinks;
-    }
-
-    @Override
-    public int getColorPositive() {
-        return colorPositive;
-    }
-
-    @Override
-    public int getColorNegative() {
-        return colorNegative;
-    }
-
-    @Override
-    public int getColorMuted() {
-        return colorMuted;
-    }
-
-    @Override
-    public int getColorText() {
-        return colorText;
-    }
-
-    @Override
-    public int getColorTextAlert() {
-        return colorTextAlert;
-    }
-
-    @Override
-    public Activity getActivity() {
-        return activity;
-    }
-
-    @Override
     public float getItemWidth() {
         return itemWidth;
     }
 
     @Override
-    public RecyclerView.LayoutManager getLayoutManager() {
-        return layoutManager;
+    public ControllerCommentsBase getControllerComments() {
+        return listener.getControllerComments();
     }
 
     protected static class ViewHolder extends AdapterLink.ViewHolderBase {
@@ -328,6 +297,20 @@ public class AdapterLinkGrid extends AdapterLink implements ControllerLinks.List
                                 }
                             });
 
+        }
+
+        // TODO: Fix expanding reply when cell is not full span
+        @Override
+        public void toggleReply() {
+            ((StaggeredGridLayoutManager.LayoutParams) itemView.getLayoutParams()).setFullSpan(true);
+            itemView.requestLayout();
+            callback.getListener().onFullLoaded(getAdapterPosition());
+            super.toggleReply();
+        }
+
+        @Override
+        public float getRatio(int adapterPosition) {
+            return ((StaggeredGridLayoutManager.LayoutParams) itemView.getLayoutParams()).isFullSpan() ? 1f : 1f / ((StaggeredGridLayoutManager) callback.getLayoutManager()).getSpanCount();
         }
 
         @Override

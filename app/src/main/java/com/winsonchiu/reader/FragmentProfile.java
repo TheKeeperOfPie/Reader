@@ -378,6 +378,11 @@ public class FragmentProfile extends Fragment {
             }
 
             @Override
+            public ControllerCommentsBase getControllerComments() {
+                return mListener.getControllerComments();
+            }
+
+            @Override
             public void requestDisallowInterceptTouchEvent(boolean disallow) {
 
             }

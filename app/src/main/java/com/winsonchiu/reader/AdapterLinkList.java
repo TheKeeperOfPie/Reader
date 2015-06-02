@@ -1,6 +1,7 @@
 package com.winsonchiu.reader;
 
 import android.app.Activity;
+import android.content.SharedPreferences;
 import android.graphics.drawable.Drawable;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -22,7 +23,7 @@ import java.util.Date;
 /**
  * Created by TheKeeperOfPie on 3/7/2015.
  */
-public class AdapterLinkList extends AdapterLink implements ControllerLinks.ListenerCallback {
+public class AdapterLinkList extends AdapterLink {
 
     private static final String TAG = AdapterLinkList.class.getCanonicalName();
 
@@ -77,48 +78,13 @@ public class AdapterLinkList extends AdapterLink implements ControllerLinks.List
     }
 
     @Override
-    public ControllerLinks getController() {
-        return controllerLinks;
-    }
-
-    @Override
-    public int getColorPositive() {
-        return colorPositive;
-    }
-
-    @Override
-    public int getColorNegative() {
-        return colorNegative;
-    }
-
-    @Override
-    public int getColorMuted() {
-        return colorMuted;
-    }
-
-    @Override
-    public int getColorText() {
-        return colorText;
-    }
-
-    @Override
-    public int getColorTextAlert() {
-        return colorTextAlert;
-    }
-
-    @Override
-    public Activity getActivity() {
-        return activity;
-    }
-
-    @Override
     public float getItemWidth() {
         return itemWidth;
     }
 
     @Override
-    public RecyclerView.LayoutManager getLayoutManager() {
-        return layoutManager;
+    public ControllerCommentsBase getControllerComments() {
+        return listener.getControllerComments();
     }
 
     protected static class ViewHolder extends AdapterLink.ViewHolderBase {
@@ -139,6 +105,11 @@ public class AdapterLinkList extends AdapterLink implements ControllerLinks.List
                                             .getLink(getAdapterPosition()), ViewHolder.this);
                 }
             });
+        }
+
+        @Override
+        public float getRatio(int adapterPosition) {
+            return 1f;
         }
 
         @Override

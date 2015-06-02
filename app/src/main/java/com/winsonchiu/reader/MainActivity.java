@@ -6,11 +6,10 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.provider.Browser;
-import android.support.design.widget.AppBarLayout;
-import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
+import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
@@ -112,12 +111,6 @@ public class MainActivity extends AppCompatActivity
                 }
             }
         });
-        toolbar.setNavigationOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                onNavigationClick();
-            }
-        });
         setSupportActionBar(toolbar);
 
         inflateNavigationDrawer();
@@ -173,6 +166,19 @@ public class MainActivity extends AppCompatActivity
 
         selectNavigationItem(R.id.item_home);
 
+        // Must be placed after ActionBarDrawerToggle instantiation,
+        /*
+            Must be placed after ActionBarDrawerToggle instantiation,
+            as the toggle will set its own OnClickListener. This is also
+            why we must manually toggle the drawer after checking its
+            visibility in onNavigationClick()
+         */
+        toolbar.setNavigationOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                onNavigationClick();
+            }
+        });
     }
 
     private void inflateNavigationDrawer() {
@@ -385,7 +391,7 @@ public class MainActivity extends AppCompatActivity
             mDrawerToggle.onDrawerSlide(mDrawerLayout, 0.0f);
         }
         else {
-            if (mDrawerLayout.isDrawerOpen(GravityCompat.START)) {
+            if (mDrawerLayout.isDrawerVisible(GravityCompat.START)) {
                 mDrawerLayout.closeDrawer(GravityCompat.START);
             }
             else {
@@ -413,14 +419,11 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
 
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
-            return true;
+        switch (item.getItemId()) {
+            case android.R.id.home:
+                onNavigationClick();
+                return true;
         }
 
         return super.onOptionsItemSelected(item);

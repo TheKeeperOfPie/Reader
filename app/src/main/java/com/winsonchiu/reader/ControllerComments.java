@@ -283,16 +283,17 @@ public class ControllerComments implements ControllerLinksBase, ControllerCommen
 
         Comment parentComment = new Comment();
         parentComment.setId(comment.getParentId());
+        int commentIndex;
 
-        int commentIndex = link.getComments().getChildren().indexOf(parentComment);
-        if (commentIndex > -1) {
+        if (link.getComments() != null) {
+            commentIndex = link.getComments().getChildren().indexOf(parentComment);
             link.getComments()
                     .getChildren()
                     .add(commentIndex + 1, comment);
         }
 
-        commentIndex = listingComments.getChildren().indexOf(parentComment);
-        if (commentIndex > -1) {
+        if (listingComments != null) {
+            commentIndex = listingComments.getChildren().indexOf(parentComment);
             listingComments.getChildren()
                     .add(commentIndex + 1, comment);
 

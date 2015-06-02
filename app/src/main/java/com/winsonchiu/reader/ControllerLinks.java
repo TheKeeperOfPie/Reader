@@ -344,6 +344,7 @@ public class ControllerLinks implements ControllerLinksBase {
         void loadSideBar(Listing listingSubreddits);
         void setEmptyView(boolean visible);
         int getRecyclerWidth();
+        ControllerCommentsBase getControllerComments();
     }
 
     public interface ListenerCallback {
@@ -357,6 +358,8 @@ public class ControllerLinks implements ControllerLinksBase {
         Activity getActivity();
         float getItemWidth();
         RecyclerView.LayoutManager getLayoutManager();
+        SharedPreferences getPreferences();
+        ControllerCommentsBase getControllerComments();
     }
 
 }

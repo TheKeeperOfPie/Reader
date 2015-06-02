@@ -2,6 +2,7 @@ package com.winsonchiu.reader;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.PorterDuff;
@@ -9,6 +10,7 @@ import android.graphics.drawable.Drawable;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Environment;
+import android.preference.PreferenceManager;
 import android.support.v4.view.MenuItemCompat;
 import android.support.v4.view.ViewPager;
 import android.support.v7.widget.RecyclerView;
@@ -26,10 +28,13 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.MediaController;
 import android.widget.ProgressBar;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.VideoView;
@@ -40,6 +45,7 @@ import com.android.volley.VolleyError;
 import com.android.volley.toolbox.ImageLoader;
 import com.squareup.picasso.Picasso;
 import com.squareup.picasso.Target;
+import com.winsonchiu.reader.data.Comment;
 import com.winsonchiu.reader.data.Link;
 import com.winsonchiu.reader.data.Reddit;
 import com.winsonchiu.reader.data.imgur.Album;
@@ -51,11 +57,13 @@ import org.json.JSONObject;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Created by TheKeeperOfPie on 3/14/2015.
  */
-public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
+public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.ViewHolder> implements ControllerLinks.ListenerCallback {
 
     private static final String TAG = AdapterLink.class.getCanonicalName();
     protected Activity activity;
@@ -68,11 +76,13 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
     protected int colorTextAlert;
     protected float itemWidth;
     protected ControllerLinks.LinkClickListener listener;
-    private static int ACTION_MENU_SIZE = 5;
+    protected SharedPreferences preferences;
+    private static int ACTION_MENU_SIZE = 6;
 
     public void setActivity(Activity activity) {
         Resources resources = activity.getResources();
         this.activity = activity;
+        this.preferences = PreferenceManager.getDefaultSharedPreferences(activity);
         this.colorPositive = resources.getColor(R.color.positiveScore);
         this.colorNegative = resources.getColor(R.color.negativeScore);
         this.colorMuted = resources.getColor(R.color.darkThemeTextColorMuted);
@@ -87,8 +97,52 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         this.listener = listener;
     }
 
+    public abstract ControllerLinks.LinkClickListener getListener();
+
+    @Override
+    public ControllerLinksBase getController() {
+        return controllerLinks;
+    }
+
+    @Override
+    public int getColorPositive() {
+        return colorPositive;
+    }
+
+    @Override
+    public int getColorNegative() {
+        return colorNegative;
+    }
+
+    @Override
+    public int getColorMuted() {
+        return colorMuted;
+    }
+
+    @Override
+    public int getColorText() {
+        return colorText;
+    }
+
+    @Override
+    public int getColorTextAlert() {
+        return colorTextAlert;
+    }
+
+    @Override
+    public Activity getActivity() {
+        return activity;
+    }
+
+    public abstract float getItemWidth();
+
     public LayoutManager getLayoutManager() {
         return layoutManager;
+    }
+
+    @Override
+    public SharedPreferences getPreferences() {
+        return preferences;
     }
 
     public abstract RecyclerView.ItemDecoration getItemDecoration();
@@ -98,7 +152,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         return controllerLinks.size();
     }
 
-    protected static class ViewHolderBase extends RecyclerView.ViewHolder {
+    protected static abstract class ViewHolderBase extends RecyclerView.ViewHolder {
 
         protected MediaController mediaController;
         protected ProgressBar progressImage;
@@ -118,6 +172,9 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         protected ImageLoader.ImageContainer imageContainer;
         protected Request request;
         protected String imageUrl;
+        protected RelativeLayout layoutContainerReply;
+        protected EditText editTextReply;
+        protected Button buttonSendReply;
 
         public ViewHolderBase(final View itemView,
                               ControllerLinks.ListenerCallback listenerCallback) {
@@ -230,8 +287,62 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                                                     .getLink(getAdapterPosition())
                                                     .getUrl());
                             break;
+                        case R.id.item_reply:
+                            toggleReply();
                     }
                     return true;
+                }
+            });
+            layoutContainerReply = (RelativeLayout) itemView.findViewById(R.id.layout_container_reply);
+            editTextReply = (EditText) itemView.findViewById(R.id.edit_text_reply);
+            buttonSendReply = (Button) itemView.findViewById(R.id.button_send_reply);
+            buttonSendReply.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    if (TextUtils.isEmpty(callback.getPreferences().getString(AppSettings.REFRESH_TOKEN, ""))) {
+                        Toast.makeText(callback.getActivity(), "Must be logged in to reply", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+
+                    if (!TextUtils.isEmpty(editTextReply.getText())) {
+                        final Link link = callback.getController().getLink(getAdapterPosition());
+                        Map<String, String> params = new HashMap<>();
+                        params.put("api_type", "json");
+                        params.put("text", editTextReply.getText()
+                                .toString());
+                        params.put("thing_id", link.getName());
+
+                        // TODO: Move add to immediate on button click, check if failed afterwards
+                        callback.getController().getReddit()
+                                .loadPost(Reddit.OAUTH_URL + "/api/comment",
+                                        new Response.Listener<String>() {
+                                            @Override
+                                            public void onResponse(String response) {
+                                                try {
+                                                    if (callback.getControllerComments().getMainLink().getName().equals(link.getName())) {
+                                                        JSONObject jsonObject = new JSONObject(response);
+                                                        Comment newComment = Comment.fromJson(
+                                                                jsonObject.getJSONObject("json")
+                                                                        .getJSONObject("data")
+                                                                        .getJSONArray("things")
+                                                                        .getJSONObject(0), 0);
+                                                        callback.getControllerComments().insertComment(newComment);
+                                                    }
+                                                }
+                                                catch (JSONException e) {
+                                                    e.printStackTrace();
+                                                }
+                                            }
+                                        }, new Response.ErrorListener() {
+                                            @Override
+                                            public void onErrorResponse(VolleyError error) {
+
+                                            }
+                                        }, params, 0);
+
+                        AnimationUtils.animateExpand(editTextReply, 1f);
+                        AnimationUtils.animateExpand(buttonSendReply, 1f);
+                    }
                 }
             });
 
@@ -265,10 +376,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
 
                     AnimationUtils.animateExpandActions(toolbarActions, false);
 
-                    float ratio = ViewHolderBase.this instanceof AdapterLinkList.ViewHolder ? 1.0f : 0.5f;
-                    Log.d(TAG, "ratio: " + ratio);
-
-                    AnimationUtils.animateExpand(textHidden, ratio);
+                    AnimationUtils.animateExpand(textHidden, getRatio(getAdapterPosition()));
                 }
             };
 
@@ -276,7 +384,6 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             this.imageThumbnail.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-//                    imageThumbnail.setVisibility(View.GONE);
                     Link link = callback.getController().getLink(getAdapterPosition());
                     onClickThumbnail(link);
                 }
@@ -295,6 +402,19 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             });
 
         }
+
+        public void toggleReply() {
+            Link link = callback.getController().getLink(getAdapterPosition());
+            if (!link.isReplyExpanded()) {
+                editTextReply.requestFocus();
+                editTextReply.setText(null);
+            }
+            link.setReplyExpanded(!link.isReplyExpanded());
+            AnimationUtils.animateExpand(editTextReply, getRatio(getAdapterPosition()));
+            AnimationUtils.animateExpand(buttonSendReply, getRatio(getAdapterPosition()));
+        }
+
+        public abstract float getRatio(int adapterPosition);
 
         public void loadFull(Link link) {
 

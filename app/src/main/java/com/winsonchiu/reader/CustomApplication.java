@@ -21,6 +21,7 @@ public class CustomApplication extends Application {
 
     @Override
     public void onCreate() {
+        super.onCreate();
 //        refWatcher = LeakCanary.install(this);
         AppSettings.initPrefs(getApplicationContext());
         Reddit.getInstance(getApplicationContext()).fetchToken(null);

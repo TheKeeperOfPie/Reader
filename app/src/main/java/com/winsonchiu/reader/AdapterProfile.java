@@ -133,6 +133,11 @@ public class AdapterProfile extends RecyclerView.Adapter<RecyclerView.ViewHolder
                     }
 
                     @Override
+                    public ControllerCommentsBase getControllerComments() {
+                        return listener.getControllerComments();
+                    }
+
+                    @Override
                     public void requestDisallowInterceptTouchEvent(boolean disallow) {
 
                     }
@@ -183,6 +188,16 @@ public class AdapterProfile extends RecyclerView.Adapter<RecyclerView.ViewHolder
             public RecyclerView.LayoutManager getLayoutManager() {
                 // Not necessary for Link row
                 return null;
+            }
+
+            @Override
+            public SharedPreferences getPreferences() {
+                return preferences;
+            }
+
+            @Override
+            public ControllerCommentsBase getControllerComments() {
+                return listener.getControllerComments();
             }
         };
         this.commentsCallback = new ControllerComments.ListenerCallback() {

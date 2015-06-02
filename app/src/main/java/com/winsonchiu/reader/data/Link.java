@@ -45,6 +45,7 @@ public class Link extends Thing {
     private long createdUtc;
 
     private Listing comments;
+    private boolean replyExpanded;
 
     public static Link fromJson(JSONObject rootJsonObject) throws JSONException {
 
@@ -399,5 +400,13 @@ public class Link extends Thing {
 
     public void setCreatedUtc(long createdUtc) {
         this.createdUtc = createdUtc;
+    }
+
+    public boolean isReplyExpanded() {
+        return replyExpanded;
+    }
+
+    public void setReplyExpanded(boolean replyExpanded) {
+        this.replyExpanded = replyExpanded;
     }
 }

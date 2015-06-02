@@ -539,6 +539,11 @@ public class FragmentThreadList extends Fragment {
             public int getRecyclerWidth() {
                 return recyclerThreadList.getWidth();
             }
+
+            @Override
+            public ControllerCommentsBase getControllerComments() {
+                return mListener.getControllerComments();
+            }
         };
 
         subredditListener = new ControllerSubreddits.SubredditListener() {

@@ -80,7 +80,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
     private boolean isGrid;
     private boolean isInitialized;
 
-    public AdapterCommentList(Activity activity, ControllerComments controllerComments, final ControllerComments.CommentClickListener listener, boolean isGrid) {
+    public AdapterCommentList(Activity activity, final ControllerComments controllerComments, final ControllerComments.CommentClickListener listener, boolean isGrid) {
         this.isGrid = isGrid;
         this.activity = activity;
         this.controllerComments = controllerComments;
@@ -147,6 +147,11 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
             @Override
             public int getRecyclerWidth() {
                 return listener.getRecyclerWidth();
+            }
+
+            @Override
+            public ControllerCommentsBase getControllerComments() {
+                return controllerComments;
             }
 
             @Override
@@ -348,9 +353,9 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
             textComment = (TextView) itemView.findViewById(R.id.text_comment);
             textComment.setMovementMethod(LinkMovementMethod.getInstance());
             textInfo = (TextView) itemView.findViewById(R.id.text_info);
+            layoutContainerActions = (LinearLayout) itemView.findViewById(R.id.layout_container_actions);
             layoutContainerReply = (RelativeLayout) itemView.findViewById(R.id.layout_container_reply);
             editTextReply = (EditText) itemView.findViewById(R.id.edit_text_reply);
-            layoutContainerActions = (LinearLayout) itemView.findViewById(R.id.layout_container_actions);
             buttonSendReply = (Button) itemView.findViewById(R.id.button_send_reply);
             buttonSendReply.setOnClickListener(new View.OnClickListener() {
                 @Override
@@ -363,7 +368,6 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                     if (!TextUtils.isEmpty(editTextReply.getText())) {
                         Comment comment = callback.getControllerComments().getComment(
                                 getAdapterPosition());
-                        final int commentIndex = getAdapterPosition();
                         final int parentLevel = comment.getLevel();
                         Map<String, String> params = new HashMap<>();
                         params.put("api_type", "json");
