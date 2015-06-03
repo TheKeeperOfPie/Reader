@@ -6,7 +6,6 @@ import android.content.res.Resources;
 import android.graphics.drawable.Drawable;
 import android.preference.PreferenceManager;
 import android.support.v7.widget.RecyclerView;
-import android.text.Html;
 import android.text.TextUtils;
 import android.util.Log;
 
@@ -21,10 +20,7 @@ import com.winsonchiu.reader.data.User;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 /**
@@ -40,12 +36,14 @@ public class ControllerSearch implements ControllerLinksBase {
     private Reddit reddit;
     private Listing subreddits;
     private Listing links;
-    private Listing ussrs;
+    private Listing users;
+    private Listing linksSubreddit;
     private String query;
     private Drawable drawableSelf;
     private Drawable drawableDefault;
     private String sort;
     private String time;
+    private int currentPage;
 
     public ControllerSearch(Activity activity, ControllerLinks controllerLinks) {
         setActivity(activity);
@@ -66,7 +64,7 @@ public class ControllerSearch implements ControllerLinksBase {
         query = "";
         subreddits = new Listing();
         links = new Listing();
-        ussrs = new Listing();
+        users = new Listing();
     }
 
     public void addListener(Listener linkClickListener) {
@@ -87,6 +85,7 @@ public class ControllerSearch implements ControllerLinksBase {
         }
         reloadSubreddits();
         reloadLinks();
+        reloadLinksSubreddit();
     }
 
     public void reloadSubreddits() {
@@ -142,6 +141,34 @@ public class ControllerSearch implements ControllerLinksBase {
                 }, 0);
     }
 
+    public void reloadLinksSubreddit() {
+
+        String subreddit = controllerLinks.getSubredditName();
+        reddit.loadGet(Reddit.OAUTH_URL + "/r/" + subreddit + "/search?q=" + query + "&sort=" + sort + "&t=" + time,
+                new Response.Listener<String>() {
+                    @Override
+                    public void onResponse(String response) {
+                        linksSubreddit = new Listing();
+
+                        Log.d(TAG, "Response: " + response);
+                        try {
+                            linksSubreddit = Listing.fromJson(new JSONObject(response));
+                            for (Listener listener : listeners) {
+                                listener.notifyChangedLinks();
+                            }
+                        }
+                        catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }, new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+
+                    }
+                }, 0);
+    }
+
     public Subreddit getSubreddit(int position) {
         return (Subreddit) subreddits.getChildren()
                 .get(position);
@@ -154,6 +181,10 @@ public class ControllerSearch implements ControllerLinksBase {
 
     @Override
     public Link getLink(int position) {
+        if (currentPage == 3) {
+            return (Link) linksSubreddit.getChildren().get(position);
+        }
+
         return (Link) links.getChildren()
                 .get(position);
     }
@@ -186,6 +217,10 @@ public class ControllerSearch implements ControllerLinksBase {
 
     @Override
     public int sizeLinks() {
+        if (currentPage == 3) {
+            return linksSubreddit.getChildren().size();
+        }
+
         return links.getChildren()
                 .size();
     }
@@ -238,6 +273,7 @@ public class ControllerSearch implements ControllerLinksBase {
             this.sort = sort;
             reloadSubreddits();
             reloadLinks();
+            reloadLinksSubreddit();
         }
     }
 
@@ -246,11 +282,20 @@ public class ControllerSearch implements ControllerLinksBase {
             this.time = time;
             reloadSubreddits();
             reloadLinks();
+            reloadLinksSubreddit();
         }
     }
 
     public String getQuery() {
         return query;
+    }
+
+    public void setCurrentPage(int currentPage) {
+        this.currentPage = currentPage;
+    }
+
+    public int getCurrentPage() {
+        return currentPage;
     }
 
     public interface Listener {

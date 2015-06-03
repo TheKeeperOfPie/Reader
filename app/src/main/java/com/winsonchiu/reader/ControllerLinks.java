@@ -332,6 +332,15 @@ public class ControllerLinks implements ControllerLinksBase {
         return listingSubreddits;
     }
 
+    public String getSubredditName() {
+
+        if (listingSubreddits.getChildren().isEmpty()) {
+            return "";
+        }
+
+        return ((Subreddit) listingSubreddits.getChildren().get(0)).getDisplayName();
+    }
+
     public interface LinkClickListener extends DisallowListener {
 
         void onClickComments(Link link, RecyclerView.ViewHolder viewHolder);

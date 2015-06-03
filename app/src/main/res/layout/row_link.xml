@@ -160,7 +160,6 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_below="@id/text_thread_info"
-        android:layout_alignParentBottom="true"
         android:layout_alignParentEnd="true"
         android:orientation="vertical"
         android:visibility="gone"
@@ -192,6 +191,7 @@
         android:layout_below="@id/layout_container_expand"
         android:layout_alignParentBottom="true"
         android:layout_alignParentEnd="true"
+        android:visibility="gone"
         >
 
         <EditText
@@ -201,7 +201,6 @@
             android:layout_marginStart="@dimen/activity_horizontal_margin"
             android:layout_marginEnd="@dimen/activity_horizontal_margin"
             android:inputType="textMultiLine"
-            android:visibility="gone"
             />
 
         <Button
@@ -214,7 +213,6 @@
             android:layout_alignParentEnd="true"
             android:textAllCaps="true"
             android:text="@string/button_send"
-            android:visibility="gone"
             />
 
     </RelativeLayout>

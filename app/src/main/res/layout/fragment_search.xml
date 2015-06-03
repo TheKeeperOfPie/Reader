@@ -27,7 +27,6 @@
             android:layout_height="match_parent"
             android:scrollbars="vertical"
             android:scrollbarFadeDuration="200"
-            android:layout_below="@id/tab_search"
             />
 
         <android.support.v7.widget.RecyclerView
@@ -37,7 +36,6 @@
             android:layout_height="match_parent"
             android:scrollbars="vertical"
             android:scrollbarFadeDuration="200"
-            android:layout_below="@id/tab_search"
             />
 
         <android.support.v7.widget.RecyclerView
@@ -47,7 +45,15 @@
             android:layout_height="match_parent"
             android:scrollbars="vertical"
             android:scrollbarFadeDuration="200"
-            android:layout_below="@id/tab_search"
+            />
+
+        <android.support.v7.widget.RecyclerView
+            xmlns:android="http://schemas.android.com/apk/res/android"
+            android:id="@+id/recycler_search_subreddit"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:scrollbars="vertical"
+            android:scrollbarFadeDuration="200"
             />
 
     </android.support.v4.view.ViewPager>

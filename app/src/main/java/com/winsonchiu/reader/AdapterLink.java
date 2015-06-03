@@ -359,13 +359,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                                             }
                                         }, params, 0);
 
-                        AnimationUtils.animateExpand(editTextReply, 1f,
-                                new AnimationUtils.OnAnimationEndListener() {
-                                    @Override
-                                    public void onAnimationEnd() {
-                                        AnimationUtils.animateExpand(buttonSendReply, 1f, null);
-                                    }
-                                });
+                        AnimationUtils.animateExpand(layoutContainerReply, getRatio(getAdapterPosition()), null);
                     }
                 }
             });
@@ -402,14 +396,6 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                         menu.findItem(R.id.item_download)
                                 .setEnabled(false);
                     }
-
-                    float height = AnimationUtils.getMeasuredHeight(textHidden,
-                            getRatio(getAdapterPosition()));
-                    final int toolbarHeight = (int) TypedValue.applyDimension(
-                            TypedValue.COMPLEX_UNIT_DIP, 48,
-                            toolbarActions.getContext()
-                                    .getResources()
-                                    .getDisplayMetrics());
 
                     AnimationUtils.animateExpand(layoutContainerExpand, getRatio(getAdapterPosition()), null);
 
@@ -448,14 +434,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                 editTextReply.setText(null);
             }
             link.setReplyExpanded(!link.isReplyExpanded());
-            AnimationUtils.animateExpand(editTextReply, getRatio(getAdapterPosition()),
-                    new AnimationUtils.OnAnimationEndListener() {
-                        @Override
-                        public void onAnimationEnd() {
-                            AnimationUtils.animateExpand(buttonSendReply,
-                                    getRatio(getAdapterPosition()), null);
-                        }
-                    });
+            AnimationUtils.animateExpand(layoutContainerReply, getRatio(getAdapterPosition()), null);
         }
 
         public abstract float getRatio(int adapterPosition);
@@ -845,6 +824,18 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         }
 
         public void onBind(int position) {
+
+            Link link = callback.getController().getLink(position);
+            layoutContainerExpand.setVisibility(View.GONE);
+
+            if (link.isReplyExpanded()) {
+                layoutContainerReply.setVisibility(View.VISIBLE);
+                layoutContainerExpand.setVisibility(View.VISIBLE);
+            }
+            else {
+                layoutContainerReply.setVisibility(View.GONE);
+                layoutContainerExpand.setVisibility(View.GONE);
+            }
 
         }
 

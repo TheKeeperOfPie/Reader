@@ -42,7 +42,7 @@ public class FragmentSearch extends Fragment {
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
     private static final String ARG_PARAM1 = "param1";
     private static final String ARG_PARAM2 = "param2";
-    private static final int PAGE_COUNT = 3;
+    private static final int PAGE_COUNT = 4;
     private static final String TAG = FragmentSearch.class.getCanonicalName();
 
     // TODO: Rename and change types of parameters
@@ -57,9 +57,11 @@ public class FragmentSearch extends Fragment {
     private RecyclerView recyclerSearchSubreddits;
     private RecyclerView recyclerSearchLinks;
     private RecyclerView recyclerSearchUsers;
+    private RecyclerView recyclerSearchSubreddit;
     private AdapterSearchSubreddits adapterSearchSubreddits;
     private AdapterLinkList adapterLinks;
     private AdapterSearchUsers adapterSearchUsers;
+    private AdapterLink adapterLinkSubreddit;
     private ControllerSearch.Listener listenerSearch;
     private PagerAdapter pagerAdapter;
     private Menu menu;
@@ -359,6 +361,11 @@ public class FragmentSearch extends Fragment {
         recyclerSearchUsers.setLayoutManager(
                 new LinearLayoutManager(activity, LinearLayoutManager.VERTICAL, false));
 
+        recyclerSearchSubreddit = (RecyclerView) view.findViewById(R.id.recycler_search_subreddit);
+        recyclerSearchSubreddit.setLayoutManager(
+                new LinearLayoutManager(activity, LinearLayoutManager.VERTICAL, false));
+        recyclerSearchSubreddit.setAdapter(adapterLinks);
+
         pagerAdapter = new PagerAdapter() {
             @Override
             public Object instantiateItem(ViewGroup container, int position) {
@@ -379,6 +386,8 @@ public class FragmentSearch extends Fragment {
                         return getString(R.string.link);
                     case 2:
                         return getString(R.string.user);
+                    case 3:
+                        return mListener.getControllerLinks().getSubredditName();
                 }
 
                 return super.getPageTitle(position);
@@ -396,10 +405,27 @@ public class FragmentSearch extends Fragment {
         };
 
         tabLayout = (TabLayout) view.findViewById(R.id.tab_search);
+        tabLayout.setTabMode(TabLayout.MODE_SCROLLABLE);
 
         viewPager = (ViewPager) view.findViewById(R.id.view_pager_search);
         viewPager.setAdapter(pagerAdapter);
         viewPager.addOnPageChangeListener(new TabLayout.TabLayoutOnPageChangeListener(tabLayout));
+        viewPager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
+            @Override
+            public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
+
+            }
+
+            @Override
+            public void onPageSelected(int position) {
+                mListener.getControllerSearch().setCurrentPage(position);
+            }
+
+            @Override
+            public void onPageScrollStateChanged(int state) {
+
+            }
+        });
 
         tabLayout.setupWithViewPager(viewPager);
 
