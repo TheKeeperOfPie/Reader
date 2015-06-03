@@ -23,6 +23,7 @@ import android.text.TextUtils;
 import android.text.method.LinkMovementMethod;
 import android.util.Log;
 import android.util.TypedValue;
+import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
@@ -32,6 +33,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.MediaController;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
@@ -63,7 +65,8 @@ import java.util.Map;
 /**
  * Created by TheKeeperOfPie on 3/14/2015.
  */
-public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.ViewHolder> implements ControllerLinks.ListenerCallback {
+public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.ViewHolder>
+        implements ControllerLinks.ListenerCallback {
 
     private static final String TAG = AdapterLink.class.getCanonicalName();
     protected Activity activity;
@@ -92,7 +95,8 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                 resources.getDisplayMetrics());
     }
 
-    public void setControllerLinks(ControllerLinks controllerLinks, ControllerLinks.LinkClickListener listener) {
+    public void setControllerLinks(ControllerLinks controllerLinks,
+            ControllerLinks.LinkClickListener listener) {
         this.controllerLinks = controllerLinks;
         this.listener = listener;
     }
@@ -167,6 +171,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         protected TextView textThreadInfo;
         protected TextView textHidden;
         protected ImageButton buttonComments;
+        protected LinearLayout layoutContainerExpand;
         protected Toolbar toolbarActions;
         protected ControllerLinks.ListenerCallback callback;
         protected ImageLoader.ImageContainer imageContainer;
@@ -177,7 +182,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         protected Button buttonSendReply;
 
         public ViewHolderBase(final View itemView,
-                              ControllerLinks.ListenerCallback listenerCallback) {
+                ControllerLinks.ListenerCallback listenerCallback) {
             super(itemView);
             this.callback = listenerCallback;
 
@@ -274,7 +279,9 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                         case R.id.item_share:
                             break;
                         case R.id.item_download:
-                            String url = callback.getController().getLink(getAdapterPosition()).getUrl();
+                            String url = callback.getController()
+                                    .getLink(getAdapterPosition())
+                                    .getUrl();
                             // TODO: Consolidate image format checking
                             if (Reddit.checkIsImage(url)) {
                                 downloadImage(url);
@@ -293,19 +300,25 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                     return true;
                 }
             });
-            layoutContainerReply = (RelativeLayout) itemView.findViewById(R.id.layout_container_reply);
+            layoutContainerExpand = (LinearLayout) itemView.findViewById(R.id.layout_container_expand);
+            layoutContainerReply = (RelativeLayout) itemView.findViewById(
+                    R.id.layout_container_reply);
             editTextReply = (EditText) itemView.findViewById(R.id.edit_text_reply);
             buttonSendReply = (Button) itemView.findViewById(R.id.button_send_reply);
             buttonSendReply.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    if (TextUtils.isEmpty(callback.getPreferences().getString(AppSettings.REFRESH_TOKEN, ""))) {
-                        Toast.makeText(callback.getActivity(), "Must be logged in to reply", Toast.LENGTH_SHORT).show();
+                    if (TextUtils.isEmpty(callback.getPreferences()
+                            .getString(AppSettings.REFRESH_TOKEN, ""))) {
+                        Toast.makeText(callback.getActivity(), "Must be logged in to reply",
+                                Toast.LENGTH_SHORT)
+                                .show();
                         return;
                     }
 
                     if (!TextUtils.isEmpty(editTextReply.getText())) {
-                        final Link link = callback.getController().getLink(getAdapterPosition());
+                        final Link link = callback.getController()
+                                .getLink(getAdapterPosition());
                         Map<String, String> params = new HashMap<>();
                         params.put("api_type", "json");
                         params.put("text", editTextReply.getText()
@@ -313,20 +326,26 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                         params.put("thing_id", link.getName());
 
                         // TODO: Move add to immediate on button click, check if failed afterwards
-                        callback.getController().getReddit()
+                        callback.getController()
+                                .getReddit()
                                 .loadPost(Reddit.OAUTH_URL + "/api/comment",
                                         new Response.Listener<String>() {
                                             @Override
                                             public void onResponse(String response) {
                                                 try {
-                                                    if (callback.getControllerComments().getMainLink().getName().equals(link.getName())) {
-                                                        JSONObject jsonObject = new JSONObject(response);
+                                                    if (callback.getControllerComments()
+                                                            .getMainLink()
+                                                            .getName()
+                                                            .equals(link.getName())) {
+                                                        JSONObject jsonObject = new JSONObject(
+                                                                response);
                                                         Comment newComment = Comment.fromJson(
                                                                 jsonObject.getJSONObject("json")
                                                                         .getJSONObject("data")
                                                                         .getJSONArray("things")
                                                                         .getJSONObject(0), 0);
-                                                        callback.getControllerComments().insertComment(newComment);
+                                                        callback.getControllerComments()
+                                                                .insertComment(newComment);
                                                     }
                                                 }
                                                 catch (JSONException e) {
@@ -340,8 +359,13 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                                             }
                                         }, params, 0);
 
-                        AnimationUtils.animateExpand(editTextReply, 1f);
-                        AnimationUtils.animateExpand(buttonSendReply, 1f);
+                        AnimationUtils.animateExpand(editTextReply, 1f,
+                                new AnimationUtils.OnAnimationEndListener() {
+                                    @Override
+                                    public void onAnimationEnd() {
+                                        AnimationUtils.animateExpand(buttonSendReply, 1f, null);
+                                    }
+                                });
                     }
                 }
             });
@@ -350,6 +374,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                 @Override
                 public void onClick(View v) {
                     setVoteColors();
+                    Menu menu = toolbarActions.getMenu();
                     Link link = callback.getController()
                             .getLink(getAdapterPosition());
                     Intent shareIntent = new Intent(Intent.ACTION_SEND);
@@ -366,17 +391,28 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                     }
 
                     if (Reddit.checkIsImage(link.getUrl()) || Reddit.placeImageUrl(link)) {
-                        toolbarActions.getMenu().findItem(R.id.item_download).setVisible(true);
-                        toolbarActions.getMenu().findItem(R.id.item_download).setEnabled(true);
+                        menu.findItem(R.id.item_download)
+                                .setVisible(true);
+                        menu.findItem(R.id.item_download)
+                                .setEnabled(true);
                     }
                     else {
-                        toolbarActions.getMenu().findItem(R.id.item_download).setVisible(false);
-                        toolbarActions.getMenu().findItem(R.id.item_download).setEnabled(false);
+                        menu.findItem(R.id.item_download)
+                                .setVisible(false);
+                        menu.findItem(R.id.item_download)
+                                .setEnabled(false);
                     }
 
-                    AnimationUtils.animateExpandActions(toolbarActions, false);
+                    float height = AnimationUtils.getMeasuredHeight(textHidden,
+                            getRatio(getAdapterPosition()));
+                    final int toolbarHeight = (int) TypedValue.applyDimension(
+                            TypedValue.COMPLEX_UNIT_DIP, 48,
+                            toolbarActions.getContext()
+                                    .getResources()
+                                    .getDisplayMetrics());
 
-                    AnimationUtils.animateExpand(textHidden, getRatio(getAdapterPosition()));
+                    AnimationUtils.animateExpand(layoutContainerExpand, getRatio(getAdapterPosition()), null);
+
                 }
             };
 
@@ -384,7 +420,8 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             this.imageThumbnail.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    Link link = callback.getController().getLink(getAdapterPosition());
+                    Link link = callback.getController()
+                            .getLink(getAdapterPosition());
                     onClickThumbnail(link);
                 }
             });
@@ -404,14 +441,21 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         }
 
         public void toggleReply() {
-            Link link = callback.getController().getLink(getAdapterPosition());
+            Link link = callback.getController()
+                    .getLink(getAdapterPosition());
             if (!link.isReplyExpanded()) {
                 editTextReply.requestFocus();
                 editTextReply.setText(null);
             }
             link.setReplyExpanded(!link.isReplyExpanded());
-            AnimationUtils.animateExpand(editTextReply, getRatio(getAdapterPosition()));
-            AnimationUtils.animateExpand(buttonSendReply, getRatio(getAdapterPosition()));
+            AnimationUtils.animateExpand(editTextReply, getRatio(getAdapterPosition()),
+                    new AnimationUtils.OnAnimationEndListener() {
+                        @Override
+                        public void onAnimationEnd() {
+                            AnimationUtils.animateExpand(buttonSendReply,
+                                    getRatio(getAdapterPosition()), null);
+                        }
+                    });
         }
 
         public abstract float getRatio(int adapterPosition);
@@ -506,7 +550,8 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                     return;
                 }
                 if (TextUtils.isEmpty(link.getSelfText())) {
-                    callback.getListener().onClickComments(link, this);
+                    callback.getListener()
+                            .onClickComments(link, this);
                 }
                 else {
                     if (callback.getLayoutManager() instanceof StaggeredGridLayoutManager) {
@@ -548,22 +593,35 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
 
         public void setVoteColors() {
 
+            Menu menu = toolbarActions.getMenu();
             Link link = callback.getController()
                     .getLink(getAdapterPosition());
             switch (link.isLikes()) {
                 case 1:
-                    toolbarActions.getMenu().findItem(R.id.item_upvote).getIcon().setColorFilter(
-                            callback.getColorPositive(), PorterDuff.Mode.MULTIPLY);
-                    toolbarActions.getMenu().findItem(R.id.item_downvote).getIcon().clearColorFilter();
+                    menu.findItem(R.id.item_upvote)
+                            .getIcon()
+                            .setColorFilter(
+                                    callback.getColorPositive(), PorterDuff.Mode.MULTIPLY);
+                    menu.findItem(R.id.item_downvote)
+                            .getIcon()
+                            .clearColorFilter();
                     break;
                 case -1:
-                    toolbarActions.getMenu().findItem(R.id.item_downvote).getIcon().setColorFilter(
-                            callback.getColorNegative(), PorterDuff.Mode.MULTIPLY);
-                    toolbarActions.getMenu().findItem(R.id.item_upvote).getIcon().clearColorFilter();
+                    menu.findItem(R.id.item_downvote)
+                            .getIcon()
+                            .setColorFilter(
+                                    callback.getColorNegative(), PorterDuff.Mode.MULTIPLY);
+                    menu.findItem(R.id.item_upvote)
+                            .getIcon()
+                            .clearColorFilter();
                     break;
                 case 0:
-                    toolbarActions.getMenu().findItem(R.id.item_upvote).getIcon().clearColorFilter();
-                    toolbarActions.getMenu().findItem(R.id.item_downvote).getIcon().clearColorFilter();
+                    menu.findItem(R.id.item_upvote)
+                            .getIcon()
+                            .clearColorFilter();
+                    menu.findItem(R.id.item_downvote)
+                            .getIcon()
+                            .clearColorFilter();
                     break;
             }
         }
@@ -586,7 +644,8 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                         .onFullLoaded(getAdapterPosition());
             }
             else {
-                callback.getListener().loadUrl(link.getUrl());
+                callback.getListener()
+                        .loadUrl(link.getUrl());
             }
         }
 
@@ -739,17 +798,16 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         }
 
         public void setToolbarMenuVisibility() {
+            Menu menu = toolbarActions.getMenu();
             int maxNum = (int) (itemView.getWidth() / callback.getItemWidth());
 
             for (int index = 0; index < ACTION_MENU_SIZE; index++) {
                 if (index < maxNum - 1) {
-                    toolbarActions.getMenu()
-                            .getItem(index)
+                    menu.getItem(index)
                             .setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
                 }
                 else {
-                    toolbarActions.getMenu()
-                            .getItem(index)
+                    menu.getItem(index)
                             .setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
                 }
             }
@@ -791,45 +849,51 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         }
 
         public void downloadImage(String url) {
-            Picasso.with(callback.getActivity()).load(url).into(new Target() {
-                @Override
-                public void onBitmapLoaded(Bitmap bitmap, Picasso.LoadedFrom from) {
-                    File file = new File(Environment.getExternalStorageDirectory().getAbsolutePath() + "/ReaderForReddit/" + System.currentTimeMillis() + ".png");
+            Picasso.with(callback.getActivity())
+                    .load(url)
+                    .into(new Target() {
+                        @Override
+                        public void onBitmapLoaded(Bitmap bitmap, Picasso.LoadedFrom from) {
+                            File file = new File(Environment.getExternalStorageDirectory()
+                                    .getAbsolutePath() + "/ReaderForReddit/" + System.currentTimeMillis() + ".png");
 
-                    file.getParentFile().mkdirs();
+                            file.getParentFile()
+                                    .mkdirs();
 
-                    FileOutputStream out = null;
-                    try {
-                        out = new FileOutputStream(file);
-                        bitmap.compress(Bitmap.CompressFormat.PNG, 90, out);
-                    }
-                    catch (FileNotFoundException e) {
-                        e.printStackTrace();
-                    }
-                    finally {
-                        try {
-                            if (out != null) {
-                                out.close();
+                            FileOutputStream out = null;
+                            try {
+                                out = new FileOutputStream(file);
+                                bitmap.compress(Bitmap.CompressFormat.PNG, 90, out);
                             }
+                            catch (FileNotFoundException e) {
+                                e.printStackTrace();
+                            }
+                            finally {
+                                try {
+                                    if (out != null) {
+                                        out.close();
+                                    }
+                                }
+                                catch (Throwable e) {
+                                    e.printStackTrace();
+                                }
+                            }
+
+                            Toast.makeText(callback.getActivity(), "Image downloaded",
+                                    Toast.LENGTH_SHORT)
+                                    .show();
                         }
-                        catch (Throwable e) {
-                            e.printStackTrace();
+
+                        @Override
+                        public void onBitmapFailed(Drawable errorDrawable) {
+
                         }
-                    }
 
-                    Toast.makeText(callback.getActivity(), "Image downloaded", Toast.LENGTH_SHORT).show();
-                }
+                        @Override
+                        public void onPrepareLoad(Drawable placeHolderDrawable) {
 
-                @Override
-                public void onBitmapFailed(Drawable errorDrawable) {
-
-                }
-
-                @Override
-                public void onPrepareLoad(Drawable placeHolderDrawable) {
-
-                }
-            });
+                        }
+                    });
         }
 
     }

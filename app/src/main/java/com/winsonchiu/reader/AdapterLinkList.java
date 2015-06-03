@@ -1,7 +1,6 @@
 package com.winsonchiu.reader;
 
 import android.app.Activity;
-import android.content.SharedPreferences;
 import android.graphics.drawable.Drawable;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -116,8 +115,6 @@ public class AdapterLinkList extends AdapterLink {
         public void onBind(int position) {
             super.onBind(position);
 
-            textHidden.setVisibility(View.GONE);
-            toolbarActions.setVisibility(View.GONE);
             imageThumbnail.setVisibility(View.VISIBLE);
 
             final Link link = callback.getController()

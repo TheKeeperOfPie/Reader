@@ -3,21 +3,15 @@ package com.winsonchiu.reader;
 import android.animation.ObjectAnimator;
 import android.animation.ValueAnimator;
 import android.content.Context;
-import android.graphics.Color;
 import android.graphics.Point;
 import android.support.v4.graphics.ColorUtils;
-import android.text.Layout;
-import android.text.StaticLayout;
-import android.util.Log;
 import android.util.TypedValue;
 import android.view.Display;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.view.animation.Animation;
-import android.view.animation.DecelerateInterpolator;
 import android.view.animation.Transformation;
-import android.widget.TextView;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -59,8 +53,18 @@ public class AnimationUtils {
         objectAnimator.start();
     }
 
-
     public static void animateExpandActions(final ViewGroup viewGroup, boolean skipFirst) {
+
+        final int height = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 48,
+                viewGroup.getContext()
+                        .getResources()
+                        .getDisplayMetrics());
+        animateExpandActionsWithHeight(viewGroup, skipFirst, height);
+    }
+
+    public static void animateExpandActionsWithHeight(final ViewGroup viewGroup,
+            boolean skipFirst,
+            final int height) {
 
         final List<View> children = new ArrayList<>(viewGroup.getChildCount());
 
@@ -68,128 +72,120 @@ public class AnimationUtils {
             children.add(viewGroup.getChildAt(index));
         }
 
-        Animation animation;
-        final int height = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 48,
+        final boolean isShown = viewGroup.isShown();
+        float speed = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 1,
                 viewGroup.getContext()
                         .getResources()
                         .getDisplayMetrics());
-        if (viewGroup.isShown()) {
-            animation = new Animation() {
-                @Override
-                protected void applyTransformation(float interpolatedTime, Transformation t) {
 
-                    for (View view : children) {
-                        view.setAlpha(1.0f - interpolatedTime);
-                    }
+        Animation animation = new Animation() {
+            @Override
+            protected void applyTransformation(float interpolatedTime, Transformation t) {
 
-                    viewGroup.getLayoutParams().height = (int) (height * (1.0f - interpolatedTime));
-                    viewGroup.requestLayout();
+                interpolatedTime = isShown ? 1.0f - interpolatedTime : interpolatedTime;
+
+                for (View view : children) {
+                    view.setAlpha(interpolatedTime);
                 }
+                viewGroup.getLayoutParams().height = (int) (interpolatedTime * height);
 
-                @Override
-                public boolean willChangeBounds() {
-                    return true;
-                }
-            };
-            animation.setAnimationListener(new Animation.AnimationListener() {
-                @Override
-                public void onAnimationStart(Animation animation) {
+                viewGroup.requestLayout();
+            }
 
-                }
+            @Override
+            public boolean willChangeBounds() {
+                return true;
+            }
+        };
+        animation.setAnimationListener(new Animation.AnimationListener() {
+            @Override
+            public void onAnimationStart(Animation animation) {
 
-                @Override
-                public void onAnimationEnd(Animation animation) {
+            }
+
+            @Override
+            public void onAnimationEnd(Animation animation) {
+                if (isShown) {
                     viewGroup.setVisibility(View.GONE);
                 }
+            }
 
-                @Override
-                public void onAnimationRepeat(Animation animation) {
+            @Override
+            public void onAnimationRepeat(Animation animation) {
 
-                }
-            });
-        }
-        else {
-            animation = new Animation() {
-                @Override
-                protected void applyTransformation(float interpolatedTime, Transformation t) {
+            }
+        });
 
-                    for (View view : children) {
-                        view.setAlpha(interpolatedTime);
-                    }
-
-                    viewGroup.getLayoutParams().height = (int) (interpolatedTime * height);
-                    viewGroup.requestLayout();
-                }
-
-                @Override
-                public boolean willChangeBounds() {
-                    return true;
-                }
-            };
+        if (!isShown) {
             viewGroup.getLayoutParams().height = 0;
-            viewGroup.requestLayout();
             viewGroup.setVisibility(View.VISIBLE);
         }
-        animation.setDuration(EXPAND_ACTION_DURATION);
-        animation.setInterpolator(new DecelerateInterpolator());
+
+        animation.setDuration((long) (height / speed * 2));
         viewGroup.startAnimation(animation);
         viewGroup.requestLayout();
+
     }
 
-    public static void animateExpand(final View view, float ratio) {
+    public static void animateExpand(final View view,
+            float widthRatio,
+            OnAnimationEndListener listener) {
+        animateExpandWithHeight(view, getMeasuredHeight(view, widthRatio), listener);
+    }
 
-        final int height = getMeasuredHeight(view, ratio);
+    public static void animateExpandWithHeight(final View view,
+            final float height,
+            final OnAnimationEndListener listener) {
 
-        Animation animation;
-        if (view.isShown()) {
-            animation = new Animation() {
-                @Override
-                protected void applyTransformation(float interpolatedTime, Transformation t) {
-                    view.getLayoutParams().height = (int) (height * (1.0f - interpolatedTime));
-                    view.requestLayout();
-                }
+        final boolean isShown = view.isShown();
+        float speed = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 1,
+                view.getContext()
+                        .getResources()
+                        .getDisplayMetrics());
 
-                @Override
-                public boolean willChangeBounds() {
-                    return true;
-                }
-            };
-            animation.setAnimationListener(new Animation.AnimationListener() {
-                @Override
-                public void onAnimationStart(Animation animation) {
+        Animation animation = new Animation() {
+            @Override
+            protected void applyTransformation(float interpolatedTime, Transformation t) {
 
-                }
+                interpolatedTime = isShown ? 1.0f - interpolatedTime : interpolatedTime;
+                view.getLayoutParams().height = (int) (interpolatedTime * height);
+                view.requestLayout();
+            }
 
-                @Override
-                public void onAnimationEnd(Animation animation) {
+            @Override
+            public boolean willChangeBounds() {
+                return true;
+            }
+        };
+        animation.setAnimationListener(new Animation.AnimationListener() {
+            @Override
+            public void onAnimationStart(Animation animation) {
+
+            }
+
+            @Override
+            public void onAnimationEnd(Animation animation) {
+                if (isShown) {
                     view.setVisibility(View.GONE);
                 }
-
-                @Override
-                public void onAnimationRepeat(Animation animation) {
-
+                if (listener != null) {
+                    listener.onAnimationEnd();
                 }
-            });
-        }
-        else {
-            animation = new Animation() {
-                @Override
-                protected void applyTransformation(float interpolatedTime, Transformation t) {
-                    view.getLayoutParams().height = (int) (interpolatedTime * height);
-                    view.requestLayout();
-                }
+            }
 
-                @Override
-                public boolean willChangeBounds() {
-                    return true;
-                }
-            };
+            @Override
+            public void onAnimationRepeat(Animation animation) {
+
+            }
+        });
+
+        if (!isShown) {
             view.getLayoutParams().height = 0;
             view.requestLayout();
             view.setVisibility(View.VISIBLE);
         }
-        animation.setDuration(EXPAND_ACTION_DURATION);
-        animation.setInterpolator(new DecelerateInterpolator());
+
+        animation.setDuration((long) (height / speed * 2));
         view.startAnimation(animation);
         view.requestLayout();
     }
@@ -201,18 +197,23 @@ public class AnimationUtils {
      */
     public static int getMeasuredHeight(View view, float widthRatio) {
         WindowManager windowManager =
-                (WindowManager) view.getContext().getSystemService(Context.WINDOW_SERVICE);
+                (WindowManager) view.getContext()
+                        .getSystemService(Context.WINDOW_SERVICE);
         Display display = windowManager.getDefaultDisplay();
 
         Point size = new Point();
         display.getSize(size);
         int deviceWidth = (int) (size.x * widthRatio);
 
-        Log.d(TAG, "getMeasuredHeight deviceWidth: " + deviceWidth);
-
-        int widthMeasureSpec = View.MeasureSpec.makeMeasureSpec(deviceWidth, View.MeasureSpec.AT_MOST);
+        int widthMeasureSpec = View.MeasureSpec.makeMeasureSpec(deviceWidth,
+                View.MeasureSpec.AT_MOST);
         int heightMeasureSpec = View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED);
         view.measure(widthMeasureSpec, heightMeasureSpec);
         return view.getMeasuredHeight();
     }
+
+    public interface OnAnimationEndListener {
+        void onAnimationEnd();
+    }
+
 }

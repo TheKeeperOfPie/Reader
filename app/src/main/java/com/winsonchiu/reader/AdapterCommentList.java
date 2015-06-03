@@ -402,10 +402,9 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                                         }, params, 0);
                         comment.setReplyExpanded(!comment.isReplyExpanded());
                         int width = callback.getCommentClickListener().getRecyclerWidth();
-                        float ratio = (width - callback.getControllerComments().getIndentWidth(comment)) / width;
+                        final float ratio = (width - callback.getControllerComments().getIndentWidth(comment)) / width;
 
-                        AnimationUtils.animateExpand(editTextReply, ratio);
-                        AnimationUtils.animateExpand(buttonSendReply, ratio);
+                        AnimationUtils.animateExpand(layoutContainerReply, ratio, null);
                     }
                 }
             });
@@ -439,9 +438,8 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                             }
                             comment.setReplyExpanded(!comment.isReplyExpanded());
                             int width = callback.getCommentClickListener().getRecyclerWidth();
-                            float ratio = (width - callback.getControllerComments().getIndentWidth(comment)) / width;
-                            AnimationUtils.animateExpand(editTextReply, ratio);
-                            AnimationUtils.animateExpand(buttonSendReply, ratio);
+                            final float ratio = (width - callback.getControllerComments().getIndentWidth(comment)) / width;
+                            AnimationUtils.animateExpand(layoutContainerReply, ratio, null);
                             break;
                         case R.id.item_delete:
                             comment = callback.getControllerComments().getComment(commentIndex);
@@ -588,13 +586,11 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
             Comment comment = callback.getControllerComments().getComment(position);
 
             if (comment.isReplyExpanded()) {
-                editTextReply.setVisibility(View.VISIBLE);
-                buttonSendReply.setVisibility(View.VISIBLE);
+                layoutContainerReply.setVisibility(View.VISIBLE);
                 layoutContainerActions.setVisibility(View.VISIBLE);
             }
             else {
-                editTextReply.setVisibility(View.GONE);
-                buttonSendReply.setVisibility(View.GONE);
+                layoutContainerReply.setVisibility(View.GONE);
                 layoutContainerActions.setVisibility(View.GONE);
             }
 

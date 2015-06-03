@@ -197,8 +197,6 @@ public class AdapterLinkGrid extends AdapterLink {
                         false);
             }
 
-            textHidden.setVisibility(View.GONE);
-            toolbarActions.setVisibility(View.GONE);
             itemView.setBackgroundColor(defaultColor);
             imagePlay.setVisibility(View.GONE);
 

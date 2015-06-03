@@ -3,14 +3,8 @@ package com.winsonchiu.reader.data;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
-import android.text.Html;
-import android.text.Spannable;
-import android.text.SpannableStringBuilder;
 import android.text.TextUtils;
-import android.text.style.ClickableSpan;
-import android.text.style.URLSpan;
 import android.util.Base64;
-import android.view.View;
 
 import com.android.volley.AuthFailureError;
 import com.android.volley.Request;

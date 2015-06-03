@@ -16,7 +16,6 @@ import com.winsonchiu.reader.data.Reddit;
 import com.winsonchiu.reader.data.Thing;
 import com.winsonchiu.reader.data.User;
 
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 

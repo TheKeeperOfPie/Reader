@@ -16,16 +16,18 @@ import com.winsonchiu.reader.data.Subreddit;
 /**
  * Created by TheKeeperOfPie on 5/17/2015.
  */
-public class AdapterSubreddits extends RecyclerView.Adapter<AdapterSubreddits.ViewHolder>
-        implements ControllerSubreddits.ListenerCallback {
+public class AdapterSearchSubreddits extends RecyclerView.Adapter<AdapterSearchSubreddits.ViewHolder>
+        implements ControllerSearch.ListenerCallback {
 
-    private static final String TAG = AdapterSubreddits.class.getCanonicalName();
+    private static final String TAG = AdapterSearchSubreddits.class.getCanonicalName();
     private RecyclerView.LayoutManager layoutManager;
     private Activity activity;
-    private ControllerSubreddits controllerSubreddits;
-    private ControllerSubreddits.SubredditListener listener;
+    private ControllerSearch controllerSubreddits;
+    private ControllerSearch.Listener listener;
 
-    public AdapterSubreddits(Activity activity, ControllerSubreddits controllerSubreddits, ControllerSubreddits.SubredditListener subredditListener) {
+    public AdapterSearchSubreddits(Activity activity,
+            ControllerSearch controllerSubreddits,
+            ControllerSearch.Listener subredditListener) {
         this.activity = activity;
         this.controllerSubreddits = controllerSubreddits;
         this.listener = subredditListener;
@@ -46,16 +48,16 @@ public class AdapterSubreddits extends RecyclerView.Adapter<AdapterSubreddits.Vi
 
     @Override
     public int getItemCount() {
-        return controllerSubreddits.getItemCount();
+        return controllerSubreddits.getSubredditCount();
     }
 
     @Override
-    public ControllerSubreddits.SubredditListener getListener() {
+    public ControllerSearch.Listener getListener() {
         return listener;
     }
 
     @Override
-    public ControllerSubreddits getController() {
+    public ControllerSearch getController() {
         return controllerSubreddits;
     }
 
@@ -75,9 +77,9 @@ public class AdapterSubreddits extends RecyclerView.Adapter<AdapterSubreddits.Vi
         protected TextView textDescription;
         protected TextView textInfo;
         protected ImageButton buttonOpen;
-        private ControllerSubreddits.ListenerCallback callback;
+        private ControllerSearch.ListenerCallback callback;
 
-        public ViewHolder(View itemView, final ControllerSubreddits.ListenerCallback listenerCallback) {
+        public ViewHolder(View itemView, final ControllerSearch.ListenerCallback listenerCallback) {
             super(itemView);
             this.callback = listenerCallback;
 

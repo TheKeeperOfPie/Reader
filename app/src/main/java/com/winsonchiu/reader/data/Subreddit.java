@@ -1,8 +1,6 @@
 package com.winsonchiu.reader.data;
 
 import android.support.annotation.Nullable;
-import android.support.v4.text.TextUtilsCompat;
-import android.text.TextUtils;
 
 import org.json.JSONArray;
 import org.json.JSONException;

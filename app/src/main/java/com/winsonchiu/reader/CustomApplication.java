@@ -1,11 +1,11 @@
 package com.winsonchiu.reader;
 
 import android.app.Application;
-import android.content.Context;
+
+import com.winsonchiu.reader.data.Reddit;
 
 //import com.squareup.leakcanary.LeakCanary;
 //import com.squareup.leakcanary.RefWatcher;
-import com.winsonchiu.reader.data.Reddit;
 
 /**
  * Created by TheKeeperOfPie on 3/7/2015.

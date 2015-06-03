@@ -1,16 +1,10 @@
 package com.winsonchiu.reader;
 
 import android.app.Activity;
-import android.content.SharedPreferences;
-import android.database.Cursor;
-import android.database.MatrixCursor;
-import android.net.Uri;
-import android.os.Bundle;
 import android.app.Fragment;
+import android.content.SharedPreferences;
+import android.os.Bundle;
 import android.preference.PreferenceManager;
-import android.provider.BaseColumns;
-import android.support.v4.widget.CursorAdapter;
-import android.support.v4.widget.SimpleCursorAdapter;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.LinearLayoutManager;
@@ -33,20 +27,11 @@ import android.view.animation.LinearInterpolator;
 import android.view.animation.Transformation;
 import android.view.animation.TranslateAnimation;
 
-import com.android.volley.Response;
-import com.android.volley.VolleyError;
 import com.winsonchiu.reader.data.Link;
-import com.winsonchiu.reader.data.Listing;
-import com.winsonchiu.reader.data.Reddit;
-import com.winsonchiu.reader.data.Subreddit;
-import com.winsonchiu.reader.data.Thing;
 import com.winsonchiu.reader.data.User;
 
 import org.json.JSONException;
 import org.json.JSONObject;
-
-import java.util.LinkedList;
-import java.util.List;
 
 
 /**

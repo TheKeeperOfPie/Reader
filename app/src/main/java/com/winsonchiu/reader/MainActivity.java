@@ -9,7 +9,6 @@ import android.provider.Browser;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
-import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
@@ -46,7 +45,8 @@ public class MainActivity extends AppCompatActivity
         FragmentComments.OnFragmentInteractionListener,
         FragmentAuth.OnFragmentInteractionListener,
         FragmentProfile.OnFragmentInteractionListener,
-        FragmentInbox.OnFragmentInteractionListener {
+        FragmentInbox.OnFragmentInteractionListener,
+        FragmentSearch.OnFragmentInteractionListener {
 
     private static final String TAG = MainActivity.class.getCanonicalName();
 
@@ -58,6 +58,7 @@ public class MainActivity extends AppCompatActivity
     private ControllerProfile controllerProfile;
     private ControllerInbox controllerInbox;
     private ControllerSubreddits controllerSubreddits;
+    private ControllerSearch controllerSearch;
     private SharedPreferences sharedPreferences;
 
     private ActionBarDrawerToggle mDrawerToggle;
@@ -88,6 +89,9 @@ public class MainActivity extends AppCompatActivity
         }
         if (controllerSubreddits == null) {
             controllerSubreddits = new ControllerSubreddits(this);
+        }
+        if (controllerSearch == null) {
+            controllerSearch = new ControllerSearch(this);
         }
         setContentView(R.layout.activity_main);
 
@@ -534,5 +538,10 @@ public class MainActivity extends AppCompatActivity
             Toast.makeText(this, "Login failed", Toast.LENGTH_SHORT)
                     .show();
         }
+    }
+
+    @Override
+    public ControllerSearch getControllerSearch() {
+        return controllerSearch;
     }
 }

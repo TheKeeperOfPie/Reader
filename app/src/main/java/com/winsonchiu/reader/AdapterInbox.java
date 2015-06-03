@@ -1,21 +1,17 @@
 package com.winsonchiu.reader;
 
 import android.app.Activity;
-import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.graphics.drawable.Drawable;
 import android.preference.PreferenceManager;
-import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.text.Html;
 import android.text.Spannable;
 import android.text.SpannableString;
-import android.text.Spanned;
 import android.text.TextUtils;
 import android.text.method.LinkMovementMethod;
-import android.text.style.ForegroundColorSpan;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
@@ -23,16 +19,12 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
-import com.winsonchiu.reader.data.Comment;
-import com.winsonchiu.reader.data.Link;
-import com.winsonchiu.reader.data.Listing;
 import com.winsonchiu.reader.data.Message;
 import com.winsonchiu.reader.data.Reddit;
 import com.winsonchiu.reader.data.User;
@@ -44,7 +36,10 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.winsonchiu.reader.ControllerInbox.*;
+import static com.winsonchiu.reader.ControllerInbox.ItemClickListener;
+import static com.winsonchiu.reader.ControllerInbox.ListenerCallback;
+import static com.winsonchiu.reader.ControllerInbox.VIEW_TYPE_COMMENT;
+import static com.winsonchiu.reader.ControllerInbox.VIEW_TYPE_MESSAGE;
 
 /**
  * Created by TheKeeperOfPie on 5/15/2015.
@@ -348,8 +343,13 @@ public class AdapterInbox extends RecyclerView.Adapter<RecyclerView.ViewHolder>
                                             }
                                         }, params, 0);
                         message.setReplyExpanded(!message.isReplyExpanded());
-                        AnimationUtils.animateExpand(editTextReply, 1.0f);
-                        AnimationUtils.animateExpand(buttonSendReply, 1.0f);
+                        AnimationUtils.animateExpand(editTextReply, 1f,
+                                new AnimationUtils.OnAnimationEndListener() {
+                                    @Override
+                                    public void onAnimationEnd() {
+                                        AnimationUtils.animateExpand(buttonSendReply, 1f, null);
+                                    }
+                                });
                     }
                 }
             });
@@ -368,8 +368,13 @@ public class AdapterInbox extends RecyclerView.Adapter<RecyclerView.ViewHolder>
                             }
                             message.setReplyExpanded(!message.isReplyExpanded());
 
-                            AnimationUtils.animateExpand(editTextReply, 1.0f);
-                            AnimationUtils.animateExpand(buttonSendReply, 1.0f);
+                            AnimationUtils.animateExpand(editTextReply, 1f,
+                                    new AnimationUtils.OnAnimationEndListener() {
+                                        @Override
+                                        public void onAnimationEnd() {
+                                            AnimationUtils.animateExpand(buttonSendReply, 1f, null);
+                                        }
+                                    });
                             break;
                     }
                     return true;

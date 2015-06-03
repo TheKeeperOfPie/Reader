@@ -2,7 +2,6 @@ package com.winsonchiu.reader;
 
 import android.app.Activity;
 import android.support.v4.view.PagerAdapter;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
