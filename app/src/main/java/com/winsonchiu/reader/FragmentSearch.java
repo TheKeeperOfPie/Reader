@@ -35,6 +35,9 @@ import com.winsonchiu.reader.data.Subreddit;
  * create an instance of this fragment.
  */
 public class FragmentSearch extends Fragment {
+
+    public static final String TIME_SEPARATOR = " - ";
+
     // TODO: Rename parameter arguments, choose names that match
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
     private static final String ARG_PARAM1 = "param1";
@@ -51,7 +54,6 @@ public class FragmentSearch extends Fragment {
     private Activity activity;
     private TabLayout tabLayout;
     private ViewPager viewPager;
-    private ControllerSearch controllerSearch;
     private RecyclerView recyclerSearchSubreddits;
     private RecyclerView recyclerSearchLinks;
     private RecyclerView recyclerSearchUsers;
@@ -62,6 +64,7 @@ public class FragmentSearch extends Fragment {
     private PagerAdapter pagerAdapter;
     private Menu menu;
     private MenuItem itemSearch;
+    private MenuItem itemSortTime;
 
     /**
      * Use this factory method to create a new instance of
@@ -104,22 +107,10 @@ public class FragmentSearch extends Fragment {
         inflater.inflate(R.menu.menu_search, menu);
         this.menu = menu;
 
+        itemSortTime = menu.findItem(R.id.item_sort_time);
+
         itemSearch = menu.findItem(R.id.item_search);
         itemSearch.expandActionView();
-
-        MenuItemCompat.setOnActionExpandListener(itemSearch,
-                new MenuItemCompat.OnActionExpandListener() {
-                    @Override
-                    public boolean onMenuItemActionExpand(MenuItem item) {
-                        return true;
-                    }
-
-                    @Override
-                    public boolean onMenuItemActionCollapse(MenuItem item) {
-                        getFragmentManager().popBackStack();
-                        return true;
-                    }
-                });
 
         final SearchView searchView = (SearchView) itemSearch.getActionView();
         searchView.setOnKeyListener(new View.OnKeyListener() {
@@ -153,6 +144,9 @@ public class FragmentSearch extends Fragment {
             }
         });
         searchView.setSubmitButtonEnabled(true);
+
+        menu.findItem(R.id.item_sort_relevance).setChecked(true);
+        menu.findItem(R.id.item_sort_all).setChecked(true);
     }
 
     @Override
@@ -161,6 +155,94 @@ public class FragmentSearch extends Fragment {
         searchView.setOnQueryTextListener(null);
         itemSearch = null;
         super.onDestroyOptionsMenu();
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+
+        item.setChecked(true);
+        switch (item.getItemId()) {
+            case R.id.item_sort_relevance:
+                mListener.getControllerSearch()
+                        .setSort("relevance");
+                flashSearchView();
+                return true;
+            case R.id.item_sort_activity:
+                mListener.getControllerSearch()
+                        .setSort("activity");
+                flashSearchView();
+                return true;
+            case R.id.item_sort_hot:
+                mListener.getControllerSearch()
+                        .setSort("hot");
+                flashSearchView();
+                return true;
+            case R.id.item_sort_new:
+                mListener.getControllerSearch()
+                        .setSort("new");
+                flashSearchView();
+                return true;
+            case R.id.item_sort_top:
+                mListener.getControllerSearch()
+                        .setSort("top");
+                flashSearchView();
+                return true;
+            case R.id.item_sort_controversial:
+                mListener.getControllerSearch()
+                        .setSort("controversial");
+                flashSearchView();
+                return true;
+            case R.id.item_sort_hour:
+                mListener.getControllerSearch()
+                        .setTime("hour");
+                itemSortTime.setTitle(getString(R.string.time) + TIME_SEPARATOR + getString(R.string.item_sort_hour));
+                flashSearchView();
+                return true;
+            case R.id.item_sort_day:
+                mListener.getControllerSearch()
+                        .setTime("day");
+                itemSortTime.setTitle(getString(R.string.time) + TIME_SEPARATOR + getString(R.string.item_sort_day));
+                flashSearchView();
+                return true;
+            case R.id.item_sort_week:
+                mListener.getControllerSearch()
+                        .setTime("week");
+                itemSortTime.setTitle(getString(R.string.time) + TIME_SEPARATOR + getString(R.string.item_sort_week));
+                flashSearchView();
+                return true;
+            case R.id.item_sort_month:
+                mListener.getControllerSearch()
+                        .setTime("month");
+                itemSortTime.setTitle(getString(R.string.time) + TIME_SEPARATOR + getString(R.string.item_sort_month));
+                flashSearchView();
+                return true;
+            case R.id.item_sort_year:
+                mListener.getControllerSearch()
+                        .setTime("year");
+                itemSortTime.setTitle(getString(R.string.time) + TIME_SEPARATOR + getString(R.string.item_sort_year));
+                flashSearchView();
+                return true;
+            case R.id.item_sort_all:
+                mListener.getControllerSearch()
+                        .setTime("all");
+                itemSortTime.setTitle(getString(R.string.time) + TIME_SEPARATOR + getString(R.string.item_sort_all));
+                flashSearchView();
+                return true;
+
+        }
+
+        return super.onOptionsItemSelected(item);
+    }
+
+    /*
+        Workaround for Android's drag-to-select menu bug, where the
+        menu becomes unusable after a drag gesture
+     */
+    public void flashSearchView() {
+        if (itemSearch != null) {
+            itemSearch.expandActionView();
+            itemSearch.collapseActionView();
+        }
     }
 
     @Override
@@ -188,6 +270,13 @@ public class FragmentSearch extends Fragment {
             @Override
             public AdapterLink getAdapterLinks() {
                 return adapterLinks;
+            }
+
+            @Override
+            public void setToolbarTitle(CharSequence title) {
+                if (mListener != null) {
+                    mListener.setToolbarTitle(title);
+                }
             }
         };
 
@@ -364,6 +453,7 @@ public class FragmentSearch extends Fragment {
     public interface OnFragmentInteractionListener {
         ControllerSearch getControllerSearch();
         ControllerLinks getControllerLinks();
+        void setToolbarTitle(CharSequence title);
     }
 
 }

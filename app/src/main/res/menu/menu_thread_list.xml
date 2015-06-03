@@ -21,7 +21,8 @@
         app:showAsAction="always"
         >
 
-        <menu>
+        <menu
+            >
             <group
                 android:checkableBehavior="single"
                 >
@@ -39,47 +40,72 @@
                     />
 
                 <item
-                    android:id="@+id/item_sort_top_hour"
-                    android:title="@string/item_sort_top_hour"
+                    android:id="@+id/item_sort_top"
+                    android:title="@string/item_sort_top"
                     android:orderInCategory="300"
-                    />
-
-                <item
-                    android:id="@+id/item_sort_top_day"
-                    android:title="@string/item_sort_top_day"
-                    android:orderInCategory="400"
-                    />
-
-                <item
-                    android:id="@+id/item_sort_top_week"
-                    android:title="@string/item_sort_top_week"
-                    android:orderInCategory="500"
-                    />
-
-                <item
-                    android:id="@+id/item_sort_top_month"
-                    android:title="@string/item_sort_top_month"
-                    android:orderInCategory="600"
-                    />
-
-                <item
-                    android:id="@+id/item_sort_top_year"
-                    android:title="@string/item_sort_top_year"
-                    android:orderInCategory="700"
-                    />
-
-                <item
-                    android:id="@+id/item_sort_top_all"
-                    android:title="@string/item_sort_top_all"
-                    android:orderInCategory="800"
                     />
 
                 <item
                     android:id="@+id/item_sort_controversial"
                     android:title="@string/item_sort_controversial"
-                    android:orderInCategory="900"
+                    android:orderInCategory="400"
                     />
+
             </group>
+
+            <item
+                android:id="@+id/item_sort_time"
+                android:title="@string/time"
+                android:orderInCategory="500"
+                >
+
+                <menu>
+
+                    <group
+                        android:checkableBehavior="single"
+                        android:orderInCategory="100"
+                        >
+
+                        <item
+                            android:id="@+id/item_sort_hour"
+                            android:title="@string/item_sort_hour"
+                            android:orderInCategory="100"
+                            />
+
+                        <item
+                            android:id="@+id/item_sort_day"
+                            android:title="@string/item_sort_day"
+                            android:orderInCategory="200"
+                            />
+
+                        <item
+                            android:id="@+id/item_sort_week"
+                            android:title="@string/item_sort_week"
+                            android:orderInCategory="300"
+                            />
+
+                        <item
+                            android:id="@+id/item_sort_month"
+                            android:title="@string/item_sort_month"
+                            android:orderInCategory="400"
+                            />
+
+                        <item
+                            android:id="@+id/item_sort_year"
+                            android:title="@string/item_sort_year"
+                            android:orderInCategory="500"
+                            />
+
+                        <item
+                            android:id="@+id/item_sort_all"
+                            android:title="@string/item_sort_all"
+                            android:orderInCategory="600"
+                            />
+
+                    </group>
+                </menu>
+
+            </item>
 
         </menu>
 

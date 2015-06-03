@@ -44,10 +44,14 @@ public class ControllerSearch implements ControllerLinksBase {
     private String query;
     private Drawable drawableSelf;
     private Drawable drawableDefault;
+    private String sort;
+    private String time;
 
     public ControllerSearch(Activity activity, ControllerLinks controllerLinks) {
         setActivity(activity);
         this.controllerLinks = controllerLinks;
+        sort = "relevance";
+        time = "all";
     }
 
     public void setActivity(Activity activity) {
@@ -74,14 +78,20 @@ public class ControllerSearch implements ControllerLinksBase {
     }
 
     public void setQuery(String query) {
+        if (TextUtils.isEmpty(query)) {
+            return;
+        }
         this.query = query;
+        for (Listener listener : listeners) {
+            listener.setToolbarTitle(query);
+        }
         reloadSubreddits();
         reloadLinks();
     }
 
     public void reloadSubreddits() {
 
-        reddit.loadGet(Reddit.OAUTH_URL + "/subreddits/search?sort=relevance&show=all&q=" + query,
+        reddit.loadGet(Reddit.OAUTH_URL + "/subreddits/search?show=all&q=" + query + "&sort=" + sort,
                 new Response.Listener<String>() {
                     @Override
                     public void onResponse(String response) {
@@ -107,7 +117,7 @@ public class ControllerSearch implements ControllerLinksBase {
 
     public void reloadLinks() {
 
-        reddit.loadGet(Reddit.OAUTH_URL + "/search?q=" + query,
+        reddit.loadGet(Reddit.OAUTH_URL + "/search?q=" + query + "&sort=" + sort + "&t=" + time,
                 new Response.Listener<String>() {
                     @Override
                     public void onResponse(String response) {
@@ -223,18 +233,37 @@ public class ControllerSearch implements ControllerLinksBase {
         return 0;
     }
 
+    public void setSort(String sort) {
+        if (!this.sort.equalsIgnoreCase(sort)) {
+            this.sort = sort;
+            reloadSubreddits();
+            reloadLinks();
+        }
+    }
+
+    public void setTime(String time) {
+        if (!this.time.equalsIgnoreCase(time)) {
+            this.time = time;
+            reloadSubreddits();
+            reloadLinks();
+        }
+    }
+
+    public String getQuery() {
+        return query;
+    }
+
     public interface Listener {
         void onClickSubreddit(Subreddit subreddit);
         void notifyChangedSubreddits();
         void notifyChangedLinks();
         AdapterLink getAdapterLinks();
+        void setToolbarTitle(CharSequence title);
     }
 
     public interface ListenerCallback {
         ControllerSearch.Listener getListener();
-
         ControllerSearch getController();
-
         Activity getActivity();
     }
 }

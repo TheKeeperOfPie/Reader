@@ -494,6 +494,7 @@ public class MainActivity extends AppCompatActivity
     public void setToolbarTitle(CharSequence title) {
         mTitle = title;
         toolbar.setTitle(mTitle);
+        Log.d(TAG, "setToolbarTitle: " + title);
     }
 
     @Override

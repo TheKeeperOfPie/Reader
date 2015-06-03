@@ -57,7 +57,6 @@ public class FragmentThreadList extends Fragment {
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
     private static final String ARG_PARAM1 = "param1";
     private static final String ARG_PARAM2 = "param2";
-    ;
 
     // TODO: Rename and change types of parameters
     private String mParam1;
@@ -81,6 +80,7 @@ public class FragmentThreadList extends Fragment {
     private DrawerLayout drawerLayout;
     private TextView textEmpty;
     private Menu menu;
+    private MenuItem itemSortTime;
 
     /**
      * Use this factory method to create a new instance of
@@ -127,9 +127,6 @@ public class FragmentThreadList extends Fragment {
         SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(
                 activity.getApplicationContext());
 
-        menu.findItem(R.id.item_sort_hot)
-                .setChecked(true);
-
         itemInterface = menu.findItem(R.id.item_interface);
         switch (preferences.getString(AppSettings.INTERFACE_MODE, AppSettings.MODE_LIST)) {
             case AppSettings.MODE_LIST:
@@ -140,12 +137,14 @@ public class FragmentThreadList extends Fragment {
                 break;
         }
 
+        itemSortTime = menu.findItem(R.id.item_sort_time);
         itemSearch = menu.findItem(R.id.item_search);
 
         MenuItemCompat.setOnActionExpandListener(itemSearch,
                 new MenuItemCompat.OnActionExpandListener() {
                     @Override
                     public boolean onMenuItemActionExpand(MenuItem item) {
+                        itemSearch.collapseActionView();
                         return false;
                     }
 
@@ -154,10 +153,15 @@ public class FragmentThreadList extends Fragment {
                         return true;
                     }
                 });
+
+        onOptionsItemSelected(menu.findItem(R.id.item_sort_hot));
+        onOptionsItemSelected(menu.findItem(R.id.item_sort_all));
     }
 
     @Override
     public void onDestroyOptionsMenu() {
+        MenuItemCompat.setOnActionExpandListener(itemSearch, null);
+        itemSearch = null;
         super.onDestroyOptionsMenu();
     }
 
@@ -185,39 +189,50 @@ public class FragmentThreadList extends Fragment {
                         .setSort("new");
                 flashSearchView();
                 return true;
-            case R.id.item_sort_top_hour:
+            case R.id.item_sort_top:
                 mListener.getControllerLinks()
-                        .setSort("hourtop");
-                flashSearchView();
-                return true;
-            case R.id.item_sort_top_day:
-                mListener.getControllerLinks()
-                        .setSort("daytop");
-                flashSearchView();
-                return true;
-            case R.id.item_sort_top_week:
-                mListener.getControllerLinks()
-                        .setSort("weektop");
-                flashSearchView();
-                return true;
-            case R.id.item_sort_top_month:
-                mListener.getControllerLinks()
-                        .setSort("monthtop");
-                flashSearchView();
-                return true;
-            case R.id.item_sort_top_year:
-                mListener.getControllerLinks()
-                        .setSort("yeartop");
-                flashSearchView();
-                return true;
-            case R.id.item_sort_top_all:
-                mListener.getControllerLinks()
-                        .setSort("alltop");
+                        .setSort("top");
                 flashSearchView();
                 return true;
             case R.id.item_sort_controversial:
                 mListener.getControllerLinks()
                         .setSort("controversial");
+                flashSearchView();
+                return true;
+            case R.id.item_sort_hour:
+                mListener.getControllerLinks()
+                        .setTime("hour");
+                itemSortTime.setTitle(getString(R.string.time) + FragmentSearch.TIME_SEPARATOR + getString(R.string.item_sort_hour));
+                flashSearchView();
+                return true;
+            case R.id.item_sort_day:
+                mListener.getControllerLinks()
+                        .setTime("day");
+                itemSortTime.setTitle(getString(R.string.time) + FragmentSearch.TIME_SEPARATOR + getString(R.string.item_sort_day));
+                flashSearchView();
+                return true;
+            case R.id.item_sort_week:
+                mListener.getControllerLinks()
+                        .setTime("week");
+                itemSortTime.setTitle(getString(R.string.time) + FragmentSearch.TIME_SEPARATOR + getString(R.string.item_sort_week));
+                flashSearchView();
+                return true;
+            case R.id.item_sort_month:
+                mListener.getControllerLinks()
+                        .setTime("month");
+                flashSearchView();
+                itemSortTime.setTitle(getString(R.string.time) + FragmentSearch.TIME_SEPARATOR + getString(R.string.item_sort_month));
+                return true;
+            case R.id.item_sort_year:
+                mListener.getControllerLinks()
+                        .setTime("year");
+                itemSortTime.setTitle(getString(R.string.time) + FragmentSearch.TIME_SEPARATOR + getString(R.string.item_sort_year));
+                flashSearchView();
+                return true;
+            case R.id.item_sort_all:
+                mListener.getControllerLinks()
+                        .setTime("all");
+                itemSortTime.setTitle(getString(R.string.time) + FragmentSearch.TIME_SEPARATOR + getString(R.string.item_sort_all));
                 flashSearchView();
                 return true;
             case R.id.item_interface:
@@ -661,13 +676,9 @@ public class FragmentThreadList extends Fragment {
      */
     public interface OnFragmentInteractionListener {
         void setToolbarTitle(CharSequence title);
-
         ControllerLinks getControllerLinks();
-
         ControllerComments getControllerComments();
-
         ControllerSubreddits getControllerSubreddits();
-
         void setNavigationAnimation(float value);
     }
 

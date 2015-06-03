@@ -41,12 +41,13 @@ public class ControllerLinks implements ControllerLinksBase {
     private Listing listingLinks;
     private Listing listingSubreddits;
     private boolean isLoading;
-    private String sort = "";
+    private String sort;
     private Drawable drawableSelf;
     private Drawable drawableDefault;
     private Reddit reddit;
     private Set<LinkClickListener> listeners;
     private SharedPreferences preferences;
+    private String time;
 
     public ControllerLinks(Activity activity, String subredditName, String sort) {
         setActivity(activity);
@@ -57,6 +58,7 @@ public class ControllerLinks implements ControllerLinksBase {
         this.drawableSelf = resources.getDrawable(R.drawable.ic_chat_white_48dp);
         this.drawableDefault = resources.getDrawable(R.drawable.ic_web_white_48dp);
         this.sort = sort;
+        this.time = "all";
         listingSubreddits = new Listing();
         if (!TextUtils.isEmpty(subredditName)) {
             List<Thing> subreddits = new ArrayList<>();
@@ -99,6 +101,13 @@ public class ControllerLinks implements ControllerLinksBase {
     public void setSort(String sort) {
         if (!this.sort.equalsIgnoreCase(sort)) {
             this.sort = sort;
+            reloadAllLinks();
+        }
+    }
+
+    public void setTime(String time) {
+        if (!this.time.equalsIgnoreCase(time)) {
+            this.time = time;
             reloadAllLinks();
         }
     }
@@ -154,14 +163,7 @@ public class ControllerLinks implements ControllerLinksBase {
                     .substring(0, builder.length() - 1) + "/";
         }
 
-        if (sort.contains("top")) {
-            url += "top?t=" + sort.substring(0, sort.indexOf("top")) + "&";
-        }
-        else {
-            url += sort + "?";
-        }
-
-        url += "limit=50&showAll=true";
+        url += sort + "?t=" + time + "&limit=50&showAll=true";
 
         reddit.loadGet(url, new Listener<String>() {
             @Override
@@ -215,14 +217,7 @@ public class ControllerLinks implements ControllerLinksBase {
                     .substring(0, builder.length() - 1) + "/";
         }
 
-        if (sort.contains("top")) {
-            url += "top?t=" + sort.substring(0, sort.indexOf("top")) + "&";
-        }
-        else {
-            url += sort + "?";
-        }
-
-        url += "limit=50&after=" + listingLinks.getAfter() + "&showAll=true";
+        url += sort + "?t=" + time + "&limit=50&showAll=true&after=" + listingLinks.getAfter();
 
         reddit.loadGet(url,
                        new Listener<String>() {

@@ -59,4 +59,14 @@
     <string name="subreddit">Subreddit</string>
     <string name="link">Link</string>
     <string name="user">User</string>
+    <string name="item_sort_relevance">Relevancy</string>
+    <string name="time">Time</string>
+    <string name="item_sort_hour">Hour</string>
+    <string name="item_sort_day">Day</string>
+    <string name="item_sort_week">Week</string>
+    <string name="item_sort_month">Month</string>
+    <string name="item_sort_year">Year</string>
+    <string name="item_sort_all">All</string>
+    <string name="item_sort_top">Top</string>
+    <string name="item_sort_activity">Activity</string>
 </resources>
