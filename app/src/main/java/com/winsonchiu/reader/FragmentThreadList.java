@@ -616,7 +616,6 @@ public class FragmentThreadList extends Fragment {
         activity = null;
     }
 
-
     @Override
     public void onStart() {
         super.onStart();
@@ -627,21 +626,21 @@ public class FragmentThreadList extends Fragment {
     }
 
     @Override
-    public void onResume() {
-        super.onResume();
-        swipeRefreshThreadList.setRefreshing(mListener.getControllerLinks()
-                .isLoading());
-        mListener.getControllerLinks()
-                .setTitle();
-    }
-
-    @Override
     public void onStop() {
         mListener.getControllerLinks()
                 .removeListener(linkClickListener);
         mListener.getControllerSubreddits()
                 .removeListener(subredditListener);
         super.onStop();
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        swipeRefreshThreadList.setRefreshing(mListener.getControllerLinks()
+                .isLoading());
+        mListener.getControllerLinks()
+                .setTitle();
     }
 
     @Override

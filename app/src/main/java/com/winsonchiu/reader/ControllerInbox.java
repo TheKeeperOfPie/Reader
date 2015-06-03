@@ -185,6 +185,22 @@ public class ControllerInbox implements ControllerCommentsBase {
         return null;
     }
 
+    @Override
+    public int sizeLinks() {
+        // Not necessary
+        return data.getChildren().size();
+    }
+
+    @Override
+    public boolean isLoading() {
+        return false;
+    }
+
+    @Override
+    public void loadMoreLinks() {
+        // Not implemented
+    }
+
     public void insertMessage(Message message) {
 
         Message parentMessage = new Message();

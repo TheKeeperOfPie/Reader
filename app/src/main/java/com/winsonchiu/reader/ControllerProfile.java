@@ -91,10 +91,6 @@ public class ControllerProfile implements ControllerLinksBase, ControllerComment
 
     }
 
-    public int getItemCount() {
-        return data.getChildren().size();
-    }
-
     @Override
     public Link getLink(int position) {
         if (position == 2) {
@@ -273,6 +269,21 @@ public class ControllerProfile implements ControllerLinksBase, ControllerComment
         }
 
         return null;
+    }
+
+    @Override
+    public int sizeLinks() {
+        return data.getChildren().size();
+    }
+
+    @Override
+    public boolean isLoading() {
+        return false;
+    }
+
+    @Override
+    public void loadMoreLinks() {
+        // Not implemented
     }
 
     @Override

@@ -391,7 +391,7 @@ public class AdapterProfile extends RecyclerView.Adapter<RecyclerView.ViewHolder
 
     @Override
     public int getItemCount() {
-        return controllerProfile.getItemCount() > 0 ? controllerProfile.getItemCount() + 4 : 0;
+        return controllerProfile.sizeLinks() > 0 ? controllerProfile.sizeLinks() + 4 : 0;
     }
 
     @Override

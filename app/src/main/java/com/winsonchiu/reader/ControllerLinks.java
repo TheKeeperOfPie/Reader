@@ -132,6 +132,11 @@ public class ControllerLinks implements ControllerLinksBase {
         return null;
     }
 
+    @Override
+    public int sizeLinks() {
+        return listingLinks.getChildren() == null ? 0 : listingLinks.getChildren().size();
+    }
+
     public void reloadAllLinks() {
         setLoading(true);
 
@@ -328,8 +333,8 @@ public class ControllerLinks implements ControllerLinksBase {
                 activity.getApplicationContext());
     }
 
-    public int size() {
-        return listingLinks.getChildren() == null ? 0 : listingLinks.getChildren().size();
+    public Listing getListingSubreddits() {
+        return listingSubreddits;
     }
 
     public interface LinkClickListener extends DisallowListener {

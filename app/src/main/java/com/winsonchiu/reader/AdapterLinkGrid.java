@@ -42,8 +42,8 @@ public class AdapterLinkGrid extends AdapterLink {
     private SharedPreferences preferences;
 
     public AdapterLinkGrid(Activity activity,
-                           ControllerLinks controllerLinks,
-                           ControllerLinks.LinkClickListener listener) {
+            ControllerLinksBase controllerLinks,
+            ControllerLinks.LinkClickListener listener) {
         setControllerLinks(controllerLinks, listener);
         setActivity(activity);
     }
@@ -78,7 +78,7 @@ public class AdapterLinkGrid extends AdapterLink {
     @Override
     public void onBindViewHolder(RecyclerView.ViewHolder holder, final int position) {
 
-        if (!controllerLinks.isLoading() && position > controllerLinks.size() - 10) {
+        if (!controllerLinks.isLoading() && position > controllerLinks.sizeLinks() - 10) {
             controllerLinks.loadMoreLinks();
         }
 
@@ -129,9 +129,9 @@ public class AdapterLinkGrid extends AdapterLink {
         protected ImageView imageFull;
 
         public ViewHolder(View itemView,
-                          ControllerLinks.ListenerCallback listenerCallback,
-                          int defaultColor,
-                          int thumbnailSize) {
+                ControllerLinks.ListenerCallback listenerCallback,
+                int defaultColor,
+                int thumbnailSize) {
             super(itemView, listenerCallback);
             this.defaultColor = defaultColor;
             this.thumbnailSize = thumbnailSize;
@@ -300,15 +300,19 @@ public class AdapterLinkGrid extends AdapterLink {
         // TODO: Fix expanding reply when cell is not full span
         @Override
         public void toggleReply() {
-            ((StaggeredGridLayoutManager.LayoutParams) itemView.getLayoutParams()).setFullSpan(true);
+            ((StaggeredGridLayoutManager.LayoutParams) itemView.getLayoutParams()).setFullSpan(
+                    true);
             itemView.requestLayout();
-            callback.getListener().onFullLoaded(getAdapterPosition());
+            callback.getListener()
+                    .onFullLoaded(getAdapterPosition());
             super.toggleReply();
         }
 
         @Override
         public float getRatio(int adapterPosition) {
-            return ((StaggeredGridLayoutManager.LayoutParams) itemView.getLayoutParams()).isFullSpan() ? 1f : 1f / ((StaggeredGridLayoutManager) callback.getLayoutManager()).getSpanCount();
+            return ((StaggeredGridLayoutManager.LayoutParams) itemView.getLayoutParams()).isFullSpan() ?
+                    1f :
+                    1f / ((StaggeredGridLayoutManager) callback.getLayoutManager()).getSpanCount();
         }
 
         @Override
@@ -332,16 +336,22 @@ public class AdapterLinkGrid extends AdapterLink {
             int scoreLength = String.valueOf(link.getScore())
                     .length();
 
-            Spannable spannableInfo = new SpannableString(subreddit + "\n" + link.getScore() + " by " + link.getAuthor());
-            spannableInfo.setSpan(new ForegroundColorSpan(callback.getColorMuted()), 0, subreddit.length(), Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
+            Spannable spannableInfo = new SpannableString(
+                    subreddit + "\n" + link.getScore() + " by " + link.getAuthor());
+            spannableInfo.setSpan(new ForegroundColorSpan(callback.getColorMuted()), 0,
+                    subreddit.length(), Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
             spannableInfo.setSpan(
-                    new ForegroundColorSpan(link.getScore() > 0 ? callback.getColorPositive() : callback.getColorNegative()),
+                    new ForegroundColorSpan(link.getScore() > 0 ? callback.getColorPositive() :
+                            callback.getColorNegative()),
                     subreddit.length() + 1,
                     subreddit.length() + 1 + scoreLength, Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
-            spannableInfo.setSpan(new ForegroundColorSpan(callback.getColorMuted()), subreddit.length() + 1 + scoreLength, spannableInfo.length(), Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
+            spannableInfo.setSpan(new ForegroundColorSpan(callback.getColorMuted()),
+                    subreddit.length() + 1 + scoreLength, spannableInfo.length(),
+                    Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
             textThreadInfo.setText(spannableInfo);
 
-            textHidden.setText(new Date(link.getCreatedUtc()).toString() + ", " + link.getNumComments() + " comments");
+            textHidden.setText(new Date(
+                    link.getCreatedUtc()).toString() + ", " + link.getNumComments() + " comments");
         }
     }
 

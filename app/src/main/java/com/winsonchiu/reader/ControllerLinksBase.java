@@ -11,9 +11,13 @@ import com.winsonchiu.reader.data.Reddit;
  */
 public interface ControllerLinksBase {
 
+    // TODO: Include default implementations
+
     Link getLink(int position);
     Reddit getReddit();
     void voteLink(final RecyclerView.ViewHolder viewHolder, final int vote);
     Drawable getDrawableForLink(Link link);
-
+    int sizeLinks();
+    boolean isLoading();
+    void loadMoreLinks();
 }

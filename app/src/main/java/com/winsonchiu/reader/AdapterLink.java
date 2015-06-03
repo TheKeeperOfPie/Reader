@@ -71,7 +71,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
     private static final String TAG = AdapterLink.class.getCanonicalName();
     protected Activity activity;
     protected LayoutManager layoutManager;
-    protected ControllerLinks controllerLinks;
+    protected ControllerLinksBase controllerLinks;
     protected int colorPositive;
     protected int colorNegative;
     protected int colorMuted;
@@ -95,7 +95,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                 resources.getDisplayMetrics());
     }
 
-    public void setControllerLinks(ControllerLinks controllerLinks,
+    public void setControllerLinks(ControllerLinksBase controllerLinks,
             ControllerLinks.LinkClickListener listener) {
         this.controllerLinks = controllerLinks;
         this.listener = listener;
@@ -153,7 +153,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
 
     @Override
     public int getItemCount() {
-        return controllerLinks.size();
+        return controllerLinks.sizeLinks();
     }
 
     protected static abstract class ViewHolderBase extends RecyclerView.ViewHolder {

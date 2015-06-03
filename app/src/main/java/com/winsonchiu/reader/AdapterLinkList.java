@@ -28,7 +28,7 @@ public class AdapterLinkList extends AdapterLink {
 
     private DividerItemDecoration itemDecoration;
 
-    public AdapterLinkList(Activity activity, ControllerLinks controllerLinks, ControllerLinks.LinkClickListener listener) {
+    public AdapterLinkList(Activity activity, ControllerLinksBase controllerLinks, ControllerLinks.LinkClickListener listener) {
         setControllerLinks(controllerLinks, listener);
         setActivity(activity);
     }
@@ -53,7 +53,7 @@ public class AdapterLinkList extends AdapterLink {
     @Override
     public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
 
-        if (!controllerLinks.isLoading() && position > controllerLinks.size() - 10) {
+        if (!controllerLinks.isLoading() && position > controllerLinks.sizeLinks() - 10) {
             controllerLinks.loadMoreLinks();
         }
 

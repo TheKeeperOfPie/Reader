@@ -157,6 +157,21 @@ public class ControllerComments implements ControllerLinksBase, ControllerCommen
     }
 
     @Override
+    public int sizeLinks() {
+        return 1;
+    }
+
+    @Override
+    public boolean isLoading() {
+        return false;
+    }
+
+    @Override
+    public void loadMoreLinks() {
+        // Not implemented
+    }
+
+    @Override
     public void loadMoreComments(final Comment moreComment) {
 
         String url = Reddit.OAUTH_URL + "/api/morechildren";

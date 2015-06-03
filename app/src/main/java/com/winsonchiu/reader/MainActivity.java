@@ -91,7 +91,7 @@ public class MainActivity extends AppCompatActivity
             controllerSubreddits = new ControllerSubreddits(this);
         }
         if (controllerSearch == null) {
-            controllerSearch = new ControllerSearch(this);
+            controllerSearch = new ControllerSearch(this, controllerLinks);
         }
         setContentView(R.layout.activity_main);
 

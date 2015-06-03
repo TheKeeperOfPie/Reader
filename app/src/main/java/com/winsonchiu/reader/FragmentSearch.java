@@ -21,6 +21,8 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 
+import com.winsonchiu.reader.data.Link;
+import com.winsonchiu.reader.data.Listing;
 import com.winsonchiu.reader.data.Subreddit;
 
 
@@ -54,7 +56,7 @@ public class FragmentSearch extends Fragment {
     private RecyclerView recyclerSearchLinks;
     private RecyclerView recyclerSearchUsers;
     private AdapterSearchSubreddits adapterSearchSubreddits;
-    private AdapterSearchLinks adapterSearchLinks;
+    private AdapterLinkList adapterLinks;
     private AdapterSearchUsers adapterSearchUsers;
     private ControllerSearch.Listener listenerSearch;
     private PagerAdapter pagerAdapter;
@@ -137,6 +139,9 @@ public class FragmentSearch extends Fragment {
             @Override
             public boolean onQueryTextChange(String newText) {
                 // TODO: Remove spaces from query text
+                if (!isAdded() || mListener == null) {
+                    return false;
+                }
                 if (newText.contains(" ")) {
                     searchView.setQuery(newText.replaceAll(" ", ""), false);
                 }
@@ -166,39 +171,109 @@ public class FragmentSearch extends Fragment {
         listenerSearch = new ControllerSearch.Listener() {
             @Override
             public void onClickSubreddit(Subreddit subreddit) {
+                mListener.getControllerLinks().setParameters(subreddit.getDisplayName(), "hot");
+                getFragmentManager().popBackStack();
+            }
 
+            @Override
+            public void notifyChangedSubreddits() {
+                adapterSearchSubreddits.notifyDataSetChanged();
+            }
+
+            @Override
+            public void notifyChangedLinks() {
+                adapterLinks.notifyDataSetChanged();
+            }
+
+            @Override
+            public AdapterLink getAdapterLinks() {
+                return adapterLinks;
             }
         };
+
+        adapterSearchSubreddits = new AdapterSearchSubreddits(activity,
+                mListener.getControllerSearch(), listenerSearch);
+        recyclerSearchSubreddits = (RecyclerView) view.findViewById(R.id.recycler_search_subreddits);
+        recyclerSearchSubreddits.setLayoutManager(
+                new LinearLayoutManager(activity, LinearLayoutManager.VERTICAL, false));
+        recyclerSearchSubreddits.setAdapter(adapterSearchSubreddits);
+
+        adapterLinks = new AdapterLinkList(activity, mListener.getControllerSearch(),
+                new ControllerLinks.LinkClickListener() {
+                    @Override
+                    public void onClickComments(Link link, RecyclerView.ViewHolder viewHolder) {
+
+                    }
+
+                    @Override
+                    public void loadUrl(String url) {
+
+                    }
+
+                    @Override
+                    public void onFullLoaded(int position) {
+
+                    }
+
+                    @Override
+                    public void setRefreshing(boolean refreshing) {
+
+                    }
+
+                    @Override
+                    public void setToolbarTitle(String title) {
+
+                    }
+
+                    @Override
+                    public AdapterLink getAdapter() {
+                        return null;
+                    }
+
+                    @Override
+                    public int getRecyclerHeight() {
+                        return 0;
+                    }
+
+                    @Override
+                    public void loadSideBar(Listing listingSubreddits) {
+
+                    }
+
+                    @Override
+                    public void setEmptyView(boolean visible) {
+
+                    }
+
+                    @Override
+                    public int getRecyclerWidth() {
+                        return 0;
+                    }
+
+                    @Override
+                    public ControllerCommentsBase getControllerComments() {
+                        return null;
+                    }
+
+                    @Override
+                    public void requestDisallowInterceptTouchEvent(boolean disallow) {
+
+                    }
+                });
+        recyclerSearchLinks = (RecyclerView) view.findViewById(R.id.recycler_search_links);
+        recyclerSearchLinks.setLayoutManager(
+                new LinearLayoutManager(activity, LinearLayoutManager.VERTICAL, false));
+        recyclerSearchLinks.setAdapter(adapterLinks);
+
+        adapterSearchUsers = new AdapterSearchUsers();
+        recyclerSearchUsers = (RecyclerView) view.findViewById(R.id.recycler_search_users);
+        recyclerSearchUsers.setLayoutManager(
+                new LinearLayoutManager(activity, LinearLayoutManager.VERTICAL, false));
+
         pagerAdapter = new PagerAdapter() {
             @Override
             public Object instantiateItem(ViewGroup container, int position) {
-
-                switch (position) {
-                    case 0:
-                        if (recyclerSearchSubreddits == null) {
-                            adapterSearchSubreddits = new AdapterSearchSubreddits(activity,
-                                    mListener.getControllerSearch(), listenerSearch);
-                            recyclerSearchSubreddits = getNewRecyclerSearch();
-                            recyclerSearchSubreddits.setAdapter(adapterSearchSubreddits);
-                        }
-                        return recyclerSearchSubreddits;
-                    case 1:
-                        if (recyclerSearchLinks == null) {
-                            adapterSearchLinks = new AdapterSearchLinks();
-                            recyclerSearchLinks = getNewRecyclerSearch();
-                            recyclerSearchLinks.setAdapter(adapterSearchSubreddits);
-                        }
-                        return recyclerSearchLinks;
-                    case 2:
-                        if (recyclerSearchUsers == null) {
-                            adapterSearchUsers = new AdapterSearchUsers();
-                            recyclerSearchUsers = getNewRecyclerSearch();
-                            recyclerSearchUsers.setAdapter(adapterSearchSubreddits);
-                        }
-                        return recyclerSearchUsers;
-                }
-
-                return super.instantiateItem(container, position);
+                return viewPager.getChildAt(position);
             }
 
             @Override
@@ -242,13 +317,18 @@ public class FragmentSearch extends Fragment {
         return view;
     }
 
-    public RecyclerView getNewRecyclerSearch() {
+    @Override
+    public void onStart() {
+        super.onStart();
+        mListener.getControllerSearch()
+                .addListener(listenerSearch);
+    }
 
-        RecyclerView recyclerSearch = (RecyclerView) LayoutInflater.from(activity)
-                .inflate(R.layout.recycler_search, viewPager, false);
-        recyclerSearch.setLayoutManager(new LinearLayoutManager(activity, LinearLayoutManager.VERTICAL, false));
-        recyclerSearch.setHasFixedSize(true);
-        return recyclerSearch;
+    @Override
+    public void onStop() {
+        mListener.getControllerSearch()
+                .removeListener(listenerSearch);
+        super.onStop();
     }
 
     @Override
@@ -283,6 +363,7 @@ public class FragmentSearch extends Fragment {
      */
     public interface OnFragmentInteractionListener {
         ControllerSearch getControllerSearch();
+        ControllerLinks getControllerLinks();
     }
 
 }

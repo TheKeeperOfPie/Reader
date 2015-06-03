@@ -5,6 +5,7 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.text.Html;
 import android.text.method.LinkMovementMethod;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -32,6 +33,7 @@ public class AdapterSearchSubreddits extends RecyclerView.Adapter<AdapterSearchS
         this.controllerSubreddits = controllerSubreddits;
         this.listener = subredditListener;
         this.layoutManager = new LinearLayoutManager(activity, LinearLayoutManager.VERTICAL, false);
+        Log.d(TAG, "AdapterSearchSubreddits created");
     }
 
     @Override
@@ -48,6 +50,7 @@ public class AdapterSearchSubreddits extends RecyclerView.Adapter<AdapterSearchS
 
     @Override
     public int getItemCount() {
+        Log.d(TAG, "getItemCount: " + controllerSubreddits.getSubredditCount());
         return controllerSubreddits.getSubredditCount();
     }
 
