@@ -306,6 +306,12 @@ public class AdapterLinkGrid extends AdapterLink {
             callback.getListener()
                     .onFullLoaded(getAdapterPosition());
             super.toggleReply();
+            itemView.post(new Runnable() {
+                @Override
+                public void run() {
+                    setToolbarMenuVisibility();
+                }
+            });
         }
 
         @Override

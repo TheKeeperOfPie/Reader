@@ -165,7 +165,6 @@
             android:gravity="end"
             android:textSize="12sp"
             android:textColor="@color/darkThemeTextColorMuted"
-            android:visibility="gone"
             android:shadowColor="@color/darkThemeDialog"
             android:shadowRadius="3"
             android:ellipsize="none"
