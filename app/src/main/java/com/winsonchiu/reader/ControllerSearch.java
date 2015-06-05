@@ -83,9 +83,24 @@ public class ControllerSearch implements ControllerLinksBase {
         for (Listener listener : listeners) {
             listener.setToolbarTitle(query);
         }
-        reloadSubreddits();
-        reloadLinks();
-        reloadLinksSubreddit();
+        reloadCurrentPage();
+    }
+
+    public void reloadCurrentPage() {
+        switch (currentPage) {
+            case 0:
+                reloadSubreddits();
+                break;
+            case 1:
+                reloadLinks();
+                break;
+            case 2:
+                // TODO: Implement user search
+                break;
+            case 3:
+                reloadLinksSubreddit();
+                break;
+        }
     }
 
     public void reloadSubreddits() {
@@ -144,7 +159,7 @@ public class ControllerSearch implements ControllerLinksBase {
     public void reloadLinksSubreddit() {
 
         String subreddit = controllerLinks.getSubredditName();
-        reddit.loadGet(Reddit.OAUTH_URL + "/r/" + subreddit + "/search?q=" + query + "&sort=" + sort + "&t=" + time,
+        reddit.loadGet(Reddit.OAUTH_URL + "/r/" + subreddit + "/search?restrict_sr=on&q=" + query + "&sort=" + sort + "&t=" + time,
                 new Response.Listener<String>() {
                     @Override
                     public void onResponse(String response) {
@@ -191,7 +206,7 @@ public class ControllerSearch implements ControllerLinksBase {
 
     @Override
     public Reddit getReddit() {
-        return null;
+        return reddit;
     }
 
     @Override
@@ -271,18 +286,14 @@ public class ControllerSearch implements ControllerLinksBase {
     public void setSort(String sort) {
         if (!this.sort.equalsIgnoreCase(sort)) {
             this.sort = sort;
-            reloadSubreddits();
-            reloadLinks();
-            reloadLinksSubreddit();
+            reloadCurrentPage();
         }
     }
 
     public void setTime(String time) {
         if (!this.time.equalsIgnoreCase(time)) {
             this.time = time;
-            reloadSubreddits();
-            reloadLinks();
-            reloadLinksSubreddit();
+            reloadCurrentPage();
         }
     }
 
@@ -292,6 +303,7 @@ public class ControllerSearch implements ControllerLinksBase {
 
     public void setCurrentPage(int currentPage) {
         this.currentPage = currentPage;
+        reloadCurrentPage();
     }
 
     public int getCurrentPage() {

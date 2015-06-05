@@ -461,9 +461,10 @@ public class FragmentSearch extends Fragment {
 
     @Override
     public void onDetach() {
-        super.onDetach();
+        mListener.getControllerLinks().setTitle();
         activity = null;
         mListener = null;
+        super.onDetach();
     }
 
     /**
