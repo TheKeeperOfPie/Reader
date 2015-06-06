@@ -33,6 +33,7 @@ public class ControllerInbox implements ControllerCommentsBase {
     public static final int VIEW_TYPE_MESSAGE = 0;
     public static final int VIEW_TYPE_COMMENT = 1;
     private static final String TAG = ControllerInbox.class.getCanonicalName();
+    private final Activity activity;
 
     private Set<ItemClickListener> listeners;
     private Listing data;
@@ -44,6 +45,7 @@ public class ControllerInbox implements ControllerCommentsBase {
     private User user;
 
     public ControllerInbox(Activity activity) {
+        this.activity = activity;
         data = new Listing();
         listeners = new HashSet<>();
         this.reddit = Reddit.getInstance(activity);
@@ -201,6 +203,11 @@ public class ControllerInbox implements ControllerCommentsBase {
         // Not implemented
     }
 
+    @Override
+    public Activity getActivity() {
+        return activity;
+    }
+
     public void insertMessage(Message message) {
 
         Message parentMessage = new Message();
@@ -313,10 +320,6 @@ public class ControllerInbox implements ControllerCommentsBase {
     public interface ListenerCallback {
         ItemClickListener getListener();
         ControllerInbox getController();
-        int getColorPositive();
-        int getColorNegative();
-        int getColorMuted();
-        Activity getActivity();
         float getItemWidth();
         SharedPreferences getPreferences();
     }

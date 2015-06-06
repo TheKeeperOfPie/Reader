@@ -1,5 +1,6 @@
 package com.winsonchiu.reader;
 
+import android.app.Activity;
 import android.graphics.drawable.Drawable;
 import android.support.v7.widget.RecyclerView;
 
@@ -20,4 +21,5 @@ public interface ControllerLinksBase {
     int sizeLinks();
     boolean isLoading();
     void loadMoreLinks();
+    Activity getActivity();
 }

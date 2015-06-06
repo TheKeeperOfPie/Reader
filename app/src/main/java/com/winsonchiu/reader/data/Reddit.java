@@ -65,6 +65,9 @@ public class Reddit {
     public static final String DEFAULT = "default";
     public static final String NSFW = "nsfw";
 
+    public static final String FRONT_PAGE = "Front Page";
+    public static final String TIME_SEPARATOR = " - ";
+
     private static final String TAG = Reddit.class.getCanonicalName();
 
     public static final long SEC_TO_MS = 1000;

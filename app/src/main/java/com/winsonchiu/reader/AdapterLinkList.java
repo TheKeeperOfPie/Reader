@@ -28,7 +28,9 @@ public class AdapterLinkList extends AdapterLink {
 
     private DividerItemDecoration itemDecoration;
 
-    public AdapterLinkList(Activity activity, ControllerLinksBase controllerLinks, ControllerLinks.LinkClickListener listener) {
+    public AdapterLinkList(Activity activity,
+            ControllerLinksBase controllerLinks,
+            ControllerLinks.LinkClickListener listener) {
         setControllerLinks(controllerLinks, listener);
         setActivity(activity);
     }
@@ -37,7 +39,8 @@ public class AdapterLinkList extends AdapterLink {
     public void setActivity(Activity activity) {
         super.setActivity(activity);
         this.layoutManager = new LinearLayoutManager(activity);
-        this.itemDecoration = new DividerItemDecoration(activity, DividerItemDecoration.VERTICAL_LIST);
+        this.itemDecoration = new DividerItemDecoration(activity,
+                DividerItemDecoration.VERTICAL_LIST);
     }
 
     @Override
@@ -47,7 +50,8 @@ public class AdapterLinkList extends AdapterLink {
 
     @Override
     public ViewHolder onCreateViewHolder(ViewGroup viewGroup, int i) {
-        return new ViewHolder(LayoutInflater.from(viewGroup.getContext()).inflate(R.layout.row_link, viewGroup, false), this);
+        return new ViewHolder(LayoutInflater.from(viewGroup.getContext())
+                .inflate(R.layout.row_link, viewGroup, false), this);
     }
 
     @Override
@@ -123,7 +127,8 @@ public class AdapterLinkList extends AdapterLink {
             Drawable drawable = callback.getController()
                     .getDrawableForLink(link);
             if (drawable == null) {
-                Picasso.with(callback.getActivity())
+                Picasso.with(callback.getController()
+                        .getActivity())
                         .load(link.getThumbnail())
                         .into(imageThumbnail);
             }
@@ -150,19 +155,45 @@ public class AdapterLinkList extends AdapterLink {
             textThreadTitle.setText(Html.fromHtml(link.getTitle())
                     .toString());
             textThreadTitle.setTextColor(
-                    link.isOver18() ? callback.getColorTextAlert() : callback.getColorText());
+                    link.isOver18() ? callback.getController()
+                            .getActivity()
+                            .getResources()
+                            .getColor(R.color.darkThemeTextColorAlert) : callback.getController()
+                            .getActivity()
+                            .getResources()
+                            .getColor(
+                                    R.color.darkThemeTextColor));
 
             String subreddit = "/r/" + link.getSubreddit();
             int scoreLength = String.valueOf(link.getScore())
                     .length();
 
-            Spannable spannableInfo = new SpannableString(subreddit + " " + link.getScore() + " by " + link.getAuthor());
-            spannableInfo.setSpan(new ForegroundColorSpan(callback.getColorMuted()), 0, subreddit.length(), Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
+            Spannable spannableInfo = new SpannableString(
+                    subreddit + " " + link.getScore() + " by " + link.getAuthor());
+            spannableInfo.setSpan(new ForegroundColorSpan(callback.getController()
+                    .getActivity()
+                    .getResources()
+                    .getColor(
+                            R.color.darkThemeTextColorMuted)), 0, subreddit.length(),
+                    Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
             spannableInfo.setSpan(
-                    new ForegroundColorSpan(link.getScore() > 0 ? callback.getColorPositive() : callback.getColorNegative()),
+                    new ForegroundColorSpan(link.getScore() > 0 ? callback.getController()
+                            .getActivity()
+                            .getResources()
+                            .getColor(
+                                    R.color.positiveScore) : callback.getController()
+                            .getActivity()
+                            .getResources()
+                            .getColor(
+                                    R.color.negativeScore)),
                     subreddit.length() + 1,
                     subreddit.length() + 1 + scoreLength, Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
-            spannableInfo.setSpan(new ForegroundColorSpan(callback.getColorMuted()), subreddit.length() + 1 + scoreLength, spannableInfo.length(), Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
+            spannableInfo.setSpan(new ForegroundColorSpan(callback.getController()
+                    .getActivity()
+                    .getResources()
+                    .getColor(
+                            R.color.darkThemeTextColorMuted)), subreddit.length() + 1 + scoreLength,
+                    spannableInfo.length(), Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
             textThreadInfo.setText(spannableInfo);
 
             textHidden.setText(new Date(

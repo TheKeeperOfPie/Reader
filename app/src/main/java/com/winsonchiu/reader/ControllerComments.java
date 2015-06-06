@@ -172,6 +172,11 @@ public class ControllerComments implements ControllerLinksBase, ControllerCommen
     }
 
     @Override
+    public Activity getActivity() {
+        return activity;
+    }
+
+    @Override
     public void loadMoreComments(final Comment moreComment) {
 
         String url = Reddit.OAUTH_URL + "/api/morechildren";
@@ -603,13 +608,6 @@ public class ControllerComments implements ControllerLinksBase, ControllerCommen
         ControllerCommentsBase getControllerComments();
         SharedPreferences getPreferences();
         User getUser();
-        int getColorMuted();
-        int getColorAccent();
-        int getColorPrimary();
-        int getColorPositive();
-        int getColorNegative();
-        int getColorDefault();
-        Activity getActivity();
         float getItemWidth();
     }
 

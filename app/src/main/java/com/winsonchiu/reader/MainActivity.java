@@ -1,8 +1,10 @@
 package com.winsonchiu.reader;
 
+import android.app.Activity;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.res.Resources;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.provider.Browser;
@@ -12,8 +14,10 @@ import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.SearchView;
 import android.support.v7.widget.Toolbar;
+import android.text.Html;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -28,13 +32,18 @@ import android.widget.Toast;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.crashlytics.android.Crashlytics;
+import com.winsonchiu.reader.data.Link;
+import com.winsonchiu.reader.data.Listing;
 import com.winsonchiu.reader.data.Reddit;
+import com.winsonchiu.reader.data.Subreddit;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.Stack;
 
 import io.fabric.sdk.android.Fabric;
 
@@ -57,7 +66,6 @@ public class MainActivity extends AppCompatActivity
     private ControllerComments controllerComments;
     private ControllerProfile controllerProfile;
     private ControllerInbox controllerInbox;
-    private ControllerSubreddits controllerSubreddits;
     private ControllerSearch controllerSearch;
     private SharedPreferences sharedPreferences;
 
@@ -69,14 +77,17 @@ public class MainActivity extends AppCompatActivity
     private TextView textAccountName;
     private TextView textAccountInfo;
 
+    private Stack<Object> stackHistory;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         Fabric.with(this, new Crashlytics());
         sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+        stackHistory = new Stack<>();
 
         if (controllerLinks == null) {
-            controllerLinks = new ControllerLinks(this, "", "hot");
+            controllerLinks = new ControllerLinks(this, "", Sort.HOT);
         }
         if (controllerComments == null) {
             controllerComments = new ControllerComments(this, "", "");
@@ -86,9 +97,6 @@ public class MainActivity extends AppCompatActivity
         }
         if (controllerInbox == null) {
             controllerInbox = new ControllerInbox(this);
-        }
-        if (controllerSubreddits == null) {
-            controllerSubreddits = new ControllerSubreddits(this);
         }
         if (controllerSearch == null) {
             controllerSearch = new ControllerSearch(this, controllerLinks);
@@ -104,7 +112,7 @@ public class MainActivity extends AppCompatActivity
                 if (itemSearch != null) {
                     itemSearch.expandActionView();
                     SearchView searchView = ((SearchView) itemSearch.getActionView());
-                    if ("Front Page".equals(toolbar.getTitle())) {
+                    if (Reddit.FRONT_PAGE.equals(toolbar.getTitle())) {
                         searchView.setQuery("", false);
                     }
                     else {
@@ -170,7 +178,6 @@ public class MainActivity extends AppCompatActivity
 
         selectNavigationItem(R.id.item_home);
 
-        // Must be placed after ActionBarDrawerToggle instantiation,
         /*
             Must be placed after ActionBarDrawerToggle instantiation,
             as the toggle will set its own OnClickListener. This is also
@@ -229,7 +236,7 @@ public class MainActivity extends AppCompatActivity
         switch (id) {
             case R.id.item_home:
                 if (getFragmentManager().findFragmentByTag(FragmentThreadList.TAG) != null) {
-                    controllerLinks.loadFrontPage("hot");
+                    controllerLinks.loadFrontPage(Sort.HOT);
                 }
                 else {
                     getFragmentManager().beginTransaction()
@@ -329,7 +336,7 @@ public class MainActivity extends AppCompatActivity
             int indexFirstSlash = path.indexOf("/", 1);
             int indexSecondSlash = path.indexOf("/", indexFirstSlash + 1);
             if (indexFirstSlash < 0) {
-                controllerLinks.setParameters("", "hot");
+                controllerLinks.setParameters("", Sort.HOT);
                 return;
             }
             String subreddit = path.substring(indexFirstSlash + 1,
@@ -379,7 +386,7 @@ public class MainActivity extends AppCompatActivity
                 String sort =
                         indexSort > -1 ? path.substring(subreddit.length() + 1, indexSort) :
                                 "hot";
-                controllerLinks.setParameters(subreddit, "hot");
+                controllerLinks.setParameters(subreddit, Sort.HOT);
                 Log.d(TAG, "Sort: " + sort);
             }
         }
@@ -423,6 +430,8 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
+
+        Log.d(TAG, "Menu item clicked: " + item.toString());
 
         switch (item.getItemId()) {
             case android.R.id.home:
@@ -509,11 +518,6 @@ public class MainActivity extends AppCompatActivity
     @Override
     public ControllerComments getControllerComments() {
         return controllerComments;
-    }
-
-    @Override
-    public ControllerSubreddits getControllerSubreddits() {
-        return controllerSubreddits;
     }
 
     @Override

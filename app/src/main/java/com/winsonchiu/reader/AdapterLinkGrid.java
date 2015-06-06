@@ -221,7 +221,8 @@ public class AdapterLinkGrid extends AdapterLink {
                 Log.d(TAG, "showThumbnail false: " + link.getUrl());
                 imageFull.setVisibility(View.GONE);
                 imageThumbnail.setVisibility(View.VISIBLE);
-                Picasso.with(callback.getActivity())
+                Picasso.with(callback.getController()
+                        .getActivity())
                         .load(link.getThumbnail())
                         .into(imageThumbnail);
             }
@@ -235,7 +236,8 @@ public class AdapterLinkGrid extends AdapterLink {
             imageThumbnail.setVisibility(View.GONE);
             progressImage.setVisibility(View.VISIBLE);
 
-            Picasso.with(callback.getActivity())
+            Picasso.with(callback.getController()
+                    .getActivity())
                     .load(link.getThumbnail())
                     .into(imageFull,
                             new Callback() {
@@ -263,7 +265,8 @@ public class AdapterLinkGrid extends AdapterLink {
                                     imageUrl = link.getThumbnail();
                                     if (Reddit.placeImageUrl(
                                             link) && position == getAdapterPosition()) {
-                                        Picasso.with(callback.getActivity())
+                                        Picasso.with(callback.getController()
+                                                .getActivity())
                                                 .load(link.getUrl())
                                                 .resize(thumbnailSize, thumbnailSize)
                                                 .centerCrop()
@@ -336,7 +339,14 @@ public class AdapterLinkGrid extends AdapterLink {
             textThreadTitle.setText(Html.fromHtml(link.getTitle())
                     .toString());
             textThreadTitle.setTextColor(
-                    link.isOver18() ? callback.getColorTextAlert() : callback.getColorText());
+                    link.isOver18() ? callback.getController()
+                            .getActivity()
+                            .getResources()
+                            .getColor(R.color.darkThemeTextColorAlert) : callback.getController()
+                            .getActivity()
+                            .getResources()
+                            .getColor(
+                                    R.color.darkThemeTextColor));
 
             String subreddit = "/r/" + link.getSubreddit();
             int scoreLength = String.valueOf(link.getScore())
@@ -344,14 +354,30 @@ public class AdapterLinkGrid extends AdapterLink {
 
             Spannable spannableInfo = new SpannableString(
                     subreddit + "\n" + link.getScore() + " by " + link.getAuthor());
-            spannableInfo.setSpan(new ForegroundColorSpan(callback.getColorMuted()), 0,
+            spannableInfo.setSpan(new ForegroundColorSpan(callback.getController()
+                            .getActivity()
+                            .getResources()
+                            .getColor(
+                                    R.color.darkThemeTextColorMuted)), 0,
                     subreddit.length(), Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
             spannableInfo.setSpan(
-                    new ForegroundColorSpan(link.getScore() > 0 ? callback.getColorPositive() :
-                            callback.getColorNegative()),
+                    new ForegroundColorSpan(link.getScore() > 0 ? callback.getController()
+                            .getActivity()
+                            .getResources()
+                            .getColor(
+                                    R.color.positiveScore) :
+                            callback.getController()
+                                    .getActivity()
+                                    .getResources()
+                                    .getColor(
+                                            R.color.negativeScore)),
                     subreddit.length() + 1,
                     subreddit.length() + 1 + scoreLength, Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
-            spannableInfo.setSpan(new ForegroundColorSpan(callback.getColorMuted()),
+            spannableInfo.setSpan(new ForegroundColorSpan(callback.getController()
+                            .getActivity()
+                            .getResources()
+                            .getColor(
+                                    R.color.darkThemeTextColorMuted)),
                     subreddit.length() + 1 + scoreLength, spannableInfo.length(),
                     Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
             textThreadInfo.setText(spannableInfo);

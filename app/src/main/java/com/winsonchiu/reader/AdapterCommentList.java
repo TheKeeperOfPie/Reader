@@ -80,7 +80,10 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
     private boolean isGrid;
     private boolean isInitialized;
 
-    public AdapterCommentList(Activity activity, final ControllerComments controllerComments, final ControllerComments.CommentClickListener listener, boolean isGrid) {
+    public AdapterCommentList(Activity activity,
+            final ControllerComments controllerComments,
+            final ControllerComments.CommentClickListener listener,
+            boolean isGrid) {
         this.isGrid = isGrid;
         this.activity = activity;
         this.controllerComments = controllerComments;
@@ -186,12 +189,16 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
 
         if (viewType == VIEW_LINK) {
             if (isGrid) {
-                return new AdapterLinkGrid.ViewHolder(LayoutInflater.from(parent.getContext()).inflate(R.layout.cell_link, parent, false), this, colorDefault, thumbnailWidth);
+                return new AdapterLinkGrid.ViewHolder(LayoutInflater.from(parent.getContext())
+                        .inflate(R.layout.cell_link, parent, false), this, colorDefault,
+                        thumbnailWidth);
             }
-            return new AdapterLinkList.ViewHolder(LayoutInflater.from(parent.getContext()).inflate(R.layout.row_link, parent, false), this);
+            return new AdapterLinkList.ViewHolder(LayoutInflater.from(parent.getContext())
+                    .inflate(R.layout.row_link, parent, false), this);
         }
 
-        return new ViewHolderComment(LayoutInflater.from(parent.getContext()).inflate(R.layout.row_comment, parent, false), this);
+        return new ViewHolderComment(LayoutInflater.from(parent.getContext())
+                .inflate(R.layout.row_comment, parent, false), this);
     }
 
     @Override
@@ -200,7 +207,8 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
         if (holder instanceof AdapterLinkList.ViewHolder) {
             ((AdapterLinkList.ViewHolder) holder).onBind(position);
             if (!isInitialized) {
-                if (controllerComments.getMainLink().isSelf()) {
+                if (controllerComments.getMainLink()
+                        .isSelf()) {
                     ((AdapterLinkList.ViewHolder) holder).imageThumbnail.callOnClick();
                 }
                 isInitialized = true;
@@ -209,7 +217,8 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
         else if (holder instanceof AdapterLinkGrid.ViewHolder) {
             ((AdapterLinkGrid.ViewHolder) holder).onBind(position);
             if (!isInitialized) {
-                if (controllerComments.getMainLink().isSelf()) {
+                if (controllerComments.getMainLink()
+                        .isSelf()) {
                     ((AdapterLinkGrid.ViewHolder) holder).imageThumbnail.callOnClick();
                 }
                 isInitialized = true;
@@ -236,51 +245,6 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
     @Override
     public ControllerLinksBase getController() {
         return controllerComments;
-    }
-
-    @Override
-    public int getColorMuted() {
-        return colorMuted;
-    }
-
-    @Override
-    public int getColorText() {
-        return colorText;
-    }
-
-    @Override
-    public int getColorTextAlert() {
-        return colorTextAlert;
-    }
-
-    @Override
-    public int getColorAccent() {
-        return colorAccent;
-    }
-
-    @Override
-    public int getColorPrimary() {
-        return colorPrimary;
-    }
-
-    @Override
-    public int getColorPositive() {
-        return colorPositive;
-    }
-
-    @Override
-    public int getColorNegative() {
-        return colorNegative;
-    }
-
-    @Override
-    public int getColorDefault() {
-        return colorDefault;
-    }
-
-    @Override
-    public Activity getActivity() {
-        return activity;
     }
 
     @Override
@@ -339,35 +303,46 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
         protected ControllerComments.ListenerCallback callback;
         private View.OnClickListener clickListenerLink;
 
-        public ViewHolderComment(final View itemView, ControllerComments.ListenerCallback listenerCallback) {
+        public ViewHolderComment(final View itemView,
+                ControllerComments.ListenerCallback listenerCallback) {
             super(itemView);
             this.callback = listenerCallback;
 
-            Resources resources = callback.getActivity().getResources();
+            Resources resources = callback.getControllerComments()
+                    .getActivity()
+                    .getResources();
             this.drawableUpvote = resources.getDrawable(R.drawable.ic_keyboard_arrow_up_white_24dp);
-            this.drawableDownvote = resources.getDrawable(R.drawable.ic_keyboard_arrow_down_white_24dp);
+            this.drawableDownvote = resources.getDrawable(
+                    R.drawable.ic_keyboard_arrow_down_white_24dp);
             viewIndent = itemView.findViewById(R.id.view_indent);
             viewIndicator = itemView.findViewById(R.id.view_indicator);
             viewIndicatorContainer = itemView.findViewById(R.id.view_indicator_container);
-            viewIndicatorContainerReply = itemView.findViewById(R.id.view_indicator_container_reply);
+            viewIndicatorContainerReply = itemView.findViewById(
+                    R.id.view_indicator_container_reply);
             textComment = (TextView) itemView.findViewById(R.id.text_comment);
             textComment.setMovementMethod(LinkMovementMethod.getInstance());
             textInfo = (TextView) itemView.findViewById(R.id.text_info);
-            layoutContainerActions = (LinearLayout) itemView.findViewById(R.id.layout_container_actions);
-            layoutContainerReply = (RelativeLayout) itemView.findViewById(R.id.layout_container_reply);
+            layoutContainerActions = (LinearLayout) itemView.findViewById(
+                    R.id.layout_container_actions);
+            layoutContainerReply = (RelativeLayout) itemView.findViewById(
+                    R.id.layout_container_reply);
             editTextReply = (EditText) itemView.findViewById(R.id.edit_text_reply);
             buttonSendReply = (Button) itemView.findViewById(R.id.button_send_reply);
             buttonSendReply.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    if (TextUtils.isEmpty(callback.getPreferences().getString(AppSettings.REFRESH_TOKEN, ""))) {
-                        Toast.makeText(callback.getActivity(), "Must be logged in to reply", Toast.LENGTH_SHORT).show();
+                    if (TextUtils.isEmpty(callback.getPreferences()
+                            .getString(AppSettings.REFRESH_TOKEN, ""))) {
+                        Toast.makeText(callback.getControllerComments()
+                                .getActivity(), "Must be logged in to reply", Toast.LENGTH_SHORT)
+                                .show();
                         return;
                     }
 
                     if (!TextUtils.isEmpty(editTextReply.getText())) {
-                        Comment comment = callback.getControllerComments().getComment(
-                                getAdapterPosition());
+                        Comment comment = callback.getControllerComments()
+                                .getComment(
+                                        getAdapterPosition());
                         final int parentLevel = comment.getLevel();
                         Map<String, String> params = new HashMap<>();
                         params.put("api_type", "json");
@@ -376,19 +351,23 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                         params.put("thing_id", comment.getName());
 
                         // TODO: Move add to immediate on button click, check if failed afterwards
-                        callback.getControllerComments().getReddit()
+                        callback.getControllerComments()
+                                .getReddit()
                                 .loadPost(Reddit.OAUTH_URL + "/api/comment",
                                         new Response.Listener<String>() {
                                             @Override
                                             public void onResponse(String response) {
                                                 try {
-                                                    JSONObject jsonObject = new JSONObject(response);
+                                                    JSONObject jsonObject = new JSONObject(
+                                                            response);
                                                     Comment newComment = Comment.fromJson(
                                                             jsonObject.getJSONObject("json")
                                                                     .getJSONObject("data")
                                                                     .getJSONArray("things")
-                                                                    .getJSONObject(0), parentLevel + 1);
-                                                    callback.getControllerComments().insertComment(newComment);
+                                                                    .getJSONObject(0),
+                                                            parentLevel + 1);
+                                                    callback.getControllerComments()
+                                                            .insertComment(newComment);
                                                 }
                                                 catch (JSONException e) {
                                                     e.printStackTrace();
@@ -401,8 +380,10 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                                             }
                                         }, params, 0);
                         comment.setReplyExpanded(!comment.isReplyExpanded());
-                        int width = callback.getCommentClickListener().getRecyclerWidth();
-                        final float ratio = (width - callback.getControllerComments().getIndentWidth(comment)) / width;
+                        int width = callback.getCommentClickListener()
+                                .getRecyclerWidth();
+                        final float ratio = (width - callback.getControllerComments()
+                                .getIndentWidth(comment)) / width;
 
                         AnimationUtils.animateExpand(layoutContainerReply, ratio, null);
                     }
@@ -417,7 +398,8 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                     final int commentIndex = getAdapterPosition();
                     switch (menuItem.getItemId()) {
                         case R.id.item_collapse:
-                            if (callback.getControllerComments().toggleComment(commentIndex)) {
+                            if (callback.getControllerComments()
+                                    .toggleComment(commentIndex)) {
                                 menuItem.setIcon(R.drawable.ic_arrow_drop_up_white_24dp);
                             }
                             else {
@@ -425,24 +407,30 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                             }
                             break;
                         case R.id.item_upvote:
-                            callback.getControllerComments().voteComment(ViewHolderComment.this, 1);
+                            callback.getControllerComments()
+                                    .voteComment(ViewHolderComment.this, 1);
                             break;
                         case R.id.item_downvote:
-                            callback.getControllerComments().voteComment(ViewHolderComment.this, -1);
+                            callback.getControllerComments()
+                                    .voteComment(ViewHolderComment.this, -1);
                             break;
                         case R.id.item_reply:
-                            comment = callback.getControllerComments().getComment(commentIndex);
+                            comment = callback.getControllerComments()
+                                    .getComment(commentIndex);
                             if (!comment.isReplyExpanded()) {
                                 editTextReply.requestFocus();
                                 editTextReply.setText(null);
                             }
                             comment.setReplyExpanded(!comment.isReplyExpanded());
-                            int width = callback.getCommentClickListener().getRecyclerWidth();
-                            final float ratio = (width - callback.getControllerComments().getIndentWidth(comment)) / width;
+                            int width = callback.getCommentClickListener()
+                                    .getRecyclerWidth();
+                            final float ratio = (width - callback.getControllerComments()
+                                    .getIndentWidth(comment)) / width;
                             AnimationUtils.animateExpand(layoutContainerReply, ratio, null);
                             break;
                         case R.id.item_delete:
-                            comment = callback.getControllerComments().getComment(commentIndex);
+                            comment = callback.getControllerComments()
+                                    .getComment(commentIndex);
                             String html = comment.getBodyHtml();
                             html = Html.fromHtml(html.trim())
                                     .toString();
@@ -455,12 +443,14 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                             while (start < end && Character.isWhitespace(sequence.charAt(start))) {
                                 start++;
                             }
-                            while (end > start && Character.isWhitespace(sequence.charAt(end - 1))) {
+                            while (end > start && Character.isWhitespace(
+                                    sequence.charAt(end - 1))) {
                                 end--;
                             }
                             sequence = sequence.subSequence(start, end);
 
-                            new AlertDialog.Builder(callback.getActivity())
+                            new AlertDialog.Builder(callback.getControllerComments()
+                                    .getActivity())
                                     .setTitle("Delete comment?")
                                     .setMessage(sequence)
                                     .setPositiveButton("Yes",
@@ -470,21 +460,26 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                                                         DialogInterface dialog,
                                                         int which) {
 
-                                                    callback.getControllerComments().deleteComment(
-                                                            comment);
+                                                    callback.getControllerComments()
+                                                            .deleteComment(
+                                                                    comment);
 
                                                     Map<String, String> params = new HashMap<>();
                                                     params.put("id", comment.getName());
 
-                                                    callback.getControllerComments().getReddit()
+                                                    callback.getControllerComments()
+                                                            .getReddit()
                                                             .loadPost(Reddit.OAUTH_URL + "/api/del",
                                                                     new Response.Listener<String>() {
                                                                         @Override
-                                                                        public void onResponse(String response) {
+                                                                        public void onResponse(
+                                                                                String response) {
                                                                         }
-                                                                    }, new Response.ErrorListener() {
+                                                                    },
+                                                                    new Response.ErrorListener() {
                                                                         @Override
-                                                                        public void onErrorResponse(VolleyError error) {
+                                                                        public void onErrorResponse(
+                                                                                VolleyError error) {
 
                                                                         }
                                                                     }, params, 0);
@@ -497,30 +492,45 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                     return true;
                 }
             });
-            itemUpvote = toolbarActions.getMenu().findItem(R.id.item_upvote);
-            itemDownvote = toolbarActions.getMenu().findItem(R.id.item_downvote);
+            itemUpvote = toolbarActions.getMenu()
+                    .findItem(R.id.item_upvote);
+            itemDownvote = toolbarActions.getMenu()
+                    .findItem(R.id.item_downvote);
 
             clickListenerLink = new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    Comment comment = callback.getControllerComments().getComment(
-                            getAdapterPosition());
+                    Comment comment = callback.getControllerComments()
+                            .getComment(
+                                    getAdapterPosition());
                     if (comment.isMore()) {
-                        callback.getControllerComments().loadMoreComments(comment);
+                        callback.getControllerComments()
+                                .loadMoreComments(comment);
                         return;
                     }
 
-                    boolean isAuthor = comment.getAuthor().equals(callback.getUser().getName());
+                    boolean isAuthor = comment.getAuthor()
+                            .equals(callback.getUser()
+                                    .getName());
 
-                    if (callback.getControllerComments().isCommentExpanded(getAdapterPosition())) {
-                        toolbarActions.getMenu().findItem(R.id.item_collapse).setIcon(R.drawable.ic_arrow_drop_up_white_24dp);
+                    if (callback.getControllerComments()
+                            .isCommentExpanded(getAdapterPosition())) {
+                        toolbarActions.getMenu()
+                                .findItem(R.id.item_collapse)
+                                .setIcon(R.drawable.ic_arrow_drop_up_white_24dp);
                     }
                     else {
-                        toolbarActions.getMenu().findItem(R.id.item_collapse).setIcon(R.drawable.ic_arrow_drop_down_white_24dp);
+                        toolbarActions.getMenu()
+                                .findItem(R.id.item_collapse)
+                                .setIcon(R.drawable.ic_arrow_drop_down_white_24dp);
                     }
 
-                    toolbarActions.getMenu().findItem(R.id.item_delete).setEnabled(isAuthor);
-                    toolbarActions.getMenu().findItem(R.id.item_delete).setVisible(isAuthor);
+                    toolbarActions.getMenu()
+                            .findItem(R.id.item_delete)
+                            .setEnabled(isAuthor);
+                    toolbarActions.getMenu()
+                            .findItem(R.id.item_delete)
+                            .setVisible(isAuthor);
 
                     setVoteColors();
 
@@ -545,27 +555,40 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
 
             for (int index = 0; index < COMMENT_MENU_SIZE; index++) {
                 if (index < maxNum) {
-                    toolbarActions.getMenu().getItem(index).setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+                    toolbarActions.getMenu()
+                            .getItem(index)
+                            .setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
                 }
                 else {
-                    toolbarActions.getMenu().getItem(index).setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
+                    toolbarActions.getMenu()
+                            .getItem(index)
+                            .setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
                 }
             }
         }
 
         public void setVoteColors() {
 
-            Comment comment = callback.getControllerComments().getComment(
-                    getAdapterPosition());
+            Comment comment = callback.getControllerComments()
+                    .getComment(
+                            getAdapterPosition());
             switch (comment.isLikes()) {
                 case 1:
-                    drawableUpvote.setColorFilter(callback.getColorPositive(), PorterDuff.Mode.MULTIPLY);
+                    drawableUpvote.setColorFilter(callback.getControllerComments()
+                            .getActivity()
+                            .getResources()
+                            .getColor(
+                                    R.color.positiveScore), PorterDuff.Mode.MULTIPLY);
                     itemUpvote.setIcon(drawableUpvote);
                     drawableDownvote.clearColorFilter();
                     itemDownvote.setIcon(drawableDownvote);
                     break;
                 case -1:
-                    drawableDownvote.setColorFilter(callback.getColorNegative(), PorterDuff.Mode.MULTIPLY);
+                    drawableDownvote.setColorFilter(callback.getControllerComments()
+                            .getActivity()
+                            .getResources()
+                            .getColor(
+                                    R.color.negativeScore), PorterDuff.Mode.MULTIPLY);
                     itemDownvote.setIcon(drawableDownvote);
                     drawableUpvote.clearColorFilter();
                     itemUpvote.setIcon(drawableUpvote);
@@ -583,7 +606,8 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
 
             toolbarActions.setVisibility(View.GONE);
 
-            Comment comment = callback.getControllerComments().getComment(position);
+            Comment comment = callback.getControllerComments()
+                    .getComment(position);
 
             if (comment.isReplyExpanded()) {
                 layoutContainerReply.setVisibility(View.VISIBLE);
@@ -596,16 +620,22 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
 
             int alphaLevel = comment.getLevel() * MAX_ALPHA / ALPHA_LEVELS;
 
-            int overlayColor = ColorUtils.setAlphaComponent(0xFF000000, alphaLevel <= MAX_ALPHA ? alphaLevel : MAX_ALPHA);
+            int overlayColor = ColorUtils.setAlphaComponent(0xFF000000,
+                    alphaLevel <= MAX_ALPHA ? alphaLevel : MAX_ALPHA);
             int indicatorColor = ColorUtils.compositeColors(overlayColor,
-                    callback.getColorPrimary());
+                    callback.getControllerComments()
+                            .getActivity()
+                            .getResources()
+                            .getColor(
+                                    R.color.colorPrimary));
 
             viewIndicator.setBackgroundColor(indicatorColor);
             viewIndicatorContainer.setBackgroundColor(indicatorColor);
             viewIndicatorContainerReply.setBackgroundColor(indicatorColor);
 
             ViewGroup.LayoutParams layoutParams = viewIndent.getLayoutParams();
-            layoutParams.width = callback.getControllerComments().getIndentWidth(comment);
+            layoutParams.width = callback.getControllerComments()
+                    .getIndentWidth(comment);
             viewIndent.setLayoutParams(layoutParams);
 
             if (comment.isMore()) {
@@ -634,18 +664,43 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
 //                Linkify.addLinks(viewHolderComment.textComment, Linkify.ALL);
 
                 Spannable spannableInfo = new SpannableString(
-                        comment.getScore() + " by " + comment.getAuthor() + " on " + new Date(comment.getCreatedUtc()).toString());
+                        comment.getScore() + " by " + comment.getAuthor() + " on " + new Date(
+                                comment.getCreatedUtc()).toString());
                 spannableInfo.setSpan(new ForegroundColorSpan(
-                                comment.getScore() > 0 ? callback.getColorPositive() : callback.getColorNegative()), 0,
+                                comment.getScore() > 0 ?
+                                        callback.getControllerComments()
+                                            .getActivity()
+                                            .getResources()
+                                            .getColor(
+                                                    R.color.positiveScore) :
+                                        callback.getControllerComments()
+                                                .getActivity()
+                                                .getResources()
+                                                .getColor(
+                                                        R.color.negativeScore)), 0,
                         String.valueOf(comment.getScore())
                                 .length(), Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
 
-                int colorAuthor = callback.getControllerComments().getMainLink().getAuthor().equals(comment.getAuthor()) ? callback.getColorAccent() : callback.getColorMuted();
+                int colorAuthor = callback.getControllerComments()
+                        .getMainLink()
+                        .getAuthor()
+                        .equals(comment.getAuthor()) ? callback.getControllerComments().getActivity().getResources().getColor(
+                        R.color.colorAccent) :
+                        callback.getControllerComments().getActivity().getResources().getColor(
+                                R.color.darkThemeTextColorMuted);
 
-                int indexScore = String.valueOf(comment.getScore()).length();
-                spannableInfo.setSpan(new ForegroundColorSpan(callback.getColorMuted()), indexScore, indexScore + 4, Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
-                spannableInfo.setSpan(new ForegroundColorSpan(colorAuthor), indexScore + 4, indexScore + 4 + comment.getAuthor().length(), Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
-                spannableInfo.setSpan(new ForegroundColorSpan(callback.getColorMuted()), indexScore + 4 + comment.getAuthor().length(), spannableInfo.length(), Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
+                int indexScore = String.valueOf(comment.getScore())
+                        .length();
+                spannableInfo.setSpan(new ForegroundColorSpan(callback.getControllerComments().getActivity().getResources().getColor(
+                        R.color.darkThemeTextColorMuted)), indexScore,
+                        indexScore + 4, Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
+                spannableInfo.setSpan(new ForegroundColorSpan(colorAuthor), indexScore + 4,
+                        indexScore + 4 + comment.getAuthor()
+                                .length(), Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
+                spannableInfo.setSpan(new ForegroundColorSpan(callback.getControllerComments().getActivity().getResources().getColor(R.color.darkThemeTextColorMuted)),
+                        indexScore + 4 + comment.getAuthor()
+                                .length(), spannableInfo.length(),
+                        Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
 
                 textInfo.setText(spannableInfo);
             }

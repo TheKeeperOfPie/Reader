@@ -68,7 +68,7 @@
             <item
                 android:id="@+id/item_sort_time"
                 android:title="@string/time"
-                android:orderInCategory="500"
+                android:orderInCategory="700"
                 >
 
                 <menu>

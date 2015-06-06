@@ -41,15 +41,15 @@ public class ControllerLinks implements ControllerLinksBase {
     private Listing listingLinks;
     private Listing listingSubreddits;
     private boolean isLoading;
-    private String sort;
+    private Sort sort;
+    private Time time;
     private Drawable drawableSelf;
     private Drawable drawableDefault;
     private Reddit reddit;
     private Set<LinkClickListener> listeners;
     private SharedPreferences preferences;
-    private String time;
 
-    public ControllerLinks(Activity activity, String subredditName, String sort) {
+    public ControllerLinks(Activity activity, String subredditName, Sort sort) {
         setActivity(activity);
         this.reddit = Reddit.getInstance(activity);
         this.listeners = new HashSet<>();
@@ -58,7 +58,7 @@ public class ControllerLinks implements ControllerLinksBase {
         this.drawableSelf = resources.getDrawable(R.drawable.ic_chat_white_48dp);
         this.drawableDefault = resources.getDrawable(R.drawable.ic_web_white_48dp);
         this.sort = sort;
-        this.time = "all";
+        this.time = Time.ALL;
         listingSubreddits = new Listing();
         if (!TextUtils.isEmpty(subredditName)) {
             List<Thing> subreddits = new ArrayList<>();
@@ -78,7 +78,7 @@ public class ControllerLinks implements ControllerLinksBase {
         listeners.remove(linkClickListener);
     }
 
-    public void setParameters(String subredditName, String sort) {
+    public void setParameters(String subredditName, Sort sort) {
         this.sort = sort;
         List<Thing> subreddits = new ArrayList<>();
         Subreddit subreddit = new Subreddit();
@@ -89,7 +89,7 @@ public class ControllerLinks implements ControllerLinksBase {
         reloadAllLinks();
     }
 
-    public void loadFrontPage(String sort) {
+    public void loadFrontPage(Sort sort) {
         for (LinkClickListener listener : listeners) {
             listener.setRefreshing(true);
         }
@@ -98,22 +98,22 @@ public class ControllerLinks implements ControllerLinksBase {
         reloadAllLinks();
     }
 
-    public void setSort(String sort) {
-        if (!this.sort.equalsIgnoreCase(sort)) {
+    public void setSort(Sort sort) {
+        if (this.sort != sort) {
             this.sort = sort;
             reloadAllLinks();
         }
     }
 
-    public void setTime(String time) {
-        if (!this.time.equalsIgnoreCase(time)) {
+    public void setTime(Time time) {
+        if (this.time != time) {
             this.time = time;
             reloadAllLinks();
         }
     }
 
     public void setTitle() {
-        String subredditName = "Front Page";
+        String subredditName = Reddit.FRONT_PAGE;
         if (listingSubreddits.getChildren().size() > 0) {
             subredditName = "/r/" + ((Subreddit) listingSubreddits.getChildren().get(0)).getDisplayName();
         }
@@ -163,7 +163,7 @@ public class ControllerLinks implements ControllerLinksBase {
                     .substring(0, builder.length() - 1) + "/";
         }
 
-        url += sort + "?t=" + time + "&limit=50&showAll=true";
+        url += sort.toString() + "?t=" + time.toString() + "&limit=50&showAll=true";
 
         reddit.loadGet(url, new Listener<String>() {
             @Override
@@ -172,9 +172,17 @@ public class ControllerLinks implements ControllerLinksBase {
                 if (response == null) {
                     return;
                 }
-                Log.d(TAG, "Result: " + response);
+
+                Log.d(TAG, "Response: " + response);
+
                 try {
-                    listingLinks = Listing.fromJson(new JSONObject(response));
+                    Listing listing = Listing.fromJson(new JSONObject(response));
+                    if (listing.getChildren().isEmpty() || !(listing.getChildren().get(0) instanceof Link)) {
+                        listingLinks = new Listing();
+                    }
+                    else {
+                        listingLinks = listing;
+                    }
                 }
                 catch (JSONException e) {
                     e.printStackTrace();
@@ -217,7 +225,7 @@ public class ControllerLinks implements ControllerLinksBase {
                     .substring(0, builder.length() - 1) + "/";
         }
 
-        url += sort + "?t=" + time + "&limit=50&showAll=true&after=" + listingLinks.getAfter();
+        url += sort.toString() + "?t=" + time.toString() + "&limit=50&showAll=true&after=" + listingLinks.getAfter();
 
         reddit.loadGet(url,
                        new Listener<String>() {
@@ -252,6 +260,12 @@ public class ControllerLinks implements ControllerLinksBase {
                 }, 0);
     }
 
+    @Override
+    public Activity getActivity() {
+        return activity;
+    }
+
+    @Override
     public void voteLink(final RecyclerView.ViewHolder viewHolder, final int vote) {
 
         if (TextUtils.isEmpty(preferences.getString(AppSettings.REFRESH_TOKEN, null))) {
@@ -335,10 +349,18 @@ public class ControllerLinks implements ControllerLinksBase {
     public String getSubredditName() {
 
         if (listingSubreddits.getChildren().isEmpty()) {
-            return "";
+            return Reddit.FRONT_PAGE;
         }
 
         return ((Subreddit) listingSubreddits.getChildren().get(0)).getDisplayName();
+    }
+
+    public Sort getSort() {
+        return sort;
+    }
+
+    public Time getTime() {
+        return time;
     }
 
     public interface LinkClickListener extends DisallowListener {
@@ -359,12 +381,6 @@ public class ControllerLinks implements ControllerLinksBase {
     public interface ListenerCallback {
         LinkClickListener getListener();
         ControllerLinksBase getController();
-        int getColorPositive();
-        int getColorNegative();
-        int getColorMuted();
-        int getColorText();
-        int getColorTextAlert();
-        Activity getActivity();
         float getItemWidth();
         RecyclerView.LayoutManager getLayoutManager();
         SharedPreferences getPreferences();

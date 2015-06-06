@@ -28,6 +28,7 @@ import android.view.animation.Transformation;
 import android.view.animation.TranslateAnimation;
 
 import com.winsonchiu.reader.data.Link;
+import com.winsonchiu.reader.data.Reddit;
 import com.winsonchiu.reader.data.User;
 
 import org.json.JSONException;
@@ -63,6 +64,8 @@ public class FragmentProfile extends Fragment {
     private AdapterProfile adapterProfile;
     private SharedPreferences preferences;
     private MenuItem itemSearch;
+    private Menu menu;
+    private MenuItem itemSortTime;
 
     /**
      * Use this factory method to create a new instance of
@@ -103,10 +106,12 @@ public class FragmentProfile extends Fragment {
         super.onCreateOptionsMenu(menu, inflater);
         menu.clear();
         inflater.inflate(R.menu.menu_profile, menu);
+        this.menu = menu;
 
         menu.findItem(R.id.item_sort_hot)
                 .setChecked(true);
 
+        itemSortTime = menu.findItem(R.id.item_sort_time);
         itemSearch = menu.findItem(R.id.item_search);
 
         final SearchView searchView = (SearchView) itemSearch.getActionView();
@@ -144,7 +149,20 @@ public class FragmentProfile extends Fragment {
         });
         searchView.setSubmitButtonEnabled(true);
 
+        resetSubmenuSelected();
+
     }
+
+    private void resetSubmenuSelected() {
+        onOptionsItemSelected(menu.findItem(mListener.getControllerProfile()
+                .getSort()
+                .getMenuId()));
+        onOptionsItemSelected(menu.findItem(mListener.getControllerProfile()
+                .getTime()
+                .getMenuId()));
+
+    }
+
 
     @Override
     public void onDestroyOptionsMenu() {
@@ -158,53 +176,25 @@ public class FragmentProfile extends Fragment {
     public boolean onOptionsItemSelected(MenuItem item) {
 
         item.setChecked(true);
-        switch (item.getItemId()) {
-            case R.id.item_sort_hot:
-                mListener.getControllerProfile()
-                        .setSort("hot");
-                flashSearchView();
-                return true;
-            case R.id.item_sort_new:
-                mListener.getControllerProfile()
-                        .setSort("new");
-                flashSearchView();
-                return true;
-            case R.id.item_sort_top_hour:
-                mListener.getControllerProfile()
-                        .setSort("hourtop");
-                flashSearchView();
-                return true;
-            case R.id.item_sort_top_day:
-                mListener.getControllerProfile()
-                        .setSort("daytop");
-                flashSearchView();
-                return true;
-            case R.id.item_sort_top_week:
-                mListener.getControllerProfile()
-                        .setSort("weektop");
-                flashSearchView();
-                return true;
-            case R.id.item_sort_top_month:
-                mListener.getControllerProfile()
-                        .setSort("monthtop");
-                flashSearchView();
-                return true;
-            case R.id.item_sort_top_year:
-                mListener.getControllerProfile()
-                        .setSort("yeartop");
-                flashSearchView();
-                return true;
-            case R.id.item_sort_top_all:
-                mListener.getControllerProfile()
-                        .setSort("alltop");
-                flashSearchView();
-                return true;
-            case R.id.item_sort_controversial:
-                mListener.getControllerProfile()
-                        .setSort("controversial");
-                flashSearchView();
-                return true;
 
+        for (Sort sort : Sort.values()) {
+            if (sort.getMenuId() == item.getItemId()) {
+                mListener.getControllerProfile()
+                        .setSort(sort);
+                flashSearchView();
+                return super.onOptionsItemSelected(item);
+            }
+        }
+
+        for (Time time : Time.values()) {
+            if (time.getMenuId() == item.getItemId()) {
+                mListener.getControllerProfile()
+                        .setTime(time);
+                itemSortTime.setTitle(
+                        getString(R.string.time) + Reddit.TIME_SEPARATOR + item.toString());
+                flashSearchView();
+                return super.onOptionsItemSelected(item);
+            }
         }
         return super.onOptionsItemSelected(item);
     }

@@ -143,41 +143,6 @@ public class AdapterInbox extends RecyclerView.Adapter<RecyclerView.ViewHolder>
             }
 
             @Override
-            public int getColorMuted() {
-                return colorMuted;
-            }
-
-            @Override
-            public int getColorAccent() {
-                return colorAccent;
-            }
-
-            @Override
-            public int getColorPrimary() {
-                return colorPrimary;
-            }
-
-            @Override
-            public int getColorPositive() {
-                return colorPositive;
-            }
-
-            @Override
-            public int getColorNegative() {
-                return colorNegative;
-            }
-
-            @Override
-            public int getColorDefault() {
-                return colorDefault;
-            }
-
-            @Override
-            public Activity getActivity() {
-                return activity;
-            }
-
-            @Override
             public float getItemWidth() {
                 return itemWidth;
             }
@@ -241,26 +206,6 @@ public class AdapterInbox extends RecyclerView.Adapter<RecyclerView.ViewHolder>
     }
 
     @Override
-    public int getColorPositive() {
-        return colorPositive;
-    }
-
-    @Override
-    public int getColorNegative() {
-        return colorNegative;
-    }
-
-    @Override
-    public int getColorMuted() {
-        return colorMuted;
-    }
-
-    @Override
-    public Activity getActivity() {
-        return activity;
-    }
-
-    @Override
     public float getItemWidth() {
         return itemWidth;
     }
@@ -286,7 +231,7 @@ public class AdapterInbox extends RecyclerView.Adapter<RecyclerView.ViewHolder>
             this.callback = listenerCallback;
 
 
-            Resources resources = callback.getActivity().getResources();
+            Resources resources = callback.getController().getActivity().getResources();
             textMessage = (TextView) itemView.findViewById(R.id.text_message);
             textMessage.setMovementMethod(LinkMovementMethod.getInstance());
             textInfo = (TextView) itemView.findViewById(R.id.text_info);
@@ -298,7 +243,7 @@ public class AdapterInbox extends RecyclerView.Adapter<RecyclerView.ViewHolder>
                 public void onClick(View v) {
                     if (TextUtils.isEmpty(callback.getPreferences()
                             .getString(AppSettings.REFRESH_TOKEN, ""))) {
-                        Toast.makeText(callback.getActivity(), "Must be logged in to reply",
+                        Toast.makeText(callback.getController().getActivity(), "Must be logged in to reply",
                                 Toast.LENGTH_SHORT)
                                 .show();
                         return;
@@ -449,7 +394,7 @@ public class AdapterInbox extends RecyclerView.Adapter<RecyclerView.ViewHolder>
             Spannable spannableInfo = new SpannableString("by " + message.getAuthor() + " on " + new Date(message.getCreatedUtc()).toString());
 
             textInfo.setText(spannableInfo);
-            textInfo.setTextColor(callback.getColorMuted());
+            textInfo.setTextColor(callback.getController().getActivity().getResources().getColor(R.color.darkThemeTextColorMuted));
         }
     }
 

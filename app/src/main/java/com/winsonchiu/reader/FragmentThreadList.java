@@ -10,13 +10,10 @@ import android.support.v4.widget.DrawerLayout;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.support.v7.widget.SearchView;
 import android.support.v7.widget.StaggeredGridLayoutManager;
 import android.text.Html;
 import android.text.method.LinkMovementMethod;
-import android.util.Log;
 import android.util.TypedValue;
-import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -73,8 +70,6 @@ public class FragmentThreadList extends Fragment {
     private MenuItem itemInterface;
 
     private ControllerLinks.LinkClickListener linkClickListener;
-    private ControllerSubreddits.SubredditListener subredditListener;
-    private AdapterSubreddits adapterSubreddits;
     private MenuItem itemSearch;
     private TextView textSidebar;
     private DrawerLayout drawerLayout;
@@ -154,8 +149,18 @@ public class FragmentThreadList extends Fragment {
                     }
                 });
 
-        onOptionsItemSelected(menu.findItem(R.id.item_sort_hot));
-        onOptionsItemSelected(menu.findItem(R.id.item_sort_all));
+        resetSubmenuSelected();
+
+    }
+
+    private void resetSubmenuSelected() {
+        onOptionsItemSelected(menu.findItem(mListener.getControllerLinks()
+                .getSort()
+                .getMenuId()));
+        onOptionsItemSelected(menu.findItem(mListener.getControllerLinks()
+                .getTime()
+                .getMenuId()));
+
     }
 
     @Override
@@ -178,63 +183,7 @@ public class FragmentThreadList extends Fragment {
                         .add(R.id.frame_fragment, FragmentSearch.newInstance("", ""))
                         .addToBackStack(null)
                         .commit();
-                return true;
-            case R.id.item_sort_hot:
-                mListener.getControllerLinks()
-                        .setSort("hot");
-                flashSearchView();
-                return true;
-            case R.id.item_sort_new:
-                mListener.getControllerLinks()
-                        .setSort("new");
-                flashSearchView();
-                return true;
-            case R.id.item_sort_top:
-                mListener.getControllerLinks()
-                        .setSort("top");
-                flashSearchView();
-                return true;
-            case R.id.item_sort_controversial:
-                mListener.getControllerLinks()
-                        .setSort("controversial");
-                flashSearchView();
-                return true;
-            case R.id.item_sort_hour:
-                mListener.getControllerLinks()
-                        .setTime("hour");
-                itemSortTime.setTitle(getString(R.string.time) + FragmentSearch.TIME_SEPARATOR + getString(R.string.item_sort_hour));
-                flashSearchView();
-                return true;
-            case R.id.item_sort_day:
-                mListener.getControllerLinks()
-                        .setTime("day");
-                itemSortTime.setTitle(getString(R.string.time) + FragmentSearch.TIME_SEPARATOR + getString(R.string.item_sort_day));
-                flashSearchView();
-                return true;
-            case R.id.item_sort_week:
-                mListener.getControllerLinks()
-                        .setTime("week");
-                itemSortTime.setTitle(getString(R.string.time) + FragmentSearch.TIME_SEPARATOR + getString(R.string.item_sort_week));
-                flashSearchView();
-                return true;
-            case R.id.item_sort_month:
-                mListener.getControllerLinks()
-                        .setTime("month");
-                flashSearchView();
-                itemSortTime.setTitle(getString(R.string.time) + FragmentSearch.TIME_SEPARATOR + getString(R.string.item_sort_month));
-                return true;
-            case R.id.item_sort_year:
-                mListener.getControllerLinks()
-                        .setTime("year");
-                itemSortTime.setTitle(getString(R.string.time) + FragmentSearch.TIME_SEPARATOR + getString(R.string.item_sort_year));
-                flashSearchView();
-                return true;
-            case R.id.item_sort_all:
-                mListener.getControllerLinks()
-                        .setTime("all");
-                itemSortTime.setTitle(getString(R.string.time) + FragmentSearch.TIME_SEPARATOR + getString(R.string.item_sort_all));
-                flashSearchView();
-                return true;
+                return super.onOptionsItemSelected(item);
             case R.id.item_interface:
                 if (AppSettings.MODE_LIST.equals(
                         preferences.getString(AppSettings.INTERFACE_MODE, AppSettings.MODE_LIST))) {
@@ -253,9 +202,30 @@ public class FragmentThreadList extends Fragment {
                             .putString(AppSettings.INTERFACE_MODE, AppSettings.MODE_LIST)
                             .commit();
                 }
-                return true;
+                return super.onOptionsItemSelected(item);
 
         }
+
+        for (Sort sort : Sort.values()) {
+            if (sort.getMenuId() == item.getItemId()) {
+                mListener.getControllerLinks()
+                        .setSort(sort);
+                flashSearchView();
+                return super.onOptionsItemSelected(item);
+            }
+        }
+
+        for (Time time : Time.values()) {
+            if (time.getMenuId() == item.getItemId()) {
+                mListener.getControllerLinks()
+                        .setTime(time);
+                itemSortTime.setTitle(
+                        getString(R.string.time) + Reddit.TIME_SEPARATOR + item.toString());
+                flashSearchView();
+                return super.onOptionsItemSelected(item);
+            }
+        }
+
 
         return super.onOptionsItemSelected(item);
     }
@@ -434,11 +404,6 @@ public class FragmentThreadList extends Fragment {
 
             @Override
             public AdapterLink getAdapter() {
-                if (recyclerThreadList.getAdapter() == adapterSubreddits) {
-                    recyclerThreadList.setLayoutManager(adapterLink.getLayoutManager());
-                    recyclerThreadList.setAdapter(adapterLink);
-                }
-
                 return adapterLink;
             }
 
@@ -510,36 +475,6 @@ public class FragmentThreadList extends Fragment {
             }
         };
 
-        subredditListener = new ControllerSubreddits.SubredditListener() {
-
-            @Override
-            public void onClickSubreddit(Subreddit subreddit) {
-                recyclerThreadList.setLayoutManager(adapterLink.getLayoutManager());
-                recyclerThreadList.setAdapter(adapterLink);
-                menu.findItem(R.id.item_sort_hot)
-                        .setChecked(true);
-                itemSearch.collapseActionView();
-                mListener.getControllerLinks()
-                        .setParameters(subreddit.getDisplayName(), "hot");
-            }
-
-            @Override
-            public AdapterSubreddits getAdapter() {
-                Log.d(TAG, "AdapterSubreddits getAdapter");
-                return adapterSubreddits;
-            }
-
-            @Override
-            public int getRecyclerWidth() {
-                return recyclerThreadList.getWidth();
-            }
-
-            @Override
-            public void requestDisallowInterceptTouchEvent(boolean disallow) {
-
-            }
-        };
-
         swipeRefreshThreadList = (SwipeRefreshLayout) view.findViewById(
                 R.id.swipe_refresh_thread_list);
         swipeRefreshThreadList.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
@@ -563,11 +498,6 @@ public class FragmentThreadList extends Fragment {
         }
         adapterLink.setActivity(activity);
 
-        if (adapterSubreddits == null) {
-            adapterSubreddits = new AdapterSubreddits(activity, mListener.getControllerSubreddits(),
-                    subredditListener);
-        }
-
         layoutManager = adapterLink.getLayoutManager();
 
         recyclerThreadList = (RecyclerView) view.findViewById(R.id.recycler_thread_list);
@@ -589,8 +519,7 @@ public class FragmentThreadList extends Fragment {
 
         mListener.getControllerLinks()
                 .addListener(linkClickListener);
-        mListener.getControllerSubreddits()
-                .addListener(subredditListener);
+
         return view;
     }
 
@@ -636,16 +565,12 @@ public class FragmentThreadList extends Fragment {
         super.onStart();
         mListener.getControllerLinks()
                 .addListener(linkClickListener);
-        mListener.getControllerSubreddits()
-                .addListener(subredditListener);
     }
 
     @Override
     public void onStop() {
         mListener.getControllerLinks()
                 .removeListener(linkClickListener);
-        mListener.getControllerSubreddits()
-                .removeListener(subredditListener);
         super.onStop();
     }
 
@@ -676,9 +601,11 @@ public class FragmentThreadList extends Fragment {
      */
     public interface OnFragmentInteractionListener {
         void setToolbarTitle(CharSequence title);
+
         ControllerLinks getControllerLinks();
+
         ControllerComments getControllerComments();
-        ControllerSubreddits getControllerSubreddits();
+
         void setNavigationAnimation(float value);
     }
 

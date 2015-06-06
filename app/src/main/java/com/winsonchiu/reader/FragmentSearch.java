@@ -1,10 +1,8 @@
 package com.winsonchiu.reader;
 
 import android.app.Activity;
-import android.content.SharedPreferences;
-import android.os.Bundle;
 import android.app.Fragment;
-import android.preference.PreferenceManager;
+import android.os.Bundle;
 import android.support.design.widget.TabLayout;
 import android.support.v4.view.MenuItemCompat;
 import android.support.v4.view.PagerAdapter;
@@ -23,6 +21,7 @@ import android.view.ViewGroup;
 
 import com.winsonchiu.reader.data.Link;
 import com.winsonchiu.reader.data.Listing;
+import com.winsonchiu.reader.data.Reddit;
 import com.winsonchiu.reader.data.Subreddit;
 
 
@@ -36,13 +35,11 @@ import com.winsonchiu.reader.data.Subreddit;
  */
 public class FragmentSearch extends Fragment {
 
-    public static final String TIME_SEPARATOR = " - ";
-
     // TODO: Rename parameter arguments, choose names that match
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
     private static final String ARG_PARAM1 = "param1";
     private static final String ARG_PARAM2 = "param2";
-    private static final int PAGE_COUNT = 4;
+    private static final int PAGE_COUNT = 3;
     private static final String TAG = FragmentSearch.class.getCanonicalName();
 
     // TODO: Rename and change types of parameters
@@ -56,11 +53,9 @@ public class FragmentSearch extends Fragment {
     private ViewPager viewPager;
     private RecyclerView recyclerSearchSubreddits;
     private RecyclerView recyclerSearchLinks;
-    private RecyclerView recyclerSearchUsers;
-    private RecyclerView recyclerSearchSubreddit;
+    private RecyclerView recyclerSearchLinksSubreddit;
     private AdapterSearchSubreddits adapterSearchSubreddits;
     private AdapterLinkList adapterLinks;
-    private AdapterSearchUsers adapterSearchUsers;
     private AdapterLink adapterLinkSubreddit;
     private ControllerSearch.Listener listenerSearch;
     private PagerAdapter pagerAdapter;
@@ -125,7 +120,8 @@ public class FragmentSearch extends Fragment {
         searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
             @Override
             public boolean onQueryTextSubmit(String query) {
-                Log.d(TAG, "Query entered");
+                mListener.getControllerLinks().setParameters(query, Sort.HOT);
+                getFragmentManager().popBackStack();
                 return false;
             }
 
@@ -146,6 +142,19 @@ public class FragmentSearch extends Fragment {
             }
         });
         searchView.setSubmitButtonEnabled(true);
+        MenuItemCompat.setOnActionExpandListener(itemSearch,
+                new MenuItemCompat.OnActionExpandListener() {
+                    @Override
+                    public boolean onMenuItemActionExpand(MenuItem item) {
+                        return true;
+                    }
+
+                    @Override
+                    public boolean onMenuItemActionCollapse(MenuItem item) {
+                        getFragmentManager().popBackStack();
+                        return true;
+                    }
+                });
 
         menu.findItem(R.id.item_sort_relevance).setChecked(true);
         menu.findItem(R.id.item_sort_all).setChecked(true);
@@ -155,6 +164,7 @@ public class FragmentSearch extends Fragment {
     public void onDestroyOptionsMenu() {
         SearchView searchView = (SearchView) itemSearch.getActionView();
         searchView.setOnQueryTextListener(null);
+        MenuItemCompat.setOnActionExpandListener(itemSearch, null);
         itemSearch = null;
         super.onDestroyOptionsMenu();
     }
@@ -163,74 +173,27 @@ public class FragmentSearch extends Fragment {
     public boolean onOptionsItemSelected(MenuItem item) {
 
         item.setChecked(true);
-        switch (item.getItemId()) {
-            case R.id.item_sort_relevance:
-                mListener.getControllerSearch()
-                        .setSort("relevance");
-                flashSearchView();
-                return true;
-            case R.id.item_sort_activity:
-                mListener.getControllerSearch()
-                        .setSort("activity");
-                flashSearchView();
-                return true;
-            case R.id.item_sort_hot:
-                mListener.getControllerSearch()
-                        .setSort("hot");
-                flashSearchView();
-                return true;
-            case R.id.item_sort_new:
-                mListener.getControllerSearch()
-                        .setSort("new");
-                flashSearchView();
-                return true;
-            case R.id.item_sort_top:
-                mListener.getControllerSearch()
-                        .setSort("top");
-                flashSearchView();
-                return true;
-            case R.id.item_sort_controversial:
-                mListener.getControllerSearch()
-                        .setSort("controversial");
-                flashSearchView();
-                return true;
-            case R.id.item_sort_hour:
-                mListener.getControllerSearch()
-                        .setTime("hour");
-                itemSortTime.setTitle(getString(R.string.time) + TIME_SEPARATOR + getString(R.string.item_sort_hour));
-                flashSearchView();
-                return true;
-            case R.id.item_sort_day:
-                mListener.getControllerSearch()
-                        .setTime("day");
-                itemSortTime.setTitle(getString(R.string.time) + TIME_SEPARATOR + getString(R.string.item_sort_day));
-                flashSearchView();
-                return true;
-            case R.id.item_sort_week:
-                mListener.getControllerSearch()
-                        .setTime("week");
-                itemSortTime.setTitle(getString(R.string.time) + TIME_SEPARATOR + getString(R.string.item_sort_week));
-                flashSearchView();
-                return true;
-            case R.id.item_sort_month:
-                mListener.getControllerSearch()
-                        .setTime("month");
-                itemSortTime.setTitle(getString(R.string.time) + TIME_SEPARATOR + getString(R.string.item_sort_month));
-                flashSearchView();
-                return true;
-            case R.id.item_sort_year:
-                mListener.getControllerSearch()
-                        .setTime("year");
-                itemSortTime.setTitle(getString(R.string.time) + TIME_SEPARATOR + getString(R.string.item_sort_year));
-                flashSearchView();
-                return true;
-            case R.id.item_sort_all:
-                mListener.getControllerSearch()
-                        .setTime("all");
-                itemSortTime.setTitle(getString(R.string.time) + TIME_SEPARATOR + getString(R.string.item_sort_all));
-                flashSearchView();
-                return true;
 
+        Log.d(TAG, "Menu item clicked: " + item.toString());
+
+        for (Sort sort : Sort.values()) {
+            if (sort.getMenuId() == item.getItemId()) {
+                mListener.getControllerSearch()
+                        .setSort(sort);
+                flashSearchView();
+                return super.onOptionsItemSelected(item);
+            }
+        }
+
+        for (Time time : Time.values()) {
+            if (time.getMenuId() == item.getItemId()) {
+                mListener.getControllerSearch()
+                        .setTime(time);
+                itemSortTime.setTitle(
+                        getString(R.string.time) + Reddit.TIME_SEPARATOR + item.toString());
+                flashSearchView();
+                return super.onOptionsItemSelected(item);
+            }
         }
 
         return super.onOptionsItemSelected(item);
@@ -255,7 +218,7 @@ public class FragmentSearch extends Fragment {
         listenerSearch = new ControllerSearch.Listener() {
             @Override
             public void onClickSubreddit(Subreddit subreddit) {
-                mListener.getControllerLinks().setParameters(subreddit.getDisplayName(), "hot");
+                mListener.getControllerLinks().setParameters(subreddit.getDisplayName(), Sort.HOT);
                 getFragmentManager().popBackStack();
             }
 
@@ -356,15 +319,10 @@ public class FragmentSearch extends Fragment {
                 new LinearLayoutManager(activity, LinearLayoutManager.VERTICAL, false));
         recyclerSearchLinks.setAdapter(adapterLinks);
 
-        adapterSearchUsers = new AdapterSearchUsers();
-        recyclerSearchUsers = (RecyclerView) view.findViewById(R.id.recycler_search_users);
-        recyclerSearchUsers.setLayoutManager(
+        recyclerSearchLinksSubreddit = (RecyclerView) view.findViewById(R.id.recycler_search_links_subreddit);
+        recyclerSearchLinksSubreddit.setLayoutManager(
                 new LinearLayoutManager(activity, LinearLayoutManager.VERTICAL, false));
-
-        recyclerSearchSubreddit = (RecyclerView) view.findViewById(R.id.recycler_search_subreddit);
-        recyclerSearchSubreddit.setLayoutManager(
-                new LinearLayoutManager(activity, LinearLayoutManager.VERTICAL, false));
-        recyclerSearchSubreddit.setAdapter(adapterLinks);
+        recyclerSearchLinksSubreddit.setAdapter(adapterLinks);
 
         pagerAdapter = new PagerAdapter() {
             @Override
@@ -380,13 +338,11 @@ public class FragmentSearch extends Fragment {
             @Override
             public CharSequence getPageTitle(int position) {
                 switch (position) {
-                    case 0:
+                    case ControllerSearch.PAGE_SUBREDDITS:
                         return getString(R.string.subreddit);
-                    case 1:
+                    case ControllerSearch.PAGE_LINKS:
                         return getString(R.string.link);
-                    case 2:
-                        return getString(R.string.user);
-                    case 3:
+                    case ControllerSearch.PAGE_LINKS_SUBREDDIT:
                         return mListener.getControllerLinks().getSubredditName();
                 }
 

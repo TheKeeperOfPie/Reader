@@ -9,13 +9,13 @@ import android.support.v7.widget.RecyclerView;
 import android.text.TextUtils;
 import android.util.Log;
 
+import com.android.volley.Request;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.winsonchiu.reader.data.Link;
 import com.winsonchiu.reader.data.Listing;
 import com.winsonchiu.reader.data.Reddit;
 import com.winsonchiu.reader.data.Subreddit;
-import com.winsonchiu.reader.data.User;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -28,7 +28,12 @@ import java.util.Set;
  */
 public class ControllerSearch implements ControllerLinksBase {
 
+    public static final int PAGE_LINKS_SUBREDDIT = 0;
+    public static final int PAGE_SUBREDDITS = 1;
+    public static final int PAGE_LINKS = 2;
+
     private static final String TAG = ControllerSearch.class.getCanonicalName();
+
     private final ControllerLinks controllerLinks;
     private Set<Listener> listeners;
     private Activity activity;
@@ -36,20 +41,22 @@ public class ControllerSearch implements ControllerLinksBase {
     private Reddit reddit;
     private Listing subreddits;
     private Listing links;
-    private Listing users;
     private Listing linksSubreddit;
     private String query;
     private Drawable drawableSelf;
     private Drawable drawableDefault;
-    private String sort;
-    private String time;
+    private Sort sort;
+    private Time time;
     private int currentPage;
+    private Request<String> requestSubreddits;
+    private Request<String> requestLinks;
+    private Request<String> requestLinksSubreddit;
 
     public ControllerSearch(Activity activity, ControllerLinks controllerLinks) {
         setActivity(activity);
         this.controllerLinks = controllerLinks;
-        sort = "relevance";
-        time = "all";
+        sort = Sort.RELEVANCE;
+        time = Time.ALL;
     }
 
     public void setActivity(Activity activity) {
@@ -64,7 +71,7 @@ public class ControllerSearch implements ControllerLinksBase {
         query = "";
         subreddits = new Listing();
         links = new Listing();
-        users = new Listing();
+        linksSubreddit = new Listing();
     }
 
     public void addListener(Listener linkClickListener) {
@@ -88,16 +95,13 @@ public class ControllerSearch implements ControllerLinksBase {
 
     public void reloadCurrentPage() {
         switch (currentPage) {
-            case 0:
+            case PAGE_SUBREDDITS:
                 reloadSubreddits();
                 break;
-            case 1:
+            case PAGE_LINKS:
                 reloadLinks();
                 break;
-            case 2:
-                // TODO: Implement user search
-                break;
-            case 3:
+            case PAGE_LINKS_SUBREDDIT:
                 reloadLinksSubreddit();
                 break;
         }
@@ -105,7 +109,11 @@ public class ControllerSearch implements ControllerLinksBase {
 
     public void reloadSubreddits() {
 
-        reddit.loadGet(Reddit.OAUTH_URL + "/subreddits/search?show=all&q=" + query + "&sort=" + sort,
+        if (requestSubreddits != null) {
+            requestSubreddits.cancel();
+        }
+
+        requestSubreddits = reddit.loadGet(Reddit.OAUTH_URL + "/subreddits/search?show=all&q=" + query + "&sort=" + sort.toString(),
                 new Response.Listener<String>() {
                     @Override
                     public void onResponse(String response) {
@@ -131,7 +139,11 @@ public class ControllerSearch implements ControllerLinksBase {
 
     public void reloadLinks() {
 
-        reddit.loadGet(Reddit.OAUTH_URL + "/search?q=" + query + "&sort=" + sort + "&t=" + time,
+        if (requestLinks != null) {
+            requestLinks.cancel();
+        }
+
+        requestLinks = reddit.loadGet(Reddit.OAUTH_URL + "/search?q=" + query + "&sort=" + sort.toString() + "&t=" + time.toString(),
                 new Response.Listener<String>() {
                     @Override
                     public void onResponse(String response) {
@@ -159,7 +171,17 @@ public class ControllerSearch implements ControllerLinksBase {
     public void reloadLinksSubreddit() {
 
         String subreddit = controllerLinks.getSubredditName();
-        reddit.loadGet(Reddit.OAUTH_URL + "/r/" + subreddit + "/search?restrict_sr=on&q=" + query + "&sort=" + sort + "&t=" + time,
+        String url = Reddit.OAUTH_URL;
+
+        if (!Reddit.FRONT_PAGE.equals(subreddit)) {
+            url += "/r/" + subreddit;
+        }
+
+        if (requestLinksSubreddit != null) {
+            requestLinksSubreddit.cancel();
+        }
+
+        requestLinksSubreddit = reddit.loadGet(url + "/search?restrict_sr=on&q=" + query + "&sort=" + sort.toString() + "&t=" + time.toString(),
                 new Response.Listener<String>() {
                     @Override
                     public void onResponse(String response) {
@@ -196,7 +218,7 @@ public class ControllerSearch implements ControllerLinksBase {
 
     @Override
     public Link getLink(int position) {
-        if (currentPage == 3) {
+        if (currentPage == PAGE_LINKS_SUBREDDIT) {
             return (Link) linksSubreddit.getChildren().get(position);
         }
 
@@ -232,7 +254,7 @@ public class ControllerSearch implements ControllerLinksBase {
 
     @Override
     public int sizeLinks() {
-        if (currentPage == 3) {
+        if (currentPage == PAGE_LINKS_SUBREDDIT) {
             return linksSubreddit.getChildren().size();
         }
 
@@ -275,23 +297,28 @@ public class ControllerSearch implements ControllerLinksBase {
                 }, 0);
     }
 
-    public User getUser(int position) {
-        return null;
+    @Override
+    public Activity getActivity() {
+        return activity;
     }
 
-    public int getUserCount() {
-        return 0;
+    public Sort getSort() {
+        return sort;
     }
 
-    public void setSort(String sort) {
-        if (!this.sort.equalsIgnoreCase(sort)) {
+    public void setSort(Sort sort) {
+        if (this.sort != sort) {
             this.sort = sort;
             reloadCurrentPage();
         }
     }
 
-    public void setTime(String time) {
-        if (!this.time.equalsIgnoreCase(time)) {
+    public Time getTime() {
+        return time;
+    }
+
+    public void setTime(Time time) {
+        if (this.time != time) {
             this.time = time;
             reloadCurrentPage();
         }
@@ -304,6 +331,11 @@ public class ControllerSearch implements ControllerLinksBase {
     public void setCurrentPage(int currentPage) {
         this.currentPage = currentPage;
         reloadCurrentPage();
+        if (currentPage == PAGE_LINKS || currentPage == PAGE_LINKS_SUBREDDIT) {
+            for (Listener listener : listeners) {
+                listener.notifyChangedLinks();
+            }
+        }
     }
 
     public int getCurrentPage() {

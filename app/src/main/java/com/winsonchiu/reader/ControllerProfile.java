@@ -34,6 +34,7 @@ public class ControllerProfile implements ControllerLinksBase, ControllerComment
     public static final int VIEW_TYPE_COMMENT = 3;
 
     private static final String TAG = ControllerProfile.class.getCanonicalName();
+    private final Activity activity;
 
     private Set<ItemClickListener> listeners;
     private Listing data;
@@ -45,9 +46,11 @@ public class ControllerProfile implements ControllerLinksBase, ControllerComment
     private Comment topComment;
     private User user;
     private String page;
-    private String sort;
+    private Sort sort;
+    private Time time;
 
     public ControllerProfile(Activity activity) {
+        this.activity = activity;
         data = new Listing();
         listeners = new HashSet<>();
         this.reddit = Reddit.getInstance(activity);
@@ -59,7 +62,8 @@ public class ControllerProfile implements ControllerLinksBase, ControllerComment
         topComment = new Comment();
         user = new User();
         page = "Overview";
-        sort = "hot";
+        sort = Sort.HOT;
+        time = Time.ALL;
     }
 
     public void addListener(ItemClickListener listener) {
@@ -128,7 +132,7 @@ public class ControllerProfile implements ControllerLinksBase, ControllerComment
 //            listener.setToolbarTitle("/u/" + user.getName());
             listener.setToolbarTitle(page);
         }
-        sort = "hot";
+        sort = Sort.HOT;
         reload();
     }
 
@@ -138,14 +142,7 @@ public class ControllerProfile implements ControllerLinksBase, ControllerComment
             listener.setRefreshing(true);
         }
 
-        String url = Reddit.OAUTH_URL + "/user/" + user.getName() + "/" + page.toLowerCase() + "?sort=";
-
-        if (sort.contains("top")) {
-            url += "top&t=" + sort.substring(0, sort.indexOf("top"));
-        }
-        else {
-            url += sort;
-        }
+        String url = Reddit.OAUTH_URL + "/user/" + user.getName() + "/" + page.toLowerCase() + "?sort=" + sort.toString() + "&t=" + time.toString();
 
         reddit.loadGet(url,
                 new Response.Listener<String>() {
@@ -287,6 +284,11 @@ public class ControllerProfile implements ControllerLinksBase, ControllerComment
     }
 
     @Override
+    public Activity getActivity() {
+        return activity;
+    }
+
+    @Override
     public void insertComments(Comment moreComment, Listing listing) {
         // Not implemented
     }
@@ -385,13 +387,26 @@ public class ControllerProfile implements ControllerLinksBase, ControllerComment
                         }, 0);
     }
 
-    public void setSort(String sort) {
-        this.sort = sort;
-        reload();
+    public Sort getSort() {
+        return sort;
     }
 
-    public String getSort() {
-        return sort;
+    public void setSort(Sort sort) {
+        if (this.sort != sort) {
+            this.sort = sort;
+            reload();
+        }
+    }
+
+    public Time getTime() {
+        return time;
+    }
+
+    public void setTime(Time time) {
+        if (this.time != time) {
+            this.time = time;
+            reload();
+        }
     }
 
     public interface ItemClickListener extends DisallowListener {
@@ -412,9 +427,6 @@ public class ControllerProfile implements ControllerLinksBase, ControllerComment
     public interface ListenerCallback {
         ItemClickListener getListener();
         ControllerProfile getController();
-        int getColorPositive();
-        int getColorNegative();
-        Activity getActivity();
         float getItemWidth();
     }
 

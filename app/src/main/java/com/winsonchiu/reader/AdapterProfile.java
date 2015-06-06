@@ -147,36 +147,6 @@ public class AdapterProfile extends RecyclerView.Adapter<RecyclerView.ViewHolder
             }
 
             @Override
-            public int getColorPositive() {
-                return colorPositive;
-            }
-
-            @Override
-            public int getColorNegative() {
-                return colorNegative;
-            }
-
-            @Override
-            public int getColorMuted() {
-                return colorMuted;
-            }
-
-            @Override
-            public int getColorText() {
-                return colorText;
-            }
-
-            @Override
-            public int getColorTextAlert() {
-                return colorTextAlert;
-            }
-
-            @Override
-            public Activity getActivity() {
-                return activity;
-            }
-
-            @Override
             public float getItemWidth() {
                 return itemWidth;
             }
@@ -246,41 +216,6 @@ public class AdapterProfile extends RecyclerView.Adapter<RecyclerView.ViewHolder
             @Override
             public User getUser() {
                 return controllerProfile.getUser();
-            }
-
-            @Override
-            public int getColorMuted() {
-                return colorMuted;
-            }
-
-            @Override
-            public int getColorAccent() {
-                return colorAccent;
-            }
-
-            @Override
-            public int getColorPrimary() {
-                return colorPrimary;
-            }
-
-            @Override
-            public int getColorPositive() {
-                return colorPositive;
-            }
-
-            @Override
-            public int getColorNegative() {
-                return colorNegative;
-            }
-
-            @Override
-            public int getColorDefault() {
-                return colorDefault;
-            }
-
-            @Override
-            public Activity getActivity() {
-                return activity;
             }
 
             @Override
@@ -405,21 +340,6 @@ public class AdapterProfile extends RecyclerView.Adapter<RecyclerView.ViewHolder
     }
 
     @Override
-    public int getColorPositive() {
-        return colorPositive;
-    }
-
-    @Override
-    public int getColorNegative() {
-        return colorNegative;
-    }
-
-    @Override
-    public Activity getActivity() {
-        return activity;
-    }
-
-    @Override
     public float getItemWidth() {
         return itemWidth;
     }
@@ -449,12 +369,15 @@ public class AdapterProfile extends RecyclerView.Adapter<RecyclerView.ViewHolder
             Spannable spannableInfo = new SpannableString(
                     user.getLinkKarma() + " Link Karma\n" + user.getCommentKarma() + " Comment Karma");
             spannableInfo.setSpan(new ForegroundColorSpan(
-                            user.getLinkKarma() > 0 ? callback.getColorPositive() :
-                                    callback.getColorNegative()), 0, linkLength,
+                            user.getLinkKarma() > 0 ? callback.getController().getActivity().getResources().getColor(
+                                    R.color.positiveScore) :
+                                    callback.getController().getActivity().getResources().getColor(
+                                            R.color.negativeScore)), 0, linkLength,
                     Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
             spannableInfo.setSpan(new ForegroundColorSpan(
-                            user.getCommentKarma() > 0 ? callback.getColorPositive() :
-                                    callback.getColorNegative()), linkLength + 12,
+                            user.getCommentKarma() > 0 ? callback.getController().getActivity().getResources().getColor(
+                                    R.color.positiveScore) :
+                                    callback.getController().getActivity().getResources().getColor(R.color.negativeScore)), linkLength + 12,
                     linkLength + 12 + commentLength, Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
 
             textKarma.setText(spannableInfo);

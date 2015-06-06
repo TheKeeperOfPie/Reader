@@ -108,36 +108,6 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         return controllerLinks;
     }
 
-    @Override
-    public int getColorPositive() {
-        return colorPositive;
-    }
-
-    @Override
-    public int getColorNegative() {
-        return colorNegative;
-    }
-
-    @Override
-    public int getColorMuted() {
-        return colorMuted;
-    }
-
-    @Override
-    public int getColorText() {
-        return colorText;
-    }
-
-    @Override
-    public int getColorTextAlert() {
-        return colorTextAlert;
-    }
-
-    @Override
-    public Activity getActivity() {
-        return activity;
-    }
-
     public abstract float getItemWidth();
 
     public LayoutManager getLayoutManager() {
@@ -310,7 +280,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                 public void onClick(View v) {
                     if (TextUtils.isEmpty(callback.getPreferences()
                             .getString(AppSettings.REFRESH_TOKEN, ""))) {
-                        Toast.makeText(callback.getActivity(), "Must be logged in to reply",
+                        Toast.makeText(callback.getController().getActivity(), "Must be logged in to reply",
                                 Toast.LENGTH_SHORT)
                                 .show();
                         return;
@@ -580,7 +550,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                     menu.findItem(R.id.item_upvote)
                             .getIcon()
                             .setColorFilter(
-                                    callback.getColorPositive(), PorterDuff.Mode.MULTIPLY);
+                                    callback.getController().getActivity().getResources().getColor(R.color.positiveScore), PorterDuff.Mode.MULTIPLY);
                     menu.findItem(R.id.item_downvote)
                             .getIcon()
                             .clearColorFilter();
@@ -589,7 +559,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                     menu.findItem(R.id.item_downvote)
                             .getIcon()
                             .setColorFilter(
-                                    callback.getColorNegative(), PorterDuff.Mode.MULTIPLY);
+                                    callback.getController().getActivity().getResources().getColor(R.color.negativeScore), PorterDuff.Mode.MULTIPLY);
                     menu.findItem(R.id.item_upvote)
                             .getIcon()
                             .clearColorFilter();
@@ -643,7 +613,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                                                         "data"));
 
                                         viewPagerFull.setAdapter(
-                                                new AdapterAlbum(callback.getActivity(),
+                                                new AdapterAlbum(callback.getController().getActivity(),
                                                         album,
                                                         callback.getListener()));
                                         viewPagerFull.getLayoutParams().height = callback.getListener()
@@ -685,7 +655,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                                                         "data"));
 
                                         viewPagerFull.setAdapter(
-                                                new AdapterAlbum(callback.getActivity(), album,
+                                                new AdapterAlbum(callback.getController().getActivity(), album,
                                                         callback.getListener()));
                                         viewPagerFull.getLayoutParams().height = callback.getListener()
                                                 .getRecyclerHeight() - itemView.getHeight();
@@ -840,7 +810,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         }
 
         public void downloadImage(String url) {
-            Picasso.with(callback.getActivity())
+            Picasso.with(callback.getController().getActivity())
                     .load(url)
                     .into(new Target() {
                         @Override
@@ -870,7 +840,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                                 }
                             }
 
-                            Toast.makeText(callback.getActivity(), "Image downloaded",
+                            Toast.makeText(callback.getController().getActivity(), "Image downloaded",
                                     Toast.LENGTH_SHORT)
                                     .show();
                         }
