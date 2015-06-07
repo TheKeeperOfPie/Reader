@@ -1,5 +1,7 @@
 package com.winsonchiu.reader.data;
 
+import android.util.Log;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -84,6 +86,9 @@ public class Listing {
 
                 // TODO: Add cases for all ID36s and fix adding Comments
 
+                case "more":
+                    things.add(Comment.fromJson(thing, 0));
+                    break;
                 case "t1":
                     List<Comment> comments = new ArrayList<>();
                     Comment.addAllFromJson(comments, thing, 0);

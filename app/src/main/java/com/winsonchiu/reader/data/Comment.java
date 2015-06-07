@@ -75,8 +75,6 @@ public class Comment extends Thing {
 
     public static Comment fromJson(JSONObject rootJsonObject, int level) throws JSONException {
 
-        Log.d(TAG, "Comment: " + rootJsonObject.toString());
-
         Comment comment = new Comment();
         comment.setLevel(level);
         comment.setKind(rootJsonObject.optString("kind"));

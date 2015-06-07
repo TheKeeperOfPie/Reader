@@ -78,14 +78,11 @@ public class MainActivity extends AppCompatActivity
     private TextView textAccountName;
     private TextView textAccountInfo;
 
-    private Stack<Object> stackHistory;
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         Fabric.with(this, new Crashlytics());
         sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
-        stackHistory = new Stack<>();
 
         if (controllerLinks == null) {
             controllerLinks = new ControllerLinks(this, "", Sort.HOT);

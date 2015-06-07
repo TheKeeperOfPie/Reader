@@ -163,6 +163,11 @@ public class ControllerInbox implements ControllerCommentsBase {
     }
 
     @Override
+    public void loadMoreComments() {
+        // Not implemented
+    }
+
+    @Override
     public Reddit getReddit() {
         return reddit;
     }
@@ -289,7 +294,7 @@ public class ControllerInbox implements ControllerCommentsBase {
     }
 
     @Override
-    public void loadMoreComments(Comment moreComment) {
+    public void loadNestedComments(Comment moreComment) {
         // Not implemented
     }
 

@@ -141,18 +141,9 @@ public class Link extends Thing {
                 .getJSONArray("children")
                 .getJSONObject(0));
 
-        List<Comment> comments = new ArrayList<>();
-
         JSONObject jsonObject = jsonArray.getJSONObject(1);
 
         Listing listing = Listing.fromJson(jsonObject);
-
-//        JSONArray arrayComments = jsonArray.getJSONObject(1).getJSONObject("data").getJSONArray("children");
-//
-//        for (int index = 0; index < arrayComments.length(); index++) {
-//            Comment.addAllFromJson(comments, arrayComments.getJSONObject(index), 0);
-//        }
-
         link.setComments(listing);
 
         return link;

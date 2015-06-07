@@ -25,7 +25,8 @@ public interface ControllerCommentsBase extends ControllerLinksBase {
     Comment getComment(int position);
     boolean voteComment(final AdapterCommentList.ViewHolderComment viewHolder, final int vote);
     int getIndentWidth(Comment comment);
-    void loadMoreComments(final Comment moreComment);
+    void loadNestedComments(final Comment moreComment);
     boolean isCommentExpanded(int position);
     Link getMainLink();
+    void loadMoreComments();
 }

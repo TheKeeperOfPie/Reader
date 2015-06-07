@@ -65,6 +65,7 @@ public class Reddit {
     public static final String DEFAULT = "default";
     public static final String NSFW = "nsfw";
 
+    public static final String UTF_8 = "UTF-8";
     public static final String FRONT_PAGE = "Front Page";
     public static final String TIME_SEPARATOR = " - ";
 

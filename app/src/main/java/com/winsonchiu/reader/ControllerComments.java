@@ -114,11 +114,14 @@ public class ControllerComments implements ControllerLinksBase, ControllerCommen
             return;
         }
 
-        reddit.loadGet(Reddit.OAUTH_URL + "/r/" + subreddit + "/comments/" + linkId + "?depth=10",
+        reddit.loadGet(Reddit.OAUTH_URL + "/r/" + subreddit + "/comments/" + linkId + "?depth=10&showmore=true&showedits=true&limit=100",
                 new Listener<String>() {
                     @Override
                     public void onResponse(String response) {
-                        Log.d(TAG, "reloadAllComments onResponse: " + response);
+
+                        for (int index = 0; index < response.length() / 500; index++) {
+                            Log.d(TAG, "reloadAllComments onResponse: " + response.substring(index * 500, (index + 1) * 500 > response.length() ? response.length() : (index + 1) * 500));
+                        }
                         try {
                             Listing listing = new Listing();
                             link = Link.fromJson(new JSONArray(response));
@@ -176,6 +179,7 @@ public class ControllerComments implements ControllerLinksBase, ControllerCommen
 
     @Override
     public boolean isLoading() {
+        // TODO: Implement isLoading() for comments
         return false;
     }
 
@@ -190,9 +194,9 @@ public class ControllerComments implements ControllerLinksBase, ControllerCommen
     }
 
     @Override
-    public void loadMoreComments(final Comment moreComment) {
+    public void loadNestedComments(final Comment moreComment) {
 
-        Log.d(TAG, "loadMoreComments");
+        Log.d(TAG, "loadNestedComments");
 
         String url = Reddit.OAUTH_URL + "/api/morechildren";
 
@@ -223,7 +227,7 @@ public class ControllerComments implements ControllerLinksBase, ControllerCommen
                     @Override
                     public void onResponse(String response) {
                         try {
-                            Log.d(TAG, "moreComments response: " + response);
+
                             JSONArray jsonArray = new JSONObject(response).getJSONObject("json").getJSONObject("data").getJSONArray("things");
 
                             Listing listing = new Listing();
@@ -231,22 +235,30 @@ public class ControllerComments implements ControllerLinksBase, ControllerCommen
                             List<Thing> comments = new ArrayList<>(jsonArray.length());
 
                             for (int index = 0; index < jsonArray.length(); index++) {
+                                Log.d(TAG, "thing: " + jsonArray.getJSONObject(index));
                                 Comment comment = Comment.fromJson(jsonArray.getJSONObject(index), moreComment.getLevel());
 
-                                int commentIndex = -1;
+                                if (comment.getParentId().equals(link.getId())) {
+                                    comments.add(comment);
+                                }
+                                else {
+                                    int commentIndex = -1;
 
-                                for (int position = 0; position < comments.size(); position++) {
-                                    if (comments.get(position).getId().equals(comment.getParentId())) {
-                                        commentIndex = position;
-                                        break;
+                                    for (int position = 0; position < comments.size(); position++) {
+                                        if (comments.get(position)
+                                                .getId()
+                                                .equals(comment.getParentId())) {
+                                            commentIndex = position;
+                                            break;
+                                        }
                                     }
-                                }
 
-                                if (commentIndex >= 0) {
-                                    comment.setLevel(((Comment) comments.get(commentIndex))
-                                            .getLevel() + 1);
+                                    if (commentIndex >= 0) {
+                                        comment.setLevel(((Comment) comments.get(commentIndex))
+                                                .getLevel() + 1);
+                                    }
+                                    comments.add(commentIndex + 1, comment);
                                 }
-                                comments.add(commentIndex + 1, comment);
                             }
                             if (comments.isEmpty()) {
                                 int commentIndex = link.getComments().getChildren().indexOf(moreComment);
@@ -606,6 +618,10 @@ public class ControllerComments implements ControllerLinksBase, ControllerCommen
     @Override
     public Link getMainLink() {
         return link;
+    }
+
+    @Override
+    public void loadMoreComments() {
     }
 
     public interface CommentClickListener extends DisallowListener {

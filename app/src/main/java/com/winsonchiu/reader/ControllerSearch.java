@@ -20,6 +20,8 @@ import com.winsonchiu.reader.data.Subreddit;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -82,6 +84,11 @@ public class ControllerSearch implements ControllerLinksBase {
         listeners.remove(linkClickListener);
     }
 
+    @Override
+    public Reddit getReddit() {
+        return reddit;
+    }
+
     public void setQuery(String query) {
         if (TextUtils.isEmpty(query)) {
             return;
@@ -94,6 +101,7 @@ public class ControllerSearch implements ControllerLinksBase {
     }
 
     public void reloadCurrentPage() {
+        Log.d(TAG, "reloadCurrentPage");
         switch (currentPage) {
             case PAGE_SUBREDDITS:
                 reloadSubreddits();
@@ -113,27 +121,32 @@ public class ControllerSearch implements ControllerLinksBase {
             requestSubreddits.cancel();
         }
 
-        requestSubreddits = reddit.loadGet(Reddit.OAUTH_URL + "/subreddits/search?show=all&q=" + query + "&sort=" + sort.toString(),
-                new Response.Listener<String>() {
-                    @Override
-                    public void onResponse(String response) {
-                        subreddits = new Listing();
-                        try {
-                            subreddits = Listing.fromJson(new JSONObject(response));
-                            for (Listener listener : listeners) {
-                                listener.notifyChangedSubreddits();
+        try {
+            requestSubreddits = reddit.loadGet(Reddit.OAUTH_URL + "/subreddits/search?show=all&q=" + URLEncoder.encode(query, Reddit.UTF_8).replaceAll("\\s", "") + "&sort=" + sort.toString(),
+                    new Response.Listener<String>() {
+                        @Override
+                        public void onResponse(String response) {
+                            subreddits = new Listing();
+                            try {
+                                subreddits = Listing.fromJson(new JSONObject(response));
+                                for (Listener listener : listeners) {
+                                    listener.getAdapterSearchSubreddits().notifyDataSetChanged();
+                                }
+                            }
+                            catch (JSONException e) {
+                                e.printStackTrace();
                             }
                         }
-                        catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                }, new Response.ErrorListener() {
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
+                    }, new Response.ErrorListener() {
+                        @Override
+                        public void onErrorResponse(VolleyError error) {
 
-                    }
-                }, 0);
+                        }
+                    }, 0);
+        }
+        catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
 
     }
 
@@ -143,29 +156,34 @@ public class ControllerSearch implements ControllerLinksBase {
             requestLinks.cancel();
         }
 
-        requestLinks = reddit.loadGet(Reddit.OAUTH_URL + "/search?q=" + query + "&sort=" + sort.toString() + "&t=" + time.toString(),
-                new Response.Listener<String>() {
-                    @Override
-                    public void onResponse(String response) {
-                        links = new Listing();
+        try {
+            requestLinks = reddit.loadGet(Reddit.OAUTH_URL + "/search?q=" + URLEncoder.encode(query, Reddit.UTF_8) + "&sort=" + sort.toString() + "&t=" + time.toString(),
+                    new Response.Listener<String>() {
+                        @Override
+                        public void onResponse(String response) {
+                            links = new Listing();
 
-                        Log.d(TAG, "Response: " + response);
-                        try {
-                            links = Listing.fromJson(new JSONObject(response));
-                            for (Listener listener : listeners) {
-                                listener.notifyChangedLinks();
+                            Log.d(TAG, "Response: " + response);
+                            try {
+                                links = Listing.fromJson(new JSONObject(response));
+                                for (Listener listener : listeners) {
+                                    listener.getAdapterLinks().notifyDataSetChanged();
+                                }
+                            }
+                            catch (JSONException e) {
+                                e.printStackTrace();
                             }
                         }
-                        catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                }, new Response.ErrorListener() {
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
+                    }, new Response.ErrorListener() {
+                        @Override
+                        public void onErrorResponse(VolleyError error) {
 
-                    }
-                }, 0);
+                        }
+                    }, 0);
+        }
+        catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
     }
 
     public void reloadLinksSubreddit() {
@@ -181,29 +199,34 @@ public class ControllerSearch implements ControllerLinksBase {
             requestLinksSubreddit.cancel();
         }
 
-        requestLinksSubreddit = reddit.loadGet(url + "/search?restrict_sr=on&q=" + query + "&sort=" + sort.toString() + "&t=" + time.toString(),
-                new Response.Listener<String>() {
-                    @Override
-                    public void onResponse(String response) {
-                        linksSubreddit = new Listing();
+        try {
+            requestLinksSubreddit = reddit.loadGet(url + "/search?restrict_sr=on&q=" + URLEncoder.encode(query, Reddit.UTF_8) + "&sort=" + sort.toString() + "&t=" + time.toString(),
+                    new Response.Listener<String>() {
+                        @Override
+                        public void onResponse(String response) {
+                            linksSubreddit = new Listing();
 
-                        Log.d(TAG, "Response: " + response);
-                        try {
-                            linksSubreddit = Listing.fromJson(new JSONObject(response));
-                            for (Listener listener : listeners) {
-                                listener.notifyChangedLinks();
+                            Log.d(TAG, "Response: " + response);
+                            try {
+                                linksSubreddit = Listing.fromJson(new JSONObject(response));
+                                for (Listener listener : listeners) {
+                                    listener.getAdapterLinksSubreddit().notifyDataSetChanged();
+                                }
+                            }
+                            catch (JSONException e) {
+                                e.printStackTrace();
                             }
                         }
-                        catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                }, new Response.ErrorListener() {
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
+                    }, new Response.ErrorListener() {
+                        @Override
+                        public void onErrorResponse(VolleyError error) {
 
-                    }
-                }, 0);
+                        }
+                    }, 0);
+        }
+        catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
     }
 
     public Subreddit getSubreddit(int position) {
@@ -214,26 +237,6 @@ public class ControllerSearch implements ControllerLinksBase {
     public int getSubredditCount() {
         return subreddits.getChildren()
                 .size();
-    }
-
-    @Override
-    public Link getLink(int position) {
-        if (currentPage == PAGE_LINKS_SUBREDDIT) {
-            return (Link) linksSubreddit.getChildren().get(position);
-        }
-
-        return (Link) links.getChildren()
-                .get(position);
-    }
-
-    @Override
-    public Reddit getReddit() {
-        return reddit;
-    }
-
-    @Override
-    public void voteLink(RecyclerView.ViewHolder viewHolder, int vote) {
-
     }
 
     @Override
@@ -250,6 +253,16 @@ public class ControllerSearch implements ControllerLinksBase {
         }
 
         return null;
+    }
+
+    @Override
+    public Link getLink(int position) {
+        return (Link) links.getChildren().get(position);
+    }
+
+    @Override
+    public void voteLink(RecyclerView.ViewHolder viewHolder, int vote) {
+
     }
 
     @Override
@@ -282,6 +295,51 @@ public class ControllerSearch implements ControllerLinksBase {
                             links.setAfter(listing.getAfter());
                             for (Listener listener : listeners) {
                                 listener.getAdapterLinks().notifyItemRangeInserted(positionStart,
+                                        listing.getChildren().size());
+                            }
+                        }
+                        catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }, new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+
+                    }
+                }, 0);
+    }
+
+    public Link getLinkSubreddit(int position) {
+        return (Link) linksSubreddit.getChildren().get(position);
+    }
+
+    public void voteLinkSubreddit(RecyclerView.ViewHolder viewHolder, int vote) {
+
+    }
+
+    public int sizeLinksSubreddit() {
+        return linksSubreddit.getChildren().size();
+    }
+
+    public boolean isLoadingSubreddit() {
+        return false;
+    }
+
+    public void loadMoreLinksSubreddit() {
+        // TODO: Load more links when end of list reached
+        reddit.loadGet(Reddit.OAUTH_URL + "/search?q=" + query + "&after=" + links.getAfter(),
+                new Response.Listener<String>() {
+                    @Override
+                    public void onResponse(String response) {
+                        try {
+                            int positionStart = linksSubreddit.getChildren()
+                                    .size();
+                            Listing listing = Listing.fromJson(new JSONObject(response));
+                            linksSubreddit.addChildren(listing.getChildren());
+                            linksSubreddit.setAfter(listing.getAfter());
+                            for (Listener listener : listeners) {
+                                listener.getAdapterLinksSubreddit().notifyItemRangeInserted(positionStart,
                                         listing.getChildren().size());
                             }
                         }
@@ -331,22 +389,29 @@ public class ControllerSearch implements ControllerLinksBase {
     public void setCurrentPage(int currentPage) {
         this.currentPage = currentPage;
         reloadCurrentPage();
-        if (currentPage == PAGE_LINKS || currentPage == PAGE_LINKS_SUBREDDIT) {
-            for (Listener listener : listeners) {
-                listener.notifyChangedLinks();
-            }
-        }
     }
 
     public int getCurrentPage() {
         return currentPage;
     }
 
+    public void clearResults() {
+        subreddits.getChildren().clear();
+        links.getChildren().clear();
+        linksSubreddit.getChildren().clear();
+        query = "";
+        for (Listener listener : listeners) {
+            listener.getAdapterSearchSubreddits().notifyDataSetChanged();
+            listener.getAdapterLinks().notifyDataSetChanged();
+            listener.getAdapterLinksSubreddit().notifyDataSetChanged();
+        }
+    }
+
     public interface Listener {
         void onClickSubreddit(Subreddit subreddit);
-        void notifyChangedSubreddits();
-        void notifyChangedLinks();
+        AdapterSearchSubreddits getAdapterSearchSubreddits();
         AdapterLink getAdapterLinks();
+        AdapterLink getAdapterLinksSubreddit();
         void setToolbarTitle(CharSequence title);
     }
 

@@ -188,6 +188,10 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
     @Override
     public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
 
+        if (!controllerComments.isLoading() && position > controllerComments.sizeLinks() - 10) {
+            controllerComments.loadMoreComments();
+        }
+
         if (holder instanceof AdapterLinkList.ViewHolder) {
             ((AdapterLinkList.ViewHolder) holder).onBind(position);
             if (!isInitialized) {
@@ -489,7 +493,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                                     getAdapterPosition());
                     if (comment.isMore()) {
                         callback.getControllerComments()
-                                .loadMoreComments(comment);
+                                .loadNestedComments(comment);
                         return;
                     }
 

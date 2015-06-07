@@ -12,14 +12,11 @@
     <string name="item_search">Search</string>
     <string name="item_interface">Interface</string>
     <string name="item_sort">Sort</string>
+    <string name="item_sort_relevance">Relevancy</string>
+    <string name="item_sort_activity">Activity</string>
+    <string name="item_sort_top">Top</string>
     <string name="item_sort_hot">Hot</string>
     <string name="item_sort_new">New</string>
-    <string name="item_sort_top_hour">Top - Hour</string>
-    <string name="item_sort_top_day">Top - Day</string>
-    <string name="item_sort_top_week">Top - Week</string>
-    <string name="item_sort_top_month">Top - Month</string>
-    <string name="item_sort_top_year">Top - Year</string>
-    <string name="item_sort_top_all">Top - All</string>
     <string name="item_sort_controversial">Controversial</string>
 
     <string name="action_settings">Settings</string>
@@ -59,7 +56,6 @@
     <string name="subreddit">Subreddit</string>
     <string name="link">Link</string>
     <string name="user">User</string>
-    <string name="item_sort_relevance">Relevancy</string>
     <string name="time">Time</string>
     <string name="item_sort_hour">Hour</string>
     <string name="item_sort_day">Day</string>
@@ -67,6 +63,4 @@
     <string name="item_sort_month">Month</string>
     <string name="item_sort_year">Year</string>
     <string name="item_sort_all">All</string>
-    <string name="item_sort_top">Top</string>
-    <string name="item_sort_activity">Activity</string>
 </resources>

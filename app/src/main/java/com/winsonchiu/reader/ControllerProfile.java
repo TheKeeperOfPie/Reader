@@ -338,7 +338,7 @@ public class ControllerProfile implements ControllerLinksBase, ControllerComment
     }
 
     @Override
-    public void loadMoreComments(Comment moreComment) {
+    public void loadNestedComments(Comment moreComment) {
         // Not implemented
     }
 
@@ -351,6 +351,11 @@ public class ControllerProfile implements ControllerLinksBase, ControllerComment
     @Override
     public Link getMainLink() {
         return link;
+    }
+
+    @Override
+    public void loadMoreComments() {
+        // Not implemented
     }
 
     public void setData(Listing data) {
