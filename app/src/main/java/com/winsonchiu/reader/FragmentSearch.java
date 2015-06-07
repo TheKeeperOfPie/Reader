@@ -20,7 +20,6 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import com.winsonchiu.reader.data.Link;
-import com.winsonchiu.reader.data.Listing;
 import com.winsonchiu.reader.data.Reddit;
 import com.winsonchiu.reader.data.Subreddit;
 
@@ -290,7 +289,7 @@ public class FragmentSearch extends Fragment {
                     }
 
                     @Override
-                    public void loadSideBar(Listing listingSubreddits) {
+                    public void loadSideBar(Subreddit listingSubreddits) {
 
                     }
 

@@ -81,6 +81,7 @@ public class ControllerComments implements ControllerLinksBase, ControllerCommen
     }
 
     public void setLink(Link link) {
+        setLinkId(link.getSubreddit(), link.getId());
         Listing listing = new Listing();
         // TODO: Make this logic cleaner
         if (link.getComments() != null) {
@@ -91,14 +92,17 @@ public class ControllerComments implements ControllerLinksBase, ControllerCommen
         }
         this.listingComments = listing;
         this.link = link;
-        this.subreddit = link.getSubreddit();
-        this.linkId = link.getId();
         for (CommentClickListener listener : listeners) {
             listener.getAdapter().notifyDataSetChanged();
         }
     }
 
     public void setLinkId(String subreddit, String linkId) {
+
+        link = new Link();
+        link.setSubreddit(subreddit);
+        link.setId(linkId);
+
         this.subreddit = subreddit;
         this.linkId = linkId;
         reloadAllComments();
@@ -116,7 +120,16 @@ public class ControllerComments implements ControllerLinksBase, ControllerCommen
                     public void onResponse(String response) {
                         Log.d(TAG, "reloadAllComments onResponse: " + response);
                         try {
-                            setLink(Link.fromJson(new JSONArray(response)));
+                            Listing listing = new Listing();
+                            link = Link.fromJson(new JSONArray(response));
+                            // TODO: Make this logic cleaner
+                            if (link.getComments() != null) {
+                                listing.setChildren(new ArrayList<>(link.getComments().getChildren()));
+                            }
+                            else {
+                                listing.setChildren(new ArrayList<Thing>());
+                            }
+                            listingComments = listing;
                             setRefreshing(false);
                             for (CommentClickListener listener : listeners) {
                                 listener.getAdapter()
@@ -179,8 +192,9 @@ public class ControllerComments implements ControllerLinksBase, ControllerCommen
     @Override
     public void loadMoreComments(final Comment moreComment) {
 
-        String url = Reddit.OAUTH_URL + "/api/morechildren";
+        Log.d(TAG, "loadMoreComments");
 
+        String url = Reddit.OAUTH_URL + "/api/morechildren";
 
         String children = "";
         List<String> childrenList = moreComment.getChildren();

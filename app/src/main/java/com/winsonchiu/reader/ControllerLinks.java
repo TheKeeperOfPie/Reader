@@ -21,6 +21,7 @@ import com.winsonchiu.reader.data.Thing;
 
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.w3c.dom.Text;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -39,7 +40,7 @@ public class ControllerLinks implements ControllerLinksBase {
 
     private Activity activity;
     private Listing listingLinks;
-    private Listing listingSubreddits;
+    private Subreddit subreddit;
     private boolean isLoading;
     private Sort sort;
     private Time time;
@@ -59,14 +60,8 @@ public class ControllerLinks implements ControllerLinksBase {
         this.drawableDefault = resources.getDrawable(R.drawable.ic_web_white_48dp);
         this.sort = sort;
         this.time = Time.ALL;
-        listingSubreddits = new Listing();
-        if (!TextUtils.isEmpty(subredditName)) {
-            List<Thing> subreddits = new ArrayList<>();
-            Subreddit subreddit = new Subreddit();
-            subreddit.setDisplayName(subredditName);
-            subreddits.add(subreddit);
-            listingSubreddits.setChildren(subreddits);
-        }
+        subreddit = new Subreddit();
+        subreddit.setDisplayName(subredditName);
         // TODO: Check whether using name vs displayName matters when loading subreddits
     }
 
@@ -79,28 +74,31 @@ public class ControllerLinks implements ControllerLinksBase {
     }
 
     public void setParameters(String subredditName, Sort sort) {
-        this.sort = sort;
-        List<Thing> subreddits = new ArrayList<>();
-        Subreddit subreddit = new Subreddit();
-        subreddit.setDisplayName(subredditName);
-        subreddits.add(subreddit);
-        listingSubreddits = new Listing();
-        listingSubreddits.setChildren(subreddits);
-        reloadAllLinks();
+        if (!TextUtils.equals(subredditName, subreddit.getDisplayName())) {
+            this.sort = sort;
+            subreddit = new Subreddit();
+            subreddit.setDisplayName(subredditName);
+            subreddit.setSort(sort);
+            subreddit.setTime(Time.ALL);
+            reloadAllLinks();
+        }
     }
 
     public void loadFrontPage(Sort sort) {
-        for (LinkClickListener listener : listeners) {
-            listener.setRefreshing(true);
+        if (!TextUtils.isEmpty(subreddit.getDisplayName())) {
+            for (LinkClickListener listener : listeners) {
+                listener.setRefreshing(true);
+            }
+            this.sort = sort;
+            subreddit = new Subreddit();
+            reloadAllLinks();
         }
-        this.sort = sort;
-        listingSubreddits = new Listing();
-        reloadAllLinks();
     }
 
     public void setSort(Sort sort) {
         if (this.sort != sort) {
             this.sort = sort;
+            subreddit.setSort(sort);
             reloadAllLinks();
         }
     }
@@ -108,14 +106,15 @@ public class ControllerLinks implements ControllerLinksBase {
     public void setTime(Time time) {
         if (this.time != time) {
             this.time = time;
+            subreddit.setTime(time);
             reloadAllLinks();
         }
     }
 
     public void setTitle() {
         String subredditName = Reddit.FRONT_PAGE;
-        if (listingSubreddits.getChildren().size() > 0) {
-            subredditName = "/r/" + ((Subreddit) listingSubreddits.getChildren().get(0)).getDisplayName();
+        if (!TextUtils.isEmpty(subreddit.getDisplayName())) {
+            subredditName = "/r/" + subreddit.getDisplayName();
         }
 
         for (LinkClickListener listener : listeners) {
@@ -151,16 +150,8 @@ public class ControllerLinks implements ControllerLinksBase {
 
         String url = Reddit.OAUTH_URL + "/";
 
-        if (listingSubreddits.getChildren().size() > 0) {
-
-            StringBuilder builder = new StringBuilder();
-            for (Thing thing : listingSubreddits.getChildren()) {
-                builder.append(((Subreddit) thing).getDisplayName());
-                builder.append("+");
-            }
-
-            url += "r/" + builder.toString()
-                    .substring(0, builder.length() - 1) + "/";
+        if (!TextUtils.isEmpty(subreddit.getDisplayName())) {
+            url += "r/" + subreddit.getDisplayName() + "/";
         }
 
         url += sort.toString() + "?t=" + time.toString() + "&limit=50&showAll=true";
@@ -191,7 +182,7 @@ public class ControllerLinks implements ControllerLinksBase {
                 for (LinkClickListener listener : listeners) {
                     listener.getAdapter().notifyDataSetChanged();
                     listener.onFullLoaded(0);
-                    listener.loadSideBar(listingSubreddits);
+                    listener.loadSideBar(subreddit);
                     listener.setEmptyView(listingLinks.getChildren().isEmpty());
                 }
                 setTitle();
@@ -213,16 +204,8 @@ public class ControllerLinks implements ControllerLinksBase {
         setLoading(true);
         String url = Reddit.OAUTH_URL + "/";
 
-        if (listingSubreddits.getChildren().size() > 0) {
-
-            StringBuilder builder = new StringBuilder();
-            for (Thing thing : listingSubreddits.getChildren()) {
-                builder.append(((Subreddit) thing).getDisplayName());
-                builder.append("+");
-            }
-
-            url += "r/" + builder.toString()
-                    .substring(0, builder.length() - 1) + "/";
+        if (!TextUtils.isEmpty(subreddit.getDisplayName())) {
+            url += "r/" + subreddit.getDisplayName();
         }
 
         url += sort.toString() + "?t=" + time.toString() + "&limit=50&showAll=true&after=" + listingLinks.getAfter();
@@ -342,17 +325,13 @@ public class ControllerLinks implements ControllerLinksBase {
                 activity.getApplicationContext());
     }
 
-    public Listing getListingSubreddits() {
-        return listingSubreddits;
-    }
-
     public String getSubredditName() {
 
-        if (listingSubreddits.getChildren().isEmpty()) {
+        if (TextUtils.isEmpty(subreddit.getDisplayName())) {
             return Reddit.FRONT_PAGE;
         }
 
-        return ((Subreddit) listingSubreddits.getChildren().get(0)).getDisplayName();
+        return subreddit.getDisplayName();
     }
 
     public Sort getSort() {
@@ -372,7 +351,7 @@ public class ControllerLinks implements ControllerLinksBase {
         void setToolbarTitle(String title);
         AdapterLink getAdapter();
         int getRecyclerHeight();
-        void loadSideBar(Listing listingSubreddits);
+        void loadSideBar(Subreddit listingSubreddits);
         void setEmptyView(boolean visible);
         int getRecyclerWidth();
         ControllerCommentsBase getControllerComments();

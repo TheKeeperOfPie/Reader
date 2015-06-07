@@ -48,20 +48,10 @@ public class AdapterInbox extends RecyclerView.Adapter<RecyclerView.ViewHolder>
         implements ListenerCallback {
 
     private static final String TAG = AdapterInbox.class.getCanonicalName();
-    private static final int MESSAGE_MENU_SIZE = 0;
+    private static final int MESSAGE_MENU_SIZE = 1;
 
     protected Activity activity;
     private ControllerInbox controllerInbox;
-    private int colorMuted;
-    private int colorAccent;
-    private int colorPrimary;
-    private int colorPositive;
-    private int colorNegative;
-    private int colorDefault;
-    private int colorText;
-    private int colorTextAlert;
-    private Drawable drawableUpvote;
-    private Drawable drawableDownvote;
     private SharedPreferences preferences;
     private float itemWidth;
     private ItemClickListener listener;
@@ -73,16 +63,6 @@ public class AdapterInbox extends RecyclerView.Adapter<RecyclerView.ViewHolder>
         this.activity = activity;
         this.preferences = PreferenceManager.getDefaultSharedPreferences(activity);
         Resources resources = activity.getResources();
-        this.colorMuted = resources.getColor(R.color.darkThemeTextColorMuted);
-        this.colorAccent = resources.getColor(R.color.colorAccent);
-        this.colorPrimary = resources.getColor(R.color.colorPrimary);
-        this.colorPositive = resources.getColor(R.color.positiveScore);
-        this.colorNegative = resources.getColor(R.color.negativeScore);
-        this.colorDefault = resources.getColor(R.color.darkThemeDialog);
-        this.colorText = resources.getColor(R.color.darkThemeTextColor);
-        this.colorTextAlert = resources.getColor(R.color.darkThemeTextColorAlert);
-        this.drawableUpvote = resources.getDrawable(R.drawable.ic_keyboard_arrow_up_white_24dp);
-        this.drawableDownvote = resources.getDrawable(R.drawable.ic_keyboard_arrow_down_white_24dp);
         this.itemWidth = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 48,
                 resources.getDisplayMetrics());
         this.controllerInbox = controllerInbox;

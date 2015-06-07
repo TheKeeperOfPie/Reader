@@ -1,5 +1,8 @@
 package com.winsonchiu.reader.data;
 
+import com.winsonchiu.reader.Sort;
+import com.winsonchiu.reader.Time;
+
 /**
  * Created by TheKeeperOfPie on 3/8/2015.
  */
@@ -9,6 +12,8 @@ public class Thing {
     private String id;
     private String name;
     private String kind;
+    private Sort sort;
+    private Time time;
 
     public Thing() {
 
@@ -71,5 +76,21 @@ public class Thing {
     @Override
     public int hashCode() {
         return getId().hashCode();
+    }
+
+    public void setSort(Sort sort) {
+        this.sort = sort;
+    }
+
+    public Sort getSort() {
+        return sort;
+    }
+
+    public void setTime(Time time) {
+        this.time = time;
+    }
+
+    public Time getTime() {
+        return time;
     }
 }

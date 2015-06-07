@@ -58,6 +58,7 @@ public class MainActivity extends AppCompatActivity
         FragmentSearch.OnFragmentInteractionListener {
 
     private static final String TAG = MainActivity.class.getCanonicalName();
+    private static final String REDDIT_PAGE = "redditPage";
 
     private CharSequence mTitle;
     private int oldId = -1;
@@ -90,7 +91,7 @@ public class MainActivity extends AppCompatActivity
             controllerLinks = new ControllerLinks(this, "", Sort.HOT);
         }
         if (controllerComments == null) {
-            controllerComments = new ControllerComments(this, "", "");
+            controllerComments = new ControllerComments(this,  "", "");
         }
         if (controllerProfile == null) {
             controllerProfile = new ControllerProfile(this);
@@ -168,6 +169,9 @@ public class MainActivity extends AppCompatActivity
         if (Intent.ACTION_VIEW.equals(getIntent().getAction())) {
             Log.d(TAG, "load intent: " + getIntent().toString());
             String urlString = getIntent().getDataString();
+            if (getIntent().hasExtra(REDDIT_PAGE)) {
+                urlString = getIntent().getExtras().getString(REDDIT_PAGE);
+            }
             if (URLUtil.isValidUrl(urlString)) {
                 parseUrl(urlString);
             }
@@ -355,7 +359,7 @@ public class MainActivity extends AppCompatActivity
                             id, false);
 
                     getFragmentManager().beginTransaction()
-                            .add(R.id.frame_fragment, fragmentComments, FragmentComments.TAG)
+                            .replace(R.id.frame_fragment, fragmentComments, FragmentComments.TAG)
                             .addToBackStack(null)
                             .commit();
                 }
@@ -488,10 +492,18 @@ public class MainActivity extends AppCompatActivity
                         Browser.EXTRA_APPLICATION_ID))) {
             String urlString = intent.getDataString();
             if (urlString.startsWith("/r/") || urlString.startsWith("/u/")) {
-                urlString = "https://reddit.com" + urlString;
+                Intent intentActivity = new Intent(this, MainActivity.class);
+                intentActivity.setAction(Intent.ACTION_VIEW);
+                intentActivity.putExtra(REDDIT_PAGE, Reddit.BASE_URL + urlString);
+                startActivity(intentActivity);
+
             }
-            if (URLUtil.isValidUrl(urlString)) {
-                parseUrl(urlString);
+            else if (URLUtil.isValidUrl(urlString)) {
+                getFragmentManager().beginTransaction()
+                        .add(R.id.frame_fragment, FragmentWeb
+                                .newInstance(urlString, ""), FragmentWeb.TAG)
+                        .addToBackStack(null)
+                        .commit();
             }
         }
         else {

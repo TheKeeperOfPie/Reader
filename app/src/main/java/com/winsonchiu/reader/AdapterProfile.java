@@ -3,7 +3,6 @@ package com.winsonchiu.reader;
 import android.app.Activity;
 import android.content.SharedPreferences;
 import android.content.res.Resources;
-import android.graphics.drawable.Drawable;
 import android.preference.PreferenceManager;
 import android.support.v7.widget.RecyclerView;
 import android.text.Spannable;
@@ -17,7 +16,7 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import com.winsonchiu.reader.data.Link;
-import com.winsonchiu.reader.data.Listing;
+import com.winsonchiu.reader.data.Subreddit;
 import com.winsonchiu.reader.data.User;
 
 /**
@@ -32,16 +31,6 @@ public class AdapterProfile extends RecyclerView.Adapter<RecyclerView.ViewHolder
     protected Activity activity;
     protected RecyclerView.LayoutManager layoutManager;
     protected ControllerProfile controllerProfile;
-    private int colorMuted;
-    private int colorAccent;
-    private int colorPrimary;
-    private int colorPositive;
-    private int colorNegative;
-    private int colorDefault;
-    private int colorText;
-    private int colorTextAlert;
-    private Drawable drawableUpvote;
-    private Drawable drawableDownvote;
     private SharedPreferences preferences;
     private float itemWidth;
     private ControllerProfile.ItemClickListener listener;
@@ -54,16 +43,6 @@ public class AdapterProfile extends RecyclerView.Adapter<RecyclerView.ViewHolder
         this.activity = activity;
         this.preferences = PreferenceManager.getDefaultSharedPreferences(activity);
         Resources resources = activity.getResources();
-        this.colorMuted = resources.getColor(R.color.darkThemeTextColorMuted);
-        this.colorAccent = resources.getColor(R.color.colorAccent);
-        this.colorPrimary = resources.getColor(R.color.colorPrimary);
-        this.colorPositive = resources.getColor(R.color.positiveScore);
-        this.colorNegative = resources.getColor(R.color.negativeScore);
-        this.colorDefault = resources.getColor(R.color.darkThemeDialog);
-        this.colorText = resources.getColor(R.color.darkThemeTextColor);
-        this.colorTextAlert = resources.getColor(R.color.darkThemeTextColorAlert);
-        this.drawableUpvote = resources.getDrawable(R.drawable.ic_keyboard_arrow_up_white_24dp);
-        this.drawableDownvote = resources.getDrawable(R.drawable.ic_keyboard_arrow_down_white_24dp);
         this.itemWidth = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 48,
                 resources.getDisplayMetrics());
         this.controllerProfile = controllerProfile;
@@ -115,7 +94,7 @@ public class AdapterProfile extends RecyclerView.Adapter<RecyclerView.ViewHolder
                     }
 
                     @Override
-                    public void loadSideBar(Listing listingSubreddits) {
+                    public void loadSideBar(Subreddit listingSubreddits) {
 
                     }
 

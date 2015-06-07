@@ -72,11 +72,6 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
     protected Activity activity;
     protected LayoutManager layoutManager;
     protected ControllerLinksBase controllerLinks;
-    protected int colorPositive;
-    protected int colorNegative;
-    protected int colorMuted;
-    protected int colorText;
-    protected int colorTextAlert;
     protected float itemWidth;
     protected ControllerLinks.LinkClickListener listener;
     protected SharedPreferences preferences;
@@ -86,11 +81,6 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         Resources resources = activity.getResources();
         this.activity = activity;
         this.preferences = PreferenceManager.getDefaultSharedPreferences(activity);
-        this.colorPositive = resources.getColor(R.color.positiveScore);
-        this.colorNegative = resources.getColor(R.color.negativeScore);
-        this.colorMuted = resources.getColor(R.color.darkThemeTextColorMuted);
-        this.colorText = resources.getColor(R.color.darkThemeTextColor);
-        this.colorTextAlert = resources.getColor(R.color.darkThemeTextColorAlert);
         this.itemWidth = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 48,
                 resources.getDisplayMetrics());
     }

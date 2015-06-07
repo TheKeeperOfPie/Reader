@@ -88,7 +88,7 @@
         android:layout_alignEnd="@id/frame_full"
         android:layout_alignBottom="@id/frame_full"
         android:contentDescription="@string/content_description_button_comments"
-        android:background="@drawable/background_comment_cell"
+        android:background="@drawable/background_gradient_cell"
         android:src="@drawable/ic_mode_comment_white_24dp"
         android:padding="@dimen/activity_horizontal_margin"
         />

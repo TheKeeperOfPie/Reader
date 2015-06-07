@@ -34,8 +34,8 @@ import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.winsonchiu.reader.data.Comment;
 import com.winsonchiu.reader.data.Link;
-import com.winsonchiu.reader.data.Listing;
 import com.winsonchiu.reader.data.Reddit;
+import com.winsonchiu.reader.data.Subreddit;
 import com.winsonchiu.reader.data.User;
 
 import org.json.JSONException;
@@ -67,14 +67,6 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
     private Activity activity;
     private ControllerComments controllerComments;
     private ControllerLinks.LinkClickListener linkClickListener;
-    private int colorMuted;
-    private int colorAccent;
-    private int colorPrimary;
-    private int colorPositive;
-    private int colorNegative;
-    private int colorDefault;
-    private int colorText;
-    private int colorTextAlert;
     private int thumbnailWidth;
     private SharedPreferences preferences;
     private boolean isGrid;
@@ -90,14 +82,6 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
         this.listener = listener;
         this.preferences = PreferenceManager.getDefaultSharedPreferences(activity);
         Resources resources = activity.getResources();
-        this.colorMuted = resources.getColor(R.color.darkThemeTextColorMuted);
-        this.colorAccent = resources.getColor(R.color.colorAccent);
-        this.colorPrimary = resources.getColor(R.color.colorPrimary);
-        this.colorPositive = resources.getColor(R.color.positiveScore);
-        this.colorNegative = resources.getColor(R.color.negativeScore);
-        this.colorDefault = resources.getColor(R.color.darkThemeDialog);
-        this.colorText = resources.getColor(R.color.darkThemeTextColor);
-        this.colorTextAlert = resources.getColor(R.color.darkThemeTextColorAlert);
         this.thumbnailWidth = resources.getDisplayMetrics().widthPixels / 2;
         this.itemWidth = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 48,
                 resources.getDisplayMetrics());
@@ -138,7 +122,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
             }
 
             @Override
-            public void loadSideBar(Listing listingSubreddits) {
+            public void loadSideBar(Subreddit listingSubreddits) {
 
             }
 
@@ -190,7 +174,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
         if (viewType == VIEW_LINK) {
             if (isGrid) {
                 return new AdapterLinkGrid.ViewHolder(LayoutInflater.from(parent.getContext())
-                        .inflate(R.layout.cell_link, parent, false), this, colorDefault,
+                        .inflate(R.layout.cell_link, parent, false), this, activity.getResources().getColor(R.color.darkThemeDialog),
                         thumbnailWidth);
             }
             return new AdapterLinkList.ViewHolder(LayoutInflater.from(parent.getContext())

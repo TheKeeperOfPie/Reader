@@ -30,7 +30,6 @@ import android.widget.TextView;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.winsonchiu.reader.data.Link;
-import com.winsonchiu.reader.data.Listing;
 import com.winsonchiu.reader.data.Reddit;
 import com.winsonchiu.reader.data.Subreddit;
 
@@ -419,44 +418,38 @@ public class FragmentThreadList extends Fragment {
             }
 
             @Override
-            public void loadSideBar(Listing listingSubreddits) {
-                if (listingSubreddits.getChildren()
-                        .size() == 1) {
-                    Subreddit subreddit = ((Subreddit) listingSubreddits.getChildren()
-                            .get(0));
-                    mListener.getControllerLinks()
-                            .getReddit()
-                            .loadGet(
-                                    Reddit.OAUTH_URL + "/r/" + subreddit.getDisplayName() + "/about",
-                                    new Response.Listener<String>() {
-                                        @Override
-                                        public void onResponse(String response) {
-                                            try {
-                                                Subreddit loadedSubreddit = Subreddit.fromJson(
-                                                        new JSONObject(response));
-                                                String html = Html.fromHtml(
-                                                        loadedSubreddit.getDescriptionHtml())
-                                                        .toString();
-                                                CharSequence sequence = Html.fromHtml(html);
-                                                textSidebar.setText(sequence);
-                                                drawerLayout.setDrawerLockMode(
-                                                        DrawerLayout.LOCK_MODE_UNLOCKED);
-                                            }
-                                            catch (JSONException e) {
-                                                e.printStackTrace();
-                                            }
+            public void loadSideBar(Subreddit subreddit) {
+                mListener.getControllerLinks()
+                        .getReddit()
+                        .loadGet(
+                                Reddit.OAUTH_URL + "/r/" + subreddit.getDisplayName() + "/about",
+                                new Response.Listener<String>() {
+                                    @Override
+                                    public void onResponse(String response) {
+                                        try {
+                                            Subreddit loadedSubreddit = Subreddit.fromJson(
+                                                    new JSONObject(response));
+                                            String html = Html.fromHtml(
+                                                    loadedSubreddit.getDescriptionHtml())
+                                                    .toString();
+                                            CharSequence sequence = Html.fromHtml(html);
+                                            textSidebar.setText(sequence);
+                                            drawerLayout.setDrawerLockMode(
+                                                    DrawerLayout.LOCK_MODE_UNLOCKED);
                                         }
-                                    }, new Response.ErrorListener() {
-                                        @Override
-                                        public void onErrorResponse(VolleyError error) {
+                                        catch (JSONException e) {
+                                            textSidebar.setText(null);
+                                            drawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED);
+                                        }
+                                    }
+                                }, new Response.ErrorListener() {
+                                    @Override
+                                    public void onErrorResponse(VolleyError error) {
 
-                                        }
-                                    }, 0);
-                }
-                else {
-                    textSidebar.setText(null);
-                    drawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED);
-                }
+                                        textSidebar.setText(null);
+                                        drawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED);
+                                    }
+                                }, 0);
             }
 
             @Override

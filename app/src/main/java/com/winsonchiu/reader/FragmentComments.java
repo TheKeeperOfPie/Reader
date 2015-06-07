@@ -7,6 +7,7 @@ import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -86,15 +87,17 @@ public class FragmentComments extends Fragment {
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
+            Bundle savedInstanceState) {
 
         View view = inflater.inflate(R.layout.fragment_comments, container, false);
 
         listener = new ControllerComments.CommentClickListener() {
             @Override
             public void loadUrl(String url) {
-                getFragmentManager().beginTransaction().add(R.id.frame_fragment, FragmentWeb
-                        .newInstance(url, ""), FragmentWeb.TAG).addToBackStack(null)
+                getFragmentManager().beginTransaction()
+                        .add(R.id.frame_fragment, FragmentWeb
+                                .newInstance(url, ""), FragmentWeb.TAG)
+                        .addToBackStack(null)
                         .commit();
             }
 
@@ -105,6 +108,7 @@ public class FragmentComments extends Fragment {
 
             @Override
             public AdapterCommentList getAdapter() {
+                Log.d(TAG, "Adapter returned");
                 return adapterCommentList;
             }
 
@@ -124,7 +128,8 @@ public class FragmentComments extends Fragment {
             }
         };
 
-        swipeRefreshCommentList = (SwipeRefreshLayout) view.findViewById(R.id.swipe_refresh_comment_list);
+        swipeRefreshCommentList = (SwipeRefreshLayout) view.findViewById(
+                R.id.swipe_refresh_comment_list);
         swipeRefreshCommentList.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
@@ -136,7 +141,8 @@ public class FragmentComments extends Fragment {
         recyclerCommentList = (RecyclerView) view.findViewById(R.id.recycler_comment_list);
         recyclerCommentList.setHasFixedSize(true);
         recyclerCommentList.setItemAnimator(new DefaultItemAnimator());
-        recyclerCommentList.getItemAnimator().setRemoveDuration(AnimationUtils.EXPAND_ACTION_DURATION);
+        recyclerCommentList.getItemAnimator()
+                .setRemoveDuration(AnimationUtils.EXPAND_ACTION_DURATION);
         recyclerCommentList.setLayoutManager(linearLayoutManager);
 //        recyclerCommentList.addItemDecoration(
 //                new DividerItemDecoration(activity, DividerItemDecoration.VERTICAL_LIST));
@@ -144,7 +150,8 @@ public class FragmentComments extends Fragment {
         controllerComments = mListener.getControllerComments();
 
         if (adapterCommentList == null) {
-            adapterCommentList = new AdapterCommentList(activity, controllerComments, listener, getArguments().getBoolean(ARG_IS_GRID, false));
+            adapterCommentList = new AdapterCommentList(activity, controllerComments, listener,
+                    getArguments().getBoolean(ARG_IS_GRID, false));
         }
 
         recyclerCommentList.setAdapter(adapterCommentList);
@@ -157,13 +164,13 @@ public class FragmentComments extends Fragment {
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
 
-        swipeRefreshCommentList.post(new Runnable() {
-            @Override
-            public void run() {
-                swipeRefreshCommentList.setRefreshing(true);
-                controllerComments.setLinkId(subreddit, linkId);
-            }
-        });
+//        swipeRefreshCommentList.post(new Runnable() {
+//            @Override
+//            public void run() {
+//                swipeRefreshCommentList.setRefreshing(true);
+//                controllerComments.setLinkId(subreddit, linkId);
+//            }
+//        });
     }
 
     @Override
@@ -224,7 +231,9 @@ public class FragmentComments extends Fragment {
      */
     public interface OnFragmentInteractionListener {
         void setNavigationAnimation(float value);
+
         void setToolbarTitle(CharSequence title);
+
         ControllerComments getControllerComments();
     }
 

@@ -5,8 +5,8 @@
         android:drawable="@drawable/background_gradient_cell"
         />
 
-    <item
-        android:drawable="?android:selectableItemBackground"
-        />
+    <!--<item-->
+        <!--android:drawable="?attr/selectableItemBackground"-->
+        <!--/>-->
 
 </layer-list>
