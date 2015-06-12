@@ -63,4 +63,8 @@
     <string name="item_sort_month">Month</string>
     <string name="item_sort_year">Year</string>
     <string name="item_sort_all">All</string>
+    <string name="post">Post</string>
+    <string name="new_post_title">Title</string>
+    <string name="new_post_body">URL or self text</string>
+    <string name="new_post">New Post</string>
 </resources>

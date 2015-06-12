@@ -44,6 +44,8 @@ public class Subreddit extends Thing {
     private boolean userIsContributor;
     private boolean userIsModerator;
     private boolean userIsSubscriber;
+    private long created;
+    private long createdUtc;
 
     public Subreddit() {
         super();
@@ -58,6 +60,10 @@ public class Subreddit extends Thing {
 
         subreddit.setId(jsonObject.optString("id"));
         subreddit.setName(jsonObject.optString("name"));
+
+        // Timestamps multiplied by 1000 as Java uses milliseconds and Reddit uses seconds
+        subreddit.setCreated(jsonObject.optLong("created") * 1000);
+        subreddit.setCreatedUtc(jsonObject.optLong("created_utc") * 1000);
 
         subreddit.setAccountsActive(jsonObject.optInt("accounts_active"));
         subreddit.setBannerImg(jsonObject.optString("banner_img"));
@@ -371,4 +377,19 @@ public class Subreddit extends Thing {
         this.userIsSubscriber = userIsSubscriber;
     }
 
+    public long getCreated() {
+        return created;
+    }
+
+    public void setCreated(long created) {
+        this.created = created;
+    }
+
+    public long getCreatedUtc() {
+        return createdUtc;
+    }
+
+    public void setCreatedUtc(long createdUtc) {
+        this.createdUtc = createdUtc;
+    }
 }

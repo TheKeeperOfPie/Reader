@@ -14,6 +14,8 @@ import android.widget.TextView;
 
 import com.winsonchiu.reader.data.Subreddit;
 
+import java.util.Date;
+
 /**
  * Created by TheKeeperOfPie on 5/17/2015.
  */
@@ -123,7 +125,7 @@ public class AdapterSearchSubreddits extends RecyclerView.Adapter<AdapterSearchS
             textDescription.setVisibility(View.GONE);
             textInfo.setVisibility(View.GONE);
 
-            textName.setText("/r/" + subreddit.getDisplayName());
+            textName.setText(subreddit.getDisplayName());
             textTitle.setText(subreddit.getTitle());
 
             if ("null".equals(subreddit.getPublicDescriptionHtml())) {
@@ -151,7 +153,8 @@ public class AdapterSearchSubreddits extends RecyclerView.Adapter<AdapterSearchS
                 textDescription.setText(sequence);
             }
 
-            textInfo.setText(subreddit.getSubscribers() + " subscribers");
+            textInfo.setText(subreddit.getSubscribers() + " subscribers\n" +
+                    "created " + new Date(subreddit.getCreatedUtc()));
 
         }
     }

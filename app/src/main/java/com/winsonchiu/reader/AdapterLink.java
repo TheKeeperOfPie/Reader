@@ -27,6 +27,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewGroup;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.Button;
@@ -50,6 +51,7 @@ import com.squareup.picasso.Target;
 import com.winsonchiu.reader.data.Comment;
 import com.winsonchiu.reader.data.Link;
 import com.winsonchiu.reader.data.Reddit;
+import com.winsonchiu.reader.data.Subreddit;
 import com.winsonchiu.reader.data.imgur.Album;
 import com.winsonchiu.reader.data.imgur.Image;
 
@@ -59,7 +61,10 @@ import org.json.JSONObject;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -68,14 +73,24 @@ import java.util.Map;
 public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.ViewHolder>
         implements ControllerLinks.ListenerCallback {
 
+    public static final int VIEW_LINK_HEADER = 0;
+    public static final int VIEW_LINK = 1;
+
     private static final String TAG = AdapterLink.class.getCanonicalName();
+
     protected Activity activity;
     protected LayoutManager layoutManager;
     protected ControllerLinksBase controllerLinks;
     protected float itemWidth;
     protected ControllerLinks.LinkClickListener listener;
     protected SharedPreferences preferences;
+    protected List<ViewHolderBase> viewHolders;
     private static int ACTION_MENU_SIZE = 6;
+
+    public AdapterLink() {
+        super();
+        viewHolders = new ArrayList<>();
+    }
 
     public void setActivity(Activity activity) {
         Resources resources = activity.getResources();
@@ -112,8 +127,91 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
     public abstract RecyclerView.ItemDecoration getItemDecoration();
 
     @Override
+    public int getItemViewType(int position) {
+        return position == 0 ? VIEW_LINK_HEADER : VIEW_LINK;
+    }
+
+    @Override
     public int getItemCount() {
-        return controllerLinks.sizeLinks();
+        return controllerLinks.sizeLinks() > 0 ? controllerLinks.sizeLinks() + 1 : 0;
+    }
+
+    protected static class ViewHolderHeader extends RecyclerView.ViewHolder {
+
+        protected TextView textName;
+        protected TextView textTitle;
+        protected TextView textDescription;
+        protected TextView textInfo;
+        protected ImageButton buttonOpen;
+        private ControllerLinks.ListenerCallback callback;
+
+        public ViewHolderHeader(View itemView,
+                ControllerLinks.ListenerCallback listenerCallback,
+                Subreddit subreddit) {
+            super(itemView);
+
+            callback = listenerCallback;
+            textName = (TextView) itemView.findViewById(R.id.text_name);
+            textTitle = (TextView) itemView.findViewById(R.id.text_title);
+            textDescription = (TextView) itemView.findViewById(R.id.text_description);
+            textDescription.setMovementMethod(LinkMovementMethod.getInstance());
+            textInfo = (TextView) itemView.findViewById(R.id.text_info);
+            buttonOpen = (ImageButton) itemView.findViewById(R.id.button_open);
+
+            textInfo.setVisibility(View.VISIBLE);
+            buttonOpen.setVisibility(View.GONE);
+
+            if (itemView.getLayoutParams() instanceof StaggeredGridLayoutManager.LayoutParams) {
+                ((StaggeredGridLayoutManager.LayoutParams) itemView.getLayoutParams()).setFullSpan(
+                        true);
+            }
+
+            if (TextUtils.isEmpty(subreddit.getDisplayName())) {
+                itemView.setVisibility(View.GONE);
+            }
+        }
+
+        public void onBind(Subreddit subreddit) {
+
+            if (TextUtils.isEmpty(subreddit.getDisplayName())) {
+                itemView.setVisibility(View.GONE);
+                return;
+            }
+            itemView.setVisibility(View.VISIBLE);
+
+            textName.setText(subreddit.getDisplayName());
+            textTitle.setText(subreddit.getTitle());
+
+            if (TextUtils.isEmpty(subreddit.getPublicDescriptionHtml()) || "null".equals(
+                    subreddit.getPublicDescriptionHtml())) {
+                textDescription.setText("");
+            }
+            else {
+                // TODO: Move all instances to Reddit class
+                String html = subreddit.getPublicDescriptionHtml();
+                html = Html.fromHtml(html.trim())
+                        .toString();
+
+                CharSequence sequence = Html.fromHtml(html);
+
+                // Trims leading and trailing whitespace
+                int start = 0;
+                int end = sequence.length();
+                while (start < end && Character.isWhitespace(sequence.charAt(start))) {
+                    start++;
+                }
+                while (end > start && Character.isWhitespace(sequence.charAt(end - 1))) {
+                    end--;
+                }
+                sequence = sequence.subSequence(start, end);
+
+                textDescription.setText(sequence);
+            }
+
+            textInfo.setText(subreddit.getSubscribers() + " subscribers\n" +
+                    "created " + new Date(subreddit.getCreatedUtc()));
+
+        }
     }
 
     protected static abstract class ViewHolderBase extends RecyclerView.ViewHolder {
@@ -176,31 +274,42 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                 }
             });
             webFull.setOnTouchListener(new View.OnTouchListener() {
+
+                float startY;
+
                 @Override
                 public boolean onTouch(View v, MotionEvent event) {
 
-                    if (event.getAction() == MotionEvent.ACTION_DOWN) {
+                    switch (event.getAction()) {
+                        case MotionEvent.ACTION_DOWN:
+                            startY = event.getY();
 
-                        if ((webFull.canScrollVertically(1) && webFull.canScrollVertically(-1))) {
-                            callback.getListener()
-                                    .requestDisallowInterceptTouchEvent(true);
-                        }
-                        else {
-                            callback.getListener()
-                                    .requestDisallowInterceptTouchEvent(false);
-                            if (webFull.getScrollY() == 0) {
-                                webFull.setScrollY(1);
+                            if ((webFull.canScrollVertically(1) && webFull.canScrollVertically(
+                                    -1))) {
+                                callback.getListener()
+                                        .requestDisallowInterceptTouchEvent(true);
+                                return true;
                             }
                             else {
-                                webFull.setScrollY(webFull.getScrollY() - 1);
+                                callback.getListener()
+                                        .requestDisallowInterceptTouchEvent(false);
                             }
-                        }
+                            break;
+                        case MotionEvent.ACTION_UP:
+                            callback.getListener()
+                                    .requestDisallowInterceptTouchEvent(false);
+                            break;
+                        case MotionEvent.ACTION_MOVE:
+                            if (event.getY() - startY < 0 && webFull.canScrollVertically(1)) {
+                                callback.getListener()
+                                        .requestDisallowInterceptTouchEvent(true);
+                            }
+                            else if (event.getY() - startY > 0 && webFull.canScrollVertically(-1)) {
+                                callback.getListener()
+                                        .requestDisallowInterceptTouchEvent(true);
+                            }
+                            break;
                     }
-                    else if (event.getAction() == MotionEvent.ACTION_UP) {
-                        callback.getListener()
-                                .requestDisallowInterceptTouchEvent(false);
-                    }
-
                     return false;
                 }
             });
@@ -216,6 +325,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             buttonComments.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
+                    callback.pauseViewHolders();
                     callback.getListener()
                             .onClickComments(
                                     callback.getController()
@@ -260,7 +370,8 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                     return true;
                 }
             });
-            layoutContainerExpand = (LinearLayout) itemView.findViewById(R.id.layout_container_expand);
+            layoutContainerExpand = (LinearLayout) itemView.findViewById(
+                    R.id.layout_container_expand);
             layoutContainerReply = (RelativeLayout) itemView.findViewById(
                     R.id.layout_container_reply);
             editTextReply = (EditText) itemView.findViewById(R.id.edit_text_reply);
@@ -270,7 +381,8 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                 public void onClick(View v) {
                     if (TextUtils.isEmpty(callback.getPreferences()
                             .getString(AppSettings.REFRESH_TOKEN, ""))) {
-                        Toast.makeText(callback.getController().getActivity(), "Must be logged in to reply",
+                        Toast.makeText(callback.getController()
+                                .getActivity(), "Must be logged in to reply",
                                 Toast.LENGTH_SHORT)
                                 .show();
                         return;
@@ -319,7 +431,8 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                                             }
                                         }, params, 0);
 
-                        AnimationUtils.animateExpand(layoutContainerReply, getRatio(getAdapterPosition()), null);
+                        AnimationUtils.animateExpand(layoutContainerReply,
+                                getRatio(getAdapterPosition()), null);
                     }
                 }
             });
@@ -357,7 +470,8 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                                 .setEnabled(false);
                     }
 
-                    AnimationUtils.animateExpand(layoutContainerExpand, getRatio(getAdapterPosition()), null);
+                    AnimationUtils.animateExpand(layoutContainerExpand,
+                            getRatio(getAdapterPosition()), null);
 
                 }
             };
@@ -394,7 +508,8 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                 editTextReply.setText(null);
             }
             link.setReplyExpanded(!link.isReplyExpanded());
-            AnimationUtils.animateExpand(layoutContainerReply, getRatio(getAdapterPosition()), null);
+            AnimationUtils.animateExpand(layoutContainerReply, getRatio(getAdapterPosition()),
+                    null);
         }
 
         public abstract float getRatio(int adapterPosition);
@@ -489,6 +604,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                     return;
                 }
                 if (TextUtils.isEmpty(link.getSelfText())) {
+                    callback.pauseViewHolders();
                     callback.getListener()
                             .onClickComments(link, this);
                 }
@@ -540,7 +656,11 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                     menu.findItem(R.id.item_upvote)
                             .getIcon()
                             .setColorFilter(
-                                    callback.getController().getActivity().getResources().getColor(R.color.positiveScore), PorterDuff.Mode.MULTIPLY);
+                                    callback.getController()
+                                            .getActivity()
+                                            .getResources()
+                                            .getColor(R.color.positiveScore),
+                                    PorterDuff.Mode.MULTIPLY);
                     menu.findItem(R.id.item_downvote)
                             .getIcon()
                             .clearColorFilter();
@@ -549,7 +669,11 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                     menu.findItem(R.id.item_downvote)
                             .getIcon()
                             .setColorFilter(
-                                    callback.getController().getActivity().getResources().getColor(R.color.negativeScore), PorterDuff.Mode.MULTIPLY);
+                                    callback.getController()
+                                            .getActivity()
+                                            .getResources()
+                                            .getColor(R.color.negativeScore),
+                                    PorterDuff.Mode.MULTIPLY);
                     menu.findItem(R.id.item_upvote)
                             .getIcon()
                             .clearColorFilter();
@@ -603,13 +727,17 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                                                         "data"));
 
                                         viewPagerFull.setAdapter(
-                                                new AdapterAlbum(callback.getController().getActivity(),
+                                                new AdapterAlbum(callback.getController()
+                                                        .getActivity(),
                                                         album,
                                                         callback.getListener()));
                                         viewPagerFull.getLayoutParams().height = callback.getListener()
                                                 .getRecyclerHeight() - itemView.getHeight();
                                         viewPagerFull.setVisibility(View.VISIBLE);
                                         viewPagerFull.requestLayout();
+                                        if (ViewHolderBase.this instanceof AdapterLinkGrid.ViewHolder) {
+                                            imageThumbnail.setVisibility(View.GONE);
+                                        }
                                         callback.getListener()
                                                 .onFullLoaded(getAdapterPosition());
                                     }
@@ -645,12 +773,16 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                                                         "data"));
 
                                         viewPagerFull.setAdapter(
-                                                new AdapterAlbum(callback.getController().getActivity(), album,
+                                                new AdapterAlbum(callback.getController()
+                                                        .getActivity(), album,
                                                         callback.getListener()));
                                         viewPagerFull.getLayoutParams().height = callback.getListener()
                                                 .getRecyclerHeight() - itemView.getHeight();
                                         viewPagerFull.setVisibility(View.VISIBLE);
                                         viewPagerFull.requestLayout();
+                                        if (ViewHolderBase.this instanceof AdapterLinkGrid.ViewHolder) {
+                                            imageThumbnail.setVisibility(View.GONE);
+                                        }
                                         callback.getListener()
                                                 .onFullLoaded(getAdapterPosition());
                                     }
@@ -781,26 +913,35 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
 //            }
             imageThumbnail.setImageBitmap(null);
 
+            if (viewPagerFull.getAdapter() != null) {
+                for (int index = 0; index < viewPagerFull.getChildCount(); index++) {
+                    ((WebView) viewPagerFull.getChildAt(index)
+                            .findViewById(R.id.web_image)).onPause();
+                    ((WebView) viewPagerFull.getChildAt(index)
+                            .findViewById(R.id.web_image)).destroy();
+                }
+            }
+
         }
 
         public void onBind(int position) {
 
-            Link link = callback.getController().getLink(position);
+            Link link = callback.getController()
+                    .getLink(position);
             layoutContainerExpand.setVisibility(View.GONE);
 
             if (link.isReplyExpanded()) {
                 layoutContainerReply.setVisibility(View.VISIBLE);
-                layoutContainerExpand.setVisibility(View.VISIBLE);
             }
             else {
                 layoutContainerReply.setVisibility(View.GONE);
-                layoutContainerExpand.setVisibility(View.GONE);
             }
 
         }
 
         public void downloadImage(String url) {
-            Picasso.with(callback.getController().getActivity())
+            Picasso.with(callback.getController()
+                    .getActivity())
                     .load(url)
                     .into(new Target() {
                         @Override
@@ -830,7 +971,8 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                                 }
                             }
 
-                            Toast.makeText(callback.getController().getActivity(), "Image downloaded",
+                            Toast.makeText(callback.getController()
+                                    .getActivity(), "Image downloaded",
                                     Toast.LENGTH_SHORT)
                                     .show();
                         }

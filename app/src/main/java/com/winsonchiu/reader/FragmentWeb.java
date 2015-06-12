@@ -1,9 +1,10 @@
 package com.winsonchiu.reader;
 
 import android.app.Activity;
-import android.app.Fragment;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.os.Bundle;
+import android.support.v4.app.Fragment;
 import android.support.v4.graphics.ColorUtils;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.SearchView;
@@ -99,6 +100,7 @@ public class FragmentWeb extends Fragment {
             }
         });
         searchView.setSubmitButtonEnabled(true);
+        mListener.setFloatingActionButtonValues(null, 0);
     }
 
     @Override
@@ -229,7 +231,7 @@ public class FragmentWeb extends Fragment {
      * "http://developer.android.com/training/basics/fragments/communicating.html"
      * >Communicating with Other Fragments</a> for more information.
      */
-    public interface OnFragmentInteractionListener {
+    public interface OnFragmentInteractionListener extends FragmentListenerBase {
         void setNavigationAnimation(float value);
     }
 

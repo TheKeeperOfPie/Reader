@@ -22,7 +22,7 @@
 
         <android.support.v7.widget.RecyclerView
             xmlns:android="http://schemas.android.com/apk/res/android"
-            android:id="@+id/recycler_search_links_subreddit"
+            android:id="@+id/recycler_search_subreddits"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:scrollbars="vertical"
@@ -31,7 +31,7 @@
 
         <android.support.v7.widget.RecyclerView
             xmlns:android="http://schemas.android.com/apk/res/android"
-            android:id="@+id/recycler_search_subreddits"
+            android:id="@+id/recycler_search_links_subreddit"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:scrollbars="vertical"

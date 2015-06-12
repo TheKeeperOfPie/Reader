@@ -71,6 +71,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
     private SharedPreferences preferences;
     private boolean isGrid;
     private boolean isInitialized;
+    private AdapterLink.ViewHolderBase viewHolderLink;
 
     public AdapterCommentList(Activity activity,
             final ControllerComments controllerComments,
@@ -173,12 +174,15 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
 
         if (viewType == VIEW_LINK) {
             if (isGrid) {
-                return new AdapterLinkGrid.ViewHolder(LayoutInflater.from(parent.getContext())
+                viewHolderLink = new AdapterLinkGrid.ViewHolder(LayoutInflater.from(parent.getContext())
                         .inflate(R.layout.cell_link, parent, false), this, activity.getResources().getColor(R.color.darkThemeDialog),
                         thumbnailWidth);
             }
-            return new AdapterLinkList.ViewHolder(LayoutInflater.from(parent.getContext())
-                    .inflate(R.layout.row_link, parent, false), this);
+            else {
+                viewHolderLink = new AdapterLinkList.ViewHolder(LayoutInflater.from(parent.getContext())
+                        .inflate(R.layout.row_link, parent, false), this);
+            }
+            return viewHolderLink;
         }
 
         return new ViewHolderComment(LayoutInflater.from(parent.getContext())
@@ -192,28 +196,29 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
             controllerComments.loadMoreComments();
         }
 
-        if (holder instanceof AdapterLinkList.ViewHolder) {
-            ((AdapterLinkList.ViewHolder) holder).onBind(position);
-            if (!isInitialized) {
-                if (controllerComments.getMainLink()
-                        .isSelf()) {
-                    ((AdapterLinkList.ViewHolder) holder).imageThumbnail.callOnClick();
+        if (getItemViewType(position) == VIEW_LINK) {
+            if (holder instanceof AdapterLinkList.ViewHolder) {
+                ((AdapterLinkList.ViewHolder) holder).onBind(position);
+                if (!isInitialized) {
+                    if (controllerComments.getMainLink()
+                            .isSelf()) {
+                        ((AdapterLinkList.ViewHolder) holder).imageThumbnail.callOnClick();
+                    }
+                    isInitialized = true;
                 }
-                isInitialized = true;
             }
-        }
-        else if (holder instanceof AdapterLinkGrid.ViewHolder) {
-            ((AdapterLinkGrid.ViewHolder) holder).onBind(position);
-            if (!isInitialized) {
-                if (controllerComments.getMainLink()
-                        .isSelf()) {
-                    ((AdapterLinkGrid.ViewHolder) holder).imageThumbnail.callOnClick();
+            else if (holder instanceof AdapterLinkGrid.ViewHolder) {
+                ((AdapterLinkGrid.ViewHolder) holder).onBind(position);
+                if (!isInitialized) {
+                    if (controllerComments.getMainLink()
+                            .isSelf()) {
+                        ((AdapterLinkGrid.ViewHolder) holder).imageThumbnail.callOnClick();
+                    }
+                    isInitialized = true;
                 }
-                isInitialized = true;
             }
         }
         else {
-
             ViewHolderComment viewHolderComment = (ViewHolderComment) holder;
             viewHolderComment.onBind(position);
         }
@@ -257,6 +262,11 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
     @Override
     public ControllerCommentsBase getControllerComments() {
         return controllerComments;
+    }
+
+    @Override
+    public void pauseViewHolders() {
+        viewHolderLink.videoFull.stopPlayback();
     }
 
     @Override

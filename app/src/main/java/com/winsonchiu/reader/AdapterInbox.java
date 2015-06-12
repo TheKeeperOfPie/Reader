@@ -156,16 +156,15 @@ public class AdapterInbox extends RecyclerView.Adapter<RecyclerView.ViewHolder>
     @Override
     public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
 
-        if (holder instanceof ViewHolderMessage) {
-
-            ViewHolderMessage viewHolderMessage = (ViewHolderMessage) holder;
-            viewHolderMessage.onBind(position);
-
-        }
-        else if (holder instanceof AdapterCommentList.ViewHolderComment) {
-
-            AdapterCommentList.ViewHolderComment viewHolderComment = (AdapterCommentList.ViewHolderComment) holder;
-            viewHolderComment.onBind(position);
+        switch (getItemViewType(position)) {
+            case VIEW_TYPE_MESSAGE:
+                ViewHolderMessage viewHolderMessage = (ViewHolderMessage) holder;
+                viewHolderMessage.onBind(position);
+                break;
+            case VIEW_TYPE_COMMENT:
+                AdapterCommentList.ViewHolderComment viewHolderComment = (AdapterCommentList.ViewHolderComment) holder;
+                viewHolderComment.onBind(position);
+                break;
         }
 
     }

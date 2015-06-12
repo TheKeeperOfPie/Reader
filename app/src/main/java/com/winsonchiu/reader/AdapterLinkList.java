@@ -31,6 +31,7 @@ public class AdapterLinkList extends AdapterLink {
     public AdapterLinkList(Activity activity,
             ControllerLinksBase controllerLinks,
             ControllerLinks.LinkClickListener listener) {
+        super();
         setControllerLinks(controllerLinks, listener);
         setActivity(activity);
     }
@@ -49,9 +50,16 @@ public class AdapterLinkList extends AdapterLink {
     }
 
     @Override
-    public ViewHolder onCreateViewHolder(ViewGroup viewGroup, int i) {
-        return new ViewHolder(LayoutInflater.from(viewGroup.getContext())
+    public RecyclerView.ViewHolder  onCreateViewHolder(ViewGroup viewGroup, int viewType) {
+
+        if (viewType == VIEW_LINK_HEADER) {
+            return new ViewHolderHeader(LayoutInflater.from(viewGroup.getContext()).inflate(R.layout.row_subreddit, viewGroup, false), this, controllerLinks.getSubreddit());
+        }
+
+        ViewHolder viewHolder = new ViewHolder(LayoutInflater.from(viewGroup.getContext())
                 .inflate(R.layout.row_link, viewGroup, false), this);
+        viewHolders.add(viewHolder);
+        return viewHolder;
     }
 
     @Override
@@ -61,16 +69,26 @@ public class AdapterLinkList extends AdapterLink {
             controllerLinks.loadMoreLinks();
         }
 
-        final ViewHolder viewHolder = (ViewHolder) holder;
-        viewHolder.onBind(position);
+        switch (getItemViewType(position)) {
+            case VIEW_LINK_HEADER:
+                ViewHolderHeader viewHolderHeader = (ViewHolderHeader) holder;
+                viewHolderHeader.onBind(controllerLinks.getSubreddit());
+                break;
+            case VIEW_LINK:
+                ViewHolder viewHolder = (ViewHolder) holder;
+                viewHolder.onBind(position);
+                break;
+        }
     }
 
     @Override
     public void onViewRecycled(RecyclerView.ViewHolder holder) {
 
-        final ViewHolder viewHolder = (ViewHolder) holder;
+        if (holder instanceof ViewHolder) {
+            final ViewHolder viewHolder = (ViewHolder) holder;
 
-        viewHolder.onRecycle();
+            viewHolder.onRecycle();
+        }
 
         super.onViewRecycled(holder);
     }
@@ -90,6 +108,13 @@ public class AdapterLinkList extends AdapterLink {
         return listener.getControllerComments();
     }
 
+    @Override
+    public void pauseViewHolders() {
+        for (ViewHolderBase viewHolder : viewHolders) {
+            viewHolder.videoFull.stopPlayback();
+        }
+    }
+
     protected static class ViewHolder extends AdapterLink.ViewHolderBase {
 
         public ViewHolder(View itemView, final ControllerLinks.ListenerCallback callback) {
@@ -102,6 +127,7 @@ public class AdapterLinkList extends AdapterLink {
                         videoFull.setVisibility(View.GONE);
                         imageThumbnail.setVisibility(View.VISIBLE);
                     }
+                    callback.pauseViewHolders();
                     callback.getListener()
                             .onClickComments(
                                     callback.getController()

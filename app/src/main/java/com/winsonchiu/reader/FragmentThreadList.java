@@ -1,10 +1,13 @@
 package com.winsonchiu.reader;
 
 import android.app.Activity;
-import android.app.Fragment;
+import android.content.Intent;
 import android.content.SharedPreferences;
+import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.support.design.widget.FloatingActionButton;
+import android.support.v4.app.Fragment;
 import android.support.v4.view.MenuItemCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v4.widget.SwipeRefreshLayout;
@@ -13,6 +16,7 @@ import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.StaggeredGridLayoutManager;
 import android.text.Html;
 import android.text.method.LinkMovementMethod;
+import android.util.Log;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -20,11 +24,13 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewTreeObserver;
 import android.view.animation.Animation;
 import android.view.animation.AnimationSet;
 import android.view.animation.LinearInterpolator;
 import android.view.animation.Transformation;
 import android.view.animation.TranslateAnimation;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.android.volley.Response;
@@ -149,6 +155,13 @@ public class FragmentThreadList extends Fragment {
                 });
 
         resetSubmenuSelected();
+
+        mListener.setFloatingActionButtonValues(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startActivity(new Intent(activity, ActivityNewPost.class));
+            }
+        }, R.drawable.ic_add_white_24dp);
 
     }
 
@@ -422,7 +435,7 @@ public class FragmentThreadList extends Fragment {
                 mListener.getControllerLinks()
                         .getReddit()
                         .loadGet(
-                                Reddit.OAUTH_URL + "/r/" + subreddit.getDisplayName() + "/about",
+                                Reddit.OAUTH_URL + subreddit.getUrl() + "about",
                                 new Response.Listener<String>() {
                                     @Override
                                     public void onResponse(String response) {
@@ -504,12 +517,22 @@ public class FragmentThreadList extends Fragment {
         recyclerThreadList.setHasFixedSize(true);
 
         drawerLayout = (DrawerLayout) view.findViewById(R.id.drawer_layout);
+        drawerLayout.getViewTreeObserver().addOnGlobalLayoutListener(
+                new ViewTreeObserver.OnGlobalLayoutListener() {
+                    @Override
+                    public void onGlobalLayout() {
+
+                        Log.d(TAG, "drawerLayout height: " + drawerLayout.getHeight());
+//                        Log.d(TAG, "fab Location: (" + fabNewPost.getX() + ", " + fabNewPost.getY() + ")");
+
+                        drawerLayout.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+                    }
+                });
 
         textSidebar = (TextView) view.findViewById(R.id.text_sidebar);
         textSidebar.setMovementMethod(LinkMovementMethod.getInstance());
 
         textEmpty = (TextView) view.findViewById(R.id.text_empty);
-
         mListener.getControllerLinks()
                 .addListener(linkClickListener);
 
@@ -592,13 +615,10 @@ public class FragmentThreadList extends Fragment {
      * "http://developer.android.com/training/basics/fragments/communicating.html"
      * >Communicating with Other Fragments</a> for more information.
      */
-    public interface OnFragmentInteractionListener {
+    public interface OnFragmentInteractionListener extends FragmentListenerBase {
         void setToolbarTitle(CharSequence title);
-
         ControllerLinks getControllerLinks();
-
         ControllerComments getControllerComments();
-
         void setNavigationAnimation(float value);
     }
 

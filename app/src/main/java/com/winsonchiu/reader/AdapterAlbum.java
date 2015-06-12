@@ -2,13 +2,18 @@ package com.winsonchiu.reader;
 
 import android.app.Activity;
 import android.support.v4.view.PagerAdapter;
+import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.webkit.WebView;
+import android.widget.ScrollView;
+import android.widget.TextView;
 
 import com.winsonchiu.reader.data.Reddit;
 import com.winsonchiu.reader.data.imgur.Album;
+import com.winsonchiu.reader.data.imgur.Image;
 
 import java.util.ArrayList;
 
@@ -28,92 +33,86 @@ public class AdapterAlbum extends PagerAdapter {
         this.activity = activity;
         this.album = album;
         this.disallowListener = listener;
-        views = new ArrayList<>(album.getImagesCount());
-        for (int index = 0; index < album.getImagesCount(); index++) {
-            final WebViewFixed webView = (WebViewFixed) LayoutInflater.from(activity).inflate(R.layout.web_view_image, null, false);
-            webView.getSettings().setUseWideViewPort(true);
-            webView.getSettings().setLoadWithOverviewMode(true);
-            webView.getSettings().setBuiltInZoomControls(true);
-            webView.getSettings().setDisplayZoomControls(false);
-            webView.getSettings().setJavaScriptEnabled(true);
-            webView.getSettings().setDomStorageEnabled(true);
-            webView.setBackgroundColor(0xFF0000);
-            webView.setInitialScale(0);
-            webView.setOnTouchListener(new View.OnTouchListener() {
-                @Override
-                public boolean onTouch(View v, MotionEvent event) {
-
-                    if (event.getAction() == MotionEvent.ACTION_DOWN) {
-
-                        if ((webView.canScrollVertically(1) && webView.canScrollVertically(-1))) {
-                            disallowListener.requestDisallowInterceptTouchEvent(true);
-                        }
-                        else {
-                            disallowListener.requestDisallowInterceptTouchEvent(false);
-                            if (webView.getScrollY() == 0) {
-                                webView.setScrollY(1);
-                            }
-                            else {
-                                webView.setScrollY(webView.getScrollY() - 1);
-                            }
-                        }
-                    }
-                    else if (event.getAction() == MotionEvent.ACTION_UP) {
-                        disallowListener.requestDisallowInterceptTouchEvent(false);
-                    }
-
-                    return false;
-                }
-            });
-            views.add(webView);
-        }
     }
 
     @Override
     public Object instantiateItem(ViewGroup container, int position) {
 
-        final WebViewFixed webView = (WebViewFixed) LayoutInflater.from(activity).inflate(R.layout.web_view_image, container, false);
+        View view = LayoutInflater.from(activity).inflate(R.layout.view_image, container, false);
+
+        final WebViewFixed webView = (WebViewFixed) view.findViewById(R.id.web_image);
         webView.getSettings().setUseWideViewPort(true);
         webView.getSettings().setBuiltInZoomControls(true);
         webView.getSettings().setDisplayZoomControls(false);
         webView.setBackgroundColor(0xFF0000);
         webView.setInitialScale(0);
-        webView.setOnTouchListener(new View.OnTouchListener() {
+
+        final ScrollView scrollView = (ScrollView) view.findViewById(R.id.scroll_image);
+        View.OnTouchListener onTouchListener = new View.OnTouchListener() {
+
+            float startY;
+
             @Override
             public boolean onTouch(View v, MotionEvent event) {
 
-                if (event.getAction() == MotionEvent.ACTION_DOWN) {
+                switch (event.getAction()) {
+                    case MotionEvent.ACTION_DOWN:
+                        startY = event.getY();
 
-                    if ((webView.canScrollVertically(1) && webView.canScrollVertically(-1))) {
-                        disallowListener.requestDisallowInterceptTouchEvent(true);
-                    }
-                    else {
-                        disallowListener.requestDisallowInterceptTouchEvent(false);
-                        if (webView.getScrollY() == 0) {
-                            webView.setScrollY(1);
+                        if ((scrollView.canScrollVertically(1) && scrollView.canScrollVertically(-1))) {
+                            disallowListener.requestDisallowInterceptTouchEvent(true);
+                            return true;
                         }
                         else {
-                            webView.setScrollY(webView.getScrollY() - 1);
+                            disallowListener.requestDisallowInterceptTouchEvent(false);
                         }
-                    }
+                        break;
+                    case MotionEvent.ACTION_UP:
+                        disallowListener.requestDisallowInterceptTouchEvent(false);
+                        break;
+                    case MotionEvent.ACTION_MOVE:
+                        if (event.getY() - startY < 0 && scrollView.canScrollVertically(1)) {
+                            disallowListener.requestDisallowInterceptTouchEvent(true);
+                        }
+                        else if (event.getY() - startY > 0 && scrollView.canScrollVertically(-1)) {
+                            disallowListener.requestDisallowInterceptTouchEvent(true);
+                        }
+                        break;
                 }
-                else if (event.getAction() == MotionEvent.ACTION_UP) {
-                    disallowListener.requestDisallowInterceptTouchEvent(false);
-                }
-
                 return false;
             }
-        });
-        webView.loadData(Reddit.getImageHtml(album.getImages()
-                .get(position)
-                .getLink()), "text/html", "UTF-8");
-        container.addView(webView);
-        return webView;
+        };
+
+        scrollView.setOnTouchListener(onTouchListener);
+        webView.setOnTouchListener(onTouchListener);
+
+        Image image = album.getImages().get(position);
+
+        webView.loadData(Reddit.getImageHtml(image.getLink()), "text/html", "UTF-8");
+
+        if (!TextUtils.isEmpty(image.getTitle()) && !"null".equals(image.getTitle())) {
+            TextView textTitle = (TextView) view.findViewById(R.id.text_image_title);
+            textTitle.setText(image.getTitle());
+            textTitle.setVisibility(View.VISIBLE);
+        }
+
+        if (!TextUtils.isEmpty(image.getDescription()) && !"null".equals(image.getDescription())) {
+            TextView textDescription = (TextView) view.findViewById(R.id.text_image_description);
+            textDescription.setText(image.getDescription());
+            textDescription.setVisibility(View.VISIBLE);
+        }
+
+        container.addView(view);
+        return view;
     }
 
     @Override
     public void destroyItem(ViewGroup container, int position, Object object) {
-        container.removeView((View) object);
+        View view = (View) object;
+        WebView webView = (WebView) view.findViewById(R.id.web_image);
+        webView.onPause();
+        webView.destroy();
+        container.removeView(view);
     }
 
     @Override

@@ -59,8 +59,12 @@ public class Listing {
     }
 
     public void addChildren(List<Thing> children) {
+        this.children.addAll(children);
+        checkChildren();
+    }
+
+    public void checkChildren() {
         LinkedHashSet<Thing> linkedHashSet = new LinkedHashSet<>(this.children);
-        linkedHashSet.addAll(children);
         this.children.clear();
         this.children.addAll(linkedHashSet);
     }

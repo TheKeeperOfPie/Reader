@@ -20,6 +20,7 @@ import com.winsonchiu.reader.data.Comment;
 import com.winsonchiu.reader.data.Link;
 import com.winsonchiu.reader.data.Listing;
 import com.winsonchiu.reader.data.Reddit;
+import com.winsonchiu.reader.data.Subreddit;
 import com.winsonchiu.reader.data.Thing;
 import com.winsonchiu.reader.data.User;
 
@@ -53,8 +54,10 @@ public class ControllerComments implements ControllerLinksBase, ControllerCommen
     private Drawable drawableSelf;
     private Drawable drawableDefault;
     private Reddit reddit;
+    private boolean isLoading;
+    private ControllerLinks controllerLinks;
 
-    public ControllerComments(Activity activity, String subreddit, String linkId) {
+    public ControllerComments(Activity activity, String subreddit, String linkId, ControllerLinks controllerLinks) {
         setActivity(activity);
         this.reddit = Reddit.getInstance(activity);
         this.listeners = new HashSet<>();
@@ -114,6 +117,7 @@ public class ControllerComments implements ControllerLinksBase, ControllerCommen
             return;
         }
 
+        setRefreshing(true);
         reddit.loadGet(Reddit.OAUTH_URL + "/r/" + subreddit + "/comments/" + linkId + "?depth=10&showmore=true&showedits=true&limit=100",
                 new Listener<String>() {
                     @Override
@@ -152,6 +156,7 @@ public class ControllerComments implements ControllerLinksBase, ControllerCommen
     }
 
     private void setRefreshing(boolean refreshing) {
+        isLoading = refreshing;
         for (CommentClickListener listener : listeners) {
             listener.setRefreshing(refreshing);
         }
@@ -179,8 +184,7 @@ public class ControllerComments implements ControllerLinksBase, ControllerCommen
 
     @Override
     public boolean isLoading() {
-        // TODO: Implement isLoading() for comments
-        return false;
+        return isLoading;
     }
 
     @Override
@@ -191,6 +195,11 @@ public class ControllerComments implements ControllerLinksBase, ControllerCommen
     @Override
     public Activity getActivity() {
         return activity;
+    }
+
+    @Override
+    public Subreddit getSubreddit() {
+        return new Subreddit();
     }
 
     @Override
@@ -321,6 +330,9 @@ public class ControllerComments implements ControllerLinksBase, ControllerCommen
                 listener.getAdapter().notifyItemRangeInserted(commentIndex + 1, listComments.size());
             }
         }
+
+        link.getComments().checkChildren();
+        listingComments.checkChildren();
 
     }
 

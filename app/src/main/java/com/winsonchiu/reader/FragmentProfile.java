@@ -1,10 +1,11 @@
 package com.winsonchiu.reader;
 
 import android.app.Activity;
-import android.app.Fragment;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.support.v4.app.Fragment;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.LinearLayoutManager;
@@ -151,6 +152,7 @@ public class FragmentProfile extends Fragment {
 
         resetSubmenuSelected();
 
+        mListener.setFloatingActionButtonValues(null, 0);
     }
 
     private void resetSubmenuSelected() {
@@ -461,7 +463,7 @@ public class FragmentProfile extends Fragment {
      * "http://developer.android.com/training/basics/fragments/communicating.html"
      * >Communicating with Other Fragments</a> for more information.
      */
-    public interface OnFragmentInteractionListener {
+    public interface OnFragmentInteractionListener extends FragmentListenerBase {
         // TODO: Update argument type and name
         void setToolbarTitle(CharSequence title);
         ControllerComments getControllerComments();

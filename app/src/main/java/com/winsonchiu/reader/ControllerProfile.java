@@ -13,6 +13,7 @@ import com.winsonchiu.reader.data.Comment;
 import com.winsonchiu.reader.data.Link;
 import com.winsonchiu.reader.data.Listing;
 import com.winsonchiu.reader.data.Reddit;
+import com.winsonchiu.reader.data.Subreddit;
 import com.winsonchiu.reader.data.Thing;
 import com.winsonchiu.reader.data.User;
 
@@ -286,6 +287,11 @@ public class ControllerProfile implements ControllerLinksBase, ControllerComment
     @Override
     public Activity getActivity() {
         return activity;
+    }
+
+    @Override
+    public Subreddit getSubreddit() {
+        return new Subreddit();
     }
 
     @Override

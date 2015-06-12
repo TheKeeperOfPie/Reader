@@ -30,8 +30,8 @@ import java.util.Set;
  */
 public class ControllerSearch implements ControllerLinksBase {
 
-    public static final int PAGE_LINKS_SUBREDDIT = 0;
-    public static final int PAGE_SUBREDDITS = 1;
+    public static final int PAGE_SUBREDDITS = 0;
+    public static final int PAGE_LINKS_SUBREDDIT = 1;
     public static final int PAGE_LINKS = 2;
 
     private static final String TAG = ControllerSearch.class.getCanonicalName();
@@ -188,11 +188,11 @@ public class ControllerSearch implements ControllerLinksBase {
 
     public void reloadLinksSubreddit() {
 
-        String subreddit = controllerLinks.getSubredditName();
+        String subredditUrl = controllerLinks.getSubredditUrl();
         String url = Reddit.OAUTH_URL;
 
-        if (!Reddit.FRONT_PAGE.equals(subreddit)) {
-            url += "/r/" + subreddit;
+        if (!Reddit.FRONT_PAGE.equals(subredditUrl)) {
+            url += subredditUrl;
         }
 
         if (requestLinksSubreddit != null) {
@@ -267,12 +267,7 @@ public class ControllerSearch implements ControllerLinksBase {
 
     @Override
     public int sizeLinks() {
-        if (currentPage == PAGE_LINKS_SUBREDDIT) {
-            return linksSubreddit.getChildren().size();
-        }
-
-        return links.getChildren()
-                .size();
+        return links.getChildren().size();
     }
 
     @Override
@@ -358,6 +353,11 @@ public class ControllerSearch implements ControllerLinksBase {
     @Override
     public Activity getActivity() {
         return activity;
+    }
+
+    @Override
+    public Subreddit getSubreddit() {
+        return new Subreddit();
     }
 
     public Sort getSort() {

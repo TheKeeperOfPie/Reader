@@ -78,19 +78,4 @@ public class Thing {
         return getId().hashCode();
     }
 
-    public void setSort(Sort sort) {
-        this.sort = sort;
-    }
-
-    public Sort getSort() {
-        return sort;
-    }
-
-    public void setTime(Time time) {
-        this.time = time;
-    }
-
-    public Time getTime() {
-        return time;
-    }
 }

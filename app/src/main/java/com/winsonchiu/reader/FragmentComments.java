@@ -1,8 +1,9 @@
 package com.winsonchiu.reader;
 
 import android.app.Activity;
-import android.app.Fragment;
+import android.content.Intent;
 import android.os.Bundle;
+import android.support.v4.app.Fragment;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.LinearLayoutManager;
@@ -83,6 +84,28 @@ public class FragmentComments extends Fragment {
         super.onCreateOptionsMenu(menu, inflater);
         menu.clear();
         inflater.inflate(R.menu.menu_comments, menu);
+        mListener.setFloatingActionButtonValues(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Runnable runnable = new Runnable() {
+                    @Override
+                    public void run() {
+                        AdapterLink.ViewHolderBase viewHolder = (AdapterLink.ViewHolderBase) recyclerCommentList.findViewHolderForAdapterPosition(
+                                0);
+                        viewHolder.toggleReply();
+                    }
+                };
+
+                if (linearLayoutManager.findFirstVisibleItemPosition() == 0) {
+                    runnable.run();
+                }
+                else {
+                    linearLayoutManager.scrollToPosition(0);
+                    adapterCommentList.notifyDataSetChanged();
+                    recyclerCommentList.post(runnable);
+                }
+            }
+        }, R.drawable.ic_reply_white_24dp);
     }
 
     @Override
@@ -229,11 +252,9 @@ public class FragmentComments extends Fragment {
      * "http://developer.android.com/training/basics/fragments/communicating.html"
      * >Communicating with Other Fragments</a> for more information.
      */
-    public interface OnFragmentInteractionListener {
+    public interface OnFragmentInteractionListener extends FragmentListenerBase {
         void setNavigationAnimation(float value);
-
         void setToolbarTitle(CharSequence title);
-
         ControllerComments getControllerComments();
     }
 

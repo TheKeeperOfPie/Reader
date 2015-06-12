@@ -1,15 +1,18 @@
 package com.winsonchiu.reader;
 
 import android.app.Activity;
-import android.app.Fragment;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.support.v4.app.Fragment;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.webkit.WebView;
@@ -44,6 +47,7 @@ public class FragmentAuth extends Fragment {
     private String mParam1;
     private String mParam2;
 
+    private Activity activity;
     private SharedPreferences preferences;
     private OnFragmentInteractionListener mListener;
     private WebView webAuth;
@@ -81,6 +85,13 @@ public class FragmentAuth extends Fragment {
         }
         state = UUID.randomUUID()
                 .toString();
+        setHasOptionsMenu(true);
+    }
+
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        super.onCreateOptionsMenu(menu, inflater);
+        mListener.setFloatingActionButtonValues(null, 0);
     }
 
     @Override
@@ -204,6 +215,7 @@ public class FragmentAuth extends Fragment {
     @Override
     public void onAttach(Activity activity) {
         super.onAttach(activity);
+        this.activity = activity;
         preferences = PreferenceManager.getDefaultSharedPreferences(
                 activity.getApplicationContext());
         reddit = Reddit.getInstance(activity);
@@ -220,6 +232,7 @@ public class FragmentAuth extends Fragment {
     public void onDetach() {
         super.onDetach();
         mListener = null;
+        activity = null;
     }
 
     @Override
@@ -251,7 +264,7 @@ public class FragmentAuth extends Fragment {
      * "http://developer.android.com/training/basics/fragments/communicating.html"
      * >Communicating with Other Fragments</a> for more information.
      */
-    public interface OnFragmentInteractionListener {
+    public interface OnFragmentInteractionListener extends FragmentListenerBase {
         void onAuthFinished(boolean success);
     }
 

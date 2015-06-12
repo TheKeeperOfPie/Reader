@@ -44,6 +44,7 @@ public class AdapterLinkGrid extends AdapterLink {
     public AdapterLinkGrid(Activity activity,
             ControllerLinksBase controllerLinks,
             ControllerLinks.LinkClickListener listener) {
+        super();
         setControllerLinks(controllerLinks, listener);
         setActivity(activity);
     }
@@ -70,9 +71,16 @@ public class AdapterLinkGrid extends AdapterLink {
     }
 
     @Override
-    public ViewHolder onCreateViewHolder(ViewGroup viewGroup, int i) {
-        return new ViewHolder(LayoutInflater.from(viewGroup.getContext())
+    public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup viewGroup, int viewType) {
+
+        if (viewType == VIEW_LINK_HEADER) {
+            return new ViewHolderHeader(LayoutInflater.from(viewGroup.getContext()).inflate(R.layout.row_subreddit, viewGroup, false), this, controllerLinks.getSubreddit());
+        }
+
+        ViewHolder viewHolder = new ViewHolder(LayoutInflater.from(viewGroup.getContext())
                 .inflate(R.layout.cell_link, viewGroup, false), this, defaultColor, thumbnailSize);
+        viewHolders.add(viewHolder);
+        return viewHolder;
     }
 
     @Override
@@ -82,8 +90,16 @@ public class AdapterLinkGrid extends AdapterLink {
             controllerLinks.loadMoreLinks();
         }
 
-        final ViewHolder viewHolder = (ViewHolder) holder;
-        viewHolder.onBind(position);
+        switch (getItemViewType(position)) {
+            case VIEW_LINK_HEADER:
+                ViewHolderHeader viewHolderHeader = (ViewHolderHeader) holder;
+                viewHolderHeader.onBind(controllerLinks.getSubreddit());
+                break;
+            case VIEW_LINK:
+                ViewHolder viewHolder = (ViewHolder) holder;
+                viewHolder.onBind(position);
+                break;
+        }
     }
 
     public static boolean showThumbnail(Link link) {
@@ -98,11 +114,14 @@ public class AdapterLinkGrid extends AdapterLink {
     @Override
     public void onViewRecycled(RecyclerView.ViewHolder holder) {
 
-        final ViewHolder viewHolder = (ViewHolder) holder;
+        if (holder instanceof ViewHolder) {
 
-        viewHolder.itemView.setBackgroundColor(defaultColor);
-        viewHolder.imagePlay.setVisibility(View.GONE);
-        viewHolder.onRecycle();
+            final ViewHolder viewHolder = (ViewHolder) holder;
+
+            viewHolder.itemView.setBackgroundColor(defaultColor);
+            viewHolder.imagePlay.setVisibility(View.GONE);
+            viewHolder.onRecycle();
+        }
 
         super.onViewRecycled(holder);
     }
@@ -120,6 +139,13 @@ public class AdapterLinkGrid extends AdapterLink {
     @Override
     public ControllerCommentsBase getControllerComments() {
         return listener.getControllerComments();
+    }
+
+    @Override
+    public void pauseViewHolders() {
+        for (ViewHolderBase viewHolder : viewHolders) {
+            viewHolder.videoFull.stopPlayback();
+        }
     }
 
     protected static class ViewHolder extends AdapterLink.ViewHolderBase {
@@ -180,6 +206,7 @@ public class AdapterLinkGrid extends AdapterLink {
                         imageFull.setVisibility(View.VISIBLE);
                         imagePlay.setVisibility(View.VISIBLE);
                     }
+                    callback.pauseViewHolders();
                     callback.getListener()
                             .onClickComments(
                                     callback.getController()
@@ -319,9 +346,13 @@ public class AdapterLinkGrid extends AdapterLink {
 
         @Override
         public float getRatio(int adapterPosition) {
-            return ((StaggeredGridLayoutManager.LayoutParams) itemView.getLayoutParams()).isFullSpan() ?
-                    1f :
-                    1f / ((StaggeredGridLayoutManager) callback.getLayoutManager()).getSpanCount();
+            if (itemView.getLayoutParams() instanceof StaggeredGridLayoutManager.LayoutParams) {
+                return ((StaggeredGridLayoutManager.LayoutParams) itemView.getLayoutParams()).isFullSpan() ?
+                        1f :
+                        1f / ((StaggeredGridLayoutManager) callback.getLayoutManager()).getSpanCount();
+            }
+
+            return 1f;
         }
 
         @Override

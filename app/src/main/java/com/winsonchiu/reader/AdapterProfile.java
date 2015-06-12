@@ -19,6 +19,9 @@ import com.winsonchiu.reader.data.Link;
 import com.winsonchiu.reader.data.Subreddit;
 import com.winsonchiu.reader.data.User;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Created by TheKeeperOfPie on 5/15/2015.
  */
@@ -26,7 +29,6 @@ public class AdapterProfile extends RecyclerView.Adapter<RecyclerView.ViewHolder
         implements ControllerProfile.ListenerCallback {
 
     private static final String TAG = AdapterProfile.class.getCanonicalName();
-
 
     protected Activity activity;
     protected RecyclerView.LayoutManager layoutManager;
@@ -36,6 +38,7 @@ public class AdapterProfile extends RecyclerView.Adapter<RecyclerView.ViewHolder
     private ControllerProfile.ItemClickListener listener;
     private ControllerLinks.ListenerCallback linksCallback;
     private ControllerComments.ListenerCallback commentsCallback;
+    private List<AdapterLink.ViewHolderBase> viewHolderLinks;
 
     public AdapterProfile(final Activity activity,
                           final ControllerProfile controllerProfile,
@@ -47,6 +50,7 @@ public class AdapterProfile extends RecyclerView.Adapter<RecyclerView.ViewHolder
                 resources.getDisplayMetrics());
         this.controllerProfile = controllerProfile;
         this.listener = listener;
+        viewHolderLinks = new ArrayList<>();
         setCallbacks();
     }
 
@@ -145,6 +149,13 @@ public class AdapterProfile extends RecyclerView.Adapter<RecyclerView.ViewHolder
             public ControllerCommentsBase getControllerComments() {
                 return listener.getControllerComments();
             }
+
+            @Override
+            public void pauseViewHolders() {
+                for (AdapterLink.ViewHolderBase viewHolder : viewHolderLinks) {
+                    viewHolder.videoFull.stopPlayback();
+                }
+            }
         };
         this.commentsCallback = new ControllerComments.ListenerCallback() {
             @Override
@@ -235,8 +246,10 @@ public class AdapterProfile extends RecyclerView.Adapter<RecyclerView.ViewHolder
             case ControllerProfile.VIEW_TYPE_HEADER_TEXT:
                 return new ViewHolderText(LayoutInflater.from(parent.getContext()).inflate(R.layout.row_text, parent, false));
             case ControllerProfile.VIEW_TYPE_LINK:
-                return new AdapterLinkList.ViewHolder(LayoutInflater.from(parent.getContext())
+                AdapterLink.ViewHolderBase viewHolder =  new AdapterLinkList.ViewHolder(LayoutInflater.from(parent.getContext())
                         .inflate(R.layout.row_link, parent, false), linksCallback);
+                viewHolderLinks.add(viewHolder);
+                return viewHolder;
             case ControllerProfile.VIEW_TYPE_COMMENT:
                 return new AdapterCommentList.ViewHolderComment(
                         LayoutInflater.from(parent.getContext())
@@ -263,11 +276,11 @@ public class AdapterProfile extends RecyclerView.Adapter<RecyclerView.ViewHolder
                 break;
             case 2:
                 AdapterLinkList.ViewHolder viewHolderLinkTop = (AdapterLinkList.ViewHolder) holder;
-                if (controllerProfile.getLink(position) == null) {
+                if (controllerProfile.getLink(position + 1) == null) {
                     viewHolderLinkTop.itemView.setVisibility(View.GONE);
                 }
                 else {
-                    viewHolderLinkTop.onBind(position);
+                    viewHolderLinkTop.onBind(position + 1);
                 }
                 break;
             case 3:

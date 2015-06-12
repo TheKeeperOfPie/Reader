@@ -1,23 +1,22 @@
 package com.winsonchiu.reader;
 
-import android.app.Activity;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.content.res.Resources;
+import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.provider.Browser;
+import android.support.design.widget.CoordinatorLayout;
+import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.SearchView;
 import android.support.v7.widget.Toolbar;
-import android.text.Html;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -26,24 +25,20 @@ import android.view.MenuItem;
 import android.view.View;
 import android.webkit.URLUtil;
 import android.widget.ImageView;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.crashlytics.android.Crashlytics;
-import com.winsonchiu.reader.data.Link;
-import com.winsonchiu.reader.data.Listing;
 import com.winsonchiu.reader.data.Reddit;
-import com.winsonchiu.reader.data.Subreddit;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.Stack;
 
 import io.fabric.sdk.android.Fabric;
 
@@ -73,6 +68,8 @@ public class MainActivity extends AppCompatActivity
     private ActionBarDrawerToggle mDrawerToggle;
     private DrawerLayout mDrawerLayout;
     private NavigationView viewNavigation;
+    private FloatingActionButton floatingActionButton;
+    private FloatingActionButton.Behavior behaviorFloatingActionButton;
 
     private ImageView imageNavHeader;
     private TextView textAccountName;
@@ -88,7 +85,7 @@ public class MainActivity extends AppCompatActivity
             controllerLinks = new ControllerLinks(this, "", Sort.HOT);
         }
         if (controllerComments == null) {
-            controllerComments = new ControllerComments(this,  "", "");
+            controllerComments = new ControllerComments(this, "", "", controllerLinks);
         }
         if (controllerProfile == null) {
             controllerProfile = new ControllerProfile(this);
@@ -101,8 +98,17 @@ public class MainActivity extends AppCompatActivity
         }
         setContentView(R.layout.activity_main);
 
+        floatingActionButton = (FloatingActionButton) findViewById(R.id.floating_action_button);
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
+            ((RelativeLayout.LayoutParams) floatingActionButton.getLayoutParams()).setMargins(0, 0,
+                    0, 0);
+            floatingActionButton.requestLayout();
+        }
+        behaviorFloatingActionButton = (FloatingActionButton.Behavior) ((CoordinatorLayout.LayoutParams) floatingActionButton.getLayoutParams()).getBehavior();
+
         toolbar = (Toolbar) findViewById(R.id.toolbar);
         toolbar.setOnClickListener(new View.OnClickListener() {
+            // TODO: Make this launch a new FragmentSearch
             @Override
             public void onClick(View v) {
                 MenuItem itemSearch = toolbar.getMenu()
@@ -167,17 +173,20 @@ public class MainActivity extends AppCompatActivity
             Log.d(TAG, "load intent: " + getIntent().toString());
             String urlString = getIntent().getDataString();
             if (getIntent().hasExtra(REDDIT_PAGE)) {
-                urlString = getIntent().getExtras().getString(REDDIT_PAGE);
+                urlString = getIntent().getExtras()
+                        .getString(REDDIT_PAGE);
             }
             if (URLUtil.isValidUrl(urlString)) {
                 parseUrl(urlString);
             }
             else {
                 Log.d(TAG, "Not valid URL: " + urlString);
+                selectNavigationItem(R.id.item_home);
             }
         }
-
-        selectNavigationItem(R.id.item_home);
+        else {
+            selectNavigationItem(R.id.item_home);
+        }
 
         /*
             Must be placed after ActionBarDrawerToggle instantiation,
@@ -196,8 +205,9 @@ public class MainActivity extends AppCompatActivity
     private void inflateNavigationDrawer() {
         viewNavigation = (NavigationView) findViewById(R.id.navigation);
 
-        View viewHeader = LayoutInflater.from(this).inflate(R.layout.header_navigation,
-                viewNavigation, false);
+        View viewHeader = LayoutInflater.from(this)
+                .inflate(R.layout.header_navigation,
+                        viewNavigation, false);
 
 
         imageNavHeader = (ImageView) viewHeader.findViewById(R.id.image_nav_header);
@@ -233,14 +243,14 @@ public class MainActivity extends AppCompatActivity
     }
 
     private void selectNavigationItem(int id) {
-        getFragmentManager().popBackStackImmediate();
+        getSupportFragmentManager().popBackStackImmediate();
         switch (id) {
             case R.id.item_home:
-                if (getFragmentManager().findFragmentByTag(FragmentThreadList.TAG) != null) {
+                if (getSupportFragmentManager().findFragmentByTag(FragmentThreadList.TAG) != null) {
                     controllerLinks.loadFrontPage(Sort.HOT);
                 }
                 else {
-                    getFragmentManager().beginTransaction()
+                    getSupportFragmentManager().beginTransaction()
                             .replace(R.id.frame_fragment,
                                     FragmentThreadList.newInstance("", ""),
                                     FragmentThreadList.TAG)
@@ -248,14 +258,14 @@ public class MainActivity extends AppCompatActivity
                 }
                 break;
             case R.id.item_profile:
-                getFragmentManager().beginTransaction()
+                getSupportFragmentManager().beginTransaction()
                         .replace(R.id.frame_fragment,
                                 FragmentProfile.newInstance("", ""),
                                 FragmentProfile.TAG)
                         .commit();
                 break;
             case R.id.item_inbox:
-                getFragmentManager().beginTransaction()
+                getSupportFragmentManager().beginTransaction()
                         .replace(R.id.frame_fragment,
                                 FragmentInbox.newInstance("", ""),
                                 FragmentInbox.TAG)
@@ -287,31 +297,32 @@ public class MainActivity extends AppCompatActivity
     }
 
     public void loadAccountInfo() {
-        Reddit.getInstance(this).loadGet(Reddit.OAUTH_URL + "/api/v1/me",
-                new Response.Listener<String>() {
-                    @Override
-                    public void onResponse(String response) {
-                        try {
-                            JSONObject jsonObject = new JSONObject(response);
-                            textAccountName.setText(jsonObject.getString("name"));
-                            textAccountInfo.setText(jsonObject.getString(
-                                    "link_karma") + " Link " + jsonObject.getString(
-                                    "comment_karma") + " Comment");
-                        }
-                        catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                }, new Response.ErrorListener() {
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
+        Reddit.getInstance(this)
+                .loadGet(Reddit.OAUTH_URL + "/api/v1/me",
+                        new Response.Listener<String>() {
+                            @Override
+                            public void onResponse(String response) {
+                                try {
+                                    JSONObject jsonObject = new JSONObject(response);
+                                    textAccountName.setText(jsonObject.getString("name"));
+                                    textAccountInfo.setText(jsonObject.getString(
+                                            "link_karma") + " Link " + jsonObject.getString(
+                                            "comment_karma") + " Comment");
+                                }
+                                catch (JSONException e) {
+                                    e.printStackTrace();
+                                }
+                            }
+                        }, new Response.ErrorListener() {
+                            @Override
+                            public void onErrorResponse(VolleyError error) {
 
-                    }
-                }, 0);
+                            }
+                        }, 0);
     }
 
     private void onClickAccount() {
-        getFragmentManager().beginTransaction()
+        getSupportFragmentManager().beginTransaction()
                 .replace(R.id.frame_fragment, FragmentAuth.newInstance("", ""), FragmentAuth.TAG)
                 .commit();
         mDrawerLayout.closeDrawer(GravityCompat.START);
@@ -323,8 +334,9 @@ public class MainActivity extends AppCompatActivity
 
             // TODO: Implement a history stack inside the Controllers
 
-            if (!url.getHost().contains("reddit")) {
-                getFragmentManager().beginTransaction()
+            if (!url.getHost()
+                    .contains("reddit")) {
+                getSupportFragmentManager().beginTransaction()
                         .add(R.id.frame_fragment, FragmentWeb
                                 .newInstance(urlString, ""), FragmentWeb.TAG)
                         .addToBackStack(null)
@@ -348,39 +360,34 @@ public class MainActivity extends AppCompatActivity
             if (path.contains("comments")) {
                 int indexComments = path.indexOf("comments") + 9;
                 int indexFourthSlash = path.indexOf("/", indexComments + 1);
-                String id = path.substring(indexComments, indexFourthSlash > -1 ? indexFourthSlash : path.length());
+                String id = path.substring(indexComments,
+                        indexFourthSlash > -1 ? indexFourthSlash : path.length());
                 Log.d(TAG, "Comments ID: " + id);
 
-                if (getFragmentManager().findFragmentByTag(FragmentComments.TAG) == null) {
-                    FragmentComments fragmentComments = FragmentComments.newInstance(subreddit,
-                            id, false);
-
-                    getFragmentManager().beginTransaction()
-                            .replace(R.id.frame_fragment, fragmentComments, FragmentComments.TAG)
-                            .addToBackStack(null)
-                            .commit();
-                }
-                else {
-                    controllerComments.setLinkId(subreddit, id);
-                }
+                getSupportFragmentManager().beginTransaction()
+                        .replace(R.id.frame_fragment,
+                                FragmentComments.newInstance(subreddit, id, false),
+                                FragmentComments.TAG)
+                        .commit();
+                controllerComments.setLinkId(subreddit, id);
             }
             else if (path.contains("/u/")) {
                 int indexUser = path.indexOf("/u/") + 3;
-                getFragmentManager().beginTransaction()
+                getSupportFragmentManager().beginTransaction()
                         .replace(R.id.frame_fragment, FragmentProfile.newInstance("", ""),
                                 FragmentProfile.TAG)
-                        .addToBackStack(null)
                         .commit();
-                controllerProfile.loadUser(urlString.substring(indexUser, path.indexOf("/", indexUser)));
+                controllerProfile.loadUser(
+                        urlString.substring(indexUser, path.indexOf("/", indexUser)));
             }
             else if (path.contains("/user/")) {
                 int indexUser = path.indexOf("/user/") + 6;
-                getFragmentManager().beginTransaction()
+                getSupportFragmentManager().beginTransaction()
                         .replace(R.id.frame_fragment, FragmentProfile.newInstance("", ""),
                                 FragmentProfile.TAG)
-                        .addToBackStack(null)
                         .commit();
-                controllerProfile.loadUser(urlString.substring(indexUser, path.indexOf("/", indexUser)));
+                controllerProfile.loadUser(
+                        urlString.substring(indexUser, path.indexOf("/", indexUser)));
             }
             else {
                 int indexSort = path.indexOf("/", subreddit.length() + 1);
@@ -397,9 +404,9 @@ public class MainActivity extends AppCompatActivity
     }
 
     public void onNavigationClick() {
-        Log.d(TAG, "Back stack count: " + getFragmentManager().getBackStackEntryCount());
-        if (getFragmentManager().getBackStackEntryCount() > 0) {
-            getFragmentManager().popBackStack();
+        Log.d(TAG, "Back stack count: " + getSupportFragmentManager().getBackStackEntryCount());
+        if (getSupportFragmentManager().getBackStackEntryCount() > 0) {
+            getSupportFragmentManager().popBackStack();
             mDrawerToggle.onDrawerSlide(mDrawerLayout, 0.0f);
         }
         else {
@@ -445,19 +452,19 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     public void onBackPressed() {
-        if (getFragmentManager().getBackStackEntryCount() > 0) {
-            FragmentWeb fragmentWeb = (FragmentWeb) getFragmentManager().findFragmentByTag(
+        if (getSupportFragmentManager().getBackStackEntryCount() > 0) {
+            FragmentWeb fragmentWeb = (FragmentWeb) getSupportFragmentManager().findFragmentByTag(
                     FragmentWeb.TAG);
 
             if (fragmentWeb != null && fragmentWeb.navigateBack()) {
                 return;
             }
 
-            getFragmentManager().popBackStack();
+            getSupportFragmentManager().popBackStack();
             Log.d(TAG, "popBackStack");
         }
         else {
-            if (getFragmentManager().getBackStackEntryCount() <= 1) {
+            if (isTaskRoot() && getSupportFragmentManager().getBackStackEntryCount() <= 1) {
                 new AlertDialog.Builder(this)
                         .setMessage("Exit Reader?")
                         .setPositiveButton("Yes",
@@ -488,15 +495,20 @@ public class MainActivity extends AppCompatActivity
                 getApplicationContext().getPackageName(), intent.getStringExtra(
                         Browser.EXTRA_APPLICATION_ID))) {
             String urlString = intent.getDataString();
+            Intent intentActivity = new Intent(this, MainActivity.class);
+            intentActivity.setAction(Intent.ACTION_VIEW);
             if (urlString.startsWith("/r/") || urlString.startsWith("/u/")) {
-                Intent intentActivity = new Intent(this, MainActivity.class);
-                intentActivity.setAction(Intent.ACTION_VIEW);
                 intentActivity.putExtra(REDDIT_PAGE, Reddit.BASE_URL + urlString);
                 startActivity(intentActivity);
 
             }
+            else if (urlString.toLowerCase()
+                    .contains("reddit")) {
+                intentActivity.putExtra(REDDIT_PAGE, urlString);
+                startActivity(intentActivity);
+            }
             else if (URLUtil.isValidUrl(urlString)) {
-                getFragmentManager().beginTransaction()
+                getSupportFragmentManager().beginTransaction()
                         .add(R.id.frame_fragment, FragmentWeb
                                 .newInstance(urlString, ""), FragmentWeb.TAG)
                         .addToBackStack(null)
@@ -537,6 +549,14 @@ public class MainActivity extends AppCompatActivity
     @Override
     public void setNavigationAnimation(float value) {
         mDrawerToggle.onDrawerSlide(mDrawerLayout, value);
+    }
+
+    @Override
+    public void setFloatingActionButtonValues(View.OnClickListener listener, int resourceId) {
+        floatingActionButton.setImageResource(resourceId);
+        floatingActionButton.setOnClickListener(listener);
+        floatingActionButton.setVisibility(listener == null ? View.GONE : View.VISIBLE);
+
     }
 
     @Override

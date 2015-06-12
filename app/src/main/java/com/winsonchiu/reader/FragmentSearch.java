@@ -1,10 +1,11 @@
 package com.winsonchiu.reader;
 
 import android.app.Activity;
-import android.app.Fragment;
+import android.content.Intent;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.support.design.widget.TabLayout;
+import android.support.v4.app.Fragment;
 import android.support.v4.view.MenuItemCompat;
 import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
@@ -166,6 +167,8 @@ public class FragmentSearch extends Fragment {
                 .setChecked(true);
         itemSortTime.setTitle(
                 getString(R.string.time) + Reddit.TIME_SEPARATOR + getString(R.string.item_sort_all));
+
+        mListener.setFloatingActionButtonValues(null, 0);
     }
 
     @Override
@@ -459,6 +462,11 @@ public class FragmentSearch extends Fragment {
             public Activity getActivity() {
                 return mListener.getControllerSearch().getActivity();
             }
+
+            @Override
+            public Subreddit getSubreddit() {
+                return new Subreddit();
+            }
         }, linkClickListener);
 
         adapterLinksSubreddit = new AdapterLinkList(activity, new ControllerLinksBase() {
@@ -501,6 +509,11 @@ public class FragmentSearch extends Fragment {
             public Activity getActivity() {
                 return mListener.getControllerSearch().getActivity();
             }
+
+            @Override
+            public Subreddit getSubreddit() {
+                return new Subreddit();
+            }
         }, linkClickListener);
 
         recyclerSearchLinks = (RecyclerView) view.findViewById(R.id.recycler_search_links);
@@ -531,7 +544,7 @@ public class FragmentSearch extends Fragment {
                     case ControllerSearch.PAGE_SUBREDDITS:
                         return getString(R.string.subreddit);
                     case ControllerSearch.PAGE_LINKS:
-                        return getString(R.string.link);
+                        return getString(R.string.post);
                     case ControllerSearch.PAGE_LINKS_SUBREDDIT:
                         return mListener.getControllerLinks()
                                 .getSubredditName();
@@ -628,7 +641,7 @@ public class FragmentSearch extends Fragment {
      * "http://developer.android.com/training/basics/fragments/communicating.html"
      * >Communicating with Other Fragments</a> for more information.
      */
-    public interface OnFragmentInteractionListener {
+    public interface OnFragmentInteractionListener extends FragmentListenerBase {
         ControllerSearch getControllerSearch();
         ControllerLinks getControllerLinks();
         ControllerComments getControllerComments();
