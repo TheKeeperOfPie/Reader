@@ -117,7 +117,24 @@ public class FragmentSearch extends Fragment {
         itemSearch = menu.findItem(R.id.item_search);
         itemSearch.expandActionView();
 
+        MenuItemCompat.setOnActionExpandListener(itemSearch,
+                new MenuItemCompat.OnActionExpandListener() {
+                    @Override
+                    public boolean onMenuItemActionExpand(MenuItem item) {
+                        mListener.hideToolbarTitle();
+                        Log.d(TAG, "onMenuItemActionExpand");
+                        return true;
+                    }
+
+                    @Override
+                    public boolean onMenuItemActionCollapse(MenuItem item) {
+                        mListener.restoreToolbarTitle();
+                        getFragmentManager().popBackStack();
+                        return true;
+                    }
+                });
         final SearchView searchView = (SearchView) itemSearch.getActionView();
+
         searchView.setOnKeyListener(new View.OnKeyListener() {
             @Override
             public boolean onKey(View v, int keyCode, KeyEvent event) {
@@ -130,7 +147,8 @@ public class FragmentSearch extends Fragment {
             public boolean onQueryTextSubmit(String query) {
                 mListener.getControllerLinks()
                         .setParameters(query, Sort.HOT);
-                mListener.getControllerSearch().clearResults();
+                mListener.getControllerSearch()
+                        .clearResults();
                 getFragmentManager().popBackStack();
                 return false;
             }
@@ -147,26 +165,14 @@ public class FragmentSearch extends Fragment {
             }
         });
         searchView.setSubmitButtonEnabled(true);
-        MenuItemCompat.setOnActionExpandListener(itemSearch,
-                new MenuItemCompat.OnActionExpandListener() {
-                    @Override
-                    public boolean onMenuItemActionExpand(MenuItem item) {
-                        return true;
-                    }
-
-                    @Override
-                    public boolean onMenuItemActionCollapse(MenuItem item) {
-                        getFragmentManager().popBackStack();
-                        return true;
-                    }
-                });
 
         menu.findItem(R.id.item_sort_relevance)
                 .setChecked(true);
         menu.findItem(R.id.item_sort_all)
                 .setChecked(true);
         itemSortTime.setTitle(
-                getString(R.string.time) + Reddit.TIME_SEPARATOR + getString(R.string.item_sort_all));
+                getString(R.string.time) + Reddit.TIME_SEPARATOR + getString(
+                        R.string.item_sort_all));
 
         mListener.setFloatingActionButtonValues(null, 0);
     }
@@ -215,10 +221,10 @@ public class FragmentSearch extends Fragment {
         menu becomes unusable after a drag gesture
      */
     public void flashSearchView() {
-        if (itemSearch != null) {
-            itemSearch.expandActionView();
-            itemSearch.collapseActionView();
-        }
+//        if (itemSearch != null) {
+//            itemSearch.expandActionView();
+//            itemSearch.collapseActionView();
+//        }
     }
 
     @Override
@@ -231,7 +237,8 @@ public class FragmentSearch extends Fragment {
             public void onClickSubreddit(Subreddit subreddit) {
                 mListener.getControllerLinks()
                         .setParameters(subreddit.getDisplayName(), Sort.HOT);
-                mListener.getControllerSearch().clearResults();
+                mListener.getControllerSearch()
+                        .clearResults();
                 getFragmentManager().popBackStack();
             }
 
@@ -425,42 +432,50 @@ public class FragmentSearch extends Fragment {
         adapterLinks = new AdapterLinkList(activity, new ControllerLinksBase() {
             @Override
             public Link getLink(int position) {
-                return mListener.getControllerSearch().getLink(position);
+                return mListener.getControllerSearch()
+                        .getLink(position);
             }
 
             @Override
             public Reddit getReddit() {
-                return mListener.getControllerLinks().getReddit();
+                return mListener.getControllerLinks()
+                        .getReddit();
             }
 
             @Override
             public void voteLink(RecyclerView.ViewHolder viewHolder, int vote) {
-                mListener.getControllerSearch().voteLink(viewHolder, vote);
+                mListener.getControllerSearch()
+                        .voteLink(viewHolder, vote);
             }
 
             @Override
             public Drawable getDrawableForLink(Link link) {
-                return mListener.getControllerSearch().getDrawableForLink(link);
+                return mListener.getControllerSearch()
+                        .getDrawableForLink(link);
             }
 
             @Override
             public int sizeLinks() {
-                return mListener.getControllerSearch().sizeLinks();
+                return mListener.getControllerSearch()
+                        .sizeLinks();
             }
 
             @Override
             public boolean isLoading() {
-                return mListener.getControllerSearch().isLoading();
+                return mListener.getControllerSearch()
+                        .isLoading();
             }
 
             @Override
             public void loadMoreLinks() {
-                mListener.getControllerSearch().loadMoreLinks();
+                mListener.getControllerSearch()
+                        .loadMoreLinks();
             }
 
             @Override
             public Activity getActivity() {
-                return mListener.getControllerSearch().getActivity();
+                return mListener.getControllerSearch()
+                        .getActivity();
             }
 
             @Override
@@ -472,42 +487,50 @@ public class FragmentSearch extends Fragment {
         adapterLinksSubreddit = new AdapterLinkList(activity, new ControllerLinksBase() {
             @Override
             public Link getLink(int position) {
-                return mListener.getControllerSearch().getLinkSubreddit(position);
+                return mListener.getControllerSearch()
+                        .getLinkSubreddit(position);
             }
 
             @Override
             public Reddit getReddit() {
-                return mListener.getControllerLinks().getReddit();
+                return mListener.getControllerLinks()
+                        .getReddit();
             }
 
             @Override
             public void voteLink(RecyclerView.ViewHolder viewHolder, int vote) {
-                mListener.getControllerSearch().voteLinkSubreddit(viewHolder, vote);
+                mListener.getControllerSearch()
+                        .voteLinkSubreddit(viewHolder, vote);
             }
 
             @Override
             public Drawable getDrawableForLink(Link link) {
-                return mListener.getControllerSearch().getDrawableForLink(link);
+                return mListener.getControllerSearch()
+                        .getDrawableForLink(link);
             }
 
             @Override
             public int sizeLinks() {
-                return mListener.getControllerSearch().sizeLinksSubreddit();
+                return mListener.getControllerSearch()
+                        .sizeLinksSubreddit();
             }
 
             @Override
             public boolean isLoading() {
-                return mListener.getControllerSearch().isLoadingSubreddit();
+                return mListener.getControllerSearch()
+                        .isLoadingSubreddit();
             }
 
             @Override
             public void loadMoreLinks() {
-                mListener.getControllerSearch().loadMoreLinksSubreddit();
+                mListener.getControllerSearch()
+                        .loadMoreLinksSubreddit();
             }
 
             @Override
             public Activity getActivity() {
-                return mListener.getControllerSearch().getActivity();
+                return mListener.getControllerSearch()
+                        .getActivity();
             }
 
             @Override
@@ -643,8 +666,11 @@ public class FragmentSearch extends Fragment {
      */
     public interface OnFragmentInteractionListener extends FragmentListenerBase {
         ControllerSearch getControllerSearch();
+
         ControllerLinks getControllerLinks();
+
         ControllerComments getControllerComments();
+
         void setToolbarTitle(CharSequence title);
     }
 

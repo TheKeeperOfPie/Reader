@@ -156,10 +156,6 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             textDescription = (TextView) itemView.findViewById(R.id.text_description);
             textDescription.setMovementMethod(LinkMovementMethod.getInstance());
             textInfo = (TextView) itemView.findViewById(R.id.text_info);
-            buttonOpen = (ImageButton) itemView.findViewById(R.id.button_open);
-
-            textInfo.setVisibility(View.VISIBLE);
-            buttonOpen.setVisibility(View.GONE);
 
             if (itemView.getLayoutParams() instanceof StaggeredGridLayoutManager.LayoutParams) {
                 ((StaggeredGridLayoutManager.LayoutParams) itemView.getLayoutParams()).setFullSpan(
@@ -167,6 +163,10 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             }
 
             if (TextUtils.isEmpty(subreddit.getDisplayName())) {
+                textName.setVisibility(View.GONE);
+                textTitle.setVisibility(View.GONE);
+                textDescription.setVisibility(View.GONE);
+                textInfo.setVisibility(View.GONE);
                 itemView.setVisibility(View.GONE);
             }
         }
@@ -174,9 +174,17 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         public void onBind(Subreddit subreddit) {
 
             if (TextUtils.isEmpty(subreddit.getDisplayName())) {
+                textName.setVisibility(View.GONE);
+                textTitle.setVisibility(View.GONE);
+                textDescription.setVisibility(View.GONE);
+                textInfo.setVisibility(View.GONE);
                 itemView.setVisibility(View.GONE);
                 return;
             }
+            textName.setVisibility(View.VISIBLE);
+            textTitle.setVisibility(View.VISIBLE);
+            textDescription.setVisibility(View.VISIBLE);
+            textInfo.setVisibility(View.VISIBLE);
             itemView.setVisibility(View.VISIBLE);
 
             textName.setText(subreddit.getDisplayName());
@@ -288,7 +296,6 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                                     -1))) {
                                 callback.getListener()
                                         .requestDisallowInterceptTouchEvent(true);
-                                return true;
                             }
                             else {
                                 callback.getListener()

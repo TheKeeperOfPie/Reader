@@ -7,19 +7,11 @@
     android:layout_marginBottom="8dp"
     >
 
-    <View
-        android:id="@+id/view_divider"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_alignParentTop="true"
-        android:background="?android:listDivider"
-        />
-
     <TextView
         android:id="@+id/text_name"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_below="@id/view_divider"
+        android:layout_alignParentTop="true"
         android:layout_alignParentStart="true"
         android:layout_toStartOf="@+id/button_open"
         android:layout_marginTop="@dimen/activity_vertical_margin"
@@ -69,13 +61,23 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_below="@id/text_description"
+        android:layout_above="@+id/view_divider"
         android:layout_marginStart="@dimen/activity_horizontal_margin"
         android:layout_marginEnd="@dimen/activity_horizontal_margin"
+        android:layout_marginBottom="8dp"
         android:textSize="12sp"
         android:layout_alignParentEnd="true"
         android:gravity="end"
         android:textColor="@color/darkThemeTextColorMuted"
         android:visibility="gone"
+        />
+
+    <View
+        android:id="@+id/view_divider"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:background="?android:listDivider"
         />
 
 </RelativeLayout>

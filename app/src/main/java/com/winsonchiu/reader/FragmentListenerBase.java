@@ -7,4 +7,6 @@ import android.view.View;
  */
 public interface FragmentListenerBase {
     void setFloatingActionButtonValues(View.OnClickListener listener, int resourceId);
+    void hideToolbarTitle();
+    void restoreToolbarTitle();
 }

@@ -6,6 +6,7 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
+import android.support.v4.view.MenuItemCompat;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.LinearLayoutManager;
@@ -98,7 +99,8 @@ public class FragmentProfile extends Fragment {
             mParam2 = getArguments().getString(ARG_PARAM2);
         }
         setHasOptionsMenu(true);
-        preferences = PreferenceManager.getDefaultSharedPreferences(activity.getApplicationContext());
+        preferences = PreferenceManager.getDefaultSharedPreferences(
+                activity.getApplicationContext());
         this.user = new User();
     }
 
@@ -114,6 +116,21 @@ public class FragmentProfile extends Fragment {
 
         itemSortTime = menu.findItem(R.id.item_sort_time);
         itemSearch = menu.findItem(R.id.item_search);
+
+        MenuItemCompat.setOnActionExpandListener(itemSearch,
+                new MenuItemCompat.OnActionExpandListener() {
+                    @Override
+                    public boolean onMenuItemActionExpand(MenuItem item) {
+                        mListener.hideToolbarTitle();
+                        return true;
+                    }
+
+                    @Override
+                    public boolean onMenuItemActionCollapse(MenuItem item) {
+                        mListener.restoreToolbarTitle();
+                        return true;
+                    }
+                });
 
         final SearchView searchView = (SearchView) itemSearch.getActionView();
 
@@ -134,7 +151,8 @@ public class FragmentProfile extends Fragment {
         searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
             @Override
             public boolean onQueryTextSubmit(String query) {
-                mListener.getControllerProfile().loadUser(query);
+                mListener.getControllerProfile()
+                        .loadUser(query);
                 itemSearch.collapseActionView();
                 return false;
             }
@@ -170,6 +188,7 @@ public class FragmentProfile extends Fragment {
     public void onDestroyOptionsMenu() {
         SearchView searchView = (SearchView) itemSearch.getActionView();
         searchView.setOnQueryTextListener(null);
+        MenuItemCompat.setOnActionExpandListener(itemSearch, null);
         itemSearch = null;
         super.onDestroyOptionsMenu();
     }
@@ -202,15 +221,15 @@ public class FragmentProfile extends Fragment {
     }
 
     private void flashSearchView() {
-        if (itemSearch != null) {
-            itemSearch.expandActionView();
-            itemSearch.collapseActionView();
-        }
+//        if (itemSearch != null) {
+//            itemSearch.expandActionView();
+//            itemSearch.collapseActionView();
+//        }
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
+            Bundle savedInstanceState) {
 
         View view = inflater.inflate(R.layout.fragment_profile, container, false);
 
@@ -218,7 +237,8 @@ public class FragmentProfile extends Fragment {
             @Override
             public void onClickComments(final Link link, final RecyclerView.ViewHolder viewHolder) {
 
-                mListener.getControllerComments().setLink(link);
+                mListener.getControllerComments()
+                        .setLink(link);
 
                 if (viewHolder instanceof AdapterLinkGrid.ViewHolder) {
                     ((StaggeredGridLayoutManager.LayoutParams) viewHolder.itemView.getLayoutParams()).setFullSpan(
@@ -232,7 +252,8 @@ public class FragmentProfile extends Fragment {
                         final float viewStartY = viewHolder.itemView.getY();
                         // Grid layout has a 4 dp layout_margin that needs to be accounted for
                         final float minY = viewHolder instanceof AdapterLinkGrid.ViewHolder ?
-                                TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 4, getResources().getDisplayMetrics()) : 0;
+                                TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 4,
+                                        getResources().getDisplayMetrics()) : 0;
                         final float viewStartPaddingBottom = viewHolder.itemView.getPaddingBottom();
                         final float screenHeight = getResources().getDisplayMetrics().heightPixels;
 
@@ -243,7 +264,8 @@ public class FragmentProfile extends Fragment {
 
                         Animation heightAnimation = new Animation() {
                             @Override
-                            protected void applyTransformation(float interpolatedTime, Transformation t) {
+                            protected void applyTransformation(float interpolatedTime,
+                                    Transformation t) {
                                 super.applyTransformation(interpolatedTime, t);
                                 viewHolder.itemView.setPadding(viewHolder.itemView.getPaddingLeft(),
                                         viewHolder.itemView.getPaddingTop(),
@@ -278,14 +300,16 @@ public class FragmentProfile extends Fragment {
                                         viewHolder instanceof AdapterLinkGrid.ViewHolder);
 
                                 getFragmentManager().beginTransaction()
-                                        .add(R.id.frame_fragment, fragmentComments, FragmentComments.TAG)
+                                        .add(R.id.frame_fragment, fragmentComments,
+                                                FragmentComments.TAG)
                                         .addToBackStack(null)
                                         .commit();
 
                                 viewHolder.itemView.postDelayed(new Runnable() {
                                     @Override
                                     public void run() {
-                                        viewHolder.itemView.setPadding(viewHolder.itemView.getPaddingLeft(),
+                                        viewHolder.itemView.setPadding(
+                                                viewHolder.itemView.getPaddingLeft(),
                                                 viewHolder.itemView.getPaddingTop(),
                                                 viewHolder.itemView.getPaddingRight(),
                                                 (int) viewStartPaddingBottom);
@@ -309,7 +333,8 @@ public class FragmentProfile extends Fragment {
             public void loadUrl(String url) {
                 getFragmentManager().beginTransaction()
                         .add(R.id.frame_fragment, FragmentWeb
-                        .newInstance(url, ""), FragmentWeb.TAG).addToBackStack(null)
+                                .newInstance(url, ""), FragmentWeb.TAG)
+                        .addToBackStack(null)
                         .commit();
             }
 
@@ -369,7 +394,8 @@ public class FragmentProfile extends Fragment {
         swipeRefreshProfile.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
-                mListener.getControllerProfile().reload();
+                mListener.getControllerProfile()
+                        .reload();
             }
         });
 
@@ -377,17 +403,20 @@ public class FragmentProfile extends Fragment {
         recyclerProfile = (RecyclerView) view.findViewById(R.id.recycler_profile);
         recyclerProfile.setHasFixedSize(true);
         recyclerProfile.setItemAnimator(new DefaultItemAnimator());
-        recyclerProfile.getItemAnimator().setRemoveDuration(AnimationUtils.EXPAND_ACTION_DURATION);
+        recyclerProfile.getItemAnimator()
+                .setRemoveDuration(AnimationUtils.EXPAND_ACTION_DURATION);
         recyclerProfile.setLayoutManager(linearLayoutManager);
 //        recyclerProfile.addItemDecoration(
 //                new DividerItemDecoration(activity, DividerItemDecoration.VERTICAL_LIST));
 
         if (adapterProfile == null) {
-            adapterProfile = new AdapterProfile(activity, mListener.getControllerProfile(), listener);
+            adapterProfile = new AdapterProfile(activity, mListener.getControllerProfile(),
+                    listener);
         }
 
         recyclerProfile.setAdapter(adapterProfile);
-        mListener.getControllerProfile().addListener(listener);
+        mListener.getControllerProfile()
+                .addListener(listener);
 
         return view;
 
@@ -409,7 +438,8 @@ public class FragmentProfile extends Fragment {
                 @Override
                 public void run() {
                     swipeRefreshProfile.setRefreshing(true);
-                    mListener.getControllerProfile().setUser(user);
+                    mListener.getControllerProfile()
+                            .setUser(user);
                 }
             });
         }
@@ -418,12 +448,14 @@ public class FragmentProfile extends Fragment {
     @Override
     public void onStart() {
         super.onStart();
-        mListener.getControllerProfile().addListener(listener);
+        mListener.getControllerProfile()
+                .addListener(listener);
     }
 
     @Override
     public void onStop() {
-        mListener.getControllerProfile().removeListener(listener);
+        mListener.getControllerProfile()
+                .removeListener(listener);
         super.onStop();
     }
 
@@ -466,7 +498,9 @@ public class FragmentProfile extends Fragment {
     public interface OnFragmentInteractionListener extends FragmentListenerBase {
         // TODO: Update argument type and name
         void setToolbarTitle(CharSequence title);
+
         ControllerComments getControllerComments();
+
         ControllerProfile getControllerProfile();
     }
 

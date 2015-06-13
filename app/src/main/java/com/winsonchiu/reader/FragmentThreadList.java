@@ -247,10 +247,10 @@ public class FragmentThreadList extends Fragment {
         menu becomes unusable after a drag gesture
      */
     public void flashSearchView() {
-        if (itemSearch != null) {
-            itemSearch.expandActionView();
-            itemSearch.collapseActionView();
-        }
+//        if (itemSearch != null) {
+//            itemSearch.expandActionView();
+//            itemSearch.collapseActionView();
+//        }
     }
 
     private void resetAdapter(AdapterLink newAdapter) {

@@ -6,14 +6,6 @@
     >
 
     <View
-        android:id="@+id/view_divider"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_alignParentTop="true"
-        android:background="?android:listDivider"
-        />
-
-    <View
         android:id="@+id/view_indent"
         android:layout_width="0dp"
         android:layout_height="match_parent"
@@ -94,7 +86,7 @@
         android:layout_height="wrap_content"
         android:layout_alignStart="@id/view_indicator"
         android:layout_below="@id/layout_container_actions"
-        android:layout_alignParentBottom="true"
+        android:layout_above="@+id/view_divider"
         android:layout_alignParentEnd="true"
         android:visibility="gone"
         >
@@ -136,5 +128,13 @@
             />
 
     </RelativeLayout>
+
+    <View
+        android:id="@+id/view_divider"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:background="?android:listDivider"
+        />
 
 </RelativeLayout>

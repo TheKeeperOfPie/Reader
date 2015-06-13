@@ -130,7 +130,6 @@ public class ControllerProfile implements ControllerLinksBase, ControllerComment
     public void setUser(User user) {
         this.user = user;
         for (ControllerProfile.ItemClickListener listener : listeners) {
-//            listener.setToolbarTitle("/u/" + user.getName());
             listener.setToolbarTitle(page);
         }
         sort = Sort.HOT;

@@ -276,11 +276,11 @@ public class AdapterProfile extends RecyclerView.Adapter<RecyclerView.ViewHolder
                 break;
             case 2:
                 AdapterLinkList.ViewHolder viewHolderLinkTop = (AdapterLinkList.ViewHolder) holder;
-                if (controllerProfile.getLink(position + 1) == null) {
+                if (controllerProfile.getLink(position) == null) {
                     viewHolderLinkTop.itemView.setVisibility(View.GONE);
                 }
                 else {
-                    viewHolderLinkTop.onBind(position + 1);
+                    viewHolderLinkTop.onBind(position);
                 }
                 break;
             case 3:

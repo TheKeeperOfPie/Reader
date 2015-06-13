@@ -59,9 +59,9 @@ public class AdapterAlbum extends PagerAdapter {
                     case MotionEvent.ACTION_DOWN:
                         startY = event.getY();
 
-                        if ((scrollView.canScrollVertically(1) && scrollView.canScrollVertically(-1))) {
+                        if ((scrollView.canScrollVertically(1) && scrollView.canScrollVertically(
+                                -1))) {
                             disallowListener.requestDisallowInterceptTouchEvent(true);
-                            return true;
                         }
                         else {
                             disallowListener.requestDisallowInterceptTouchEvent(false);
