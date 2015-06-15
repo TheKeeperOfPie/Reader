@@ -485,6 +485,11 @@ public class FragmentSearch extends Fragment {
             public Subreddit getSubreddit() {
                 return new Subreddit();
             }
+
+            @Override
+            public void deletePost(Link link) {
+                // Not implemented
+            }
         }, linkClickListener);
 
         adapterLinksSubreddit = new AdapterLinkList(activity, new ControllerLinksBase() {
@@ -539,6 +544,11 @@ public class FragmentSearch extends Fragment {
             @Override
             public Subreddit getSubreddit() {
                 return new Subreddit();
+            }
+
+            @Override
+            public void deletePost(Link link) {
+                // Not implemented
             }
         }, linkClickListener);
 

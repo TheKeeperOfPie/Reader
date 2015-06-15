@@ -65,9 +65,7 @@ public class AdapterLinkList extends AdapterLink {
     @Override
     public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
 
-        if (!controllerLinks.isLoading() && position > controllerLinks.sizeLinks() - 10) {
-            controllerLinks.loadMoreLinks();
-        }
+        super.onBindViewHolder(holder, position);
 
         switch (getItemViewType(position)) {
             case VIEW_LINK_HEADER:

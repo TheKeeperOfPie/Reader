@@ -13,6 +13,7 @@ import android.util.TypedValue;
 import android.view.View;
 import android.widget.Toast;
 
+import com.android.volley.Response;
 import com.android.volley.Response.ErrorListener;
 import com.android.volley.Response.Listener;
 import com.android.volley.VolleyError;
@@ -33,6 +34,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -57,11 +59,16 @@ public class ControllerComments implements ControllerLinksBase, ControllerCommen
     private boolean isLoading;
     private ControllerLinks controllerLinks;
 
-    public ControllerComments(Activity activity, String subreddit, String linkId, ControllerLinks controllerLinks) {
+    public ControllerComments(Activity activity,
+            String subreddit,
+            String linkId,
+            ControllerLinks controllerLinks) {
         setActivity(activity);
         this.reddit = Reddit.getInstance(activity);
         this.listeners = new HashSet<>();
-        this.indentWidth = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 8, activity.getResources().getDisplayMetrics());
+        this.indentWidth = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 8,
+                activity.getResources()
+                        .getDisplayMetrics());
         this.subreddit = subreddit;
         this.linkId = linkId;
         Resources resources = activity.getResources();
@@ -88,7 +95,8 @@ public class ControllerComments implements ControllerLinksBase, ControllerCommen
         Listing listing = new Listing();
         // TODO: Make this logic cleaner
         if (link.getComments() != null) {
-            listing.setChildren(new ArrayList<>(link.getComments().getChildren()));
+            listing.setChildren(new ArrayList<>(link.getComments()
+                    .getChildren()));
         }
         else {
             listing.setChildren(new ArrayList<Thing>());
@@ -96,7 +104,8 @@ public class ControllerComments implements ControllerLinksBase, ControllerCommen
         this.listingComments = listing;
         this.link = link;
         for (CommentClickListener listener : listeners) {
-            listener.getAdapter().notifyDataSetChanged();
+            listener.getAdapter()
+                    .notifyDataSetChanged();
         }
     }
 
@@ -118,20 +127,25 @@ public class ControllerComments implements ControllerLinksBase, ControllerCommen
         }
 
         setRefreshing(true);
-        reddit.loadGet(Reddit.OAUTH_URL + "/r/" + subreddit + "/comments/" + linkId + "?depth=10&showmore=true&showedits=true&limit=100",
+        reddit.loadGet(
+                Reddit.OAUTH_URL + "/r/" + subreddit + "/comments/" + linkId + "?depth=10&showmore=true&showedits=true&limit=100",
                 new Listener<String>() {
                     @Override
                     public void onResponse(String response) {
 
                         for (int index = 0; index < response.length() / 500; index++) {
-                            Log.d(TAG, "reloadAllComments onResponse: " + response.substring(index * 500, (index + 1) * 500 > response.length() ? response.length() : (index + 1) * 500));
+                            Log.d(TAG, "reloadAllComments onResponse: " + response.substring(
+                                    index * 500,
+                                    (index + 1) * 500 > response.length() ? response.length() :
+                                            (index + 1) * 500));
                         }
                         try {
                             Listing listing = new Listing();
                             link = Link.fromJson(new JSONArray(response));
                             // TODO: Make this logic cleaner
                             if (link.getComments() != null) {
-                                listing.setChildren(new ArrayList<>(link.getComments().getChildren()));
+                                listing.setChildren(new ArrayList<>(link.getComments()
+                                        .getChildren()));
                             }
                             else {
                                 listing.setChildren(new ArrayList<Thing>());
@@ -170,7 +184,8 @@ public class ControllerComments implements ControllerLinksBase, ControllerCommen
             return drawableSelf;
         }
 
-        if (TextUtils.isEmpty(thumbnail) || thumbnail.equals(Reddit.DEFAULT) || thumbnail.equals(Reddit.NSFW)) {
+        if (TextUtils.isEmpty(thumbnail) || thumbnail.equals(Reddit.DEFAULT) || thumbnail.equals(
+                Reddit.NSFW)) {
             return drawableDefault;
         }
 
@@ -203,6 +218,11 @@ public class ControllerComments implements ControllerLinksBase, ControllerCommen
     }
 
     @Override
+    public void deletePost(Link link) {
+        controllerLinks.deletePost(link);
+    }
+
+    @Override
     public void loadNestedComments(final Comment moreComment) {
 
         Log.d(TAG, "loadNestedComments");
@@ -212,12 +232,14 @@ public class ControllerComments implements ControllerLinksBase, ControllerCommen
         String children = "";
         List<String> childrenList = moreComment.getChildren();
         if (childrenList.isEmpty()) {
-            int commentIndex = listingComments.getChildren().indexOf(moreComment);
+            int commentIndex = listingComments.getChildren()
+                    .indexOf(moreComment);
             if (commentIndex >= 0) {
                 listingComments.getChildren()
                         .remove(commentIndex);
                 for (CommentClickListener listener : listeners) {
-                    listener.getAdapter().notifyItemRemoved(commentIndex + 1);
+                    listener.getAdapter()
+                            .notifyItemRemoved(commentIndex + 1);
                 }
             }
             return;
@@ -237,7 +259,9 @@ public class ControllerComments implements ControllerLinksBase, ControllerCommen
                     public void onResponse(String response) {
                         try {
 
-                            JSONArray jsonArray = new JSONObject(response).getJSONObject("json").getJSONObject("data").getJSONArray("things");
+                            JSONArray jsonArray = new JSONObject(response).getJSONObject("json")
+                                    .getJSONObject("data")
+                                    .getJSONArray("things");
 
                             Listing listing = new Listing();
                             List<Thing> things = new ArrayList<>();
@@ -245,9 +269,11 @@ public class ControllerComments implements ControllerLinksBase, ControllerCommen
 
                             for (int index = 0; index < jsonArray.length(); index++) {
                                 Log.d(TAG, "thing: " + jsonArray.getJSONObject(index));
-                                Comment comment = Comment.fromJson(jsonArray.getJSONObject(index), moreComment.getLevel());
+                                Comment comment = Comment.fromJson(jsonArray.getJSONObject(index),
+                                        moreComment.getLevel());
 
-                                if (comment.getParentId().equals(link.getId())) {
+                                if (comment.getParentId()
+                                        .equals(link.getId())) {
                                     comments.add(comment);
                                 }
                                 else {
@@ -270,15 +296,22 @@ public class ControllerComments implements ControllerLinksBase, ControllerCommen
                                 }
                             }
                             if (comments.isEmpty()) {
-                                int commentIndex = link.getComments().getChildren().indexOf(moreComment);
+                                int commentIndex = link.getComments()
+                                        .getChildren()
+                                        .indexOf(moreComment);
                                 if (commentIndex >= 0) {
-                                    link.getComments().getChildren().remove(commentIndex);
+                                    link.getComments()
+                                            .getChildren()
+                                            .remove(commentIndex);
                                 }
-                                commentIndex = listingComments.getChildren().indexOf(moreComment);
+                                commentIndex = listingComments.getChildren()
+                                        .indexOf(moreComment);
                                 if (commentIndex >= 0) {
-                                    listingComments.getChildren().remove(commentIndex);
+                                    listingComments.getChildren()
+                                            .remove(commentIndex);
                                     for (CommentClickListener listener : listeners) {
-                                        listener.getAdapter().notifyItemRemoved(commentIndex + 1);
+                                        listener.getAdapter()
+                                                .notifyItemRemoved(commentIndex + 1);
                                     }
                                 }
                             }
@@ -289,7 +322,8 @@ public class ControllerComments implements ControllerLinksBase, ControllerCommen
                             }
 
                             setRefreshing(false);
-                        } catch (JSONException e1) {
+                        }
+                        catch (JSONException e1) {
                             e1.printStackTrace();
                         }
                     }
@@ -305,33 +339,45 @@ public class ControllerComments implements ControllerLinksBase, ControllerCommen
     public void insertComments(Comment moreComment, Listing listing) {
 
         List<Thing> listComments = listing.getChildren();
-        int commentIndex = link.getComments().getChildren().indexOf(moreComment);
+        int commentIndex = link.getComments()
+                .getChildren()
+                .indexOf(moreComment);
         if (commentIndex >= 0) {
-            link.getComments().getChildren().remove(commentIndex);
+            link.getComments()
+                    .getChildren()
+                    .remove(commentIndex);
             for (int index = listComments.size() - 1; index >= 0; index--) {
                 Comment comment = (Comment) listComments.get(index);
-                link.getComments().getChildren().add(commentIndex, comment);
+                link.getComments()
+                        .getChildren()
+                        .add(commentIndex, comment);
             }
         }
 
-        commentIndex = listingComments.getChildren().indexOf(moreComment);
+        commentIndex = listingComments.getChildren()
+                .indexOf(moreComment);
         if (commentIndex >= 0) {
-            listingComments.getChildren().remove(commentIndex);
+            listingComments.getChildren()
+                    .remove(commentIndex);
             for (CommentClickListener listener : listeners) {
-                listener.getAdapter().notifyItemRemoved(commentIndex + 1);
+                listener.getAdapter()
+                        .notifyItemRemoved(commentIndex + 1);
             }
 
             for (int index = listComments.size() - 1; index >= 0; index--) {
                 Comment comment = (Comment) listComments.get(index);
-                listingComments.getChildren().add(commentIndex, comment);
+                listingComments.getChildren()
+                        .add(commentIndex, comment);
             }
 
             for (CommentClickListener listener : listeners) {
-                listener.getAdapter().notifyItemRangeInserted(commentIndex + 1, listComments.size());
+                listener.getAdapter()
+                        .notifyItemRangeInserted(commentIndex + 1, listComments.size());
             }
         }
 
-        link.getComments().checkChildren();
+        link.getComments()
+                .checkChildren();
         listingComments.checkChildren();
 
     }
@@ -344,20 +390,24 @@ public class ControllerComments implements ControllerLinksBase, ControllerCommen
         int commentIndex;
 
         if (link.getComments() != null) {
-            commentIndex = link.getComments().getChildren().indexOf(parentComment);
+            commentIndex = link.getComments()
+                    .getChildren()
+                    .indexOf(parentComment);
             link.getComments()
                     .getChildren()
                     .add(commentIndex + 1, comment);
         }
 
         if (listingComments != null) {
-            commentIndex = listingComments.getChildren().indexOf(parentComment);
+            commentIndex = listingComments.getChildren()
+                    .indexOf(parentComment);
             listingComments.getChildren()
                     .add(commentIndex + 1, comment);
 
             // TODO: Fix index offset as this will not work with Profile page
             for (CommentClickListener listener : listeners) {
-                listener.getAdapter().notifyItemInserted(commentIndex + 2);
+                listener.getAdapter()
+                        .notifyItemInserted(commentIndex + 2);
             }
         }
     }
@@ -365,7 +415,9 @@ public class ControllerComments implements ControllerLinksBase, ControllerCommen
     @Override
     public void deleteComment(Comment comment) {
 
-        int commentIndex = link.getComments().getChildren().indexOf(comment);
+        int commentIndex = link.getComments()
+                .getChildren()
+                .indexOf(comment);
         if (commentIndex > -1) {
             Comment newComment = (Comment) link.getComments()
                     .getChildren()
@@ -375,7 +427,8 @@ public class ControllerComments implements ControllerLinksBase, ControllerCommen
 //            link.getComments().getChildren().set(commentIndex, newComment);
         }
 
-        commentIndex = listingComments.getChildren().indexOf(comment);
+        commentIndex = listingComments.getChildren()
+                .indexOf(comment);
         if (commentIndex > -1) {
             Comment newComment = (Comment) listingComments
                     .getChildren()
@@ -385,9 +438,28 @@ public class ControllerComments implements ControllerLinksBase, ControllerCommen
 //            listingComments.getChildren().set(commentIndex, newComment);
 
             for (CommentClickListener listener : listeners) {
-                listener.getAdapter().notifyItemChanged(commentIndex + 1);
+                listener.getAdapter()
+                        .notifyItemChanged(commentIndex + 1);
             }
         }
+
+        Map<String, String> params = new HashMap<>();
+        params.put("id", comment.getName());
+
+        reddit.loadPost(Reddit.OAUTH_URL + "/api/del",
+                new Response.Listener<String>() {
+                    @Override
+                    public void onResponse(
+                            String response) {
+                    }
+                },
+                new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(
+                            VolleyError error) {
+
+                    }
+                }, params, 0);
     }
 
     @Override
@@ -401,7 +473,8 @@ public class ControllerComments implements ControllerLinksBase, ControllerCommen
 
         position = position - 1;
 
-        if (position == listingComments.getChildren().size() - 1) {
+        if (position == listingComments.getChildren()
+                .size() - 1) {
             expandComment(position);
             return true;
         }
@@ -414,7 +487,7 @@ public class ControllerComments implements ControllerLinksBase, ControllerCommen
             expandComment(position);
             return true;
         }
-        else if (comment.getLevel() < nextComment.getLevel()){
+        else if (comment.getLevel() < nextComment.getLevel()) {
             collapseComment(position);
             return false;
         }
@@ -425,25 +498,30 @@ public class ControllerComments implements ControllerLinksBase, ControllerCommen
 
     @Override
     public void expandComment(int position) {
-        List<Thing> commentList = link.getComments().getChildren();
-        int index = commentList.indexOf(listingComments.getChildren().get(position));
+        List<Thing> commentList = link.getComments()
+                .getChildren();
+        int index = commentList.indexOf(listingComments.getChildren()
+                .get(position));
         if (index < 0) {
             return;
         }
         List<Comment> commentsToInsert = new LinkedList<>();
         Comment comment = (Comment) commentList.get(index);
         int numAdded = 0;
-        while (++index < commentList.size() && ((Comment) commentList.get(index)).getLevel() != comment.getLevel()) {
+        while (++index < commentList.size() && ((Comment) commentList.get(
+                index)).getLevel() != comment.getLevel()) {
             commentsToInsert.add((Comment) commentList.get(index));
         }
 
         for (int insertIndex = commentsToInsert.size() - 1; insertIndex >= 0; insertIndex--) {
-            listingComments.getChildren().add(position + 1, commentsToInsert.get(insertIndex));
+            listingComments.getChildren()
+                    .add(position + 1, commentsToInsert.get(insertIndex));
             numAdded++;
         }
 
         for (CommentClickListener listener : listeners) {
-            listener.getAdapter().notifyItemRangeInserted(position + 2, numAdded);
+            listener.getAdapter()
+                    .notifyItemRangeInserted(position + 2, numAdded);
         }
     }
 
@@ -453,25 +531,30 @@ public class ControllerComments implements ControllerLinksBase, ControllerCommen
         Comment comment = (Comment) commentList.get(position);
         position++;
         int numRemoved = 0;
-        while (position < commentList.size() && ((Comment) commentList.get(position)).getLevel() != comment.getLevel()) {
+        while (position < commentList.size() && ((Comment) commentList.get(
+                position)).getLevel() != comment.getLevel()) {
             commentList.remove(position);
             numRemoved++;
         }
         for (CommentClickListener listener : listeners) {
-            listener.getAdapter().notifyItemRangeRemoved(position + 1, numRemoved);
+            listener.getAdapter()
+                    .notifyItemRangeRemoved(position + 1, numRemoved);
         }
     }
 
     @Override
-    public boolean voteComment(final AdapterCommentList.ViewHolderComment viewHolder, final int vote) {
+    public boolean voteComment(final AdapterCommentList.ViewHolderComment viewHolder,
+            final int vote) {
 
         if (TextUtils.isEmpty(preferences.getString(AppSettings.REFRESH_TOKEN, null))) {
-            Toast.makeText(activity, "Must be logged in to vote", Toast.LENGTH_SHORT).show();
+            Toast.makeText(activity, "Must be logged in to vote", Toast.LENGTH_SHORT)
+                    .show();
             return false;
         }
 
         final int position = viewHolder.getAdapterPosition();
-        final Comment comment = (Comment) listingComments.getChildren().get(viewHolder.getAdapterPosition());
+        final Comment comment = (Comment) listingComments.getChildren()
+                .get(viewHolder.getAdapterPosition());
 
         final int oldVote = comment.isLikes();
         int newVote = 0;
@@ -511,7 +594,8 @@ public class ControllerComments implements ControllerLinksBase, ControllerCommen
     public void voteLink(final RecyclerView.ViewHolder viewHolder, final int vote) {
 
         if (TextUtils.isEmpty(preferences.getString(AppSettings.REFRESH_TOKEN, null))) {
-            Toast.makeText(activity, "Must be logged in to vote", Toast.LENGTH_SHORT).show();
+            Toast.makeText(activity, "Must be logged in to vote", Toast.LENGTH_SHORT)
+                    .show();
             return;
         }
 
@@ -593,23 +677,27 @@ public class ControllerComments implements ControllerLinksBase, ControllerCommen
         if (link == null || TextUtils.isEmpty(link.getId())) {
             return 0;
         }
-        if (listingComments == null || listingComments.getChildren().isEmpty()) {
+        if (listingComments == null || listingComments.getChildren()
+                .isEmpty()) {
             return 1;
         }
 
-        return listingComments.getChildren().size() + 1;
+        return listingComments.getChildren()
+                .size() + 1;
     }
 
     @Override
     public Comment getComment(int position) {
-        return (Comment) listingComments.getChildren().get(position - 1);
+        return (Comment) listingComments.getChildren()
+                .get(position - 1);
     }
 
     @Override
     public boolean isCommentExpanded(int position) {
         position = position - 1;
 
-        if (position == listingComments.getChildren().size() - 1) {
+        if (position == listingComments.getChildren()
+                .size() - 1) {
             return false;
         }
 
@@ -620,7 +708,7 @@ public class ControllerComments implements ControllerLinksBase, ControllerCommen
         if (comment.getLevel() == nextComment.getLevel()) {
             return false;
         }
-        else if (comment.getLevel() < nextComment.getLevel()){
+        else if (comment.getLevel() < nextComment.getLevel()) {
             return true;
         }
 
@@ -639,17 +727,25 @@ public class ControllerComments implements ControllerLinksBase, ControllerCommen
     public interface CommentClickListener extends DisallowListener {
 
         void loadUrl(String url);
+
         void setRefreshing(boolean refreshing);
+
         AdapterCommentList getAdapter();
+
         int getRecyclerHeight();
+
         int getRecyclerWidth();
     }
 
     public interface ListenerCallback {
         CommentClickListener getCommentClickListener();
+
         ControllerCommentsBase getControllerComments();
+
         SharedPreferences getPreferences();
+
         User getUser();
+
         float getItemWidth();
     }
 

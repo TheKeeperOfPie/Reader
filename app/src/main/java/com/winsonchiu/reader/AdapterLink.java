@@ -18,7 +18,6 @@ import android.support.v7.widget.RecyclerView.LayoutManager;
 import android.support.v7.widget.ShareActionProvider;
 import android.support.v7.widget.StaggeredGridLayoutManager;
 import android.support.v7.widget.Toolbar;
-import android.text.Html;
 import android.text.TextUtils;
 import android.text.method.LinkMovementMethod;
 import android.util.Log;
@@ -27,7 +26,6 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.ViewGroup;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.Button;
@@ -85,7 +83,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
     protected ControllerLinks.LinkClickListener listener;
     protected SharedPreferences preferences;
     protected List<ViewHolderBase> viewHolders;
-    private static int ACTION_MENU_SIZE = 6;
+    private static int ACTION_MENU_SIZE = 7;
 
     public AdapterLink() {
         super();
@@ -136,6 +134,13 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         return controllerLinks.sizeLinks() > 0 ? controllerLinks.sizeLinks() + 1 : 0;
     }
 
+    @Override
+    public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
+        if (!controllerLinks.isLoading() && position > controllerLinks.sizeLinks() - 5) {
+            controllerLinks.loadMoreLinks();
+        }
+    }
+
     protected static class ViewHolderHeader extends RecyclerView.ViewHolder {
 
         protected TextView textName;
@@ -144,7 +149,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         protected TextView textInfo;
         protected ImageButton buttonOpen;
         protected Button buttonSubmitLink;
-        protected Button buttonSubmitText;
+        protected Button buttomSubmitSelf;
         protected LinearLayout layoutButtons;
         protected View viewDivider;
 
@@ -165,19 +170,21 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             textInfo = (TextView) itemView.findViewById(R.id.text_info);
             layoutButtons = (LinearLayout) itemView.findViewById(R.id.layout_buttons);
             buttonSubmitLink = (Button) itemView.findViewById(R.id.button_submit_link);
-            buttonSubmitText = (Button) itemView.findViewById(R.id.button_submit_text);
+            buttomSubmitSelf = (Button) itemView.findViewById(R.id.button_submit_self);
             viewDivider = itemView.findViewById(R.id.view_divider);
 
             buttonSubmitLink.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    listenerCallback.getListener().onClickSubmit(ActivityNewPost.LINK);
+                    listenerCallback.getListener()
+                            .onClickSubmit(Reddit.POST_TYPE_LINK);
                 }
             });
-            buttonSubmitText.setOnClickListener(new View.OnClickListener() {
+            buttomSubmitSelf.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    listenerCallback.getListener().onClickSubmit(ActivityNewPost.TEXT);
+                    listenerCallback.getListener()
+                            .onClickSubmit(Reddit.POST_TYPE_SELF);
                 }
             });
 
@@ -186,8 +193,12 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                         true);
             }
 
-            defaultTextSubmitLink = itemView.getContext().getResources().getString(R.string.submit_link);
-            defaultTextSubmitText = itemView.getContext().getResources().getString(R.string.submit_text);
+            defaultTextSubmitLink = itemView.getContext()
+                    .getResources()
+                    .getString(R.string.submit_link);
+            defaultTextSubmitText = itemView.getContext()
+                    .getResources()
+                    .getString(R.string.submit_text);
         }
 
         private void setVisibility(int visibility) {
@@ -197,14 +208,15 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             textInfo.setVisibility(visibility);
             layoutButtons.setVisibility(visibility);
             buttonSubmitLink.setVisibility(visibility);
-            buttonSubmitText.setVisibility(visibility);
+            buttomSubmitSelf.setVisibility(visibility);
             viewDivider.setVisibility(visibility);
             itemView.setVisibility(visibility);
         }
 
         public void onBind(Subreddit subreddit) {
 
-            if (TextUtils.isEmpty(subreddit.getDisplayName()) || "/r/all/".equalsIgnoreCase(subreddit.getUrl())) {
+            if (TextUtils.isEmpty(subreddit.getDisplayName()) || "/r/all/".equalsIgnoreCase(
+                    subreddit.getUrl())) {
                 setVisibility(View.GONE);
                 return;
             }
@@ -218,28 +230,31 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                 textDescription.setText("");
             }
             else {
-                textDescription.setText(Reddit.getTrimmedHtml(subreddit.getPublicDescriptionHtml()));
+                textDescription.setText(
+                        Reddit.getTrimmedHtml(subreddit.getPublicDescriptionHtml()));
             }
 
             textInfo.setText(subreddit.getSubscribers() + " subscribers\n" +
                     "created " + new Date(subreddit.getCreatedUtc()));
 
-            if (TextUtils.isEmpty(subreddit.getSubmitLinkLabel()) || "null".equals(subreddit.getSubmitLinkLabel())) {
+            if (TextUtils.isEmpty(subreddit.getSubmitLinkLabel()) || "null".equals(
+                    subreddit.getSubmitLinkLabel())) {
                 buttonSubmitLink.setText(defaultTextSubmitLink);
             }
             else {
                 buttonSubmitLink.setText(subreddit.getSubmitLinkLabel());
             }
 
-            if (TextUtils.isEmpty(subreddit.getSubmitTextLabel()) || "null".equals(subreddit.getSubmitTextLabel())) {
-                buttonSubmitText.setText(defaultTextSubmitText);
+            if (TextUtils.isEmpty(subreddit.getSubmitTextLabel()) || "null".equals(
+                    subreddit.getSubmitTextLabel())) {
+                buttomSubmitSelf.setText(defaultTextSubmitText);
             }
             else {
-                buttonSubmitText.setText(subreddit.getSubmitTextLabel());
+                buttomSubmitSelf.setText(subreddit.getSubmitTextLabel());
             }
 
             if (Reddit.POST_TYPE_LINK.equalsIgnoreCase(subreddit.getSubmissionType())) {
-                buttonSubmitText.setVisibility(View.GONE);
+                buttomSubmitSelf.setVisibility(View.GONE);
             }
             else if (Reddit.POST_TYPE_SELF.equalsIgnoreCase(subreddit.getSubmissionType())) {
                 buttonSubmitLink.setVisibility(View.GONE);
@@ -399,6 +414,11 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                             break;
                         case R.id.item_reply:
                             toggleReply();
+                            break;
+                        case R.id.item_delete:
+                            callback.getController().deletePost(callback.getController()
+                                    .getLink(getAdapterPosition()));
+                            break;
                     }
                     return true;
                 }
@@ -415,7 +435,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                     if (TextUtils.isEmpty(callback.getPreferences()
                             .getString(AppSettings.REFRESH_TOKEN, ""))) {
                         Toast.makeText(callback.getController()
-                                .getActivity(), "Must be logged in to reply",
+                                        .getActivity(), "Must be logged in to reply",
                                 Toast.LENGTH_SHORT)
                                 .show();
                         return;
@@ -987,7 +1007,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                             }
 
                             Toast.makeText(callback.getController()
-                                    .getActivity(), "Image downloaded",
+                                            .getActivity(), "Image downloaded",
                                     Toast.LENGTH_SHORT)
                                     .show();
                         }

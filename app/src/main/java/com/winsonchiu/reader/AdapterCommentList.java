@@ -449,26 +449,6 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                                                     callback.getControllerComments()
                                                             .deleteComment(
                                                                     comment);
-
-                                                    Map<String, String> params = new HashMap<>();
-                                                    params.put("id", comment.getName());
-
-                                                    callback.getControllerComments()
-                                                            .getReddit()
-                                                            .loadPost(Reddit.OAUTH_URL + "/api/del",
-                                                                    new Response.Listener<String>() {
-                                                                        @Override
-                                                                        public void onResponse(
-                                                                                String response) {
-                                                                        }
-                                                                    },
-                                                                    new Response.ErrorListener() {
-                                                                        @Override
-                                                                        public void onErrorResponse(
-                                                                                VolleyError error) {
-
-                                                                        }
-                                                                    }, params, 0);
                                                 }
                                             })
                                     .setNegativeButton("No", null)

@@ -69,4 +69,12 @@
     <string name="new_post">New Post</string>
     <string name="submit_link">New Link</string>
     <string name="submit_text">New Self Post</string>
+    <string name="captcha">CAPTCHA</string>
+    <string name="captcha_response">CAPTCHA response</string>
+    <string name="empty_title">Title cannot be empty</string>
+    <string name="invalid_url">Text is not valid URL</string>
+    <string name="item_delete">Delete</string>
+    <string name="submitting_to">Submitting to</string>
+    <string name="as">as</string>
+    <string name="must_be_logged_in">Must be logged in to do that</string>
 </resources>

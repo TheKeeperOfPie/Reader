@@ -20,8 +20,10 @@ import com.winsonchiu.reader.data.User;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -294,6 +296,11 @@ public class ControllerProfile implements ControllerLinksBase, ControllerComment
     }
 
     @Override
+    public void deletePost(Link link) {
+        // TODO: Implement deleting posts from Profile view
+    }
+
+    @Override
     public void insertComments(Comment moreComment, Listing listing) {
         // Not implemented
     }
@@ -310,7 +317,26 @@ public class ControllerProfile implements ControllerLinksBase, ControllerComment
 
         for (ControllerProfile.ItemClickListener listener : listeners) {
             listener.getAdapter().notifyItemRemoved(commentIndex + 6);
+
         }
+
+        Map<String, String> params = new HashMap<>();
+        params.put("id", comment.getName());
+
+        reddit.loadPost(Reddit.OAUTH_URL + "/api/del",
+                new Response.Listener<String>() {
+                    @Override
+                    public void onResponse(
+                            String response) {
+                    }
+                },
+                new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(
+                            VolleyError error) {
+
+                    }
+                }, params, 0);
     }
 
     @Override

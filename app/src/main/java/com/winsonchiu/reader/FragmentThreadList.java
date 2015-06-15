@@ -15,6 +15,7 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.StaggeredGridLayoutManager;
 import android.text.Html;
+import android.text.TextUtils;
 import android.text.method.LinkMovementMethod;
 import android.util.Log;
 import android.util.TypedValue;
@@ -32,6 +33,7 @@ import android.view.animation.Transformation;
 import android.view.animation.TranslateAnimation;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
@@ -473,10 +475,21 @@ public class FragmentThreadList extends Fragment {
 
             @Override
             public void onClickSubmit(String postType) {
+                if (TextUtils.isEmpty(mListener.getControllerInbox().getUser().getName())) {
+                    Toast.makeText(activity, getString(R.string.must_be_logged_in), Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
                 Intent intent = new Intent(activity, ActivityNewPost.class);
+                intent.putExtra(ActivityNewPost.USER, mListener.getControllerInbox().getUser().getName());
+                intent.putExtra(ActivityNewPost.SUBREDDIT, mListener.getControllerLinks().getSubreddit().getUrl().substring(
+                        3, mListener.getControllerLinks()
+                        .getSubreddit()
+                        .getUrl()
+                        .length() - 1));
                 intent.putExtra(ActivityNewPost.POST_TYPE, postType);
                 intent.putExtra(ActivityNewPost.SUBMIT_TEXT_HTML, mListener.getControllerLinks().getSubreddit().getSubmitTextHtml());
-                startActivity(intent);
+                startActivityForResult(intent, ActivityNewPost.REQUEST_CODE);
             }
 
             @Override
@@ -521,17 +534,6 @@ public class FragmentThreadList extends Fragment {
         recyclerThreadList.setHasFixedSize(true);
 
         drawerLayout = (DrawerLayout) view.findViewById(R.id.drawer_layout);
-        drawerLayout.getViewTreeObserver().addOnGlobalLayoutListener(
-                new ViewTreeObserver.OnGlobalLayoutListener() {
-                    @Override
-                    public void onGlobalLayout() {
-
-                        Log.d(TAG, "drawerLayout height: " + drawerLayout.getHeight());
-//                        Log.d(TAG, "fab Location: (" + fabNewPost.getX() + ", " + fabNewPost.getY() + ")");
-
-                        drawerLayout.getViewTreeObserver().removeOnGlobalLayoutListener(this);
-                    }
-                });
 
         textSidebar = (TextView) view.findViewById(R.id.text_sidebar);
         textSidebar.setMovementMethod(LinkMovementMethod.getInstance());
@@ -541,6 +543,16 @@ public class FragmentThreadList extends Fragment {
                 .addListener(linkClickListener);
 
         return view;
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if (resultCode == Activity.RESULT_OK) {
+            mListener.getControllerLinks().reloadAllLinks();
+        }
+
     }
 
     @Override
@@ -623,6 +635,7 @@ public class FragmentThreadList extends Fragment {
         void setToolbarTitle(CharSequence title);
         ControllerLinks getControllerLinks();
         ControllerComments getControllerComments();
+        ControllerInbox getControllerInbox();
         void setNavigationAnimation(float value);
     }
 

@@ -30,6 +30,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -181,7 +182,7 @@ public class ControllerLinks implements ControllerLinksBase {
     public void reloadAllLinks() {
         setLoading(true);
 
-        String url = Reddit.OAUTH_URL + subreddit.getUrl() + sort.toString() + "?t=" + time.toString() + "&limit=50&showAll=true";
+        String url = Reddit.OAUTH_URL + subreddit.getUrl() + sort.toString() + "?t=" + time.toString() + "&limit=25&showAll=true";
 
         reddit.loadGet(url, new Listener<String>() {
             @Override
@@ -233,7 +234,7 @@ public class ControllerLinks implements ControllerLinksBase {
             return;
         }
         setLoading(true);
-        String url = Reddit.OAUTH_URL + subreddit.getUrl() + sort.toString() + "?t=" + time.toString() + "&limit=50&showAll=true&after=" + listingLinks.getAfter();
+        String url = Reddit.OAUTH_URL + subreddit.getUrl() + sort.toString() + "?t=" + time.toString() + "&limit=15&showAll=true&after=" + listingLinks.getAfter();
 
         reddit.loadGet(url,
                 new Listener<String>() {
@@ -247,9 +248,9 @@ public class ControllerLinks implements ControllerLinksBase {
                             listingLinks.setAfter(listing.getAfter());
                             for (LinkClickListener listener : listeners) {
                                 listener.getAdapter()
-                                        .notifyItemRangeInserted(positionStart,
+                                        .notifyItemRangeInserted(positionStart + 1,
                                                 listingLinks.getChildren()
-                                                        .size() - positionStart);
+                                                        .size() - positionStart + 1);
                             }
                         }
                         catch (JSONException exception) {
@@ -276,6 +277,36 @@ public class ControllerLinks implements ControllerLinksBase {
     @Override
     public Subreddit getSubreddit() {
         return subreddit;
+    }
+
+    @Override
+    public void deletePost(Link link) {
+        int index = listingLinks.getChildren().indexOf(link);
+
+        if (index >= 0) {
+            listingLinks.getChildren().remove(index);
+            for (LinkClickListener listener : listeners) {
+                listener.getAdapter().notifyItemRemoved(index + 1);
+            }
+
+            Map<String, String> params = new HashMap<>();
+            params.put("id", link.getName());
+
+            reddit.loadPost(Reddit.OAUTH_URL + "/api/del",
+                    new Response.Listener<String>() {
+                        @Override
+                        public void onResponse(
+                                String response) {
+                        }
+                    },
+                    new Response.ErrorListener() {
+                        @Override
+                        public void onErrorResponse(
+                                VolleyError error) {
+
+                        }
+                    }, params, 0);
+        }
     }
 
     @Override

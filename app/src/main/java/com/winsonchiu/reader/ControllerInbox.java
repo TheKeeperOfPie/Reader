@@ -23,7 +23,9 @@ import com.winsonchiu.reader.data.User;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -55,6 +57,8 @@ public class ControllerInbox implements ControllerCommentsBase {
         this.drawableDefault = resources.getDrawable(R.drawable.ic_web_white_48dp);
         link = new Link();
         page = "Inbox";
+
+        // TODO: Support reloading user data
         SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(activity);
         if (!TextUtils.isEmpty(preferences.getString(AppSettings.ACCOUNT_JSON, ""))) {
             try {
@@ -219,6 +223,11 @@ public class ControllerInbox implements ControllerCommentsBase {
         return new Subreddit();
     }
 
+    @Override
+    public void deletePost(Link link) {
+        // Not implemented
+    }
+
     public void insertMessage(Message message) {
 
         Message parentMessage = new Message();
@@ -268,6 +277,24 @@ public class ControllerInbox implements ControllerCommentsBase {
         for (ItemClickListener listener : listeners) {
             listener.getAdapter().notifyItemRemoved(commentIndex);
         }
+
+        Map<String, String> params = new HashMap<>();
+        params.put("id", comment.getName());
+
+        reddit.loadPost(Reddit.OAUTH_URL + "/api/del",
+                new Response.Listener<String>() {
+                    @Override
+                    public void onResponse(
+                            String response) {
+                    }
+                },
+                new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(
+                            VolleyError error) {
+
+                    }
+                }, params, 0);
     }
 
     @Override

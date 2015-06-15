@@ -24,4 +24,5 @@ public interface ControllerLinksBase {
     void loadMoreLinks();
     Activity getActivity();
     Subreddit getSubreddit();
+    void deletePost(Link link);
 }

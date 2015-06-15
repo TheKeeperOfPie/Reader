@@ -28,10 +28,24 @@
                 >
 
                 <TextView
-                    android:id="@+id/text_submit"
+                    android:id="@+id/text_info"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_alignParentTop="true"
+                    android:layout_marginStart="@dimen/activity_horizontal_margin"
+                    android:layout_marginEnd="@dimen/activity_horizontal_margin"
+                    android:layout_marginTop="@dimen/activity_vertical_margin"
+                    android:layout_marginBottom="@dimen/activity_vertical_margin"
+                    android:paddingStart="16dp"
+                    android:paddingEnd="16dp"
+                    android:textAppearance="?android:textAppearanceMedium"
+                    />
+
+                <TextView
+                    android:id="@+id/text_submit"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@id/text_info"
                     android:layout_marginStart="@dimen/activity_horizontal_margin"
                     android:layout_marginEnd="@dimen/activity_horizontal_margin"
                     android:layout_marginTop="@dimen/activity_vertical_margin"
@@ -63,6 +77,7 @@
                     android:paddingEnd="16dp"
                     android:hint="@string/new_post_title"
                     android:ellipsize="end"
+                    android:maxLength="300"
                     />
 
                 <!--</android.support.design.widget.TextInputLayout>-->
@@ -91,37 +106,71 @@
                     android:paddingEnd="16dp"
                     android:hint="@string/new_post_body"
                     android:ellipsize="end"
+                    android:maxLength="10000"
                     />
 
                 <!--</android.support.design.widget.TextInputLayout>-->
 
-                <!--<android.support.design.widget.TextInputLayout-->
-                <!--android:layout_width="match_parent"-->
-                <!--android:layout_height="wrap_content"-->
-                <!--android:layout_below="@id/layout_text_input_body"-->
-                <!--android:layout_marginStart="@dimen/activity_horizontal_margin"-->
-                <!--android:layout_marginEnd="@dimen/activity_horizontal_margin"-->
-                <!--android:layout_marginTop="@dimen/activity_vertical_margin"-->
-                <!--android:layout_marginBottom="@dimen/activity_vertical_margin"-->
-                <!-->-->
-
-                <EditText
-                    android:id="@+id/edit_subreddit"
+                <RelativeLayout
+                    android:id="@+id/layout_captcha"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_below="@id/edit_body"
-                    android:layout_marginStart="@dimen/activity_horizontal_margin"
-                    android:layout_marginEnd="@dimen/activity_horizontal_margin"
-                    android:layout_marginTop="@dimen/activity_vertical_margin"
-                    android:layout_marginBottom="@dimen/activity_vertical_margin"
-                    android:paddingStart="16dp"
-                    android:paddingEnd="16dp"
-                    android:hint="@string/subreddit"
-                    android:ellipsize="end"
-                    />
+                    android:visibility="gone"
+                    >
 
-                <!--</android.support.design.widget.TextInputLayout>-->
+                    <TextView
+                        android:id="@+id/text_captcha"
+                        android:minHeight="48dp"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_alignParentTop="true"
+                        android:layout_toStartOf="@+id/button_captcha_refresh"
+                        android:layout_marginStart="@dimen/activity_horizontal_margin"
+                        android:layout_marginEnd="@dimen/activity_horizontal_margin"
+                        android:layout_marginTop="@dimen/activity_vertical_margin"
+                        android:layout_marginBottom="@dimen/activity_vertical_margin"
+                        android:hint="@string/captcha"
+                        />
 
+                    <ImageButton
+                        android:id="@+id/button_captcha_refresh"
+                        android:layout_width="wrap_content"
+                        android:layout_height="48dp"
+                        android:layout_alignParentTop="true"
+                        android:layout_alignParentEnd="true"
+                        android:src="@drawable/ic_refresh_white_24dp"
+                        android:padding="12dp"
+                        />
+
+                    <ImageView
+                        android:id="@+id/image_captcha"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_below="@id/text_captcha"
+                        android:layout_marginStart="@dimen/activity_horizontal_margin"
+                        android:layout_marginEnd="@dimen/activity_horizontal_margin"
+                        android:layout_marginTop="8dp"
+                        android:layout_marginBottom="8dp"
+                        android:background="@android:color/holo_red_dark"
+                        />
+
+                    <EditText
+                        android:id="@+id/edit_captcha"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_below="@id/image_captcha"
+                        android:layout_marginStart="@dimen/activity_horizontal_margin"
+                        android:layout_marginEnd="@dimen/activity_horizontal_margin"
+                        android:layout_marginTop="@dimen/activity_vertical_margin"
+                        android:layout_marginBottom="@dimen/activity_vertical_margin"
+                        android:paddingStart="16dp"
+                        android:paddingEnd="16dp"
+                        android:hint="@string/captcha_response"
+                        android:ellipsize="end"
+                        />
+
+                </RelativeLayout>
 
             </RelativeLayout>
 

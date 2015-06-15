@@ -566,9 +566,9 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     public void setFloatingActionButtonValues(View.OnClickListener listener, int resourceId) {
-        floatingActionButton.setImageResource(resourceId);
-        floatingActionButton.setOnClickListener(listener);
-        floatingActionButton.setVisibility(listener == null ? View.GONE : View.VISIBLE);
+//        floatingActionButton.setImageResource(resourceId);
+//        floatingActionButton.setOnClickListener(listener);
+//        floatingActionButton.setVisibility(listener == null ? View.GONE : View.VISIBLE);
     }
 
     @Override

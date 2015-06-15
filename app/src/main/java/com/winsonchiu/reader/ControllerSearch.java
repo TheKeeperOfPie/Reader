@@ -28,7 +28,7 @@ import java.util.Set;
 /**
  * Created by TheKeeperOfPie on 6/3/2015.
  */
-public class ControllerSearch implements ControllerLinksBase {
+public class ControllerSearch{
 
     public static final int PAGE_SUBREDDITS = 0;
     public static final int PAGE_LINKS_SUBREDDIT = 1;
@@ -84,7 +84,6 @@ public class ControllerSearch implements ControllerLinksBase {
         listeners.remove(linkClickListener);
     }
 
-    @Override
     public Reddit getReddit() {
         return reddit;
     }
@@ -239,7 +238,6 @@ public class ControllerSearch implements ControllerLinksBase {
                 .size();
     }
 
-    @Override
     public Drawable getDrawableForLink(Link link) {
         String thumbnail = link.getThumbnail();
 
@@ -255,27 +253,22 @@ public class ControllerSearch implements ControllerLinksBase {
         return null;
     }
 
-    @Override
     public Link getLink(int position) {
         return (Link) links.getChildren().get(position);
     }
 
-    @Override
     public void voteLink(RecyclerView.ViewHolder viewHolder, int vote) {
 
     }
 
-    @Override
     public int sizeLinks() {
         return links.getChildren().size();
     }
 
-    @Override
     public boolean isLoading() {
         return false;
     }
 
-    @Override
     public void loadMoreLinks() {
         // TODO: Load more links when end of list reached
         reddit.loadGet(Reddit.OAUTH_URL + "/search?q=" + query + "&after=" + links.getAfter(),
@@ -350,12 +343,10 @@ public class ControllerSearch implements ControllerLinksBase {
                 }, 0);
     }
 
-    @Override
     public Activity getActivity() {
         return activity;
     }
 
-    @Override
     public Subreddit getSubreddit() {
         return new Subreddit();
     }
