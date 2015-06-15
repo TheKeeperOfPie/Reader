@@ -3,6 +3,7 @@ package com.winsonchiu.reader.data;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
+import android.text.Html;
 import android.text.TextUtils;
 import android.util.Base64;
 
@@ -17,6 +18,7 @@ import com.android.volley.toolbox.Volley;
 import com.winsonchiu.reader.ApiKeys;
 import com.winsonchiu.reader.AppSettings;
 import com.winsonchiu.reader.BuildConfig;
+import com.winsonchiu.reader.R;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -61,9 +63,11 @@ public class Reddit {
     public static final String JPEG = ".jpeg";
     public static final String WEBP = ".webp";
 
-    public static final String SELF = "self";
     public static final String DEFAULT = "default";
     public static final String NSFW = "nsfw";
+
+    public static final String POST_TYPE_LINK = "Link";
+    public static final String POST_TYPE_SELF = "Self";
 
     public static final String UTF_8 = "UTF-8";
     public static final String FRONT_PAGE = "Front Page";
@@ -408,8 +412,22 @@ public class Reddit {
         return "<html><head><meta name=\"viewport\" content=\"width=device-width, minimum-scale=0.1\"><style>img {width:100%;}</style></head><body style=\"margin: 0px;\"><img style=\"-webkit-user-select: none; cursor: zoom-in;\" src=\"" + src + "\"></body></html>";
     }
 
-    public interface UrlClickListener {
-        void onUrlClick(String url);
+    public static CharSequence getTrimmedHtml(String html) {
+        html = Html.fromHtml(html.trim())
+                .toString();
+
+        CharSequence sequence = Html.fromHtml(html);
+
+        // Trims leading and trailing whitespace
+        int start = 0;
+        int end = sequence.length();
+        while (start < end && Character.isWhitespace(sequence.charAt(start))) {
+            start++;
+        }
+        while (end > start && Character.isWhitespace(sequence.charAt(end - 1))) {
+            end--;
+        }
+        return sequence.subSequence(start, end);
     }
 
     public interface RedditErrorListener {

@@ -12,6 +12,7 @@ import android.view.ViewGroup;
 import android.widget.ImageButton;
 import android.widget.TextView;
 
+import com.winsonchiu.reader.data.Reddit;
 import com.winsonchiu.reader.data.Subreddit;
 
 import java.util.Date;
@@ -132,25 +133,7 @@ public class AdapterSearchSubreddits extends RecyclerView.Adapter<AdapterSearchS
                 textDescription.setText("");
             }
             else {
-                // TODO: Move all instances to Reddit class
-                String html = subreddit.getPublicDescriptionHtml();
-                html = Html.fromHtml(html.trim())
-                        .toString();
-
-                CharSequence sequence = Html.fromHtml(html);
-
-                // Trims leading and trailing whitespace
-                int start = 0;
-                int end = sequence.length();
-                while (start < end && Character.isWhitespace(sequence.charAt(start))) {
-                    start++;
-                }
-                while (end > start && Character.isWhitespace(sequence.charAt(end - 1))) {
-                    end--;
-                }
-                sequence = sequence.subSequence(start, end);
-
-                textDescription.setText(sequence);
+                textDescription.setText(Reddit.getTrimmedHtml(subreddit.getPublicDescriptionHtml()));
             }
 
             textInfo.setText(subreddit.getSubscribers() + " subscribers\n" +

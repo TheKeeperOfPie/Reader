@@ -85,21 +85,6 @@ public class FragmentWeb extends Fragment {
 
         itemSearch = menu.findItem(R.id.item_search);
 
-        MenuItemCompat.setOnActionExpandListener(itemSearch,
-                new MenuItemCompat.OnActionExpandListener() {
-                    @Override
-                    public boolean onMenuItemActionExpand(MenuItem item) {
-                        mListener.hideToolbarTitle();
-                        return true;
-                    }
-
-                    @Override
-                    public boolean onMenuItemActionCollapse(MenuItem item) {
-                        mListener.restoreToolbarTitle();
-                        return true;
-                    }
-                });
-
         SearchView searchView = (SearchView) itemSearch.getActionView();
 
         searchView.setQueryHint(getString(R.string.search_in_page));
@@ -123,7 +108,6 @@ public class FragmentWeb extends Fragment {
     public void onDestroyOptionsMenu() {
         SearchView searchView = (SearchView) itemSearch.getActionView();
         searchView.setOnQueryTextListener(null);
-        MenuItemCompat.setOnActionExpandListener(itemSearch, null);
         itemSearch = null;
         super.onDestroyOptionsMenu();
     }

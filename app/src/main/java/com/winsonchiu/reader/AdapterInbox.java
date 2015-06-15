@@ -351,24 +351,7 @@ public class AdapterInbox extends RecyclerView.Adapter<RecyclerView.ViewHolder>
                 buttonSendReply.setVisibility(View.GONE);
             }
 
-            String html = message.getBodyHtml();
-            html = Html.fromHtml(html.trim())
-                    .toString();
-
-            CharSequence sequence = Html.fromHtml(html);
-
-            // Trims leading and trailing whitespace
-            int start = 0;
-            int end = sequence.length();
-            while (start < end && Character.isWhitespace(sequence.charAt(start))) {
-                start++;
-            }
-            while (end > start && Character.isWhitespace(sequence.charAt(end - 1))) {
-                end--;
-            }
-            sequence = sequence.subSequence(start, end);
-
-            textMessage.setText(sequence);
+            textMessage.setText(Reddit.getTrimmedHtml(message.getBodyHtml()));
 
             Spannable spannableInfo = new SpannableString("by " + message.getAuthor() + " on " + new Date(message.getCreatedUtc()).toString());
 

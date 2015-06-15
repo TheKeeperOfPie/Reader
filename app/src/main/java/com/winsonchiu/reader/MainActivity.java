@@ -75,8 +75,6 @@ public class MainActivity extends AppCompatActivity
     private DrawerLayout mDrawerLayout;
     private NavigationView viewNavigation;
     private FloatingActionButton floatingActionButton;
-    private CollapsingToolbarLayout layoutCollapsingToolbar;
-    private FrameLayout layoutFrameHeaderView;
     private AppBarLayout layoutAppBar;
     private CoordinatorLayout layoutCoordinator;
     private FloatingActionButton.Behavior behaviorFloatingActionButton;
@@ -120,8 +118,6 @@ public class MainActivity extends AppCompatActivity
 
         layoutCoordinator = (CoordinatorLayout) findViewById(R.id.layout_coordinator);
         layoutAppBar = (AppBarLayout) findViewById(R.id.layout_app_bar);
-        layoutCollapsingToolbar = (CollapsingToolbarLayout) findViewById(R.id.layout_collapsing_toolbar);
-        layoutFrameHeaderView = (FrameLayout) findViewById(R.id.layout_frame_header_view);
 
         toolbar = (Toolbar) findViewById(R.id.toolbar);
         toolbar.setOnClickListener(new View.OnClickListener() {
@@ -540,23 +536,7 @@ public class MainActivity extends AppCompatActivity
     @Override
     public void setToolbarTitle(CharSequence title) {
         mTitle = title;
-        layoutCollapsingToolbar.setTitle(mTitle);
         toolbar.setTitle(mTitle);
-    }
-
-    @Override
-    public void hideToolbarTitle() {
-        CoordinatorLayout.LayoutParams params = (CoordinatorLayout.LayoutParams) layoutAppBar.getLayoutParams();
-        AppBarLayout.Behavior behaviorAppBar = (AppBarLayout.Behavior) params.getBehavior();
-        if (behaviorAppBar != null) {
-            behaviorAppBar.setTopAndBottomOffset(0);
-            behaviorAppBar.onNestedPreScroll(layoutCoordinator, layoutAppBar, null, 0, 1,
-                    new int[2]);
-        }
-    }
-
-    @Override
-    public void restoreToolbarTitle() {
     }
 
     @Override
@@ -589,33 +569,6 @@ public class MainActivity extends AppCompatActivity
         floatingActionButton.setImageResource(resourceId);
         floatingActionButton.setOnClickListener(listener);
         floatingActionButton.setVisibility(listener == null ? View.GONE : View.VISIBLE);
-        if (listener == null) {
-//            layoutFrameHeaderView.getLayoutParams().height = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 48, getResources().getDisplayMetrics());
-//            layoutFrameHeaderView.requestLayout();
-//            layoutCoordinator.requestLayout();
-            CoordinatorLayout.LayoutParams params = (CoordinatorLayout.LayoutParams) layoutAppBar.getLayoutParams();
-            AppBarLayout.Behavior behaviorAppBar = (AppBarLayout.Behavior) params.getBehavior();
-            if (behaviorAppBar != null) {
-                behaviorAppBar.onNestedFling(layoutCoordinator, layoutAppBar, null, 0,
-                        Float.MAX_VALUE, true);
-            }
-//            try {
-//                Field field = CollapsingToolbarLayout.class.getDeclaredField("mOnOffsetChangedListener");
-//                field.setAccessible(true);
-//                offsetListener = (AppBarLayout.OnOffsetChangedListener) field.get(layoutCollapsingToolbar);
-//                layoutAppBar.removeOnOffsetChangedListener(offsetListener);
-//            }
-//            catch (NoSuchFieldException e) {
-//                e.printStackTrace();
-//            }
-//            catch (IllegalAccessException e) {
-//                e.printStackTrace();
-//            }
-        }
-//        else if (offsetListener != null) {
-//            layoutAppBar.addOnOffsetChangedListener(offsetListener);
-//        }
-
     }
 
     @Override

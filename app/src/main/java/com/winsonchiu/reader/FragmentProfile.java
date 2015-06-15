@@ -117,21 +117,6 @@ public class FragmentProfile extends Fragment {
         itemSortTime = menu.findItem(R.id.item_sort_time);
         itemSearch = menu.findItem(R.id.item_search);
 
-        MenuItemCompat.setOnActionExpandListener(itemSearch,
-                new MenuItemCompat.OnActionExpandListener() {
-                    @Override
-                    public boolean onMenuItemActionExpand(MenuItem item) {
-                        mListener.hideToolbarTitle();
-                        return true;
-                    }
-
-                    @Override
-                    public boolean onMenuItemActionCollapse(MenuItem item) {
-                        mListener.restoreToolbarTitle();
-                        return true;
-                    }
-                });
-
         final SearchView searchView = (SearchView) itemSearch.getActionView();
 
         searchView.setQueryHint(getString(R.string.username));
@@ -188,7 +173,6 @@ public class FragmentProfile extends Fragment {
     public void onDestroyOptionsMenu() {
         SearchView searchView = (SearchView) itemSearch.getActionView();
         searchView.setOnQueryTextListener(null);
-        MenuItemCompat.setOnActionExpandListener(itemSearch, null);
         itemSearch = null;
         super.onDestroyOptionsMenu();
     }
@@ -220,11 +204,15 @@ public class FragmentProfile extends Fragment {
         return super.onOptionsItemSelected(item);
     }
 
+    /*
+        Workaround for Android's drag-to-select menu bug, where the
+        menu becomes unusable after a drag gesture
+     */
     private void flashSearchView() {
-//        if (itemSearch != null) {
-//            itemSearch.expandActionView();
-//            itemSearch.collapseActionView();
-//        }
+        if (itemSearch != null) {
+            itemSearch.expandActionView();
+            itemSearch.collapseActionView();
+        }
     }
 
     @Override

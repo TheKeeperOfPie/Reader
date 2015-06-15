@@ -28,29 +28,14 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             >
-            <android.support.design.widget.CollapsingToolbarLayout
-                android:id="@+id/layout_collapsing_toolbar"
+
+            <android.support.v7.widget.Toolbar
+                android:id="@+id/toolbar"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:fitsSystemWindows="true"
-                app:contentScrim="?attr/colorPrimary"
-                app:layout_scrollFlags="scroll|exitUntilCollapsed">
-
-                <FrameLayout
-                    android:id="@+id/layout_frame_header_view"
-                    android:layout_width="match_parent"
-                    android:layout_height="192dp"
-                    />
-
-                <android.support.v7.widget.Toolbar
-                    android:id="@+id/toolbar"
-                    android:layout_width="match_parent"
-                    android:layout_height="?attr/actionBarSize"
-                    android:background="@color/colorPrimary"
-                    app:layout_collapseMode="pin"
-                    />
-
-            </android.support.design.widget.CollapsingToolbarLayout>
+                android:layout_height="?attr/actionBarSize"
+                android:background="@color/colorPrimary"
+                app:layout_collapseMode="pin"
+                />
 
         </android.support.design.widget.AppBarLayout>
 

@@ -9,6 +9,7 @@ import android.support.v7.widget.RecyclerView;
 import android.text.Html;
 import android.text.TextUtils;
 import android.util.Log;
+import android.view.View;
 import android.widget.Toast;
 
 import com.android.volley.Response;
@@ -99,6 +100,7 @@ public class ControllerLinks implements ControllerLinksBase {
                     public void onResponse(String response) {
                         try {
                             subreddit = Subreddit.fromJson(new JSONObject(response));
+                            Log.d(TAG, "subreddit: " + response);
                         }
                         catch (JSONException e) {
                             e.printStackTrace();
@@ -400,6 +402,8 @@ public class ControllerLinks implements ControllerLinksBase {
         void setEmptyView(boolean visible);
 
         int getRecyclerWidth();
+
+        void onClickSubmit(String postType);
 
         ControllerCommentsBase getControllerComments();
     }

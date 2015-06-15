@@ -67,4 +67,6 @@
     <string name="new_post_title">Title</string>
     <string name="new_post_body">URL or self text</string>
     <string name="new_post">New Post</string>
+    <string name="submit_link">New Link</string>
+    <string name="submit_text">New Self Post</string>
 </resources>

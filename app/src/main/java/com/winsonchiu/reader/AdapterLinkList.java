@@ -53,7 +53,7 @@ public class AdapterLinkList extends AdapterLink {
     public RecyclerView.ViewHolder  onCreateViewHolder(ViewGroup viewGroup, int viewType) {
 
         if (viewType == VIEW_LINK_HEADER) {
-            return new ViewHolderHeader(LayoutInflater.from(viewGroup.getContext()).inflate(R.layout.header_link, viewGroup, false), this, controllerLinks.getSubreddit());
+            return new ViewHolderHeader(LayoutInflater.from(viewGroup.getContext()).inflate(R.layout.header_link, viewGroup, false), this);
         }
 
         ViewHolder viewHolder = new ViewHolder(LayoutInflater.from(viewGroup.getContext())

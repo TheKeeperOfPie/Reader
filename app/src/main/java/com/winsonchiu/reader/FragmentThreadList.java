@@ -246,11 +246,11 @@ public class FragmentThreadList extends Fragment {
         Workaround for Android's drag-to-select menu bug, where the
         menu becomes unusable after a drag gesture
      */
-    public void flashSearchView() {
-//        if (itemSearch != null) {
-//            itemSearch.expandActionView();
-//            itemSearch.collapseActionView();
-//        }
+    private void flashSearchView() {
+        if (itemSearch != null) {
+            itemSearch.expandActionView();
+            itemSearch.collapseActionView();
+        }
     }
 
     private void resetAdapter(AdapterLink newAdapter) {
@@ -442,11 +442,7 @@ public class FragmentThreadList extends Fragment {
                                         try {
                                             Subreddit loadedSubreddit = Subreddit.fromJson(
                                                     new JSONObject(response));
-                                            String html = Html.fromHtml(
-                                                    loadedSubreddit.getDescriptionHtml())
-                                                    .toString();
-                                            CharSequence sequence = Html.fromHtml(html);
-                                            textSidebar.setText(sequence);
+                                            textSidebar.setText(Reddit.getTrimmedHtml(loadedSubreddit.getDescriptionHtml()));
                                             drawerLayout.setDrawerLockMode(
                                                     DrawerLayout.LOCK_MODE_UNLOCKED);
                                         }
@@ -473,6 +469,14 @@ public class FragmentThreadList extends Fragment {
             @Override
             public int getRecyclerWidth() {
                 return recyclerThreadList.getWidth();
+            }
+
+            @Override
+            public void onClickSubmit(String postType) {
+                Intent intent = new Intent(activity, ActivityNewPost.class);
+                intent.putExtra(ActivityNewPost.POST_TYPE, postType);
+                intent.putExtra(ActivityNewPost.SUBMIT_TEXT_HTML, mListener.getControllerLinks().getSubreddit().getSubmitTextHtml());
+                startActivity(intent);
             }
 
             @Override

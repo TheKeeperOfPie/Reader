@@ -143,11 +143,18 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         protected TextView textDescription;
         protected TextView textInfo;
         protected ImageButton buttonOpen;
+        protected Button buttonSubmitLink;
+        protected Button buttonSubmitText;
+        protected LinearLayout layoutButtons;
+        protected View viewDivider;
+
+        private String defaultTextSubmitLink;
+        private String defaultTextSubmitText;
+
         private ControllerLinks.ListenerCallback callback;
 
         public ViewHolderHeader(View itemView,
-                ControllerLinks.ListenerCallback listenerCallback,
-                Subreddit subreddit) {
+                final ControllerLinks.ListenerCallback listenerCallback) {
             super(itemView);
 
             callback = listenerCallback;
@@ -156,36 +163,52 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             textDescription = (TextView) itemView.findViewById(R.id.text_description);
             textDescription.setMovementMethod(LinkMovementMethod.getInstance());
             textInfo = (TextView) itemView.findViewById(R.id.text_info);
+            layoutButtons = (LinearLayout) itemView.findViewById(R.id.layout_buttons);
+            buttonSubmitLink = (Button) itemView.findViewById(R.id.button_submit_link);
+            buttonSubmitText = (Button) itemView.findViewById(R.id.button_submit_text);
+            viewDivider = itemView.findViewById(R.id.view_divider);
+
+            buttonSubmitLink.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    listenerCallback.getListener().onClickSubmit(ActivityNewPost.LINK);
+                }
+            });
+            buttonSubmitText.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    listenerCallback.getListener().onClickSubmit(ActivityNewPost.TEXT);
+                }
+            });
 
             if (itemView.getLayoutParams() instanceof StaggeredGridLayoutManager.LayoutParams) {
                 ((StaggeredGridLayoutManager.LayoutParams) itemView.getLayoutParams()).setFullSpan(
                         true);
             }
 
-            if (TextUtils.isEmpty(subreddit.getDisplayName())) {
-                textName.setVisibility(View.GONE);
-                textTitle.setVisibility(View.GONE);
-                textDescription.setVisibility(View.GONE);
-                textInfo.setVisibility(View.GONE);
-                itemView.setVisibility(View.GONE);
-            }
+            defaultTextSubmitLink = itemView.getContext().getResources().getString(R.string.submit_link);
+            defaultTextSubmitText = itemView.getContext().getResources().getString(R.string.submit_text);
+        }
+
+        private void setVisibility(int visibility) {
+            textName.setVisibility(visibility);
+            textTitle.setVisibility(visibility);
+            textDescription.setVisibility(visibility);
+            textInfo.setVisibility(visibility);
+            layoutButtons.setVisibility(visibility);
+            buttonSubmitLink.setVisibility(visibility);
+            buttonSubmitText.setVisibility(visibility);
+            viewDivider.setVisibility(visibility);
+            itemView.setVisibility(visibility);
         }
 
         public void onBind(Subreddit subreddit) {
 
-            if (TextUtils.isEmpty(subreddit.getDisplayName())) {
-                textName.setVisibility(View.GONE);
-                textTitle.setVisibility(View.GONE);
-                textDescription.setVisibility(View.GONE);
-                textInfo.setVisibility(View.GONE);
-                itemView.setVisibility(View.GONE);
+            if (TextUtils.isEmpty(subreddit.getDisplayName()) || "/r/all/".equalsIgnoreCase(subreddit.getUrl())) {
+                setVisibility(View.GONE);
                 return;
             }
-            textName.setVisibility(View.VISIBLE);
-            textTitle.setVisibility(View.VISIBLE);
-            textDescription.setVisibility(View.VISIBLE);
-            textInfo.setVisibility(View.VISIBLE);
-            itemView.setVisibility(View.VISIBLE);
+            setVisibility(View.VISIBLE);
 
             textName.setText(subreddit.getDisplayName());
             textTitle.setText(subreddit.getTitle());
@@ -195,29 +218,32 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                 textDescription.setText("");
             }
             else {
-                // TODO: Move all instances to Reddit class
-                String html = subreddit.getPublicDescriptionHtml();
-                html = Html.fromHtml(html.trim())
-                        .toString();
-
-                CharSequence sequence = Html.fromHtml(html);
-
-                // Trims leading and trailing whitespace
-                int start = 0;
-                int end = sequence.length();
-                while (start < end && Character.isWhitespace(sequence.charAt(start))) {
-                    start++;
-                }
-                while (end > start && Character.isWhitespace(sequence.charAt(end - 1))) {
-                    end--;
-                }
-                sequence = sequence.subSequence(start, end);
-
-                textDescription.setText(sequence);
+                textDescription.setText(Reddit.getTrimmedHtml(subreddit.getPublicDescriptionHtml()));
             }
 
             textInfo.setText(subreddit.getSubscribers() + " subscribers\n" +
                     "created " + new Date(subreddit.getCreatedUtc()));
+
+            if (TextUtils.isEmpty(subreddit.getSubmitLinkLabel()) || "null".equals(subreddit.getSubmitLinkLabel())) {
+                buttonSubmitLink.setText(defaultTextSubmitLink);
+            }
+            else {
+                buttonSubmitLink.setText(subreddit.getSubmitLinkLabel());
+            }
+
+            if (TextUtils.isEmpty(subreddit.getSubmitTextLabel()) || "null".equals(subreddit.getSubmitTextLabel())) {
+                buttonSubmitText.setText(defaultTextSubmitText);
+            }
+            else {
+                buttonSubmitText.setText(subreddit.getSubmitTextLabel());
+            }
+
+            if (Reddit.POST_TYPE_LINK.equalsIgnoreCase(subreddit.getSubmissionType())) {
+                buttonSubmitText.setVisibility(View.GONE);
+            }
+            else if (Reddit.POST_TYPE_SELF.equalsIgnoreCase(subreddit.getSubmissionType())) {
+                buttonSubmitLink.setVisibility(View.GONE);
+            }
 
         }
     }
@@ -621,26 +647,8 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                                 true);
                         ((StaggeredGridLayoutManager) callback.getLayoutManager()).invalidateSpanAssignments();
                     }
-
-                    String html = link.getSelfTextHtml();
-                    html = Html.fromHtml(html.trim())
-                            .toString();
-
-                    CharSequence sequence = Html.fromHtml(html);
-
-                    // Trims leading and trailing whitespace
-                    int start = 0;
-                    int end = sequence.length();
-                    while (start < end && Character.isWhitespace(sequence.charAt(start))) {
-                        start++;
-                    }
-                    while (end > start && Character.isWhitespace(sequence.charAt(end - 1))) {
-                        end--;
-                    }
-                    sequence = sequence.subSequence(start, end);
-
                     textThreadSelf.setVisibility(View.VISIBLE);
-                    textThreadSelf.setText(sequence);
+                    textThreadSelf.setText(Reddit.getTrimmedHtml(link.getSelfTextHtml()));
                 }
             }
             else {

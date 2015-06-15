@@ -27,6 +27,19 @@
                 android:layout_height="match_parent"
                 >
 
+                <TextView
+                    android:id="@+id/text_submit"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentTop="true"
+                    android:layout_marginStart="@dimen/activity_horizontal_margin"
+                    android:layout_marginEnd="@dimen/activity_horizontal_margin"
+                    android:layout_marginTop="@dimen/activity_vertical_margin"
+                    android:layout_marginBottom="@dimen/activity_vertical_margin"
+                    android:paddingStart="16dp"
+                    android:paddingEnd="16dp"
+                    />
+
                 <!--<android.support.design.widget.TextInputLayout-->
                 <!--android:id="@+id/layout_text_input_title"-->
                 <!--android:layout_width="match_parent"-->
@@ -38,9 +51,10 @@
                 <!-->-->
 
                 <EditText
-                    android:id="@+id/text_title"
+                    android:id="@+id/edit_title"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:layout_below="@id/text_submit"
                     android:layout_marginStart="@dimen/activity_horizontal_margin"
                     android:layout_marginEnd="@dimen/activity_horizontal_margin"
                     android:layout_marginTop="@dimen/activity_vertical_margin"
@@ -65,10 +79,10 @@
                 <!-->-->
 
                 <EditText
-                    android:id="@+id/text_body"
+                    android:id="@+id/edit_body"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_below="@id/text_title"
+                    android:layout_below="@id/edit_title"
                     android:layout_marginStart="@dimen/activity_horizontal_margin"
                     android:layout_marginEnd="@dimen/activity_horizontal_margin"
                     android:layout_marginTop="@dimen/activity_vertical_margin"
@@ -92,10 +106,10 @@
                 <!-->-->
 
                 <EditText
-                    android:id="@+id/text_subreddit"
+                    android:id="@+id/edit_subreddit"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_below="@id/text_body"
+                    android:layout_below="@id/edit_body"
                     android:layout_marginStart="@dimen/activity_horizontal_margin"
                     android:layout_marginEnd="@dimen/activity_horizontal_margin"
                     android:layout_marginTop="@dimen/activity_vertical_margin"

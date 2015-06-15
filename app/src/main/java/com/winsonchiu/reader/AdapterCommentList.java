@@ -138,6 +138,11 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
             }
 
             @Override
+            public void onClickSubmit(String postType) {
+
+            }
+
+            @Override
             public ControllerCommentsBase getControllerComments() {
                 return controllerComments;
             }
@@ -429,28 +434,11 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                         case R.id.item_delete:
                             comment = callback.getControllerComments()
                                     .getComment(commentIndex);
-                            String html = comment.getBodyHtml();
-                            html = Html.fromHtml(html.trim())
-                                    .toString();
-
-                            CharSequence sequence = Html.fromHtml(html);
-
-                            // Trims leading and trailing whitespace
-                            int start = 0;
-                            int end = sequence.length();
-                            while (start < end && Character.isWhitespace(sequence.charAt(start))) {
-                                start++;
-                            }
-                            while (end > start && Character.isWhitespace(
-                                    sequence.charAt(end - 1))) {
-                                end--;
-                            }
-                            sequence = sequence.subSequence(start, end);
 
                             new AlertDialog.Builder(callback.getControllerComments()
                                     .getActivity())
                                     .setTitle("Delete comment?")
-                                    .setMessage(sequence)
+                                    .setMessage(Reddit.getTrimmedHtml(comment.getBodyHtml()))
                                     .setPositiveButton("Yes",
                                             new DialogInterface.OnClickListener() {
                                                 @Override
@@ -641,25 +629,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                 textInfo.setText("");
             }
             else {
-                String html = comment.getBodyHtml();
-                html = Html.fromHtml(html.trim())
-                        .toString();
-
-                CharSequence sequence = Html.fromHtml(html);
-
-                // Trims leading and trailing whitespace
-                int start = 0;
-                int end = sequence.length();
-                while (start < end && Character.isWhitespace(sequence.charAt(start))) {
-                    start++;
-                }
-                while (end > start && Character.isWhitespace(sequence.charAt(end - 1))) {
-                    end--;
-                }
-                sequence = sequence.subSequence(start, end);
-
-                textComment.setText(sequence);
-//                Linkify.addLinks(viewHolderComment.textComment, Linkify.ALL);
+                textComment.setText(Reddit.getTrimmedHtml(comment.getBodyHtml()));
 
                 Spannable spannableInfo = new SpannableString(
                         comment.getScore() + " by " + comment.getAuthor() + " on " + new Date(

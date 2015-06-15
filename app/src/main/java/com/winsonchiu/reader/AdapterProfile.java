@@ -113,6 +113,11 @@ public class AdapterProfile extends RecyclerView.Adapter<RecyclerView.ViewHolder
                     }
 
                     @Override
+                    public void onClickSubmit(String postType) {
+                        // Not implemented
+                    }
+
+                    @Override
                     public ControllerCommentsBase getControllerComments() {
                         return listener.getControllerComments();
                     }
