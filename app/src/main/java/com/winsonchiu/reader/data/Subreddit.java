@@ -51,6 +51,54 @@ public class Subreddit extends Thing {
         super();
     }
 
+    public String toJsonString() throws JSONException {
+
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("id", getId());
+        jsonObject.put("name", getName());
+        jsonObject.put("accountsActive", accountsActive);
+        jsonObject.put("bannerImg", bannerImg);
+        jsonObject.put("bannerSize", bannerSize);
+        jsonObject.put("collapseDeletedComments", collapseDeletedComments);
+        jsonObject.put("commentScoreHideMins", commentScoreHideMins);
+        jsonObject.put("description", description);
+        jsonObject.put("descriptionHtml", descriptionHtml);
+        jsonObject.put("displayName", displayName);
+        jsonObject.put("headerImg", headerImg);
+        jsonObject.put("headerSize", headerSize);
+        jsonObject.put("headerTitle", headerTitle);
+        jsonObject.put("hideAds", hideAds);
+        jsonObject.put("iconImg", iconImg);
+        jsonObject.put("iconSize", iconSize);
+        jsonObject.put("over18", over18);
+        jsonObject.put("publicDescription", publicDescription);
+        jsonObject.put("publicDescriptionHtml", publicDescriptionHtml);
+        jsonObject.put("publicTraffic", publicTraffic);
+        jsonObject.put("subscribers", subscribers);
+        jsonObject.put("submissionType", submissionType);
+        jsonObject.put("submitLinkLabel", submitLinkLabel);
+        jsonObject.put("submitText", submitText);
+        jsonObject.put("submitTextLabel", submitTextLabel);
+        jsonObject.put("submitTextHtml", submitTextHtml);
+        jsonObject.put("subredditType", subredditType);
+        jsonObject.put("title", title);
+        jsonObject.put("url", url);
+        jsonObject.put("userIsBanned", userIsBanned);
+        jsonObject.put("userIsContributor", userIsContributor);
+        jsonObject.put("userIsModerator", userIsModerator);
+        jsonObject.put("userIsSubscriber", userIsSubscriber);
+
+        // Timestamps divided by 1000 so fromJson can recreate the object correctly
+        jsonObject.put("created", created / 1000);
+        jsonObject.put("createdUtc", createdUtc / 1000);
+
+        JSONObject rootJsonObject = new JSONObject();
+        rootJsonObject.put("kind", getKind());
+        rootJsonObject.put("data", jsonObject);
+
+        return jsonObject.toString();
+    }
+
     public static Subreddit fromJson(JSONObject rootJsonObject) throws JSONException {
 
         Subreddit subreddit = new Subreddit();
@@ -68,7 +116,7 @@ public class Subreddit extends Thing {
         subreddit.setAccountsActive(jsonObject.optInt("accounts_active"));
         subreddit.setBannerImg(jsonObject.optString("banner_img"));
 
-        if (!jsonObject.optString("banner_size").equals("null")) {
+        if (!"null".equalsIgnoreCase(jsonObject.optString("banner_size"))) {
             JSONArray jsonArray = jsonObject.getJSONArray("banner_size");
             int[] array = new int[jsonArray.length()];
             for (int index = 0; index < jsonArray.length(); index++) {
@@ -83,7 +131,7 @@ public class Subreddit extends Thing {
         subreddit.setDisplayName(jsonObject.optString("display_name"));
         subreddit.setHeaderImg(jsonObject.optString("header_img"));
 
-        if (!jsonObject.optString("header_size").equals("null")) {
+        if (!"null".equalsIgnoreCase(jsonObject.optString("header_size"))) {
             JSONArray jsonArray = jsonObject.getJSONArray("header_size");
             int[] array = new int[jsonArray.length()];
             for (int index = 0; index < jsonArray.length(); index++) {
@@ -96,7 +144,7 @@ public class Subreddit extends Thing {
         subreddit.setHideAds(jsonObject.optBoolean("hide_ads"));
         subreddit.setIconImg(jsonObject.optString("icon_img"));
 
-        if (!jsonObject.optString("icon_size").equals("null")) {
+        if (!"null".equalsIgnoreCase(jsonObject.optString("icon_size"))) {
             JSONArray jsonArray = jsonObject.getJSONArray("icon_size");
             int[] array = new int[jsonArray.length()];
             for (int index = 0; index < jsonArray.length(); index++) {

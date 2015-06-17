@@ -26,6 +26,8 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewGroup;
+import android.webkit.WebChromeClient;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.Button;
@@ -59,11 +61,15 @@ import org.json.JSONObject;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Created by TheKeeperOfPie on 3/14/2015.
@@ -210,7 +216,6 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             buttonSubmitLink.setVisibility(visibility);
             buttomSubmitSelf.setVisibility(visibility);
             viewDivider.setVisibility(visibility);
-            itemView.setVisibility(visibility);
         }
 
         public void onBind(Subreddit subreddit) {
@@ -223,7 +228,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             setVisibility(View.VISIBLE);
 
             textName.setText(subreddit.getDisplayName());
-            textTitle.setText(subreddit.getTitle());
+            textTitle.setText(Reddit.getTrimmedHtml(subreddit.getTitle()));
 
             if (TextUtils.isEmpty(subreddit.getPublicDescriptionHtml()) || "null".equals(
                     subreddit.getPublicDescriptionHtml())) {
@@ -306,15 +311,16 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             mediaController.setAnchorView(videoFull);
             videoFull.setMediaController(mediaController);
             webFull = (WebViewFixed) itemView.findViewById(R.id.web_full);
-            webFull.getSettings()
-                    .setUseWideViewPort(true);
-            webFull.getSettings()
-                    .setBuiltInZoomControls(true);
-            webFull.getSettings()
-                    .setDisplayZoomControls(false);
-            webFull.getSettings()
-                    .setDomStorageEnabled(true);
+            webFull.getSettings().setUseWideViewPort(true);
+            webFull.getSettings().setLoadWithOverviewMode(true);
+            webFull.getSettings().setBuiltInZoomControls(true);
+            webFull.getSettings().setDisplayZoomControls(false);
+            webFull.getSettings().setJavaScriptEnabled(true);
+            webFull.getSettings().setDomStorageEnabled(true);
+            webFull.getSettings().setDatabaseEnabled(true);
+            webFull.getSettings().setAppCacheEnabled(true);
             webFull.setBackgroundColor(0x000000);
+            webFull.setWebChromeClient(new WebChromeClient());
             webFull.setWebViewClient(new WebViewClient() {
                 @Override
                 public void onScaleChanged(WebView view, float oldScale, float newScale) {
@@ -539,9 +545,6 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                 }
             });
 
-            textThreadTitle.setOnClickListener(clickListenerLink);
-            textThreadInfo.setOnClickListener(clickListenerLink);
-            textThreadSelf.setOnClickListener(clickListenerLink);
             this.itemView.setOnClickListener(clickListenerLink);
 
             toolbarActions.post(new Runnable() {
@@ -573,34 +576,34 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
 
             // TODO: Toggle visibility of web and video views
 
-            String url = link.getUrl();
-            if (!TextUtils.isEmpty(url)) {
+            String urlString = link.getUrl();
+            if (!TextUtils.isEmpty(urlString)) {
                 if (link.getDomain()
                         .contains("imgur")) {
                     int startIndex;
                     int lastIndex;
-                    if (url.contains("imgur.com/a/")) {
-                        startIndex = url.indexOf("imgur.com/a/") + 12;
-                        int slashIndex = url.substring(startIndex)
+                    if (urlString.contains("imgur.com/a/")) {
+                        startIndex = urlString.indexOf("imgur.com/a/") + 12;
+                        int slashIndex = urlString.substring(startIndex)
                                 .indexOf("/") + startIndex;
-                        lastIndex = slashIndex > startIndex ? slashIndex : url.length();
-                        String imgurId = url.substring(startIndex, lastIndex);
+                        lastIndex = slashIndex > startIndex ? slashIndex : urlString.length();
+                        String imgurId = urlString.substring(startIndex, lastIndex);
                         loadAlbum(imgurId);
                     }
-                    else if (url.contains("imgur.com/gallery/")) {
-                        startIndex = url.indexOf("imgur.com/gallery/") + 18;
-                        int slashIndex = url.substring(startIndex)
+                    else if (urlString.contains("imgur.com/gallery/")) {
+                        startIndex = urlString.indexOf("imgur.com/gallery/") + 18;
+                        int slashIndex = urlString.substring(startIndex)
                                 .indexOf("/") + startIndex;
-                        lastIndex = slashIndex > startIndex ? slashIndex : url.length();
-                        String imgurId = url.substring(startIndex, lastIndex);
+                        lastIndex = slashIndex > startIndex ? slashIndex : urlString.length();
+                        String imgurId = urlString.substring(startIndex, lastIndex);
                         loadGallery(imgurId);
                     }
-                    else if (url.contains(Reddit.GIFV)) {
-                        startIndex = url.indexOf("imgur.com/") + 10;
-                        int dotIndex = url.substring(startIndex)
+                    else if (urlString.contains(Reddit.GIFV)) {
+                        startIndex = urlString.indexOf("imgur.com/") + 10;
+                        int dotIndex = urlString.substring(startIndex)
                                 .indexOf(".") + startIndex;
-                        lastIndex = dotIndex > startIndex ? dotIndex : url.length();
-                        String imgurId = url.substring(startIndex, lastIndex);
+                        lastIndex = dotIndex > startIndex ? dotIndex : urlString.length();
+                        String imgurId = urlString.substring(startIndex, lastIndex);
                         loadGifv(imgurId);
                     }
                     else {
@@ -609,11 +612,11 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                 }
                 else if (link.getDomain()
                         .contains("gfycat")) {
-                    int startIndex = url.indexOf("gfycat.com/") + 11;
-                    int dotIndex = url.substring(startIndex)
+                    int startIndex = urlString.indexOf("gfycat.com/") + 11;
+                    int dotIndex = urlString.substring(startIndex)
                             .indexOf(".");
-                    int lastIndex = dotIndex > startIndex ? dotIndex : url.length();
-                    String gfycatId = url.substring(startIndex, lastIndex);
+                    int lastIndex = dotIndex > startIndex ? dotIndex : urlString.length();
+                    String gfycatId = urlString.substring(startIndex, lastIndex);
                     progressImage.setVisibility(View.VISIBLE);
                     callback.getController()
                             .getReddit()
@@ -642,6 +645,40 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                                             progressImage.setVisibility(View.GONE);
                                         }
                                     }, 0);
+                }
+                else if (link.getDomain().contains("youtube")) {
+                    Log.d(TAG, "youtube");
+                    try {
+                        URL url = new URL(urlString);
+                        /*
+                            Regex taken from Gubatron at
+                            http://stackoverflow.com/questions/24048308/how-to-get-the-video-id-from-a-youtube-url-with-regex-in-java
+                        */
+                        Pattern pattern = Pattern.compile(".*(?:youtu.be\\/|v\\/|u\\/\\w\\/|embed\\/|watch\\?v=)([^#\\&\\?]*).*");
+                        Matcher matcher = pattern.matcher(urlString);
+                        if (matcher.matches()) {
+                            Log.d(TAG, "YouTube URL loaded: " + matcher.group(1));
+                            webFull.onResume();
+                            webFull.resetMaxHeight();
+                            webFull.loadUrl("https://www.youtube.com/embed/" + matcher.group(1) + "?autoplay=1&vq=small");
+                            webFull.setVisibility(View.VISIBLE);
+//                            ViewGroup.LayoutParams layoutParams = webFull.getLayoutParams();
+//                            layoutParams.height = callback.getController().getActivity().getResources().getDisplayMetrics().widthPixels / 16 * 9;
+//                            webFull.setLayoutParams(layoutParams);
+                            webFull.loadData("<html><head><meta name=\"viewport\" content=\"width=device-width, minimum-scale=0.1\"><style>img {width:100%;}</style></head><body><iframe /*width=\"640\" height=\"390\" */src=\"https://www.youtube.com/embed/" + matcher.group(1) + "?autoplay=1&vq=small\"" + "frameborder=\"0\" allowfullscreen></iframe></body></html>", "text/html", "UTF-8");
+                            webFull.setMaxHeight(
+                                    (int) (callback.getController().getActivity().getResources().getDisplayMetrics().widthPixels / 16f * 9f));
+                            webFull.lockHeight();
+                            callback.getListener()
+                                    .onFullLoaded(getAdapterPosition());
+                        }
+                        else {
+                            attemptLoadImage(link);
+                        }
+                    }
+                    catch (MalformedURLException e) {
+                        e.printStackTrace();
+                    }
                 }
                 else {
                     attemptLoadImage(link);
@@ -772,6 +809,8 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                                         viewPagerFull.requestLayout();
                                         if (ViewHolderBase.this instanceof AdapterLinkGrid.ViewHolder) {
                                             imageThumbnail.setVisibility(View.GONE);
+                                            ((RelativeLayout.LayoutParams) textThreadTitle.getLayoutParams()).addRule(
+                                                    RelativeLayout.START_OF, buttonComments.getId());
                                         }
                                         callback.getListener()
                                                 .onFullLoaded(getAdapterPosition());
@@ -817,6 +856,8 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                                         viewPagerFull.requestLayout();
                                         if (ViewHolderBase.this instanceof AdapterLinkGrid.ViewHolder) {
                                             imageThumbnail.setVisibility(View.GONE);
+                                            ((RelativeLayout.LayoutParams) textThreadTitle.getLayoutParams()).addRule(
+                                                    RelativeLayout.START_OF, buttonComments.getId());
                                         }
                                         callback.getListener()
                                                 .onFullLoaded(getAdapterPosition());
@@ -938,6 +979,10 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             imageThumbnail.setVisibility(View.VISIBLE);
             progressImage.setVisibility(View.GONE);
             textThreadSelf.setVisibility(View.GONE);
+            if (this instanceof AdapterLinkGrid.ViewHolder) {
+                ((RelativeLayout.LayoutParams) textThreadTitle.getLayoutParams()).removeRule(
+                        RelativeLayout.START_OF);
+            }
 
 //            if (!TextUtils.isEmpty(imageUrl) && !callback.getController().getReddit().getImageLoader().isCached(imageUrl, 0, 0)) {
 //                Drawable drawable = imageThumbnail.getDrawable();

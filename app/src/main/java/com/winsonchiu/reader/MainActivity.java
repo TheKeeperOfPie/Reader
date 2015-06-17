@@ -42,6 +42,7 @@ import com.winsonchiu.reader.data.Reddit;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.IOException;
 import java.lang.reflect.Field;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -61,29 +62,18 @@ public class MainActivity extends AppCompatActivity
     private static final String TAG = MainActivity.class.getCanonicalName();
     private static final String REDDIT_PAGE = "redditPage";
 
+    private FragmentData fragmentData;
+
     private CharSequence mTitle;
     private int oldId = -1;
-    private Toolbar toolbar;
-    private ControllerLinks controllerLinks;
-    private ControllerComments controllerComments;
-    private ControllerProfile controllerProfile;
-    private ControllerInbox controllerInbox;
-    private ControllerSearch controllerSearch;
-    private SharedPreferences sharedPreferences;
 
-    private ActionBarDrawerToggle mDrawerToggle;
+    private SharedPreferences sharedPreferences;
     private DrawerLayout mDrawerLayout;
     private NavigationView viewNavigation;
-    private FloatingActionButton floatingActionButton;
-    private AppBarLayout layoutAppBar;
-    private CoordinatorLayout layoutCoordinator;
-    private FloatingActionButton.Behavior behaviorFloatingActionButton;
 
     private ImageView imageNavHeader;
     private TextView textAccountName;
     private TextView textAccountInfo;
-    private AppBarLayout.Behavior behaviorAppBar;
-    private AppBarLayout.OnOffsetChangedListener offsetListener;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -91,128 +81,67 @@ public class MainActivity extends AppCompatActivity
         Fabric.with(this, new Crashlytics());
         sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
 
-        if (controllerLinks == null) {
-            controllerLinks = new ControllerLinks(this, "", Sort.HOT);
+        fragmentData = (FragmentData) getSupportFragmentManager().findFragmentByTag(FragmentData.TAG);
+        if (fragmentData == null) {
+            fragmentData = new FragmentData();
+            getSupportFragmentManager().beginTransaction().add(fragmentData, FragmentData.TAG).commit();
+            fragmentData.initializeControllers(this);
         }
-        if (controllerComments == null) {
-            controllerComments = new ControllerComments(this, "", "", controllerLinks);
+        else {
+            fragmentData.resetActivity(this);
         }
-        if (controllerProfile == null) {
-            controllerProfile = new ControllerProfile(this);
-        }
-        if (controllerInbox == null) {
-            controllerInbox = new ControllerInbox(this);
-        }
-        if (controllerSearch == null) {
-            controllerSearch = new ControllerSearch(this, controllerLinks);
-        }
+
         setContentView(R.layout.activity_main);
-
-        floatingActionButton = (FloatingActionButton) findViewById(R.id.floating_action_button);
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
-            ((RelativeLayout.LayoutParams) floatingActionButton.getLayoutParams()).setMargins(0, 0,
-                    0, 0);
-            floatingActionButton.requestLayout();
-        }
-        behaviorFloatingActionButton = (FloatingActionButton.Behavior) ((CoordinatorLayout.LayoutParams) floatingActionButton.getLayoutParams()).getBehavior();
-
-        layoutCoordinator = (CoordinatorLayout) findViewById(R.id.layout_coordinator);
-        layoutAppBar = (AppBarLayout) findViewById(R.id.layout_app_bar);
-
-        toolbar = (Toolbar) findViewById(R.id.toolbar);
-        toolbar.setOnClickListener(new View.OnClickListener() {
-            // TODO: Make this launch a new FragmentSearch
-            @Override
-            public void onClick(View v) {
-                MenuItem itemSearch = toolbar.getMenu()
-                        .findItem(R.id.item_search);
-                if (itemSearch != null) {
-                    itemSearch.expandActionView();
-                    SearchView searchView = ((SearchView) itemSearch.getActionView());
-                    if (Reddit.FRONT_PAGE.equals(toolbar.getTitle())) {
-                        searchView.setQuery("", false);
-                    }
-                    else {
-                        searchView.setQuery(toolbar.getTitle()
-                                .toString()
-                                .replaceAll("/r/", ""), false);
-                    }
-                }
-            }
-        });
-        setSupportActionBar(toolbar);
 
         inflateNavigationDrawer();
 
         mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
-
-        // set a custom shadow that overlays the main content when the drawer opens
         mDrawerLayout.setDrawerShadow(R.drawable.drawer_shadow, GravityCompat.START);
-        // set up the drawer's list view with items and click listener
-
-        // ActionBarDrawerToggle ties together the the proper interactions
-        // between the navigation drawer and the action bar app icon.
-        mDrawerToggle = new ActionBarDrawerToggle(
-                this,
-                mDrawerLayout,
-                toolbar,
-                R.string.navigation_drawer_open,
-                R.string.navigation_drawer_close) {
+        mDrawerLayout.setDrawerListener(new DrawerLayout.DrawerListener() {
             @Override
-            public void onDrawerClosed(View drawerView) {
-                super.onDrawerClosed(drawerView);
-                supportInvalidateOptionsMenu(); // calls onPrepareOptionsMenu()
+            public void onDrawerSlide(View drawerView, float slideOffset) {
+
             }
 
             @Override
             public void onDrawerOpened(View drawerView) {
-                super.onDrawerOpened(drawerView);
-                supportInvalidateOptionsMenu(); // calls onPrepareOptionsMenu()
+                supportInvalidateOptionsMenu();
             }
-        };
 
-        // Defer code dependent on restoration of previous instance state.
-        mDrawerLayout.post(new Runnable() {
             @Override
-            public void run() {
-                mDrawerToggle.syncState();
+            public void onDrawerClosed(View drawerView) {
+                supportInvalidateOptionsMenu();
+            }
+
+            @Override
+            public void onDrawerStateChanged(int newState) {
+
             }
         });
 
-        mDrawerLayout.setDrawerListener(mDrawerToggle);
         mTitle = getTitle();
 
-        if (Intent.ACTION_VIEW.equals(getIntent().getAction())) {
-            Log.d(TAG, "load intent: " + getIntent().toString());
-            String urlString = getIntent().getDataString();
-            if (getIntent().hasExtra(REDDIT_PAGE)) {
-                urlString = getIntent().getExtras()
-                        .getString(REDDIT_PAGE);
-            }
-            if (URLUtil.isValidUrl(urlString)) {
-                parseUrl(urlString);
+        if (savedInstanceState == null) {
+            if (Intent.ACTION_VIEW.equals(getIntent().getAction())) {
+                Log.d(TAG, "load intent: " + getIntent().toString());
+                String urlString = getIntent().getDataString();
+                if (getIntent().hasExtra(REDDIT_PAGE)) {
+                    urlString = getIntent().getExtras()
+                            .getString(REDDIT_PAGE);
+                }
+                if (URLUtil.isValidUrl(urlString)) {
+                    parseUrl(urlString);
+                }
+                else {
+                    Log.d(TAG, "Not valid URL: " + urlString);
+                    selectNavigationItem(R.id.item_home);
+                }
             }
             else {
-                Log.d(TAG, "Not valid URL: " + urlString);
                 selectNavigationItem(R.id.item_home);
             }
         }
-        else {
-            selectNavigationItem(R.id.item_home);
-        }
 
-        /*
-            Must be placed after ActionBarDrawerToggle instantiation,
-            as the toggle will set its own OnClickListener. This is also
-            why we must manually toggle the drawer after checking its
-            visibility in onNavigationClick()
-         */
-        toolbar.setNavigationOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                onNavigationClick();
-            }
-        });
     }
 
     private void inflateNavigationDrawer() {
@@ -260,7 +189,7 @@ public class MainActivity extends AppCompatActivity
         switch (id) {
             case R.id.item_home:
                 if (getSupportFragmentManager().findFragmentByTag(FragmentThreadList.TAG) != null) {
-                    controllerLinks.loadFrontPage(Sort.HOT);
+                    fragmentData.getControllerLinks().loadFrontPage(Sort.HOT);
                 }
                 else {
                     getSupportFragmentManager().beginTransaction()
@@ -362,7 +291,7 @@ public class MainActivity extends AppCompatActivity
             int indexFirstSlash = path.indexOf("/", 1);
             int indexSecondSlash = path.indexOf("/", indexFirstSlash + 1);
             if (indexFirstSlash < 0) {
-                controllerLinks.setParameters("", Sort.HOT);
+                fragmentData.getControllerLinks().setParameters("", Sort.HOT);
                 return;
             }
             String subreddit = path.substring(indexFirstSlash + 1,
@@ -382,7 +311,7 @@ public class MainActivity extends AppCompatActivity
                                 FragmentComments.newInstance(subreddit, id, false),
                                 FragmentComments.TAG)
                         .commit();
-                controllerComments.setLinkId(subreddit, id);
+                fragmentData.getControllerComments().setLinkId(subreddit, id);
             }
             else if (path.contains("/u/")) {
                 int indexUser = path.indexOf("/u/") + 3;
@@ -390,7 +319,7 @@ public class MainActivity extends AppCompatActivity
                         .replace(R.id.frame_fragment, FragmentProfile.newInstance("", ""),
                                 FragmentProfile.TAG)
                         .commit();
-                controllerProfile.loadUser(
+                fragmentData.getControllerProfile().loadUser(
                         urlString.substring(indexUser, path.indexOf("/", indexUser)));
             }
             else if (path.contains("/user/")) {
@@ -399,15 +328,19 @@ public class MainActivity extends AppCompatActivity
                         .replace(R.id.frame_fragment, FragmentProfile.newInstance("", ""),
                                 FragmentProfile.TAG)
                         .commit();
-                controllerProfile.loadUser(
+                fragmentData.getControllerProfile().loadUser(
                         urlString.substring(indexUser, path.indexOf("/", indexUser)));
             }
             else {
+                getSupportFragmentManager().beginTransaction()
+                        .replace(R.id.frame_fragment, FragmentThreadList.newInstance("", ""),
+                                FragmentThreadList.TAG)
+                        .commit();
                 int indexSort = path.indexOf("/", subreddit.length() + 1);
                 String sort =
                         indexSort > -1 ? path.substring(subreddit.length() + 1, indexSort) :
                                 "hot";
-                controllerLinks.setParameters(subreddit, Sort.HOT);
+                fragmentData.getControllerLinks().setParameters(subreddit, Sort.HOT);
                 Log.d(TAG, "Sort: " + sort);
             }
         }
@@ -420,7 +353,7 @@ public class MainActivity extends AppCompatActivity
         Log.d(TAG, "Back stack count: " + getSupportFragmentManager().getBackStackEntryCount());
         if (getSupportFragmentManager().getBackStackEntryCount() > 0) {
             getSupportFragmentManager().popBackStack();
-            mDrawerToggle.onDrawerSlide(mDrawerLayout, 0.0f);
+//            mDrawerLayout.onDrawerSlide(mDrawerLayout, 0.0f);
         }
         else {
             if (mDrawerLayout.isDrawerVisible(GravityCompat.START)) {
@@ -430,23 +363,6 @@ public class MainActivity extends AppCompatActivity
                 mDrawerLayout.openDrawer(GravityCompat.START);
             }
         }
-    }
-
-    public void restoreActionBar() {
-        setToolbarTitle(mTitle);
-    }
-
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        if (!mDrawerLayout.isDrawerOpen(GravityCompat.START)) {
-            // Only show items in the action bar relevant to this screen
-            // if the drawer is not showing. Otherwise, let the drawer
-            // decide what to show in the action bar.
-            getMenuInflater().inflate(R.menu.main, menu);
-            restoreActionBar();
-            return true;
-        }
-        return true;
     }
 
     @Override
@@ -473,29 +389,10 @@ public class MainActivity extends AppCompatActivity
                 return;
             }
 
-            getSupportFragmentManager().popBackStack();
-            Log.d(TAG, "popBackStack");
+            onNavigationBackClick();
         }
         else {
-            if (isTaskRoot() && getSupportFragmentManager().getBackStackEntryCount() <= 1) {
-                new AlertDialog.Builder(this)
-                        .setMessage("Exit Reader?")
-                        .setPositiveButton("Yes",
-                                new DialogInterface.OnClickListener() {
-                                    @Override
-                                    public void onClick(
-                                            DialogInterface dialog,
-                                            int which) {
-                                        MainActivity.super.onBackPressed();
-                                    }
-                                })
-                        .setNegativeButton("No", null)
-                        .show();
-
-            }
-            else {
-                super.onBackPressed();
-            }
+            onNavigationBackClick();
         }
 
     }
@@ -534,41 +431,23 @@ public class MainActivity extends AppCompatActivity
     }
 
     @Override
-    public void setToolbarTitle(CharSequence title) {
-        mTitle = title;
-        toolbar.setTitle(mTitle);
-    }
-
-    @Override
     public ControllerLinks getControllerLinks() {
-        return controllerLinks;
+        return fragmentData.getControllerLinks();
     }
 
     @Override
     public ControllerInbox getControllerInbox() {
-        return controllerInbox;
+        return fragmentData.getControllerInbox();
     }
 
     @Override
     public ControllerComments getControllerComments() {
-        return controllerComments;
+        return fragmentData.getControllerComments();
     }
 
     @Override
     public ControllerProfile getControllerProfile() {
-        return controllerProfile;
-    }
-
-    @Override
-    public void setNavigationAnimation(float value) {
-        mDrawerToggle.onDrawerSlide(mDrawerLayout, value);
-    }
-
-    @Override
-    public void setFloatingActionButtonValues(View.OnClickListener listener, int resourceId) {
-//        floatingActionButton.setImageResource(resourceId);
-//        floatingActionButton.setOnClickListener(listener);
-//        floatingActionButton.setVisibility(listener == null ? View.GONE : View.VISIBLE);
+        return fragmentData.getControllerProfile();
     }
 
     @Override
@@ -587,7 +466,39 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     public ControllerSearch getControllerSearch() {
-        return controllerSearch;
+        return fragmentData.getControllerSearch();
     }
 
+    @Override
+    public void onNavigationBackClick() {
+        if (getSupportFragmentManager().getBackStackEntryCount() > 0) {
+            getSupportFragmentManager().popBackStack();
+        }
+        else {
+            if (isTaskRoot() && getSupportFragmentManager().getBackStackEntryCount() <= 1) {
+                new AlertDialog.Builder(this)
+                        .setMessage("Exit Reader?")
+                        .setPositiveButton("Yes",
+                                new DialogInterface.OnClickListener() {
+                                    @Override
+                                    public void onClick(
+                                            DialogInterface dialog,
+                                            int which) {
+                                        MainActivity.super.onBackPressed();
+                                    }
+                                })
+                        .setNegativeButton("No", null)
+                        .show();
+
+            }
+            else {
+                super.onBackPressed();
+            }
+        }
+    }
+
+    @Override
+    public void openDrawer() {
+        mDrawerLayout.openDrawer(GravityCompat.START);
+    }
 }

@@ -1,6 +1,7 @@
 package com.winsonchiu.reader;
 
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
@@ -13,6 +14,7 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.SearchView;
 import android.support.v7.widget.StaggeredGridLayoutManager;
+import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.util.TypedValue;
 import android.view.KeyEvent;
@@ -27,6 +29,7 @@ import android.view.animation.AnimationSet;
 import android.view.animation.LinearInterpolator;
 import android.view.animation.Transformation;
 import android.view.animation.TranslateAnimation;
+import android.view.inputmethod.InputMethodManager;
 
 import com.winsonchiu.reader.data.Link;
 import com.winsonchiu.reader.data.Reddit;
@@ -41,7 +44,7 @@ import com.winsonchiu.reader.data.Subreddit;
  * Use the {@link FragmentSearch#newInstance} factory method to
  * create an instance of this fragment.
  */
-public class FragmentSearch extends Fragment {
+public class FragmentSearch extends Fragment implements Toolbar.OnMenuItemClickListener {
 
     // TODO: Rename parameter arguments, choose names that match
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
@@ -70,6 +73,7 @@ public class FragmentSearch extends Fragment {
     private Menu menu;
     private MenuItem itemSearch;
     private MenuItem itemSortTime;
+    private Toolbar toolbar;
 
     /**
      * Use this factory method to create a new instance of
@@ -100,36 +104,32 @@ public class FragmentSearch extends Fragment {
             mParam1 = getArguments().getString(ARG_PARAM1);
             mParam2 = getArguments().getString(ARG_PARAM2);
         }
-
         setHasOptionsMenu(true);
     }
 
-    @Override
-    public void onCreateOptionsMenu(final Menu menu, MenuInflater inflater) {
-        super.onCreateOptionsMenu(menu, inflater);
-
-        menu.clear();
-        inflater.inflate(R.menu.menu_search, menu);
-        this.menu = menu;
+    private void setUpOptionsMenu() {
+        toolbar.inflateMenu(R.menu.menu_search);
+        toolbar.setOnMenuItemClickListener(this);
+        menu = toolbar.getMenu();
 
         itemSortTime = menu.findItem(R.id.item_sort_time);
 
         itemSearch = menu.findItem(R.id.item_search);
         itemSearch.expandActionView();
 
-        MenuItemCompat.setOnActionExpandListener(itemSearch,
-                new MenuItemCompat.OnActionExpandListener() {
-                    @Override
-                    public boolean onMenuItemActionExpand(MenuItem item) {
-                        return true;
-                    }
-
-                    @Override
-                    public boolean onMenuItemActionCollapse(MenuItem item) {
-                        getFragmentManager().popBackStack();
-                        return true;
-                    }
-                });
+//        MenuItemCompat.setOnActionExpandListener(itemSearch,
+//                new MenuItemCompat.OnActionExpandListener() {
+//                    @Override
+//                    public boolean onMenuItemActionExpand(MenuItem item) {
+//                        return true;
+//                    }
+//
+//                    @Override
+//                    public boolean onMenuItemActionCollapse(MenuItem item) {
+//                        getFragmentManager().popBackStack();
+//                        return true;
+//                    }
+//                });
 
         final SearchView searchView = (SearchView) itemSearch.getActionView();
 
@@ -171,8 +171,6 @@ public class FragmentSearch extends Fragment {
         itemSortTime.setTitle(
                 getString(R.string.time) + Reddit.TIME_SEPARATOR + getString(
                         R.string.item_sort_all));
-
-        mListener.setFloatingActionButtonValues(null, 0);
     }
 
     @Override
@@ -182,36 +180,6 @@ public class FragmentSearch extends Fragment {
         MenuItemCompat.setOnActionExpandListener(itemSearch, null);
         itemSearch = null;
         super.onDestroyOptionsMenu();
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-
-        item.setChecked(true);
-
-        Log.d(TAG, "Menu item clicked: " + item.toString());
-
-        for (Sort sort : Sort.values()) {
-            if (sort.getMenuId() == item.getItemId()) {
-                mListener.getControllerSearch()
-                        .setSort(sort);
-                flashSearchView();
-                return super.onOptionsItemSelected(item);
-            }
-        }
-
-        for (Time time : Time.values()) {
-            if (time.getMenuId() == item.getItemId()) {
-                mListener.getControllerSearch()
-                        .setTime(time);
-                itemSortTime.setTitle(
-                        getString(R.string.time) + Reddit.TIME_SEPARATOR + item.toString());
-                flashSearchView();
-                return super.onOptionsItemSelected(item);
-            }
-        }
-
-        return super.onOptionsItemSelected(item);
     }
 
     /*
@@ -228,7 +196,7 @@ public class FragmentSearch extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
             Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.fragment_search, container, false);
+        final View view = inflater.inflate(R.layout.fragment_search, container, false);
 
         listenerSearch = new ControllerSearch.Listener() {
             @Override
@@ -237,6 +205,10 @@ public class FragmentSearch extends Fragment {
                         .setParameters(subreddit.getDisplayName(), Sort.HOT);
                 mListener.getControllerSearch()
                         .clearResults();
+                InputMethodManager inputManager = (InputMethodManager) activity
+                        .getSystemService(Context.INPUT_METHOD_SERVICE);
+                inputManager.hideSoftInputFromWindow(view.getWindowToken(),
+                        InputMethodManager.HIDE_NOT_ALWAYS);
                 getFragmentManager().popBackStack();
             }
 
@@ -257,11 +229,19 @@ public class FragmentSearch extends Fragment {
 
             @Override
             public void setToolbarTitle(CharSequence title) {
-                if (mListener != null) {
-                    mListener.setToolbarTitle(title);
-                }
+                toolbar.setTitle(title);
             }
         };
+
+        toolbar = (Toolbar) view.findViewById(R.id.toolbar);
+        toolbar.setNavigationIcon(R.drawable.ic_arrow_back_white_24dp);
+        toolbar.setNavigationOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mListener.onNavigationBackClick();
+            }
+        });
+        setUpOptionsMenu();
 
         adapterSearchSubreddits = new AdapterSearchSubreddits(activity,
                 mListener.getControllerSearch(), listenerSearch);
@@ -288,9 +268,9 @@ public class FragmentSearch extends Fragment {
                     @Override
                     public void run() {
                         final float viewStartY = viewHolder.itemView.getY();
-                        // Grid layout has a 4 dp layout_margin that needs to be accounted for
+                        // Grid layout has a 2 dp layout_margin that needs to be accounted for
                         final float minY = viewHolder instanceof AdapterLinkGrid.ViewHolder ?
-                                TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 4,
+                                TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 2,
                                         getResources().getDisplayMetrics()) : 0;
                         final float viewStartPaddingBottom = viewHolder.itemView.getPaddingBottom();
                         final float screenHeight = getResources().getDisplayMetrics().heightPixels;
@@ -580,7 +560,7 @@ public class FragmentSearch extends Fragment {
                     case ControllerSearch.PAGE_SUBREDDITS:
                         return getString(R.string.subreddit);
                     case ControllerSearch.PAGE_LINKS:
-                        return getString(R.string.post);
+                        return getString(R.string.all);
                     case ControllerSearch.PAGE_LINKS_SUBREDDIT:
                         return mListener.getControllerLinks()
                                 .getSubredditName();
@@ -667,6 +647,33 @@ public class FragmentSearch extends Fragment {
         super.onDetach();
     }
 
+    @Override
+    public boolean onMenuItemClick(MenuItem item) {
+
+        item.setChecked(true);
+
+        for (Sort sort : Sort.values()) {
+            if (sort.getMenuId() == item.getItemId()) {
+                mListener.getControllerSearch()
+                        .setSort(sort);
+                flashSearchView();
+                return true;
+            }
+        }
+
+        for (Time time : Time.values()) {
+            if (time.getMenuId() == item.getItemId()) {
+                mListener.getControllerSearch()
+                        .setTime(time);
+                itemSortTime.setTitle(
+                        getString(R.string.time) + Reddit.TIME_SEPARATOR + item.toString());
+                flashSearchView();
+                return true;
+            }
+        }
+        return false;
+    }
+
     /**
      * This interface must be implemented by activities that contain this
      * fragment to allow an interaction in this fragment to be communicated
@@ -683,8 +690,6 @@ public class FragmentSearch extends Fragment {
         ControllerLinks getControllerLinks();
 
         ControllerComments getControllerComments();
-
-        void setToolbarTitle(CharSequence title);
     }
 
 }

@@ -61,33 +61,57 @@ public class ControllerComments implements ControllerLinksBase, ControllerCommen
 
     public ControllerComments(Activity activity,
             String subreddit,
-            String linkId,
-            ControllerLinks controllerLinks) {
+            String linkId) {
         setActivity(activity);
-        this.reddit = Reddit.getInstance(activity);
         this.listeners = new HashSet<>();
-        this.indentWidth = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 8,
-                activity.getResources()
-                        .getDisplayMetrics());
         this.subreddit = subreddit;
         this.linkId = linkId;
-        Resources resources = activity.getResources();
-        this.drawableSelf = resources.getDrawable(R.drawable.ic_chat_white_48dp);
-        this.drawableDefault = resources.getDrawable(R.drawable.ic_web_white_48dp);
+    }
+
+    public ControllerComments(Activity activity, JSONObject data) {
+        this(activity, "", "");
+        try {
+            setLinkId(data.getString("subreddit"), data.getString("linkId"));
+        }
+        catch (JSONException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public String saveData() throws JSONException {
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("subreddit", subreddit);
+        jsonObject.put("linkId", linkId);
+        return jsonObject.toString();
     }
 
     public void setActivity(Activity activity) {
         this.activity = activity;
         this.preferences = PreferenceManager.getDefaultSharedPreferences(
                 activity.getApplicationContext());
+        this.reddit = Reddit.getInstance(activity);
+        this.indentWidth = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 8,
+                activity.getResources()
+                        .getDisplayMetrics());
+        Resources resources = activity.getResources();
+        this.drawableSelf = resources.getDrawable(R.drawable.ic_chat_white_48dp);
+        this.drawableDefault = resources.getDrawable(R.drawable.ic_web_white_48dp);
     }
 
     public void addListener(CommentClickListener listener) {
         listeners.add(listener);
+        setTitle();
+        listener.getAdapter().notifyDataSetChanged();
     }
 
     public void removeListener(CommentClickListener listener) {
         listeners.remove(listener);
+    }
+
+    public void setTitle() {
+        for (CommentClickListener listener : listeners) {
+            listener.setToolbarTitle(controllerLinks.getSubredditName());
+        }
     }
 
     public void setLink(Link link) {
@@ -724,28 +748,25 @@ public class ControllerComments implements ControllerLinksBase, ControllerCommen
     public void loadMoreComments() {
     }
 
+    public void setControllerLinks(ControllerLinks controllerLinks) {
+        this.controllerLinks = controllerLinks;
+    }
+
     public interface CommentClickListener extends DisallowListener {
 
         void loadUrl(String url);
-
         void setRefreshing(boolean refreshing);
-
         AdapterCommentList getAdapter();
-
         int getRecyclerHeight();
-
         int getRecyclerWidth();
+        void setToolbarTitle(String title);
     }
 
     public interface ListenerCallback {
         CommentClickListener getCommentClickListener();
-
         ControllerCommentsBase getControllerComments();
-
         SharedPreferences getPreferences();
-
         User getUser();
-
         float getItemWidth();
     }
 

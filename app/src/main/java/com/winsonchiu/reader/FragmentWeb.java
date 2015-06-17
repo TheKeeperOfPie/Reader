@@ -9,6 +9,8 @@ import android.support.v4.graphics.ColorUtils;
 import android.support.v4.view.MenuItemCompat;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.SearchView;
+import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -18,6 +20,8 @@ import android.view.ViewGroup;
 import android.webkit.WebChromeClient;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.widget.ImageButton;
+import android.widget.LinearLayout;
 
 
 /**
@@ -44,6 +48,9 @@ public class FragmentWeb extends Fragment {
     private SwipeRefreshLayout swipeRefreshWeb;
     private Activity activity;
     private MenuItem itemSearch;
+    private Toolbar toolbarActions;
+    private Toolbar toolbar;
+    private Menu menu;
 
     /**
      * Use this factory method to create a new instance of
@@ -77,13 +84,27 @@ public class FragmentWeb extends Fragment {
         setHasOptionsMenu(true);
     }
 
-    @Override
-    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
-        super.onCreateOptionsMenu(menu, inflater);
-        menu.clear();
-        inflater.inflate(R.menu.menu_web, menu);
+    private void setUpOptionsMenu() {
+        toolbar.inflateMenu(R.menu.menu_web);
+        menu = toolbar.getMenu();
+        itemSearch = menu.findItem(R.id.item_search_web);
 
-        itemSearch = menu.findItem(R.id.item_search);
+        MenuItemCompat.setOnActionExpandListener(itemSearch,
+                new MenuItemCompat.OnActionExpandListener() {
+                    @Override
+                    public boolean onMenuItemActionExpand(MenuItem item) {
+                        toolbarActions.setVisibility(View.VISIBLE);
+                        Log.d(TAG, "onMenuItemActionExpand");
+                        return true;
+                    }
+
+                    @Override
+                    public boolean onMenuItemActionCollapse(MenuItem item) {
+                        toolbarActions.setVisibility(View.GONE);
+                        Log.d(TAG, "onMenuItemActionCollapse");
+                        return true;
+                    }
+                });
 
         SearchView searchView = (SearchView) itemSearch.getActionView();
 
@@ -91,30 +112,24 @@ public class FragmentWeb extends Fragment {
         searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
             @Override
             public boolean onQueryTextSubmit(String query) {
-                webView.findAllAsync(query);
                 return false;
             }
 
             @Override
             public boolean onQueryTextChange(String newText) {
+                webView.findAllAsync(newText);
                 return false;
             }
         });
-        searchView.setSubmitButtonEnabled(true);
-        mListener.setFloatingActionButtonValues(null, 0);
     }
 
     @Override
     public void onDestroyOptionsMenu() {
         SearchView searchView = (SearchView) itemSearch.getActionView();
         searchView.setOnQueryTextListener(null);
+        MenuItemCompat.setOnActionExpandListener(itemSearch, null);
         itemSearch = null;
         super.onDestroyOptionsMenu();
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        return super.onOptionsItemSelected(item);
     }
 
     @Override
@@ -122,6 +137,17 @@ public class FragmentWeb extends Fragment {
                              Bundle savedInstanceState) {
 
         View view = inflater.inflate(R.layout.fragment_web, container, false);
+
+        toolbar = (Toolbar) view.findViewById(R.id.toolbar);
+        toolbar.setTitle(getString(R.string.loading_web_page));
+        toolbar.setNavigationIcon(R.drawable.ic_arrow_back_white_24dp);
+        toolbar.setNavigationOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mListener.onNavigationBackClick();
+            }
+        });
+        setUpOptionsMenu();
 
         swipeRefreshWeb = (SwipeRefreshLayout) view.findViewById(R.id.swipe_refresh_web);
         swipeRefreshWeb.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
@@ -137,6 +163,7 @@ public class FragmentWeb extends Fragment {
             @Override
             public void onPageStarted(WebView view, String url, Bitmap favicon) {
                 super.onPageStarted(view, url, favicon);
+                toolbar.setTitle(view.getTitle());
             }
 
             @Override
@@ -144,6 +171,7 @@ public class FragmentWeb extends Fragment {
                 super.onPageFinished(view, url);
                 swipeRefreshWeb.setRefreshing(false);
                 webView.setBackgroundColor(0xFFFFFFFF);
+                toolbar.setTitle(view.getTitle());
             }
         });
         webView.setWebChromeClient(new WebChromeClient() {
@@ -172,6 +200,23 @@ public class FragmentWeb extends Fragment {
             }
         });
 
+        toolbarActions = (Toolbar) view.findViewById(R.id.toolbar_actions);
+        toolbarActions.inflateMenu(R.menu.menu_web_search);
+        toolbarActions.setOnMenuItemClickListener(new Toolbar.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                switch (item.getItemId()) {
+                    case R.id.item_search_previous:
+                        webView.findNext(false);
+                        break;
+                    case R.id.item_search_next:
+                        webView.findNext(true);
+                        break;
+                }
+                return true;
+            }
+        });
+
         return view;
     }
 
@@ -186,7 +231,6 @@ public class FragmentWeb extends Fragment {
             throw new ClassCastException(activity.toString()
                     + " must implement OnFragmentInteractionListener");
         }
-        mListener.setNavigationAnimation(1.0f);
     }
 
     @Override
@@ -221,7 +265,6 @@ public class FragmentWeb extends Fragment {
         super.onDestroy();
 //        CustomApplication.getRefWatcher(getActivity()).watch(this);
     }
-
     /**
      * This interface must be implemented by activities that contain this
      * fragment to allow an interaction in this fragment to be communicated
@@ -233,7 +276,6 @@ public class FragmentWeb extends Fragment {
      * >Communicating with Other Fragments</a> for more information.
      */
     public interface OnFragmentInteractionListener extends FragmentListenerBase {
-        void setNavigationAnimation(float value);
     }
 
 }

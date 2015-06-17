@@ -8,6 +8,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
+import android.support.v7.widget.Toolbar;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -53,6 +54,7 @@ public class FragmentAuth extends Fragment {
     private WebView webAuth;
     private Reddit reddit;
     private String state;
+    private Toolbar toolbar;
 
     /**
      * Use this factory method to create a new instance of
@@ -85,13 +87,6 @@ public class FragmentAuth extends Fragment {
         }
         state = UUID.randomUUID()
                 .toString();
-        setHasOptionsMenu(true);
-    }
-
-    @Override
-    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
-        super.onCreateOptionsMenu(menu, inflater);
-        mListener.setFloatingActionButtonValues(null, 0);
     }
 
     @Override
@@ -99,6 +94,16 @@ public class FragmentAuth extends Fragment {
                              Bundle savedInstanceState) {
 
         View view = inflater.inflate(R.layout.fragment_auth, container, false);
+
+        toolbar = (Toolbar) view.findViewById(R.id.toolbar);
+        toolbar.setTitle("Login");
+        toolbar.setNavigationIcon(R.drawable.ic_arrow_back_white_24dp);
+        toolbar.setNavigationOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mListener.onNavigationBackClick();
+            }
+        });
 
         webAuth = (WebView) view.findViewById(R.id.web_auth);
         webAuth.setWebViewClient(new WebViewClient() {

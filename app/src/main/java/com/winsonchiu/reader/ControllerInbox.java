@@ -36,8 +36,8 @@ public class ControllerInbox implements ControllerCommentsBase {
     public static final int VIEW_TYPE_MESSAGE = 0;
     public static final int VIEW_TYPE_COMMENT = 1;
     private static final String TAG = ControllerInbox.class.getCanonicalName();
-    private final Activity activity;
 
+    private Activity activity;
     private Set<ItemClickListener> listeners;
     private Listing data;
     private Reddit reddit;
@@ -46,20 +46,25 @@ public class ControllerInbox implements ControllerCommentsBase {
     private Link link;
     private String page;
     private User user;
+    private SharedPreferences preferences;
 
     public ControllerInbox(Activity activity) {
-        this.activity = activity;
+        setActivity(activity);
         data = new Listing();
         listeners = new HashSet<>();
-        this.reddit = Reddit.getInstance(activity);
-        Resources resources = activity.getResources();
-        this.drawableSelf = resources.getDrawable(R.drawable.ic_chat_white_48dp);
-        this.drawableDefault = resources.getDrawable(R.drawable.ic_web_white_48dp);
         link = new Link();
         page = "Inbox";
 
         // TODO: Support reloading user data
-        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(activity);
+    }
+
+    public void setActivity(Activity activity) {
+        this.activity = activity;
+        this.reddit = Reddit.getInstance(activity);
+        Resources resources = activity.getResources();
+        this.drawableSelf = resources.getDrawable(R.drawable.ic_chat_white_48dp);
+        this.drawableDefault = resources.getDrawable(R.drawable.ic_web_white_48dp);
+        preferences = PreferenceManager.getDefaultSharedPreferences(activity);
         if (!TextUtils.isEmpty(preferences.getString(AppSettings.ACCOUNT_JSON, ""))) {
             try {
                 this.user = User.fromJson(
@@ -76,10 +81,18 @@ public class ControllerInbox implements ControllerCommentsBase {
 
     public void addListener(ItemClickListener listener) {
         listeners.add(listener);
+        setTitle();
+        listener.getAdapter().notifyDataSetChanged();
     }
 
     public void removeListener(ItemClickListener listener) {
         listeners.remove(listener);
+    }
+
+    public void setTitle() {
+        for (ItemClickListener listener : listeners) {
+            listener.setToolbarTitle("Inbox");
+        }
     }
 
     public int getViewType(int position) {
@@ -126,7 +139,7 @@ public class ControllerInbox implements ControllerCommentsBase {
 
     public void reload() {
 
-        reddit.loadGet(Reddit.OAUTH_URL + "/message/" + page.toLowerCase(),
+        reddit.loadGet(Reddit.OAUTH_URL + "/message/" + page,
                 new Response.Listener<String>() {
                     @Override
                     public void onResponse(String response) {
@@ -138,7 +151,6 @@ public class ControllerInbox implements ControllerCommentsBase {
                                         false);
                                 // TODO: Check if reset necessary
                                 listener.resetRecycler();
-                                listener.setToolbarTitle("Inbox");
                             }
                         }
                         catch (JSONException e1) {

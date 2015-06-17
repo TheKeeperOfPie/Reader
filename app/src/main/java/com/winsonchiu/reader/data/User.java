@@ -3,6 +3,8 @@ package com.winsonchiu.reader.data;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.Serializable;
+
 /**
  * Created by TheKeeperOfPie on 4/22/2015.
  */

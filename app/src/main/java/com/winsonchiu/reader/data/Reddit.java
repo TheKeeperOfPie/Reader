@@ -7,7 +7,9 @@ import android.preference.PreferenceManager;
 import android.text.Html;
 import android.text.TextUtils;
 import android.util.Base64;
+import android.util.Log;
 import android.widget.ImageView;
+import android.widget.Toast;
 
 import com.android.volley.AuthFailureError;
 import com.android.volley.Request;
@@ -26,6 +28,7 @@ import com.winsonchiu.reader.R;
 
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.w3c.dom.Text;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -100,15 +103,17 @@ public class Reddit {
     public static final String QUERY_EXPIRES_IN = "expires_in";
     public static final String QUERY_ID = "id";
     public static final String QUERY_VOTE = "dir";
-    public static final String QUERY_MODHASH = "uh";
 
     private static Reddit reddit;
+    private Context context;
     private RequestQueue requestQueue;
     private SharedPreferences preferences;
 
     private Reddit(Context context) {
         requestQueue = Volley.newRequestQueue(context.getApplicationContext());
-        preferences = PreferenceManager.getDefaultSharedPreferences(context.getApplicationContext());
+        preferences = PreferenceManager.getDefaultSharedPreferences(
+                context.getApplicationContext());
+        this.context = context.getApplicationContext();
     }
 
     public static Reddit getInstance(Context context) {
@@ -136,12 +141,16 @@ public class Reddit {
 
         if (TextUtils.isEmpty(preferences.getString(AppSettings.REFRESH_TOKEN, ""))) {
             if ("".equals(preferences.getString(AppSettings.DEVICE_ID, ""))) {
-                preferences.edit().putString(AppSettings.DEVICE_ID, UUID.randomUUID().toString()).commit();
+                preferences.edit()
+                        .putString(AppSettings.DEVICE_ID, UUID.randomUUID()
+                                .toString())
+                        .commit();
             }
 
             params.put(QUERY_GRANT_TYPE, INSTALLED_CLIENT_GRANT);
-            params.put(QUERY_DEVICE_ID, preferences.getString(AppSettings.DEVICE_ID, UUID.randomUUID()
-                    .toString()));
+            params.put(QUERY_DEVICE_ID,
+                    preferences.getString(AppSettings.DEVICE_ID, UUID.randomUUID()
+                            .toString()));
         }
         else {
             params.put(QUERY_GRANT_TYPE, QUERY_REFRESH_TOKEN);
@@ -155,12 +164,12 @@ public class Reddit {
                     JSONObject jsonObject = new JSONObject(response);
                     preferences.edit()
                             .putString(AppSettings.ACCESS_TOKEN,
-                                       jsonObject.getString(QUERY_ACCESS_TOKEN))
+                                    jsonObject.getString(QUERY_ACCESS_TOKEN))
                             .commit();
                     preferences.edit()
                             .putLong(AppSettings.EXPIRE_TIME,
-                                     System.currentTimeMillis() + jsonObject.getLong(
-                                             QUERY_EXPIRES_IN) * SEC_TO_MS)
+                                    System.currentTimeMillis() + jsonObject.getLong(
+                                            QUERY_EXPIRES_IN) * SEC_TO_MS)
                             .commit();
                 }
                 catch (JSONException e1) {
@@ -181,7 +190,10 @@ public class Reddit {
 
     }
 
-    public Request<String> loadPostDefault(final String url, final Listener<String> listener, final ErrorListener errorListener, final Map<String, String> params) {
+    public Request<String> loadPostDefault(final String url,
+            final Listener<String> listener,
+            final ErrorListener errorListener,
+            final Map<String, String> params) {
 
         StringRequest postRequest = new StringRequest(Request.Method.POST, url,
                 listener, errorListener) {
@@ -194,7 +206,8 @@ public class Reddit {
             public Map<String, String> getHeaders() throws AuthFailureError {
                 HashMap<String, String> headers = new HashMap<>(3);
                 String credentials = CLIENT_ID + ":";
-                String auth = "Basic " + Base64.encodeToString(credentials.getBytes(), Base64.DEFAULT);
+                String auth = "Basic " + Base64.encodeToString(credentials.getBytes(),
+                        Base64.DEFAULT);
                 headers.put(USER_AGENT, CUSTOM_USER_AGENT);
                 headers.put(AUTHORIZATION, auth);
                 headers.put(CONTENT_TYPE, CONTENT_TYPE_APP_JSON);
@@ -208,12 +221,17 @@ public class Reddit {
 
     /**
      * HTTP POST call to Reddit OAuth API
-     *  @param url
+     *
+     * @param url
      * @param listener
      * @param errorListener
      * @param iteration
      */
-    public Request<String> loadPost(final String url, final Listener<String> listener, final ErrorListener errorListener, final Map<String, String> params, final int iteration) {
+    public Request<String> loadPost(final String url,
+            final Listener<String> listener,
+            final ErrorListener errorListener,
+            final Map<String, String> params,
+            final int iteration) {
 
         if (iteration > 2) {
             errorListener.onErrorResponse(null);
@@ -231,7 +249,14 @@ public class Reddit {
         }
 
         StringRequest getRequest = new StringRequest(Request.Method.POST, url,
-                listener, errorListener) {
+                listener, new ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                Log.d(TAG, "loadPost error: " + error);
+                Toast.makeText(context, "loadPost error: " + error, Toast.LENGTH_SHORT).show();
+                errorListener.onErrorResponse(error);
+            }
+        }) {
 
             @Override
             protected Map<String, String> getParams() throws AuthFailureError {
@@ -253,12 +278,16 @@ public class Reddit {
 
     /**
      * HTTP GET call to Reddit OAuth API, query parameters must exist inside url param
-     *  @param url
+     *
+     * @param url
      * @param listener
      * @param errorListener
      * @param iteration
      */
-    public Request<String> loadGet(final String url, final Listener<String> listener, final ErrorListener errorListener, final int iteration) {
+    public Request<String> loadGet(final String url,
+            final Listener<String> listener,
+            final ErrorListener errorListener,
+            final int iteration) {
 
         if (iteration > 2) {
             errorListener.onErrorResponse(null);
@@ -276,21 +305,31 @@ public class Reddit {
         }
 
         StringRequest getRequest = new StringRequest(Request.Method.GET, url,
-                listener, errorListener) {
-                    @Override
-                    public Map<String, String> getHeaders() throws AuthFailureError {
-                        HashMap<String, String> headers = new HashMap<>(3);
-                        headers.put(USER_AGENT, CUSTOM_USER_AGENT);
-                        headers.put(AUTHORIZATION, getAuthorizationHeader());
-                        headers.put(CONTENT_TYPE, CONTENT_TYPE_APP_JSON);
-                        return headers;
-                    }
-                };
+                listener, new ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                Log.d(TAG, "loadGet error: " + error);
+                Toast.makeText(context, "loadGet error: " + error, Toast.LENGTH_SHORT).show();
+                errorListener.onErrorResponse(error);
+            }
+        }) {
+            @Override
+            public Map<String, String> getHeaders() throws AuthFailureError {
+                HashMap<String, String> headers = new HashMap<>(3);
+                headers.put(USER_AGENT, CUSTOM_USER_AGENT);
+                headers.put(AUTHORIZATION, getAuthorizationHeader());
+                headers.put(CONTENT_TYPE, CONTENT_TYPE_APP_JSON);
+                return headers;
+            }
+        };
 
         return requestQueue.add(getRequest);
     }
 
-    public Request<String> loadImgurImage(String id, Listener<String> listener, final ErrorListener errorListener, final int iteration) {
+    public Request<String> loadImgurImage(String id,
+            Listener<String> listener,
+            final ErrorListener errorListener,
+            final int iteration) {
 
         if (iteration > 2) {
             errorListener.onErrorResponse(null);
@@ -313,7 +352,10 @@ public class Reddit {
 
     }
 
-    public Request<String> loadImgurAlbum(String id, Listener<String> listener, final ErrorListener errorListener, final int iteration) {
+    public Request<String> loadImgurAlbum(String id,
+            Listener<String> listener,
+            final ErrorListener errorListener,
+            final int iteration) {
 
         if (iteration > 2) {
             errorListener.onErrorResponse(null);
@@ -321,7 +363,7 @@ public class Reddit {
         }
 
         StringRequest getRequest = new StringRequest(Request.Method.GET, IMGUR_ALBUM_URL + id,
-                                                     listener, errorListener) {
+                listener, errorListener) {
             @Override
             public Map<String, String> getHeaders() throws AuthFailureError {
                 HashMap<String, String> headers = new HashMap<>(3);
@@ -336,7 +378,10 @@ public class Reddit {
 
     }
 
-    public Request<String> loadImgurGallery(String id, Listener<String> listener, final ErrorListener errorListener, final int iteration) {
+    public Request<String> loadImgurGallery(String id,
+            Listener<String> listener,
+            final ErrorListener errorListener,
+            final int iteration) {
 
         if (iteration > 2) {
             errorListener.onErrorResponse(null);
@@ -344,7 +389,7 @@ public class Reddit {
         }
 
         StringRequest getRequest = new StringRequest(Request.Method.GET, IMGUR_GALLERY_URL + id,
-                                                     listener, errorListener) {
+                listener, errorListener) {
             @Override
             public Map<String, String> getHeaders() throws AuthFailureError {
                 HashMap<String, String> headers = new HashMap<>(3);
@@ -417,6 +462,10 @@ public class Reddit {
     }
 
     public static CharSequence getTrimmedHtml(String html) {
+        if (TextUtils.isEmpty(html)) {
+            return html;
+        }
+
         html = Html.fromHtml(html.trim())
                 .toString();
 

@@ -20,6 +20,7 @@ import com.winsonchiu.reader.data.Subreddit;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.HashSet;
@@ -28,7 +29,7 @@ import java.util.Set;
 /**
  * Created by TheKeeperOfPie on 6/3/2015.
  */
-public class ControllerSearch{
+public class ControllerSearch {
 
     public static final int PAGE_SUBREDDITS = 0;
     public static final int PAGE_LINKS_SUBREDDIT = 1;
@@ -36,7 +37,7 @@ public class ControllerSearch{
 
     private static final String TAG = ControllerSearch.class.getCanonicalName();
 
-    private final ControllerLinks controllerLinks;
+    private ControllerLinks controllerLinks;
     private Set<Listener> listeners;
     private Activity activity;
     private SharedPreferences preferences;
@@ -54,11 +55,15 @@ public class ControllerSearch{
     private Request<String> requestLinks;
     private Request<String> requestLinksSubreddit;
 
-    public ControllerSearch(Activity activity, ControllerLinks controllerLinks) {
+    public ControllerSearch(Activity activity) {
         setActivity(activity);
-        this.controllerLinks = controllerLinks;
         sort = Sort.RELEVANCE;
         time = Time.ALL;
+        listeners = new HashSet<>();
+        query = "";
+        subreddits = new Listing();
+        links = new Listing();
+        linksSubreddit = new Listing();
     }
 
     public void setActivity(Activity activity) {
@@ -69,19 +74,16 @@ public class ControllerSearch{
         Resources resources = activity.getResources();
         this.drawableSelf = resources.getDrawable(R.drawable.ic_chat_white_48dp);
         this.drawableDefault = resources.getDrawable(R.drawable.ic_web_white_48dp);
-        listeners = new HashSet<>();
-        query = "";
-        subreddits = new Listing();
-        links = new Listing();
-        linksSubreddit = new Listing();
     }
 
-    public void addListener(Listener linkClickListener) {
-        listeners.add(linkClickListener);
+    public void addListener(Listener listener) {
+        listeners.add(listener);
+        setTitle();
+        listener.getAdapterSearchSubreddits().notifyDataSetChanged();
     }
 
-    public void removeListener(Listener linkClickListener) {
-        listeners.remove(linkClickListener);
+    public void removeListener(Listener listener) {
+        listeners.remove(listener);
     }
 
     public Reddit getReddit() {
@@ -93,10 +95,14 @@ public class ControllerSearch{
             return;
         }
         this.query = query;
+        setTitle();
+        reloadCurrentPage();
+    }
+
+    public void setTitle() {
         for (Listener listener : listeners) {
             listener.setToolbarTitle(query);
         }
-        reloadCurrentPage();
     }
 
     public void reloadCurrentPage() {
@@ -156,7 +162,11 @@ public class ControllerSearch{
         }
 
         try {
-            requestLinks = reddit.loadGet(Reddit.OAUTH_URL + "/search?q=" + URLEncoder.encode(query, Reddit.UTF_8) + "&sort=" + sort.toString() + "&t=" + time.toString(),
+            String sortString = sort.toString();
+            if (sort == Sort.ACTIVITY) {
+                sortString = Sort.HOT.name();
+            }
+            requestLinks = reddit.loadGet(Reddit.OAUTH_URL + "/search?q=" + URLEncoder.encode(query, Reddit.UTF_8) + "&sort=" + sortString + "&t=" + time.toString(),
                     new Response.Listener<String>() {
                         @Override
                         public void onResponse(String response) {
@@ -187,11 +197,13 @@ public class ControllerSearch{
 
     public void reloadLinksSubreddit() {
 
-        String subredditUrl = controllerLinks.getSubredditUrl();
+        Subreddit subreddit = controllerLinks.getSubreddit();
         String url = Reddit.OAUTH_URL;
-
-        if (!Reddit.FRONT_PAGE.equals(subredditUrl)) {
-            url += subredditUrl;
+        if (TextUtils.isEmpty(subreddit.getUrl())) {
+            url += "/";
+        }
+        else {
+            url += subreddit.getUrl();
         }
 
         if (requestLinksSubreddit != null) {
@@ -199,7 +211,7 @@ public class ControllerSearch{
         }
 
         try {
-            requestLinksSubreddit = reddit.loadGet(url + "/search?restrict_sr=on&q=" + URLEncoder.encode(query, Reddit.UTF_8) + "&sort=" + sort.toString() + "&t=" + time.toString(),
+            requestLinksSubreddit = reddit.loadGet(url + "search?restrict_sr=on&q=" + URLEncoder.encode(query, Reddit.UTF_8) + "&sort=" + sort.toString() + "&t=" + time.toString(),
                     new Response.Listener<String>() {
                         @Override
                         public void onResponse(String response) {
@@ -219,7 +231,7 @@ public class ControllerSearch{
                     }, new Response.ErrorListener() {
                         @Override
                         public void onErrorResponse(VolleyError error) {
-
+                            Log.d(TAG, "Error: " + error);
                         }
                     }, 0);
         }
@@ -254,7 +266,7 @@ public class ControllerSearch{
     }
 
     public Link getLink(int position) {
-        return (Link) links.getChildren().get(position);
+        return (Link) links.getChildren().get(position - 1);
     }
 
     public void voteLink(RecyclerView.ViewHolder viewHolder, int vote) {
@@ -299,7 +311,7 @@ public class ControllerSearch{
     }
 
     public Link getLinkSubreddit(int position) {
-        return (Link) linksSubreddit.getChildren().get(position);
+        return (Link) linksSubreddit.getChildren().get(position - 1);
     }
 
     public void voteLinkSubreddit(RecyclerView.ViewHolder viewHolder, int vote) {
@@ -396,6 +408,10 @@ public class ControllerSearch{
             listener.getAdapterLinks().notifyDataSetChanged();
             listener.getAdapterLinksSubreddit().notifyDataSetChanged();
         }
+    }
+
+    public void setControllerLinks(ControllerLinks controllerLinks) {
+        this.controllerLinks = controllerLinks;
     }
 
     public interface Listener {

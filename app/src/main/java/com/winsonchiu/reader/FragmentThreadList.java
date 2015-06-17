@@ -11,9 +11,11 @@ import android.support.v4.app.Fragment;
 import android.support.v4.view.MenuItemCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v4.widget.SwipeRefreshLayout;
+import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.StaggeredGridLayoutManager;
+import android.support.v7.widget.Toolbar;
 import android.text.Html;
 import android.text.TextUtils;
 import android.text.method.LinkMovementMethod;
@@ -53,7 +55,7 @@ import org.json.JSONObject;
  * Use the {@link FragmentThreadList#newInstance} factory method to
  * create an instance of this fragment.
  */
-public class FragmentThreadList extends Fragment {
+public class FragmentThreadList extends Fragment implements Toolbar.OnMenuItemClickListener {
 
     public static final String TAG = FragmentThreadList.class.getCanonicalName();
 
@@ -83,6 +85,7 @@ public class FragmentThreadList extends Fragment {
     private TextView textEmpty;
     private Menu menu;
     private MenuItem itemSortTime;
+    private Toolbar toolbar;
 
     /**
      * Use this factory method to create a new instance of
@@ -115,16 +118,12 @@ public class FragmentThreadList extends Fragment {
             mParam2 = getArguments().getString(ARG_PARAM2);
         }
         setHasOptionsMenu(true);
-        setRetainInstance(true);
     }
 
-    @Override
-    public void onCreateOptionsMenu(final Menu menu, MenuInflater inflater) {
-        super.onCreateOptionsMenu(menu, inflater);
-
-        menu.clear();
-        inflater.inflate(R.menu.menu_thread_list, menu);
-        this.menu = menu;
+    private void setUpOptionsMenu() {
+        toolbar.inflateMenu(R.menu.menu_thread_list);
+        toolbar.setOnMenuItemClickListener(this);
+        menu = toolbar.getMenu();
 
         SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(
                 activity.getApplicationContext());
@@ -158,20 +157,13 @@ public class FragmentThreadList extends Fragment {
 
         resetSubmenuSelected();
 
-        mListener.setFloatingActionButtonValues(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                startActivity(new Intent(activity, ActivityNewPost.class));
-            }
-        }, R.drawable.ic_add_white_24dp);
-
     }
 
     private void resetSubmenuSelected() {
-        onOptionsItemSelected(menu.findItem(mListener.getControllerLinks()
+        onMenuItemClick(menu.findItem(mListener.getControllerLinks()
                 .getSort()
                 .getMenuId()));
-        onOptionsItemSelected(menu.findItem(mListener.getControllerLinks()
+        onMenuItemClick(menu.findItem(mListener.getControllerLinks()
                 .getTime()
                 .getMenuId()));
 
@@ -182,66 +174,6 @@ public class FragmentThreadList extends Fragment {
         MenuItemCompat.setOnActionExpandListener(itemSearch, null);
         itemSearch = null;
         super.onDestroyOptionsMenu();
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-
-        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(
-                activity.getApplicationContext());
-
-        item.setChecked(true);
-        switch (item.getItemId()) {
-            case R.id.item_search:
-                getFragmentManager().beginTransaction()
-                        .add(R.id.frame_fragment, FragmentSearch.newInstance("", ""))
-                        .addToBackStack(null)
-                        .commit();
-                return super.onOptionsItemSelected(item);
-            case R.id.item_interface:
-                if (AppSettings.MODE_LIST.equals(
-                        preferences.getString(AppSettings.INTERFACE_MODE, AppSettings.MODE_LIST))) {
-                    resetAdapter(new AdapterLinkGrid(activity, mListener.getControllerLinks(),
-                            linkClickListener));
-                    item.setIcon(getResources().getDrawable(R.drawable.ic_view_list_white_24dp));
-                    preferences.edit()
-                            .putString(AppSettings.INTERFACE_MODE, AppSettings.MODE_GRID)
-                            .commit();
-                }
-                else {
-                    resetAdapter(new AdapterLinkList(activity, mListener.getControllerLinks(),
-                            linkClickListener));
-                    item.setIcon(getResources().getDrawable(R.drawable.ic_view_module_white_24dp));
-                    preferences.edit()
-                            .putString(AppSettings.INTERFACE_MODE, AppSettings.MODE_LIST)
-                            .commit();
-                }
-                return super.onOptionsItemSelected(item);
-
-        }
-
-        for (Sort sort : Sort.values()) {
-            if (sort.getMenuId() == item.getItemId()) {
-                mListener.getControllerLinks()
-                        .setSort(sort);
-                flashSearchView();
-                return super.onOptionsItemSelected(item);
-            }
-        }
-
-        for (Time time : Time.values()) {
-            if (time.getMenuId() == item.getItemId()) {
-                mListener.getControllerLinks()
-                        .setTime(time);
-                itemSortTime.setTitle(
-                        getString(R.string.time) + Reddit.TIME_SEPARATOR + item.toString());
-                flashSearchView();
-                return super.onOptionsItemSelected(item);
-            }
-        }
-
-
-        return super.onOptionsItemSelected(item);
     }
 
     /*
@@ -268,6 +200,15 @@ public class FragmentThreadList extends Fragment {
         recyclerThreadList.removeItemDecoration(adapterLink.getItemDecoration());
         adapterLink = newAdapter;
         layoutManager = adapterLink.getLayoutManager();
+
+        if (layoutManager instanceof LinearLayoutManager) {
+            recyclerThreadList.setPadding(0, 0, 0, 0);
+        }
+        else {
+            int padding = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 2, getResources().getDisplayMetrics());
+            recyclerThreadList.setPadding(padding, 0, padding, 0);
+        }
+
         if (adapterLink.getItemDecoration() != null) {
 //            recyclerThreadList.addItemDecoration(adapterLink.getItemDecoration());
         }
@@ -298,9 +239,9 @@ public class FragmentThreadList extends Fragment {
                     @Override
                     public void run() {
                         final float viewStartY = viewHolder.itemView.getY();
-                        // Grid layout has a 4 dp layout_margin that needs to be accounted for
+                        // Grid layout has a 2 dp layout_margin that needs to be accounted for
                         final float minY = viewHolder instanceof AdapterLinkGrid.ViewHolder ?
-                                TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 4,
+                                TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 2,
                                         getResources().getDisplayMetrics()) : 0;
                         final float viewStartPaddingBottom = viewHolder.itemView.getPaddingBottom();
                         final float screenHeight = getResources().getDisplayMetrics().heightPixels;
@@ -411,9 +352,7 @@ public class FragmentThreadList extends Fragment {
 
             @Override
             public void setToolbarTitle(String title) {
-                if (mListener != null) {
-                    mListener.setToolbarTitle(title);
-                }
+                toolbar.setTitle(title);
             }
 
             @Override
@@ -434,6 +373,10 @@ public class FragmentThreadList extends Fragment {
 
             @Override
             public void loadSideBar(Subreddit subreddit) {
+                if (subreddit.getUrl().equals("/") || "/r/all/".equalsIgnoreCase(subreddit.getUrl())) {
+                    return;
+                }
+
                 mListener.getControllerLinks()
                         .getReddit()
                         .loadGet(
@@ -456,7 +399,6 @@ public class FragmentThreadList extends Fragment {
                                 }, new Response.ErrorListener() {
                                     @Override
                                     public void onErrorResponse(VolleyError error) {
-
                                         textSidebar.setText(null);
                                         drawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED);
                                     }
@@ -498,13 +440,34 @@ public class FragmentThreadList extends Fragment {
             }
         };
 
+        toolbar = (Toolbar) view.findViewById(R.id.toolbar);
+        if (getFragmentManager().getBackStackEntryCount() <= 1) {
+            toolbar.setNavigationIcon(R.drawable.ic_menu_white_24dp);
+            toolbar.setNavigationOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    mListener.openDrawer();
+                }
+            });
+        }
+        else {
+            toolbar.setNavigationIcon(R.drawable.ic_arrow_back_white_24dp);
+            toolbar.setNavigationOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    mListener.onNavigationBackClick();
+                }
+            });
+        }
+        setUpOptionsMenu();
+
         swipeRefreshThreadList = (SwipeRefreshLayout) view.findViewById(
                 R.id.swipe_refresh_thread_list);
         swipeRefreshThreadList.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
                 mListener.getControllerLinks()
-                        .reloadAllLinks();
+                        .reloadAllLinks(false);
             }
         });
         if (adapterLink == null) {
@@ -526,12 +489,17 @@ public class FragmentThreadList extends Fragment {
         recyclerThreadList = (RecyclerView) view.findViewById(R.id.recycler_thread_list);
         recyclerThreadList.setScrollBarDefaultDelayBeforeFade(0);
         recyclerThreadList.setScrollBarFadeDuration(100);
-        if (adapterLink.getItemDecoration() != null) {
-//            recyclerThreadList.addItemDecoration(adapterLink.getItemDecoration());
-        }
         recyclerThreadList.setLayoutManager(layoutManager);
-        recyclerThreadList.setAdapter(adapterLink);
         recyclerThreadList.setHasFixedSize(true);
+        recyclerThreadList.setAdapter(adapterLink);
+
+        if (layoutManager instanceof LinearLayoutManager) {
+            recyclerThreadList.setPadding(0, 0, 0, 0);
+        }
+        else {
+            int padding = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 2, getResources().getDisplayMetrics());
+            recyclerThreadList.setPadding(padding, 0, padding, 0);
+        }
 
         drawerLayout = (DrawerLayout) view.findViewById(R.id.drawer_layout);
 
@@ -550,7 +518,7 @@ public class FragmentThreadList extends Fragment {
         super.onActivityResult(requestCode, resultCode, data);
 
         if (resultCode == Activity.RESULT_OK) {
-            mListener.getControllerLinks().reloadAllLinks();
+            mListener.getControllerLinks().reloadAllLinks(false);
         }
 
     }
@@ -559,12 +527,14 @@ public class FragmentThreadList extends Fragment {
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
 
+        Log.d(TAG, "onActivityCreated");
+
         swipeRefreshThreadList.post(new Runnable() {
             @Override
             public void run() {
                 swipeRefreshThreadList.setRefreshing(true);
                 mListener.getControllerLinks()
-                        .reloadAllLinks();
+                        .reloadAllLinks(false);
 
             }
         });
@@ -573,6 +543,7 @@ public class FragmentThreadList extends Fragment {
     @Override
     public void onAttach(Activity activity) {
         super.onAttach(activity);
+        Log.d(TAG, "onAttach");
         this.activity = activity;
         this.preferences = PreferenceManager.getDefaultSharedPreferences(
                 activity.getApplicationContext());
@@ -621,6 +592,65 @@ public class FragmentThreadList extends Fragment {
 //        CustomApplication.getRefWatcher(getActivity()).watch(this);
     }
 
+    @Override
+    public boolean onMenuItemClick(MenuItem item) {
+
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(
+                activity.getApplicationContext());
+
+        item.setChecked(true);
+        switch (item.getItemId()) {
+            case R.id.item_search:
+                getFragmentManager().beginTransaction()
+                        .add(R.id.frame_fragment, FragmentSearch.newInstance("", ""))
+                        .addToBackStack(null)
+                        .commit();
+                return true;
+            case R.id.item_interface:
+                if (AppSettings.MODE_LIST.equals(
+                        preferences.getString(AppSettings.INTERFACE_MODE, AppSettings.MODE_LIST))) {
+                    resetAdapter(new AdapterLinkGrid(activity, mListener.getControllerLinks(),
+                            linkClickListener));
+                    item.setIcon(getResources().getDrawable(R.drawable.ic_view_list_white_24dp));
+                    preferences.edit()
+                            .putString(AppSettings.INTERFACE_MODE, AppSettings.MODE_GRID)
+                            .commit();
+                }
+                else {
+                    resetAdapter(new AdapterLinkList(activity, mListener.getControllerLinks(),
+                            linkClickListener));
+                    item.setIcon(getResources().getDrawable(R.drawable.ic_view_module_white_24dp));
+                    preferences.edit()
+                            .putString(AppSettings.INTERFACE_MODE, AppSettings.MODE_LIST)
+                            .commit();
+                }
+                return true;
+
+        }
+
+        for (Sort sort : Sort.values()) {
+            if (sort.getMenuId() == item.getItemId()) {
+                mListener.getControllerLinks()
+                        .setSort(sort);
+                flashSearchView();
+                return true;
+            }
+        }
+
+        for (Time time : Time.values()) {
+            if (time.getMenuId() == item.getItemId()) {
+                mListener.getControllerLinks()
+                        .setTime(time);
+                itemSortTime.setTitle(
+                        getString(R.string.time) + Reddit.TIME_SEPARATOR + item.toString());
+                flashSearchView();
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     /**
      * This interface must be implemented by activities that contain this
      * fragment to allow an interaction in this fragment to be communicated
@@ -632,11 +662,9 @@ public class FragmentThreadList extends Fragment {
      * >Communicating with Other Fragments</a> for more information.
      */
     public interface OnFragmentInteractionListener extends FragmentListenerBase {
-        void setToolbarTitle(CharSequence title);
         ControllerLinks getControllerLinks();
         ControllerComments getControllerComments();
         ControllerInbox getControllerInbox();
-        void setNavigationAnimation(float value);
     }
 
 }

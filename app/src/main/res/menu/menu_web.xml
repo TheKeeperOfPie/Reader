@@ -5,7 +5,7 @@
     >
 
     <item
-        android:id="@+id/item_search"
+        android:id="@+id/item_search_web"
         android:title="@string/item_search"
         android:icon="@drawable/ic_search_white_24dp"
         android:orderInCategory="100"

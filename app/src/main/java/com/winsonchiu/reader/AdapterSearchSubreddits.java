@@ -127,7 +127,7 @@ public class AdapterSearchSubreddits extends RecyclerView.Adapter<AdapterSearchS
             textInfo.setVisibility(View.GONE);
 
             textName.setText(subreddit.getDisplayName());
-            textTitle.setText(subreddit.getTitle());
+            textTitle.setText(Reddit.getTrimmedHtml(subreddit.getTitle()));
 
             if ("null".equals(subreddit.getPublicDescriptionHtml())) {
                 textDescription.setText("");

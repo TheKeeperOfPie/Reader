@@ -8,6 +8,7 @@ import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -42,9 +43,9 @@ public class FragmentComments extends Fragment {
     private LinearLayoutManager linearLayoutManager;
     private AdapterCommentList adapterCommentList;
     private SwipeRefreshLayout swipeRefreshCommentList;
-    private ControllerComments controllerComments;
     private ControllerComments.CommentClickListener listener;
     private RecyclerView.ViewHolder viewHolder;
+    private Toolbar toolbar;
 
     /**
      * Use this factory method to create a new instance of
@@ -79,33 +80,8 @@ public class FragmentComments extends Fragment {
         setHasOptionsMenu(true);
     }
 
-    @Override
-    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
-        super.onCreateOptionsMenu(menu, inflater);
-        menu.clear();
-        inflater.inflate(R.menu.menu_comments, menu);
-        mListener.setFloatingActionButtonValues(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Runnable runnable = new Runnable() {
-                    @Override
-                    public void run() {
-                        AdapterLink.ViewHolderBase viewHolder = (AdapterLink.ViewHolderBase) recyclerCommentList.findViewHolderForAdapterPosition(
-                                0);
-                        viewHolder.toggleReply();
-                    }
-                };
-
-                if (linearLayoutManager.findFirstVisibleItemPosition() == 0) {
-                    runnable.run();
-                }
-                else {
-                    linearLayoutManager.scrollToPosition(0);
-                    adapterCommentList.notifyDataSetChanged();
-                    recyclerCommentList.post(runnable);
-                }
-            }
-        }, R.drawable.ic_reply_white_24dp);
+    private void setUpOptionsMenu() {
+        toolbar.inflateMenu(R.menu.menu_comments);
     }
 
     @Override
@@ -146,39 +122,47 @@ public class FragmentComments extends Fragment {
             }
 
             @Override
+            public void setToolbarTitle(String title) {
+                toolbar.setTitle(title);
+            }
+
+            @Override
             public void requestDisallowInterceptTouchEvent(boolean disallow) {
                 recyclerCommentList.requestDisallowInterceptTouchEvent(disallow);
             }
         };
+
+        toolbar = (Toolbar) view.findViewById(R.id.toolbar);
+        toolbar.setNavigationIcon(R.drawable.ic_arrow_back_white_24dp);
+        toolbar.setNavigationOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mListener.onNavigationBackClick();
+            }
+        });
+        setUpOptionsMenu();
 
         swipeRefreshCommentList = (SwipeRefreshLayout) view.findViewById(
                 R.id.swipe_refresh_comment_list);
         swipeRefreshCommentList.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
-                controllerComments.reloadAllComments();
+                mListener.getControllerComments().reloadAllComments();
             }
         });
 
         linearLayoutManager = new LinearLayoutManager(activity);
         recyclerCommentList = (RecyclerView) view.findViewById(R.id.recycler_comment_list);
         recyclerCommentList.setHasFixedSize(true);
-        recyclerCommentList.setItemAnimator(new DefaultItemAnimator());
-        recyclerCommentList.getItemAnimator()
-                .setRemoveDuration(AnimationUtils.EXPAND_ACTION_DURATION);
         recyclerCommentList.setLayoutManager(linearLayoutManager);
-//        recyclerCommentList.addItemDecoration(
-//                new DividerItemDecoration(activity, DividerItemDecoration.VERTICAL_LIST));
-
-        controllerComments = mListener.getControllerComments();
 
         if (adapterCommentList == null) {
-            adapterCommentList = new AdapterCommentList(activity, controllerComments, listener,
+            adapterCommentList = new AdapterCommentList(activity, mListener.getControllerComments(), listener,
                     getArguments().getBoolean(ARG_IS_GRID, false));
         }
 
         recyclerCommentList.setAdapter(adapterCommentList);
-        controllerComments.addListener(listener);
+        mListener.getControllerComments().addListener(listener);
 
         return view;
     }
@@ -186,14 +170,17 @@ public class FragmentComments extends Fragment {
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
+        Log.d(TAG, "onActivityCreated");
 
-//        swipeRefreshCommentList.post(new Runnable() {
-//            @Override
-//            public void run() {
-//                swipeRefreshCommentList.setRefreshing(true);
-//                controllerComments.setLinkId(subreddit, linkId);
-//            }
-//        });
+        swipeRefreshCommentList.post(new Runnable() {
+            @Override
+            public void run() {
+                swipeRefreshCommentList.setRefreshing(true);
+                mListener.getControllerComments()
+                        .reloadAllComments();
+
+            }
+        });
     }
 
     @Override
@@ -204,18 +191,19 @@ public class FragmentComments extends Fragment {
     @Override
     public void onStart() {
         super.onStart();
-        controllerComments.addListener(listener);
+        mListener.getControllerComments().addListener(listener);
     }
 
     @Override
     public void onStop() {
-        controllerComments.removeListener(listener);
+        mListener.getControllerComments().removeListener(listener);
         super.onStop();
     }
 
     @Override
     public void onAttach(Activity activity) {
         super.onAttach(activity);
+        Log.d(TAG, "onAttach");
         this.activity = activity;
         try {
             mListener = (OnFragmentInteractionListener) activity;
@@ -224,12 +212,10 @@ public class FragmentComments extends Fragment {
             throw new ClassCastException(activity.toString()
                     + " must implement OnFragmentInteractionListener");
         }
-        mListener.setNavigationAnimation(1.0f);
     }
 
     @Override
     public void onDetach() {
-        mListener.setNavigationAnimation(0.0f);
         mListener = null;
         activity = null;
         super.onDetach();
@@ -253,8 +239,6 @@ public class FragmentComments extends Fragment {
      * >Communicating with Other Fragments</a> for more information.
      */
     public interface OnFragmentInteractionListener extends FragmentListenerBase {
-        void setNavigationAnimation(float value);
-        void setToolbarTitle(CharSequence title);
         ControllerComments getControllerComments();
     }
 

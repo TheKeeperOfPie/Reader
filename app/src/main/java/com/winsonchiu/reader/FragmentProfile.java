@@ -13,6 +13,7 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.SearchView;
 import android.support.v7.widget.StaggeredGridLayoutManager;
+import android.support.v7.widget.Toolbar;
 import android.text.TextUtils;
 import android.util.Log;
 import android.util.TypedValue;
@@ -45,7 +46,7 @@ import org.json.JSONObject;
  * Use the {@link FragmentProfile#newInstance} factory method to
  * create an instance of this fragment.
  */
-public class FragmentProfile extends Fragment {
+public class FragmentProfile extends Fragment implements Toolbar.OnMenuItemClickListener {
     // TODO: Rename parameter arguments, choose names that match
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
     private static final String ARG_PARAM1 = "param1";
@@ -68,6 +69,7 @@ public class FragmentProfile extends Fragment {
     private MenuItem itemSearch;
     private Menu menu;
     private MenuItem itemSortTime;
+    private Toolbar toolbar;
 
     /**
      * Use this factory method to create a new instance of
@@ -98,19 +100,15 @@ public class FragmentProfile extends Fragment {
             mParam1 = getArguments().getString(ARG_PARAM1);
             mParam2 = getArguments().getString(ARG_PARAM2);
         }
-        setHasOptionsMenu(true);
         preferences = PreferenceManager.getDefaultSharedPreferences(
                 activity.getApplicationContext());
         this.user = new User();
     }
 
-    @Override
-    public void onCreateOptionsMenu(final Menu menu, MenuInflater inflater) {
-        super.onCreateOptionsMenu(menu, inflater);
-        menu.clear();
-        inflater.inflate(R.menu.menu_profile, menu);
-        this.menu = menu;
-
+    private void setUpOptionsMenu() {
+        toolbar.inflateMenu(R.menu.menu_profile);
+        toolbar.setOnMenuItemClickListener(this);
+        menu = toolbar.getMenu();
         menu.findItem(R.id.item_sort_hot)
                 .setChecked(true);
 
@@ -154,15 +152,13 @@ public class FragmentProfile extends Fragment {
         searchView.setSubmitButtonEnabled(true);
 
         resetSubmenuSelected();
-
-        mListener.setFloatingActionButtonValues(null, 0);
     }
 
     private void resetSubmenuSelected() {
-        onOptionsItemSelected(menu.findItem(mListener.getControllerProfile()
+        onMenuItemClick(menu.findItem(mListener.getControllerProfile()
                 .getSort()
                 .getMenuId()));
-        onOptionsItemSelected(menu.findItem(mListener.getControllerProfile()
+        onMenuItemClick(menu.findItem(mListener.getControllerProfile()
                 .getTime()
                 .getMenuId()));
 
@@ -175,33 +171,6 @@ public class FragmentProfile extends Fragment {
         searchView.setOnQueryTextListener(null);
         itemSearch = null;
         super.onDestroyOptionsMenu();
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-
-        item.setChecked(true);
-
-        for (Sort sort : Sort.values()) {
-            if (sort.getMenuId() == item.getItemId()) {
-                mListener.getControllerProfile()
-                        .setSort(sort);
-                flashSearchView();
-                return super.onOptionsItemSelected(item);
-            }
-        }
-
-        for (Time time : Time.values()) {
-            if (time.getMenuId() == item.getItemId()) {
-                mListener.getControllerProfile()
-                        .setTime(time);
-                itemSortTime.setTitle(
-                        getString(R.string.time) + Reddit.TIME_SEPARATOR + item.toString());
-                flashSearchView();
-                return super.onOptionsItemSelected(item);
-            }
-        }
-        return super.onOptionsItemSelected(item);
     }
 
     /*
@@ -238,9 +207,9 @@ public class FragmentProfile extends Fragment {
                     @Override
                     public void run() {
                         final float viewStartY = viewHolder.itemView.getY();
-                        // Grid layout has a 4 dp layout_margin that needs to be accounted for
+                        // Grid layout has a 2 dp layout_margin that needs to be accounted for
                         final float minY = viewHolder instanceof AdapterLinkGrid.ViewHolder ?
-                                TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 4,
+                                TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 2,
                                         getResources().getDisplayMetrics()) : 0;
                         final float viewStartPaddingBottom = viewHolder.itemView.getPaddingBottom();
                         final float screenHeight = getResources().getDisplayMetrics().heightPixels;
@@ -338,7 +307,7 @@ public class FragmentProfile extends Fragment {
 
             @Override
             public void setToolbarTitle(String title) {
-                mListener.setToolbarTitle(title);
+                toolbar.setTitle(title);
             }
 
             @Override
@@ -377,6 +346,27 @@ public class FragmentProfile extends Fragment {
 
             }
         };
+
+        toolbar = (Toolbar) view.findViewById(R.id.toolbar);
+        if (getFragmentManager().getBackStackEntryCount() <= 1) {
+            toolbar.setNavigationIcon(R.drawable.ic_menu_white_24dp);
+            toolbar.setNavigationOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    mListener.openDrawer();
+                }
+            });
+        }
+        else {
+            toolbar.setNavigationIcon(R.drawable.ic_arrow_back_white_24dp);
+            toolbar.setNavigationOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    mListener.onNavigationBackClick();
+                }
+            });
+        }
+        setUpOptionsMenu();
 
         swipeRefreshProfile = (SwipeRefreshLayout) view.findViewById(R.id.swipe_refresh_profile);
         swipeRefreshProfile.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
@@ -473,6 +463,32 @@ public class FragmentProfile extends Fragment {
 //        CustomApplication.getRefWatcher(getActivity()).watch(this);
     }
 
+    @Override
+    public boolean onMenuItemClick(MenuItem item) {
+        item.setChecked(true);
+
+        for (Sort sort : Sort.values()) {
+            if (sort.getMenuId() == item.getItemId()) {
+                mListener.getControllerProfile()
+                        .setSort(sort);
+                flashSearchView();
+                return true;
+            }
+        }
+
+        for (Time time : Time.values()) {
+            if (time.getMenuId() == item.getItemId()) {
+                mListener.getControllerProfile()
+                        .setTime(time);
+                itemSortTime.setTitle(
+                        getString(R.string.time) + Reddit.TIME_SEPARATOR + item.toString());
+                flashSearchView();
+                return true;
+            }
+        }
+        return false;
+    }
+
     /**
      * This interface must be implemented by activities that contain this
      * fragment to allow an interaction in this fragment to be communicated
@@ -484,8 +500,6 @@ public class FragmentProfile extends Fragment {
      * >Communicating with Other Fragments</a> for more information.
      */
     public interface OnFragmentInteractionListener extends FragmentListenerBase {
-        // TODO: Update argument type and name
-        void setToolbarTitle(CharSequence title);
 
         ControllerComments getControllerComments();
 

@@ -24,6 +24,7 @@
         <menu
             >
             <group
+                android:id="@+id/group_subreddit"
                 android:checkableBehavior="single"
                 >
 
@@ -38,6 +39,13 @@
                     android:title="@string/item_sort_activity"
                     android:orderInCategory="200"
                     />
+
+            </group>
+
+            <group
+                android:id="@+id/group_link"
+                android:checkableBehavior="single"
+                >
 
                 <item
                     android:id="@+id/item_sort_hot"
@@ -57,18 +65,12 @@
                     android:orderInCategory="500"
                     />
 
-                <item
-                    android:id="@+id/item_sort_controversial"
-                    android:title="@string/item_sort_controversial"
-                    android:orderInCategory="600"
-                    />
-
             </group>
 
             <item
                 android:id="@+id/item_sort_time"
                 android:title="@string/time"
-                android:orderInCategory="700"
+                android:orderInCategory="600"
                 >
 
                 <menu>

@@ -649,5 +649,5 @@ public class ItemAnimatorComment extends RecyclerView.ItemAnimator {
 
         @Override
         public void onAnimationCancel(View view) {}
-    };
+    }
 }

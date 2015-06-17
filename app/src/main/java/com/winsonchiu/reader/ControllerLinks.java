@@ -4,6 +4,8 @@ import android.app.Activity;
 import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.graphics.drawable.Drawable;
+import android.os.Parcel;
+import android.os.Parcelable;
 import android.preference.PreferenceManager;
 import android.support.v7.widget.RecyclerView;
 import android.text.Html;
@@ -38,8 +40,6 @@ import java.util.Set;
  */
 public class ControllerLinks implements ControllerLinksBase {
 
-    // TODO: Check if need setActivity
-
     private static final String TAG = ControllerLinks.class.getCanonicalName();
 
     private Activity activity;
@@ -56,12 +56,8 @@ public class ControllerLinks implements ControllerLinksBase {
 
     public ControllerLinks(Activity activity, String subredditName, Sort sort) {
         setActivity(activity);
-        this.reddit = Reddit.getInstance(activity);
         this.listeners = new HashSet<>();
         listingLinks = new Listing();
-        Resources resources = activity.getResources();
-        this.drawableSelf = resources.getDrawable(R.drawable.ic_chat_white_48dp);
-        this.drawableDefault = resources.getDrawable(R.drawable.ic_web_white_48dp);
         this.sort = sort;
         this.time = Time.ALL;
         subreddit = new Subreddit();
@@ -72,15 +68,44 @@ public class ControllerLinks implements ControllerLinksBase {
         else {
             subreddit.setUrl("/r/" + subredditName);
         }
-        // TODO: Check whether using name vs displayName matters when loading subreddits
     }
 
-    public void addListener(LinkClickListener linkClickListener) {
-        listeners.add(linkClickListener);
+    public ControllerLinks(Activity activity, JSONObject data) {
+        setActivity(activity);
+        this.listeners = new HashSet<>();
+        listingLinks = new Listing();
+        try {
+            sort = Sort.valueOf(data.getString("sort"));
+            time = Time.valueOf(data.getString("time"));
+            subreddit = Subreddit.fromJson(new JSONObject(data.getString("subreddit")));
+        }
+        catch (JSONException e) {
+            this.sort = Sort.HOT;
+            this.time = Time.ALL;
+            subreddit = new Subreddit();
+            subreddit.setUrl("/");
+            e.printStackTrace();
+        }
+        reloadAllLinks(true);
     }
 
-    public void removeListener(LinkClickListener linkClickListener) {
-        listeners.remove(linkClickListener);
+    public String saveData() throws JSONException {
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("sort", sort.name());
+        jsonObject.put("time", time.name());
+        jsonObject.put("subreddit", subreddit.toJsonString());
+
+        return jsonObject.toString();
+    }
+
+    public void addListener(LinkClickListener listener) {
+        listeners.add(listener);
+        setTitle();
+        listener.getAdapter().notifyDataSetChanged();
+    }
+
+    public void removeListener(LinkClickListener listener) {
+        listeners.remove(listener);
     }
 
     public void setParameters(String subredditName, Sort sort) {
@@ -89,6 +114,11 @@ public class ControllerLinks implements ControllerLinksBase {
             subreddit = new Subreddit();
             subreddit.setDisplayName(subredditName);
             subreddit.setUrl("/r/" + subredditName + "/");
+            int size = sizeLinks();
+            listingLinks = new Listing();
+            for (LinkClickListener listener : listeners) {
+                listener.getAdapter().notifyItemRangeRemoved(0, size + 1);
+            }
             reloadSubreddit();
         }
     }
@@ -106,12 +136,12 @@ public class ControllerLinks implements ControllerLinksBase {
                         catch (JSONException e) {
                             e.printStackTrace();
                         }
-                        reloadAllLinks();
+                        reloadAllLinks(true);
                     }
                 }, new Response.ErrorListener() {
                     @Override
                     public void onErrorResponse(VolleyError error) {
-                        reloadAllLinks();
+                        reloadAllLinks(true);
                     }
                 }, 0);
     }
@@ -124,21 +154,21 @@ public class ControllerLinks implements ControllerLinksBase {
             this.sort = sort;
             subreddit = new Subreddit();
             subreddit.setUrl("/");
-            reloadAllLinks();
+            reloadAllLinks(false);
         }
     }
 
     public void setSort(Sort sort) {
         if (this.sort != sort) {
             this.sort = sort;
-            reloadAllLinks();
+            reloadAllLinks(false);
         }
     }
 
     public void setTime(Time time) {
         if (this.time != time) {
             this.time = time;
-            reloadAllLinks();
+            reloadAllLinks(false);
         }
     }
 
@@ -179,7 +209,7 @@ public class ControllerLinks implements ControllerLinksBase {
                 .size();
     }
 
-    public void reloadAllLinks() {
+    public void reloadAllLinks(final boolean isListCleared) {
         setLoading(true);
 
         String url = Reddit.OAUTH_URL + subreddit.getUrl() + sort.toString() + "?t=" + time.toString() + "&limit=25&showAll=true";
@@ -210,8 +240,13 @@ public class ControllerLinks implements ControllerLinksBase {
                 }
 
                 for (LinkClickListener listener : listeners) {
-                    listener.getAdapter()
-                            .notifyDataSetChanged();
+                    if (isListCleared) {
+                        listener.getAdapter().notifyItemRangeInserted(0, sizeLinks() + 1);
+                    }
+                    else {
+                        listener.getAdapter()
+                                .notifyDataSetChanged();
+                    }
                     listener.onFullLoaded(0);
                     listener.loadSideBar(subreddit);
                     listener.setEmptyView(listingLinks.getChildren()
@@ -385,6 +420,10 @@ public class ControllerLinks implements ControllerLinksBase {
         this.activity = activity;
         this.preferences = PreferenceManager.getDefaultSharedPreferences(
                 activity.getApplicationContext());
+        this.reddit = Reddit.getInstance(activity);
+        Resources resources = activity.getResources();
+        this.drawableSelf = resources.getDrawable(R.drawable.ic_chat_white_48dp);
+        this.drawableDefault = resources.getDrawable(R.drawable.ic_web_white_48dp);
     }
 
     public String getSubredditName() {
@@ -394,14 +433,6 @@ public class ControllerLinks implements ControllerLinksBase {
         }
 
         return subreddit.getDisplayName();
-    }
-
-    public String getSubredditUrl() {
-        if (TextUtils.isEmpty(subreddit.getUrl())) {
-            return Reddit.FRONT_PAGE;
-        }
-
-        return subreddit.getUrl();
     }
 
     public Sort getSort() {

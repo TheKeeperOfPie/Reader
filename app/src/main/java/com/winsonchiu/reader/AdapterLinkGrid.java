@@ -21,6 +21,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.RelativeLayout;
 
 import com.squareup.picasso.Callback;
 import com.squareup.picasso.Picasso;
@@ -237,6 +238,8 @@ public class AdapterLinkGrid extends AdapterLink {
                 imageFull.setVisibility(View.GONE);
                 imageThumbnail.setVisibility(View.VISIBLE);
                 imageThumbnail.setImageDrawable(drawable);
+                ((RelativeLayout.LayoutParams) textThreadTitle.getLayoutParams()).removeRule(
+                        RelativeLayout.START_OF);
             }
             else if (showThumbnail(link)) {
                 Log.d(TAG, "showThumbnail true: " + link.getUrl());
@@ -246,6 +249,8 @@ public class AdapterLinkGrid extends AdapterLink {
                 Log.d(TAG, "showThumbnail false: " + link.getUrl());
                 imageFull.setVisibility(View.GONE);
                 imageThumbnail.setVisibility(View.VISIBLE);
+                ((RelativeLayout.LayoutParams) textThreadTitle.getLayoutParams()).removeRule(
+                        RelativeLayout.START_OF);
                 Picasso.with(callback.getController()
                         .getActivity())
                         .load(link.getThumbnail())
@@ -260,6 +265,8 @@ public class AdapterLinkGrid extends AdapterLink {
             imageFull.setVisibility(View.VISIBLE);
             imageThumbnail.setVisibility(View.GONE);
             progressImage.setVisibility(View.VISIBLE);
+            ((RelativeLayout.LayoutParams) textThreadTitle.getLayoutParams()).addRule(
+                    RelativeLayout.START_OF, buttonComments.getId());
 
             Picasso.with(callback.getController()
                     .getActivity())
@@ -328,8 +335,10 @@ public class AdapterLinkGrid extends AdapterLink {
         // TODO: Fix expanding reply when cell is not full span
         @Override
         public void toggleReply() {
-            ((StaggeredGridLayoutManager.LayoutParams) itemView.getLayoutParams()).setFullSpan(
-                    true);
+            if (itemView.getLayoutParams() instanceof StaggeredGridLayoutManager.LayoutParams) {
+                ((StaggeredGridLayoutManager.LayoutParams) itemView.getLayoutParams()).setFullSpan(
+                        true);
+            }
             itemView.requestLayout();
             callback.getListener()
                     .onFullLoaded(getAdapterPosition());

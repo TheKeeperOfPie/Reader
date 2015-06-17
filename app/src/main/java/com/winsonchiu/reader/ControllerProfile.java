@@ -37,8 +37,8 @@ public class ControllerProfile implements ControllerLinksBase, ControllerComment
     public static final int VIEW_TYPE_COMMENT = 3;
 
     private static final String TAG = ControllerProfile.class.getCanonicalName();
-    private final Activity activity;
 
+    private Activity activity;
     private Set<ItemClickListener> listeners;
     private Listing data;
     private Reddit reddit;
@@ -53,13 +53,9 @@ public class ControllerProfile implements ControllerLinksBase, ControllerComment
     private Time time;
 
     public ControllerProfile(Activity activity) {
-        this.activity = activity;
+        setActivity(activity);
         data = new Listing();
         listeners = new HashSet<>();
-        this.reddit = Reddit.getInstance(activity);
-        Resources resources = activity.getResources();
-        this.drawableSelf = resources.getDrawable(R.drawable.ic_chat_white_48dp);
-        this.drawableDefault = resources.getDrawable(R.drawable.ic_web_white_48dp);
         link = new Link();
         topLink = new Link();
         topComment = new Comment();
@@ -69,8 +65,18 @@ public class ControllerProfile implements ControllerLinksBase, ControllerComment
         time = Time.ALL;
     }
 
+    public void setActivity(Activity activity) {
+        this.activity = activity;
+        this.reddit = Reddit.getInstance(activity);
+        Resources resources = activity.getResources();
+        this.drawableSelf = resources.getDrawable(R.drawable.ic_chat_white_48dp);
+        this.drawableDefault = resources.getDrawable(R.drawable.ic_web_white_48dp);
+    }
+
     public void addListener(ItemClickListener listener) {
         listeners.add(listener);
+        setTitle();
+        listener.getAdapter().notifyDataSetChanged();
     }
 
     public void removeListener(ItemClickListener listener) {
@@ -131,11 +137,15 @@ public class ControllerProfile implements ControllerLinksBase, ControllerComment
 
     public void setUser(User user) {
         this.user = user;
+        setTitle();
+        sort = Sort.HOT;
+        reload();
+    }
+
+    public void setTitle() {
         for (ControllerProfile.ItemClickListener listener : listeners) {
             listener.setToolbarTitle(page);
         }
-        sort = Sort.HOT;
-        reload();
     }
 
     public void reload() {
@@ -415,10 +425,16 @@ public class ControllerProfile implements ControllerLinksBase, ControllerComment
                                     e.printStackTrace();
                                 }
                                 setUser(user);
+                                for (ControllerProfile.ItemClickListener listener : listeners) {
+                                    listener.setRefreshing(false);
+                                }
                             }
                         }, new Response.ErrorListener() {
                             @Override
                             public void onErrorResponse(VolleyError error) {
+                                for (ControllerProfile.ItemClickListener listener : listeners) {
+                                    listener.setRefreshing(false);
+                                }
                             }
                         }, 0);
     }

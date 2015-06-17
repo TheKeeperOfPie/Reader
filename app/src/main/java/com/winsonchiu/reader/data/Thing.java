@@ -3,6 +3,8 @@ package com.winsonchiu.reader.data;
 import com.winsonchiu.reader.Sort;
 import com.winsonchiu.reader.Time;
 
+import java.io.Serializable;
+
 /**
  * Created by TheKeeperOfPie on 3/8/2015.
  */

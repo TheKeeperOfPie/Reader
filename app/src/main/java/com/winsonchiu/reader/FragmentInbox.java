@@ -9,6 +9,7 @@ import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.StaggeredGridLayoutManager;
+import android.support.v7.widget.Toolbar;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -51,6 +52,7 @@ public class FragmentInbox extends Fragment {
     private LinearLayoutManager linearLayoutManager;
     private AdapterInbox adapterInbox;
     private ControllerInbox.ItemClickListener listener;
+    private Toolbar toolbar;
 
     /**
      * Use this factory method to create a new instance of
@@ -87,7 +89,7 @@ public class FragmentInbox extends Fragment {
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
         super.onCreateOptionsMenu(menu, inflater);
-        mListener.setFloatingActionButtonValues(null, 0);
+        menu.clear();
     }
 
     @Override
@@ -203,7 +205,7 @@ public class FragmentInbox extends Fragment {
 
             @Override
             public void setToolbarTitle(String title) {
-                mListener.setToolbarTitle(title);
+                toolbar.setTitle(title);
             }
 
             @Override
@@ -236,6 +238,15 @@ public class FragmentInbox extends Fragment {
 
             }
         };
+
+        toolbar = (Toolbar) view.findViewById(R.id.toolbar);
+        toolbar.setNavigationIcon(R.drawable.ic_menu_white_24dp);
+        toolbar.setNavigationOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mListener.openDrawer();
+            }
+        });
 
         swipeRefreshInbox = (SwipeRefreshLayout) view.findViewById(R.id.swipe_refresh_inbox);
         swipeRefreshInbox.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
@@ -330,7 +341,6 @@ public class FragmentInbox extends Fragment {
      */
     public interface OnFragmentInteractionListener extends FragmentListenerBase {
         ControllerInbox getControllerInbox();
-        void setToolbarTitle(CharSequence title);
         ControllerComments getControllerComments();
     }
 

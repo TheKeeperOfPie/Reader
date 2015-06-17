@@ -179,13 +179,25 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
 
         if (viewType == VIEW_LINK) {
             if (isGrid) {
-                viewHolderLink = new AdapterLinkGrid.ViewHolder(LayoutInflater.from(parent.getContext())
-                        .inflate(R.layout.cell_link, parent, false), this, activity.getResources().getColor(R.color.darkThemeDialog),
+                viewHolderLink = new AdapterLinkGrid.ViewHolder(
+                        LayoutInflater.from(parent.getContext())
+                                .inflate(R.layout.cell_link, parent, false), this,
+                        activity.getResources()
+                                .getColor(R.color.darkThemeDialog),
                         thumbnailWidth);
+                // TODO: Fix margin when expanding comment thread from grid UI
+//                int margin = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 4,
+//                        activity.getResources()
+//                                .getDisplayMetrics());
+//                ((RecyclerView.LayoutParams) viewHolderLink.itemView.findViewById(R.id.layout_link).getLayoutParams()).setMarginStart(
+//                        margin);
+//                ((RecyclerView.LayoutParams) viewHolderLink.itemView.findViewById(R.id.layout_link).getLayoutParams()).setMarginEnd(
+//                        margin);
             }
             else {
-                viewHolderLink = new AdapterLinkList.ViewHolder(LayoutInflater.from(parent.getContext())
-                        .inflate(R.layout.row_link, parent, false), this);
+                viewHolderLink = new AdapterLinkList.ViewHolder(
+                        LayoutInflater.from(parent.getContext())
+                                .inflate(R.layout.row_link, parent, false), this);
             }
             return viewHolderLink;
         }
@@ -617,10 +629,10 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                 spannableInfo.setSpan(new ForegroundColorSpan(
                                 comment.getScore() > 0 ?
                                         callback.getControllerComments()
-                                            .getActivity()
-                                            .getResources()
-                                            .getColor(
-                                                    R.color.positiveScore) :
+                                                .getActivity()
+                                                .getResources()
+                                                .getColor(
+                                                        R.color.positiveScore) :
                                         callback.getControllerComments()
                                                 .getActivity()
                                                 .getResources()
@@ -632,20 +644,32 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                 int colorAuthor = callback.getControllerComments()
                         .getMainLink()
                         .getAuthor()
-                        .equals(comment.getAuthor()) ? callback.getControllerComments().getActivity().getResources().getColor(
-                        R.color.colorAccent) :
-                        callback.getControllerComments().getActivity().getResources().getColor(
-                                R.color.darkThemeTextColorMuted);
+                        .equals(comment.getAuthor()) ? callback.getControllerComments()
+                        .getActivity()
+                        .getResources()
+                        .getColor(
+                                R.color.colorAccent) :
+                        callback.getControllerComments()
+                                .getActivity()
+                                .getResources()
+                                .getColor(
+                                        R.color.darkThemeTextColorMuted);
 
                 int indexScore = String.valueOf(comment.getScore())
                         .length();
-                spannableInfo.setSpan(new ForegroundColorSpan(callback.getControllerComments().getActivity().getResources().getColor(
-                        R.color.darkThemeTextColorMuted)), indexScore,
+                spannableInfo.setSpan(new ForegroundColorSpan(callback.getControllerComments()
+                                .getActivity()
+                                .getResources()
+                                .getColor(
+                                        R.color.darkThemeTextColorMuted)), indexScore,
                         indexScore + 4, Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
                 spannableInfo.setSpan(new ForegroundColorSpan(colorAuthor), indexScore + 4,
                         indexScore + 4 + comment.getAuthor()
                                 .length(), Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
-                spannableInfo.setSpan(new ForegroundColorSpan(callback.getControllerComments().getActivity().getResources().getColor(R.color.darkThemeTextColorMuted)),
+                spannableInfo.setSpan(new ForegroundColorSpan(callback.getControllerComments()
+                                .getActivity()
+                                .getResources()
+                                .getColor(R.color.darkThemeTextColorMuted)),
                         indexScore + 4 + comment.getAuthor()
                                 .length(), spannableInfo.length(),
                         Spanned.SPAN_INCLUSIVE_EXCLUSIVE);

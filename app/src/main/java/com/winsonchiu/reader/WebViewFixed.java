@@ -47,6 +47,10 @@ public class WebViewFixed extends WebView {
         }
     }
 
+    public void setMaxHeight(int height) {
+        maxHeight = height;
+    }
+
     public void lockHeight() {
         if (maxHeight == Integer.MAX_VALUE) {
             maxHeight = AnimationUtils.getMeasuredHeight(this, 1.0f);

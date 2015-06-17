@@ -13,11 +13,18 @@
         android:layout_height="match_parent"
         >
 
+        <include
+            layout="@layout/toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignParentTop="true"
+            />
+
         <com.winsonchiu.reader.CustomSwipeRefreshLayout
             android:id="@+id/swipe_refresh_thread_list"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:layout_alignParentTop="true"
+            android:layout_below="@id/toolbar"
             >
 
                 <android.support.v7.widget.RecyclerView
@@ -26,7 +33,6 @@
                     android:layout_height="match_parent"
                     android:scrollbars="vertical"
                     android:scrollbarFadeDuration="200"
-                    android:padding="2dp"
                     android:clipToPadding="false"
                     />
 

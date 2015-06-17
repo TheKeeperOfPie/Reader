@@ -4,6 +4,7 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:background="?android:selectableItemBackground"
+    android:layout_marginBottom="1dp"
     >
 
     <TextView
@@ -119,7 +120,7 @@
         android:layout_height="wrap_content"
         android:layout_below="@id/layout_buttons"
         android:layout_alignParentBottom="true"
-        android:layout_marginBottom="2dp"
+        android:layout_marginBottom="1dp"
         android:background="?android:listDivider"
         />
 

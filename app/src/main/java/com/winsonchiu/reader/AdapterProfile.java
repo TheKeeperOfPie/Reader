@@ -192,6 +192,11 @@ public class AdapterProfile extends RecyclerView.Adapter<RecyclerView.ViewHolder
                     }
 
                     @Override
+                    public void setToolbarTitle(String title) {
+                        // Not implemented
+                    }
+
+                    @Override
                     public void requestDisallowInterceptTouchEvent(boolean disallow) {
 
                     }
