@@ -1,12 +1,12 @@
 package com.winsonchiu.reader;
 
 import android.app.Activity;
+import android.app.Fragment;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.support.design.widget.TabLayout;
-import android.support.v4.app.Fragment;
 import android.support.v4.view.MenuItemCompat;
 import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
@@ -275,8 +275,11 @@ public class FragmentSearch extends Fragment implements Toolbar.OnMenuItemClickL
                         final float viewStartPaddingBottom = viewHolder.itemView.getPaddingBottom();
                         final float screenHeight = getResources().getDisplayMetrics().heightPixels;
 
-                        long duration = (long) Math.abs(
-                                viewStartY / screenHeight * AnimationUtils.MOVE_DURATION);
+                        float speed = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 1,
+                                activity.getResources()
+                                        .getDisplayMetrics());
+                        long duration = (long) (viewStartY / speed * 3);
+
                         TranslateAnimation translateAnimation = new TranslateAnimation(0, 0, 0,
                                 -viewStartY + minY);
 
@@ -467,6 +470,11 @@ public class FragmentSearch extends Fragment implements Toolbar.OnMenuItemClickL
             }
 
             @Override
+            public boolean showSubreddit() {
+                return true;
+            }
+
+            @Override
             public void deletePost(Link link) {
                 // Not implemented
             }
@@ -524,6 +532,11 @@ public class FragmentSearch extends Fragment implements Toolbar.OnMenuItemClickL
             @Override
             public Subreddit getSubreddit() {
                 return new Subreddit();
+            }
+
+            @Override
+            public boolean showSubreddit() {
+                return true;
             }
 
             @Override

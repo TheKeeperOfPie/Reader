@@ -32,6 +32,13 @@
                 android:visibility="gone"
                 />
 
+            <com.google.android.youtube.player.YouTubePlayerView
+                android:id="@+id/youtube"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:visibility="gone"
+                />
+
             <android.support.v4.view.ViewPager
                 android:id="@+id/view_pager_full"
                 android:layout_width="match_parent"
@@ -138,6 +145,7 @@
             android:layout_height="wrap_content"
             android:layout_below="@id/text_thread_self"
             android:layout_alignStart="@id/text_thread_self"
+            android:layout_marginStart="@dimen/activity_horizontal_margin"
             android:layout_marginEnd="@dimen/activity_horizontal_margin"
             android:layout_alignParentEnd="true"
             android:gravity="end"
@@ -159,13 +167,12 @@
             android:padding="@dimen/activity_horizontal_margin"
             />
 
-        <LinearLayout
+        <RelativeLayout
             android:id="@+id/layout_container_expand"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_below="@id/text_thread_info"
             android:layout_alignParentEnd="true"
-            android:orientation="vertical"
             android:visibility="gone"
             >
 
@@ -173,7 +180,10 @@
                 android:id="@+id/text_hidden"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_marginStart="@dimen/activity_horizontal_margin"
                 android:layout_marginEnd="@dimen/activity_horizontal_margin"
+                android:layout_alignParentTop="true"
+                android:layout_alignParentEnd="true"
                 android:layout_gravity="end"
                 android:gravity="end"
                 android:textSize="12sp"
@@ -184,9 +194,10 @@
                 android:id="@+id/toolbar_actions"
                 android:layout_width="match_parent"
                 android:layout_height="48dp"
+                android:layout_below="@id/text_hidden"
                 />
 
-        </LinearLayout>
+        </RelativeLayout>
 
         <RelativeLayout
             android:id="@+id/layout_container_reply"

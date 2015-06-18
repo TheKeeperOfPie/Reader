@@ -242,6 +242,11 @@ public class ControllerComments implements ControllerLinksBase, ControllerCommen
     }
 
     @Override
+    public boolean showSubreddit() {
+        return true;
+    }
+
+    @Override
     public void deletePost(Link link) {
         controllerLinks.deletePost(link);
     }

@@ -1,11 +1,11 @@
 package com.winsonchiu.reader;
 
 import android.app.Activity;
+import android.app.Fragment;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
-import android.support.v4.app.Fragment;
 import android.support.v4.view.MenuItemCompat;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.DefaultItemAnimator;
@@ -214,8 +214,11 @@ public class FragmentProfile extends Fragment implements Toolbar.OnMenuItemClick
                         final float viewStartPaddingBottom = viewHolder.itemView.getPaddingBottom();
                         final float screenHeight = getResources().getDisplayMetrics().heightPixels;
 
-                        long duration = (long) Math.abs(
-                                viewStartY / screenHeight * AnimationUtils.MOVE_DURATION);
+                        float speed = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 1,
+                                activity.getResources()
+                                        .getDisplayMetrics());
+                        long duration = (long) (viewStartY / speed * 3);
+
                         TranslateAnimation translateAnimation = new TranslateAnimation(0, 0, 0,
                                 -viewStartY + minY);
 

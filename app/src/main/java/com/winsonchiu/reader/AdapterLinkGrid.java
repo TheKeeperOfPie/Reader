@@ -15,6 +15,7 @@ import android.text.Spannable;
 import android.text.SpannableString;
 import android.text.Spanned;
 import android.text.TextUtils;
+import android.text.format.DateUtils;
 import android.text.style.ForegroundColorSpan;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -28,6 +29,7 @@ import com.squareup.picasso.Picasso;
 import com.winsonchiu.reader.data.Link;
 import com.winsonchiu.reader.data.Reddit;
 
+import java.util.Calendar;
 import java.util.Date;
 
 /**
@@ -128,11 +130,6 @@ public class AdapterLinkGrid extends AdapterLink {
     @Override
     public ControllerLinks.LinkClickListener getListener() {
         return listener;
-    }
-
-    @Override
-    public float getItemWidth() {
-        return itemWidth;
     }
 
     @Override
@@ -240,6 +237,7 @@ public class AdapterLinkGrid extends AdapterLink {
                 imageThumbnail.setImageDrawable(drawable);
                 ((RelativeLayout.LayoutParams) textThreadTitle.getLayoutParams()).removeRule(
                         RelativeLayout.START_OF);
+                ((RelativeLayout.LayoutParams) textThreadTitle.getLayoutParams()).setMarginEnd(callback.getTitleMargin());
             }
             else if (showThumbnail(link)) {
                 Log.d(TAG, "showThumbnail true: " + link.getUrl());
@@ -251,6 +249,7 @@ public class AdapterLinkGrid extends AdapterLink {
                 imageThumbnail.setVisibility(View.VISIBLE);
                 ((RelativeLayout.LayoutParams) textThreadTitle.getLayoutParams()).removeRule(
                         RelativeLayout.START_OF);
+                ((RelativeLayout.LayoutParams) textThreadTitle.getLayoutParams()).setMarginEnd(callback.getTitleMargin());
                 Picasso.with(callback.getController()
                         .getActivity())
                         .load(link.getThumbnail())
@@ -267,6 +266,7 @@ public class AdapterLinkGrid extends AdapterLink {
             progressImage.setVisibility(View.VISIBLE);
             ((RelativeLayout.LayoutParams) textThreadTitle.getLayoutParams()).addRule(
                     RelativeLayout.START_OF, buttonComments.getId());
+            ((RelativeLayout.LayoutParams) textThreadTitle.getLayoutParams()).setMarginEnd(0);
 
             Picasso.with(callback.getController()
                     .getActivity())
@@ -386,12 +386,22 @@ public class AdapterLinkGrid extends AdapterLink {
                             .getColor(
                                     R.color.darkThemeTextColor));
 
-            String subreddit = "/r/" + link.getSubreddit();
             int scoreLength = String.valueOf(link.getScore())
                     .length();
 
-            Spannable spannableInfo = new SpannableString(
-                    subreddit + "\n" + link.getScore() + " by " + link.getAuthor());
+            String subreddit;
+            Spannable spannableInfo;
+
+            if (callback.getController().showSubreddit()) {
+                subreddit = "/r/" + link.getSubreddit();
+                spannableInfo = new SpannableString(
+                        subreddit + "\n" + link.getScore() + " by " + link.getAuthor());
+            }
+            else {
+                subreddit = "";
+                spannableInfo = new SpannableString(" " + link.getScore() + " by " + link.getAuthor());
+            }
+
             spannableInfo.setSpan(new ForegroundColorSpan(callback.getController()
                             .getActivity()
                             .getResources()
@@ -420,8 +430,7 @@ public class AdapterLinkGrid extends AdapterLink {
                     Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
             textThreadInfo.setText(spannableInfo);
 
-            textHidden.setText(new Date(
-                    link.getCreatedUtc()).toString() + ", " + link.getNumComments() + " comments");
+            textHidden.setText(DateUtils.getRelativeTimeSpanString(link.getCreatedUtc()) + "\n" + getFormatttedDate(link.getCreatedUtc()) + "\n" + link.getNumComments() + " comments");
         }
     }
 

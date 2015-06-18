@@ -214,7 +214,6 @@ public class AdapterInbox extends RecyclerView.Adapter<RecyclerView.ViewHolder>
             super(itemView);
             this.callback = listenerCallback;
 
-
             Resources resources = callback.getController().getActivity().getResources();
             textMessage = (TextView) itemView.findViewById(R.id.text_message);
             textMessage.setMovementMethod(LinkMovementMethod.getInstance());
@@ -312,7 +311,7 @@ public class AdapterInbox extends RecyclerView.Adapter<RecyclerView.ViewHolder>
             clickListenerLink = new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    AnimationUtils.animateExpandActions(toolbarActions, false);
+                    AnimationUtils.animateExpand(toolbarActions, 1f, null);
                 }
             };
             textMessage.setOnClickListener(clickListenerLink);

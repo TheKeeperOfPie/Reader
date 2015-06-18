@@ -2,8 +2,8 @@ package com.winsonchiu.reader;
 
 
 import android.app.Activity;
+import android.app.Fragment;
 import android.os.Bundle;
-import android.support.v4.app.Fragment;
 
 /**
  * A simple {@link Fragment} subclass.

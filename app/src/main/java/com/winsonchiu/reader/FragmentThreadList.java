@@ -1,13 +1,13 @@
 package com.winsonchiu.reader;
 
 import android.app.Activity;
+import android.app.Fragment;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.design.widget.FloatingActionButton;
-import android.support.v4.app.Fragment;
 import android.support.v4.view.MenuItemCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v4.widget.SwipeRefreshLayout;
@@ -226,6 +226,9 @@ public class FragmentThreadList extends Fragment implements Toolbar.OnMenuItemCl
         linkClickListener = new ControllerLinks.LinkClickListener() {
             @Override
             public void onClickComments(final Link link, final RecyclerView.ViewHolder viewHolder) {
+
+                // TODO: Move onClickComments code to shared class to prevent code duplication
+
                 mListener.getControllerComments()
                         .setLink(link);
 
@@ -246,8 +249,11 @@ public class FragmentThreadList extends Fragment implements Toolbar.OnMenuItemCl
                         final float viewStartPaddingBottom = viewHolder.itemView.getPaddingBottom();
                         final float screenHeight = getResources().getDisplayMetrics().heightPixels;
 
-                        long duration = (long) Math.abs(
-                                viewStartY / screenHeight * AnimationUtils.MOVE_DURATION);
+                        float speed = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 1,
+                                activity.getResources()
+                                        .getDisplayMetrics());
+                        long duration = (long) (viewStartY / speed * 3);
+
                         TranslateAnimation translateAnimation = new TranslateAnimation(0, 0, 0,
                                 -viewStartY + minY);
 

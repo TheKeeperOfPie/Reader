@@ -9,7 +9,9 @@ import android.text.Spannable;
 import android.text.SpannableString;
 import android.text.Spanned;
 import android.text.TextUtils;
+import android.text.format.DateUtils;
 import android.text.style.ForegroundColorSpan;
+import android.text.style.LeadingMarginSpan;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -94,11 +96,6 @@ public class AdapterLinkList extends AdapterLink {
     @Override
     public ControllerLinks.LinkClickListener getListener() {
         return listener;
-    }
-
-    @Override
-    public float getItemWidth() {
-        return itemWidth;
     }
 
     @Override
@@ -188,12 +185,22 @@ public class AdapterLinkList extends AdapterLink {
                             .getColor(
                                     R.color.darkThemeTextColor));
 
-            String subreddit = "/r/" + link.getSubreddit();
             int scoreLength = String.valueOf(link.getScore())
                     .length();
 
-            Spannable spannableInfo = new SpannableString(
-                    subreddit + " " + link.getScore() + " by " + link.getAuthor());
+            String subreddit;
+            Spannable spannableInfo;
+
+            if (callback.getController().showSubreddit()) {
+                subreddit = "/r/" + link.getSubreddit();
+                spannableInfo = new SpannableString(
+                        subreddit + "\n" + link.getScore() + " by " + link.getAuthor());
+            }
+            else {
+                subreddit = "";
+                spannableInfo = new SpannableString(" " + link.getScore() + " by " + link.getAuthor());
+            }
+
             spannableInfo.setSpan(new ForegroundColorSpan(callback.getController()
                     .getActivity()
                     .getResources()
@@ -220,8 +227,7 @@ public class AdapterLinkList extends AdapterLink {
                     spannableInfo.length(), Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
             textThreadInfo.setText(spannableInfo);
 
-            textHidden.setText(new Date(
-                    link.getCreatedUtc()).toString() + ", " + link.getNumComments() + " comments");
+            textHidden.setText(DateUtils.getRelativeTimeSpanString(link.getCreatedUtc()) + " at " + getFormatttedDate(link.getCreatedUtc()) + ", " + link.getNumComments() + " comments");
         }
     }
 

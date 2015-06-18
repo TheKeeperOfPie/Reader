@@ -37,6 +37,7 @@ import android.widget.Toast;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.crashlytics.android.Crashlytics;
+import com.google.android.youtube.player.YouTubeBaseActivity;
 import com.winsonchiu.reader.data.Reddit;
 
 import org.json.JSONException;
@@ -50,7 +51,7 @@ import java.net.URL;
 import io.fabric.sdk.android.Fabric;
 
 
-public class MainActivity extends AppCompatActivity
+public class MainActivity extends YouTubeBaseActivity
         implements FragmentThreadList.OnFragmentInteractionListener,
         FragmentWeb.OnFragmentInteractionListener,
         FragmentComments.OnFragmentInteractionListener,
@@ -81,10 +82,10 @@ public class MainActivity extends AppCompatActivity
         Fabric.with(this, new Crashlytics());
         sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
 
-        fragmentData = (FragmentData) getSupportFragmentManager().findFragmentByTag(FragmentData.TAG);
+        fragmentData = (FragmentData) getFragmentManager().findFragmentByTag(FragmentData.TAG);
         if (fragmentData == null) {
             fragmentData = new FragmentData();
-            getSupportFragmentManager().beginTransaction().add(fragmentData, FragmentData.TAG).commit();
+            getFragmentManager().beginTransaction().add(fragmentData, FragmentData.TAG).commit();
             fragmentData.initializeControllers(this);
         }
         else {
@@ -105,12 +106,12 @@ public class MainActivity extends AppCompatActivity
 
             @Override
             public void onDrawerOpened(View drawerView) {
-                supportInvalidateOptionsMenu();
+                invalidateOptionsMenu();
             }
 
             @Override
             public void onDrawerClosed(View drawerView) {
-                supportInvalidateOptionsMenu();
+                invalidateOptionsMenu();
             }
 
             @Override
@@ -185,14 +186,14 @@ public class MainActivity extends AppCompatActivity
     }
 
     private void selectNavigationItem(int id) {
-        getSupportFragmentManager().popBackStackImmediate();
+        getFragmentManager().popBackStackImmediate();
         switch (id) {
             case R.id.item_home:
-                if (getSupportFragmentManager().findFragmentByTag(FragmentThreadList.TAG) != null) {
+                if (getFragmentManager().findFragmentByTag(FragmentThreadList.TAG) != null) {
                     fragmentData.getControllerLinks().loadFrontPage(Sort.HOT);
                 }
                 else {
-                    getSupportFragmentManager().beginTransaction()
+                    getFragmentManager().beginTransaction()
                             .replace(R.id.frame_fragment,
                                     FragmentThreadList.newInstance("", ""),
                                     FragmentThreadList.TAG)
@@ -200,14 +201,14 @@ public class MainActivity extends AppCompatActivity
                 }
                 break;
             case R.id.item_profile:
-                getSupportFragmentManager().beginTransaction()
+                getFragmentManager().beginTransaction()
                         .replace(R.id.frame_fragment,
                                 FragmentProfile.newInstance("", ""),
                                 FragmentProfile.TAG)
                         .commit();
                 break;
             case R.id.item_inbox:
-                getSupportFragmentManager().beginTransaction()
+                getFragmentManager().beginTransaction()
                         .replace(R.id.frame_fragment,
                                 FragmentInbox.newInstance("", ""),
                                 FragmentInbox.TAG)
@@ -264,7 +265,7 @@ public class MainActivity extends AppCompatActivity
     }
 
     private void onClickAccount() {
-        getSupportFragmentManager().beginTransaction()
+        getFragmentManager().beginTransaction()
                 .replace(R.id.frame_fragment, FragmentAuth.newInstance("", ""), FragmentAuth.TAG)
                 .commit();
         mDrawerLayout.closeDrawer(GravityCompat.START);
@@ -278,7 +279,7 @@ public class MainActivity extends AppCompatActivity
 
             if (!url.getHost()
                     .contains("reddit")) {
-                getSupportFragmentManager().beginTransaction()
+                getFragmentManager().beginTransaction()
                         .add(R.id.frame_fragment, FragmentWeb
                                 .newInstance(urlString, ""), FragmentWeb.TAG)
                         .addToBackStack(null)
@@ -306,7 +307,7 @@ public class MainActivity extends AppCompatActivity
                         indexFourthSlash > -1 ? indexFourthSlash : path.length());
                 Log.d(TAG, "Comments ID: " + id);
 
-                getSupportFragmentManager().beginTransaction()
+                getFragmentManager().beginTransaction()
                         .replace(R.id.frame_fragment,
                                 FragmentComments.newInstance(subreddit, id, false),
                                 FragmentComments.TAG)
@@ -315,7 +316,7 @@ public class MainActivity extends AppCompatActivity
             }
             else if (path.contains("/u/")) {
                 int indexUser = path.indexOf("/u/") + 3;
-                getSupportFragmentManager().beginTransaction()
+                getFragmentManager().beginTransaction()
                         .replace(R.id.frame_fragment, FragmentProfile.newInstance("", ""),
                                 FragmentProfile.TAG)
                         .commit();
@@ -324,7 +325,7 @@ public class MainActivity extends AppCompatActivity
             }
             else if (path.contains("/user/")) {
                 int indexUser = path.indexOf("/user/") + 6;
-                getSupportFragmentManager().beginTransaction()
+                getFragmentManager().beginTransaction()
                         .replace(R.id.frame_fragment, FragmentProfile.newInstance("", ""),
                                 FragmentProfile.TAG)
                         .commit();
@@ -332,7 +333,7 @@ public class MainActivity extends AppCompatActivity
                         urlString.substring(indexUser, path.indexOf("/", indexUser)));
             }
             else {
-                getSupportFragmentManager().beginTransaction()
+                getFragmentManager().beginTransaction()
                         .replace(R.id.frame_fragment, FragmentThreadList.newInstance("", ""),
                                 FragmentThreadList.TAG)
                         .commit();
@@ -350,9 +351,9 @@ public class MainActivity extends AppCompatActivity
     }
 
     public void onNavigationClick() {
-        Log.d(TAG, "Back stack count: " + getSupportFragmentManager().getBackStackEntryCount());
-        if (getSupportFragmentManager().getBackStackEntryCount() > 0) {
-            getSupportFragmentManager().popBackStack();
+        Log.d(TAG, "Back stack count: " + getFragmentManager().getBackStackEntryCount());
+        if (getFragmentManager().getBackStackEntryCount() > 0) {
+            getFragmentManager().popBackStack();
 //            mDrawerLayout.onDrawerSlide(mDrawerLayout, 0.0f);
         }
         else {
@@ -381,8 +382,8 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     public void onBackPressed() {
-        if (getSupportFragmentManager().getBackStackEntryCount() > 0) {
-            FragmentWeb fragmentWeb = (FragmentWeb) getSupportFragmentManager().findFragmentByTag(
+        if (getFragmentManager().getBackStackEntryCount() > 0) {
+            FragmentWeb fragmentWeb = (FragmentWeb) getFragmentManager().findFragmentByTag(
                     FragmentWeb.TAG);
 
             if (fragmentWeb != null && fragmentWeb.navigateBack()) {
@@ -418,7 +419,7 @@ public class MainActivity extends AppCompatActivity
                 startActivity(intentActivity);
             }
             else if (URLUtil.isValidUrl(urlString)) {
-                getSupportFragmentManager().beginTransaction()
+                getFragmentManager().beginTransaction()
                         .add(R.id.frame_fragment, FragmentWeb
                                 .newInstance(urlString, ""), FragmentWeb.TAG)
                         .addToBackStack(null)
@@ -471,11 +472,11 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     public void onNavigationBackClick() {
-        if (getSupportFragmentManager().getBackStackEntryCount() > 0) {
-            getSupportFragmentManager().popBackStack();
+        if (getFragmentManager().getBackStackEntryCount() > 0) {
+            getFragmentManager().popBackStack();
         }
         else {
-            if (isTaskRoot() && getSupportFragmentManager().getBackStackEntryCount() <= 1) {
+            if (isTaskRoot() && getFragmentManager().getBackStackEntryCount() <= 1) {
                 new AlertDialog.Builder(this)
                         .setMessage("Exit Reader?")
                         .setPositiveButton("Yes",

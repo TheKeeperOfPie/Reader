@@ -68,6 +68,7 @@ public class ControllerLinks implements ControllerLinksBase {
         else {
             subreddit.setUrl("/r/" + subredditName);
         }
+
     }
 
     public ControllerLinks(Activity activity, JSONObject data) {
@@ -443,6 +444,11 @@ public class ControllerLinks implements ControllerLinksBase {
         return time;
     }
 
+    @Override
+    public boolean showSubreddit() {
+        return "/".equals(subreddit.getUrl()) || "/r/all/".equals(subreddit.getUrl());
+    }
+
     public interface LinkClickListener extends DisallowListener {
 
         void onClickComments(Link link, RecyclerView.ViewHolder viewHolder);
@@ -476,6 +482,8 @@ public class ControllerLinks implements ControllerLinksBase {
         ControllerLinksBase getController();
 
         float getItemWidth();
+
+        int getTitleMargin();
 
         RecyclerView.LayoutManager getLayoutManager();
 

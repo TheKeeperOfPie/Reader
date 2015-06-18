@@ -11,11 +11,11 @@ import android.support.v4.graphics.ColorUtils;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
-import android.text.Html;
 import android.text.Spannable;
 import android.text.SpannableString;
 import android.text.Spanned;
 import android.text.TextUtils;
+import android.text.format.DateUtils;
 import android.text.method.LinkMovementMethod;
 import android.text.style.ForegroundColorSpan;
 import android.util.TypedValue;
@@ -25,7 +25,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -41,8 +40,9 @@ import com.winsonchiu.reader.data.User;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.util.Date;
+import java.util.Calendar;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -62,6 +62,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
     private static final int ALPHA_LEVELS = 8;
     private final ControllerComments.CommentClickListener listener;
     private final float itemWidth;
+    private final int titleMargin;
     private User user;
 
     private Activity activity;
@@ -86,6 +87,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
         this.thumbnailWidth = resources.getDisplayMetrics().widthPixels / 2;
         this.itemWidth = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 48,
                 resources.getDisplayMetrics());
+        this.titleMargin = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 16, resources.getDisplayMetrics());
         this.linkClickListener = new ControllerLinks.LinkClickListener() {
             @Override
             public void onClickComments(Link link, RecyclerView.ViewHolder viewHolder) {
@@ -263,6 +265,11 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
     }
 
     @Override
+    public int getTitleMargin() {
+        return titleMargin;
+    }
+
+    @Override
     public RecyclerView.LayoutManager getLayoutManager() {
         return null;
     }
@@ -304,6 +311,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
         protected View viewIndicatorContainerReply;
         protected TextView textComment;
         protected TextView textInfo;
+        protected TextView textHidden;
         protected RelativeLayout layoutContainerReply;
         protected EditText editTextReply;
         protected Button buttonSendReply;
@@ -314,15 +322,17 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
         protected MenuItem itemShare;
         protected Drawable drawableUpvote;
         protected Drawable drawableDownvote;
-        protected LinearLayout layoutContainerActions;
+        protected RelativeLayout layoutContainerExpand;
         protected ControllerComments.ListenerCallback callback;
         private View.OnClickListener clickListenerLink;
+        private Calendar calendar;
 
         public ViewHolderComment(final View itemView,
                 ControllerComments.ListenerCallback listenerCallback) {
             super(itemView);
             this.callback = listenerCallback;
 
+            calendar = Calendar.getInstance();
             Resources resources = callback.getControllerComments()
                     .getActivity()
                     .getResources();
@@ -337,8 +347,9 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
             textComment = (TextView) itemView.findViewById(R.id.text_comment);
             textComment.setMovementMethod(LinkMovementMethod.getInstance());
             textInfo = (TextView) itemView.findViewById(R.id.text_info);
-            layoutContainerActions = (LinearLayout) itemView.findViewById(
-                    R.id.layout_container_actions);
+            textHidden = (TextView) itemView.findViewById(R.id.text_hidden);
+            layoutContainerExpand = (RelativeLayout) itemView.findViewById(
+                    R.id.layout_container_expand);
             layoutContainerReply = (RelativeLayout) itemView.findViewById(
                     R.id.layout_container_reply);
             editTextReply = (EditText) itemView.findViewById(R.id.edit_text_reply);
@@ -512,8 +523,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
 
                     setVoteColors();
 
-                    AnimationUtils.animateExpandActions(layoutContainerActions, true);
-                    AnimationUtils.animateExpandActions(toolbarActions, false);
+                    AnimationUtils.animateExpand(layoutContainerExpand, 1f, null);
                 }
             };
             textComment.setOnClickListener(clickListenerLink);
@@ -582,18 +592,16 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
 
         public void onBind(int position) {
 
-            toolbarActions.setVisibility(View.GONE);
-
             Comment comment = callback.getControllerComments()
                     .getComment(position);
 
             if (comment.isReplyExpanded()) {
                 layoutContainerReply.setVisibility(View.VISIBLE);
-                layoutContainerActions.setVisibility(View.VISIBLE);
+                layoutContainerExpand.setVisibility(View.VISIBLE);
             }
             else {
                 layoutContainerReply.setVisibility(View.GONE);
-                layoutContainerActions.setVisibility(View.GONE);
+                layoutContainerExpand.setVisibility(View.GONE);
             }
 
             int alphaLevel = comment.getLevel() * MAX_ALPHA / ALPHA_LEVELS;
@@ -624,8 +632,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                 textComment.setText(Reddit.getTrimmedHtml(comment.getBodyHtml()));
 
                 Spannable spannableInfo = new SpannableString(
-                        comment.getScore() + " by " + comment.getAuthor() + " on " + new Date(
-                                comment.getCreatedUtc()).toString());
+                        comment.getScore() + " by " + comment.getAuthor() + " " + DateUtils.getRelativeTimeSpanString(comment.getCreatedUtc()));
                 spannableInfo.setSpan(new ForegroundColorSpan(
                                 comment.getScore() > 0 ?
                                         callback.getControllerComments()
@@ -675,7 +682,27 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                         Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
 
                 textInfo.setText(spannableInfo);
+                textHidden.setText(getFormatttedDate(comment.getCreatedUtc()));
+
             }
+
+            if (comment.getGilded() > 0) {
+                textComment.setTextColor(callback.getControllerComments()
+                        .getActivity()
+                        .getResources()
+                        .getColor(R.color.gildedComment));
+            }
+            else {
+                textComment.setTextColor(callback.getControllerComments()
+                        .getActivity()
+                        .getResources()
+                        .getColor(R.color.darkThemeTextColor));
+            }
+        }
+
+        public String getFormatttedDate(long time) {
+            calendar.setTimeInMillis(time);
+            return calendar.getDisplayName(Calendar.MONTH, Calendar.SHORT, Locale.getDefault()) + " " + calendar.get(Calendar.DAY_OF_MONTH) + " " + calendar.get(Calendar.YEAR) + " " + calendar.get(Calendar.HOUR_OF_DAY) + ":" + calendar.get(Calendar.MINUTE);
         }
     }
 }

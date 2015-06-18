@@ -138,11 +138,6 @@ public class AnimationUtils {
             final OnAnimationEndListener listener) {
 
         final boolean isShown = view.isShown();
-        float speed = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 1,
-                view.getContext()
-                        .getResources()
-                        .getDisplayMetrics());
-
         Animation animation = new Animation() {
             @Override
             protected void applyTransformation(float interpolatedTime, Transformation t) {
@@ -184,6 +179,11 @@ public class AnimationUtils {
             view.requestLayout();
             view.setVisibility(View.VISIBLE);
         }
+
+        float speed = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 1,
+                view.getContext()
+                        .getResources()
+                        .getDisplayMetrics());
 
         animation.setDuration((long) (height / speed * 2));
         view.startAnimation(animation);

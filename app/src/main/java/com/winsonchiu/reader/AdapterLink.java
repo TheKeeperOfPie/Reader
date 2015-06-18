@@ -46,6 +46,9 @@ import com.android.volley.Request;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.ImageLoader;
+import com.google.android.youtube.player.YouTubeInitializationResult;
+import com.google.android.youtube.player.YouTubePlayer;
+import com.google.android.youtube.player.YouTubePlayerView;
 import com.squareup.picasso.Picasso;
 import com.squareup.picasso.Target;
 import com.winsonchiu.reader.data.Comment;
@@ -64,10 +67,13 @@ import java.io.FileOutputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.TimeZone;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -81,6 +87,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
     public static final int VIEW_LINK = 1;
 
     private static final String TAG = AdapterLink.class.getCanonicalName();
+    private static int ACTION_MENU_SIZE = 7;
 
     protected Activity activity;
     protected LayoutManager layoutManager;
@@ -89,7 +96,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
     protected ControllerLinks.LinkClickListener listener;
     protected SharedPreferences preferences;
     protected List<ViewHolderBase> viewHolders;
-    private static int ACTION_MENU_SIZE = 7;
+    private int titleMargin;
 
     public AdapterLink() {
         super();
@@ -102,6 +109,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         this.preferences = PreferenceManager.getDefaultSharedPreferences(activity);
         this.itemWidth = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 48,
                 resources.getDisplayMetrics());
+        this.titleMargin = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 16, resources.getDisplayMetrics());
     }
 
     public void setControllerLinks(ControllerLinksBase controllerLinks,
@@ -117,7 +125,14 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         return controllerLinks;
     }
 
-    public abstract float getItemWidth();
+    public float getItemWidth() {
+        return itemWidth;
+    }
+
+    @Override
+    public int getTitleMargin() {
+        return titleMargin;
+    }
 
     public LayoutManager getLayoutManager() {
         return layoutManager;
@@ -270,6 +285,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
 
     protected static abstract class ViewHolderBase extends RecyclerView.ViewHolder {
 
+        private Calendar calendar;
         protected MediaController mediaController;
         protected ProgressBar progressImage;
         protected ViewPager viewPagerFull;
@@ -283,7 +299,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         protected TextView textThreadInfo;
         protected TextView textHidden;
         protected ImageButton buttonComments;
-        protected LinearLayout layoutContainerExpand;
+        protected RelativeLayout layoutContainerExpand;
         protected Toolbar toolbarActions;
         protected ControllerLinks.ListenerCallback callback;
         protected ImageLoader.ImageContainer imageContainer;
@@ -292,12 +308,15 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         protected RelativeLayout layoutContainerReply;
         protected EditText editTextReply;
         protected Button buttonSendReply;
+        protected YouTubePlayerView viewYouTube;
+        protected YouTubePlayer youTubePlayer;
 
         public ViewHolderBase(final View itemView,
                 ControllerLinks.ListenerCallback listenerCallback) {
             super(itemView);
             this.callback = listenerCallback;
 
+            calendar = Calendar.getInstance();
             progressImage = (ProgressBar) itemView.findViewById(R.id.progress_image);
             imagePlay = (ImageView) itemView.findViewById(R.id.image_play);
             mediaController = new MediaController(itemView.getContext());
@@ -429,7 +448,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                     return true;
                 }
             });
-            layoutContainerExpand = (LinearLayout) itemView.findViewById(
+            layoutContainerExpand = (RelativeLayout) itemView.findViewById(
                     R.id.layout_container_expand);
             layoutContainerReply = (RelativeLayout) itemView.findViewById(
                     R.id.layout_container_reply);
@@ -495,6 +514,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                     }
                 }
             });
+            viewYouTube = (YouTubePlayerView) itemView.findViewById(R.id.youtube);
 
             View.OnClickListener clickListenerLink = new View.OnClickListener() {
                 @Override
@@ -570,7 +590,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
 
         public abstract float getRatio(int adapterPosition);
 
-        public void loadFull(Link link) {
+        public void loadFull(final Link link) {
 
             Log.d(TAG, "loadFull: " + link.getUrl());
 
@@ -646,38 +666,40 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                                         }
                                     }, 0);
                 }
-                else if (link.getDomain().contains("youtube")) {
+                else if (link.getDomain().contains("youtu")) {
                     Log.d(TAG, "youtube");
-                    try {
-                        URL url = new URL(urlString);
-                        /*
-                            Regex taken from Gubatron at
-                            http://stackoverflow.com/questions/24048308/how-to-get-the-video-id-from-a-youtube-url-with-regex-in-java
-                        */
-                        Pattern pattern = Pattern.compile(".*(?:youtu.be\\/|v\\/|u\\/\\w\\/|embed\\/|watch\\?v=)([^#\\&\\?]*).*");
-                        Matcher matcher = pattern.matcher(urlString);
-                        if (matcher.matches()) {
-                            Log.d(TAG, "YouTube URL loaded: " + matcher.group(1));
-                            webFull.onResume();
-                            webFull.resetMaxHeight();
-                            webFull.loadUrl("https://www.youtube.com/embed/" + matcher.group(1) + "?autoplay=1&vq=small");
-                            webFull.setVisibility(View.VISIBLE);
-//                            ViewGroup.LayoutParams layoutParams = webFull.getLayoutParams();
-//                            layoutParams.height = callback.getController().getActivity().getResources().getDisplayMetrics().widthPixels / 16 * 9;
-//                            webFull.setLayoutParams(layoutParams);
-                            webFull.loadData("<html><head><meta name=\"viewport\" content=\"width=device-width, minimum-scale=0.1\"><style>img {width:100%;}</style></head><body><iframe /*width=\"640\" height=\"390\" */src=\"https://www.youtube.com/embed/" + matcher.group(1) + "?autoplay=1&vq=small\"" + "frameborder=\"0\" allowfullscreen></iframe></body></html>", "text/html", "UTF-8");
-                            webFull.setMaxHeight(
-                                    (int) (callback.getController().getActivity().getResources().getDisplayMetrics().widthPixels / 16f * 9f));
-                            webFull.lockHeight();
-                            callback.getListener()
-                                    .onFullLoaded(getAdapterPosition());
-                        }
-                        else {
-                            attemptLoadImage(link);
-                        }
+                    /*
+                        Regex taken from Gubatron at
+                        http://stackoverflow.com/questions/24048308/how-to-get-the-video-id-from-a-youtube-url-with-regex-in-java
+                    */
+                    Pattern pattern = Pattern.compile(".*(?:youtu.be\\/|v\\/|u\\/\\w\\/|embed\\/|watch\\?v=)([^#\\&\\?]*).*");
+                    final Matcher matcher = pattern.matcher(urlString);
+                    if (matcher.matches()) {
+                        Log.d(TAG, "YouTube URL loaded: " + matcher.group(1));
+                        final String id = matcher.group(1);
+                        viewYouTube.initialize(ApiKeys.YOUTUBE_API_KEY,
+                                new YouTubePlayer.OnInitializedListener() {
+                                    @Override
+                                    public void onInitializationSuccess(YouTubePlayer.Provider provider,
+                                            YouTubePlayer youTubePlayer,
+                                            boolean b) {
+                                        ViewHolderBase.this.youTubePlayer = youTubePlayer;
+                                        youTubePlayer.setManageAudioFocus(false);
+                                        youTubePlayer.loadVideo(id);
+                                        viewYouTube.setVisibility(View.VISIBLE);
+                                        callback.getListener()
+                                                .onFullLoaded(getAdapterPosition());
+                                    }
+
+                                    @Override
+                                    public void onInitializationFailure(YouTubePlayer.Provider provider,
+                                            YouTubeInitializationResult youTubeInitializationResult) {
+                                        attemptLoadImage(link);
+                                    }
+                                });
                     }
-                    catch (MalformedURLException e) {
-                        e.printStackTrace();
+                    else {
+                        attemptLoadImage(link);
                     }
                 }
                 else {
@@ -811,6 +833,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                                             imageThumbnail.setVisibility(View.GONE);
                                             ((RelativeLayout.LayoutParams) textThreadTitle.getLayoutParams()).addRule(
                                                     RelativeLayout.START_OF, buttonComments.getId());
+                                            ((RelativeLayout.LayoutParams) textThreadTitle.getLayoutParams()).setMarginEnd(0);
                                         }
                                         callback.getListener()
                                                 .onFullLoaded(getAdapterPosition());
@@ -858,6 +881,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                                             imageThumbnail.setVisibility(View.GONE);
                                             ((RelativeLayout.LayoutParams) textThreadTitle.getLayoutParams()).addRule(
                                                     RelativeLayout.START_OF, buttonComments.getId());
+                                            ((RelativeLayout.LayoutParams) textThreadTitle.getLayoutParams()).setMarginEnd(0);
                                         }
                                         callback.getListener()
                                                 .onFullLoaded(getAdapterPosition());
@@ -970,6 +994,11 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                 request.cancel();
             }
 
+            if (youTubePlayer != null) {
+                youTubePlayer.release();
+                youTubePlayer = null;
+            }
+            viewYouTube.setVisibility(View.GONE);
             webFull.onPause();
             webFull.resetMaxHeight();
             webFull.setVisibility(View.GONE);
@@ -982,6 +1011,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             if (this instanceof AdapterLinkGrid.ViewHolder) {
                 ((RelativeLayout.LayoutParams) textThreadTitle.getLayoutParams()).removeRule(
                         RelativeLayout.START_OF);
+                ((RelativeLayout.LayoutParams) textThreadTitle.getLayoutParams()).setMarginEnd(callback.getTitleMargin());
             }
 
 //            if (!TextUtils.isEmpty(imageUrl) && !callback.getController().getReddit().getImageLoader().isCached(imageUrl, 0, 0)) {
@@ -1016,6 +1046,8 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             else {
                 layoutContainerReply.setVisibility(View.GONE);
             }
+
+            textThreadSelf.setVisibility(View.GONE);
 
         }
 
@@ -1067,6 +1099,11 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
 
                         }
                     });
+        }
+
+        public String getFormatttedDate(long time) {
+            calendar.setTimeInMillis(time);
+            return calendar.getDisplayName(Calendar.MONTH, Calendar.SHORT, Locale.getDefault()) + " " + calendar.get(Calendar.DAY_OF_MONTH) + " " + calendar.get(Calendar.YEAR) + " " + calendar.get(Calendar.HOUR_OF_DAY) + ":" + calendar.get(Calendar.MINUTE);
         }
 
     }

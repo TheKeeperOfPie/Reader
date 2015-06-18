@@ -306,6 +306,11 @@ public class ControllerProfile implements ControllerLinksBase, ControllerComment
     }
 
     @Override
+    public boolean showSubreddit() {
+        return true;
+    }
+
+    @Override
     public void deletePost(Link link) {
         // TODO: Implement deleting posts from Profile view
     }

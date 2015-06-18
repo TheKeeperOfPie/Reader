@@ -1,15 +1,16 @@
 package com.winsonchiu.reader;
 
 import android.app.Activity;
+import android.app.Fragment;
 import android.content.Intent;
 import android.os.Bundle;
-import android.support.v4.app.Fragment;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.StaggeredGridLayoutManager;
 import android.support.v7.widget.Toolbar;
+import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -94,7 +95,7 @@ public class FragmentInbox extends Fragment {
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
+            Bundle savedInstanceState) {
 
         View view = inflater.inflate(R.layout.fragment_inbox, container, false);
 
@@ -102,7 +103,8 @@ public class FragmentInbox extends Fragment {
             @Override
             public void onClickComments(final Link link, final RecyclerView.ViewHolder viewHolder) {
 
-                mListener.getControllerComments().setLink(link);
+                mListener.getControllerComments()
+                        .setLink(link);
 
                 if (viewHolder instanceof AdapterLinkGrid.ViewHolder) {
                     ((StaggeredGridLayoutManager.LayoutParams) viewHolder.itemView.getLayoutParams()).setFullSpan(
@@ -117,14 +119,18 @@ public class FragmentInbox extends Fragment {
                         final float viewStartPaddingBottom = viewHolder.itemView.getPaddingBottom();
                         final float screenHeight = getResources().getDisplayMetrics().heightPixels;
 
-                        long duration = (long) Math.abs(
-                                viewStartY / screenHeight * AnimationUtils.MOVE_DURATION / 2 + AnimationUtils.MOVE_DURATION / 2);
+                        float speed = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 1,
+                                activity.getResources()
+                                        .getDisplayMetrics());
+                        long duration = (long) (viewStartY / speed * 3);
+
                         TranslateAnimation translateAnimation = new TranslateAnimation(0, 0, 0,
                                 -viewStartY);
 
                         Animation heightAnimation = new Animation() {
                             @Override
-                            protected void applyTransformation(float interpolatedTime, Transformation t) {
+                            protected void applyTransformation(float interpolatedTime,
+                                    Transformation t) {
                                 super.applyTransformation(interpolatedTime, t);
                                 viewHolder.itemView.setPadding(viewHolder.itemView.getPaddingLeft(),
                                         viewHolder.itemView.getPaddingTop(),
@@ -144,6 +150,7 @@ public class FragmentInbox extends Fragment {
                         animation.addAnimation(translateAnimation);
                         animation.addAnimation(heightAnimation);
 
+
                         animation.setDuration(duration);
                         animation.setFillAfter(false);
                         animation.setAnimationListener(new Animation.AnimationListener() {
@@ -159,14 +166,16 @@ public class FragmentInbox extends Fragment {
                                         viewHolder instanceof AdapterLinkGrid.ViewHolder);
 
                                 getFragmentManager().beginTransaction()
-                                        .add(R.id.frame_fragment, fragmentComments, FragmentComments.TAG)
+                                        .add(R.id.frame_fragment, fragmentComments,
+                                                FragmentComments.TAG)
                                         .addToBackStack(null)
                                         .commit();
 
                                 viewHolder.itemView.postDelayed(new Runnable() {
                                     @Override
                                     public void run() {
-                                        viewHolder.itemView.setPadding(viewHolder.itemView.getPaddingLeft(),
+                                        viewHolder.itemView.setPadding(
+                                                viewHolder.itemView.getPaddingLeft(),
                                                 viewHolder.itemView.getPaddingTop(),
                                                 viewHolder.itemView.getPaddingRight(),
                                                 (int) viewStartPaddingBottom);
@@ -188,8 +197,10 @@ public class FragmentInbox extends Fragment {
 
             @Override
             public void loadUrl(String url) {
-                getFragmentManager().beginTransaction().add(R.id.frame_fragment, FragmentWeb
-                        .newInstance(url, ""), FragmentWeb.TAG).addToBackStack(null)
+                getFragmentManager().beginTransaction()
+                        .add(R.id.frame_fragment, FragmentWeb
+                                .newInstance(url, ""), FragmentWeb.TAG)
+                        .addToBackStack(null)
                         .commit();
             }
 
@@ -261,7 +272,8 @@ public class FragmentInbox extends Fragment {
         recyclerInbox = (RecyclerView) view.findViewById(R.id.recycler_inbox);
         recyclerInbox.setHasFixedSize(true);
         recyclerInbox.setItemAnimator(new DefaultItemAnimator());
-        recyclerInbox.getItemAnimator().setRemoveDuration(AnimationUtils.EXPAND_ACTION_DURATION);
+        recyclerInbox.getItemAnimator()
+                .setRemoveDuration(AnimationUtils.EXPAND_ACTION_DURATION);
         recyclerInbox.setLayoutManager(linearLayoutManager);
 //        recyclerInbox.addItemDecoration(
 //                new DividerItemDecoration(activity, DividerItemDecoration.VERTICAL_LIST));
@@ -271,7 +283,8 @@ public class FragmentInbox extends Fragment {
         }
 
         recyclerInbox.setAdapter(adapterInbox);
-        mListener.getControllerInbox().addListener(listener);
+        mListener.getControllerInbox()
+                .addListener(listener);
 
         return view;
 
@@ -285,7 +298,8 @@ public class FragmentInbox extends Fragment {
             @Override
             public void run() {
                 swipeRefreshInbox.setRefreshing(true);
-                mListener.getControllerInbox().reload();
+                mListener.getControllerInbox()
+                        .reload();
             }
         });
     }
@@ -293,12 +307,14 @@ public class FragmentInbox extends Fragment {
     @Override
     public void onStart() {
         super.onStart();
-        mListener.getControllerInbox().addListener(listener);
+        mListener.getControllerInbox()
+                .addListener(listener);
     }
 
     @Override
     public void onStop() {
-        mListener.getControllerInbox().removeListener(listener);
+        mListener.getControllerInbox()
+                .removeListener(listener);
         super.onStop();
     }
 

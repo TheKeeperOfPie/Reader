@@ -236,6 +236,11 @@ public class ControllerInbox implements ControllerCommentsBase {
     }
 
     @Override
+    public boolean showSubreddit() {
+        return true;
+    }
+
+    @Override
     public void deletePost(Link link) {
         // Not implemented
     }

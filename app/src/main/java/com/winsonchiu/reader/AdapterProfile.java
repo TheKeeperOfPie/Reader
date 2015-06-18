@@ -35,6 +35,7 @@ public class AdapterProfile extends RecyclerView.Adapter<RecyclerView.ViewHolder
     protected ControllerProfile controllerProfile;
     private SharedPreferences preferences;
     private float itemWidth;
+    private int titleMargin;
     private ControllerProfile.ItemClickListener listener;
     private ControllerLinks.ListenerCallback linksCallback;
     private ControllerComments.ListenerCallback commentsCallback;
@@ -48,6 +49,7 @@ public class AdapterProfile extends RecyclerView.Adapter<RecyclerView.ViewHolder
         Resources resources = activity.getResources();
         this.itemWidth = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 48,
                 resources.getDisplayMetrics());
+        this.titleMargin = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 16, resources.getDisplayMetrics());
         this.controllerProfile = controllerProfile;
         this.listener = listener;
         viewHolderLinks = new ArrayList<>();
@@ -137,6 +139,11 @@ public class AdapterProfile extends RecyclerView.Adapter<RecyclerView.ViewHolder
             @Override
             public float getItemWidth() {
                 return itemWidth;
+            }
+
+            @Override
+            public int getTitleMargin() {
+                return titleMargin;
             }
 
             @Override

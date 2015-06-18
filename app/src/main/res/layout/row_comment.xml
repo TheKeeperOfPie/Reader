@@ -51,11 +51,10 @@
         android:gravity="start"
         />
 
-    <LinearLayout
-        android:orientation="horizontal"
-        android:id="@+id/layout_container_actions"
+    <RelativeLayout
+        android:id="@+id/layout_container_expand"
         android:layout_width="match_parent"
-        android:layout_height="48dp"
+        android:layout_height="wrap_content"
         android:layout_alignStart="@id/view_indicator"
         android:layout_below="@id/text_info"
         android:visibility="gone"
@@ -64,28 +63,48 @@
         <View
             android:id="@+id/view_indicator_container"
             android:layout_width="8dp"
-            android:layout_height="48dp"
+            android:layout_height="wrap_content"
             android:layout_margin="0dp"
+            android:layout_alignTop="@+id/text_hidden"
+            android:layout_alignBottom="@+id/toolbar_actions"
+            android:layout_alignParentStart="true"
             android:padding="0dp"
             android:background="@color/colorPrimary"
+            />
+
+        <TextView
+            android:id="@+id/text_hidden"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="@dimen/activity_horizontal_margin"
+            android:layout_marginEnd="@dimen/activity_horizontal_margin"
+            android:layout_toEndOf="@id/view_indicator_container"
+            android:layout_alignParentTop="true"
+            android:layout_alignParentEnd="true"
+            android:gravity="end"
+            android:textSize="12sp"
+            android:textColor="@color/darkThemeTextColorMuted"
+            android:ellipsize="none"
+            android:scrollHorizontally="false"
             />
 
         <android.support.v7.widget.Toolbar
             android:id="@+id/toolbar_actions"
             android:layout_width="match_parent"
             android:layout_height="48dp"
-            android:gravity="end"
-            android:visibility="gone"
+            android:layout_below="@id/text_hidden"
+            android:layout_toEndOf="@id/view_indicator_container"
+            android:layout_alignParentEnd="true"
             />
 
-    </LinearLayout>
+    </RelativeLayout>
 
     <RelativeLayout
         android:id="@+id/layout_container_reply"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignStart="@id/view_indicator"
-        android:layout_below="@id/layout_container_actions"
+        android:layout_below="@id/layout_container_expand"
         android:layout_above="@+id/view_divider"
         android:layout_alignParentEnd="true"
         android:visibility="gone"
