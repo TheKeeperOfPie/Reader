@@ -40,13 +40,6 @@
                     android:orderInCategory="200"
                     />
 
-            </group>
-
-            <group
-                android:id="@+id/group_link"
-                android:checkableBehavior="single"
-                >
-
                 <item
                     android:id="@+id/item_sort_hot"
                     android:title="@string/item_sort_hot"

@@ -11,6 +11,7 @@
         xmlns:android="http://schemas.android.com/apk/res/android"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:paddingTop="8dp"
         >
 
         <TextView
@@ -20,6 +21,9 @@
             android:visibility="gone"
             android:layout_alignParentTop="true"
             android:textAppearance="?android:textAppearanceMedium"
+            android:layout_marginStart="@dimen/activity_horizontal_margin"
+            android:layout_marginEnd="@dimen/activity_horizontal_margin"
+            android:layout_marginBottom="8dp"
             />
 
         <TextView
@@ -28,6 +32,9 @@
             android:layout_height="wrap_content"
             android:visibility="gone"
             android:layout_below="@id/text_image_title"
+            android:layout_marginStart="@dimen/activity_horizontal_margin"
+            android:layout_marginEnd="@dimen/activity_horizontal_margin"
+            android:layout_marginBottom="8dp"
             />
 
         <com.winsonchiu.reader.WebViewFixed

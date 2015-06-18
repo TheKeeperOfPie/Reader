@@ -65,6 +65,7 @@
         android:layout_below="@id/tab_search"
         android:text="@string/empty_thread_list"
         android:visibility="gone"
+        android:layout_margin="@dimen/activity_horizontal_margin"
         />
 
 </RelativeLayout>

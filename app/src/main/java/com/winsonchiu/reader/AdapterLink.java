@@ -55,6 +55,7 @@ import com.winsonchiu.reader.data.Comment;
 import com.winsonchiu.reader.data.Link;
 import com.winsonchiu.reader.data.Reddit;
 import com.winsonchiu.reader.data.Subreddit;
+import com.winsonchiu.reader.data.User;
 import com.winsonchiu.reader.data.imgur.Album;
 import com.winsonchiu.reader.data.imgur.Image;
 
@@ -96,11 +97,18 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
     protected ControllerLinks.LinkClickListener listener;
     protected SharedPreferences preferences;
     protected List<ViewHolderBase> viewHolders;
+    protected User user;
     private int titleMargin;
 
     public AdapterLink() {
         super();
         viewHolders = new ArrayList<>();
+        this.user = new User();
+    }
+
+    @Override
+    public User getUser() {
+        return user;
     }
 
     public void setActivity(Activity activity) {
@@ -109,7 +117,17 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         this.preferences = PreferenceManager.getDefaultSharedPreferences(activity);
         this.itemWidth = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 48,
                 resources.getDisplayMetrics());
-        this.titleMargin = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 16, resources.getDisplayMetrics());
+        this.titleMargin = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 16,
+                resources.getDisplayMetrics());
+        if (!TextUtils.isEmpty(preferences.getString(AppSettings.ACCOUNT_JSON, ""))) {
+            try {
+                this.user = User.fromJson(
+                        new JSONObject(preferences.getString(AppSettings.ACCOUNT_JSON, "")));
+            }
+            catch (JSONException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     public void setControllerLinks(ControllerLinksBase controllerLinks,
@@ -330,14 +348,22 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             mediaController.setAnchorView(videoFull);
             videoFull.setMediaController(mediaController);
             webFull = (WebViewFixed) itemView.findViewById(R.id.web_full);
-            webFull.getSettings().setUseWideViewPort(true);
-            webFull.getSettings().setLoadWithOverviewMode(true);
-            webFull.getSettings().setBuiltInZoomControls(true);
-            webFull.getSettings().setDisplayZoomControls(false);
-            webFull.getSettings().setJavaScriptEnabled(true);
-            webFull.getSettings().setDomStorageEnabled(true);
-            webFull.getSettings().setDatabaseEnabled(true);
-            webFull.getSettings().setAppCacheEnabled(true);
+            webFull.getSettings()
+                    .setUseWideViewPort(true);
+            webFull.getSettings()
+                    .setLoadWithOverviewMode(true);
+            webFull.getSettings()
+                    .setBuiltInZoomControls(true);
+            webFull.getSettings()
+                    .setDisplayZoomControls(false);
+            webFull.getSettings()
+                    .setJavaScriptEnabled(true);
+            webFull.getSettings()
+                    .setDomStorageEnabled(true);
+            webFull.getSettings()
+                    .setDatabaseEnabled(true);
+            webFull.getSettings()
+                    .setAppCacheEnabled(true);
             webFull.setBackgroundColor(0x000000);
             webFull.setWebChromeClient(new WebChromeClient());
             webFull.setWebViewClient(new WebViewClient() {
@@ -438,11 +464,22 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                                                     .getUrl());
                             break;
                         case R.id.item_reply:
+                            if (TextUtils.isEmpty(callback.getPreferences()
+                                    .getString(AppSettings.REFRESH_TOKEN, ""))) {
+                                Toast.makeText(callback.getController()
+                                        .getActivity(), callback.getController()
+                                        .getActivity()
+                                        .getString(R.string.must_be_logged_in_to_reply),
+                                        Toast.LENGTH_SHORT)
+                                        .show();
+                                return false;
+                            }
                             toggleReply();
                             break;
                         case R.id.item_delete:
-                            callback.getController().deletePost(callback.getController()
-                                    .getLink(getAdapterPosition()));
+                            callback.getController()
+                                    .deletePost(callback.getController()
+                                            .getLink(getAdapterPosition()));
                             break;
                     }
                     return true;
@@ -453,18 +490,51 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             layoutContainerReply = (RelativeLayout) itemView.findViewById(
                     R.id.layout_container_reply);
             editTextReply = (EditText) itemView.findViewById(R.id.edit_text_reply);
+            editTextReply.setOnTouchListener(new View.OnTouchListener() {
+
+                float startY;
+
+                @Override
+                public boolean onTouch(View v, MotionEvent event) {
+
+                    switch (event.getAction()) {
+                        case MotionEvent.ACTION_DOWN:
+                            startY = event.getY();
+
+                            if ((editTextReply.canScrollVertically(
+                                    1) && editTextReply.canScrollVertically(
+                                    -1))) {
+                                callback.getListener()
+                                        .requestDisallowInterceptTouchEvent(true);
+                            }
+                            else {
+                                callback.getListener()
+                                        .requestDisallowInterceptTouchEvent(false);
+                            }
+                            break;
+                        case MotionEvent.ACTION_UP:
+                            callback.getListener()
+                                    .requestDisallowInterceptTouchEvent(false);
+                            break;
+                        case MotionEvent.ACTION_MOVE:
+                            if (event.getY() - startY < 0 && editTextReply.canScrollVertically(1)) {
+                                callback.getListener()
+                                        .requestDisallowInterceptTouchEvent(true);
+                            }
+                            else if (event.getY() - startY > 0 && editTextReply.canScrollVertically(
+                                    -1)) {
+                                callback.getListener()
+                                        .requestDisallowInterceptTouchEvent(true);
+                            }
+                            break;
+                    }
+                    return false;
+                }
+            });
             buttonSendReply = (Button) itemView.findViewById(R.id.button_send_reply);
             buttonSendReply.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    if (TextUtils.isEmpty(callback.getPreferences()
-                            .getString(AppSettings.REFRESH_TOKEN, ""))) {
-                        Toast.makeText(callback.getController()
-                                        .getActivity(), "Must be logged in to reply",
-                                Toast.LENGTH_SHORT)
-                                .show();
-                        return;
-                    }
 
                     if (!TextUtils.isEmpty(editTextReply.getText())) {
                         final Link link = callback.getController()
@@ -509,8 +579,9 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                                             }
                                         }, params, 0);
 
-                        AnimationUtils.animateExpand(layoutContainerReply,
-                                getRatio(getAdapterPosition()), null);
+                        layoutContainerReply.setVisibility(View.GONE);
+//                        AnimationUtils.animateExpand(layoutContainerReply,
+//                                getRatio(getAdapterPosition()), null);
                     }
                 }
             });
@@ -549,6 +620,16 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                                 .setEnabled(false);
                     }
 
+                    boolean isAuthor = link.getAuthor()
+                            .equals(callback.getUser().getName());
+
+                    toolbarActions.getMenu()
+                            .findItem(R.id.item_delete)
+                            .setEnabled(isAuthor);
+                    toolbarActions.getMenu()
+                            .findItem(R.id.item_delete)
+                            .setVisible(isAuthor);
+
                     AnimationUtils.animateExpand(layoutContainerExpand,
                             getRatio(getAdapterPosition()), null);
 
@@ -584,8 +665,9 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                 editTextReply.setText(null);
             }
             link.setReplyExpanded(!link.isReplyExpanded());
-            AnimationUtils.animateExpand(layoutContainerReply, getRatio(getAdapterPosition()),
-                    null);
+            layoutContainerReply.setVisibility(link.isReplyExpanded() ? View.VISIBLE : View.GONE);
+//            AnimationUtils.animateExpand(layoutContainerReply, getRatio(getAdapterPosition()),
+//                    null);
         }
 
         public abstract float getRatio(int adapterPosition);
@@ -666,13 +748,15 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                                         }
                                     }, 0);
                 }
-                else if (link.getDomain().contains("youtu")) {
+                else if (link.getDomain()
+                        .contains("youtu")) {
                     Log.d(TAG, "youtube");
                     /*
                         Regex taken from Gubatron at
                         http://stackoverflow.com/questions/24048308/how-to-get-the-video-id-from-a-youtube-url-with-regex-in-java
                     */
-                    Pattern pattern = Pattern.compile(".*(?:youtu.be\\/|v\\/|u\\/\\w\\/|embed\\/|watch\\?v=)([^#\\&\\?]*).*");
+                    Pattern pattern = Pattern.compile(
+                            ".*(?:youtu.be\\/|v\\/|u\\/\\w\\/|embed\\/|watch\\?v=)([^#\\&\\?]*).*");
                     final Matcher matcher = pattern.matcher(urlString);
                     if (matcher.matches()) {
                         Log.d(TAG, "YouTube URL loaded: " + matcher.group(1));
@@ -832,8 +916,10 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                                         if (ViewHolderBase.this instanceof AdapterLinkGrid.ViewHolder) {
                                             imageThumbnail.setVisibility(View.GONE);
                                             ((RelativeLayout.LayoutParams) textThreadTitle.getLayoutParams()).addRule(
-                                                    RelativeLayout.START_OF, buttonComments.getId());
-                                            ((RelativeLayout.LayoutParams) textThreadTitle.getLayoutParams()).setMarginEnd(0);
+                                                    RelativeLayout.START_OF,
+                                                    buttonComments.getId());
+                                            ((RelativeLayout.LayoutParams) textThreadTitle.getLayoutParams()).setMarginEnd(
+                                                    0);
                                         }
                                         callback.getListener()
                                                 .onFullLoaded(getAdapterPosition());
@@ -880,8 +966,10 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                                         if (ViewHolderBase.this instanceof AdapterLinkGrid.ViewHolder) {
                                             imageThumbnail.setVisibility(View.GONE);
                                             ((RelativeLayout.LayoutParams) textThreadTitle.getLayoutParams()).addRule(
-                                                    RelativeLayout.START_OF, buttonComments.getId());
-                                            ((RelativeLayout.LayoutParams) textThreadTitle.getLayoutParams()).setMarginEnd(0);
+                                                    RelativeLayout.START_OF,
+                                                    buttonComments.getId());
+                                            ((RelativeLayout.LayoutParams) textThreadTitle.getLayoutParams()).setMarginEnd(
+                                                    0);
                                         }
                                         callback.getListener()
                                                 .onFullLoaded(getAdapterPosition());
@@ -970,12 +1058,32 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
 
         public void setToolbarMenuVisibility() {
             Menu menu = toolbarActions.getMenu();
+
+            boolean loggedIn = !TextUtils.isEmpty(callback.getPreferences()
+                    .getString(AppSettings.REFRESH_TOKEN, ""));
+
+            menu.findItem(R.id.item_upvote).setVisible(loggedIn);
+            menu.findItem(R.id.item_downvote).setVisible(loggedIn);
+            menu.findItem(R.id.item_reply).setVisible(loggedIn);
+
             int maxNum = (int) (itemView.getWidth() / callback.getItemWidth());
+            int numShown = 0;
 
             for (int index = 0; index < ACTION_MENU_SIZE; index++) {
-                if (index < maxNum - 1) {
+
+                if (!loggedIn) {
+                    switch (menu.getItem(index).getItemId()) {
+                        case R.id.item_upvote:
+                        case R.id.item_downvote:
+                        case R.id.item_reply:
+                            continue;
+                    }
+                }
+
+                if (numShown < maxNum - 1) {
                     menu.getItem(index)
                             .setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+                    numShown++;
                 }
                 else {
                     menu.getItem(index)
@@ -1011,16 +1119,10 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             if (this instanceof AdapterLinkGrid.ViewHolder) {
                 ((RelativeLayout.LayoutParams) textThreadTitle.getLayoutParams()).removeRule(
                         RelativeLayout.START_OF);
-                ((RelativeLayout.LayoutParams) textThreadTitle.getLayoutParams()).setMarginEnd(callback.getTitleMargin());
+                ((RelativeLayout.LayoutParams) textThreadTitle.getLayoutParams()).setMarginEnd(
+                        callback.getTitleMargin());
             }
 
-//            if (!TextUtils.isEmpty(imageUrl) && !callback.getController().getReddit().getImageLoader().isCached(imageUrl, 0, 0)) {
-//                Drawable drawable = imageThumbnail.getDrawable();
-//                if (drawable instanceof BitmapDrawable && ((BitmapDrawable) drawable).getBitmap() != null) {
-//                    ((BitmapDrawable) drawable).getBitmap().recycle();
-//                }
-//                imageUrl = null;
-//            }
             imageThumbnail.setImageBitmap(null);
 
             if (viewPagerFull.getAdapter() != null) {
@@ -1030,6 +1132,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                     ((WebView) viewPagerFull.getChildAt(index)
                             .findViewById(R.id.web_image)).destroy();
                 }
+                viewPagerFull.setAdapter(null);
             }
 
         }
@@ -1103,7 +1206,11 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
 
         public String getFormatttedDate(long time) {
             calendar.setTimeInMillis(time);
-            return calendar.getDisplayName(Calendar.MONTH, Calendar.SHORT, Locale.getDefault()) + " " + calendar.get(Calendar.DAY_OF_MONTH) + " " + calendar.get(Calendar.YEAR) + " " + calendar.get(Calendar.HOUR_OF_DAY) + ":" + calendar.get(Calendar.MINUTE);
+            int minute = calendar.get(Calendar.MINUTE);
+            return calendar.getDisplayName(Calendar.MONTH, Calendar.SHORT,
+                    Locale.getDefault()) + " " + calendar.get(
+                    Calendar.DAY_OF_MONTH) + " " + calendar.get(Calendar.YEAR) + " " + calendar.get(
+                    Calendar.HOUR_OF_DAY) + (minute < 10 ? ":0" : ":") + minute;
         }
 
     }

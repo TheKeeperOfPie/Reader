@@ -23,6 +23,7 @@ import com.winsonchiu.reader.data.Listing;
 import com.winsonchiu.reader.data.Reddit;
 import com.winsonchiu.reader.data.Subreddit;
 import com.winsonchiu.reader.data.Thing;
+import com.winsonchiu.reader.data.User;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -102,7 +103,8 @@ public class ControllerLinks implements ControllerLinksBase {
     public void addListener(LinkClickListener listener) {
         listeners.add(listener);
         setTitle();
-        listener.getAdapter().notifyDataSetChanged();
+        listener.getAdapter()
+                .notifyDataSetChanged();
     }
 
     public void removeListener(LinkClickListener listener) {
@@ -118,7 +120,8 @@ public class ControllerLinks implements ControllerLinksBase {
             int size = sizeLinks();
             listingLinks = new Listing();
             for (LinkClickListener listener : listeners) {
-                listener.getAdapter().notifyItemRangeRemoved(0, size + 1);
+                listener.getAdapter()
+                        .notifyItemRangeRemoved(0, size + 1);
             }
             reloadSubreddit();
         }
@@ -242,7 +245,8 @@ public class ControllerLinks implements ControllerLinksBase {
 
                 for (LinkClickListener listener : listeners) {
                     if (isListCleared) {
-                        listener.getAdapter().notifyItemRangeInserted(0, sizeLinks() + 1);
+                        listener.getAdapter()
+                                .notifyItemRangeInserted(0, sizeLinks() + 1);
                     }
                     else {
                         listener.getAdapter()
@@ -317,12 +321,15 @@ public class ControllerLinks implements ControllerLinksBase {
 
     @Override
     public void deletePost(Link link) {
-        int index = listingLinks.getChildren().indexOf(link);
+        int index = listingLinks.getChildren()
+                .indexOf(link);
 
         if (index >= 0) {
-            listingLinks.getChildren().remove(index);
+            listingLinks.getChildren()
+                    .remove(index);
             for (LinkClickListener listener : listeners) {
-                listener.getAdapter().notifyItemRemoved(index + 1);
+                listener.getAdapter()
+                        .notifyItemRemoved(index + 1);
             }
 
             Map<String, String> params = new HashMap<>();
@@ -349,7 +356,8 @@ public class ControllerLinks implements ControllerLinksBase {
     public void voteLink(final RecyclerView.ViewHolder viewHolder, final int vote) {
 
         if (TextUtils.isEmpty(preferences.getString(AppSettings.REFRESH_TOKEN, null))) {
-            Toast.makeText(activity, "Must be logged in to vote", Toast.LENGTH_SHORT)
+            Toast.makeText(activity, activity.getString(R.string.must_be_logged_in_to_vote),
+                    Toast.LENGTH_SHORT)
                     .show();
             return;
         }
@@ -470,27 +478,19 @@ public class ControllerLinks implements ControllerLinksBase {
         void setEmptyView(boolean visible);
 
         int getRecyclerWidth();
-
         void onClickSubmit(String postType);
-
         ControllerCommentsBase getControllerComments();
     }
 
     public interface ListenerCallback {
         LinkClickListener getListener();
-
         ControllerLinksBase getController();
-
         float getItemWidth();
-
         int getTitleMargin();
-
         RecyclerView.LayoutManager getLayoutManager();
-
         SharedPreferences getPreferences();
-
         ControllerCommentsBase getControllerComments();
-
+        User getUser();
         void pauseViewHolders();
     }
 

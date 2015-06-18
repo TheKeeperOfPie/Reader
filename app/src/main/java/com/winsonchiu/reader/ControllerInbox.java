@@ -185,6 +185,11 @@ public class ControllerInbox implements ControllerCommentsBase {
     }
 
     @Override
+    public boolean hasChildren(Comment comment) {
+        return false;
+    }
+
+    @Override
     public Reddit getReddit() {
         return reddit;
     }

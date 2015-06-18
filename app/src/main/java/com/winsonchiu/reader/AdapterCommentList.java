@@ -20,7 +20,9 @@ import android.text.method.LinkMovementMethod;
 import android.text.style.ForegroundColorSpan;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
+import android.view.Menu;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
@@ -87,7 +89,8 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
         this.thumbnailWidth = resources.getDisplayMetrics().widthPixels / 2;
         this.itemWidth = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 48,
                 resources.getDisplayMetrics());
-        this.titleMargin = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 16, resources.getDisplayMetrics());
+        this.titleMargin = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 16,
+                resources.getDisplayMetrics());
         this.linkClickListener = new ControllerLinks.LinkClickListener() {
             @Override
             public void onClickComments(Link link, RecyclerView.ViewHolder viewHolder) {
@@ -154,6 +157,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                 listener.requestDisallowInterceptTouchEvent(disallow);
             }
         };
+        // TODO: Move current user to global instance
         this.user = new User();
 
         if (!TextUtils.isEmpty(preferences.getString(AppSettings.ACCOUNT_JSON, ""))) {
@@ -319,7 +323,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
         protected MenuItem itemCollapse;
         protected MenuItem itemUpvote;
         protected MenuItem itemDownvote;
-        protected MenuItem itemShare;
+        protected MenuItem itemReply;
         protected Drawable drawableUpvote;
         protected Drawable drawableDownvote;
         protected RelativeLayout layoutContainerExpand;
@@ -346,6 +350,47 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                     R.id.view_indicator_container_reply);
             textComment = (TextView) itemView.findViewById(R.id.text_comment);
             textComment.setMovementMethod(LinkMovementMethod.getInstance());
+            textComment.setOnTouchListener(new View.OnTouchListener() {
+
+                float startY;
+
+                @Override
+                public boolean onTouch(View v, MotionEvent event) {
+
+                    switch (event.getAction()) {
+                        case MotionEvent.ACTION_DOWN:
+                            startY = event.getY();
+
+                            if ((textComment.canScrollVertically(
+                                    1) && textComment.canScrollVertically(
+                                    -1))) {
+                                callback.getCommentClickListener()
+                                        .requestDisallowInterceptTouchEvent(true);
+                            }
+                            else {
+                                callback.getCommentClickListener()
+                                        .requestDisallowInterceptTouchEvent(false);
+                            }
+                            break;
+                        case MotionEvent.ACTION_UP:
+                            callback.getCommentClickListener()
+                                    .requestDisallowInterceptTouchEvent(false);
+                            break;
+                        case MotionEvent.ACTION_MOVE:
+                            if (event.getY() - startY < 0 && textComment.canScrollVertically(1)) {
+                                callback.getCommentClickListener()
+                                        .requestDisallowInterceptTouchEvent(true);
+                            }
+                            else if (event.getY() - startY > 0 && textComment.canScrollVertically(
+                                    -1)) {
+                                callback.getCommentClickListener()
+                                        .requestDisallowInterceptTouchEvent(true);
+                            }
+                            break;
+                    }
+                    return false;
+                }
+            });
             textInfo = (TextView) itemView.findViewById(R.id.text_info);
             textHidden = (TextView) itemView.findViewById(R.id.text_hidden);
             layoutContainerExpand = (RelativeLayout) itemView.findViewById(
@@ -353,18 +398,51 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
             layoutContainerReply = (RelativeLayout) itemView.findViewById(
                     R.id.layout_container_reply);
             editTextReply = (EditText) itemView.findViewById(R.id.edit_text_reply);
+            editTextReply.setOnTouchListener(new View.OnTouchListener() {
+
+                float startY;
+
+                @Override
+                public boolean onTouch(View v, MotionEvent event) {
+
+                    switch (event.getAction()) {
+                        case MotionEvent.ACTION_DOWN:
+                            startY = event.getY();
+
+                            if ((editTextReply.canScrollVertically(
+                                    1) && editTextReply.canScrollVertically(
+                                    -1))) {
+                                callback.getCommentClickListener()
+                                        .requestDisallowInterceptTouchEvent(true);
+                            }
+                            else {
+                                callback.getCommentClickListener()
+                                        .requestDisallowInterceptTouchEvent(false);
+                            }
+                            break;
+                        case MotionEvent.ACTION_UP:
+                            callback.getCommentClickListener()
+                                    .requestDisallowInterceptTouchEvent(false);
+                            break;
+                        case MotionEvent.ACTION_MOVE:
+                            if (event.getY() - startY < 0 && editTextReply.canScrollVertically(1)) {
+                                callback.getCommentClickListener()
+                                        .requestDisallowInterceptTouchEvent(true);
+                            }
+                            else if (event.getY() - startY > 0 && editTextReply.canScrollVertically(
+                                    -1)) {
+                                callback.getCommentClickListener()
+                                        .requestDisallowInterceptTouchEvent(true);
+                            }
+                            break;
+                    }
+                    return false;
+                }
+            });
             buttonSendReply = (Button) itemView.findViewById(R.id.button_send_reply);
             buttonSendReply.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    if (TextUtils.isEmpty(callback.getPreferences()
-                            .getString(AppSettings.REFRESH_TOKEN, ""))) {
-                        Toast.makeText(callback.getControllerComments()
-                                .getActivity(), "Must be logged in to reply", Toast.LENGTH_SHORT)
-                                .show();
-                        return;
-                    }
-
                     if (!TextUtils.isEmpty(editTextReply.getText())) {
                         Comment comment = callback.getControllerComments()
                                 .getComment(
@@ -411,7 +489,8 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                         final float ratio = (width - callback.getControllerComments()
                                 .getIndentWidth(comment)) / width;
 
-                        AnimationUtils.animateExpand(layoutContainerReply, ratio, null);
+                        layoutContainerReply.setVisibility(View.GONE);
+//                        AnimationUtils.animateExpand(layoutContainerReply, ratio, null);
                     }
                 }
             });
@@ -441,6 +520,16 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                                     .voteComment(ViewHolderComment.this, -1);
                             break;
                         case R.id.item_reply:
+                            if (TextUtils.isEmpty(callback.getPreferences()
+                                    .getString(AppSettings.REFRESH_TOKEN, ""))) {
+                                Toast.makeText(callback.getControllerComments()
+                                        .getActivity(), callback.getControllerComments()
+                                        .getActivity()
+                                        .getString(R.string.must_be_logged_in_to_reply),
+                                        Toast.LENGTH_SHORT)
+                                        .show();
+                                return false;
+                            }
                             comment = callback.getControllerComments()
                                     .getComment(commentIndex);
                             if (!comment.isReplyExpanded()) {
@@ -448,11 +537,13 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                                 editTextReply.setText(null);
                             }
                             comment.setReplyExpanded(!comment.isReplyExpanded());
-                            int width = callback.getCommentClickListener()
-                                    .getRecyclerWidth();
-                            final float ratio = (width - callback.getControllerComments()
-                                    .getIndentWidth(comment)) / width;
-                            AnimationUtils.animateExpand(layoutContainerReply, ratio, null);
+                            layoutContainerReply.setVisibility(
+                                    comment.isReplyExpanded() ? View.VISIBLE : View.GONE);
+//                            int width = callback.getCommentClickListener()
+//                                    .getRecyclerWidth();
+//                            final float ratio = (width - callback.getControllerComments()
+//                                    .getIndentWidth(comment)) / width;
+//                            AnimationUtils.animateExpand(layoutContainerReply, ratio, null);
                             break;
                         case R.id.item_delete:
                             comment = callback.getControllerComments()
@@ -481,17 +572,22 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                     return true;
                 }
             });
-            itemUpvote = toolbarActions.getMenu()
-                    .findItem(R.id.item_upvote);
-            itemDownvote = toolbarActions.getMenu()
-                    .findItem(R.id.item_downvote);
+            Menu menu = toolbarActions.getMenu();
+
+            itemCollapse = menu.findItem(R.id.item_collapse);
+            itemUpvote = menu.findItem(R.id.item_upvote);
+            itemDownvote = menu.findItem(R.id.item_downvote);
+            itemReply = menu.findItem(R.id.item_reply);
 
             clickListenerLink = new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
                     Comment comment = callback.getControllerComments()
-                            .getComment(
-                                    getAdapterPosition());
+                            .getComment(getAdapterPosition());
+
+                    callback.getControllerComments()
+                            .hasChildren(comment);
+
                     if (comment.isMore()) {
                         callback.getControllerComments()
                                 .loadNestedComments(comment);
@@ -539,18 +635,35 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
         }
 
         private void setToolbarMenuVisibility() {
+            // TODO: Move instances to shared class to prevent code duplication
+
+            Menu menu = toolbarActions.getMenu();
+
             int maxNum = (int) (itemView.getWidth() / callback.getItemWidth());
+            int numShown = 0;
+
+            boolean loggedIn = !TextUtils.isEmpty(callback.getPreferences()
+                    .getString(AppSettings.REFRESH_TOKEN, ""));
+
+            menu.findItem(R.id.item_upvote).setVisible(loggedIn);
+            menu.findItem(R.id.item_downvote).setVisible(loggedIn);
+            menu.findItem(R.id.item_reply).setVisible(loggedIn);
 
             for (int index = 0; index < COMMENT_MENU_SIZE; index++) {
-                if (index < maxNum) {
-                    toolbarActions.getMenu()
-                            .getItem(index)
-                            .setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+                if (!loggedIn) {
+                    switch (menu.getItem(index).getItemId()) {
+                        case R.id.item_upvote:
+                        case R.id.item_downvote:
+                        case R.id.item_reply:
+                            continue;
+                    }
+                }
+
+                if (numShown < maxNum - 1) {
+                    menu.getItem(index).setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
                 }
                 else {
-                    toolbarActions.getMenu()
-                            .getItem(index)
-                            .setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
+                    menu.getItem(index).setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
                 }
             }
         }
@@ -632,7 +745,8 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                 textComment.setText(Reddit.getTrimmedHtml(comment.getBodyHtml()));
 
                 Spannable spannableInfo = new SpannableString(
-                        comment.getScore() + " by " + comment.getAuthor() + " " + DateUtils.getRelativeTimeSpanString(comment.getCreatedUtc()));
+                        comment.getScore() + " by " + comment.getAuthor() + " " + DateUtils.getRelativeTimeSpanString(
+                                comment.getCreatedUtc()));
                 spannableInfo.setSpan(new ForegroundColorSpan(
                                 comment.getScore() > 0 ?
                                         callback.getControllerComments()
@@ -698,11 +812,19 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                         .getResources()
                         .getColor(R.color.darkThemeTextColor));
             }
+
+            itemCollapse.setVisible(callback.getControllerComments()
+                    .hasChildren(comment));
+
         }
 
         public String getFormatttedDate(long time) {
             calendar.setTimeInMillis(time);
-            return calendar.getDisplayName(Calendar.MONTH, Calendar.SHORT, Locale.getDefault()) + " " + calendar.get(Calendar.DAY_OF_MONTH) + " " + calendar.get(Calendar.YEAR) + " " + calendar.get(Calendar.HOUR_OF_DAY) + ":" + calendar.get(Calendar.MINUTE);
+            int minute = calendar.get(Calendar.MINUTE);
+            return calendar.getDisplayName(Calendar.MONTH, Calendar.SHORT,
+                    Locale.getDefault()) + " " + calendar.get(
+                    Calendar.DAY_OF_MONTH) + " " + calendar.get(Calendar.YEAR) + " " + calendar.get(
+                    Calendar.HOUR_OF_DAY) + (minute < 10 ? ":0" : ":") + minute;
         }
     }
 }

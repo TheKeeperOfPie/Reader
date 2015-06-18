@@ -278,7 +278,7 @@ public class FragmentSearch extends Fragment implements Toolbar.OnMenuItemClickL
                         float speed = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 1,
                                 activity.getResources()
                                         .getDisplayMetrics());
-                        long duration = (long) (viewStartY / speed * 3);
+                        long duration = (long) Math.abs(viewStartY / speed);
 
                         TranslateAnimation translateAnimation = new TranslateAnimation(0, 0, 0,
                                 -viewStartY + minY);

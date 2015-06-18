@@ -8,6 +8,7 @@ import android.support.v7.widget.RecyclerView;
 import android.text.Spannable;
 import android.text.SpannableString;
 import android.text.Spanned;
+import android.text.TextUtils;
 import android.text.style.ForegroundColorSpan;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
@@ -18,6 +19,9 @@ import android.widget.TextView;
 import com.winsonchiu.reader.data.Link;
 import com.winsonchiu.reader.data.Subreddit;
 import com.winsonchiu.reader.data.User;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -40,6 +44,7 @@ public class AdapterProfile extends RecyclerView.Adapter<RecyclerView.ViewHolder
     private ControllerLinks.ListenerCallback linksCallback;
     private ControllerComments.ListenerCallback commentsCallback;
     private List<AdapterLink.ViewHolderBase> viewHolderLinks;
+    private User user;
 
     public AdapterProfile(final Activity activity,
                           final ControllerProfile controllerProfile,
@@ -54,6 +59,17 @@ public class AdapterProfile extends RecyclerView.Adapter<RecyclerView.ViewHolder
         this.listener = listener;
         viewHolderLinks = new ArrayList<>();
         setCallbacks();
+        this.user = new User();
+
+        if (!TextUtils.isEmpty(preferences.getString(AppSettings.ACCOUNT_JSON, ""))) {
+            try {
+                this.user = User.fromJson(
+                        new JSONObject(preferences.getString(AppSettings.ACCOUNT_JSON, "")));
+            }
+            catch (JSONException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     private void setCallbacks() {
@@ -160,6 +176,11 @@ public class AdapterProfile extends RecyclerView.Adapter<RecyclerView.ViewHolder
             @Override
             public ControllerCommentsBase getControllerComments() {
                 return listener.getControllerComments();
+            }
+
+            @Override
+            public User getUser() {
+                return user;
             }
 
             @Override

@@ -155,6 +155,7 @@ public class FragmentComments extends Fragment {
         recyclerCommentList = (RecyclerView) view.findViewById(R.id.recycler_comment_list);
         recyclerCommentList.setHasFixedSize(true);
         recyclerCommentList.setLayoutManager(linearLayoutManager);
+        recyclerCommentList.setItemAnimator(null);
 
         if (adapterCommentList == null) {
             adapterCommentList = new AdapterCommentList(activity, mListener.getControllerComments(), listener,

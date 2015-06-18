@@ -77,6 +77,8 @@
     <string name="submitting_to">Submitting to</string>
     <string name="as">as</string>
     <string name="must_be_logged_in">Must be logged in to do that</string>
+    <string name="must_be_logged_in_to_vote">Must be logged in to vote</string>
+    <string name="must_be_logged_in_to_reply">Must be logged in to reply</string>
     <string name="search_next">Next search result</string>
     <string name="search_previous">Previous search result</string>
     <string name="loading_web_page">Loading web page</string>

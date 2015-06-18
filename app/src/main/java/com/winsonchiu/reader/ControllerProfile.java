@@ -404,6 +404,11 @@ public class ControllerProfile implements ControllerLinksBase, ControllerComment
         // Not implemented
     }
 
+    @Override
+    public boolean hasChildren(Comment comment) {
+        return false;
+    }
+
     public void setData(Listing data) {
         this.data = data;
     }

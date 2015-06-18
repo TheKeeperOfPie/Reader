@@ -576,7 +576,7 @@ public class ControllerComments implements ControllerLinksBase, ControllerCommen
             final int vote) {
 
         if (TextUtils.isEmpty(preferences.getString(AppSettings.REFRESH_TOKEN, null))) {
-            Toast.makeText(activity, "Must be logged in to vote", Toast.LENGTH_SHORT)
+            Toast.makeText(activity, activity.getString(R.string.must_be_logged_in_to_vote), Toast.LENGTH_SHORT)
                     .show();
             return false;
         }
@@ -623,7 +623,7 @@ public class ControllerComments implements ControllerLinksBase, ControllerCommen
     public void voteLink(final RecyclerView.ViewHolder viewHolder, final int vote) {
 
         if (TextUtils.isEmpty(preferences.getString(AppSettings.REFRESH_TOKEN, null))) {
-            Toast.makeText(activity, "Must be logged in to vote", Toast.LENGTH_SHORT)
+            Toast.makeText(activity, activity.getString(R.string.must_be_logged_in_to_vote), Toast.LENGTH_SHORT)
                     .show();
             return;
         }
@@ -751,6 +751,29 @@ public class ControllerComments implements ControllerLinksBase, ControllerCommen
 
     @Override
     public void loadMoreComments() {
+    }
+
+    @Override
+    public boolean hasChildren(Comment comment) {
+
+        Log.d(TAG, "comment level: " + comment.getLevel());
+
+        int commentIndex = link.getComments()
+                .getChildren()
+                .indexOf(comment);
+
+        if (commentIndex > -1 && commentIndex + 1 < link.getComments()
+                .getChildren()
+                .size()) {
+            Comment nextComment = (Comment) link.getComments()
+                .getChildren()
+                .get(commentIndex + 1);
+            Log.d(TAG, "next level: " + nextComment.getLevel());
+            return nextComment.getLevel() > comment.getLevel();
+
+        }
+
+        return false;
     }
 
     public void setControllerLinks(ControllerLinks controllerLinks) {

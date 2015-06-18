@@ -204,7 +204,6 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_below="@id/layout_container_expand"
-            android:layout_above="@+id/view_divider"
             android:layout_alignParentEnd="true"
             android:visibility="gone"
             >
@@ -221,7 +220,7 @@
             <Button
                 android:id="@+id/button_send_reply"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+                android:layout_height="48dp"
                 android:layout_below="@id/edit_text_reply"
                 android:layout_marginStart="@dimen/activity_horizontal_margin"
                 android:layout_marginEnd="@dimen/activity_horizontal_margin"
@@ -236,6 +235,7 @@
             android:id="@+id/view_divider"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_below="@id/layout_container_reply"
             android:layout_alignParentBottom="true"
             android:background="?android:listDivider"
             />

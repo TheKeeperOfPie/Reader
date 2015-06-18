@@ -28,6 +28,7 @@ import com.squareup.picasso.Callback;
 import com.squareup.picasso.Picasso;
 import com.winsonchiu.reader.data.Link;
 import com.winsonchiu.reader.data.Reddit;
+import com.winsonchiu.reader.data.User;
 
 import java.util.Calendar;
 import java.util.Date;
@@ -136,7 +137,7 @@ public class AdapterLinkGrid extends AdapterLink {
     public ControllerCommentsBase getControllerComments() {
         return listener.getControllerComments();
     }
-
+    
     @Override
     public void pauseViewHolders() {
         for (ViewHolderBase viewHolder : viewHolders) {

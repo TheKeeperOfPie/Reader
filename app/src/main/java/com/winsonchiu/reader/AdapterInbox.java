@@ -58,8 +58,8 @@ public class AdapterInbox extends RecyclerView.Adapter<RecyclerView.ViewHolder>
     private ControllerComments.ListenerCallback commentsCallback;
 
     public AdapterInbox(final Activity activity,
-                        final ControllerInbox controllerInbox,
-                        ItemClickListener listener) {
+            final ControllerInbox controllerInbox,
+            ItemClickListener listener) {
         this.activity = activity;
         this.preferences = PreferenceManager.getDefaultSharedPreferences(activity);
         Resources resources = activity.getResources();
@@ -143,7 +143,7 @@ public class AdapterInbox extends RecyclerView.Adapter<RecyclerView.ViewHolder>
     public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
 
         switch (viewType) {
-            
+
             case VIEW_TYPE_MESSAGE:
                 return new ViewHolderMessage(
                         LayoutInflater.from(parent.getContext())
@@ -214,23 +214,19 @@ public class AdapterInbox extends RecyclerView.Adapter<RecyclerView.ViewHolder>
             super(itemView);
             this.callback = listenerCallback;
 
-            Resources resources = callback.getController().getActivity().getResources();
+            Resources resources = callback.getController()
+                    .getActivity()
+                    .getResources();
             textMessage = (TextView) itemView.findViewById(R.id.text_message);
             textMessage.setMovementMethod(LinkMovementMethod.getInstance());
             textInfo = (TextView) itemView.findViewById(R.id.text_info);
-            layoutContainerReply = (RelativeLayout) itemView.findViewById(R.id.layout_container_reply);
+            layoutContainerReply = (RelativeLayout) itemView.findViewById(
+                    R.id.layout_container_reply);
             editTextReply = (EditText) itemView.findViewById(R.id.edit_text_reply);
             buttonSendReply = (Button) itemView.findViewById(R.id.button_send_reply);
             buttonSendReply.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    if (TextUtils.isEmpty(callback.getPreferences()
-                            .getString(AppSettings.REFRESH_TOKEN, ""))) {
-                        Toast.makeText(callback.getController().getActivity(), "Must be logged in to reply",
-                                Toast.LENGTH_SHORT)
-                                .show();
-                        return;
-                    }
 
                     if (!TextUtils.isEmpty(editTextReply.getText())) {
                         final int messageIndex = getAdapterPosition();
@@ -271,13 +267,16 @@ public class AdapterInbox extends RecyclerView.Adapter<RecyclerView.ViewHolder>
                                             }
                                         }, params, 0);
                         message.setReplyExpanded(!message.isReplyExpanded());
-                        AnimationUtils.animateExpand(editTextReply, 1f,
-                                new AnimationUtils.OnAnimationEndListener() {
-                                    @Override
-                                    public void onAnimationEnd() {
-                                        AnimationUtils.animateExpand(buttonSendReply, 1f, null);
-                                    }
-                                });
+
+                        layoutContainerReply.setVisibility(View.GONE);
+
+//                        AnimationUtils.animateExpand(editTextReply, 1f,
+//                                new AnimationUtils.OnAnimationEndListener() {
+//                                    @Override
+//                                    public void onAnimationEnd() {
+//                                        AnimationUtils.animateExpand(buttonSendReply, 1f, null);
+//                                    }
+//                                });
                     }
                 }
             });
@@ -289,20 +288,33 @@ public class AdapterInbox extends RecyclerView.Adapter<RecyclerView.ViewHolder>
                     final int messageIndex = getAdapterPosition();
                     switch (menuItem.getItemId()) {
                         case R.id.item_reply:
-                            Message message = callback.getController().getMessage(messageIndex);
+                            if (TextUtils.isEmpty(callback.getPreferences()
+                                    .getString(AppSettings.REFRESH_TOKEN, ""))) {
+                                Toast.makeText(callback.getController()
+                                        .getActivity(), callback.getController()
+                                        .getActivity()
+                                        .getString(R.string.must_be_logged_in_to_reply),
+                                        Toast.LENGTH_SHORT)
+                                        .show();
+                                return false;
+                            }
+                            Message message = callback.getController()
+                                    .getMessage(messageIndex);
                             if (!message.isReplyExpanded()) {
                                 editTextReply.requestFocus();
                                 editTextReply.setText(null);
                             }
                             message.setReplyExpanded(!message.isReplyExpanded());
+                            layoutContainerReply.setVisibility(
+                                    message.isReplyExpanded() ? View.VISIBLE : View.GONE);
 
-                            AnimationUtils.animateExpand(editTextReply, 1f,
-                                    new AnimationUtils.OnAnimationEndListener() {
-                                        @Override
-                                        public void onAnimationEnd() {
-                                            AnimationUtils.animateExpand(buttonSendReply, 1f, null);
-                                        }
-                                    });
+//                            AnimationUtils.animateExpand(editTextReply, 1f,
+//                                    new AnimationUtils.OnAnimationEndListener() {
+//                                        @Override
+//                                        public void onAnimationEnd() {
+//                                            AnimationUtils.animateExpand(buttonSendReply, 1f, null);
+//                                        }
+//                                    });
                             break;
                     }
                     return true;
@@ -332,10 +344,14 @@ public class AdapterInbox extends RecyclerView.Adapter<RecyclerView.ViewHolder>
 
             for (int index = 0; index < MESSAGE_MENU_SIZE; index++) {
                 if (index < maxNum) {
-                    toolbarActions.getMenu().getItem(index).setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+                    toolbarActions.getMenu()
+                            .getItem(index)
+                            .setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
                 }
                 else {
-                    toolbarActions.getMenu().getItem(index).setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
+                    toolbarActions.getMenu()
+                            .getItem(index)
+                            .setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
                 }
             }
         }
@@ -344,23 +360,27 @@ public class AdapterInbox extends RecyclerView.Adapter<RecyclerView.ViewHolder>
 
             toolbarActions.setVisibility(View.GONE);
 
-            Message message = callback.getController().getMessage(position);
+            Message message = callback.getController()
+                    .getMessage(position);
 
             if (message.isReplyExpanded()) {
-                editTextReply.setVisibility(View.VISIBLE);
-                buttonSendReply.setVisibility(View.VISIBLE);
+                layoutContainerReply.setVisibility(View.VISIBLE);
             }
             else {
-                editTextReply.setVisibility(View.GONE);
-                buttonSendReply.setVisibility(View.GONE);
+                layoutContainerReply.setVisibility(View.GONE);
             }
 
             textMessage.setText(Reddit.getTrimmedHtml(message.getBodyHtml()));
 
-            Spannable spannableInfo = new SpannableString("by " + message.getAuthor() + " on " + new Date(message.getCreatedUtc()).toString());
+            Spannable spannableInfo = new SpannableString(
+                    "by " + message.getAuthor() + " on " + new Date(
+                            message.getCreatedUtc()).toString());
 
             textInfo.setText(spannableInfo);
-            textInfo.setTextColor(callback.getController().getActivity().getResources().getColor(R.color.darkThemeTextColorMuted));
+            textInfo.setTextColor(callback.getController()
+                    .getActivity()
+                    .getResources()
+                    .getColor(R.color.darkThemeTextColorMuted));
         }
     }
 
