@@ -13,6 +13,7 @@ import android.os.Environment;
 import android.preference.PreferenceManager;
 import android.support.v4.view.MenuItemCompat;
 import android.support.v4.view.ViewPager;
+import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.RecyclerView.LayoutManager;
 import android.support.v7.widget.ShareActionProvider;
@@ -170,6 +171,8 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
 
     @Override
     public int getItemCount() {
+        Log.d(TAG, "getItemCount: " + (controllerLinks.sizeLinks() > 0 ? controllerLinks.sizeLinks() + 1 : 0));
+
         return controllerLinks.sizeLinks() > 0 ? controllerLinks.sizeLinks() + 1 : 0;
     }
 
@@ -301,12 +304,21 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         }
     }
 
+    @Override
+    public void onDetachedFromRecyclerView(RecyclerView recyclerView) {
+        super.onDetachedFromRecyclerView(recyclerView);
+        for (ViewHolderBase viewHolder : viewHolders) {
+            viewHolder.destroy();
+        }
+    }
+
     protected static abstract class ViewHolderBase extends RecyclerView.ViewHolder {
 
         private Calendar calendar;
         protected MediaController mediaController;
         protected ProgressBar progressImage;
         protected ViewPager viewPagerFull;
+        protected AdapterAlbum adapterAlbum;
         protected ImageView imagePlay;
         protected ImageView imageThumbnail;
         protected VideoView videoFull;
@@ -412,7 +424,9 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                     return false;
                 }
             });
+            adapterAlbum = new AdapterAlbum(callback.getController().getActivity(), new Album(), callback.getListener());
             viewPagerFull = (ViewPager) itemView.findViewById(R.id.view_pager_full);
+            viewPagerFull.setAdapter(adapterAlbum);
             imageThumbnail = (ImageView) itemView.findViewById(R.id.image_thumbnail);
             textThreadFlair = (TextView) itemView.findViewById(R.id.text_thread_flair);
             textThreadTitle = (TextView) itemView.findViewById(R.id.text_thread_title);
@@ -904,11 +918,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                                                         response).getJSONObject(
                                                         "data"));
 
-                                        viewPagerFull.setAdapter(
-                                                new AdapterAlbum(callback.getController()
-                                                        .getActivity(),
-                                                        album,
-                                                        callback.getListener()));
+                                        adapterAlbum.setAlbum(album);
                                         viewPagerFull.getLayoutParams().height = callback.getListener()
                                                 .getRecyclerHeight() - itemView.getHeight();
                                         viewPagerFull.setVisibility(View.VISIBLE);
@@ -955,10 +965,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                                                         response).getJSONObject(
                                                         "data"));
 
-                                        viewPagerFull.setAdapter(
-                                                new AdapterAlbum(callback.getController()
-                                                        .getActivity(), album,
-                                                        callback.getListener()));
+                                        adapterAlbum.setAlbum(album);
                                         viewPagerFull.getLayoutParams().height = callback.getListener()
                                                 .getRecyclerHeight() - itemView.getHeight();
                                         viewPagerFull.setVisibility(View.VISIBLE);
@@ -1080,10 +1087,9 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                     }
                 }
 
-                if (numShown < maxNum - 1) {
+                if (numShown++ < maxNum - 1) {
                     menu.getItem(index)
                             .setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
-                    numShown++;
                 }
                 else {
                     menu.getItem(index)
@@ -1124,16 +1130,6 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             }
 
             imageThumbnail.setImageBitmap(null);
-
-            if (viewPagerFull.getAdapter() != null) {
-                for (int index = 0; index < viewPagerFull.getChildCount(); index++) {
-                    ((WebView) viewPagerFull.getChildAt(index)
-                            .findViewById(R.id.web_image)).onPause();
-                    ((WebView) viewPagerFull.getChildAt(index)
-                            .findViewById(R.id.web_image)).destroy();
-                }
-                viewPagerFull.setAdapter(null);
-            }
 
         }
 
@@ -1213,6 +1209,27 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                     Calendar.HOUR_OF_DAY) + (minute < 10 ? ":0" : ":") + minute;
         }
 
+        public void destroy() {
+            if (imageContainer != null) {
+                imageContainer.cancelRequest();
+            }
+            if (request != null) {
+                request.cancel();
+            }
+            if (youTubePlayer != null) {
+                youTubePlayer.release();
+            }
+            videoFull.stopPlayback();
+            webFull.destroy();
+            adapterAlbum.destroyViews();
+            for (int index = 0; index < viewPagerFull.getChildCount(); index++) {
+                ((WebView) viewPagerFull.getChildAt(index)
+                        .findViewById(R.id.web_image)).onPause();
+                ((WebView) viewPagerFull.getChildAt(index)
+                        .findViewById(R.id.web_image)).destroy();
+            }
+            viewPagerFull.setAdapter(null);
+        }
     }
 
 }

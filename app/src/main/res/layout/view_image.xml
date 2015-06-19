@@ -2,9 +2,8 @@
 <ScrollView
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/scroll_image"
-    android:layout_width="match_parent"
+    android:layout_width="wrap_content"
     android:layout_height="match_parent"
-    android:layout_alignParentTop="true"
     >
 
     <RelativeLayout
@@ -40,7 +39,7 @@
         <com.winsonchiu.reader.WebViewFixed
             android:id="@+id/web_image"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="match_parent"
             android:layout_below="@id/text_image_description"
             android:focusableInTouchMode="false"
             android:clickable="false"

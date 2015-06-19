@@ -4,14 +4,10 @@ import android.app.Activity;
 import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.graphics.drawable.Drawable;
-import android.os.Parcel;
-import android.os.Parcelable;
 import android.preference.PreferenceManager;
 import android.support.v7.widget.RecyclerView;
-import android.text.Html;
 import android.text.TextUtils;
 import android.util.Log;
-import android.view.View;
 import android.widget.Toast;
 
 import com.android.volley.Response;
@@ -22,17 +18,13 @@ import com.winsonchiu.reader.data.Link;
 import com.winsonchiu.reader.data.Listing;
 import com.winsonchiu.reader.data.Reddit;
 import com.winsonchiu.reader.data.Subreddit;
-import com.winsonchiu.reader.data.Thing;
 import com.winsonchiu.reader.data.User;
 
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.w3c.dom.Text;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -103,6 +95,7 @@ public class ControllerLinks implements ControllerLinksBase {
     public void addListener(LinkClickListener listener) {
         listeners.add(listener);
         setTitle();
+        listener.setSort(sort);
         listener.getAdapter()
                 .notifyDataSetChanged();
     }
@@ -120,6 +113,7 @@ public class ControllerLinks implements ControllerLinksBase {
             int size = sizeLinks();
             listingLinks = new Listing();
             for (LinkClickListener listener : listeners) {
+                listener.setSort(sort);
                 listener.getAdapter()
                         .notifyItemRangeRemoved(0, size + 1);
             }
@@ -244,14 +238,8 @@ public class ControllerLinks implements ControllerLinksBase {
                 }
 
                 for (LinkClickListener listener : listeners) {
-                    if (isListCleared) {
-                        listener.getAdapter()
-                                .notifyItemRangeInserted(0, sizeLinks() + 1);
-                    }
-                    else {
-                        listener.getAdapter()
-                                .notifyDataSetChanged();
-                    }
+                    listener.getAdapter()
+                            .notifyDataSetChanged();
                     listener.onFullLoaded(0);
                     listener.loadSideBar(subreddit);
                     listener.setEmptyView(listingLinks.getChildren()
@@ -303,7 +291,8 @@ public class ControllerLinks implements ControllerLinksBase {
                 }, new ErrorListener() {
                     @Override
                     public void onErrorResponse(VolleyError error) {
-                        Toast.makeText(activity, "Error loading links", Toast.LENGTH_SHORT)
+                        setLoading(false);
+                        Toast.makeText(activity, activity.getString(R.string.error_loading_links), Toast.LENGTH_SHORT)
                                 .show();
                     }
                 }, 0);
@@ -460,26 +449,18 @@ public class ControllerLinks implements ControllerLinksBase {
     public interface LinkClickListener extends DisallowListener {
 
         void onClickComments(Link link, RecyclerView.ViewHolder viewHolder);
-
         void loadUrl(String url);
-
         void onFullLoaded(int position);
-
         void setRefreshing(boolean refreshing);
-
         void setToolbarTitle(String title);
-
         AdapterLink getAdapter();
-
         int getRecyclerHeight();
-
         void loadSideBar(Subreddit listingSubreddits);
-
         void setEmptyView(boolean visible);
-
         int getRecyclerWidth();
         void onClickSubmit(String postType);
         ControllerCommentsBase getControllerComments();
+        void setSort(Sort sort);
     }
 
     public interface ListenerCallback {

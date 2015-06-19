@@ -10,11 +10,16 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
+import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewTreeObserver;
+import android.widget.ImageButton;
+import android.widget.RelativeLayout;
 
 
 /**
@@ -32,6 +37,7 @@ public class FragmentComments extends Fragment {
     private static final String ARG_PARAM2 = "param2";
     private static final String ARG_IS_GRID = "isGrid";
     public static final String TAG = FragmentComments.class.getCanonicalName();
+    private static final int MENU_ACTIONS_SIZE = 4;
 
     // TODO: Rename and change types of parameters
     private String subreddit;
@@ -46,6 +52,9 @@ public class FragmentComments extends Fragment {
     private ControllerComments.CommentClickListener listener;
     private RecyclerView.ViewHolder viewHolder;
     private Toolbar toolbar;
+    private Toolbar toolbarActions;
+    private ImageButton buttonExpandActions;
+    private RelativeLayout layoutContainerExpand;
 
     /**
      * Use this factory method to create a new instance of
@@ -107,7 +116,6 @@ public class FragmentComments extends Fragment {
 
             @Override
             public AdapterCommentList getAdapter() {
-                Log.d(TAG, "Adapter returned");
                 return adapterCommentList;
             }
 
@@ -141,6 +149,90 @@ public class FragmentComments extends Fragment {
             }
         });
         setUpOptionsMenu();
+
+        toolbarActions = (Toolbar) view.findViewById(R.id.toolbar_actions);
+        toolbarActions.inflateMenu(R.menu.menu_comment_actions);
+        toolbarActions.setOnMenuItemClickListener(new Toolbar.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                int position;
+                switch (item.getItemId()) {
+
+                    case R.id.item_comment_previous:
+                        position = linearLayoutManager.findFirstCompletelyVisibleItemPosition();
+                        if (position == 1) {
+                            linearLayoutManager.scrollToPositionWithOffset(0, 0);
+                        }
+                        linearLayoutManager.scrollToPositionWithOffset(mListener.getControllerComments().getPreviousCommentPosition(
+                                position - 1) + 1, 0);
+                        break;
+                    case R.id.item_comment_next:
+                        position = linearLayoutManager.findFirstCompletelyVisibleItemPosition();
+                        if (position == 0) {
+                            if (adapterCommentList.getItemCount() > 0) {
+                                linearLayoutManager.scrollToPositionWithOffset(1, 0);
+                            }
+                            return true;
+                        }
+                        linearLayoutManager.scrollToPositionWithOffset(mListener.getControllerComments()
+                                .getNextCommentPosition(position - 1) + 1, 0);
+                        break;
+                    case R.id.item_jump_to_top:
+                        linearLayoutManager.smoothScrollToPosition(recyclerCommentList, null, 0);
+                        break;
+                    case R.id.item_view_subreddit:
+                        Intent intent = new Intent(activity, MainActivity.class);
+                        intent.setAction(Intent.ACTION_VIEW);
+                        intent.putExtra(MainActivity.REDDIT_PAGE, "https://reddit.com/r/" + mListener.getControllerComments().getMainLink().getSubreddit());
+                        startActivity(intent);
+                        break;
+                }
+
+                return true;
+            }
+        });
+        toolbarActions.getViewTreeObserver().addOnGlobalLayoutListener(
+                new ViewTreeObserver.OnGlobalLayoutListener() {
+                    @Override
+                    public void onGlobalLayout() {
+
+                        Menu menu = toolbarActions.getMenu();
+
+                        int maxNum = (int) (toolbarActions.getWidth() / TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 48, activity.getResources().getDisplayMetrics()));
+                        int numShown = 0;
+
+                        Log.d(TAG, "maxNum: " + maxNum);
+
+                        for (int index = 0; index < MENU_ACTIONS_SIZE; index++) {
+                            if (numShown < maxNum - 1) {
+                                menu.getItem(index)
+                                        .setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+                            }
+                            else {
+                                menu.getItem(index).setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
+                            }
+                        }
+
+                        toolbarActions.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+                    }
+                });
+
+        layoutContainerExpand = (RelativeLayout) view.findViewById(R.id.layout_container_expand);
+
+        buttonExpandActions = (ImageButton) view.findViewById(R.id.button_expand_actions);
+        buttonExpandActions.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (layoutContainerExpand.isShown()) {
+                    layoutContainerExpand.setVisibility(View.GONE);
+                    buttonExpandActions.setImageResource(R.drawable.ic_keyboard_arrow_up_white_24dp);
+                }
+                else {
+                    layoutContainerExpand.setVisibility(View.VISIBLE);
+                    buttonExpandActions.setImageResource(R.drawable.ic_keyboard_arrow_down_white_24dp);
+                }
+            }
+        });
 
         swipeRefreshCommentList = (SwipeRefreshLayout) view.findViewById(
                 R.id.swipe_refresh_comment_list);
@@ -225,8 +317,8 @@ public class FragmentComments extends Fragment {
     @Override
     public void onDestroy() {
         super.onDestroy();
-//        CustomApplication.getRefWatcher(getActivity())
-//                .watch(this);
+        CustomApplication.getRefWatcher(getActivity())
+                .watch(this);
     }
 
     /**

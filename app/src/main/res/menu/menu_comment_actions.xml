@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    >
+
+    <item
+        android:id="@+id/item_comment_previous"
+        android:title="@string/item_comment_previous"
+        android:icon="@drawable/ic_keyboard_arrow_up_white_24dp"
+        android:orderInCategory="100"
+        app:showAsAction="ifRoom"
+        />
+
+    <item
+        android:id="@+id/item_comment_next"
+        android:title="@string/item_comment_next"
+        android:icon="@drawable/ic_keyboard_arrow_down_white_24dp"
+        android:orderInCategory="200"
+        app:showAsAction="ifRoom"
+        />
+
+    <item
+        android:id="@+id/item_jump_to_top"
+        android:title="@string/item_jump_to_top"
+        android:icon="@drawable/ic_vertical_align_top_white_24dp"
+        android:orderInCategory="300"
+        app:showAsAction="ifRoom"
+        />
+
+    <item
+        android:id="@+id/item_view_subreddit"
+        android:title="@string/item_view_subreddit"
+        android:icon="@drawable/ic_open_in_new_white_24dp"
+        android:orderInCategory="400"
+        app:showAsAction="ifRoom"
+        />
+
+</menu>

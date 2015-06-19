@@ -137,7 +137,7 @@ public class AdapterLinkGrid extends AdapterLink {
     public ControllerCommentsBase getControllerComments() {
         return listener.getControllerComments();
     }
-    
+
     @Override
     public void pauseViewHolders() {
         for (ViewHolderBase viewHolder : viewHolders) {
@@ -226,9 +226,6 @@ public class AdapterLinkGrid extends AdapterLink {
 
             final Link link = callback.getController()
                     .getLink(position);
-
-            Log.d(TAG, "onBind: " + link.getUrl());
-            Log.d(TAG, "thumbnail: " + link.getThumbnail());
 
             Drawable drawable = callback.getController()
                     .getDrawableForLink(link);
@@ -369,7 +366,7 @@ public class AdapterLinkGrid extends AdapterLink {
 
             if (!TextUtils.isEmpty(link.getLinkFlairText())) {
                 textThreadFlair.setVisibility(View.VISIBLE);
-                textThreadFlair.setText(link.getLinkFlairText());
+                textThreadFlair.setText(Reddit.getTrimmedHtml(link.getLinkFlairText()));
             }
             else {
                 textThreadFlair.setVisibility(View.GONE);

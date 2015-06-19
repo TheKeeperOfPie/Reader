@@ -60,8 +60,9 @@ public class MainActivity extends YouTubeBaseActivity
         FragmentInbox.OnFragmentInteractionListener,
         FragmentSearch.OnFragmentInteractionListener {
 
+    public static final String REDDIT_PAGE = "redditPage";
+
     private static final String TAG = MainActivity.class.getCanonicalName();
-    private static final String REDDIT_PAGE = "redditPage";
 
     private FragmentData fragmentData;
 
@@ -87,8 +88,10 @@ public class MainActivity extends YouTubeBaseActivity
             fragmentData = new FragmentData();
             getFragmentManager().beginTransaction().add(fragmentData, FragmentData.TAG).commit();
             fragmentData.initializeControllers(this);
+            Log.d(TAG, "FragmentData NOT FOUND");
         }
         else {
+            Log.d(TAG, "FragmentData FOUND");
             fragmentData.resetActivity(this);
         }
 
@@ -341,8 +344,8 @@ public class MainActivity extends YouTubeBaseActivity
                 String sort =
                         indexSort > -1 ? path.substring(subreddit.length() + 1, indexSort) :
                                 "hot";
-                fragmentData.getControllerLinks().setParameters(subreddit, Sort.HOT);
                 Log.d(TAG, "Sort: " + sort);
+                fragmentData.getControllerLinks().setParameters(subreddit, Sort.HOT);
             }
         }
         catch (MalformedURLException e) {

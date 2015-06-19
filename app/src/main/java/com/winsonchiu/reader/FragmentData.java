@@ -39,6 +39,10 @@ public class FragmentData extends Fragment {
     }
 
     public void resetActivity(Activity activity) {
+        if (controllerSearch == null) {
+            initializeControllers(activity);
+        }
+
         controllerLinks.setActivity(activity);
         controllerComments.setActivity(activity);
         controllerProfile.setActivity(activity);
@@ -84,5 +88,12 @@ public class FragmentData extends Fragment {
 
     public void setControllerSearch(ControllerSearch controllerSearch) {
         this.controllerSearch = controllerSearch;
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        CustomApplication.getRefWatcher(getActivity())
+                .watch(this);
     }
 }

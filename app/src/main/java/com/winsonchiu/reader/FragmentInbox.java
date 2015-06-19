@@ -21,6 +21,7 @@ import android.view.animation.AnimationSet;
 import android.view.animation.LinearInterpolator;
 import android.view.animation.Transformation;
 import android.view.animation.TranslateAnimation;
+import android.widget.Toast;
 
 import com.winsonchiu.reader.data.Link;
 
@@ -102,6 +103,15 @@ public class FragmentInbox extends Fragment {
         listener = new ControllerInbox.ItemClickListener() {
             @Override
             public void onClickComments(final Link link, final RecyclerView.ViewHolder viewHolder) {
+
+                if (link.getNumComments() == 0) {
+                    if (!link.isCommentsClicked()) {
+                        Toast.makeText(activity, activity.getString(R.string.no_comments),
+                                Toast.LENGTH_SHORT).show();
+                        link.setCommentsClicked(true);
+                        return;
+                    }
+                }
 
                 mListener.getControllerComments()
                         .setLink(link);

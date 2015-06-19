@@ -86,6 +86,8 @@ public class FragmentThreadList extends Fragment implements Toolbar.OnMenuItemCl
     private Menu menu;
     private MenuItem itemSortTime;
     private Toolbar toolbar;
+    private AdapterLinkList adapterLinkList;
+    private AdapterLinkGrid adapterLinkGrid;
 
     /**
      * Use this factory method to create a new instance of
@@ -228,6 +230,14 @@ public class FragmentThreadList extends Fragment implements Toolbar.OnMenuItemCl
             public void onClickComments(final Link link, final RecyclerView.ViewHolder viewHolder) {
 
                 // TODO: Move onClickComments code to shared class to prevent code duplication
+
+                if (link.getNumComments() == 0) {
+                    if (!link.isCommentsClicked()) {
+                        Toast.makeText(activity, activity.getString(R.string.no_comments), Toast.LENGTH_SHORT).show();
+                        link.setCommentsClicked(true);
+                        return;
+                    }
+                }
 
                 mListener.getControllerComments()
                         .setLink(link);
@@ -444,6 +454,11 @@ public class FragmentThreadList extends Fragment implements Toolbar.OnMenuItemCl
             public ControllerCommentsBase getControllerComments() {
                 return mListener.getControllerComments();
             }
+
+            @Override
+            public void setSort(Sort sort) {
+                menu.findItem(sort.getMenuId()).setChecked(true);
+            }
         };
 
         toolbar = (Toolbar) view.findViewById(R.id.toolbar);
@@ -476,19 +491,26 @@ public class FragmentThreadList extends Fragment implements Toolbar.OnMenuItemCl
                         .reloadAllLinks(false);
             }
         });
-        if (adapterLink == null) {
-            if (AppSettings.MODE_LIST.equals(
-                    PreferenceManager.getDefaultSharedPreferences(activity.getApplicationContext())
-                            .getString(AppSettings.INTERFACE_MODE, AppSettings.MODE_LIST))) {
-                adapterLink = new AdapterLinkList(activity, mListener.getControllerLinks(),
-                        linkClickListener);
-            }
-            else {
-                adapterLink = new AdapterLinkGrid(activity, mListener.getControllerLinks(),
-                        linkClickListener);
-            }
+        if (adapterLinkList == null) {
+            adapterLinkList = new AdapterLinkList(activity, mListener.getControllerLinks(),
+                    linkClickListener);
         }
-        adapterLink.setActivity(activity);
+        if (adapterLinkGrid == null) {
+            adapterLinkGrid = new AdapterLinkGrid(activity, mListener.getControllerLinks(),
+                    linkClickListener);
+        }
+
+        if (AppSettings.MODE_LIST.equals(
+                PreferenceManager.getDefaultSharedPreferences(activity.getApplicationContext())
+                        .getString(AppSettings.INTERFACE_MODE, AppSettings.MODE_LIST))) {
+            adapterLink = adapterLinkList;
+        }
+        else {
+            adapterLink = adapterLinkGrid;
+        }
+
+        adapterLinkList.setActivity(activity);
+        adapterLinkGrid.setActivity(activity);
 
         layoutManager = adapterLink.getLayoutManager();
 
@@ -595,7 +617,8 @@ public class FragmentThreadList extends Fragment implements Toolbar.OnMenuItemCl
     @Override
     public void onDestroy() {
         super.onDestroy();
-//        CustomApplication.getRefWatcher(getActivity()).watch(this);
+        CustomApplication.getRefWatcher(getActivity())
+                .watch(this);
     }
 
     @Override

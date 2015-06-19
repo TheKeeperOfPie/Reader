@@ -189,6 +189,7 @@ public class ControllerComments implements ControllerLinksBase, ControllerCommen
                     @Override
                     public void onErrorResponse(VolleyError error) {
                         Log.d(TAG, "reloadAllComments onErrorResponse: " + error.toString());
+                        setRefreshing(false);
                     }
                 }, 0);
     }
@@ -778,6 +779,31 @@ public class ControllerComments implements ControllerLinksBase, ControllerCommen
 
     public void setControllerLinks(ControllerLinks controllerLinks) {
         this.controllerLinks = controllerLinks;
+    }
+
+    public int getPreviousCommentPosition(int commentIndex) {
+
+        Log.d(TAG, "commentIndex: " + commentIndex);
+
+        for (int index = commentIndex - 1; index >= 0; index--) {
+            if (((Comment) listingComments.getChildren().get(index)).getLevel() == 0) {
+                return index;
+            }
+        }
+
+        return commentIndex;
+    }
+
+    public int getNextCommentPosition(int commentIndex) {
+        Log.d(TAG, "commentIndex: " + commentIndex);
+
+        for (int index = commentIndex + 1; index < listingComments.getChildren().size(); index++) {
+            if (((Comment) listingComments.getChildren().get(index)).getLevel() == 0) {
+                return index;
+            }
+        }
+
+        return commentIndex;
     }
 
     public interface CommentClickListener extends DisallowListener {

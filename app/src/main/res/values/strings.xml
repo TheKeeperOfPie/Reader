@@ -45,6 +45,7 @@
     <string name="button_send">Send</string>
     <string name="item_download">Download</string>
     <string name="empty_thread_list">Error loading subreddit</string>
+    <string name="error_loading_links">Error loading links</string>
     <string name="username">Username</string>
     <string name="search_in_page">Search in page</string>
     <string name="content_description_button_open">Open</string>
@@ -83,4 +84,9 @@
     <string name="search_previous">Previous search result</string>
     <string name="loading_web_page">Loading web page</string>
     <string name="all">All</string>
+    <string name="no_comments">No comments, click again to force load</string>
+    <string name="item_jump_to_top">Jump to top</string>
+    <string name="item_comment_previous">Previous comment</string>
+    <string name="item_comment_next">Next comment</string>
+    <string name="item_view_subreddit">View subreddit</string>
 </resources>

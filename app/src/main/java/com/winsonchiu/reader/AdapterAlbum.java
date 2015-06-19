@@ -16,6 +16,7 @@ import com.winsonchiu.reader.data.imgur.Album;
 import com.winsonchiu.reader.data.imgur.Image;
 
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by TheKeeperOfPie on 3/19/2015.
@@ -24,70 +25,81 @@ public class AdapterAlbum extends PagerAdapter {
 
     private static final String TAG = AdapterAlbum.class.getCanonicalName();
     private Activity activity;
-    private ArrayList<View> views;
     private DisallowListener disallowListener;
+    private List<View> recycledViews;
     private Album album;
-    private int oldPosition = -1;
 
     public AdapterAlbum(Activity activity, Album album, DisallowListener listener) {
         this.activity = activity;
         this.album = album;
         this.disallowListener = listener;
+        recycledViews = new ArrayList<>();
     }
 
     @Override
     public Object instantiateItem(ViewGroup container, int position) {
 
-        View view = LayoutInflater.from(activity).inflate(R.layout.view_image, container, false);
+        View view;
+        final WebView webView;
 
-        final WebViewFixed webView = (WebViewFixed) view.findViewById(R.id.web_image);
-        webView.getSettings().setUseWideViewPort(true);
-        webView.getSettings().setBuiltInZoomControls(true);
-        webView.getSettings().setDisplayZoomControls(false);
-        webView.setBackgroundColor(0xFF0000);
-        webView.setInitialScale(0);
+        if (!recycledViews.isEmpty()) {
+            view = recycledViews.remove(0);
+            webView = (WebViewFixed) view.findViewById(R.id.web_image);
+        }
+        else {
+            view = LayoutInflater.from(activity)
+                    .inflate(R.layout.view_image, container, false);
 
-        final ScrollView scrollView = (ScrollView) view.findViewById(R.id.scroll_image);
-        View.OnTouchListener onTouchListener = new View.OnTouchListener() {
+            webView = (WebViewFixed) view.findViewById(R.id.web_image);
+            webView.getSettings().setUseWideViewPort(true);
+            webView.getSettings().setBuiltInZoomControls(true);
+            webView.getSettings().setDisplayZoomControls(false);
+            webView.setBackgroundColor(0xFF0000);
+            webView.setInitialScale(0);
 
-            float startY;
+            final ScrollView scrollView = (ScrollView) view.findViewById(R.id.scroll_image);
+            View.OnTouchListener onTouchListener = new View.OnTouchListener() {
 
-            @Override
-            public boolean onTouch(View v, MotionEvent event) {
+                float startY;
 
-                switch (event.getAction()) {
-                    case MotionEvent.ACTION_DOWN:
-                        startY = event.getY();
+                @Override
+                public boolean onTouch(View v, MotionEvent event) {
 
-                        if ((scrollView.canScrollVertically(1) && scrollView.canScrollVertically(
-                                -1))) {
-                            disallowListener.requestDisallowInterceptTouchEvent(true);
-                        }
-                        else {
+                    switch (event.getAction()) {
+                        case MotionEvent.ACTION_DOWN:
+                            startY = event.getY();
+
+                            if ((scrollView.canScrollVertically(1) && scrollView.canScrollVertically(
+                                    -1))) {
+                                disallowListener.requestDisallowInterceptTouchEvent(true);
+                            }
+                            else {
+                                disallowListener.requestDisallowInterceptTouchEvent(false);
+                            }
+                            break;
+                        case MotionEvent.ACTION_UP:
                             disallowListener.requestDisallowInterceptTouchEvent(false);
-                        }
-                        break;
-                    case MotionEvent.ACTION_UP:
-                        disallowListener.requestDisallowInterceptTouchEvent(false);
-                        break;
-                    case MotionEvent.ACTION_MOVE:
-                        if (event.getY() - startY < 0 && scrollView.canScrollVertically(1)) {
-                            disallowListener.requestDisallowInterceptTouchEvent(true);
-                        }
-                        else if (event.getY() - startY > 0 && scrollView.canScrollVertically(-1)) {
-                            disallowListener.requestDisallowInterceptTouchEvent(true);
-                        }
-                        break;
+                            break;
+                        case MotionEvent.ACTION_MOVE:
+                            if (event.getY() - startY < 0 && scrollView.canScrollVertically(1)) {
+                                disallowListener.requestDisallowInterceptTouchEvent(true);
+                            }
+                            else if (event.getY() - startY > 0 && scrollView.canScrollVertically(-1)) {
+                                disallowListener.requestDisallowInterceptTouchEvent(true);
+                            }
+                            break;
+                    }
+                    return false;
                 }
-                return false;
-            }
-        };
+            };
 
-        scrollView.setOnTouchListener(onTouchListener);
-        webView.setOnTouchListener(onTouchListener);
+            scrollView.setOnTouchListener(onTouchListener);
+            webView.setOnTouchListener(onTouchListener);
+        }
 
         Image image = album.getImages().get(position);
 
+        webView.onResume();
         webView.loadData(Reddit.getImageHtml(image.getLink()), "text/html", "UTF-8");
 
         if (!TextUtils.isEmpty(image.getTitle()) && !"null".equals(image.getTitle())) {
@@ -111,8 +123,8 @@ public class AdapterAlbum extends PagerAdapter {
         View view = (View) object;
         WebView webView = (WebView) view.findViewById(R.id.web_image);
         webView.onPause();
-        webView.destroy();
         container.removeView(view);
+        recycledViews.add(view);
     }
 
     @Override
@@ -125,8 +137,15 @@ public class AdapterAlbum extends PagerAdapter {
         return view == object;
     }
 
-    @Override
-    public void setPrimaryItem(ViewGroup container, int position, Object object) {
-        super.setPrimaryItem(container, position, object);
+    public void setAlbum(Album album) {
+        this.album = album;
+        notifyDataSetChanged();
     }
+
+    public void destroyViews() {
+        for (View view : recycledViews) {
+            ((WebView) view.findViewById(R.id.web_image)).destroy();
+        }
+    }
+
 }

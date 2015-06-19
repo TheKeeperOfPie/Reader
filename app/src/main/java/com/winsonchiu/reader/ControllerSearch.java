@@ -16,6 +16,8 @@ import com.winsonchiu.reader.data.Link;
 import com.winsonchiu.reader.data.Listing;
 import com.winsonchiu.reader.data.Reddit;
 import com.winsonchiu.reader.data.Subreddit;
+import com.winsonchiu.reader.data.Thing;
+import com.winsonchiu.reader.data.User;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -24,6 +26,7 @@ import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Set;
 
 /**
@@ -54,6 +57,7 @@ public class ControllerSearch {
     private Request<String> requestSubreddits;
     private Request<String> requestLinks;
     private Request<String> requestLinksSubreddit;
+    private User user;
 
     public ControllerSearch(Activity activity) {
         setActivity(activity);
@@ -74,12 +78,24 @@ public class ControllerSearch {
         Resources resources = activity.getResources();
         this.drawableSelf = resources.getDrawable(R.drawable.ic_chat_white_48dp);
         this.drawableDefault = resources.getDrawable(R.drawable.ic_web_white_48dp);
+        this.user = new User();
+
+        if (!TextUtils.isEmpty(preferences.getString(AppSettings.ACCOUNT_JSON, ""))) {
+            try {
+                this.user = User.fromJson(
+                        new JSONObject(preferences.getString(AppSettings.ACCOUNT_JSON, "")));
+            }
+            catch (JSONException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     public void addListener(Listener listener) {
         listeners.add(listener);
         setTitle();
         listener.getAdapterSearchSubreddits().notifyDataSetChanged();
+        listener.setSort(sort);
     }
 
     public void removeListener(Listener listener) {
@@ -131,9 +147,18 @@ public class ControllerSearch {
                     new Response.Listener<String>() {
                         @Override
                         public void onResponse(String response) {
-                            subreddits = new Listing();
                             try {
-                                subreddits = Listing.fromJson(new JSONObject(response));
+                                Listing listing = Listing.fromJson(new JSONObject(response));
+                                Iterator<Thing> iterator = listing.getChildren().iterator();
+                                while (iterator.hasNext()) {
+                                    Subreddit subreddit = (Subreddit) iterator.next();
+                                    if (subreddit.getSubredditType()
+                                            .equalsIgnoreCase(Subreddit.PRIVATE) && !subreddit.isUserIsContributor()) {
+                                        iterator.remove();
+                                    }
+                                }
+
+                                subreddits = listing;
                                 for (Listener listener : listeners) {
                                     listener.getAdapterSearchSubreddits().notifyDataSetChanged();
                                 }
@@ -403,7 +428,9 @@ public class ControllerSearch {
         links.getChildren().clear();
         linksSubreddit.getChildren().clear();
         query = "";
+        sort = Sort.RELEVANCE;
         for (Listener listener : listeners) {
+            listener.setSort(sort);
             listener.getAdapterSearchSubreddits().notifyDataSetChanged();
             listener.getAdapterLinks().notifyDataSetChanged();
             listener.getAdapterLinksSubreddit().notifyDataSetChanged();
@@ -420,6 +447,7 @@ public class ControllerSearch {
         AdapterLink getAdapterLinks();
         AdapterLink getAdapterLinksSubreddit();
         void setToolbarTitle(CharSequence title);
+        void setSort(Sort sort);
     }
 
     public interface ListenerCallback {

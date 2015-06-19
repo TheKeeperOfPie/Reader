@@ -11,6 +11,12 @@ import org.json.JSONObject;
  */
 public class Subreddit extends Thing {
 
+    public static final String PUBLIC = "public";
+    public static final String PRIVATE = "private";
+    public static final String RESTRICTED = "restricted";
+    public static final String GOLD_RESTRICTED = "gold_restricted";
+    public static final String ARCHIVED = "archived";
+
     private static final String TAG = Subreddit.class.getCanonicalName();
 
     private int accountsActive;

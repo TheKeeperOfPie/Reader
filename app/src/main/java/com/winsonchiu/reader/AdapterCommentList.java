@@ -153,6 +153,11 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
             }
 
             @Override
+            public void setSort(Sort sort) {
+
+            }
+
+            @Override
             public void requestDisallowInterceptTouchEvent(boolean disallow) {
                 listener.requestDisallowInterceptTouchEvent(disallow);
             }
@@ -246,6 +251,12 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
             viewHolderComment.onBind(position);
         }
 
+    }
+
+    @Override
+    public void onDetachedFromRecyclerView(RecyclerView recyclerView) {
+        super.onDetachedFromRecyclerView(recyclerView);
+        viewHolderLink.destroy();
     }
 
     @Override
@@ -659,7 +670,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                     }
                 }
 
-                if (numShown < maxNum - 1) {
+                if (numShown++ < maxNum - 1) {
                     menu.getItem(index).setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
                 }
                 else {

@@ -31,4 +31,34 @@
 
     </com.winsonchiu.reader.CustomSwipeRefreshLayout>
 
+    <ImageButton
+        android:id="@+id/button_expand_actions"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:src="@drawable/ic_keyboard_arrow_up_white_24dp"
+        android:layout_centerHorizontal="true"
+        android:layout_alignParentBottom="true"
+        android:layout_above="@id/layout_container_expand"
+        />
+
+    <RelativeLayout
+        android:id="@+id/layout_container_expand"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/colorPrimary"
+        android:layout_alignParentBottom="true"
+        android:visibility="gone"
+        android:padding="8dp"
+        >
+
+        <android.support.v7.widget.Toolbar
+            android:id="@+id/toolbar_actions"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerHorizontal="true"
+            android:layout_centerVertical="true"
+            />
+
+    </RelativeLayout>
+
 </RelativeLayout>

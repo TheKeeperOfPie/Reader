@@ -18,6 +18,7 @@ import android.view.ViewGroup;
 
 import com.squareup.picasso.Picasso;
 import com.winsonchiu.reader.data.Link;
+import com.winsonchiu.reader.data.Reddit;
 
 import java.util.Date;
 
@@ -167,7 +168,7 @@ public class AdapterLinkList extends AdapterLink {
 
             if (!TextUtils.isEmpty(link.getLinkFlairText())) {
                 textThreadFlair.setVisibility(View.VISIBLE);
-                textThreadFlair.setText(link.getLinkFlairText());
+                textThreadFlair.setText(Reddit.getTrimmedHtml(link.getLinkFlairText()));
             }
             else {
                 textThreadFlair.setVisibility(View.GONE);

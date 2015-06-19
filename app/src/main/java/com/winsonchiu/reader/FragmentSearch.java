@@ -30,6 +30,7 @@ import android.view.animation.LinearInterpolator;
 import android.view.animation.Transformation;
 import android.view.animation.TranslateAnimation;
 import android.view.inputmethod.InputMethodManager;
+import android.widget.Toast;
 
 import com.winsonchiu.reader.data.Link;
 import com.winsonchiu.reader.data.Reddit;
@@ -231,6 +232,11 @@ public class FragmentSearch extends Fragment implements Toolbar.OnMenuItemClickL
             public void setToolbarTitle(CharSequence title) {
                 toolbar.setTitle(title);
             }
+
+            @Override
+            public void setSort(Sort sort) {
+                menu.findItem(sort.getMenuId()).setChecked(true);
+            }
         };
 
         toolbar = (Toolbar) view.findViewById(R.id.toolbar);
@@ -254,6 +260,15 @@ public class FragmentSearch extends Fragment implements Toolbar.OnMenuItemClickL
         ControllerLinks.LinkClickListener linkClickListener = new ControllerLinks.LinkClickListener() {
             @Override
             public void onClickComments(final Link link, final RecyclerView.ViewHolder viewHolder) {
+
+                if (link.getNumComments() == 0) {
+                    if (!link.isCommentsClicked()) {
+                        Toast.makeText(activity, activity.getString(R.string.no_comments),
+                                Toast.LENGTH_SHORT).show();
+                        link.setCommentsClicked(true);
+                        return;
+                    }
+                }
 
                 mListener.getControllerComments()
                         .setLink(link);
@@ -407,6 +422,11 @@ public class FragmentSearch extends Fragment implements Toolbar.OnMenuItemClickL
             @Override
             public ControllerCommentsBase getControllerComments() {
                 return mListener.getControllerComments();
+            }
+
+            @Override
+            public void setSort(Sort sort) {
+
             }
 
             @Override
@@ -685,6 +705,13 @@ public class FragmentSearch extends Fragment implements Toolbar.OnMenuItemClickL
             }
         }
         return false;
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        CustomApplication.getRefWatcher(getActivity())
+                .watch(this);
     }
 
     /**
