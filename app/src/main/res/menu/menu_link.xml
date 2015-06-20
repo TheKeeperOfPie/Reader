@@ -69,4 +69,14 @@
         app:showAsAction="ifRoom"
         />
 
+    <item
+        android:id="@+id/item_view_subreddit"
+        android:title="@string/item_view_subreddit"
+        android:icon="@drawable/ic_open_in_new_white_24dp"
+        android:orderInCategory="900"
+        android:visible="false"
+        android:enabled="false"
+        app:showAsAction="ifRoom"
+        />
+
 </menu>

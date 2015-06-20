@@ -203,12 +203,14 @@ public class FragmentAuth extends Fragment {
 
                                     }
                                 }, 0);
+                        getFragmentManager().popBackStack();
                         mListener.onAuthFinished(true);
                     }
                 }, new Response.ErrorListener() {
                     @Override
                     public void onErrorResponse(VolleyError error) {
                         // TODO: Check user info error
+                        getFragmentManager().popBackStack();
                         mListener.onAuthFinished(true);
                     }
                 }, 0);
@@ -254,6 +256,14 @@ public class FragmentAuth extends Fragment {
         super.onDestroy();
 //        CustomApplication.getRefWatcher(getActivity())
 //                .watch(this);
+    }
+
+    public boolean navigateBack() {
+        if (webAuth.canGoBack()) {
+            webAuth.goBack();
+            return true;
+        }
+        return false;
     }
 
     /**

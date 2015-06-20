@@ -1,6 +1,7 @@
 <RelativeLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context="com.winsonchiu.reader.FragmentComments"
@@ -15,33 +16,92 @@
         android:layout_alignParentTop="true"
         />
 
-    <com.winsonchiu.reader.CustomSwipeRefreshLayout
-        android:id="@+id/swipe_refresh_comment_list"
+    <com.google.android.youtube.player.YouTubePlayerView
+        android:id="@+id/youtube"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:visibility="gone"
+        android:layout_below="@id/toolbar"
+        />
+
+    <android.support.design.widget.CoordinatorLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_below="@id/toolbar"
+        android:layout_below="@id/youtube"
         >
 
-        <android.support.v7.widget.RecyclerView
-            android:id="@+id/recycler_comment_list"
+        <com.winsonchiu.reader.CustomSwipeRefreshLayout
+            android:id="@+id/swipe_refresh_comment_list"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:scrollbars="vertical"
-            android:paddingBottom="48dp"
-            android:clipToPadding="false"
+            app:layout_behavior="@string/appbar_scrolling_view_behavior"
+            >
+
+            <android.support.v7.widget.RecyclerView
+                android:id="@+id/recycler_comment_list"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:scrollbars="vertical"
+                android:paddingBottom="48dp"
+                android:clipToPadding="false"
+                />
+
+        </com.winsonchiu.reader.CustomSwipeRefreshLayout>
+
+        <android.support.design.widget.FloatingActionButton
+            android:id="@+id/button_expand_actions"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_margin="@dimen/activity_horizontal_margin"
+            android:src="@drawable/ic_unfold_more_white_24dp"
+            android:layout_alignParentBottom="true"
+            android:layout_alignParentEnd="true"
+            app:layout_anchor="@id/swipe_refresh_comment_list"
+            app:layout_anchorGravity="bottom|end"
+            app:elevation="4dp"
+            app:borderWidth="0dp"
             />
 
-    </com.winsonchiu.reader.CustomSwipeRefreshLayout>
+    </android.support.design.widget.CoordinatorLayout>
 
-    <ImageButton
-        android:id="@+id/button_expand_actions"
-        android:layout_width="48dp"
-        android:layout_height="48dp"
-        android:src="@drawable/ic_keyboard_arrow_up_white_24dp"
-        android:layout_centerHorizontal="true"
+    <LinearLayout
+        android:orientation="vertical"
+        android:id="@+id/layout_actions"
+        android:layout_width="56dp"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="88dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp"
         android:layout_alignParentBottom="true"
-        android:layout_above="@id/layout_container_expand"
-        />
+        android:layout_alignParentEnd="true"
+        android:visibility="gone"
+        >
+
+        <android.support.design.widget.FloatingActionButton
+            android:id="@+id/button_comment_previous"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:src="@drawable/ic_keyboard_arrow_up_white_24dp"
+            android:layout_margin="8dp"
+            app:fabSize="mini"
+            app:elevation="4dp"
+            app:borderWidth="0dp"
+            />
+
+        <android.support.design.widget.FloatingActionButton
+            android:id="@+id/button_comment_next"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:src="@drawable/ic_keyboard_arrow_down_white_24dp"
+            android:layout_margin="8dp"
+            app:fabSize="mini"
+            app:elevation="4dp"
+            app:borderWidth="0dp"
+            />
+
+    </LinearLayout>
 
     <RelativeLayout
         android:id="@+id/layout_container_expand"

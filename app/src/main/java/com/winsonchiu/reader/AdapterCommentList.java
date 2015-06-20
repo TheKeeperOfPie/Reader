@@ -19,7 +19,6 @@ import android.text.TextUtils;
 import android.text.format.DateUtils;
 import android.text.method.LinkMovementMethod;
 import android.text.style.ForegroundColorSpan;
-import android.util.Log;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -195,7 +194,19 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                                 .inflate(R.layout.cell_link, parent, false), this,
                         activity.getResources()
                                 .getColor(R.color.darkThemeDialog),
-                        thumbnailWidth);
+                        thumbnailWidth) {
+                    @Override
+                    public void loadYouTube(Link link, String id) {
+                        listener.loadYouTube(link, id, this);
+                    }
+
+                    @Override
+                    public void onClickThumbnail(Link link) {
+                        if (listener.hideYouTube()) {
+                            super.onClickThumbnail(link);
+                        }
+                    }
+                };
                 // TODO: Fix margin when expanding comment thread from grid UI
 //                int margin = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 4,
 //                        activity.getResources()
@@ -208,7 +219,19 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
             else {
                 viewHolderLink = new AdapterLinkList.ViewHolder(
                         LayoutInflater.from(parent.getContext())
-                                .inflate(R.layout.row_link, parent, false), this);
+                                .inflate(R.layout.row_link, parent, false), this) {
+                    @Override
+                    public void loadYouTube(Link link, String id) {
+                        listener.loadYouTube(link, id, this);
+                    }
+
+                    @Override
+                    public void onClickThumbnail(Link link) {
+                        if (listener.hideYouTube()) {
+                            super.onClickThumbnail(link);
+                        }
+                    }
+                };
             }
             return viewHolderLink;
         }

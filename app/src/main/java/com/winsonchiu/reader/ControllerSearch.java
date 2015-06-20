@@ -21,9 +21,12 @@ import com.winsonchiu.reader.data.User;
 
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.w3c.dom.Text;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
@@ -44,6 +47,7 @@ public class ControllerSearch {
     private Activity activity;
     private SharedPreferences preferences;
     private Reddit reddit;
+    private Listing subredditsSubscribed;
     private Listing subreddits;
     private Listing links;
     private Listing linksSubreddit;
@@ -52,7 +56,7 @@ public class ControllerSearch {
     private Drawable drawableDefault;
     private Sort sort;
     private Time time;
-    private int currentPage;
+    private volatile int currentPage;
     private Request<String> requestSubreddits;
     private Request<String> requestLinks;
     private Request<String> requestLinksSubreddit;
@@ -64,9 +68,11 @@ public class ControllerSearch {
         time = Time.ALL;
         listeners = new HashSet<>();
         query = "";
+        subredditsSubscribed = new Listing();
         subreddits = new Listing();
         links = new Listing();
         linksSubreddit = new Listing();
+        reloadSubscriptionList();
     }
 
     public void setActivity(Activity activity) {
@@ -106,10 +112,15 @@ public class ControllerSearch {
     }
 
     public void setQuery(String query) {
-        if (TextUtils.isEmpty(query)) {
+        this.query = query;
+        if (TextUtils.isEmpty(query) && currentPage == PAGE_SUBREDDITS) {
+            subreddits = subredditsSubscribed;
+            for (Listener listener : listeners) {
+                listener.getAdapterSearchSubreddits()
+                        .notifyDataSetChanged();
+            }
             return;
         }
-        this.query = query;
         setTitle();
         reloadCurrentPage();
     }
@@ -120,11 +131,113 @@ public class ControllerSearch {
         }
     }
 
+    public void reloadSubscriptionList() {
+        String url;
+
+        if (TextUtils.isEmpty(preferences.getString(AppSettings.ACCOUNT_JSON, ""))) {
+            url = Reddit.OAUTH_URL + "/subreddits/default?show=all&limit=100";
+        }
+        else {
+            url = Reddit.OAUTH_URL + "/subreddits/mine/subscriber?show=all&limit=100";
+        }
+
+        reddit.loadGet(url,
+                new Response.Listener<String>() {
+                    @Override
+                    public void onResponse(String response) {
+                        try {
+                            Listing listing = Listing.fromJson(new JSONObject(response));
+                            subredditsSubscribed = listing;
+                            Collections.sort(subredditsSubscribed.getChildren(), new Comparator<Thing>() {
+                                @Override
+                                public int compare(Thing lhs, Thing rhs) {
+                                    return ((Subreddit) lhs).getDisplayName().compareToIgnoreCase(((Subreddit) rhs).getDisplayName());
+                                }
+                            });
+                            if (TextUtils.isEmpty(query)) {
+                                subreddits = subredditsSubscribed;
+                                for (Listener listener : listeners) {
+                                    listener.getAdapterSearchSubreddits()
+                                            .notifyDataSetChanged();
+                                }
+                            }
+                            if (listing.getChildren().size() == 100) {
+                                loadMoreSubscriptions();
+                            }
+
+                        }
+                        catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }, new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+
+                    }
+                }, 0);
+    }
+
+    private void loadMoreSubscriptions() {
+        String url;
+
+        if (TextUtils.isEmpty(preferences.getString(AppSettings.ACCOUNT_JSON, ""))) {
+            url = Reddit.OAUTH_URL + "/subreddits/default?show=all&limit=100&after=" + subredditsSubscribed.getAfter();
+        }
+        else {
+            url = Reddit.OAUTH_URL + "/subreddits/mine/subscriber?show=all&limit=100&after=" + subredditsSubscribed.getAfter();
+        }
+
+        reddit.loadGet(url,
+                new Response.Listener<String>() {
+                    @Override
+                    public void onResponse(String response) {
+                        try {
+                            Listing listing = Listing.fromJson(new JSONObject(response));
+                            subredditsSubscribed.addChildren(listing.getChildren());
+                            Collections.sort(subredditsSubscribed.getChildren(), new Comparator<Thing>() {
+                                @Override
+                                public int compare(Thing lhs, Thing rhs) {
+                                    return ((Subreddit) lhs).getDisplayName().compareToIgnoreCase(((Subreddit) rhs).getDisplayName());
+                                }
+                            });
+                            if (TextUtils.isEmpty(query)) {
+                                subreddits = subredditsSubscribed;
+                                for (Listener listener : listeners) {
+                                    listener.getAdapterSearchSubreddits()
+                                            .notifyDataSetChanged();
+                                }
+                            }
+                            if (listing.getChildren().size() == 100) {
+                                loadMoreSubscriptions();
+                            }
+
+                        }
+                        catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }, new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+
+                    }
+                }, 0);
+    }
+
     public void reloadCurrentPage() {
         Log.d(TAG, "reloadCurrentPage");
         switch (currentPage) {
             case PAGE_SUBREDDITS:
-                reloadSubreddits();
+                if (TextUtils.isEmpty(query)) {
+                    for (Listener listener : listeners) {
+                        listener.getAdapterSearchSubreddits()
+                                .notifyDataSetChanged();
+                    }
+                }
+                else {
+                    reloadSubreddits();
+                }
                 break;
             case PAGE_LINKS:
                 reloadLinks();
@@ -423,7 +536,13 @@ public class ControllerSearch {
     }
 
     public void clearResults() {
-        subreddits.getChildren().clear();
+        if (subreddits == subredditsSubscribed) {
+            subreddits = new Listing();
+        }
+        else {
+            subreddits.getChildren()
+                    .clear();
+        }
         links.getChildren().clear();
         linksSubreddit.getChildren().clear();
         query = "";

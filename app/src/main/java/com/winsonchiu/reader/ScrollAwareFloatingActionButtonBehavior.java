@@ -28,17 +28,28 @@ import android.support.v4.view.ViewCompat;
 import android.support.v4.view.ViewPropertyAnimatorListener;
 import android.support.v4.view.animation.FastOutSlowInInterpolator;
 import android.util.AttributeSet;
+import android.util.Log;
+import android.util.TypedValue;
 import android.view.View;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.view.animation.Interpolator;
 
 public class ScrollAwareFloatingActionButtonBehavior extends FloatingActionButton.Behavior {
+
     private static final Interpolator INTERPOLATOR = new FastOutSlowInInterpolator();
+    private static final String TAG = ScrollAwareFloatingActionButtonBehavior.class.getCanonicalName();
+
     private boolean mIsAnimatingOut = false;
+    private OnVisibilityChangeListener listener;
 
     public ScrollAwareFloatingActionButtonBehavior(Context context, AttributeSet attrs) {
+        this(context, attrs, null);
+    }
+
+    public ScrollAwareFloatingActionButtonBehavior(Context context, AttributeSet attrs, OnVisibilityChangeListener listener) {
         super();
+        this.listener = listener;
     }
 
     @Override
@@ -63,6 +74,7 @@ public class ScrollAwareFloatingActionButtonBehavior extends FloatingActionButto
             final int dyUnconsumed) {
         super.onNestedScroll(coordinatorLayout, child, target, dxConsumed, dyConsumed, dxUnconsumed,
                 dyUnconsumed);
+
         if (dyConsumed > 0 && !this.mIsAnimatingOut && child.getVisibility() == View.VISIBLE) {
             // User scrolled down and the FAB is currently visible -> hide the FAB
             animateOut(child);
@@ -75,69 +87,52 @@ public class ScrollAwareFloatingActionButtonBehavior extends FloatingActionButto
 
     // Same animation that FloatingActionButton.Behavior uses to hide the FAB when the AppBarLayout exits
     private void animateOut(final FloatingActionButton button) {
-        if (Build.VERSION.SDK_INT >= 14) {
-            ViewCompat.animate(button)
-                    .scaleX(0.0F)
-                    .scaleY(0.0F)
-                    .alpha(0.0F)
-                    .setInterpolator(INTERPOLATOR)
-                    .withLayer()
-                    .setListener(new ViewPropertyAnimatorListener() {
-                        public void onAnimationStart(View view) {
-                            ScrollAwareFloatingActionButtonBehavior.this.mIsAnimatingOut = true;
-                        }
-
-                        public void onAnimationCancel(View view) {
-                            ScrollAwareFloatingActionButtonBehavior.this.mIsAnimatingOut = false;
-                        }
-
-                        public void onAnimationEnd(View view) {
-                            ScrollAwareFloatingActionButtonBehavior.this.mIsAnimatingOut = false;
-                            view.setVisibility(View.GONE);
-                        }
-                    })
-                    .start();
+        if (listener != null) {
+            listener.onStartHideFromScroll();
         }
-        else {
-            Animation anim = AnimationUtils.loadAnimation(button.getContext(), R.anim.fab_out);
-            anim.setInterpolator(INTERPOLATOR);
-            anim.setDuration(200L);
-            anim.setAnimationListener(new Animation.AnimationListener() {
-                public void onAnimationStart(Animation animation) {
-                    ScrollAwareFloatingActionButtonBehavior.this.mIsAnimatingOut = true;
-                }
+        ViewCompat.animate(button)
+                .scaleX(0.0F)
+                .scaleY(0.0F)
+                .alpha(0.0F)
+                .setInterpolator(INTERPOLATOR)
+                .withLayer()
+                .setListener(new ViewPropertyAnimatorListener() {
+                    public void onAnimationStart(View view) {
+                        ScrollAwareFloatingActionButtonBehavior.this.mIsAnimatingOut = true;
+                    }
 
-                public void onAnimationEnd(Animation animation) {
-                    ScrollAwareFloatingActionButtonBehavior.this.mIsAnimatingOut = false;
-                    button.setVisibility(View.GONE);
-                }
+                    public void onAnimationCancel(View view) {
+                        ScrollAwareFloatingActionButtonBehavior.this.mIsAnimatingOut = false;
+                    }
 
-                @Override
-                public void onAnimationRepeat(final Animation animation) {
-                }
-            });
-            button.startAnimation(anim);
-        }
+                    public void onAnimationEnd(View view) {
+                        ScrollAwareFloatingActionButtonBehavior.this.mIsAnimatingOut = false;
+                        view.setVisibility(View.GONE);
+                        if (listener != null) {
+                            listener.onEndHideFromScroll();
+                        }
+                    }
+                })
+                .start();
     }
 
     // Same animation that FloatingActionButton.Behavior uses to show the FAB when the AppBarLayout enters
     private void animateIn(FloatingActionButton button) {
         button.setVisibility(View.VISIBLE);
-        if (Build.VERSION.SDK_INT >= 14) {
-            ViewCompat.animate(button)
-                    .scaleX(1.0F)
-                    .scaleY(1.0F)
-                    .alpha(1.0F)
-                    .setInterpolator(INTERPOLATOR)
-                    .withLayer()
-                    .setListener(null)
-                    .start();
-        }
-        else {
-            Animation anim = AnimationUtils.loadAnimation(button.getContext(), R.anim.fab_in);
-            anim.setDuration(200L);
-            anim.setInterpolator(INTERPOLATOR);
-            button.startAnimation(anim);
-        }
+        ViewCompat.animate(button)
+                .scaleX(1.0F)
+                .scaleY(1.0F)
+                .alpha(1.0F)
+                .setInterpolator(INTERPOLATOR)
+                .setListener(null)
+                .withLayer()
+                .start();
+    }
+
+    public interface OnVisibilityChangeListener {
+
+        void onStartHideFromScroll();
+        void onEndHideFromScroll();
+
     }
 }

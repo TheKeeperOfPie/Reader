@@ -16,3 +16,4 @@ app/src/androidTest
 volley
 app/src/main/java/com/winsonchiu/reader/ApiKeys.java
 app/src/main/res/values/strings_ignore.xml
+app/crashlytics.properties

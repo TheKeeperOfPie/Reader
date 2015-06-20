@@ -25,8 +25,8 @@ android {
         applicationId "com.winsonchiu.reader"
         minSdkVersion 17
         targetSdkVersion 22
-        versionCode 13
-        versionName "0.7"
+        versionCode 14
+        versionName "0.9"
     }
     buildTypes {
         release {
@@ -43,7 +43,7 @@ android {
 
 dependencies {
     compile fileTree(include: ['*.jar'], dir: 'libs')
-    compile('com.crashlytics.sdk.android:crashlytics:2.2.4@aar') {
+    compile('com.crashlytics.sdk.android:crashlytics:2.3.2@aar') {
         transitive = true;
     }
     compile project(':volley')

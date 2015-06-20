@@ -4,7 +4,7 @@
     <color name="colorLight">#FFB39DDB</color>
     <color name="colorPrimary">#FF9575CD</color>
     <color name="colorPrimaryDark">#FF673AB7</color>
-    <color name="colorAccent">#FFFFD740</color>
+    <color name="colorAccent">#FFFFC400</color>
 
     <color name="positiveScore">#FFFF8B60</color>
     <color name="negativeScore">#FF9494FF</color>

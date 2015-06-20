@@ -226,8 +226,21 @@ public class AdapterProfile extends RecyclerView.Adapter<RecyclerView.ViewHolder
                     }
 
                     @Override
-                    public void setToolbarTitle(String title) {
+                    public void setToolbarTitle(CharSequence title) {
                         // Not implemented
+                    }
+
+                    @Override
+                    public void loadYouTube(Link link,
+                            String id,
+                            AdapterLink.ViewHolderBase viewHolderBase) {
+                        // Not implemented
+                    }
+
+                    @Override
+                    public boolean hideYouTube() {
+                        // Not implemented
+                        return false;
                     }
 
                     @Override

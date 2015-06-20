@@ -333,7 +333,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         protected YouTubePlayerView viewYouTube;
         protected YouTubePlayer youTubePlayer;
 
-        public ViewHolderBase(final View itemView,
+        public ViewHolderBase(View itemView,
                 ControllerLinks.ListenerCallback listenerCallback) {
             super(itemView);
             this.callback = listenerCallback;
@@ -416,7 +416,8 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                     return false;
                 }
             });
-            adapterAlbum = new AdapterAlbum(callback.getController().getActivity(), new Album(), callback.getListener());
+            adapterAlbum = new AdapterAlbum(callback.getController()
+                    .getActivity(), new Album(), callback.getListener());
             viewPagerFull = (ViewPager) itemView.findViewById(R.id.view_pager_full);
             viewPagerFull.setAdapter(adapterAlbum);
             imageThumbnail = (ImageView) itemView.findViewById(R.id.image_thumbnail);
@@ -442,7 +443,8 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             toolbarActions.setOnMenuItemClickListener(new Toolbar.OnMenuItemClickListener() {
                 @Override
                 public boolean onMenuItemClick(MenuItem menuItem) {
-                    Link link = callback.getController().getLink(getAdapterPosition());
+                    Link link = callback.getController()
+                            .getLink(getAdapterPosition());
 
                     switch (menuItem.getItemId()) {
                         case R.id.item_upvote:
@@ -470,9 +472,9 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                             if (TextUtils.isEmpty(callback.getPreferences()
                                     .getString(AppSettings.REFRESH_TOKEN, ""))) {
                                 Toast.makeText(callback.getController()
-                                        .getActivity(), callback.getController()
-                                        .getActivity()
-                                        .getString(R.string.must_be_logged_in_to_reply),
+                                                .getActivity(), callback.getController()
+                                                .getActivity()
+                                                .getString(R.string.must_be_logged_in_to_reply),
                                         Toast.LENGTH_SHORT)
                                         .show();
                                 return false;
@@ -480,19 +482,29 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                             toggleReply();
                             break;
                         case R.id.item_view_profile:
-                            Intent intent = new Intent(callback.getControllerComments()
+                            Intent intentViewProfile = new Intent(callback.getControllerComments()
                                     .getActivity(), MainActivity.class);
-                            intent.setAction(Intent.ACTION_VIEW);
-                            intent.putExtra(MainActivity.REDDIT_PAGE,
+                            intentViewProfile.setAction(Intent.ACTION_VIEW);
+                            intentViewProfile.putExtra(MainActivity.REDDIT_PAGE,
                                     "https://reddit.com/user/" + link.getAuthor());
                             callback.getControllerComments()
                                     .getActivity()
-                                    .startActivity(intent);
+                                    .startActivity(intentViewProfile);
                             break;
                         case R.id.item_delete:
                             callback.getController()
                                     .deletePost(callback.getController()
                                             .getLink(getAdapterPosition()));
+                            break;
+                        case R.id.item_view_subreddit:
+                            Intent intentViewSubreddit = new Intent(callback.getController()
+                                    .getActivity(), MainActivity.class);
+                            intentViewSubreddit.setAction(Intent.ACTION_VIEW);
+                            intentViewSubreddit.putExtra(MainActivity.REDDIT_PAGE,
+                                    "https://reddit.com/r/" + link.getSubreddit());
+                            callback.getController()
+                                    .getActivity()
+                                    .startActivity(intentViewSubreddit);
                             break;
                     }
                     return true;
@@ -634,7 +646,8 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                     }
 
                     boolean isAuthor = link.getAuthor()
-                            .equals(callback.getUser().getName());
+                            .equals(callback.getUser()
+                                    .getName());
 
                     toolbarActions.getMenu()
                             .findItem(R.id.item_delete)
@@ -665,7 +678,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                 public boolean onTouch(View v, MotionEvent event) {
                     MotionEvent newEvent = MotionEvent.obtain(event);
                     newEvent.offsetLocation(v.getLeft(), v.getTop());
-                    itemView.onTouchEvent(newEvent);
+                    ViewHolderBase.this.itemView.onTouchEvent(newEvent);
                     newEvent.recycle();
                     return false;
                 }
@@ -776,6 +789,15 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                 }
                 else if (link.getDomain()
                         .contains("youtu")) {
+                    if (viewYouTube.isShown()) {
+                        hideYouTube();
+                        return;
+                    }
+
+                    if (youTubePlayer != null) {
+                        viewYouTube.setVisibility(View.VISIBLE);
+                        return;
+                    }
                     Log.d(TAG, "youtube");
                     /*
                         Regex taken from Gubatron at
@@ -785,28 +807,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                             ".*(?:youtu.be\\/|v\\/|u\\/\\w\\/|embed\\/|watch\\?v=)([^#\\&\\?]*).*");
                     final Matcher matcher = pattern.matcher(urlString);
                     if (matcher.matches()) {
-                        Log.d(TAG, "YouTube URL loaded: " + matcher.group(1));
-                        final String id = matcher.group(1);
-                        viewYouTube.initialize(ApiKeys.YOUTUBE_API_KEY,
-                                new YouTubePlayer.OnInitializedListener() {
-                                    @Override
-                                    public void onInitializationSuccess(YouTubePlayer.Provider provider,
-                                            YouTubePlayer youTubePlayer,
-                                            boolean b) {
-                                        ViewHolderBase.this.youTubePlayer = youTubePlayer;
-                                        youTubePlayer.setManageAudioFocus(false);
-                                        youTubePlayer.loadVideo(id);
-                                        viewYouTube.setVisibility(View.VISIBLE);
-                                        callback.getListener()
-                                                .onFullLoaded(getAdapterPosition());
-                                    }
-
-                                    @Override
-                                    public void onInitializationFailure(YouTubePlayer.Provider provider,
-                                            YouTubeInitializationResult youTubeInitializationResult) {
-                                        attemptLoadImage(link);
-                                    }
-                                });
+                        loadYouTube(link, matcher.group(1));
                     }
                     else {
                         attemptLoadImage(link);
@@ -897,7 +898,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
 
         }
 
-        private void attemptLoadImage(Link link) {
+        public void attemptLoadImage(Link link) {
 
             if (Reddit.placeImageUrl(link)) {
                 webFull.onResume();
@@ -1075,15 +1076,49 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                     .onFullLoaded(getAdapterPosition());
         }
 
+        public void loadYouTube(final Link link, final String id) {
+            viewYouTube.initialize(ApiKeys.YOUTUBE_API_KEY,
+                    new YouTubePlayer.OnInitializedListener() {
+                        @Override
+                        public void onInitializationSuccess(YouTubePlayer.Provider provider,
+                                YouTubePlayer youTubePlayer,
+                                boolean b) {
+                            ViewHolderBase.this.youTubePlayer = youTubePlayer;
+                            youTubePlayer.setShowFullscreenButton(false);
+                            youTubePlayer.setManageAudioFocus(false);
+                            youTubePlayer.loadVideo(id);
+                            viewYouTube.setVisibility(View.VISIBLE);
+                            callback.getListener()
+                                    .onFullLoaded(getAdapterPosition());
+                        }
+
+                        @Override
+                        public void onInitializationFailure(YouTubePlayer.Provider provider,
+                                YouTubeInitializationResult youTubeInitializationResult) {
+                            attemptLoadImage(link);
+                        }
+                    });
+        }
+
+        private void hideYouTube() {
+            if (youTubePlayer != null) {
+                youTubePlayer.pause();
+            }
+            viewYouTube.setVisibility(View.GONE);
+        }
+
         public void setToolbarMenuVisibility() {
             Menu menu = toolbarActions.getMenu();
 
             boolean loggedIn = !TextUtils.isEmpty(callback.getPreferences()
                     .getString(AppSettings.REFRESH_TOKEN, ""));
 
-            menu.findItem(R.id.item_upvote).setVisible(loggedIn);
-            menu.findItem(R.id.item_downvote).setVisible(loggedIn);
-            menu.findItem(R.id.item_reply).setVisible(loggedIn);
+            menu.findItem(R.id.item_upvote)
+                    .setVisible(loggedIn);
+            menu.findItem(R.id.item_downvote)
+                    .setVisible(loggedIn);
+            menu.findItem(R.id.item_reply)
+                    .setVisible(loggedIn);
 
             int maxNum = (int) (itemView.getWidth() / callback.getItemWidth());
             int numShown = 0;
@@ -1091,10 +1126,12 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             for (int index = 0; index < menu.size(); index++) {
 
                 if (!loggedIn) {
-                    switch (menu.getItem(index).getItemId()) {
+                    switch (menu.getItem(index)
+                            .getItemId()) {
                         case R.id.item_upvote:
                         case R.id.item_downvote:
                         case R.id.item_reply:
+                        case R.id.item_view_subreddit:
                             continue;
                     }
                 }
@@ -1108,6 +1145,13 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                             .setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
                 }
             }
+
+            menu.findItem(R.id.item_view_subreddit)
+                    .setVisible(callback.getController()
+                            .showSubreddit());
+            menu.findItem(R.id.item_view_subreddit)
+                    .setEnabled(callback.getController()
+                            .showSubreddit());
         }
 
 

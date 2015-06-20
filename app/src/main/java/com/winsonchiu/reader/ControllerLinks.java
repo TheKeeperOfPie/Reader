@@ -144,8 +144,8 @@ public class ControllerLinks implements ControllerLinksBase {
                 }, 0);
     }
 
-    public void loadFrontPage(Sort sort) {
-        if (!TextUtils.isEmpty(subreddit.getDisplayName())) {
+    public void loadFrontPage(Sort sort, boolean force) {
+        if (force || !TextUtils.isEmpty(subreddit.getDisplayName())) {
             for (LinkClickListener listener : listeners) {
                 listener.setRefreshing(true);
             }

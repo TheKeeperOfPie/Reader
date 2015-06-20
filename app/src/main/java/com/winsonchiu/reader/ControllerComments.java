@@ -110,7 +110,7 @@ public class ControllerComments implements ControllerLinksBase, ControllerCommen
 
     public void setTitle() {
         for (CommentClickListener listener : listeners) {
-            listener.setToolbarTitle(link.getTitle());
+            listener.setToolbarTitle(Reddit.getTrimmedHtml(link.getTitle()));
         }
     }
 
@@ -813,7 +813,9 @@ public class ControllerComments implements ControllerLinksBase, ControllerCommen
         AdapterCommentList getAdapter();
         int getRecyclerHeight();
         int getRecyclerWidth();
-        void setToolbarTitle(String title);
+        void setToolbarTitle(CharSequence title);
+        void loadYouTube(Link link, String id, AdapterLink.ViewHolderBase viewHolderBase);
+        boolean hideYouTube();
     }
 
     public interface ListenerCallback {

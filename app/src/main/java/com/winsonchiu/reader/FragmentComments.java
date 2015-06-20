@@ -2,22 +2,24 @@ package com.winsonchiu.reader;
 
 import android.app.Activity;
 import android.app.Fragment;
-import android.content.Intent;
 import android.os.Bundle;
+import android.support.design.widget.CoordinatorLayout;
+import android.support.design.widget.FloatingActionButton;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
-import android.util.TypedValue;
 import android.view.LayoutInflater;
-import android.view.Menu;
-import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.ViewTreeObserver;
-import android.widget.ImageButton;
-import android.widget.RelativeLayout;
+import android.widget.LinearLayout;
+import android.widget.Toast;
+
+import com.google.android.youtube.player.YouTubeInitializationResult;
+import com.google.android.youtube.player.YouTubePlayer;
+import com.google.android.youtube.player.YouTubePlayerView;
+import com.winsonchiu.reader.data.Link;
 
 
 /**
@@ -50,9 +52,14 @@ public class FragmentComments extends Fragment {
     private ControllerComments.CommentClickListener listener;
     private RecyclerView.ViewHolder viewHolder;
     private Toolbar toolbar;
-    private Toolbar toolbarActions;
-    private ImageButton buttonExpandActions;
-    private RelativeLayout layoutContainerExpand;
+    private LinearLayout layoutActions;
+    private FloatingActionButton buttonExpandActions;
+    private FloatingActionButton buttonCommentPrevious;
+    private FloatingActionButton buttonCommentNext;
+    private ScrollAwareFloatingActionButtonBehavior behaviorFloatingActionButton;
+    private YouTubePlayerView viewYouTube;
+    private YouTubePlayer youTubePlayer;
+    private RecyclerView.AdapterDataObserver observer;
 
     /**
      * Use this factory method to create a new instance of
@@ -128,8 +135,49 @@ public class FragmentComments extends Fragment {
             }
 
             @Override
-            public void setToolbarTitle(String title) {
+            public void setToolbarTitle(CharSequence title) {
                 toolbar.setTitle(title);
+            }
+
+            @Override
+            public void loadYouTube(final Link link, final String id, final AdapterLink.ViewHolderBase viewHolderBase) {
+                if (youTubePlayer != null) {
+                    viewYouTube.setVisibility(View.VISIBLE);
+                    return;
+                }
+
+                viewYouTube.initialize(ApiKeys.YOUTUBE_API_KEY,
+                        new YouTubePlayer.OnInitializedListener() {
+                            @Override
+                            public void onInitializationSuccess(YouTubePlayer.Provider provider,
+                                    YouTubePlayer youTubePlayer,
+                                    boolean b) {
+                                FragmentComments.this.youTubePlayer = youTubePlayer;
+                                youTubePlayer.setShowFullscreenButton(false);
+                                youTubePlayer.setManageAudioFocus(false);
+                                youTubePlayer.loadVideo(id);
+                                viewYouTube.setVisibility(View.VISIBLE);
+                            }
+
+                            @Override
+                            public void onInitializationFailure(YouTubePlayer.Provider provider,
+                                    YouTubeInitializationResult youTubeInitializationResult) {
+                                viewHolderBase.attemptLoadImage(link);
+                            }
+                        });
+            }
+
+            @Override
+            public boolean hideYouTube() {
+                if (viewYouTube.isShown()) {
+                    if (youTubePlayer != null) {
+                        youTubePlayer.pause();
+                    }
+                    viewYouTube.setVisibility(View.GONE);
+                    return false;
+                }
+
+                return true;
             }
 
             @Override
@@ -140,6 +188,19 @@ public class FragmentComments extends Fragment {
 
         toolbar = (Toolbar) view.findViewById(R.id.toolbar);
         toolbar.setNavigationIcon(R.drawable.ic_arrow_back_white_24dp);
+        toolbar.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                linearLayoutManager.scrollToPositionWithOffset(0, 0);
+            }
+        });
+        toolbar.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View v) {
+                Toast.makeText(activity, "Return to top", Toast.LENGTH_LONG).show();
+                return true;
+            }
+        });
         toolbar.setNavigationOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -148,89 +209,62 @@ public class FragmentComments extends Fragment {
         });
         setUpOptionsMenu();
 
-        toolbarActions = (Toolbar) view.findViewById(R.id.toolbar_actions);
-        toolbarActions.inflateMenu(R.menu.menu_comment_actions);
-        toolbarActions.setOnMenuItemClickListener(new Toolbar.OnMenuItemClickListener() {
-            @Override
-            public boolean onMenuItemClick(MenuItem item) {
-                int position;
-                switch (item.getItemId()) {
-
-                    case R.id.item_comment_previous:
-                        position = linearLayoutManager.findFirstVisibleItemPosition();
-                        if (position == 1) {
-                            linearLayoutManager.scrollToPositionWithOffset(0, 0);
-                        }
-                        linearLayoutManager.scrollToPositionWithOffset(mListener.getControllerComments().getPreviousCommentPosition(
-                                position - 1) + 1, 0);
-                        break;
-                    case R.id.item_comment_next:
-                        position = linearLayoutManager.findFirstVisibleItemPosition();
-                        if (position == 0) {
-                            if (adapterCommentList.getItemCount() > 0) {
-                                linearLayoutManager.scrollToPositionWithOffset(1, 0);
-                            }
-                            return true;
-                        }
-                        linearLayoutManager.scrollToPositionWithOffset(mListener.getControllerComments()
-                                .getNextCommentPosition(position - 1) + 1, 0);
-                        break;
-                    case R.id.item_jump_to_top:
-                        linearLayoutManager.smoothScrollToPosition(recyclerCommentList, null, 0);
-                        break;
-                    case R.id.item_view_subreddit:
-                        Intent intent = new Intent(activity, MainActivity.class);
-                        intent.setAction(Intent.ACTION_VIEW);
-                        intent.putExtra(MainActivity.REDDIT_PAGE, "https://reddit.com/r/" + mListener.getControllerComments().getMainLink().getSubreddit());
-                        startActivity(intent);
-                        break;
-                }
-
-                return true;
-            }
-        });
-        toolbarActions.getViewTreeObserver().addOnGlobalLayoutListener(
-                new ViewTreeObserver.OnGlobalLayoutListener() {
-                    @Override
-                    public void onGlobalLayout() {
-
-                        Menu menu = toolbarActions.getMenu();
-
-                        int maxNum = (int) (toolbarActions.getWidth() / TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 48, activity.getResources().getDisplayMetrics()));
-                        int numShown = 0;
-
-                        Log.d(TAG, "maxNum: " + maxNum);
-
-                        for (int index = 0; index < MENU_ACTIONS_SIZE; index++) {
-                            if (numShown < maxNum - 1) {
-                                menu.getItem(index)
-                                        .setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
-                            }
-                            else {
-                                menu.getItem(index).setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
-                            }
-                        }
-
-                        toolbarActions.getViewTreeObserver().removeOnGlobalLayoutListener(this);
-                    }
-                });
-
-        layoutContainerExpand = (RelativeLayout) view.findViewById(R.id.layout_container_expand);
-
-        buttonExpandActions = (ImageButton) view.findViewById(R.id.button_expand_actions);
+        layoutActions = (LinearLayout) view.findViewById(R.id.layout_actions);
+        buttonExpandActions = (FloatingActionButton) view.findViewById(R.id.button_expand_actions);
         buttonExpandActions.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (layoutContainerExpand.isShown()) {
-                    layoutContainerExpand.setVisibility(View.GONE);
-                    buttonExpandActions.setImageResource(R.drawable.ic_keyboard_arrow_up_white_24dp);
-                }
-                else {
-                    layoutContainerExpand.setVisibility(View.VISIBLE);
-                    buttonExpandActions.setImageResource(R.drawable.ic_keyboard_arrow_down_white_24dp);
-                }
+                buttonExpandActions.setImageResource(layoutActions.isShown() ? R.drawable.ic_unfold_more_white_24dp : android.R.color.transparent);
+                layoutActions.setVisibility(layoutActions.isShown() ? View.GONE : View.VISIBLE);
             }
         });
+
+        behaviorFloatingActionButton = new ScrollAwareFloatingActionButtonBehavior(activity, null,
+                new ScrollAwareFloatingActionButtonBehavior.OnVisibilityChangeListener() {
+                    @Override
+                    public void onStartHideFromScroll() {
+                        layoutActions.setVisibility(View.GONE);
+                    }
+
+                    @Override
+                    public void onEndHideFromScroll() {
+                        buttonExpandActions.setImageResource(R.drawable.ic_unfold_more_white_24dp);
+                    }
+
+                });
+        ((CoordinatorLayout.LayoutParams) buttonExpandActions.getLayoutParams()).setBehavior(behaviorFloatingActionButton);
+
+        buttonCommentPrevious = (FloatingActionButton) view.findViewById(R.id.button_comment_previous);
+        buttonCommentPrevious.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                int position = linearLayoutManager.findFirstVisibleItemPosition();
+                if (position == 1) {
+                    linearLayoutManager.scrollToPositionWithOffset(0, 0);
+                    return;
+                }
+                linearLayoutManager.scrollToPositionWithOffset(mListener.getControllerComments().getPreviousCommentPosition(
+                        position - 1) + 1, 0);
+            }
+        });
+
+        buttonCommentNext = (FloatingActionButton) view.findViewById(R.id.button_comment_next);
+        buttonCommentNext.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                int position = linearLayoutManager.findFirstVisibleItemPosition();
+                if (position == 0) {
+                    if (adapterCommentList.getItemCount() > 0) {
+                        linearLayoutManager.scrollToPositionWithOffset(1, 0);
+                    }
+                    return;
+                }
+                linearLayoutManager.scrollToPositionWithOffset(mListener.getControllerComments()
+                        .getNextCommentPosition(position - 1) + 1, 0);
+            }
+        });
+
+        viewYouTube = (YouTubePlayerView) view.findViewById(R.id.youtube);
 
         swipeRefreshCommentList = (SwipeRefreshLayout) view.findViewById(
                 R.id.swipe_refresh_comment_list);
@@ -251,6 +285,19 @@ public class FragmentComments extends Fragment {
             adapterCommentList = new AdapterCommentList(activity, mListener.getControllerComments(), listener,
                     getArguments().getBoolean(ARG_IS_GRID, false));
         }
+
+        observer = new RecyclerView.AdapterDataObserver() {
+            @Override
+            public void onItemRangeChanged(int positionStart, int itemCount) {
+                super.onItemRangeChanged(positionStart, itemCount);
+                if (positionStart == 0 && youTubePlayer != null) {
+                    youTubePlayer.release();
+                    youTubePlayer = null;
+                }
+            }
+        };
+
+        adapterCommentList.registerAdapterDataObserver(observer);
 
         recyclerCommentList.setAdapter(adapterCommentList);
         mListener.getControllerComments().addListener(listener);
@@ -313,7 +360,17 @@ public class FragmentComments extends Fragment {
     }
 
     @Override
+    public void onDestroyView() {
+        adapterCommentList.unregisterAdapterDataObserver(observer);
+        super.onDestroyView();
+    }
+
+    @Override
     public void onDestroy() {
+        if (youTubePlayer != null) {
+            youTubePlayer.release();
+            youTubePlayer = null;
+        }
         super.onDestroy();
 //        CustomApplication.getRefWatcher(getActivity())
 //                .watch(this);

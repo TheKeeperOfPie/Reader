@@ -23,6 +23,7 @@ import android.widget.Toast;
 
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
+import com.winsonchiu.reader.data.Link;
 import com.winsonchiu.reader.data.Message;
 import com.winsonchiu.reader.data.Reddit;
 import com.winsonchiu.reader.data.User;
@@ -99,8 +100,21 @@ public class AdapterInbox extends RecyclerView.Adapter<RecyclerView.ViewHolder>
                     }
 
                     @Override
-                    public void setToolbarTitle(String title) {
+                    public void setToolbarTitle(CharSequence title) {
                         // Not implemented
+                    }
+
+                    @Override
+                    public void loadYouTube(Link link,
+                            String id,
+                            AdapterLink.ViewHolderBase viewHolderBase) {
+                        // Not implemented
+                    }
+
+                    @Override
+                    public boolean hideYouTube() {
+                        // Not implemented
+                        return false;
                     }
 
                     @Override

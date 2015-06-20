@@ -155,12 +155,7 @@ public class MainActivity extends YouTubeBaseActivity
         textAccountName.setOnClickListener(clickListenerAccount);
         textAccountInfo.setOnClickListener(clickListenerAccount);
 
-        if (TextUtils.isEmpty(sharedPreferences.getString(AppSettings.REFRESH_TOKEN, ""))) {
-            textAccountName.setText(R.string.add_account);
-        }
-        else {
-            loadAccountInfo();
-        }
+        loadAccountInfo();
 
         viewNavigation.addHeaderView(viewHeader);
         viewNavigation.setNavigationItemSelectedListener(
@@ -179,7 +174,7 @@ public class MainActivity extends YouTubeBaseActivity
         switch (id) {
             case R.id.item_home:
                 if (getFragmentManager().findFragmentByTag(FragmentThreadList.TAG) != null) {
-                    fragmentData.getControllerLinks().loadFrontPage(Sort.HOT);
+                    fragmentData.getControllerLinks().loadFrontPage(Sort.HOT, false);
                 }
                 else {
                     getFragmentManager().beginTransaction()
@@ -230,6 +225,8 @@ public class MainActivity extends YouTubeBaseActivity
                 preferences.edit()
                         .putString(AppSettings.SUBSCRIBED_SUBREDDITS, "")
                         .apply();
+                getControllerLinks().loadFrontPage(Sort.HOT, true);
+                getControllerSearch().reloadSubscriptionList();
                 Toast.makeText(MainActivity.this, "Cleared refresh token", Toast.LENGTH_SHORT)
                         .show();
                 break;
@@ -240,33 +237,47 @@ public class MainActivity extends YouTubeBaseActivity
     }
 
     public void loadAccountInfo() {
-        Reddit.getInstance(this)
-                .loadGet(Reddit.OAUTH_URL + "/api/v1/me",
-                        new Response.Listener<String>() {
-                            @Override
-                            public void onResponse(String response) {
-                                try {
-                                    JSONObject jsonObject = new JSONObject(response);
-                                    textAccountName.setText(jsonObject.getString("name"));
-                                    textAccountInfo.setText(jsonObject.getString(
-                                            "link_karma") + " Link " + jsonObject.getString(
-                                            "comment_karma") + " Comment");
+        boolean visible = !TextUtils.isEmpty(sharedPreferences.getString(AppSettings.REFRESH_TOKEN, ""));
+        if (visible) {
+            Reddit.getInstance(this)
+                    .loadGet(Reddit.OAUTH_URL + "/api/v1/me",
+                            new Response.Listener<String>() {
+                                @Override
+                                public void onResponse(String response) {
+                                    try {
+                                        JSONObject jsonObject = new JSONObject(response);
+                                        textAccountName.setText(jsonObject.getString("name"));
+                                        textAccountInfo.setText(jsonObject.getString(
+                                                "link_karma") + " Link " + jsonObject.getString(
+                                                "comment_karma") + " Comment");
+                                    }
+                                    catch (JSONException e) {
+                                        e.printStackTrace();
+                                    }
                                 }
-                                catch (JSONException e) {
-                                    e.printStackTrace();
-                                }
-                            }
-                        }, new Response.ErrorListener() {
-                            @Override
-                            public void onErrorResponse(VolleyError error) {
+                            }, new Response.ErrorListener() {
+                                @Override
+                                public void onErrorResponse(VolleyError error) {
 
-                            }
-                        }, 0);
+                                }
+                            }, 0);
+        }
+        else {
+            textAccountName.setText(R.string.add_account);
+        }
+
+        viewNavigation.getMenu().findItem(R.id.item_profile).setVisible(visible);
+        viewNavigation.getMenu().findItem(R.id.item_profile).setEnabled(visible);
+        viewNavigation.getMenu().findItem(R.id.item_inbox).setVisible(visible);
+        viewNavigation.getMenu().findItem(R.id.item_inbox).setEnabled(visible);
+        viewNavigation.getMenu().findItem(R.id.item_settings).setVisible(visible);
+        viewNavigation.getMenu().findItem(R.id.item_settings).setEnabled(visible);
     }
 
     private void onClickAccount() {
         getFragmentManager().beginTransaction()
-                .replace(R.id.frame_fragment, FragmentAuth.newInstance("", ""), FragmentAuth.TAG)
+                .add(R.id.frame_fragment, FragmentAuth.newInstance("", ""), FragmentAuth.TAG)
+                .addToBackStack(null)
                 .commit();
         mDrawerLayout.closeDrawer(GravityCompat.START);
     }
@@ -286,6 +297,8 @@ public class MainActivity extends YouTubeBaseActivity
                         .commit();
                 return;
             }
+
+            // TODO: Handle special cases like redd.it and / for Front Page
 
             String path = url.getPath();
             Log.d(TAG, "Path: " + path);
@@ -400,6 +413,13 @@ public class MainActivity extends YouTubeBaseActivity
                 return;
             }
 
+            FragmentAuth fragmentAuth = (FragmentAuth) getFragmentManager().findFragmentByTag(
+                    FragmentAuth.TAG);
+
+            if (fragmentAuth != null && fragmentAuth.navigateBack()) {
+                return;
+            }
+
             onNavigationBackClick();
         }
         else {
@@ -468,6 +488,8 @@ public class MainActivity extends YouTubeBaseActivity
             Toast.makeText(this, "Login successful", Toast.LENGTH_SHORT)
                     .show();
             loadAccountInfo();
+            getControllerSearch().reloadSubscriptionList();
+            getControllerLinks().loadFrontPage(Sort.HOT, true);
         }
         else {
             Toast.makeText(this, "Login failed", Toast.LENGTH_SHORT)
