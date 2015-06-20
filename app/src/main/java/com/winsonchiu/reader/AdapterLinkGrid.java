@@ -141,7 +141,7 @@ public class AdapterLinkGrid extends AdapterLink {
         }
     }
 
-    protected static class ViewHolder extends AdapterLink.ViewHolderBase {
+    public static class ViewHolder extends AdapterLink.ViewHolderBase {
 
         private final int defaultColor;
         private final int thumbnailSize;
@@ -234,11 +234,9 @@ public class AdapterLinkGrid extends AdapterLink {
                 ((RelativeLayout.LayoutParams) textThreadTitle.getLayoutParams()).setMarginEnd(callback.getTitleMargin());
             }
             else if (showThumbnail(link)) {
-                Log.d(TAG, "showThumbnail true: " + link.getUrl());
                 loadThumbnail(link, position);
             }
             else {
-                Log.d(TAG, "showThumbnail false: " + link.getUrl());
                 imageFull.setVisibility(View.GONE);
                 imageThumbnail.setVisibility(View.VISIBLE);
                 ((RelativeLayout.LayoutParams) textThreadTitle.getLayoutParams()).removeRule(
@@ -424,7 +422,7 @@ public class AdapterLinkGrid extends AdapterLink {
                     Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
             textThreadInfo.setText(spannableInfo);
 
-            textHidden.setText(DateUtils.getRelativeTimeSpanString(link.getCreatedUtc()) + "\n" + getFormatttedDate(link.getCreatedUtc()) + "\n" + link.getNumComments() + " comments");
+            textHidden.setText(DateUtils.getRelativeTimeSpanString(link.getCreatedUtc()) + "\n" + link.getNumComments() + " comments");
         }
     }
 

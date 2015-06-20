@@ -233,6 +233,15 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                     }
                 };
             }
+            if (!TextUtils.isEmpty(controllerComments.getMainLink().getSelfText())) {
+                viewHolderLink.itemView.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        viewHolderLink.onClickThumbnail(controllerComments.getMainLink());
+                    }
+                });
+            }
+
             return viewHolderLink;
         }
 
@@ -341,7 +350,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
         return user;
     }
 
-    protected static class ViewHolderComment extends RecyclerView.ViewHolder {
+    public static class ViewHolderComment extends RecyclerView.ViewHolder {
 
         protected View viewIndent;
         protected View viewIndicator;
@@ -563,11 +572,11 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                             break;
                         case R.id.item_upvote:
                             callback.getControllerComments()
-                                    .voteComment(ViewHolderComment.this, 1);
+                                    .voteComment(ViewHolderComment.this, comment, 1);
                             break;
                         case R.id.item_downvote:
                             callback.getControllerComments()
-                                    .voteComment(ViewHolderComment.this, -1);
+                                    .voteComment(ViewHolderComment.this, comment, -1);
                             break;
                         case R.id.item_reply:
                             if (TextUtils.isEmpty(callback.getPreferences()

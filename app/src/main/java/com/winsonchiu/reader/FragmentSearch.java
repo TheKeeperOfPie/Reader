@@ -447,9 +447,9 @@ public class FragmentSearch extends Fragment implements Toolbar.OnMenuItemClickL
             }
 
             @Override
-            public void voteLink(RecyclerView.ViewHolder viewHolder, int vote) {
+            public void voteLink(RecyclerView.ViewHolder viewHolder, final Link link, int vote) {
                 mListener.getControllerSearch()
-                        .voteLink(viewHolder, vote);
+                        .voteLink(viewHolder, link, vote);
             }
 
             @Override
@@ -467,7 +467,7 @@ public class FragmentSearch extends Fragment implements Toolbar.OnMenuItemClickL
             @Override
             public boolean isLoading() {
                 return mListener.getControllerSearch()
-                        .isLoading();
+                        .isLoadingLinks();
             }
 
             @Override
@@ -512,9 +512,9 @@ public class FragmentSearch extends Fragment implements Toolbar.OnMenuItemClickL
             }
 
             @Override
-            public void voteLink(RecyclerView.ViewHolder viewHolder, int vote) {
+            public void voteLink(RecyclerView.ViewHolder viewHolder, final Link link, int vote) {
                 mListener.getControllerSearch()
-                        .voteLinkSubreddit(viewHolder, vote);
+                        .voteLinkSubreddit(viewHolder, link, vote);
             }
 
             @Override
@@ -532,7 +532,7 @@ public class FragmentSearch extends Fragment implements Toolbar.OnMenuItemClickL
             @Override
             public boolean isLoading() {
                 return mListener.getControllerSearch()
-                        .isLoadingSubreddit();
+                        .isLoadingLinksSubreddit();
             }
 
             @Override

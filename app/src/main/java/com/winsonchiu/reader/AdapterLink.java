@@ -31,6 +31,7 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -314,6 +315,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         protected ImageView imagePlay;
         protected ImageView imageThumbnail;
         protected VideoView videoFull;
+        protected FrameLayout frameFull;
         protected WebViewFixed webFull;
         protected TextView textThreadFlair;
         protected TextView textThreadTitle;
@@ -351,7 +353,10 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             });
             mediaController.setAnchorView(videoFull);
             videoFull.setMediaController(mediaController);
-            webFull = (WebViewFixed) itemView.findViewById(R.id.web_full);
+
+//            webFull = (WebViewFixed) itemView.findViewById(R.id.web_full);
+
+            webFull = new WebViewFixed(callback.getController().getActivity().getApplicationContext());
             webFull.getSettings()
                     .setUseWideViewPort(true);
             webFull.getSettings()
@@ -416,6 +421,8 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                     return false;
                 }
             });
+            frameFull = (FrameLayout) itemView.findViewById(R.id.frame_full);
+            frameFull.addView(webFull);
             adapterAlbum = new AdapterAlbum(callback.getController()
                     .getActivity(), new Album(), callback.getListener());
             viewPagerFull = (ViewPager) itemView.findViewById(R.id.view_pager_full);
@@ -449,11 +456,11 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                     switch (menuItem.getItemId()) {
                         case R.id.item_upvote:
                             callback.getController()
-                                    .voteLink(ViewHolderBase.this, 1);
+                                    .voteLink(ViewHolderBase.this, link, 1);
                             break;
                         case R.id.item_downvote:
                             callback.getController()
-                                    .voteLink(ViewHolderBase.this, -1);
+                                    .voteLink(ViewHolderBase.this, link, -1);
                             break;
                         case R.id.item_share:
                             break;
@@ -724,20 +731,33 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                     int startIndex;
                     int lastIndex;
                     if (urlString.contains("imgur.com/a/")) {
+                        if (link.getAlbum() != null) {
+                            loadAlbum(link, link.getAlbum());
+                            Log.d(TAG, "link URL: " + link.getUrl());
+                            Log.d(TAG, "album URL: " + link.getAlbum().getLink());
+                            Toast.makeText(callback.getController().getActivity(), "Cached album loaded: " + link.getAlbum().getTitle(), Toast.LENGTH_SHORT).show();
+                            return;
+                        }
+
                         startIndex = urlString.indexOf("imgur.com/a/") + 12;
                         int slashIndex = urlString.substring(startIndex)
                                 .indexOf("/") + startIndex;
                         lastIndex = slashIndex > startIndex ? slashIndex : urlString.length();
                         String imgurId = urlString.substring(startIndex, lastIndex);
-                        loadAlbum(imgurId);
+                        loadAlbum(imgurId, link);
                     }
                     else if (urlString.contains("imgur.com/gallery/")) {
+                        if (link.getAlbum() != null) {
+                            loadAlbum(link, link.getAlbum());
+                            return;
+                        }
+
                         startIndex = urlString.indexOf("imgur.com/gallery/") + 18;
                         int slashIndex = urlString.substring(startIndex)
                                 .indexOf("/") + startIndex;
                         lastIndex = slashIndex > startIndex ? slashIndex : urlString.length();
                         String imgurId = urlString.substring(startIndex, lastIndex);
-                        loadGallery(imgurId);
+                        loadGallery(imgurId, link);
                     }
                     else if (urlString.contains(Reddit.GIFV)) {
                         startIndex = urlString.indexOf("imgur.com/") + 10;
@@ -917,7 +937,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             }
         }
 
-        private void loadGallery(String id) {
+        private void loadGallery(String id, final Link link) {
             progressImage.setVisibility(View.VISIBLE);
             request = callback.getController()
                     .getReddit()
@@ -926,26 +946,8 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                                 @Override
                                 public void onResponse(String response) {
                                     try {
-                                        Album album = Album.fromJson(
-                                                new JSONObject(
-                                                        response).getJSONObject(
-                                                        "data"));
-
-                                        adapterAlbum.setAlbum(album);
-                                        viewPagerFull.getLayoutParams().height = callback.getListener()
-                                                .getRecyclerHeight() - itemView.getHeight();
-                                        viewPagerFull.setVisibility(View.VISIBLE);
-                                        viewPagerFull.requestLayout();
-                                        if (ViewHolderBase.this instanceof AdapterLinkGrid.ViewHolder) {
-                                            imageThumbnail.setVisibility(View.GONE);
-                                            ((RelativeLayout.LayoutParams) textThreadTitle.getLayoutParams()).addRule(
-                                                    RelativeLayout.START_OF,
-                                                    buttonComments.getId());
-                                            ((RelativeLayout.LayoutParams) textThreadTitle.getLayoutParams()).setMarginEnd(
-                                                    0);
-                                        }
-                                        callback.getListener()
-                                                .onFullLoaded(getAdapterPosition());
+                                        loadAlbum(link, Album.fromJson(
+                                                new JSONObject(response).getJSONObject("data")));
                                     }
                                     catch (JSONException e) {
                                         e.printStackTrace();
@@ -963,7 +965,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                             }, 0);
         }
 
-        private void loadAlbum(String id) {
+        private void loadAlbum(String id, final Link link) {
             progressImage.setVisibility(View.VISIBLE);
             request = callback.getController()
                     .getReddit()
@@ -972,27 +974,12 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                                 @Override
                                 public void onResponse(String response) {
                                     try {
-                                        Log.d(TAG, "loadAlbum: " + response);
                                         Album album = Album.fromJson(
-                                                new JSONObject(
-                                                        response).getJSONObject(
-                                                        "data"));
-
-                                        adapterAlbum.setAlbum(album);
-                                        viewPagerFull.getLayoutParams().height = callback.getListener()
-                                                .getRecyclerHeight() - itemView.getHeight();
-                                        viewPagerFull.setVisibility(View.VISIBLE);
-                                        viewPagerFull.requestLayout();
-                                        if (ViewHolderBase.this instanceof AdapterLinkGrid.ViewHolder) {
-                                            imageThumbnail.setVisibility(View.GONE);
-                                            ((RelativeLayout.LayoutParams) textThreadTitle.getLayoutParams()).addRule(
-                                                    RelativeLayout.START_OF,
-                                                    buttonComments.getId());
-                                            ((RelativeLayout.LayoutParams) textThreadTitle.getLayoutParams()).setMarginEnd(
-                                                    0);
-                                        }
-                                        callback.getListener()
-                                                .onFullLoaded(getAdapterPosition());
+                                                new JSONObject(response).getJSONObject("data"));
+                                        loadAlbum(link, album);
+                                        Log.d(TAG, "link URL: " + link.getUrl());
+                                        Log.d(TAG, "album URL: " + album.getLink());
+                                        Toast.makeText(callback.getController().getActivity(), "New album loaded: " + album.getTitle(), Toast.LENGTH_SHORT).show();
                                     }
                                     catch (JSONException e) {
                                         e.printStackTrace();
@@ -1009,6 +996,24 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                             }, 0);
         }
 
+        private void loadAlbum(Link link, Album album) {
+            link.setAlbum(album);
+            adapterAlbum.setAlbum(album);
+            viewPagerFull.getLayoutParams().height = callback.getListener()
+                    .getRecyclerHeight() - itemView.getHeight();
+            viewPagerFull.setVisibility(View.VISIBLE);
+            viewPagerFull.requestLayout();
+            if (ViewHolderBase.this instanceof AdapterLinkGrid.ViewHolder) {
+                imageThumbnail.setVisibility(View.GONE);
+                ((RelativeLayout.LayoutParams) textThreadTitle.getLayoutParams()).addRule(
+                        RelativeLayout.START_OF,
+                        buttonComments.getId());
+                ((RelativeLayout.LayoutParams) textThreadTitle.getLayoutParams()).setMarginEnd(
+                        0);
+            }
+            callback.getListener()
+                    .onFullLoaded(getAdapterPosition());
+        }
 
         private void loadGifv(String id) {
             Log.d(TAG, "loadGifv: " + id);
@@ -1169,6 +1174,9 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                 youTubePlayer = null;
             }
             viewYouTube.setVisibility(View.GONE);
+            webFull.loadData(Reddit.getImageHtml(""), "text/html", "UTF-8");
+//            webFull.loadData("<html><head><meta name=\"viewport\" content=\"width=device-width, minimum-scale=0.1\"><style>img {width:100%;}</style></head><body style=\"margin: 0px;\">><img style=\"-webkit-user-select: none; cursor: zoom-in;\"/></body></html>", "text/html", "UTF-8");
+            webFull.destroyDrawingCache();
             webFull.onPause();
             webFull.resetMaxHeight();
             webFull.setVisibility(View.GONE);
@@ -1203,6 +1211,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             }
 
             textThreadSelf.setVisibility(View.GONE);
+            adapterAlbum.setAlbum(null);
 
         }
 
@@ -1280,10 +1289,15 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             webFull.destroy();
             adapterAlbum.destroyViews();
             for (int index = 0; index < viewPagerFull.getChildCount(); index++) {
-                ((WebView) viewPagerFull.getChildAt(index)
-                        .findViewById(R.id.web_image)).onPause();
-                ((WebView) viewPagerFull.getChildAt(index)
-                        .findViewById(R.id.web_image)).destroy();
+                FrameLayout layoutFrame = (FrameLayout) viewPagerFull.getChildAt(index).findViewById(R.id.layout_frame);
+                if (layoutFrame.getChildCount() > 0) {
+                    for (int indexFrame = 0; indexFrame < layoutFrame.getChildCount(); indexFrame++) {
+                        WebView webView = (WebView) layoutFrame.getChildAt(indexFrame);
+                        webView.onPause();
+                        webView.destroy();
+                    }
+                }
+                layoutFrame.removeAllViews();
             }
             viewPagerFull.setAdapter(null);
         }

@@ -108,7 +108,7 @@ public class AdapterLinkList extends AdapterLink {
         }
     }
 
-    protected static class ViewHolder extends AdapterLink.ViewHolderBase {
+    public static class ViewHolder extends AdapterLink.ViewHolderBase {
 
         public ViewHolder(View itemView, final ControllerLinks.ListenerCallback callback) {
             super(itemView, callback);
@@ -192,7 +192,7 @@ public class AdapterLinkList extends AdapterLink {
             if (callback.getController().showSubreddit()) {
                 subreddit = "/r/" + link.getSubreddit();
                 spannableInfo = new SpannableString(
-                        subreddit + "\n" + link.getScore() + " by " + link.getAuthor());
+                        subreddit + " " + link.getScore() + " by " + link.getAuthor());
             }
             else {
                 subreddit = "";
@@ -225,7 +225,7 @@ public class AdapterLinkList extends AdapterLink {
                     spannableInfo.length(), Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
             textThreadInfo.setText(spannableInfo);
 
-            textHidden.setText(DateUtils.getRelativeTimeSpanString(link.getCreatedUtc()) + " at " + getFormatttedDate(link.getCreatedUtc()) + ", " + link.getNumComments() + " comments");
+            textHidden.setText(DateUtils.getRelativeTimeSpanString(link.getCreatedUtc()) + ", " + link.getNumComments() + " comments");
         }
     }
 

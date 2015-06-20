@@ -251,7 +251,9 @@ public class ControllerLinks implements ControllerLinksBase {
         }, new ErrorListener() {
             @Override
             public void onErrorResponse(VolleyError error) {
-
+                setLoading(false);
+                Toast.makeText(activity, activity.getString(R.string.error_loading_links), Toast.LENGTH_SHORT)
+                        .show();
             }
         }, 0);
         Log.d(TAG, "reloadAllLinks");
@@ -342,61 +344,14 @@ public class ControllerLinks implements ControllerLinksBase {
     }
 
     @Override
-    public void voteLink(final RecyclerView.ViewHolder viewHolder, final int vote) {
-
-        if (TextUtils.isEmpty(preferences.getString(AppSettings.REFRESH_TOKEN, null))) {
-            Toast.makeText(activity, activity.getString(R.string.must_be_logged_in_to_vote),
-                    Toast.LENGTH_SHORT)
-                    .show();
-            return;
-        }
-
-        final int position = viewHolder.getAdapterPosition();
-        final Link link = getLink(position);
-
-        final int oldVote = link.isLikes();
-        int newVote = 0;
-
-        if (link.isLikes() != vote) {
-            newVote = vote;
-        }
-
-        HashMap<String, String> params = new HashMap<>(2);
-        params.put(Reddit.QUERY_ID, link.getName());
-        params.put(Reddit.QUERY_VOTE, String.valueOf(newVote));
-
-        link.setLikes(newVote);
-        if (position == viewHolder.getAdapterPosition()) {
-            if (viewHolder instanceof AdapterLinkList.ViewHolder) {
-                ((AdapterLinkList.ViewHolder) viewHolder).setVoteColors();
-                ((AdapterLinkList.ViewHolder) viewHolder).setTextInfo(link);
-            }
-            else if (viewHolder instanceof AdapterLinkGrid.ViewHolder) {
-                ((AdapterLinkGrid.ViewHolder) viewHolder).setVoteColors();
-            }
-        }
-        reddit.loadPost(Reddit.OAUTH_URL + "/api/vote", new Listener<String>() {
+    public void voteLink(final RecyclerView.ViewHolder viewHolder, final Link link, int vote) {
+        reddit.voteLink(viewHolder, link, vote, new Reddit.VoteResponseListener() {
             @Override
-            public void onResponse(String response) {
-            }
-        }, new ErrorListener() {
-            @Override
-            public void onErrorResponse(VolleyError error) {
+            public void onVoteFailed() {
                 Toast.makeText(activity, "Error voting", Toast.LENGTH_SHORT)
                         .show();
-
-                link.setLikes(oldVote);
-                if (position == viewHolder.getAdapterPosition()) {
-                    if (viewHolder instanceof AdapterLinkList.ViewHolder) {
-                        ((AdapterLinkList.ViewHolder) viewHolder).setVoteColors();
-                        ((AdapterLinkList.ViewHolder) viewHolder).setTextInfo(link);
-                    }
-                    else if (viewHolder instanceof AdapterLinkGrid.ViewHolder) {
-                        ((AdapterLinkGrid.ViewHolder) viewHolder).setVoteColors();
-                    }
-                }
             }
-        }, params, 0);
+        });
     }
 
     public Reddit getReddit() {

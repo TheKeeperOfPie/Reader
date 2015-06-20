@@ -101,7 +101,8 @@ public class ControllerComments implements ControllerLinksBase, ControllerCommen
     public void addListener(CommentClickListener listener) {
         listeners.add(listener);
         setTitle();
-        listener.getAdapter().notifyDataSetChanged();
+        listener.getAdapter()
+                .notifyDataSetChanged();
     }
 
     public void removeListener(CommentClickListener listener) {
@@ -110,7 +111,7 @@ public class ControllerComments implements ControllerLinksBase, ControllerCommen
 
     public void setTitle() {
         for (CommentClickListener listener : listeners) {
-            listener.setToolbarTitle(Reddit.getTrimmedHtml(link.getTitle()));
+            listener.setToolbarTitle(link == null ? "" : Reddit.getTrimmedHtml(link.getTitle()));
         }
     }
 
@@ -573,107 +574,30 @@ public class ControllerComments implements ControllerLinksBase, ControllerCommen
     }
 
     @Override
-    public boolean voteComment(final AdapterCommentList.ViewHolderComment viewHolder,
-            final int vote) {
+    public void voteComment(final AdapterCommentList.ViewHolderComment viewHolder,
+            final Comment comment, final int vote) {
 
-        if (TextUtils.isEmpty(preferences.getString(AppSettings.REFRESH_TOKEN, null))) {
-            Toast.makeText(activity, activity.getString(R.string.must_be_logged_in_to_vote), Toast.LENGTH_SHORT)
-                    .show();
-            return false;
-        }
-
-        final int position = viewHolder.getAdapterPosition();
-        final Comment comment = (Comment) listingComments.getChildren()
-                .get(viewHolder.getAdapterPosition());
-
-        final int oldVote = comment.isLikes();
-        int newVote = 0;
-
-        if (comment.isLikes() != vote) {
-            newVote = vote;
-        }
-
-        HashMap<String, String> params = new HashMap<>(2);
-        params.put(Reddit.QUERY_ID, comment.getName());
-        params.put(Reddit.QUERY_VOTE, String.valueOf(newVote));
-
-        comment.setLikes(newVote);
-        if (position == viewHolder.getAdapterPosition()) {
-            viewHolder.setVoteColors();
-        }
-        reddit.loadPost(Reddit.OAUTH_URL + "/api/vote", new Listener<String>() {
+        reddit.voteComment(viewHolder, comment, vote, new Reddit.VoteResponseListener() {
             @Override
-            public void onResponse(String response) {
-            }
-        }, new ErrorListener() {
-            @Override
-            public void onErrorResponse(VolleyError error) {
+            public void onVoteFailed() {
                 Toast.makeText(activity, "Error voting", Toast.LENGTH_SHORT)
                         .show();
-
-                comment.setLikes(oldVote);
-                if (position == viewHolder.getAdapterPosition()) {
-                    viewHolder.setVoteColors();
-                }
             }
-        }, params, 0);
-        return true;
+        });
     }
 
     @Override
-    public void voteLink(final RecyclerView.ViewHolder viewHolder, final int vote) {
+    public void voteLink(final RecyclerView.ViewHolder viewHolder,
+            final Link link,
+            final int vote) {
 
-        if (TextUtils.isEmpty(preferences.getString(AppSettings.REFRESH_TOKEN, null))) {
-            Toast.makeText(activity, activity.getString(R.string.must_be_logged_in_to_vote), Toast.LENGTH_SHORT)
-                    .show();
-            return;
-        }
-
-        final int position = viewHolder.getAdapterPosition();
-
-        final int oldVote = link.isLikes();
-        int newVote = 0;
-
-        if (link.isLikes() != vote) {
-            newVote = vote;
-        }
-
-        HashMap<String, String> params = new HashMap<>(2);
-        params.put(Reddit.QUERY_ID, link.getName());
-        params.put(Reddit.QUERY_VOTE, String.valueOf(newVote));
-
-        link.setLikes(newVote);
-        if (position == viewHolder.getAdapterPosition()) {
-            if (viewHolder instanceof AdapterLinkList.ViewHolder) {
-                ((AdapterLinkList.ViewHolder) viewHolder).setVoteColors();
-                ((AdapterLinkList.ViewHolder) viewHolder).setTextInfo(link);
-            }
-            else if (viewHolder instanceof AdapterLinkGrid.ViewHolder) {
-                ((AdapterLinkGrid.ViewHolder) viewHolder).setVoteColors();
-            }
-        }
-        reddit.loadPost(Reddit.OAUTH_URL + "/api/vote", new Listener<String>() {
+        reddit.voteLink(viewHolder, link, vote, new Reddit.VoteResponseListener() {
             @Override
-            public void onResponse(String response) {
-            }
-        }, new ErrorListener() {
-            @Override
-            public void onErrorResponse(VolleyError error) {
+            public void onVoteFailed() {
                 Toast.makeText(activity, "Error voting", Toast.LENGTH_SHORT)
                         .show();
-
-                link.setLikes(oldVote);
-                if (position == viewHolder.getAdapterPosition()) {
-                    if (viewHolder instanceof AdapterLinkList.ViewHolder) {
-                        ((AdapterLinkList.ViewHolder) viewHolder).setVoteColors();
-                        ((AdapterLinkList.ViewHolder) viewHolder).setTextInfo(link);
-                    }
-                    else if (viewHolder instanceof AdapterLinkGrid.ViewHolder) {
-                        ((AdapterLinkGrid.ViewHolder) viewHolder).setVoteColors();
-                    }
-                }
             }
-        }, params, 0);
+        });
     }
 
     @Override
@@ -767,8 +691,8 @@ public class ControllerComments implements ControllerLinksBase, ControllerCommen
                 .getChildren()
                 .size()) {
             Comment nextComment = (Comment) link.getComments()
-                .getChildren()
-                .get(commentIndex + 1);
+                    .getChildren()
+                    .get(commentIndex + 1);
             Log.d(TAG, "next level: " + nextComment.getLevel());
             return nextComment.getLevel() > comment.getLevel();
 
@@ -786,7 +710,8 @@ public class ControllerComments implements ControllerLinksBase, ControllerCommen
         Log.d(TAG, "commentIndex: " + commentIndex);
 
         for (int index = commentIndex - 1; index >= 0; index--) {
-            if (((Comment) listingComments.getChildren().get(index)).getLevel() == 0) {
+            if (((Comment) listingComments.getChildren()
+                    .get(index)).getLevel() == 0) {
                 return index;
             }
         }
@@ -797,8 +722,10 @@ public class ControllerComments implements ControllerLinksBase, ControllerCommen
     public int getNextCommentPosition(int commentIndex) {
         Log.d(TAG, "commentIndex: " + commentIndex);
 
-        for (int index = commentIndex + 1; index < listingComments.getChildren().size(); index++) {
-            if (((Comment) listingComments.getChildren().get(index)).getLevel() == 0) {
+        for (int index = commentIndex + 1; index < listingComments.getChildren()
+                .size(); index++) {
+            if (((Comment) listingComments.getChildren()
+                    .get(index)).getLevel() == 0) {
                 return index;
             }
         }

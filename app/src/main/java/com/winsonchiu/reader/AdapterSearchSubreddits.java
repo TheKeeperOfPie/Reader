@@ -45,9 +45,7 @@ public class AdapterSearchSubreddits extends RecyclerView.Adapter<AdapterSearchS
 
     @Override
     public void onBindViewHolder(ViewHolder holder, int position) {
-
         holder.onBind(controllerSubreddits.getSubreddit(position));
-
     }
 
     @Override

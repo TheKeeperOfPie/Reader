@@ -1,11 +1,14 @@
 package com.winsonchiu.reader;
 
 import android.app.Activity;
+import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.graphics.drawable.Drawable;
+import android.preference.PreferenceManager;
 import android.support.v7.widget.RecyclerView;
 import android.text.TextUtils;
 import android.util.Log;
+import android.widget.Toast;
 
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
@@ -51,6 +54,7 @@ public class ControllerProfile implements ControllerLinksBase, ControllerComment
     private String page;
     private Sort sort;
     private Time time;
+    private SharedPreferences preferences;
 
     public ControllerProfile(Activity activity) {
         setActivity(activity);
@@ -71,6 +75,7 @@ public class ControllerProfile implements ControllerLinksBase, ControllerComment
         Resources resources = activity.getResources();
         this.drawableSelf = resources.getDrawable(R.drawable.ic_chat_white_48dp);
         this.drawableDefault = resources.getDrawable(R.drawable.ic_web_white_48dp);
+        this.preferences = PreferenceManager.getDefaultSharedPreferences(activity);
     }
 
     public void addListener(ItemClickListener listener) {
@@ -261,8 +266,14 @@ public class ControllerProfile implements ControllerLinksBase, ControllerComment
     }
 
     @Override
-    public void voteLink(RecyclerView.ViewHolder viewHolder, int vote) {
-
+    public void voteLink(final RecyclerView.ViewHolder viewHolder, final Link link, int vote) {
+        reddit.voteLink(viewHolder, link, vote, new Reddit.VoteResponseListener() {
+            @Override
+            public void onVoteFailed() {
+                Toast.makeText(activity, "Error voting", Toast.LENGTH_SHORT)
+                        .show();
+            }
+        });
     }
 
     @Override
@@ -371,10 +382,17 @@ public class ControllerProfile implements ControllerLinksBase, ControllerComment
     }
 
     @Override
-    public boolean voteComment(AdapterCommentList.ViewHolderComment viewHolder,
-                               int vote) {
-        // Not implemented
-        return false;
+    public void voteComment(final AdapterCommentList.ViewHolderComment viewHolder,
+            final Comment comment,
+            int vote) {
+
+        reddit.voteComment(viewHolder, comment, vote, new Reddit.VoteResponseListener() {
+            @Override
+            public void onVoteFailed() {
+                Toast.makeText(activity, "Error voting", Toast.LENGTH_SHORT)
+                        .show();
+            }
+        });
     }
 
     @Override

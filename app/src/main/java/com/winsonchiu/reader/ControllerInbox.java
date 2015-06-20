@@ -8,6 +8,7 @@ import android.preference.PreferenceManager;
 import android.support.v7.widget.RecyclerView;
 import android.text.TextUtils;
 import android.util.Log;
+import android.widget.Toast;
 
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
@@ -139,7 +140,7 @@ public class ControllerInbox implements ControllerCommentsBase {
 
     public void reload() {
 
-        reddit.loadGet(Reddit.OAUTH_URL + "/message/" + page,
+        reddit.loadGet(Reddit.OAUTH_URL + "/message/" + page.toLowerCase(),
                 new Response.Listener<String>() {
                     @Override
                     public void onResponse(String response) {
@@ -195,8 +196,15 @@ public class ControllerInbox implements ControllerCommentsBase {
     }
 
     @Override
-    public void voteLink(RecyclerView.ViewHolder viewHolder, int vote) {
+    public void voteLink(final RecyclerView.ViewHolder viewHolder, final Link link, int vote) {
 
+        reddit.voteLink(viewHolder, link, vote, new Reddit.VoteResponseListener() {
+            @Override
+            public void onVoteFailed() {
+                Toast.makeText(activity, "Error voting", Toast.LENGTH_SHORT)
+                        .show();
+            }
+        });
     }
 
     @Override
@@ -336,10 +344,17 @@ public class ControllerInbox implements ControllerCommentsBase {
     }
 
     @Override
-    public boolean voteComment(AdapterCommentList.ViewHolderComment viewHolder,
-                               int vote) {
-        // Not implemented
-        return false;
+    public void voteComment(final AdapterCommentList.ViewHolderComment viewHolder,
+            final Comment comment,
+            int vote) {
+
+        reddit.voteComment(viewHolder, comment, vote, new Reddit.VoteResponseListener() {
+            @Override
+            public void onVoteFailed() {
+                Toast.makeText(activity, "Error voting", Toast.LENGTH_SHORT)
+                        .show();
+            }
+        });
     }
 
     @Override

@@ -8,6 +8,7 @@ import android.preference.PreferenceManager;
 import android.support.v7.widget.RecyclerView;
 import android.text.TextUtils;
 import android.util.Log;
+import android.widget.Toast;
 
 import com.android.volley.Request;
 import com.android.volley.Response;
@@ -27,6 +28,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
@@ -61,6 +63,8 @@ public class ControllerSearch {
     private Request<String> requestLinks;
     private Request<String> requestLinksSubreddit;
     private User user;
+    private boolean isLoadingLinks;
+    private boolean isLoadingLinksSubreddit;
 
     public ControllerSearch(Activity activity) {
         setActivity(activity);
@@ -293,6 +297,7 @@ public class ControllerSearch {
     }
 
     public void reloadLinks() {
+        setLoadingLinks(true);
 
         if (requestLinks != null) {
             requestLinks.cancel();
@@ -307,32 +312,36 @@ public class ControllerSearch {
                     new Response.Listener<String>() {
                         @Override
                         public void onResponse(String response) {
-                            links = new Listing();
-
                             Log.d(TAG, "Response: " + response);
                             try {
                                 links = Listing.fromJson(new JSONObject(response));
                                 for (Listener listener : listeners) {
                                     listener.getAdapterLinks().notifyDataSetChanged();
                                 }
+                                setLoadingLinks(false);
                             }
                             catch (JSONException e) {
                                 e.printStackTrace();
+                                setLoadingLinks(false);
                             }
                         }
                     }, new Response.ErrorListener() {
                         @Override
                         public void onErrorResponse(VolleyError error) {
-
+                            setLoadingLinks(false);
+                            Toast.makeText(activity, activity.getString(R.string.error_loading_links), Toast.LENGTH_SHORT)
+                                    .show();
                         }
                     }, 0);
         }
         catch (UnsupportedEncodingException e) {
             e.printStackTrace();
+            setLoadingLinks(false);
         }
     }
 
     public void reloadLinksSubreddit() {
+        setLoadingLinksSubreddit(true);
 
         Subreddit subreddit = controllerLinks.getSubreddit();
         String url = Reddit.OAUTH_URL;
@@ -352,28 +361,30 @@ public class ControllerSearch {
                     new Response.Listener<String>() {
                         @Override
                         public void onResponse(String response) {
-                            linksSubreddit = new Listing();
-
-                            Log.d(TAG, "Response: " + response);
                             try {
                                 linksSubreddit = Listing.fromJson(new JSONObject(response));
                                 for (Listener listener : listeners) {
                                     listener.getAdapterLinksSubreddit().notifyDataSetChanged();
                                 }
+                                setLoadingLinksSubreddit(false);
                             }
                             catch (JSONException e) {
                                 e.printStackTrace();
+                                setLoadingLinksSubreddit(false);
                             }
                         }
                     }, new Response.ErrorListener() {
                         @Override
                         public void onErrorResponse(VolleyError error) {
-                            Log.d(TAG, "Error: " + error);
+                            setLoadingLinksSubreddit(false);
+                            Toast.makeText(activity, activity.getString(R.string.error_loading_links), Toast.LENGTH_SHORT)
+                                    .show();
                         }
                     }, 0);
         }
         catch (UnsupportedEncodingException e) {
             e.printStackTrace();
+            setLoadingLinksSubreddit(false);
         }
     }
 
@@ -406,52 +417,85 @@ public class ControllerSearch {
         return (Link) links.getChildren().get(position - 1);
     }
 
-    public void voteLink(RecyclerView.ViewHolder viewHolder, int vote) {
-
+    public void voteLink(final RecyclerView.ViewHolder viewHolder, final Link link, int vote) {
+        reddit.voteLink(viewHolder, link, vote, new Reddit.VoteResponseListener() {
+            @Override
+            public void onVoteFailed() {
+                Toast.makeText(activity, "Error voting", Toast.LENGTH_SHORT)
+                        .show();
+            }
+        });
     }
 
     public int sizeLinks() {
         return links.getChildren().size();
     }
 
-    public boolean isLoading() {
-        return false;
+    public boolean isLoadingLinks() {
+        return isLoadingLinks;
     }
 
     public void loadMoreLinks() {
-        // TODO: Load more links when end of list reached
-        reddit.loadGet(Reddit.OAUTH_URL + "/search?q=" + query + "&after=" + links.getAfter(),
-                new Response.Listener<String>() {
-                    @Override
-                    public void onResponse(String response) {
-                        try {
-                            int positionStart = links.getChildren()
-                                    .size();
-                            Listing listing = Listing.fromJson(new JSONObject(response));
-                            links.addChildren(listing.getChildren());
-                            links.setAfter(listing.getAfter());
-                            for (Listener listener : listeners) {
-                                listener.getAdapterLinks().notifyItemRangeInserted(positionStart,
-                                        listing.getChildren().size());
+        if (isLoadingLinks()) {
+            return;
+        }
+        setLoadingLinks(true);
+
+        if (requestLinks != null) {
+            requestLinks.cancel();
+        }
+
+        try {
+            String sortString = sort.toString();
+            if (sort == Sort.ACTIVITY) {
+                sortString = Sort.HOT.name();
+            }
+            requestLinks = reddit.loadGet(Reddit.OAUTH_URL + "/search?q=" + URLEncoder.encode(query, Reddit.UTF_8) + "&sort=" + sortString + "&t=" + time.toString() + "&after=" + links.getAfter(),
+                    new Response.Listener<String>() {
+                        @Override
+                        public void onResponse(String response) {
+                            try {
+
+                                int positionStart = links.getChildren()
+                                        .size() + 1;
+                                int startSize = links.getChildren().size();
+                                Listing listing = Listing.fromJson(new JSONObject(response));
+                                links.addChildren(listing.getChildren());
+                                links.setAfter(listing.getAfter());
+                                for (Listener listener : listeners) {
+                                    listener.getAdapterLinks().notifyItemRangeInserted(positionStart, links.getChildren().size() - startSize);
+                                }
+                                setLoadingLinks(false);
+                            }
+                            catch (JSONException e) {
+                                e.printStackTrace();
+                                setLoadingLinks(false);
                             }
                         }
-                        catch (JSONException e) {
-                            e.printStackTrace();
+                    }, new Response.ErrorListener() {
+                        @Override
+                        public void onErrorResponse(VolleyError error) {
+                            setLoadingLinks(false);
+                            Toast.makeText(activity, activity.getString(R.string.error_loading_links), Toast.LENGTH_SHORT)
+                                    .show();
                         }
-                    }
-                }, new Response.ErrorListener() {
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
+                    }, 0);
+        }
+        catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+            setLoadingLinks(false);
+        }
+    }
 
-                    }
-                }, 0);
+    private void setLoadingLinks(boolean loading) {
+        isLoadingLinks = loading;
     }
 
     public Link getLinkSubreddit(int position) {
         return (Link) linksSubreddit.getChildren().get(position - 1);
     }
 
-    public void voteLinkSubreddit(RecyclerView.ViewHolder viewHolder, int vote) {
+    public void voteLinkSubreddit(RecyclerView.ViewHolder viewHolder, final Link link, int vote) {
 
     }
 
@@ -459,37 +503,69 @@ public class ControllerSearch {
         return linksSubreddit.getChildren().size();
     }
 
-    public boolean isLoadingSubreddit() {
-        return false;
+    public boolean isLoadingLinksSubreddit() {
+        return isLoadingLinksSubreddit;
     }
 
     public void loadMoreLinksSubreddit() {
-        // TODO: Load more links when end of list reached
-        reddit.loadGet(Reddit.OAUTH_URL + "/search?q=" + query + "&after=" + links.getAfter(),
-                new Response.Listener<String>() {
-                    @Override
-                    public void onResponse(String response) {
-                        try {
-                            int positionStart = linksSubreddit.getChildren()
-                                    .size();
-                            Listing listing = Listing.fromJson(new JSONObject(response));
-                            linksSubreddit.addChildren(listing.getChildren());
-                            linksSubreddit.setAfter(listing.getAfter());
-                            for (Listener listener : listeners) {
-                                listener.getAdapterLinksSubreddit().notifyItemRangeInserted(positionStart,
-                                        listing.getChildren().size());
+
+        if (isLoadingLinksSubreddit()) {
+            return;
+        }
+        setLoadingLinksSubreddit(true);
+
+        Subreddit subreddit = controllerLinks.getSubreddit();
+        String url = Reddit.OAUTH_URL;
+        if (TextUtils.isEmpty(subreddit.getUrl())) {
+            url += "/";
+        }
+        else {
+            url += subreddit.getUrl();
+        }
+
+        if (requestLinksSubreddit != null) {
+            requestLinksSubreddit.cancel();
+        }
+
+        try {
+            requestLinksSubreddit = reddit.loadGet(url + "search?restrict_sr=on&q=" + URLEncoder.encode(query, Reddit.UTF_8) + "&sort=" + sort.toString() + "&t=" + time.toString() + "&after=" + linksSubreddit.getAfter(),
+                    new Response.Listener<String>() {
+                        @Override
+                        public void onResponse(String response) {
+                            try {
+                                int positionStart = linksSubreddit.getChildren()
+                                        .size() + 1;
+                                int startSize = linksSubreddit.getChildren().size();
+                                Listing listing = Listing.fromJson(new JSONObject(response));
+                                linksSubreddit.addChildren(listing.getChildren());
+                                linksSubreddit.setAfter(listing.getAfter());
+                                for (Listener listener : listeners) {
+                                    listener.getAdapterLinksSubreddit().notifyItemRangeInserted(positionStart, linksSubreddit.getChildren().size() - startSize);
+                                }
+                                setLoadingLinksSubreddit(false);
+                            }
+                            catch (JSONException e) {
+                                e.printStackTrace();
+                                setLoadingLinksSubreddit(false);
                             }
                         }
-                        catch (JSONException e) {
-                            e.printStackTrace();
+                    }, new Response.ErrorListener() {
+                        @Override
+                        public void onErrorResponse(VolleyError error) {
+                            setLoadingLinksSubreddit(false);
+                            Toast.makeText(activity, activity.getString(R.string.error_loading_links), Toast.LENGTH_SHORT)
+                                    .show();
                         }
-                    }
-                }, new Response.ErrorListener() {
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
+                    }, 0);
+        }
+        catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+            setLoadingLinksSubreddit(false);
+        }
+    }
 
-                    }
-                }, 0);
+    private void setLoadingLinksSubreddit(boolean loading) {
+        isLoadingLinksSubreddit = loading;
     }
 
     public Activity getActivity() {

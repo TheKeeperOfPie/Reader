@@ -1,5 +1,7 @@
 package com.winsonchiu.reader.data;
 
+import com.winsonchiu.reader.data.imgur.Album;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -42,6 +44,7 @@ public class Link extends Thing {
     private long createdUtc;
 
     private Listing comments = new Listing();
+    private Album album;
     private boolean replyExpanded;
     private boolean commentsClicked;
 
@@ -405,5 +408,13 @@ public class Link extends Thing {
 
     public void setCommentsClicked(boolean commentsClicked) {
         this.commentsClicked = commentsClicked;
+    }
+
+    public Album getAlbum() {
+        return album;
+    }
+
+    public void setAlbum(Album album) {
+        this.album = album;
     }
 }

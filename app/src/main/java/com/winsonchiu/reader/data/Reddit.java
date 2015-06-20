@@ -1,8 +1,10 @@
 package com.winsonchiu.reader.data;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
+import android.support.v7.widget.RecyclerView;
 import android.text.Html;
 import android.text.TextUtils;
 import android.util.Base64;
@@ -17,9 +19,13 @@ import com.android.volley.Response.Listener;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
+import com.winsonchiu.reader.AdapterCommentList;
+import com.winsonchiu.reader.AdapterLinkGrid;
+import com.winsonchiu.reader.AdapterLinkList;
 import com.winsonchiu.reader.ApiKeys;
 import com.winsonchiu.reader.AppSettings;
 import com.winsonchiu.reader.BuildConfig;
+import com.winsonchiu.reader.R;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -320,6 +326,91 @@ public class Reddit {
         return requestQueue.add(getRequest);
     }
 
+    public void voteLink(final RecyclerView.ViewHolder viewHolder,
+            final Link link,
+            int vote,
+            final VoteResponseListener voteResponseListener) {
+        final int position = viewHolder.getAdapterPosition();
+
+        final int oldVote = link.isLikes();
+        int newVote = 0;
+
+        if (link.isLikes() != vote) {
+            newVote = vote;
+        }
+
+        HashMap<String, String> params = new HashMap<>(2);
+        params.put(Reddit.QUERY_ID, link.getName());
+        params.put(Reddit.QUERY_VOTE, String.valueOf(newVote));
+
+        link.setLikes(newVote);
+        if (position == viewHolder.getAdapterPosition()) {
+            if (viewHolder instanceof AdapterLinkList.ViewHolder) {
+                ((AdapterLinkList.ViewHolder) viewHolder).setVoteColors();
+                ((AdapterLinkList.ViewHolder) viewHolder).setTextInfo(link);
+            }
+            else if (viewHolder instanceof AdapterLinkGrid.ViewHolder) {
+                ((AdapterLinkGrid.ViewHolder) viewHolder).setVoteColors();
+            }
+        }
+        loadPost(Reddit.OAUTH_URL + "/api/vote", new Listener<String>() {
+            @Override
+            public void onResponse(String response) {
+            }
+        }, new ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                voteResponseListener.onVoteFailed();
+                link.setLikes(oldVote);
+                if (position == viewHolder.getAdapterPosition()) {
+                    if (viewHolder instanceof AdapterLinkList.ViewHolder) {
+                        ((AdapterLinkList.ViewHolder) viewHolder).setVoteColors();
+                        ((AdapterLinkList.ViewHolder) viewHolder).setTextInfo(link);
+                    }
+                    else if (viewHolder instanceof AdapterLinkGrid.ViewHolder) {
+                        ((AdapterLinkGrid.ViewHolder) viewHolder).setVoteColors();
+                    }
+                }
+            }
+        }, params, 0);
+    }
+
+    public boolean voteComment(final AdapterCommentList.ViewHolderComment viewHolder, final Comment comment, int vote, final VoteResponseListener voteResponseListener) {
+
+        final int position = viewHolder.getAdapterPosition();
+        final int oldVote = comment.isLikes();
+        int newVote = 0;
+
+        if (comment.isLikes() != vote) {
+            newVote = vote;
+        }
+
+        HashMap<String, String> params = new HashMap<>(2);
+        params.put(Reddit.QUERY_ID, comment.getName());
+        params.put(Reddit.QUERY_VOTE, String.valueOf(newVote));
+
+        comment.setLikes(newVote);
+        if (position == viewHolder.getAdapterPosition()) {
+            viewHolder.setVoteColors();
+        }
+        reddit.loadPost(Reddit.OAUTH_URL + "/api/vote", new Listener<String>() {
+            @Override
+            public void onResponse(String response) {
+            }
+        }, new ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                voteResponseListener.onVoteFailed();
+
+                comment.setLikes(oldVote);
+                if (position == viewHolder.getAdapterPosition()) {
+                    viewHolder.setVoteColors();
+                }
+            }
+        }, params, 0);
+        return true;
+    }
+
     public Request<String> loadImgurImage(String id,
             Listener<String> listener,
             final ErrorListener errorListener,
@@ -452,7 +543,7 @@ public class Reddit {
     }
 
     public static String getImageHtml(String src) {
-        return "<html><head><meta name=\"viewport\" content=\"width=device-width, minimum-scale=0.1\"><style>img {width:100%;}</style></head><body style=\"margin: 0px;\"><img style=\"-webkit-user-select: none; cursor: zoom-in;\" src=\"" + src + "\"></body></html>";
+        return "<html><head><meta name=\"viewport\" content=\"width=device-width, minimum-scale=0.1\"><style>img {width:100%;}</style></head><body style=\"margin: 0px;\"><img style=\"-webkit-user-select: none; cursor: zoom-in;\" src=\"" + src + "\"/></body></html>";
     }
 
     public static CharSequence getTrimmedHtml(String html) {
@@ -479,6 +570,10 @@ public class Reddit {
 
     public interface RedditErrorListener {
         void onErrorHandled();
+    }
+
+    public interface VoteResponseListener {
+        void onVoteFailed();
     }
 
 }

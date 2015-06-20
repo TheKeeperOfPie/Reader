@@ -20,11 +20,11 @@
             android:layout_height="wrap_content"
             >
 
-            <com.winsonchiu.reader.WebViewFixed
-                android:id="@+id/web_full"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                />
+            <!--<com.winsonchiu.reader.WebViewFixed-->
+                <!--android:id="@+id/web_full"-->
+                <!--android:layout_width="match_parent"-->
+                <!--android:layout_height="wrap_content"-->
+                <!--/>-->
 
             <com.winsonchiu.reader.ImageViewSquare
                 android:id="@+id/image_full"

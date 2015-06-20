@@ -43,13 +43,10 @@
                 android:layout_marginBottom="8dp"
                 />
 
-            <com.winsonchiu.reader.WebViewFixed
-                android:id="@+id/web_image"
+            <FrameLayout
+                android:id="@+id/layout_frame"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:layout_below="@id/text_image_description"
-                android:focusableInTouchMode="false"
-                android:clickable="false"
+                android:layout_height="wrap_content"
                 />
 
         </RelativeLayout>
