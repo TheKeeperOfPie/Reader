@@ -7,7 +7,9 @@ import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.webkit.WebChromeClient;
 import android.webkit.WebView;
+import android.webkit.WebViewClient;
 import android.widget.ScrollView;
 import android.widget.TextView;
 
@@ -40,24 +42,48 @@ public class AdapterAlbum extends PagerAdapter {
     public Object instantiateItem(ViewGroup container, int position) {
 
         View view;
-        final WebView webView;
+        final WebViewFixed webView;
+        TextView textAlbumIndicator;
+        final ScrollView scrollView;
 
         if (!recycledViews.isEmpty()) {
             view = recycledViews.remove(0);
             webView = (WebViewFixed) view.findViewById(R.id.web_image);
+            textAlbumIndicator = (TextView) view.findViewById(R.id.text_album_indicator);
+            scrollView = (ScrollView) view.findViewById(R.id.scroll_image);
         }
         else {
             view = LayoutInflater.from(activity)
                     .inflate(R.layout.view_image, container, false);
+            textAlbumIndicator = (TextView) view.findViewById(R.id.text_album_indicator);
 
             webView = (WebViewFixed) view.findViewById(R.id.web_image);
-            webView.getSettings().setUseWideViewPort(true);
-            webView.getSettings().setBuiltInZoomControls(true);
-            webView.getSettings().setDisplayZoomControls(false);
-            webView.setBackgroundColor(0xFF0000);
+            webView.getSettings()
+                    .setUseWideViewPort(true);
+            webView.getSettings()
+                    .setLoadWithOverviewMode(true);
+            webView.getSettings()
+                    .setBuiltInZoomControls(true);
+            webView.getSettings()
+                    .setDisplayZoomControls(false);
+            webView.getSettings()
+                    .setDomStorageEnabled(true);
+            webView.getSettings()
+                    .setDatabaseEnabled(true);
+            webView.getSettings()
+                    .setAppCacheEnabled(true);
+            webView.setBackgroundColor(0x000000);
+            webView.setWebChromeClient(new WebChromeClient());
+            webView.setWebViewClient(new WebViewClient() {
+                @Override
+                public void onScaleChanged(WebView view, float oldScale, float newScale) {
+                    webView.lockHeight();
+                    super.onScaleChanged(view, oldScale, newScale);
+                }
+            });
             webView.setInitialScale(0);
 
-            final ScrollView scrollView = (ScrollView) view.findViewById(R.id.scroll_image);
+            scrollView = (ScrollView) view.findViewById(R.id.scroll_image);
             View.OnTouchListener onTouchListener = new View.OnTouchListener() {
 
                 float startY;
@@ -99,7 +125,11 @@ public class AdapterAlbum extends PagerAdapter {
 
         Image image = album.getImages().get(position);
 
+        scrollView.setScrollY(0);
+        textAlbumIndicator.setText((position + 1) + " / " + album.getImages().size());
+
         webView.onResume();
+        webView.resetMaxHeight();
         webView.loadData(Reddit.getImageHtml(image.getLink()), "text/html", "UTF-8");
 
         if (!TextUtils.isEmpty(image.getTitle()) && !"null".equals(image.getTitle())) {
@@ -113,6 +143,7 @@ public class AdapterAlbum extends PagerAdapter {
             textDescription.setText(image.getDescription());
             textDescription.setVisibility(View.VISIBLE);
         }
+        scrollView.measure(View.MeasureSpec.AT_MOST, View.MeasureSpec.EXACTLY);
 
         container.addView(view);
         return view;

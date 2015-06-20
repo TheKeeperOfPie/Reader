@@ -484,6 +484,7 @@ public class ControllerProfile implements ControllerLinksBase, ControllerComment
         void setSwipeRefreshEnabled(boolean enabled);
         int getRecyclerWidth();
         ControllerCommentsBase getControllerComments();
+        void loadLink(Comment comment);
     }
 
     public interface ListenerCallback {

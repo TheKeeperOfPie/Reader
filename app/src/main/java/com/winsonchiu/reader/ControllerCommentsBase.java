@@ -4,8 +4,6 @@ import com.winsonchiu.reader.data.Comment;
 import com.winsonchiu.reader.data.Link;
 import com.winsonchiu.reader.data.Listing;
 
-import java.io.Serializable;
-
 /**
  * Created by TheKeeperOfPie on 3/21/2015.
  */

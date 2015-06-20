@@ -5,10 +5,20 @@
     >
 
     <item
+        android:id="@+id/item_view_link"
+        android:title="@string/item_view_link"
+        android:icon="@drawable/ic_open_in_new_white_24dp"
+        android:orderInCategory="100"
+        app:showAsAction="never"
+        android:visible="false"
+        android:enabled="false"
+        />
+
+    <item
         android:id="@+id/item_collapse"
         android:title="@string/item_collapse"
         android:icon="@drawable/ic_arrow_drop_down_white_24dp"
-        android:orderInCategory="100"
+        android:orderInCategory="200"
         app:showAsAction="always"
         />
 
@@ -16,7 +26,7 @@
         android:id="@+id/item_upvote"
         android:title="@string/item_upvote"
         android:icon="@drawable/ic_keyboard_arrow_up_white_24dp"
-        android:orderInCategory="200"
+        android:orderInCategory="300"
         app:showAsAction="always"
         />
 
@@ -24,22 +34,30 @@
         android:id="@+id/item_downvote"
         android:title="@string/item_downvote"
         android:icon="@drawable/ic_keyboard_arrow_down_white_24dp"
-        android:orderInCategory="300"
+        android:orderInCategory="400"
         app:showAsAction="always"
         />
 
     <item
         android:id="@+id/item_reply"
         android:title="@string/item_reply"
-        android:orderInCategory="400"
+        android:orderInCategory="500"
         android:icon="@drawable/ic_reply_white_24dp"
         app:showAsAction="always"
         />
 
     <item
+        android:id="@+id/item_view_profile"
+        android:title="@string/item_view_profile"
+        android:orderInCategory="600"
+        android:icon="@drawable/ic_person_white_24dp"
+        app:showAsAction="ifRoom"
+        />
+
+    <item
         android:id="@+id/item_delete"
         android:title="@string/item_delete"
-        android:orderInCategory="500"
+        android:orderInCategory="700"
         android:icon="@drawable/ic_delete_white_24dp"
         app:showAsAction="ifRoom"
         />

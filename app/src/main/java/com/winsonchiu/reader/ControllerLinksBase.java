@@ -8,8 +8,6 @@ import com.winsonchiu.reader.data.Link;
 import com.winsonchiu.reader.data.Reddit;
 import com.winsonchiu.reader.data.Subreddit;
 
-import java.io.Serializable;
-
 /**
  * Created by TheKeeperOfPie on 3/21/2015.
  */

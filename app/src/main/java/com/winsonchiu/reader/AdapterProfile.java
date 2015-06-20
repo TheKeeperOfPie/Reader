@@ -12,6 +12,7 @@ import android.text.TextUtils;
 import android.text.style.ForegroundColorSpan;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
@@ -292,11 +293,15 @@ public class AdapterProfile extends RecyclerView.Adapter<RecyclerView.ViewHolder
                 AdapterLink.ViewHolderBase viewHolder =  new AdapterLinkList.ViewHolder(LayoutInflater.from(parent.getContext())
                         .inflate(R.layout.row_link, parent, false), linksCallback);
                 viewHolderLinks.add(viewHolder);
+                viewHolder.toolbarActions.getMenu().findItem(R.id.item_view_profile).setShowAsAction(
+                        MenuItem.SHOW_AS_ACTION_NEVER);
+                viewHolder.toolbarActions.getMenu().findItem(R.id.item_view_profile).setVisible(false);
+                viewHolder.toolbarActions.getMenu().findItem(R.id.item_view_profile).setEnabled(false);
                 return viewHolder;
             case ControllerProfile.VIEW_TYPE_COMMENT:
                 return new AdapterCommentList.ViewHolderComment(
                         LayoutInflater.from(parent.getContext())
-                                .inflate(R.layout.row_comment, parent, false), commentsCallback);
+                                .inflate(R.layout.row_comment, parent, false), commentsCallback, listener);
 
         }
 

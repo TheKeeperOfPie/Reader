@@ -28,10 +28,6 @@ import com.squareup.picasso.Callback;
 import com.squareup.picasso.Picasso;
 import com.winsonchiu.reader.data.Link;
 import com.winsonchiu.reader.data.Reddit;
-import com.winsonchiu.reader.data.User;
-
-import java.util.Calendar;
-import java.util.Date;
 
 /**
  * Created by TheKeeperOfPie on 3/7/2015.

@@ -59,4 +59,5 @@ public class WebViewFixed extends WebView {
         getLayoutParams().height = maxHeight;
         requestLayout();
     }
+
 }

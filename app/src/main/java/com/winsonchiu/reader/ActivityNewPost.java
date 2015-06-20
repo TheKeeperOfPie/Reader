@@ -1,13 +1,10 @@
 package com.winsonchiu.reader;
 
 import android.app.Activity;
-import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
-import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.text.Html;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.MenuItem;
@@ -16,7 +13,6 @@ import android.webkit.URLUtil;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -184,7 +180,8 @@ public class ActivityNewPost extends AppCompatActivity {
             @Override
             public void onResponse(String response) {
                 captchaId = response;
-                Picasso.with(ActivityNewPost.this).load(Reddit.OAUTH_URL + "/captcha/" + response).into(imageCaptcha);
+                Picasso.with(ActivityNewPost.this).load(Reddit.OAUTH_URL + "/captcha/" + response).into(
+                        imageCaptcha);
             }
         }, new Response.ErrorListener() {
             @Override

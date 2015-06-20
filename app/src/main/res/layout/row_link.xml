@@ -60,7 +60,6 @@
             android:layout_marginBottom="@dimen/activity_horizontal_margin"
             android:contentDescription="@string/content_description_thread_preview"
             android:scaleType="centerCrop"
-            android:background="?android:selectableItemBackground"
             />
 
         <ImageView
@@ -72,7 +71,6 @@
             android:scaleType="centerInside"
             android:src="@drawable/ic_play_circle_outline_white_48dp"
             android:visibility="gone"
-            android:background="?android:selectableItemBackground"
             />
 
         <ProgressBar
@@ -135,8 +133,7 @@
             android:layout_marginBottom="8dp"
             android:textSize="12sp"
             android:visibility="gone"
-            android:clickable="false"
-            android:longClickable="false"
+            android:background="?android:selectableItemBackground"
             />
 
         <TextView
@@ -162,7 +159,7 @@
             android:layout_below="@id/frame_full"
             android:layout_alignParentEnd="true"
             android:contentDescription="@string/content_description_button_comments"
-            android:background="?android:selectableItemBackground"
+            android:background="@android:color/transparent"
             android:src="@drawable/ic_mode_comment_white_24dp"
             android:padding="@dimen/activity_horizontal_margin"
             />

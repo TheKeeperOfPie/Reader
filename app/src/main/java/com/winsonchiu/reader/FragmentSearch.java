@@ -3,7 +3,6 @@ package com.winsonchiu.reader;
 import android.app.Activity;
 import android.app.Fragment;
 import android.content.Context;
-import android.content.Intent;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.support.design.widget.TabLayout;
@@ -20,7 +19,6 @@ import android.util.TypedValue;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.Menu;
-import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
@@ -145,7 +143,7 @@ public class FragmentSearch extends Fragment implements Toolbar.OnMenuItemClickL
             @Override
             public boolean onQueryTextSubmit(String query) {
                 mListener.getControllerLinks()
-                        .setParameters(query, Sort.HOT);
+                        .setParameters(query.replaceAll("\\s", ""), Sort.HOT);
                 mListener.getControllerSearch()
                         .clearResults();
                 getFragmentManager().popBackStack();
@@ -710,8 +708,8 @@ public class FragmentSearch extends Fragment implements Toolbar.OnMenuItemClickL
     @Override
     public void onDestroy() {
         super.onDestroy();
-        CustomApplication.getRefWatcher(getActivity())
-                .watch(this);
+//        CustomApplication.getRefWatcher(getActivity())
+//                .watch(this);
     }
 
     /**

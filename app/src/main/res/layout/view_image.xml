@@ -1,50 +1,71 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView
+<RelativeLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/scroll_image"
-    android:layout_width="wrap_content"
-    android:layout_height="match_parent"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
     >
 
-    <RelativeLayout
+    <ScrollView
         xmlns:android="http://schemas.android.com/apk/res/android"
-        android:layout_width="match_parent"
+        android:id="@+id/scroll_image"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:paddingTop="8dp"
         >
 
-        <TextView
-            android:id="@+id/text_image_title"
+        <RelativeLayout
+            android:id="@+id/layout_image"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:visibility="gone"
-            android:layout_alignParentTop="true"
-            android:textAppearance="?android:textAppearanceMedium"
-            android:layout_marginStart="@dimen/activity_horizontal_margin"
-            android:layout_marginEnd="@dimen/activity_horizontal_margin"
-            android:layout_marginBottom="8dp"
-            />
+            android:paddingBottom="48dp"
+            >
 
-        <TextView
-            android:id="@+id/text_image_description"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:visibility="gone"
-            android:layout_below="@id/text_image_title"
-            android:layout_marginStart="@dimen/activity_horizontal_margin"
-            android:layout_marginEnd="@dimen/activity_horizontal_margin"
-            android:layout_marginBottom="8dp"
-            />
+            <TextView
+                android:id="@+id/text_image_title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:visibility="gone"
+                android:layout_alignParentTop="true"
+                android:textAppearance="?android:textAppearanceMedium"
+                android:paddingTop="8dp"
+                android:layout_marginStart="@dimen/activity_horizontal_margin"
+                android:layout_marginEnd="@dimen/activity_horizontal_margin"
+                />
 
-        <com.winsonchiu.reader.WebViewFixed
-            android:id="@+id/web_image"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_below="@id/text_image_description"
-            android:focusableInTouchMode="false"
-            android:clickable="false"
-            />
+            <TextView
+                android:id="@+id/text_image_description"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:visibility="gone"
+                android:layout_below="@id/text_image_title"
+                android:paddingTop="8dp"
+                android:layout_marginStart="@dimen/activity_horizontal_margin"
+                android:layout_marginEnd="@dimen/activity_horizontal_margin"
+                android:layout_marginBottom="8dp"
+                />
 
-    </RelativeLayout>
+            <com.winsonchiu.reader.WebViewFixed
+                android:id="@+id/web_image"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_below="@id/text_image_description"
+                android:focusableInTouchMode="false"
+                android:clickable="false"
+                />
 
-</ScrollView>
+        </RelativeLayout>
+
+    </ScrollView>
+
+    <com.winsonchiu.reader.TextViewShadow
+        android:id="@+id/text_album_indicator"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:textAppearance="?android:textAppearanceSmall"
+        android:textColor="@color/darkThemeTextColor"
+        android:shadowColor="@color/darkThemeDialog"
+        android:shadowRadius="3"
+        />
+
+</RelativeLayout>

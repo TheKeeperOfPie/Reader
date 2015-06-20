@@ -3,34 +3,20 @@ package com.winsonchiu.reader;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.provider.Browser;
-import android.support.design.widget.AppBarLayout;
-import android.support.design.widget.CollapsingToolbarLayout;
-import android.support.design.widget.CoordinatorLayout;
-import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
-import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AlertDialog;
-import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.SearchView;
-import android.support.v7.widget.Toolbar;
 import android.text.TextUtils;
 import android.util.Log;
-import android.util.TypedValue;
 import android.view.LayoutInflater;
-import android.view.Menu;
 import android.view.MenuItem;
-import android.view.MotionEvent;
 import android.view.View;
 import android.webkit.URLUtil;
-import android.widget.FrameLayout;
 import android.widget.ImageView;
-import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -38,13 +24,13 @@ import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.crashlytics.android.Crashlytics;
 import com.google.android.youtube.player.YouTubeBaseActivity;
+import com.squareup.picasso.Picasso;
 import com.winsonchiu.reader.data.Reddit;
+import com.winsonchiu.reader.data.User;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.IOException;
-import java.lang.reflect.Field;
 import java.net.MalformedURLException;
 import java.net.URL;
 
@@ -209,6 +195,17 @@ public class MainActivity extends YouTubeBaseActivity
                                 FragmentProfile.newInstance("", ""),
                                 FragmentProfile.TAG)
                         .commit();
+
+                if (!TextUtils.isEmpty(sharedPreferences.getString(AppSettings.ACCOUNT_JSON, ""))) {
+                    try {
+                        getControllerProfile().setUser(User.fromJson(
+                                new JSONObject(sharedPreferences.getString(AppSettings.ACCOUNT_JSON, ""))));
+                    }
+                    catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                }
+
                 break;
             case R.id.item_inbox:
                 getFragmentManager().beginTransaction()
@@ -318,22 +315,32 @@ public class MainActivity extends YouTubeBaseActivity
                 fragmentData.getControllerComments().setLinkId(subreddit, id);
             }
             else if (path.contains("/u/")) {
-                int indexUser = path.indexOf("/u/") + 3;
+                int indexUser = path.indexOf("u/") + 2;
                 getFragmentManager().beginTransaction()
                         .replace(R.id.frame_fragment, FragmentProfile.newInstance("", ""),
                                 FragmentProfile.TAG)
                         .commit();
                 fragmentData.getControllerProfile().loadUser(
-                        urlString.substring(indexUser, path.indexOf("/", indexUser)));
+                        path.substring(indexUser, path.indexOf("/", indexUser)));
             }
             else if (path.contains("/user/")) {
-                int indexUser = path.indexOf("/user/") + 6;
+                int indexUser = path.indexOf("user/") + 5;
                 getFragmentManager().beginTransaction()
                         .replace(R.id.frame_fragment, FragmentProfile.newInstance("", ""),
                                 FragmentProfile.TAG)
                         .commit();
-                fragmentData.getControllerProfile().loadUser(
-                        urlString.substring(indexUser, path.indexOf("/", indexUser)));
+
+                int endIndex = path.indexOf("/", indexUser);
+                if (endIndex > -1) {
+                    fragmentData.getControllerProfile()
+                            .loadUser(
+                                    path.substring(indexUser, endIndex));
+                }
+                else {
+                    fragmentData.getControllerProfile()
+                            .loadUser(
+                                    path.substring(indexUser));
+                }
             }
             else {
                 getFragmentManager().beginTransaction()
@@ -505,4 +512,5 @@ public class MainActivity extends YouTubeBaseActivity
     public void openDrawer() {
         mDrawerLayout.openDrawer(GravityCompat.START);
     }
+
 }

@@ -3,7 +3,6 @@ package com.winsonchiu.reader;
 import android.app.Activity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.text.Html;
 import android.text.method.LinkMovementMethod;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -53,7 +52,6 @@ public class AdapterSearchSubreddits extends RecyclerView.Adapter<AdapterSearchS
 
     @Override
     public int getItemCount() {
-        Log.d(TAG, "getItemCount: " + controllerSubreddits.getSubredditCount());
         return controllerSubreddits.getSubredditCount();
     }
 

@@ -6,7 +6,6 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
-import android.support.v4.view.MenuItemCompat;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.LinearLayoutManager;
@@ -20,7 +19,6 @@ import android.util.TypedValue;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.Menu;
-import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
@@ -31,6 +29,7 @@ import android.view.animation.Transformation;
 import android.view.animation.TranslateAnimation;
 import android.widget.Toast;
 
+import com.winsonchiu.reader.data.Comment;
 import com.winsonchiu.reader.data.Link;
 import com.winsonchiu.reader.data.Reddit;
 import com.winsonchiu.reader.data.User;
@@ -337,6 +336,7 @@ public class FragmentProfile extends Fragment implements Toolbar.OnMenuItemClick
             public void resetRecycler() {
                 recyclerProfile.setAdapter(null);
                 recyclerProfile.swapAdapter(adapterProfile, true);
+                adapterProfile.notifyDataSetChanged();
             }
 
             @Override
@@ -352,6 +352,14 @@ public class FragmentProfile extends Fragment implements Toolbar.OnMenuItemClick
             @Override
             public ControllerCommentsBase getControllerComments() {
                 return mListener.getControllerComments();
+            }
+
+            @Override
+            public void loadLink(Comment comment) {
+                Intent intent = new Intent(activity, MainActivity.class);
+                intent.setAction(Intent.ACTION_VIEW);
+                intent.putExtra(MainActivity.REDDIT_PAGE, "https://reddit.com/r/" + comment.getSubreddit() + "/comments/" + comment.getLinkId().replace("t3_", ""));
+                startActivity(intent);
             }
 
             @Override
@@ -416,24 +424,6 @@ public class FragmentProfile extends Fragment implements Toolbar.OnMenuItemClick
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
-
-        if (!TextUtils.isEmpty(preferences.getString(AppSettings.ACCOUNT_JSON, ""))) {
-            try {
-                this.user = User.fromJson(
-                        new JSONObject(preferences.getString(AppSettings.ACCOUNT_JSON, "")));
-            }
-            catch (JSONException e) {
-                e.printStackTrace();
-            }
-            swipeRefreshProfile.post(new Runnable() {
-                @Override
-                public void run() {
-                    swipeRefreshProfile.setRefreshing(true);
-                    mListener.getControllerProfile()
-                            .setUser(user);
-                }
-            });
-        }
     }
 
     @Override
@@ -473,8 +463,8 @@ public class FragmentProfile extends Fragment implements Toolbar.OnMenuItemClick
     @Override
     public void onDestroy() {
         super.onDestroy();
-        CustomApplication.getRefWatcher(getActivity())
-                .watch(this);
+//        CustomApplication.getRefWatcher(getActivity())
+//                .watch(this);
     }
 
     @Override

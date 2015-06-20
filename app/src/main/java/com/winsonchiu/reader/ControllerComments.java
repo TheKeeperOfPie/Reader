@@ -110,7 +110,7 @@ public class ControllerComments implements ControllerLinksBase, ControllerCommen
 
     public void setTitle() {
         for (CommentClickListener listener : listeners) {
-            listener.setToolbarTitle(controllerLinks.getSubredditName());
+            listener.setToolbarTitle(link.getTitle());
         }
     }
 

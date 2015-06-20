@@ -39,11 +39,11 @@
     <string name="item_upvote">Upvote</string>
     <string name="item_downvote">Downvote</string>
     <string name="item_share">Share</string>
-    <string name="load_more_comments">Load more comments...</string>
+    <string name="load_more_comments">Load more comments…</string>
     <string name="item_web">Load in browser</string>
     <string name="item_reply">Reply</string>
     <string name="button_send">Send</string>
-    <string name="item_download">Download</string>
+    <string name="item_download_image">Download image</string>
     <string name="empty_thread_list">Error loading subreddit</string>
     <string name="error_loading_links">Error loading links</string>
     <string name="username">Username</string>
@@ -89,4 +89,6 @@
     <string name="item_comment_previous">Previous comment</string>
     <string name="item_comment_next">Next comment</string>
     <string name="item_view_subreddit">View subreddit</string>
+    <string name="item_view_profile">View user profile</string>
+    <string name="item_view_link">View parent post</string>
 </resources>

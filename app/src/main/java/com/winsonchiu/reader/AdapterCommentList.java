@@ -2,6 +2,7 @@ package com.winsonchiu.reader;
 
 import android.app.Activity;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.graphics.PorterDuff;
@@ -18,6 +19,7 @@ import android.text.TextUtils;
 import android.text.format.DateUtils;
 import android.text.method.LinkMovementMethod;
 import android.text.style.ForegroundColorSpan;
+import android.util.Log;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -58,8 +60,6 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
 
     private static final int VIEW_LINK = 0;
     private static final int VIEW_COMMENT = 1;
-    private static final int LINK_MENU_SIZE = 4;
-    private static final int COMMENT_MENU_SIZE = 5;
     private static final int MAX_ALPHA = 180;
     private static final int ALPHA_LEVELS = 8;
     private final ControllerComments.CommentClickListener listener;
@@ -342,6 +342,21 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
         private View.OnClickListener clickListenerLink;
         private Calendar calendar;
 
+
+        public ViewHolderComment(final View itemView,
+                ControllerComments.ListenerCallback listenerCallback, final ControllerProfile.ItemClickListener listener) {
+            this(itemView, listenerCallback);
+            toolbarActions.getMenu().findItem(R.id.item_view_link).setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+            toolbarActions.getMenu().findItem(R.id.item_view_link).setOnMenuItemClickListener(
+                    new MenuItem.OnMenuItemClickListener() {
+                        @Override
+                        public boolean onMenuItemClick(MenuItem item) {
+                            listener.loadLink(callback.getControllerComments().getComment(getAdapterPosition()));
+                            return true;
+                        }
+                    });
+        }
+
         public ViewHolderComment(final View itemView,
                 ControllerComments.ListenerCallback listenerCallback) {
             super(itemView);
@@ -510,8 +525,9 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
             toolbarActions.setOnMenuItemClickListener(new Toolbar.OnMenuItemClickListener() {
                 @Override
                 public boolean onMenuItemClick(MenuItem menuItem) {
-                    final Comment comment;
                     final int commentIndex = getAdapterPosition();
+                    final Comment comment = callback.getControllerComments()
+                            .getComment(commentIndex);
                     switch (menuItem.getItemId()) {
                         case R.id.item_collapse:
                             if (callback.getControllerComments()
@@ -534,15 +550,13 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                             if (TextUtils.isEmpty(callback.getPreferences()
                                     .getString(AppSettings.REFRESH_TOKEN, ""))) {
                                 Toast.makeText(callback.getControllerComments()
-                                        .getActivity(), callback.getControllerComments()
-                                        .getActivity()
-                                        .getString(R.string.must_be_logged_in_to_reply),
+                                                .getActivity(), callback.getControllerComments()
+                                                .getActivity()
+                                                .getString(R.string.must_be_logged_in_to_reply),
                                         Toast.LENGTH_SHORT)
                                         .show();
                                 return false;
                             }
-                            comment = callback.getControllerComments()
-                                    .getComment(commentIndex);
                             if (!comment.isReplyExpanded()) {
                                 editTextReply.requestFocus();
                                 editTextReply.setText(null);
@@ -556,10 +570,17 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
 //                                    .getIndentWidth(comment)) / width;
 //                            AnimationUtils.animateExpand(layoutContainerReply, ratio, null);
                             break;
+                        case R.id.item_view_profile:
+                            Intent intent = new Intent(callback.getControllerComments()
+                                    .getActivity(), MainActivity.class);
+                            intent.setAction(Intent.ACTION_VIEW);
+                            intent.putExtra(MainActivity.REDDIT_PAGE,
+                                    "https://reddit.com/user/" + comment.getAuthor());
+                            callback.getControllerComments()
+                                    .getActivity()
+                                    .startActivity(intent);
+                            break;
                         case R.id.item_delete:
-                            comment = callback.getControllerComments()
-                                    .getComment(commentIndex);
-
                             new AlertDialog.Builder(callback.getControllerComments()
                                     .getActivity())
                                     .setTitle("Delete comment?")
@@ -634,6 +655,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                 }
             };
             textComment.setOnClickListener(clickListenerLink);
+            textComment.setOnClickListener(clickListenerLink);
             textInfo.setOnClickListener(clickListenerLink);
             this.itemView.setOnClickListener(clickListenerLink);
 
@@ -656,13 +678,17 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
             boolean loggedIn = !TextUtils.isEmpty(callback.getPreferences()
                     .getString(AppSettings.REFRESH_TOKEN, ""));
 
-            menu.findItem(R.id.item_upvote).setVisible(loggedIn);
-            menu.findItem(R.id.item_downvote).setVisible(loggedIn);
-            menu.findItem(R.id.item_reply).setVisible(loggedIn);
+            menu.findItem(R.id.item_upvote)
+                    .setVisible(loggedIn);
+            menu.findItem(R.id.item_downvote)
+                    .setVisible(loggedIn);
+            menu.findItem(R.id.item_reply)
+                    .setVisible(loggedIn);
 
-            for (int index = 0; index < COMMENT_MENU_SIZE; index++) {
+            for (int index = 0; index < menu.size(); index++) {
                 if (!loggedIn) {
-                    switch (menu.getItem(index).getItemId()) {
+                    switch (menu.getItem(index)
+                            .getItemId()) {
                         case R.id.item_upvote:
                         case R.id.item_downvote:
                         case R.id.item_reply:
@@ -670,11 +696,17 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                     }
                 }
 
+                if (menu.getItem(index).getItemId() == R.id.item_view_link) {
+                    continue;
+                }
+
                 if (numShown++ < maxNum - 1) {
-                    menu.getItem(index).setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+                    menu.getItem(index)
+                            .setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
                 }
                 else {
-                    menu.getItem(index).setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
+                    menu.getItem(index)
+                            .setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
                 }
             }
         }

@@ -5,7 +5,6 @@ import android.app.Fragment;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.widget.SwipeRefreshLayout;
-import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
@@ -13,7 +12,6 @@ import android.util.Log;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.Menu;
-import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
@@ -159,7 +157,7 @@ public class FragmentComments extends Fragment {
                 switch (item.getItemId()) {
 
                     case R.id.item_comment_previous:
-                        position = linearLayoutManager.findFirstCompletelyVisibleItemPosition();
+                        position = linearLayoutManager.findFirstVisibleItemPosition();
                         if (position == 1) {
                             linearLayoutManager.scrollToPositionWithOffset(0, 0);
                         }
@@ -167,7 +165,7 @@ public class FragmentComments extends Fragment {
                                 position - 1) + 1, 0);
                         break;
                     case R.id.item_comment_next:
-                        position = linearLayoutManager.findFirstCompletelyVisibleItemPosition();
+                        position = linearLayoutManager.findFirstVisibleItemPosition();
                         if (position == 0) {
                             if (adapterCommentList.getItemCount() > 0) {
                                 linearLayoutManager.scrollToPositionWithOffset(1, 0);
@@ -317,8 +315,8 @@ public class FragmentComments extends Fragment {
     @Override
     public void onDestroy() {
         super.onDestroy();
-        CustomApplication.getRefWatcher(getActivity())
-                .watch(this);
+//        CustomApplication.getRefWatcher(getActivity())
+//                .watch(this);
     }
 
     /**

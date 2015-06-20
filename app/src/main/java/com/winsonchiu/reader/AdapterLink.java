@@ -13,7 +13,6 @@ import android.os.Environment;
 import android.preference.PreferenceManager;
 import android.support.v4.view.MenuItemCompat;
 import android.support.v4.view.ViewPager;
-import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.RecyclerView.LayoutManager;
 import android.support.v7.widget.ShareActionProvider;
@@ -27,7 +26,6 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.ViewGroup;
 import android.webkit.WebChromeClient;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
@@ -66,8 +64,6 @@ import org.json.JSONObject;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
@@ -75,7 +71,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.TimeZone;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -89,7 +84,6 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
     public static final int VIEW_LINK = 1;
 
     private static final String TAG = AdapterLink.class.getCanonicalName();
-    private static int ACTION_MENU_SIZE = 7;
 
     protected Activity activity;
     protected LayoutManager layoutManager;
@@ -171,8 +165,6 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
 
     @Override
     public int getItemCount() {
-        Log.d(TAG, "getItemCount: " + (controllerLinks.sizeLinks() > 0 ? controllerLinks.sizeLinks() + 1 : 0));
-
         return controllerLinks.sizeLinks() > 0 ? controllerLinks.sizeLinks() + 1 : 0;
     }
 
@@ -450,6 +442,8 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             toolbarActions.setOnMenuItemClickListener(new Toolbar.OnMenuItemClickListener() {
                 @Override
                 public boolean onMenuItemClick(MenuItem menuItem) {
+                    Link link = callback.getController().getLink(getAdapterPosition());
+
                     switch (menuItem.getItemId()) {
                         case R.id.item_upvote:
                             callback.getController()
@@ -461,10 +455,8 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                             break;
                         case R.id.item_share:
                             break;
-                        case R.id.item_download:
-                            String url = callback.getController()
-                                    .getLink(getAdapterPosition())
-                                    .getUrl();
+                        case R.id.item_download_image:
+                            String url = link.getUrl();
                             // TODO: Consolidate image format checking
                             if (Reddit.checkIsImage(url)) {
                                 downloadImage(url);
@@ -472,10 +464,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                             break;
                         case R.id.item_web:
                             ViewHolderBase.this.callback.getListener()
-                                    .loadUrl(
-                                            callback.getController()
-                                                    .getLink(getAdapterPosition())
-                                                    .getUrl());
+                                    .loadUrl(link.getUrl());
                             break;
                         case R.id.item_reply:
                             if (TextUtils.isEmpty(callback.getPreferences()
@@ -489,6 +478,16 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                                 return false;
                             }
                             toggleReply();
+                            break;
+                        case R.id.item_view_profile:
+                            Intent intent = new Intent(callback.getControllerComments()
+                                    .getActivity(), MainActivity.class);
+                            intent.setAction(Intent.ACTION_VIEW);
+                            intent.putExtra(MainActivity.REDDIT_PAGE,
+                                    "https://reddit.com/user/" + link.getAuthor());
+                            callback.getControllerComments()
+                                    .getActivity()
+                                    .startActivity(intent);
                             break;
                         case R.id.item_delete:
                             callback.getController()
@@ -601,7 +600,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             });
             viewYouTube = (YouTubePlayerView) itemView.findViewById(R.id.youtube);
 
-            View.OnClickListener clickListenerLink = new View.OnClickListener() {
+            final View.OnClickListener clickListenerLink = new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
                     setVoteColors();
@@ -622,15 +621,15 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                     }
 
                     if (Reddit.checkIsImage(link.getUrl()) || Reddit.placeImageUrl(link)) {
-                        menu.findItem(R.id.item_download)
+                        menu.findItem(R.id.item_download_image)
                                 .setVisible(true);
-                        menu.findItem(R.id.item_download)
+                        menu.findItem(R.id.item_download_image)
                                 .setEnabled(true);
                     }
                     else {
-                        menu.findItem(R.id.item_download)
+                        menu.findItem(R.id.item_download_image)
                                 .setVisible(false);
-                        menu.findItem(R.id.item_download)
+                        menu.findItem(R.id.item_download_image)
                                 .setEnabled(false);
                     }
 
@@ -650,6 +649,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                 }
             };
 
+            this.itemView.setOnClickListener(clickListenerLink);
 
             this.imageThumbnail.setOnClickListener(new View.OnClickListener() {
                 @Override
@@ -660,7 +660,19 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                 }
             });
 
-            this.itemView.setOnClickListener(clickListenerLink);
+            View.OnTouchListener onTouchListener = new View.OnTouchListener() {
+                @Override
+                public boolean onTouch(View v, MotionEvent event) {
+                    MotionEvent newEvent = MotionEvent.obtain(event);
+                    newEvent.offsetLocation(v.getLeft(), v.getTop());
+                    itemView.onTouchEvent(newEvent);
+                    newEvent.recycle();
+                    return false;
+                }
+            };
+            textThreadSelf.setOnTouchListener(onTouchListener);
+            buttonComments.setOnTouchListener(onTouchListener);
+            imageThumbnail.setOnTouchListener(onTouchListener);
 
             toolbarActions.post(new Runnable() {
                 @Override
@@ -1076,7 +1088,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             int maxNum = (int) (itemView.getWidth() / callback.getItemWidth());
             int numShown = 0;
 
-            for (int index = 0; index < ACTION_MENU_SIZE; index++) {
+            for (int index = 0; index < menu.size(); index++) {
 
                 if (!loggedIn) {
                     switch (menu.getItem(index).getItemId()) {
@@ -1220,6 +1232,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                 youTubePlayer.release();
             }
             videoFull.stopPlayback();
+            webFull.removeAllViews();
             webFull.destroy();
             adapterAlbum.destroyViews();
             for (int index = 0; index < viewPagerFull.getChildCount(); index++) {

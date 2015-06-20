@@ -1,7 +1,6 @@
 package com.winsonchiu.reader.data;
 
 import android.text.TextUtils;
-import android.util.Log;
 
 import org.json.JSONArray;
 import org.json.JSONException;
