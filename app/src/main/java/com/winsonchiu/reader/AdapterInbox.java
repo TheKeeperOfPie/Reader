@@ -180,7 +180,7 @@ public class AdapterInbox extends RecyclerView.Adapter<RecyclerView.ViewHolder>
                 break;
             case VIEW_TYPE_COMMENT:
                 AdapterCommentList.ViewHolderComment viewHolderComment = (AdapterCommentList.ViewHolderComment) holder;
-                viewHolderComment.onBind(position);
+                viewHolderComment.onBind(controllerInbox.getComment(position));
                 break;
         }
 

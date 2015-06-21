@@ -6,6 +6,7 @@ import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.PorterDuff;
+import android.graphics.PorterDuffColorFilter;
 import android.graphics.drawable.Drawable;
 import android.media.MediaPlayer;
 import android.net.Uri;
@@ -45,7 +46,6 @@ import android.widget.VideoView;
 import com.android.volley.Request;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
-import com.android.volley.toolbox.ImageLoader;
 import com.google.android.youtube.player.YouTubeInitializationResult;
 import com.google.android.youtube.player.YouTubePlayer;
 import com.google.android.youtube.player.YouTubePlayerView;
@@ -156,8 +156,6 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
     public SharedPreferences getPreferences() {
         return preferences;
     }
-
-    public abstract RecyclerView.ItemDecoration getItemDecoration();
 
     @Override
     public int getItemViewType(int position) {
@@ -326,7 +324,6 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         protected RelativeLayout layoutContainerExpand;
         protected Toolbar toolbarActions;
         protected ControllerLinks.ListenerCallback callback;
-        protected ImageLoader.ImageContainer imageContainer;
         protected Request request;
         protected String imageUrl;
         protected RelativeLayout layoutContainerReply;
@@ -334,6 +331,16 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         protected Button buttonSendReply;
         protected YouTubePlayerView viewYouTube;
         protected YouTubePlayer youTubePlayer;
+
+        protected MenuItem itemUpvote;
+        protected MenuItem itemDownvote;
+        protected MenuItem itemSave;
+        protected MenuItem itemReply;
+        protected MenuItem itemShare;
+        protected MenuItem itemDownloadImage;
+        protected MenuItem itemDelete;
+        protected MenuItem itemViewSubreddit;
+        protected PorterDuffColorFilter colorFilterSave;
 
         public ViewHolderBase(View itemView,
                 ControllerLinks.ListenerCallback listenerCallback) {
@@ -353,8 +360,6 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             });
             mediaController.setAnchorView(videoFull);
             videoFull.setMediaController(mediaController);
-
-//            webFull = (WebViewFixed) itemView.findViewById(R.id.web_full);
 
             webFull = new WebViewFixed(callback.getController().getActivity().getApplicationContext());
             webFull.getSettings()
@@ -450,7 +455,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             toolbarActions.setOnMenuItemClickListener(new Toolbar.OnMenuItemClickListener() {
                 @Override
                 public boolean onMenuItemClick(MenuItem menuItem) {
-                    Link link = callback.getController()
+                    final Link link = callback.getController()
                             .getLink(getAdapterPosition());
 
                     switch (menuItem.getItemId()) {
@@ -488,6 +493,28 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                             }
                             toggleReply();
                             break;
+                        case R.id.item_save:
+                            final int position = getAdapterPosition();
+                            if (link.isSaved()) {
+                                callback.getController().getReddit().unsave(link);
+                            }
+                            else {
+                                callback.getController().getReddit().save(link, "",
+                                        new Response.ErrorListener() {
+                                            @Override
+                                            public void onErrorResponse(VolleyError error) {
+                                                if (link.isSaved()) {
+                                                    link.setSaved(false);
+                                                    if (position == getAdapterPosition()) {
+                                                        syncSaveIcon(link);
+                                                    }
+                                                }
+                                            }
+                                        });
+                            }
+                            link.setSaved(!link.isSaved());
+                            syncSaveIcon(link);
+                            break;
                         case R.id.item_view_profile:
                             Intent intentViewProfile = new Intent(callback.getControllerComments()
                                     .getActivity(), MainActivity.class);
@@ -517,6 +544,19 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                     return true;
                 }
             });
+            Menu menu = toolbarActions.getMenu();
+            itemUpvote = menu.findItem(R.id.item_upvote);
+            itemDownvote = menu.findItem(R.id.item_downvote);
+            itemSave = menu.findItem(R.id.item_save);
+            itemReply = menu.findItem(R.id.item_reply);
+            itemShare = menu.findItem(R.id.item_share);
+            itemDownloadImage = menu.findItem(R.id.item_download_image);
+            itemDelete = menu.findItem(R.id.item_delete);
+            itemViewSubreddit = menu.findItem(R.id.item_view_subreddit);
+
+            colorFilterSave = new PorterDuffColorFilter(callback.getController().getActivity().getResources().getColor(R.color.colorAccent),
+                    PorterDuff.Mode.MULTIPLY);
+
             layoutContainerExpand = (RelativeLayout) itemView.findViewById(
                     R.id.layout_container_expand);
             layoutContainerReply = (RelativeLayout) itemView.findViewById(
@@ -578,7 +618,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                         params.put("thing_id", link.getName());
 
                         // TODO: Move add to immediate on button click, check if failed afterwards
-                        callback.getController()
+                        request = callback.getController()
                                 .getReddit()
                                 .loadPost(Reddit.OAUTH_URL + "/api/comment",
                                         new Response.Listener<String>() {
@@ -623,7 +663,6 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                 @Override
                 public void onClick(View v) {
                     setVoteColors();
-                    Menu menu = toolbarActions.getMenu();
                     Link link = callback.getController()
                             .getLink(getAdapterPosition());
                     Intent shareIntent = new Intent(Intent.ACTION_SEND);
@@ -631,40 +670,35 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                     shareIntent.putExtra(Intent.EXTRA_SUBJECT, link.getTitle());
                     shareIntent.putExtra(Intent.EXTRA_TEXT, Reddit.BASE_URL + link.getPermalink());
 
-                    setToolbarMenuVisibility();
-                    ShareActionProvider shareActionProvider = (ShareActionProvider) MenuItemCompat.getActionProvider(
-                            toolbarActions.getMenu()
-                                    .findItem(R.id.item_share));
+                    setToolbarMenuVisibility(link);
+                    ShareActionProvider shareActionProvider = (ShareActionProvider) MenuItemCompat.getActionProvider(itemShare);
                     if (shareActionProvider != null) {
                         shareActionProvider.setShareIntent(shareIntent);
                     }
 
                     if (Reddit.checkIsImage(link.getUrl()) || Reddit.placeImageUrl(link)) {
-                        menu.findItem(R.id.item_download_image)
-                                .setVisible(true);
-                        menu.findItem(R.id.item_download_image)
-                                .setEnabled(true);
+                        itemDownloadImage.setVisible(true);
+                        itemDownloadImage.setEnabled(true);
                     }
                     else {
-                        menu.findItem(R.id.item_download_image)
-                                .setVisible(false);
-                        menu.findItem(R.id.item_download_image)
-                                .setEnabled(false);
+                        itemDownloadImage.setVisible(false);
+                        itemDownloadImage.setEnabled(false);
                     }
 
                     boolean isAuthor = link.getAuthor()
                             .equals(callback.getUser()
                                     .getName());
 
-                    toolbarActions.getMenu()
-                            .findItem(R.id.item_delete)
-                            .setEnabled(isAuthor);
-                    toolbarActions.getMenu()
-                            .findItem(R.id.item_delete)
-                            .setVisible(isAuthor);
+                    itemDelete.setVisible(isAuthor);
+                    itemDelete.setEnabled(isAuthor);
 
-                    AnimationUtils.animateExpand(layoutContainerExpand,
-                            getRatio(getAdapterPosition()), null);
+                    toolbarActions.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            AnimationUtils.animateExpand(layoutContainerExpand,
+                                    getRatio(getAdapterPosition()), null);
+                        }
+                    });
 
                 }
             };
@@ -691,15 +725,6 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                 }
             };
             textThreadSelf.setOnTouchListener(onTouchListener);
-            buttonComments.setOnTouchListener(onTouchListener);
-            imageThumbnail.setOnTouchListener(onTouchListener);
-
-            toolbarActions.post(new Runnable() {
-                @Override
-                public void run() {
-                    setToolbarMenuVisibility();
-                }
-            });
 
         }
 
@@ -779,7 +804,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                     int lastIndex = dotIndex > startIndex ? dotIndex : urlString.length();
                     String gfycatId = urlString.substring(startIndex, lastIndex);
                     progressImage.setVisibility(View.VISIBLE);
-                    callback.getController()
+                    request = callback.getController()
                             .getReddit()
                             .loadGet(Reddit.GFYCAT_URL + gfycatId,
                                     new Response.Listener<String>() {
@@ -841,25 +866,10 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
 
         public void onClickThumbnail(Link link) {
 
+            Log.d(TAG, "onClickThumbnail");
+
             if (link.isSelf()) {
-                if (textThreadSelf.isShown()) {
-                    textThreadSelf.setVisibility(View.GONE);
-                    return;
-                }
-                if (TextUtils.isEmpty(link.getSelfText())) {
-                    callback.pauseViewHolders();
-                    callback.getListener()
-                            .onClickComments(link, this);
-                }
-                else {
-                    if (callback.getLayoutManager() instanceof StaggeredGridLayoutManager) {
-                        ((StaggeredGridLayoutManager.LayoutParams) itemView.getLayoutParams()).setFullSpan(
-                                true);
-                        ((StaggeredGridLayoutManager) callback.getLayoutManager()).invalidateSpanAssignments();
-                    }
-                    textThreadSelf.setVisibility(View.VISIBLE);
-                    textThreadSelf.setText(Reddit.getTrimmedHtml(link.getSelfTextHtml()));
-                }
+                loadSelfText(link);
             }
             else {
                 if (callback.getLayoutManager() instanceof StaggeredGridLayoutManager) {
@@ -871,6 +881,33 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             }
         }
 
+        public void loadSelfText(Link link) {
+            if (textThreadSelf.isShown()) {
+                AnimationUtils.animateExpand(textThreadSelf, 1f, null);
+                return;
+            }
+            if (TextUtils.isEmpty(link.getSelfText())) {
+                callback.pauseViewHolders();
+                callback.getListener()
+                        .onClickComments(link, this);
+            }
+            else {
+                if (callback.getLayoutManager() instanceof StaggeredGridLayoutManager) {
+                    ((StaggeredGridLayoutManager.LayoutParams) itemView.getLayoutParams()).setFullSpan(
+                            true);
+                    itemView.requestLayout();
+                    itemView.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            ((StaggeredGridLayoutManager) callback.getLayoutManager()).invalidateSpanAssignments();
+                        }
+                    });
+                }
+                textThreadSelf.setText(Reddit.getTrimmedHtml(link.getSelfTextHtml()));
+                AnimationUtils.animateExpand(textThreadSelf, 1f, null);
+            }
+        }
+
         public void setVoteColors() {
 
             Menu menu = toolbarActions.getMenu();
@@ -878,37 +915,31 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                     .getLink(getAdapterPosition());
             switch (link.isLikes()) {
                 case 1:
-                    menu.findItem(R.id.item_upvote)
-                            .getIcon()
+                    itemUpvote.getIcon()
                             .setColorFilter(
                                     callback.getController()
                                             .getActivity()
                                             .getResources()
                                             .getColor(R.color.positiveScore),
                                     PorterDuff.Mode.MULTIPLY);
-                    menu.findItem(R.id.item_downvote)
-                            .getIcon()
+                    itemDownvote.getIcon()
                             .clearColorFilter();
                     break;
                 case -1:
-                    menu.findItem(R.id.item_downvote)
-                            .getIcon()
+                    itemDownvote.getIcon()
                             .setColorFilter(
                                     callback.getController()
                                             .getActivity()
                                             .getResources()
                                             .getColor(R.color.negativeScore),
                                     PorterDuff.Mode.MULTIPLY);
-                    menu.findItem(R.id.item_upvote)
-                            .getIcon()
+                    itemUpvote.getIcon()
                             .clearColorFilter();
                     break;
                 case 0:
-                    menu.findItem(R.id.item_upvote)
-                            .getIcon()
+                    itemUpvote.getIcon()
                             .clearColorFilter();
-                    menu.findItem(R.id.item_downvote)
-                            .getIcon()
+                    itemDownvote.getIcon()
                             .clearColorFilter();
                     break;
             }
@@ -1112,18 +1143,16 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             viewYouTube.setVisibility(View.GONE);
         }
 
-        public void setToolbarMenuVisibility() {
+        public void setToolbarMenuVisibility(Link link) {
             Menu menu = toolbarActions.getMenu();
 
             boolean loggedIn = !TextUtils.isEmpty(callback.getPreferences()
                     .getString(AppSettings.REFRESH_TOKEN, ""));
 
-            menu.findItem(R.id.item_upvote)
-                    .setVisible(loggedIn);
-            menu.findItem(R.id.item_downvote)
-                    .setVisible(loggedIn);
-            menu.findItem(R.id.item_reply)
-                    .setVisible(loggedIn);
+            itemUpvote.setVisible(loggedIn);
+            itemDownvote.setVisible(loggedIn);
+            itemReply.setVisible(loggedIn);
+            itemSave.setVisible(loggedIn);
 
             int maxNum = (int) (itemView.getWidth() / callback.getItemWidth());
             int numShown = 0;
@@ -1137,6 +1166,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                         case R.id.item_downvote:
                         case R.id.item_reply:
                         case R.id.item_view_subreddit:
+                        case R.id.item_save:
                             continue;
                     }
                 }
@@ -1151,20 +1181,17 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                 }
             }
 
-            menu.findItem(R.id.item_view_subreddit)
-                    .setVisible(callback.getController()
-                            .showSubreddit());
-            menu.findItem(R.id.item_view_subreddit)
-                    .setEnabled(callback.getController()
-                            .showSubreddit());
+            itemViewSubreddit.setVisible(callback.getController()
+                    .showSubreddit());
+            itemViewSubreddit.setEnabled(callback.getController()
+                    .showSubreddit());
+
+            syncSaveIcon(link);
         }
 
 
         public void onRecycle() {
 
-            if (imageContainer != null) {
-                imageContainer.cancelRequest();
-            }
             if (request != null) {
                 request.cancel();
             }
@@ -1197,10 +1224,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
 
         }
 
-        public void onBind(int position) {
-
-            Link link = callback.getController()
-                    .getLink(position);
+        public void onBind(Link link) {
             layoutContainerExpand.setVisibility(View.GONE);
 
             if (link.isReplyExpanded()) {
@@ -1212,6 +1236,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
 
             textThreadSelf.setVisibility(View.GONE);
             adapterAlbum.setAlbum(null);
+            syncSaveIcon(link);
 
         }
 
@@ -1274,10 +1299,18 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                     Calendar.HOUR_OF_DAY) + (minute < 10 ? ":0" : ":") + minute;
         }
 
-        public void destroy() {
-            if (imageContainer != null) {
-                imageContainer.cancelRequest();
+        public void syncSaveIcon(Link link) {
+            if (link.isSaved()) {
+                itemSave.setTitle(callback.getController().getActivity().getString(R.string.unsave));
+                itemSave.getIcon().setColorFilter(colorFilterSave);
             }
+            else {
+                itemSave.setTitle(callback.getController().getActivity().getString(R.string.save));
+                itemSave.getIcon().clearColorFilter();
+            }
+        }
+
+        public void destroy() {
             if (request != null) {
                 request.cancel();
             }

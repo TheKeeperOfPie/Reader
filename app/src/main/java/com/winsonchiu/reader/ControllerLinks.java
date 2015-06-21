@@ -280,7 +280,7 @@ public class ControllerLinks implements ControllerLinksBase {
                                 listener.getAdapter()
                                         .notifyItemRangeInserted(positionStart + 1,
                                                 listingLinks.getChildren()
-                                                        .size() - positionStart + 1);
+                                                        .size() - positionStart);
                             }
                         }
                         catch (JSONException exception) {

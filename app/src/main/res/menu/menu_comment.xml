@@ -47,9 +47,17 @@
         />
 
     <item
+        android:id="@+id/item_save"
+        android:title="@string/item_save"
+        android:orderInCategory="600"
+        android:icon="@drawable/ic_save_white_24dp"
+        app:showAsAction="ifRoom"
+        />
+
+    <item
         android:id="@+id/item_view_profile"
         android:title="@string/item_view_profile"
-        android:orderInCategory="600"
+        android:orderInCategory="700"
         android:icon="@drawable/ic_person_white_24dp"
         app:showAsAction="ifRoom"
         />
@@ -57,7 +65,7 @@
     <item
         android:id="@+id/item_delete"
         android:title="@string/item_delete"
-        android:orderInCategory="700"
+        android:orderInCategory="800"
         android:icon="@drawable/ic_delete_white_24dp"
         app:showAsAction="ifRoom"
         />

@@ -54,20 +54,14 @@ public class AdapterLinkGrid extends AdapterLink {
         super.setActivity(activity);
         preferences = PreferenceManager.getDefaultSharedPreferences(activity);
         Resources resources = activity.getResources();
-        this.thumbnailSize = resources.getDisplayMetrics().widthPixels / 2;
+        this.thumbnailSize = (int) (resources.getDisplayMetrics().widthPixels / 2f * 0.75f);
         boolean isLandscape = resources.getDisplayMetrics().widthPixels > resources.getDisplayMetrics().heightPixels;
 
         this.layoutManager = new StaggeredGridLayoutManager(isLandscape ? 3 : 2,
                 StaggeredGridLayoutManager.VERTICAL);
         ((StaggeredGridLayoutManager) this.layoutManager).setGapStrategy(
                 StaggeredGridLayoutManager.GAP_HANDLING_NONE);
-        this.itemDecoration = null;
         this.defaultColor = resources.getColor(R.color.darkThemeDialog);
-    }
-
-    @Override
-    public RecyclerView.ItemDecoration getItemDecoration() {
-        return itemDecoration;
     }
 
     @Override
@@ -95,7 +89,7 @@ public class AdapterLinkGrid extends AdapterLink {
                 break;
             case VIEW_LINK:
                 ViewHolder viewHolder = (ViewHolder) holder;
-                viewHolder.onBind(position);
+                viewHolder.onBind(controllerLinks.getLink(position));
                 break;
         }
     }
@@ -174,13 +168,6 @@ public class AdapterLinkGrid extends AdapterLink {
 
                     loadFull(callback.getController()
                             .getLink(getAdapterPosition()));
-
-                    viewHolder.itemView.post(new Runnable() {
-                        @Override
-                        public void run() {
-                            setToolbarMenuVisibility();
-                        }
-                    });
                 }
             });
 
@@ -209,20 +196,19 @@ public class AdapterLinkGrid extends AdapterLink {
         }
 
         @Override
-        public void onBind(final int position) {
-            super.onBind(position);
+        public void onBind(Link link) {
+
+            super.onBind(link);
 
             if (itemView.getLayoutParams() instanceof StaggeredGridLayoutManager.LayoutParams) {
                 ((StaggeredGridLayoutManager.LayoutParams) itemView.getLayoutParams()).setFullSpan(
                         false);
             }
 
+            int position = getAdapterPosition();
+
             itemView.setBackgroundColor(defaultColor);
             imagePlay.setVisibility(View.GONE);
-
-            final Link link = callback.getController()
-                    .getLink(position);
-
             Drawable drawable = callback.getController()
                     .getDrawableForLink(link);
             if (drawable != null) {
@@ -294,8 +280,6 @@ public class AdapterLinkGrid extends AdapterLink {
                                                 .load(link.getUrl())
                                                 .resize(thumbnailSize, thumbnailSize)
                                                 .centerCrop()
-//                                                .noPlaceholder()
-//                                                .noFade()
                                                 .into(imageFull, new Callback() {
                                                     @Override
                                                     public void onSuccess() {
@@ -335,12 +319,6 @@ public class AdapterLinkGrid extends AdapterLink {
             callback.getListener()
                     .onFullLoaded(getAdapterPosition());
             super.toggleReply();
-            itemView.post(new Runnable() {
-                @Override
-                public void run() {
-                    setToolbarMenuVisibility();
-                }
-            });
         }
 
         @Override

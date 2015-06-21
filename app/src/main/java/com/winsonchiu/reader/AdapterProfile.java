@@ -103,7 +103,7 @@ public class AdapterProfile extends RecyclerView.Adapter<RecyclerView.ViewHolder
 
                     @Override
                     public void setToolbarTitle(String title) {
-                        listener.setToolbarTitle(title);
+
                     }
 
                     @Override
@@ -326,6 +326,10 @@ public class AdapterProfile extends RecyclerView.Adapter<RecyclerView.ViewHolder
 
         holder.itemView.setVisibility(View.VISIBLE);
 
+        if (!controllerProfile.isLoading() && position > controllerProfile.sizeLinks() - 5) {
+            controllerProfile.loadMore();
+        }
+
         switch (position) {
             case 0:
                 ViewHolderHeader viewHolderHeader = (ViewHolderHeader) holder;
@@ -333,28 +337,32 @@ public class AdapterProfile extends RecyclerView.Adapter<RecyclerView.ViewHolder
                 break;
             case 1:
                 ViewHolderText viewHolderTextLink = (ViewHolderText) holder;
+                viewHolderTextLink.itemView.setVisibility(controllerProfile.getTopLink() == null ? View.GONE : View.VISIBLE);
                 viewHolderTextLink.onBind("Top Post");
                 break;
             case 2:
                 AdapterLinkList.ViewHolder viewHolderLinkTop = (AdapterLinkList.ViewHolder) holder;
-                if (controllerProfile.getLink(position) == null) {
+                if (controllerProfile.getTopLink() == null) {
                     viewHolderLinkTop.itemView.setVisibility(View.GONE);
                 }
                 else {
-                    viewHolderLinkTop.onBind(position);
+                    viewHolderLinkTop.itemView.setVisibility(View.VISIBLE);
+                    viewHolderLinkTop.onBind(controllerProfile.getTopLink());
                 }
                 break;
             case 3:
                 ViewHolderText viewHolderTextComment = (ViewHolderText) holder;
+                viewHolderTextComment.itemView.setVisibility(controllerProfile.getTopComment() == null ? View.GONE : View.VISIBLE);
                 viewHolderTextComment.onBind("Top Comment");
                 break;
             case 4:
                 AdapterCommentList.ViewHolderComment viewHolderCommentTop = (AdapterCommentList.ViewHolderComment) holder;
-                if (controllerProfile.getComment(position) == null) {
+                if (controllerProfile.getTopComment() == null) {
                     viewHolderCommentTop.itemView.setVisibility(View.GONE);
                 }
                 else {
-                    viewHolderCommentTop.onBind(position);
+                    viewHolderCommentTop.itemView.setVisibility(View.VISIBLE);
+                    viewHolderCommentTop.onBind(controllerProfile.getTopComment());
                 }
                 break;
             case 5:
@@ -365,13 +373,13 @@ public class AdapterProfile extends RecyclerView.Adapter<RecyclerView.ViewHolder
                 if (holder instanceof AdapterLinkList.ViewHolder) {
 
                     AdapterLinkList.ViewHolder viewHolderLink = (AdapterLinkList.ViewHolder) holder;
-                    viewHolderLink.onBind(position);
+                    viewHolderLink.onBind(controllerProfile.getLink(position));
 
                 }
                 else if (holder instanceof AdapterCommentList.ViewHolderComment) {
 
                     AdapterCommentList.ViewHolderComment viewHolderComment = (AdapterCommentList.ViewHolderComment) holder;
-                    viewHolderComment.onBind(position);
+                    viewHolderComment.onBind(controllerProfile.getComment(position));
                 }
         }
 

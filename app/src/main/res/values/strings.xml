@@ -91,4 +91,16 @@
     <string name="item_view_subreddit">View subreddit</string>
     <string name="item_view_profile">View user profile</string>
     <string name="item_view_link">View parent post</string>
+    <string name="item_save">Save</string>
+    <string name="unsave">Unsave</string>
+    <string name="save">Save</string>
+    <string name="profile_page_overview">Overview</string>
+    <string name="profile_page_submitted">Submitted</string>
+    <string name="profile_page_comments">Comments</string>
+    <string name="profile_page_upvoted">Upvoted</string>
+    <string name="profile_page_downvoted">Downvoted</string>
+    <string name="profile_page_hidden">Hidden</string>
+    <string name="profile_page_saved">Saved</string>
+    <string name="profile_page_gilded">Gilded</string>
+    <string name="error_loading">Error loading</string>
 </resources>

@@ -39,6 +39,7 @@ import java.util.UUID;
  */
 public class Reddit {
 
+
     // Constant values to represent Thing states
     public enum Distinguished {
         NOT_DISTINGUISHED, MODERATOR, ADMIN, SPECIAL
@@ -103,6 +104,7 @@ public class Reddit {
     public static final String QUERY_EXPIRES_IN = "expires_in";
     public static final String QUERY_ID = "id";
     public static final String QUERY_VOTE = "dir";
+    public static final String QUERY_CATEGORY = "category";
 
     private static Reddit reddit;
     private Context context;
@@ -409,6 +411,36 @@ public class Reddit {
             }
         }, params, 0);
         return true;
+    }
+
+    public void save(Thing thing, String category, ErrorListener errorListener) {
+
+        HashMap<String, String> params = new HashMap<>(2);
+        params.put(Reddit.QUERY_ID, thing.getName());
+        if (!TextUtils.isEmpty(category)) {
+            params.put(Reddit.QUERY_CATEGORY, category);
+        }
+
+        reddit.loadPost(Reddit.OAUTH_URL + "/api/save", new Listener<String>() {
+            @Override
+            public void onResponse(String response) {
+            }
+        }, errorListener, params, 0);
+    }
+
+    public void unsave(Thing thing) {
+        HashMap<String, String> params = new HashMap<>(2);
+        params.put(Reddit.QUERY_ID, thing.getName());
+
+        reddit.loadPost(Reddit.OAUTH_URL + "/api/unsave", new Listener<String>() {
+            @Override
+            public void onResponse(String response) {
+            }
+        }, new ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+            }
+        }, params, 0);
     }
 
     public Request<String> loadImgurImage(String id,

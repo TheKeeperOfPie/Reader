@@ -27,6 +27,8 @@ import android.view.animation.AnimationSet;
 import android.view.animation.LinearInterpolator;
 import android.view.animation.Transformation;
 import android.view.animation.TranslateAnimation;
+import android.widget.AdapterView;
+import android.widget.Spinner;
 import android.widget.Toast;
 
 import com.winsonchiu.reader.data.Comment;
@@ -70,6 +72,8 @@ public class FragmentProfile extends Fragment implements Toolbar.OnMenuItemClick
     private Menu menu;
     private MenuItem itemSortTime;
     private Toolbar toolbar;
+    private Spinner spinnerPage;
+    private AdapterProfilePage adapterProfilePage;
 
     /**
      * Use this factory method to create a new instance of
@@ -135,17 +139,13 @@ public class FragmentProfile extends Fragment implements Toolbar.OnMenuItemClick
             @Override
             public boolean onQueryTextSubmit(String query) {
                 mListener.getControllerProfile()
-                        .loadUser(query);
+                        .loadUser(query.replaceAll("\\s", ""));
                 itemSearch.collapseActionView();
                 return false;
             }
 
             @Override
             public boolean onQueryTextChange(String newText) {
-                // TODO: Remove spaces from query text
-                if (newText.contains(" ")) {
-                    searchView.setQuery(newText.replaceAll(" ", ""), false);
-                }
                 return false;
             }
         });
@@ -318,11 +318,6 @@ public class FragmentProfile extends Fragment implements Toolbar.OnMenuItemClick
             }
 
             @Override
-            public void setToolbarTitle(String title) {
-                toolbar.setTitle(title);
-            }
-
-            @Override
             public AdapterProfile getAdapter() {
                 return adapterProfile;
             }
@@ -363,6 +358,18 @@ public class FragmentProfile extends Fragment implements Toolbar.OnMenuItemClick
             }
 
             @Override
+            public void setIsUser(boolean isUser) {
+                Log.d(TAG, "isUser: " + isUser);
+                adapterProfilePage.setIsUser(isUser);
+            }
+
+            @Override
+            public void setPage(String page) {
+                // TODO: Fix set page for Profile view
+                spinnerPage.setSelection(adapterProfilePage.getPages().indexOf(page));
+            }
+
+            @Override
             public void requestDisallowInterceptTouchEvent(boolean disallow) {
 
             }
@@ -389,6 +396,21 @@ public class FragmentProfile extends Fragment implements Toolbar.OnMenuItemClick
         }
         setUpOptionsMenu();
 
+        adapterProfilePage = new AdapterProfilePage(activity);
+        spinnerPage = (Spinner) view.findViewById(R.id.spinner_page);
+        spinnerPage.setAdapter(adapterProfilePage);
+        spinnerPage.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                mListener.getControllerProfile().setPage(adapterProfilePage.getItem(position));
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+
+            }
+        });
+
         swipeRefreshProfile = (SwipeRefreshLayout) view.findViewById(R.id.swipe_refresh_profile);
         swipeRefreshProfile.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
@@ -405,8 +427,6 @@ public class FragmentProfile extends Fragment implements Toolbar.OnMenuItemClick
         recyclerProfile.getItemAnimator()
                 .setRemoveDuration(AnimationUtils.EXPAND_ACTION_DURATION);
         recyclerProfile.setLayoutManager(linearLayoutManager);
-//        recyclerProfile.addItemDecoration(
-//                new DividerItemDecoration(activity, DividerItemDecoration.VERTICAL_LIST));
 
         if (adapterProfile == null) {
             adapterProfile = new AdapterProfile(activity, mListener.getControllerProfile(),

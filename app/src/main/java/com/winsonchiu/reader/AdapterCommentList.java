@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.graphics.PorterDuff;
+import android.graphics.PorterDuffColorFilter;
 import android.graphics.drawable.Drawable;
 import android.preference.PreferenceManager;
 import android.support.v4.graphics.ColorUtils;
@@ -19,6 +20,7 @@ import android.text.TextUtils;
 import android.text.format.DateUtils;
 import android.text.method.LinkMovementMethod;
 import android.text.style.ForegroundColorSpan;
+import android.util.Log;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -195,6 +197,23 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                         activity.getResources()
                                 .getColor(R.color.darkThemeDialog),
                         thumbnailWidth) {
+
+                    @Override
+                    public void onBind(Link link) {
+                        super.onBind(link);
+                        if (link.isSelf() && !TextUtils.isEmpty(link.getSelfTextHtml())) {
+                            textThreadSelf.setVisibility(View.VISIBLE);
+                        }
+                    }
+
+                    @Override
+                    public void loadSelfText(Link link) {
+                        if (textThreadSelf.isShown()) {
+                            return;
+                        }
+                        super.loadSelfText(link);
+                    }
+
                     @Override
                     public void loadYouTube(Link link, String id) {
                         listener.loadYouTube(link, id, this);
@@ -220,6 +239,23 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                 viewHolderLink = new AdapterLinkList.ViewHolder(
                         LayoutInflater.from(parent.getContext())
                                 .inflate(R.layout.row_link, parent, false), this) {
+
+                    @Override
+                    public void onBind(Link link) {
+                        super.onBind(link);
+                        if (link.isSelf() && !TextUtils.isEmpty(link.getSelfTextHtml())) {
+                            textThreadSelf.setVisibility(View.VISIBLE);
+                        }
+                    }
+
+                    @Override
+                    public void loadSelfText(Link link) {
+                        if (textThreadSelf.isShown()) {
+                            return;
+                        }
+                        super.loadSelfText(link);
+                    }
+
                     @Override
                     public void loadYouTube(Link link, String id) {
                         listener.loadYouTube(link, id, this);
@@ -232,14 +268,6 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                         }
                     }
                 };
-            }
-            if (!TextUtils.isEmpty(controllerComments.getMainLink().getSelfText())) {
-                viewHolderLink.itemView.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        viewHolderLink.onClickThumbnail(controllerComments.getMainLink());
-                    }
-                });
             }
 
             return viewHolderLink;
@@ -257,30 +285,19 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
         }
 
         if (getItemViewType(position) == VIEW_LINK) {
-            if (holder instanceof AdapterLinkList.ViewHolder) {
-                ((AdapterLinkList.ViewHolder) holder).onBind(position);
-                if (!isInitialized) {
-                    if (controllerComments.getMainLink()
-                            .isSelf()) {
-                        ((AdapterLinkList.ViewHolder) holder).imageThumbnail.callOnClick();
-                    }
-                    isInitialized = true;
+            AdapterLink.ViewHolderBase viewHolderBase = (AdapterLink.ViewHolderBase) holder;
+
+            viewHolderBase.onBind(controllerComments.getMainLink());
+            if (!isInitialized) {
+                if (controllerComments.getMainLink().isSelf()) {
+                    viewHolderBase.onClickThumbnail(controllerComments.getMainLink());
                 }
-            }
-            else if (holder instanceof AdapterLinkGrid.ViewHolder) {
-                ((AdapterLinkGrid.ViewHolder) holder).onBind(position);
-                if (!isInitialized) {
-                    if (controllerComments.getMainLink()
-                            .isSelf()) {
-                        ((AdapterLinkGrid.ViewHolder) holder).imageThumbnail.callOnClick();
-                    }
-                    isInitialized = true;
-                }
+                isInitialized = true;
             }
         }
         else {
             ViewHolderComment viewHolderComment = (ViewHolderComment) holder;
-            viewHolderComment.onBind(position);
+            viewHolderComment.onBind(controllerComments.getComment(position));
         }
 
     }
@@ -363,10 +380,14 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
         protected EditText editTextReply;
         protected Button buttonSendReply;
         protected Toolbar toolbarActions;
+        protected MenuItem itemViewLink;
         protected MenuItem itemCollapse;
         protected MenuItem itemUpvote;
         protected MenuItem itemDownvote;
         protected MenuItem itemReply;
+        protected MenuItem itemSave;
+        protected MenuItem itemDelete;
+        protected PorterDuffColorFilter colorFilterSave;
         protected Drawable drawableUpvote;
         protected Drawable drawableDownvote;
         protected RelativeLayout layoutContainerExpand;
@@ -378,12 +399,15 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
         public ViewHolderComment(final View itemView,
                 ControllerComments.ListenerCallback listenerCallback, final ControllerProfile.ItemClickListener listener) {
             this(itemView, listenerCallback);
-            toolbarActions.getMenu().findItem(R.id.item_view_link).setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
-            toolbarActions.getMenu().findItem(R.id.item_view_link).setOnMenuItemClickListener(
+            itemViewLink.setVisible(true);
+            itemViewLink.setEnabled(true);
+            itemViewLink.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+            itemViewLink.setOnMenuItemClickListener(
                     new MenuItem.OnMenuItemClickListener() {
                         @Override
                         public boolean onMenuItemClick(MenuItem item) {
-                            listener.loadLink(callback.getControllerComments().getComment(getAdapterPosition()));
+                            listener.loadLink(callback.getControllerComments()
+                                    .getComment(getAdapterPosition()));
                             return true;
                         }
                     });
@@ -602,6 +626,28 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
 //                                    .getIndentWidth(comment)) / width;
 //                            AnimationUtils.animateExpand(layoutContainerReply, ratio, null);
                             break;
+                        case R.id.item_save:
+                            final int position = getAdapterPosition();
+                            if (comment.isSaved()) {
+                                callback.getControllerComments().getReddit().unsave(comment);
+                            }
+                            else {
+                                callback.getControllerComments().getReddit().save(comment, "",
+                                        new Response.ErrorListener() {
+                                            @Override
+                                            public void onErrorResponse(VolleyError error) {
+                                                if (comment.isSaved()) {
+                                                    comment.setSaved(false);
+                                                    if (position == getAdapterPosition()) {
+                                                        syncSaveIcon(comment);
+                                                    }
+                                                }
+                                            }
+                                        });
+                            }
+                            comment.setSaved(!comment.isSaved());
+                            syncSaveIcon(comment);
+                            break;
                         case R.id.item_view_profile:
                             Intent intent = new Intent(callback.getControllerComments()
                                     .getActivity(), MainActivity.class);
@@ -636,12 +682,18 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                     return true;
                 }
             });
-            Menu menu = toolbarActions.getMenu();
 
+            Menu menu = toolbarActions.getMenu();
+            itemViewLink = menu.findItem(R.id.item_view_link);
             itemCollapse = menu.findItem(R.id.item_collapse);
             itemUpvote = menu.findItem(R.id.item_upvote);
             itemDownvote = menu.findItem(R.id.item_downvote);
             itemReply = menu.findItem(R.id.item_reply);
+            itemSave = menu.findItem(R.id.item_save);
+            itemDelete = menu.findItem(R.id.item_delete);
+
+            colorFilterSave = new PorterDuffColorFilter(callback.getControllerComments().getActivity().getResources().getColor(R.color.colorAccent),
+                    PorterDuff.Mode.MULTIPLY);
 
             clickListenerLink = new View.OnClickListener() {
                 @Override
@@ -664,22 +716,14 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
 
                     if (callback.getControllerComments()
                             .isCommentExpanded(getAdapterPosition())) {
-                        toolbarActions.getMenu()
-                                .findItem(R.id.item_collapse)
-                                .setIcon(R.drawable.ic_arrow_drop_up_white_24dp);
+                        itemCollapse.setIcon(R.drawable.ic_arrow_drop_up_white_24dp);
                     }
                     else {
-                        toolbarActions.getMenu()
-                                .findItem(R.id.item_collapse)
-                                .setIcon(R.drawable.ic_arrow_drop_down_white_24dp);
+                        itemCollapse.setIcon(R.drawable.ic_arrow_drop_down_white_24dp);
                     }
 
-                    toolbarActions.getMenu()
-                            .findItem(R.id.item_delete)
-                            .setEnabled(isAuthor);
-                    toolbarActions.getMenu()
-                            .findItem(R.id.item_delete)
-                            .setVisible(isAuthor);
+                    itemDelete.setEnabled(isAuthor);
+                    itemDelete.setVisible(isAuthor);
 
                     setVoteColors();
 
@@ -710,12 +754,10 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
             boolean loggedIn = !TextUtils.isEmpty(callback.getPreferences()
                     .getString(AppSettings.REFRESH_TOKEN, ""));
 
-            menu.findItem(R.id.item_upvote)
-                    .setVisible(loggedIn);
-            menu.findItem(R.id.item_downvote)
-                    .setVisible(loggedIn);
-            menu.findItem(R.id.item_reply)
-                    .setVisible(loggedIn);
+            itemUpvote.setVisible(loggedIn);
+            itemDownvote.setVisible(loggedIn);
+            itemReply.setVisible(loggedIn);
+            itemSave.setVisible(loggedIn);
 
             for (int index = 0; index < menu.size(); index++) {
                 if (!loggedIn) {
@@ -778,10 +820,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
             }
         }
 
-        public void onBind(int position) {
-
-            Comment comment = callback.getControllerComments()
-                    .getComment(position);
+        public void onBind(Comment comment) {
 
             if (comment.isReplyExpanded()) {
                 layoutContainerReply.setVisibility(View.VISIBLE);
@@ -871,6 +910,16 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                         Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
 
                 textInfo.setText(spannableInfo);
+
+                // TODO: Improve edited indicator
+
+                if (comment.getEdited() > 0) {
+                    textInfo.append("\nEdited ");
+                    if (comment.getEdited() > 1) {
+                        textInfo.append(DateUtils.getRelativeTimeSpanString(comment.getEdited()));
+                    }
+                }
+
                 textHidden.setText(getFormatttedDate(comment.getCreatedUtc()));
 
             }
@@ -891,6 +940,15 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
             itemCollapse.setVisible(callback.getControllerComments()
                     .hasChildren(comment));
 
+        }
+
+        public void syncSaveIcon(Comment comment) {
+            if (comment.isSaved()) {
+                itemSave.getIcon().setColorFilter(colorFilterSave);
+            }
+            else {
+                itemSave.getIcon().clearColorFilter();
+            }
         }
 
         public String getFormatttedDate(long time) {

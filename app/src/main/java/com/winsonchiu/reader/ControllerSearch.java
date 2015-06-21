@@ -533,9 +533,8 @@ public class ControllerSearch {
                         @Override
                         public void onResponse(String response) {
                             try {
-                                int positionStart = linksSubreddit.getChildren()
-                                        .size() + 1;
                                 int startSize = linksSubreddit.getChildren().size();
+                                int positionStart = startSize + 1;
                                 Listing listing = Listing.fromJson(new JSONObject(response));
                                 linksSubreddit.addChildren(listing.getChildren());
                                 linksSubreddit.setAfter(listing.getAfter());

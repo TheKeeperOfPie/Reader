@@ -47,6 +47,7 @@
                 android:id="@+id/layout_frame"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_below="@id/text_image_description"
                 />
 
         </RelativeLayout>

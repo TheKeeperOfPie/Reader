@@ -26,8 +26,6 @@ public class AdapterLinkList extends AdapterLink {
 
     private static final String TAG = AdapterLinkList.class.getCanonicalName();
 
-    private DividerItemDecoration itemDecoration;
-
     public AdapterLinkList(Activity activity,
             ControllerLinksBase controllerLinks,
             ControllerLinks.LinkClickListener listener) {
@@ -40,13 +38,6 @@ public class AdapterLinkList extends AdapterLink {
     public void setActivity(Activity activity) {
         super.setActivity(activity);
         this.layoutManager = new LinearLayoutManager(activity);
-        this.itemDecoration = new DividerItemDecoration(activity,
-                DividerItemDecoration.VERTICAL_LIST);
-    }
-
-    @Override
-    public RecyclerView.ItemDecoration getItemDecoration() {
-        return itemDecoration;
     }
 
     @Override
@@ -74,7 +65,7 @@ public class AdapterLinkList extends AdapterLink {
                 break;
             case VIEW_LINK:
                 ViewHolder viewHolder = (ViewHolder) holder;
-                viewHolder.onBind(position);
+                viewHolder.onBind(controllerLinks.getLink(position));
                 break;
         }
     }
@@ -84,7 +75,6 @@ public class AdapterLinkList extends AdapterLink {
 
         if (holder instanceof ViewHolder) {
             final ViewHolder viewHolder = (ViewHolder) holder;
-
             viewHolder.onRecycle();
         }
 
@@ -135,13 +125,10 @@ public class AdapterLinkList extends AdapterLink {
         }
 
         @Override
-        public void onBind(int position) {
-            super.onBind(position);
+        public void onBind(Link link) {
+            super.onBind(link);
 
             imageThumbnail.setVisibility(View.VISIBLE);
-
-            final Link link = callback.getController()
-                    .getLink(position);
 
             Drawable drawable = callback.getController()
                     .getDrawableForLink(link);
@@ -224,6 +211,8 @@ public class AdapterLinkList extends AdapterLink {
                             R.color.darkThemeTextColorMuted)), subreddit.length() + 1 + scoreLength,
                     spannableInfo.length(), Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
             textThreadInfo.setText(spannableInfo);
+
+            // TODO: Add link edited indicator
 
             textHidden.setText(DateUtils.getRelativeTimeSpanString(link.getCreatedUtc()) + ", " + link.getNumComments() + " comments");
         }
