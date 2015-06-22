@@ -27,7 +27,6 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
-import android.webkit.WebChromeClient;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.Button;
@@ -370,14 +369,6 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                     .setBuiltInZoomControls(true);
             webFull.getSettings()
                     .setDisplayZoomControls(false);
-            webFull.getSettings()
-                    .setJavaScriptEnabled(true);
-            webFull.getSettings()
-                    .setDomStorageEnabled(true);
-            webFull.getSettings()
-                    .setDatabaseEnabled(true);
-            webFull.getSettings()
-                    .setAppCacheEnabled(true);
             webFull.setBackgroundColor(0x000000);
             webFull.setWebChromeClient(null);
             webFull.setWebViewClient(new WebViewClient() {
@@ -1237,7 +1228,6 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             viewYouTube.setVisibility(View.GONE);
             webFull.loadData(Reddit.getImageHtml(""), "text/html", "UTF-8");
 //            webFull.loadData("<html><head><meta name=\"viewport\" content=\"width=device-width, minimum-scale=0.1\"><style>img {width:100%;}</style></head><body style=\"margin: 0px;\">><img style=\"-webkit-user-select: none; cursor: zoom-in;\"/></body></html>", "text/html", "UTF-8");
-            webFull.destroyDrawingCache();
             webFull.onPause();
             webFull.resetMaxHeight();
             webFull.setVisibility(View.GONE);
@@ -1357,18 +1347,13 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             adapterAlbum.setAlbum(null);
             if (viewPagerFull.getChildCount() > 0) {
                 for (int index = 0; index < viewPagerFull.getChildCount(); index++) {
-                    AdapterAlbum.ViewHolder viewHolder = (AdapterAlbum.ViewHolder) viewPagerFull.getChildAt(
-                            index)
-                            .getTag();
-                    RelativeLayout layoutWebView = viewHolder.layoutWebView;
-                    if (layoutWebView.getChildCount() > 0) {
-                        for (int indexFrame = 0; indexFrame < layoutWebView.getChildCount(); indexFrame++) {
-                            WebView webView = (WebView) layoutWebView.getChildAt(indexFrame);
-                            webView.onPause();
-                            webView.destroy();
-                        }
+                    View view = viewPagerFull.getChildAt(index);
+                    WebView webView = (WebView) view.findViewById(R.id.web);
+                    if (webView != null) {
+                        webView.onPause();
+                        webView.destroy();
+                        ((RelativeLayout) view).removeView(webView);
                     }
-                    layoutWebView.removeAllViews();
                 }
             }
             viewPagerFull.setAdapter(null);

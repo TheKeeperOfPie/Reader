@@ -69,6 +69,7 @@ public class AdapterAlbum extends PagerAdapter {
         ViewHolder viewHolder = (ViewHolder) view.getTag();
 
         webView = new WebViewFixed(activity.getApplicationContext());
+        webView.setId(R.id.web);
         webView.getSettings()
                 .setUseWideViewPort(true);
         webView.getSettings()
@@ -77,12 +78,6 @@ public class AdapterAlbum extends PagerAdapter {
                 .setBuiltInZoomControls(true);
         webView.getSettings()
                 .setDisplayZoomControls(false);
-        webView.getSettings()
-                .setDomStorageEnabled(true);
-        webView.getSettings()
-                .setDatabaseEnabled(true);
-        webView.getSettings()
-                .setAppCacheEnabled(true);
         webView.setBackgroundColor(0x000000);
         webView.setWebChromeClient(null);
         webView.setWebViewClient(new WebViewClient() {
@@ -218,7 +213,7 @@ public class AdapterAlbum extends PagerAdapter {
         layoutParams.addRule(RelativeLayout.ALIGN_PARENT_END, RelativeLayout.TRUE);
         layoutParams.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM, RelativeLayout.TRUE);
         layoutParams.addRule(RelativeLayout.BELOW, scrollText.getId());
-        viewHolder.layoutWebView.addView(webView, layoutParams);
+        ((RelativeLayout) view).addView(webView, layoutParams);
 
         container.addView(view);
         return view;
@@ -227,16 +222,12 @@ public class AdapterAlbum extends PagerAdapter {
     @Override
     public void destroyItem(ViewGroup container, int position, Object object) {
         View view = (View) object;
-        ViewHolder viewHolder = (ViewHolder) view.getTag();
-        RelativeLayout layoutWebView = viewHolder.layoutWebView;
-        if (layoutWebView.getChildCount() > 0) {
-            for (int index = 0; index < layoutWebView.getChildCount(); index++) {
-                WebView webView = (WebView) layoutWebView.getChildAt(index);
-                webView.onPause();
-                webView.destroy();
-            }
+        WebView webView = (WebView) view.findViewById(R.id.web);
+        if (webView != null) {
+            webView.onPause();
+            webView.destroy();
+            ((RelativeLayout) view).removeView(webView);
         }
-        layoutWebView.removeAllViews();
         container.removeView(view);
         recycledViews.add(view);
     }
@@ -259,28 +250,22 @@ public class AdapterAlbum extends PagerAdapter {
 
     public void destroyViews() {
         for (View view : recycledViews) {
-            ViewHolder viewHolder = (ViewHolder) view.getTag();
-            RelativeLayout layoutWebView = viewHolder.layoutWebView;
-            if (layoutWebView.getChildCount() > 0) {
-                for (int index = 0; index < layoutWebView.getChildCount(); index++) {
-                    WebView webView = (WebView) layoutWebView.getChildAt(index);
-                    webView.onPause();
-                    webView.destroy();
-                }
+            WebView webView = (WebView) view.findViewById(R.id.web);
+            if (webView != null) {
+                webView.onPause();
+                webView.destroy();
+                ((RelativeLayout) view).removeView(webView);
             }
-            layoutWebView.removeAllViews();
         }
     }
 
     public static class ViewHolder {
 
         protected ScrollView scrollText;
-        protected RelativeLayout layoutWebView;
         protected TextView textAlbumIndicator;
 
         public ViewHolder(View view) {
             scrollText = (ScrollView) view.findViewById(R.id.scroll_text);
-            layoutWebView = (RelativeLayout) view.findViewById(R.id.layout_web_view);
             textAlbumIndicator = (TextView) view.findViewById(R.id.text_album_indicator);
         }
     }

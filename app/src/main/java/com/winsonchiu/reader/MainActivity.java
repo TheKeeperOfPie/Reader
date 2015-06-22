@@ -18,6 +18,7 @@ import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.webkit.URLUtil;
+import android.webkit.WebView;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -65,11 +66,15 @@ public class MainActivity extends YouTubeBaseActivity
     private TextView textAccountName;
     private TextView textAccountInfo;
 
+    private WebView webView;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         Fabric.with(this, new Crashlytics());
         sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+
+        webView = new WebView(getApplicationContext());
 
         fragmentData = (FragmentData) getFragmentManager().findFragmentByTag(FragmentData.TAG);
         if (fragmentData == null) {
@@ -555,4 +560,15 @@ public class MainActivity extends YouTubeBaseActivity
         mDrawerLayout.openDrawer(GravityCompat.START);
     }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+        webView.resumeTimers();
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        webView.pauseTimers();
+    }
 }
