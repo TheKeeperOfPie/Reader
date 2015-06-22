@@ -110,7 +110,7 @@ public class AdapterLinkGrid extends AdapterLink {
 
             final ViewHolder viewHolder = (ViewHolder) holder;
 
-            viewHolder.itemView.setBackgroundColor(defaultColor);
+//            viewHolder.itemView.setBackgroundColor(defaultColor);
             viewHolder.imagePlay.setVisibility(View.GONE);
             viewHolder.onRecycle();
         }
@@ -308,7 +308,6 @@ public class AdapterLinkGrid extends AdapterLink {
 
         }
 
-        // TODO: Fix expanding reply when cell is not full span
         @Override
         public void toggleReply() {
             if (itemView.getLayoutParams() instanceof StaggeredGridLayoutManager.LayoutParams) {

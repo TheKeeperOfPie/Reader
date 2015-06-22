@@ -269,6 +269,7 @@ public class FragmentProfile extends Fragment implements Toolbar.OnMenuItemClick
                                         viewHolder instanceof AdapterLinkGrid.ViewHolder);
 
                                 getFragmentManager().beginTransaction()
+                                        .hide(FragmentProfile.this)
                                         .add(R.id.frame_fragment, fragmentComments,
                                                 FragmentComments.TAG)
                                         .addToBackStack(null)
@@ -301,6 +302,7 @@ public class FragmentProfile extends Fragment implements Toolbar.OnMenuItemClick
             @Override
             public void loadUrl(String url) {
                 getFragmentManager().beginTransaction()
+                        .hide(FragmentProfile.this)
                         .add(R.id.frame_fragment, FragmentWeb
                                 .newInstance(url, ""), FragmentWeb.TAG)
                         .addToBackStack(null)

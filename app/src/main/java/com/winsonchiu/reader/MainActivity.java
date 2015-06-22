@@ -1,5 +1,7 @@
 package com.winsonchiu.reader;
 
+import android.app.Fragment;
+import android.app.FragmentTransaction;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -275,10 +277,16 @@ public class MainActivity extends YouTubeBaseActivity
     }
 
     private void onClickAccount() {
-        getFragmentManager().beginTransaction()
+        FragmentTransaction fragmentTransaction = getFragmentManager().beginTransaction()
                 .add(R.id.frame_fragment, FragmentAuth.newInstance("", ""), FragmentAuth.TAG)
-                .addToBackStack(null)
-                .commit();
+                .addToBackStack(null);
+
+        Fragment fragment = getFragmentManager().findFragmentById(R.id.frame_fragment);
+        if (fragment != null) {
+            fragmentTransaction.hide(fragment);
+        }
+
+        fragmentTransaction.commit();
         mDrawerLayout.closeDrawer(GravityCompat.START);
     }
 
@@ -289,12 +297,18 @@ public class MainActivity extends YouTubeBaseActivity
             // TODO: Implement a history stack inside the Controllers
 
             if (!url.getHost()
-                    .contains("reddit")) {
-                getFragmentManager().beginTransaction()
+                    .contains("redd")) {
+                FragmentTransaction fragmentTransaction = getFragmentManager().beginTransaction()
                         .add(R.id.frame_fragment, FragmentWeb
                                 .newInstance(urlString, ""), FragmentWeb.TAG)
-                        .addToBackStack(null)
-                        .commit();
+                        .addToBackStack(null);
+
+                Fragment fragment = getFragmentManager().findFragmentById(R.id.frame_fragment);
+                if (fragment != null) {
+                    fragmentTransaction.hide(fragment);
+                }
+
+                fragmentTransaction.commit();
                 return;
             }
 
@@ -449,11 +463,17 @@ public class MainActivity extends YouTubeBaseActivity
                 startActivity(intentActivity);
             }
             else if (URLUtil.isValidUrl(urlString)) {
-                getFragmentManager().beginTransaction()
+                FragmentTransaction fragmentTransaction = getFragmentManager().beginTransaction()
                         .add(R.id.frame_fragment, FragmentWeb
                                 .newInstance(urlString, ""), FragmentWeb.TAG)
-                        .addToBackStack(null)
-                        .commit();
+                        .addToBackStack(null);
+
+                Fragment fragment = getFragmentManager().findFragmentById(R.id.frame_fragment);
+                if (fragment != null) {
+                    fragmentTransaction.hide(fragment);
+                }
+
+                fragmentTransaction.commit();
             }
         }
         else {

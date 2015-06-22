@@ -11,7 +11,7 @@ public class User {
     private static final String TAG = User.class.getCanonicalName();
 
     private boolean hasMail;
-    private String name;
+    private String name = "";
     private long created;
     private boolean hideFromRobots;
     private int goldCreddits;
@@ -24,7 +24,7 @@ public class User {
     private boolean isMod;
     private long goldExpiration;
     private boolean hasVerifiedEmail;
-    private String id;
+    private String id = "";
     private int inboxCount;
 
 

@@ -65,8 +65,8 @@ public class FragmentSearch extends Fragment implements Toolbar.OnMenuItemClickL
     private RecyclerView recyclerSearchLinks;
     private RecyclerView recyclerSearchLinksSubreddit;
     private AdapterSearchSubreddits adapterSearchSubreddits;
-    private AdapterLinkList adapterLinks;
-    private AdapterLinkList adapterLinksSubreddit;
+    private AdapterLink adapterLinks;
+    private AdapterLink adapterLinksSubreddit;
     private ControllerSearch.Listener listenerSearch;
     private PagerAdapter pagerAdapter;
     private Menu menu;
@@ -116,20 +116,6 @@ public class FragmentSearch extends Fragment implements Toolbar.OnMenuItemClickL
         itemSearch = menu.findItem(R.id.item_search);
         itemSearch.expandActionView();
 
-//        MenuItemCompat.setOnActionExpandListener(itemSearch,
-//                new MenuItemCompat.OnActionExpandListener() {
-//                    @Override
-//                    public boolean onMenuItemActionExpand(MenuItem item) {
-//                        return true;
-//                    }
-//
-//                    @Override
-//                    public boolean onMenuItemActionCollapse(MenuItem item) {
-//                        getFragmentManager().popBackStack();
-//                        return true;
-//                    }
-//                });
-
         final SearchView searchView = (SearchView) itemSearch.getActionView();
 
         searchView.setOnKeyListener(new View.OnKeyListener() {
@@ -142,11 +128,18 @@ public class FragmentSearch extends Fragment implements Toolbar.OnMenuItemClickL
         searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
             @Override
             public boolean onQueryTextSubmit(String query) {
-                mListener.getControllerLinks()
-                        .setParameters(query.replaceAll("\\s", ""), Sort.HOT);
-                mListener.getControllerSearch()
-                        .clearResults();
-                getFragmentManager().popBackStack();
+                if (mListener.getControllerSearch().getCurrentPage() == ControllerSearch.PAGE_SUBREDDITS) {
+                    mListener.getControllerLinks()
+                            .setParameters(query.replaceAll("\\s", ""), Sort.HOT);
+                    mListener.getControllerSearch()
+                            .clearResults();
+                    getFragmentManager().popBackStack();
+                }
+                else {
+                    mListener.getControllerSearch()
+                            .setQuery(query);
+                    mListener.getControllerSearch().reloadCurrentPage();
+                }
                 return false;
             }
 
@@ -334,6 +327,7 @@ public class FragmentSearch extends Fragment implements Toolbar.OnMenuItemClickL
                                         viewHolder instanceof AdapterLinkGrid.ViewHolder);
 
                                 getFragmentManager().beginTransaction()
+                                        .hide(FragmentSearch.this)
                                         .add(R.id.frame_fragment, fragmentComments,
                                                 FragmentComments.TAG)
                                         .addToBackStack(null)
@@ -366,6 +360,7 @@ public class FragmentSearch extends Fragment implements Toolbar.OnMenuItemClickL
             @Override
             public void loadUrl(String url) {
                 getFragmentManager().beginTransaction()
+                        .hide(FragmentSearch.this)
                         .add(R.id.frame_fragment, FragmentWeb
                                 .newInstance(url, ""), FragmentWeb.TAG)
                         .addToBackStack(null)
@@ -394,7 +389,7 @@ public class FragmentSearch extends Fragment implements Toolbar.OnMenuItemClickL
 
             @Override
             public int getRecyclerHeight() {
-                return 0;
+                return viewPager.getHeight();
             }
 
             @Override
@@ -409,7 +404,7 @@ public class FragmentSearch extends Fragment implements Toolbar.OnMenuItemClickL
 
             @Override
             public int getRecyclerWidth() {
-                return 0;
+                return viewPager.getWidth();
             }
 
             @Override
@@ -429,11 +424,13 @@ public class FragmentSearch extends Fragment implements Toolbar.OnMenuItemClickL
 
             @Override
             public void requestDisallowInterceptTouchEvent(boolean disallow) {
-
+                recyclerSearchLinks.requestDisallowInterceptTouchEvent(disallow);
+                recyclerSearchLinksSubreddit.requestDisallowInterceptTouchEvent(disallow);
+                viewPager.requestDisallowInterceptTouchEvent(disallow);
             }
         };
 
-        adapterLinks = new AdapterLinkList(activity, new ControllerLinksBase() {
+        adapterLinks = new AdapterSearchLinkList(activity, new ControllerLinksBase() {
             @Override
             public Link getLink(int position) {
                 return mListener.getControllerSearch()
@@ -498,7 +495,7 @@ public class FragmentSearch extends Fragment implements Toolbar.OnMenuItemClickL
             }
         }, linkClickListener);
 
-        adapterLinksSubreddit = new AdapterLinkList(activity, new ControllerLinksBase() {
+        adapterLinksSubreddit = new AdapterSearchLinkList(activity, new ControllerLinksBase() {
             @Override
             public Link getLink(int position) {
                 return mListener.getControllerSearch()

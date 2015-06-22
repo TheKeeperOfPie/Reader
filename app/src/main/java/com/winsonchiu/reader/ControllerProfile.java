@@ -8,6 +8,7 @@ import android.preference.PreferenceManager;
 import android.support.v7.widget.RecyclerView;
 import android.text.TextUtils;
 import android.util.Log;
+import android.util.TypedValue;
 import android.widget.Toast;
 
 import com.android.volley.Response;
@@ -57,6 +58,7 @@ public class ControllerProfile implements ControllerLinksBase, ControllerComment
     private Time time;
     private SharedPreferences preferences;
     private boolean isLoading;
+    private int indentWidth;
 
     public ControllerProfile(Activity activity) {
         setActivity(activity);
@@ -88,6 +90,9 @@ public class ControllerProfile implements ControllerLinksBase, ControllerComment
         this.drawableSelf = resources.getDrawable(R.drawable.ic_chat_white_48dp);
         this.drawableDefault = resources.getDrawable(R.drawable.ic_web_white_48dp);
         this.preferences = PreferenceManager.getDefaultSharedPreferences(activity);
+        this.indentWidth = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 8,
+                activity.getResources()
+                        .getDisplayMetrics());
     }
 
     public void addListener(ItemClickListener listener) {
@@ -225,9 +230,14 @@ public class ControllerProfile implements ControllerLinksBase, ControllerComment
                         Log.d(TAG, "onResponse: " + response);
                         try {
                             int startSize = data.getChildren().size();
-                            int positionStart = startSize + 4;
+                            int positionStart = startSize + 5;
 
                             Listing listing = Listing.fromJson(new JSONObject(response));
+//                            for (Thing thing : listing.getChildren()) {
+//                                Comment comment = (Comment) thing;
+//                                comment.setLevel(0);
+//                            }
+
                             data.addChildren(listing.getChildren());
                             data.setAfter(listing.getAfter());
 
@@ -288,9 +298,9 @@ public class ControllerProfile implements ControllerLinksBase, ControllerComment
                                                         new JSONObject(
                                                                 response));
                                                 if (!listingComment.getChildren().isEmpty()) {
-                                                    topComment = null;
                                                     topComment = (Comment) listingComment.getChildren()
                                                             .get(0);
+                                                    topComment.setLevel(0);
                                                     for (ControllerProfile.ItemClickListener listener : listeners) {
                                                         listener.setRefreshing(
                                                                 false);
@@ -398,6 +408,23 @@ public class ControllerProfile implements ControllerLinksBase, ControllerComment
     @Override
     public void insertComment(Comment comment) {
 
+        Comment parentComment = new Comment();
+        parentComment.setId(comment.getParentId());
+        int commentIndex = data.getChildren()
+                    .indexOf(parentComment);
+
+        if (commentIndex > -1) {
+            comment.setLevel(parentComment.getLevel() + 1);
+            data.getChildren()
+                    .add(commentIndex + 1, comment);
+
+            for (ItemClickListener listener : listeners) {
+//                listener.getAdapter().notifyDataSetChanged();
+                listener.getAdapter()
+                        .notifyItemInserted(commentIndex + 7);
+            }
+        }
+
     }
 
     @Override
@@ -461,8 +488,7 @@ public class ControllerProfile implements ControllerLinksBase, ControllerComment
 
     @Override
     public int getIndentWidth(Comment comment) {
-        // Not implemented
-        return 0;
+        return indentWidth * comment.getLevel();
     }
 
     @Override

@@ -91,7 +91,7 @@
         <android.support.v7.widget.Toolbar
             android:id="@+id/toolbar_actions"
             android:layout_width="match_parent"
-            android:layout_height="48dp"
+            android:layout_height="wrap_content"
             android:layout_below="@id/text_hidden"
             android:layout_toEndOf="@id/view_indicator_container"
             android:layout_alignParentEnd="true"

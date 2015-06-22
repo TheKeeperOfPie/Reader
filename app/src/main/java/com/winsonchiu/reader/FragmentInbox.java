@@ -175,6 +175,7 @@ public class FragmentInbox extends Fragment {
                                         viewHolder instanceof AdapterLinkGrid.ViewHolder);
 
                                 getFragmentManager().beginTransaction()
+                                        .hide(FragmentInbox.this)
                                         .add(R.id.frame_fragment, fragmentComments,
                                                 FragmentComments.TAG)
                                         .addToBackStack(null)
@@ -207,6 +208,7 @@ public class FragmentInbox extends Fragment {
             @Override
             public void loadUrl(String url) {
                 getFragmentManager().beginTransaction()
+                        .hide(FragmentInbox.this)
                         .add(R.id.frame_fragment, FragmentWeb
                                 .newInstance(url, ""), FragmentWeb.TAG)
                         .addToBackStack(null)

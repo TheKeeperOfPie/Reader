@@ -208,9 +208,6 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
 
                     @Override
                     public void loadSelfText(Link link) {
-                        if (textThreadSelf.isShown()) {
-                            return;
-                        }
                         super.loadSelfText(link);
                     }
 
@@ -250,9 +247,6 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
 
                     @Override
                     public void loadSelfText(Link link) {
-                        if (textThreadSelf.isShown()) {
-                            return;
-                        }
                         super.loadSelfText(link);
                     }
 
@@ -860,7 +854,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
 
                 Spannable spannableInfo = new SpannableString(
                         comment.getScore() + " by " + comment.getAuthor() + " " + DateUtils.getRelativeTimeSpanString(
-                                comment.getCreatedUtc()));
+                                comment.getCreatedUtc()) + (comment.getEdited() > 0 ? "*" : ""));
                 spannableInfo.setSpan(new ForegroundColorSpan(
                                 comment.getScore() > 0 ?
                                         callback.getControllerComments()
@@ -911,16 +905,9 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
 
                 textInfo.setText(spannableInfo);
 
-                // TODO: Improve edited indicator
-
-                if (comment.getEdited() > 0) {
-                    textInfo.append("\nEdited ");
-                    if (comment.getEdited() > 1) {
-                        textInfo.append(DateUtils.getRelativeTimeSpanString(comment.getEdited()));
-                    }
+                if (comment.getEdited() > 1) {
+                    textHidden.setText("Edited " + DateUtils.getRelativeTimeSpanString(comment.getEdited()));
                 }
-
-                textHidden.setText(getFormatttedDate(comment.getCreatedUtc()));
 
             }
 

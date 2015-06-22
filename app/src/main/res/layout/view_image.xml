@@ -2,21 +2,20 @@
 <RelativeLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
+    android:layout_height="match_parent"
     >
 
     <ScrollView
         xmlns:android="http://schemas.android.com/apk/res/android"
-        android:id="@+id/scroll_image"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:id="@+id/scroll_text"
+        android:layout_width="match_parent"
+        android:layout_height="72dp"
+        android:layout_alignParentTop="true"
         >
 
         <RelativeLayout
-            android:id="@+id/layout_image"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:paddingBottom="48dp"
             >
 
             <TextView
@@ -43,16 +42,16 @@
                 android:layout_marginBottom="8dp"
                 />
 
-            <FrameLayout
-                android:id="@+id/layout_frame"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_below="@id/text_image_description"
-                />
-
         </RelativeLayout>
 
     </ScrollView>
+
+    <RelativeLayout
+        android:id="@+id/layout_web_view"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_below="@id/scroll_text"
+        />
 
     <com.winsonchiu.reader.TextViewShadow
         android:id="@+id/text_album_indicator"

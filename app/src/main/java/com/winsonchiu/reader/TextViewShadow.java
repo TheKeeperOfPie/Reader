@@ -34,8 +34,8 @@ public class TextViewShadow extends TextView {
 
     @Override
     protected void onDraw(Canvas canvas) {
-        for (int num = 0; num < NUM_TO_DRAW; num++) {
+//        for (int num = 0; num < NUM_TO_DRAW; num++) {
             super.onDraw(canvas);
-        }
+//        }
     }
 }

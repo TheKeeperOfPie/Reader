@@ -379,12 +379,21 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             webFull.getSettings()
                     .setAppCacheEnabled(true);
             webFull.setBackgroundColor(0x000000);
-            webFull.setWebChromeClient(new WebChromeClient());
+            webFull.setWebChromeClient(null);
             webFull.setWebViewClient(new WebViewClient() {
                 @Override
                 public void onScaleChanged(WebView view, float oldScale, float newScale) {
                     webFull.lockHeight();
                     super.onScaleChanged(view, oldScale, newScale);
+                }
+
+                @Override
+                public void onReceivedError(WebView view,
+                        int errorCode,
+                        String description,
+                        String failingUrl) {
+                    super.onReceivedError(view, errorCode, description, failingUrl);
+                    Toast.makeText(callback.getController().getActivity(), "WebView error: " + description, Toast.LENGTH_SHORT).show();
                 }
             });
             webFull.setOnTouchListener(new View.OnTouchListener() {
@@ -429,9 +438,30 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             frameFull = (FrameLayout) itemView.findViewById(R.id.frame_full);
             frameFull.addView(webFull);
             adapterAlbum = new AdapterAlbum(callback.getController()
-                    .getActivity(), new Album(), callback.getListener());
+                    .getActivity(), new Album(), new AdapterAlbum.DisallowListenerAlbum() {
+                @Override
+                public void requestDisallowInterceptTouchEventViewPager(boolean disallow) {
+                    viewPagerFull.requestDisallowInterceptTouchEvent(disallow);
+                }
+
+                @Override
+                public void requestDisallowInterceptTouchEvent(boolean disallow) {
+                    callback.getListener().requestDisallowInterceptTouchEvent(disallow);
+                }
+            });
             viewPagerFull = (ViewPager) itemView.findViewById(R.id.view_pager_full);
             viewPagerFull.setAdapter(adapterAlbum);
+            viewPagerFull.setPageTransformer(false, new ViewPager.PageTransformer() {
+                @Override
+                public void transformPage(View page, float position) {
+                    if (page.getTag() instanceof AdapterAlbum.ViewHolder) {
+                        AdapterAlbum.ViewHolder viewHolder = (AdapterAlbum.ViewHolder) page.getTag();
+                        if (position >= -1 && position <= 1) {
+                            viewHolder.textAlbumIndicator.setTranslationX(-position * page.getWidth());
+                        }
+                    }
+                }
+            });
             imageThumbnail = (ImageView) itemView.findViewById(R.id.image_thumbnail);
             textThreadFlair = (TextView) itemView.findViewById(R.id.text_thread_flair);
             textThreadTitle = (TextView) itemView.findViewById(R.id.text_thread_title);
@@ -883,7 +913,9 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
 
         public void loadSelfText(Link link) {
             if (textThreadSelf.isShown()) {
-                AnimationUtils.animateExpand(textThreadSelf, 1f, null);
+                textThreadSelf.setVisibility(View.GONE);
+                // TODO: Check if textThreadSelf is taller than view and optimize animation
+//                AnimationUtils.animateExpand(textThreadSelf, 1f, null);
                 return;
             }
             if (TextUtils.isEmpty(link.getSelfText())) {
@@ -904,7 +936,8 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                     });
                 }
                 textThreadSelf.setText(Reddit.getTrimmedHtml(link.getSelfTextHtml()));
-                AnimationUtils.animateExpand(textThreadSelf, 1f, null);
+                textThreadSelf.setVisibility(View.VISIBLE);
+//                AnimationUtils.animateExpand(textThreadSelf, 1f, null);
             }
         }
 
@@ -1030,6 +1063,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         private void loadAlbum(Link link, Album album) {
             link.setAlbum(album);
             adapterAlbum.setAlbum(album);
+            viewPagerFull.setCurrentItem(0);
             viewPagerFull.getLayoutParams().height = callback.getListener()
                     .getRecyclerHeight() - itemView.getHeight();
             viewPagerFull.setVisibility(View.VISIBLE);
@@ -1320,19 +1354,25 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             videoFull.stopPlayback();
             webFull.removeAllViews();
             webFull.destroy();
-            adapterAlbum.destroyViews();
-            for (int index = 0; index < viewPagerFull.getChildCount(); index++) {
-                FrameLayout layoutFrame = (FrameLayout) viewPagerFull.getChildAt(index).findViewById(R.id.layout_frame);
-                if (layoutFrame.getChildCount() > 0) {
-                    for (int indexFrame = 0; indexFrame < layoutFrame.getChildCount(); indexFrame++) {
-                        WebView webView = (WebView) layoutFrame.getChildAt(indexFrame);
-                        webView.onPause();
-                        webView.destroy();
+            adapterAlbum.setAlbum(null);
+            if (viewPagerFull.getChildCount() > 0) {
+                for (int index = 0; index < viewPagerFull.getChildCount(); index++) {
+                    AdapterAlbum.ViewHolder viewHolder = (AdapterAlbum.ViewHolder) viewPagerFull.getChildAt(
+                            index)
+                            .getTag();
+                    RelativeLayout layoutWebView = viewHolder.layoutWebView;
+                    if (layoutWebView.getChildCount() > 0) {
+                        for (int indexFrame = 0; indexFrame < layoutWebView.getChildCount(); indexFrame++) {
+                            WebView webView = (WebView) layoutWebView.getChildAt(indexFrame);
+                            webView.onPause();
+                            webView.destroy();
+                        }
                     }
+                    layoutWebView.removeAllViews();
                 }
-                layoutFrame.removeAllViews();
             }
             viewPagerFull.setAdapter(null);
+            viewPagerFull.removeAllViews();
         }
     }
 

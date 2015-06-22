@@ -15,6 +15,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.widget.Toast;
 
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
@@ -161,11 +162,11 @@ public class FragmentAuth extends Fragment {
 
             @Override
             public void onReceivedError(WebView view,
-                                        int errorCode,
-                                        String description,
-                                        String failingUrl) {
-                Log.e(TAG, "Error: " + errorCode + " " + description + " from " + failingUrl);
+                    int errorCode,
+                    String description,
+                    String failingUrl) {
                 super.onReceivedError(view, errorCode, description, failingUrl);
+                Toast.makeText(activity, "WebView error: " + description, Toast.LENGTH_SHORT).show();
             }
         });
         webAuth.loadUrl(reddit.getUserAuthUrl(state));

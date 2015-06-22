@@ -13,6 +13,8 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.AlphaAnimation;
+import android.view.animation.Animation;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 
@@ -31,13 +33,13 @@ import com.winsonchiu.reader.data.Link;
  * create an instance of this fragment.
  */
 public class FragmentComments extends Fragment {
-    // TODO: Rename parameter arguments, choose names that match
-    // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
+
+    public static final String TAG = FragmentComments.class.getCanonicalName();
+
     private static final String ARG_PARAM1 = "param1";
     private static final String ARG_PARAM2 = "param2";
     private static final String ARG_IS_GRID = "isGrid";
-    public static final String TAG = FragmentComments.class.getCanonicalName();
-    private static final int MENU_ACTIONS_SIZE = 4;
+    private static final long DURATION_ACTIONS_FADE = 150;
 
     // TODO: Rename and change types of parameters
     private String subreddit;
@@ -108,6 +110,7 @@ public class FragmentComments extends Fragment {
             @Override
             public void loadUrl(String url) {
                 getFragmentManager().beginTransaction()
+                        .hide(FragmentComments.this)
                         .add(R.id.frame_fragment, FragmentWeb
                                 .newInstance(url, ""), FragmentWeb.TAG)
                         .addToBackStack(null)
@@ -183,6 +186,7 @@ public class FragmentComments extends Fragment {
             @Override
             public void requestDisallowInterceptTouchEvent(boolean disallow) {
                 recyclerCommentList.requestDisallowInterceptTouchEvent(disallow);
+                swipeRefreshCommentList.requestDisallowInterceptTouchEvent(disallow);
             }
         };
 
@@ -214,8 +218,8 @@ public class FragmentComments extends Fragment {
         buttonExpandActions.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                buttonExpandActions.setImageResource(layoutActions.isShown() ? R.drawable.ic_unfold_more_white_24dp : android.R.color.transparent);
-                layoutActions.setVisibility(layoutActions.isShown() ? View.GONE : View.VISIBLE);
+                buttonExpandActions.setImageResource(buttonCommentPrevious.isShown() ? R.drawable.ic_unfold_more_white_24dp : android.R.color.transparent);
+                toggleLayoutActions();
             }
         });
 
@@ -223,7 +227,7 @@ public class FragmentComments extends Fragment {
                 new ScrollAwareFloatingActionButtonBehavior.OnVisibilityChangeListener() {
                     @Override
                     public void onStartHideFromScroll() {
-                        layoutActions.setVisibility(View.GONE);
+                        hideLayoutActions();
                     }
 
                     @Override
@@ -303,6 +307,67 @@ public class FragmentComments extends Fragment {
         mListener.getControllerComments().addListener(listener);
 
         return view;
+    }
+
+    private void toggleLayoutActions() {
+        if (buttonCommentPrevious.isShown()) {
+            hideLayoutActions();
+        }
+        else {
+            showLayoutActions();
+        }
+    }
+
+    private void showLayoutActions() {
+
+        for (int index = layoutActions.getChildCount() - 1; index >= 0; index--) {
+            final View view = layoutActions.getChildAt(index);
+            AlphaAnimation alphaAnimation = new AlphaAnimation(0f, 1f);
+            alphaAnimation.setAnimationListener(new Animation.AnimationListener() {
+                @Override
+                public void onAnimationStart(Animation animation) {
+                    view.setVisibility(View.VISIBLE);
+                }
+
+                @Override
+                public void onAnimationEnd(Animation animation) {
+                }
+
+                @Override
+                public void onAnimationRepeat(Animation animation) {
+
+                }
+            });
+            alphaAnimation.setDuration(DURATION_ACTIONS_FADE);
+            alphaAnimation.setStartOffset(index * DURATION_ACTIONS_FADE / 3);
+            view.startAnimation(alphaAnimation);
+        }
+
+    }
+
+    private void hideLayoutActions() {
+        for (int index = 0; index < layoutActions.getChildCount(); index++) {
+            final View view = layoutActions.getChildAt(index);
+            AlphaAnimation alphaAnimation = new AlphaAnimation(1f, 0f);
+            alphaAnimation.setAnimationListener(new Animation.AnimationListener() {
+                @Override
+                public void onAnimationStart(Animation animation) {
+                }
+
+                @Override
+                public void onAnimationEnd(Animation animation) {
+                    view.setVisibility(View.GONE);
+                }
+
+                @Override
+                public void onAnimationRepeat(Animation animation) {
+
+                }
+            });
+            alphaAnimation.setDuration(DURATION_ACTIONS_FADE);
+            alphaAnimation.setStartOffset(index * DURATION_ACTIONS_FADE / 3);
+            view.startAnimation(alphaAnimation);
+        }
     }
 
     @Override

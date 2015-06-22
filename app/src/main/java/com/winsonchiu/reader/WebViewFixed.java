@@ -4,6 +4,7 @@ import android.annotation.TargetApi;
 import android.content.Context;
 import android.os.Build;
 import android.util.AttributeSet;
+import android.view.ViewGroup;
 import android.webkit.WebView;
 
 /**
@@ -35,6 +36,10 @@ public class WebViewFixed extends WebView {
     public void resetMaxHeight() {
         this.maxHeight = Integer.MAX_VALUE;
         setMeasuredDimension(getMeasuredWidth(), 0);
+        ViewGroup.LayoutParams layoutParams = getLayoutParams();
+        layoutParams.height = ViewGroup.LayoutParams.WRAP_CONTENT;
+        setLayoutParams(layoutParams);
+        requestLayout();
     }
 
     @Override

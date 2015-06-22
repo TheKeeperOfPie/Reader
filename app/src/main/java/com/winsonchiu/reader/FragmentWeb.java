@@ -18,6 +18,7 @@ import android.view.ViewGroup;
 import android.webkit.WebChromeClient;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.widget.Toast;
 
 
 /**
@@ -168,6 +169,15 @@ public class FragmentWeb extends Fragment {
                 swipeRefreshWeb.setRefreshing(false);
                 webView.setBackgroundColor(0xFFFFFFFF);
                 toolbar.setTitle(view.getTitle());
+            }
+
+            @Override
+            public void onReceivedError(WebView view,
+                    int errorCode,
+                    String description,
+                    String failingUrl) {
+                super.onReceivedError(view, errorCode, description, failingUrl);
+                Toast.makeText(activity, "WebView error: " + description, Toast.LENGTH_SHORT).show();
             }
         });
         webView.setWebChromeClient(new WebChromeClient() {

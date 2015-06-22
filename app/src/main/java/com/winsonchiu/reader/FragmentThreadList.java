@@ -239,99 +239,101 @@ public class FragmentThreadList extends Fragment implements Toolbar.OnMenuItemCl
                         @Override
                         public void run() {
                             ((StaggeredGridLayoutManager) layoutManager).invalidateSpanAssignments();
-
-                            viewHolder.itemView.post(new Runnable() {
-                                @Override
-                                public void run() {
-                                    final float viewStartY = viewHolder.itemView.getY();
-                                    // Grid layout has a 2 dp layout_margin that needs to be accounted for
-                                    final float minY = viewHolder instanceof AdapterLinkGrid.ViewHolder ?
-                                            TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 2,
-                                                    getResources().getDisplayMetrics()) : 0;
-                                    final float viewStartPaddingBottom = viewHolder.itemView.getPaddingBottom();
-                                    final float screenHeight = getResources().getDisplayMetrics().heightPixels;
-
-                                    float speed = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 1,
-                                            activity.getResources()
-                                                    .getDisplayMetrics());
-                                    long duration = (long) Math.abs(viewStartY / speed);
-
-                                    TranslateAnimation translateAnimation = new TranslateAnimation(0, 0, 0,
-                                            -viewStartY + minY);
-
-                                    Animation heightAnimation = new Animation() {
-                                        @Override
-                                        protected void applyTransformation(float interpolatedTime,
-                                                Transformation t) {
-                                            super.applyTransformation(interpolatedTime, t);
-                                            viewHolder.itemView.setPadding(viewHolder.itemView.getPaddingLeft(),
-                                                    viewHolder.itemView.getPaddingTop(),
-                                                    viewHolder.itemView.getPaddingRight(),
-                                                    (int) (viewStartPaddingBottom + interpolatedTime * screenHeight));
-                                        }
-
-                                        @Override
-                                        public boolean willChangeBounds() {
-                                            return true;
-                                        }
-                                    };
-                                    heightAnimation.setStartOffset(duration / 10);
-                                    heightAnimation.setInterpolator(new LinearInterpolator());
-
-                                    AnimationSet animation = new AnimationSet(false);
-                                    animation.addAnimation(translateAnimation);
-                                    animation.addAnimation(heightAnimation);
-
-                                    animation.setDuration(duration);
-                                    animation.setFillAfter(false);
-                                    animation.setAnimationListener(new Animation.AnimationListener() {
-                                        @Override
-                                        public void onAnimationStart(Animation animation) {
-
-                                        }
-
-                                        @Override
-                                        public void onAnimationEnd(Animation animation) {
-                                            FragmentComments fragmentComments = FragmentComments.newInstance(
-                                                    link.getSubreddit(), link.getId(),
-                                                    viewHolder instanceof AdapterLinkGrid.ViewHolder);
-
-                                            getFragmentManager().beginTransaction()
-                                                    .add(R.id.frame_fragment, fragmentComments,
-                                                            FragmentComments.TAG)
-                                                    .addToBackStack(null)
-                                                    .commit();
-
-                                            viewHolder.itemView.postDelayed(new Runnable() {
-                                                @Override
-                                                public void run() {
-                                                    viewHolder.itemView.setPadding(
-                                                            viewHolder.itemView.getPaddingLeft(),
-                                                            viewHolder.itemView.getPaddingTop(),
-                                                            viewHolder.itemView.getPaddingRight(),
-                                                            (int) viewStartPaddingBottom);
-                                                    viewHolder.itemView.clearAnimation();
-                                                }
-                                            }, 150);
-                                        }
-
-                                        @Override
-                                        public void onAnimationRepeat(Animation animation) {
-
-                                        }
-                                    });
-
-                                    viewHolder.itemView.startAnimation(animation);
-                                }
-                            });
                         }
                     });
                 }
+
+                viewHolder.itemView.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        final float viewStartY = viewHolder.itemView.getY();
+                        // Grid layout has a 2 dp layout_margin that needs to be accounted for
+                        final float minY = viewHolder instanceof AdapterLinkGrid.ViewHolder ?
+                                TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 2,
+                                        getResources().getDisplayMetrics()) : 0;
+                        final float viewStartPaddingBottom = viewHolder.itemView.getPaddingBottom();
+                        final float screenHeight = getResources().getDisplayMetrics().heightPixels;
+
+                        float speed = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 1,
+                                activity.getResources()
+                                        .getDisplayMetrics());
+                        long duration = (long) Math.abs(viewStartY / speed);
+
+                        TranslateAnimation translateAnimation = new TranslateAnimation(0, 0, 0,
+                                -viewStartY + minY);
+
+                        Animation heightAnimation = new Animation() {
+                            @Override
+                            protected void applyTransformation(float interpolatedTime,
+                                    Transformation t) {
+                                super.applyTransformation(interpolatedTime, t);
+                                viewHolder.itemView.setPadding(viewHolder.itemView.getPaddingLeft(),
+                                        viewHolder.itemView.getPaddingTop(),
+                                        viewHolder.itemView.getPaddingRight(),
+                                        (int) (viewStartPaddingBottom + interpolatedTime * screenHeight));
+                            }
+
+                            @Override
+                            public boolean willChangeBounds() {
+                                return true;
+                            }
+                        };
+                        heightAnimation.setStartOffset(duration / 10);
+                        heightAnimation.setInterpolator(new LinearInterpolator());
+
+                        AnimationSet animation = new AnimationSet(false);
+                        animation.addAnimation(translateAnimation);
+                        animation.addAnimation(heightAnimation);
+
+                        animation.setDuration(duration);
+                        animation.setFillAfter(false);
+                        animation.setAnimationListener(new Animation.AnimationListener() {
+                            @Override
+                            public void onAnimationStart(Animation animation) {
+
+                            }
+
+                            @Override
+                            public void onAnimationEnd(Animation animation) {
+                                FragmentComments fragmentComments = FragmentComments.newInstance(
+                                        link.getSubreddit(), link.getId(),
+                                        viewHolder instanceof AdapterLinkGrid.ViewHolder);
+
+                                getFragmentManager().beginTransaction()
+                                        .hide(FragmentThreadList.this)
+                                        .add(R.id.frame_fragment, fragmentComments,
+                                                FragmentComments.TAG)
+                                        .addToBackStack(null)
+                                        .commit();
+
+                                viewHolder.itemView.postDelayed(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        viewHolder.itemView.setPadding(
+                                                viewHolder.itemView.getPaddingLeft(),
+                                                viewHolder.itemView.getPaddingTop(),
+                                                viewHolder.itemView.getPaddingRight(),
+                                                (int) viewStartPaddingBottom);
+                                        viewHolder.itemView.clearAnimation();
+                                    }
+                                }, 150);
+                            }
+
+                            @Override
+                            public void onAnimationRepeat(Animation animation) {
+
+                            }
+                        });
+
+                        viewHolder.itemView.startAnimation(animation);
+                    }
+                });
             }
 
             @Override
             public void loadUrl(String url) {
                 getFragmentManager().beginTransaction()
+                        .hide(FragmentThreadList.this)
                         .add(R.id.frame_fragment, FragmentWeb
                                 .newInstance(url, ""), FragmentWeb.TAG)
                         .addToBackStack(null)
@@ -626,6 +628,7 @@ public class FragmentThreadList extends Fragment implements Toolbar.OnMenuItemCl
         switch (item.getItemId()) {
             case R.id.item_search:
                 getFragmentManager().beginTransaction()
+                        .hide(FragmentThreadList.this)
                         .add(R.id.frame_fragment, FragmentSearch.newInstance("", ""))
                         .addToBackStack(null)
                         .commit();

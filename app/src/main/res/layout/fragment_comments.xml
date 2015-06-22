@@ -6,7 +6,6 @@
     android:layout_height="match_parent"
     tools:context="com.winsonchiu.reader.FragmentComments"
     android:orientation="vertical"
-    android:background="@color/darkThemeBackground"
     >
 
     <include
@@ -74,7 +73,6 @@
         android:layout_marginEnd="16dp"
         android:layout_alignParentBottom="true"
         android:layout_alignParentEnd="true"
-        android:visibility="gone"
         >
 
         <android.support.design.widget.FloatingActionButton
