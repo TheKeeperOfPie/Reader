@@ -42,7 +42,7 @@ public class FragmentSearch extends Fragment implements Toolbar.OnMenuItemClickL
     private static final String ARG_PARAM1 = "param1";
     private static final String ARG_PARAM2 = "param2";
     private static final int PAGE_COUNT = 3;
-    private static final String TAG = FragmentSearch.class.getCanonicalName();
+    public static final String TAG = FragmentSearch.class.getCanonicalName();
 
     // TODO: Rename and change types of parameters
     private String mParam1;
@@ -347,6 +347,16 @@ public class FragmentSearch extends Fragment implements Toolbar.OnMenuItemClickL
             @Override
             public void setSort(Sort sort) {
 
+            }
+
+            @Override
+            public void loadVideoLandscape(int position) {
+
+            }
+
+            @Override
+            public int getRequestedOrientation() {
+                return mListener.getRequestedOrientation();
             }
 
         };

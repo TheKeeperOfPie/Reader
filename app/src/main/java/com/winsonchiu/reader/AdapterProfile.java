@@ -75,6 +75,8 @@ public class AdapterProfile extends RecyclerView.Adapter<RecyclerView.ViewHolder
 
     private void setCallbacks() {
 
+        // TODO: Move to FragmentProfile
+
         this.linksCallback = new ControllerLinks.ListenerCallback() {
             @Override
             public ControllerLinks.LinkClickListener getListener() {
@@ -154,6 +156,16 @@ public class AdapterProfile extends RecyclerView.Adapter<RecyclerView.ViewHolder
                     @Override
                     public void setSort(Sort sort) {
 
+                    }
+
+                    @Override
+                    public void loadVideoLandscape(int position) {
+
+                    }
+
+                    @Override
+                    public int getRequestedOrientation() {
+                        return listener.getRequestedOrientation();
                     }
 
                 };

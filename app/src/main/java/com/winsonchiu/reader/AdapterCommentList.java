@@ -81,7 +81,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
     public AdapterCommentList(Activity activity,
             final ControllerComments controllerComments,
             final ControllerComments.CommentClickListener listener,
-            boolean isGrid, int colorLink) {
+            boolean isGrid, int colorLink, ControllerLinks.LinkClickListener linkClickListener) {
         this.isGrid = isGrid;
         this.colorLink = colorLink;
         this.activity = activity;
@@ -94,82 +94,8 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                 resources.getDisplayMetrics());
         this.titleMargin = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 16,
                 resources.getDisplayMetrics());
-        this.linkClickListener = new ControllerLinks.LinkClickListener() {
-            @Override
-            public void onClickComments(Link link, RecyclerView.ViewHolder viewHolder) {
-                // Not required
-            }
+        this.linkClickListener = linkClickListener;
 
-            @Override
-            public void loadUrl(String url) {
-                listener.loadUrl(url);
-            }
-
-            @Override
-            public void onFullLoaded(int position) {
-                // Not required
-            }
-
-            @Override
-            public void setRefreshing(boolean refreshing) {
-                // Not required
-            }
-
-            @Override
-            public void setToolbarTitle(String title) {
-                // Not required
-            }
-
-            @Override
-            public AdapterLink getAdapter() {
-                return null;
-            }
-
-            @Override
-            public int getRecyclerHeight() {
-                return listener.getRecyclerHeight();
-            }
-
-            @Override
-            public void loadSideBar(Subreddit listingSubreddits) {
-
-            }
-
-            @Override
-            public void setEmptyView(boolean visible) {
-                // Not required
-            }
-
-            @Override
-            public int getRecyclerWidth() {
-                return listener.getRecyclerWidth();
-            }
-
-            @Override
-            public void onClickSubmit(String postType) {
-
-            }
-
-            @Override
-            public ControllerCommentsBase getControllerComments() {
-                return controllerComments;
-            }
-
-            @Override
-            public void setSort(Sort sort) {
-
-            }
-
-            @Override
-            public void requestDisallowInterceptTouchEventVertical(boolean disallow) {
-                listener.requestDisallowInterceptTouchEventVertical(disallow);
-            }
-
-            @Override
-            public void requestDisallowInterceptTouchEventHorizontal(boolean disallow) {
-                listener.requestDisallowInterceptTouchEventHorizontal(disallow);
-            }
-        };
         // TODO: Move current user to global instance
         this.user = new User();
 
@@ -240,9 +166,9 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                     }
 
                     @Override
-                    public void onClickThumbnail(Link link) {
+                    public void onClickThumbnail() {
                         if (listener.hideYouTube()) {
-                            super.onClickThumbnail(link);
+                            super.onClickThumbnail();
                         }
                     }
                 };
@@ -279,9 +205,9 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                     }
 
                     @Override
-                    public void onClickThumbnail(Link link) {
+                    public void onClickThumbnail() {
                         if (listener.hideYouTube()) {
-                            super.onClickThumbnail(link);
+                            super.onClickThumbnail();
                         }
                     }
                 };
@@ -307,7 +233,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
             viewHolderBase.onBind(controllerComments.getMainLink());
             if (!isInitialized) {
                 if (controllerComments.getMainLink().isSelf()) {
-                    viewHolderBase.onClickThumbnail(controllerComments.getMainLink());
+                    viewHolderBase.onClickThumbnail();
                 }
                 isInitialized = true;
             }

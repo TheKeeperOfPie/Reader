@@ -297,6 +297,16 @@ public class FragmentProfile extends Fragment implements Toolbar.OnMenuItemClick
                 spinnerPage.setSelection(adapterProfilePage.getPages().indexOf(page));
             }
 
+            @Override
+            public void setRequestedOrientation(int orientation) {
+                mListener.setRequestedOrientation(orientation);
+            }
+
+            @Override
+            public int getRequestedOrientation() {
+                return mListener.getRequestedOrientation();
+            }
+
         };
 
         toolbar = (Toolbar) view.findViewById(R.id.toolbar);

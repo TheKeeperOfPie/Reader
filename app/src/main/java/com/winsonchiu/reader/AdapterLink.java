@@ -3,6 +3,7 @@ package com.winsonchiu.reader;
 import android.app.Activity;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.ActivityInfo;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.PorterDuff;
@@ -279,7 +280,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         public void onBind(Subreddit subreddit) {
 
             if (TextUtils.isEmpty(subreddit.getDisplayName()) || "/r/all/".equalsIgnoreCase(
-                    subreddit.getUrl())) {
+                    subreddit.getUrl()) || subreddit.getUrl().contains("+")) {
                 setVisibility(View.GONE);
                 return;
             }
@@ -598,7 +599,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                             .onClickComments(link, ViewHolderBase.this);
                     break;
                 case R.id.image_thumbnail:
-                    onClickThumbnail(link);
+                    onClickThumbnail();
                     break;
                 case R.id.text_thread_self:
                     break;
@@ -774,7 +775,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             return false;
         }
 
-        private boolean loadYouTube() {
+        public boolean loadYouTube() {
 
             if (viewYouTube.isShown()) {
                 hideYouTube();
@@ -867,7 +868,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             return true;
         }
 
-        public void onClickThumbnail(Link link) {
+        public void onClickThumbnail() {
             if (link.isSelf()) {
                 loadSelfText(link);
             }
@@ -1087,12 +1088,30 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                     new YouTubePlayer.OnInitializedListener() {
                         @Override
                         public void onInitializationSuccess(YouTubePlayer.Provider provider,
-                                YouTubePlayer youTubePlayer,
+                                final YouTubePlayer youTubePlayer,
                                 boolean b) {
                             ViewHolderBase.this.youTubePlayer = youTubePlayer;
-                            youTubePlayer.setShowFullscreenButton(false);
                             youTubePlayer.setManageAudioFocus(false);
                             youTubePlayer.loadVideo(id);
+                            if (callback.getListener().getRequestedOrientation() != ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE) {
+                                youTubePlayer.setOnFullscreenListener(
+                                        new YouTubePlayer.OnFullscreenListener() {
+                                            @Override
+                                            public void onFullscreen(boolean b) {
+                                                callback.getListener().loadVideoLandscape(getAdapterPosition());
+                                            }
+                                        });
+                            }
+                            else {
+                                youTubePlayer.setFullscreen(true);
+                                youTubePlayer.setOnFullscreenListener(
+                                        new YouTubePlayer.OnFullscreenListener() {
+                                            @Override
+                                            public void onFullscreen(boolean fullscreen) {
+                                                youTubePlayer.setFullscreen(fullscreen);
+                                            }
+                                        });
+                            }
                             viewYouTube.setVisibility(View.VISIBLE);
                             callback.getListener()
                                     .onFullLoaded(getAdapterPosition());

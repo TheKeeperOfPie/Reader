@@ -2,6 +2,7 @@ package com.winsonchiu.reader;
 
 import android.app.Activity;
 import android.app.Fragment;
+import android.content.pm.ActivityInfo;
 import android.os.Bundle;
 import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.FloatingActionButton;
@@ -9,6 +10,7 @@ import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -24,6 +26,7 @@ import com.google.android.youtube.player.YouTubeInitializationResult;
 import com.google.android.youtube.player.YouTubePlayer;
 import com.google.android.youtube.player.YouTubePlayerView;
 import com.winsonchiu.reader.data.Link;
+import com.winsonchiu.reader.data.Subreddit;
 
 public class FragmentComments extends Fragment {
 
@@ -166,13 +169,63 @@ public class FragmentComments extends Fragment {
                         new YouTubePlayer.OnInitializedListener() {
                             @Override
                             public void onInitializationSuccess(YouTubePlayer.Provider provider,
-                                    YouTubePlayer youTubePlayer,
+                                    YouTubePlayer player,
                                     boolean b) {
-                                FragmentComments.this.youTubePlayer = youTubePlayer;
-                                youTubePlayer.setShowFullscreenButton(false);
+                                FragmentComments.this.youTubePlayer = player;
                                 youTubePlayer.setManageAudioFocus(false);
-                                youTubePlayer.loadVideo(id);
+                                youTubePlayer.setFullscreenControlFlags(YouTubePlayer.FULLSCREEN_FLAG_CONTROL_SYSTEM_UI);
+
+                                DisplayMetrics displayMetrics = activity.getResources().getDisplayMetrics();
+
+                                if (displayMetrics.widthPixels > displayMetrics.heightPixels){
+                                    youTubePlayer.setOnFullscreenListener(
+                                            new YouTubePlayer.OnFullscreenListener() {
+                                                @Override
+                                                public void onFullscreen(boolean fullscreen) {
+                                                    Log.d(TAG, "fullscreen: " + fullscreen);
+                                                    if (!fullscreen) {
+                                                        youTubePlayer.pause();
+                                                        youTubePlayer.release();
+                                                        youTubePlayer = null;
+                                                        viewYouTube.setVisibility(View.GONE);
+                                                    }
+                                                }
+                                            });
+                                    youTubePlayer.setPlayerStateChangeListener(
+                                            new YouTubePlayer.PlayerStateChangeListener() {
+                                                @Override
+                                                public void onLoading() {
+
+                                                }
+
+                                                @Override
+                                                public void onLoaded(String s) {
+                                                }
+
+                                                @Override
+                                                public void onAdStarted() {
+
+                                                }
+
+                                                @Override
+                                                public void onVideoStarted() {
+                                                    youTubePlayer.setFullscreen(true);
+
+                                                }
+
+                                                @Override
+                                                public void onVideoEnded() {
+
+                                                }
+
+                                                @Override
+                                                public void onError(YouTubePlayer.ErrorReason errorReason) {
+
+                                                }
+                                            });
+                                }
                                 viewYouTube.setVisibility(View.VISIBLE);
+                                youTubePlayer.loadVideo(id);
                             }
 
                             @Override
@@ -303,7 +356,95 @@ public class FragmentComments extends Fragment {
 
         if (adapterCommentList == null) {
             adapterCommentList = new AdapterCommentList(activity, mListener.getControllerComments(), listener,
-                    getArguments().getBoolean(ARG_IS_GRID, false), getArguments().getInt(ARG_COLOR_LINK));
+                    getArguments().getBoolean(ARG_IS_GRID, false), getArguments().getInt(ARG_COLOR_LINK),
+                    new ControllerLinks.LinkClickListener() {
+                        @Override
+                        public void requestDisallowInterceptTouchEventVertical(boolean disallow) {
+                            recyclerCommentList.requestDisallowInterceptTouchEvent(disallow);
+                            swipeRefreshCommentList.requestDisallowInterceptTouchEvent(disallow);
+                        }
+
+                        @Override
+                        public void requestDisallowInterceptTouchEventHorizontal(boolean disallow) {
+
+                        }
+
+                        @Override
+                        public void onClickComments(Link link, RecyclerView.ViewHolder viewHolder) {
+
+                        }
+
+                        @Override
+                        public void loadUrl(String url) {
+                            listener.loadUrl(url);
+                        }
+
+                        @Override
+                        public void onFullLoaded(int position) {
+
+                        }
+
+                        @Override
+                        public void setRefreshing(boolean refreshing) {
+
+                        }
+
+                        @Override
+                        public void setToolbarTitle(String title) {
+
+                        }
+
+                        @Override
+                        public AdapterLink getAdapter() {
+                            return null;
+                        }
+
+                        @Override
+                        public int getRecyclerHeight() {
+                            return recyclerCommentList.getHeight();
+                        }
+
+                        @Override
+                        public void loadSideBar(Subreddit listingSubreddits) {
+
+                        }
+
+                        @Override
+                        public void setEmptyView(boolean visible) {
+
+                        }
+
+                        @Override
+                        public int getRecyclerWidth() {
+                            return recyclerCommentList.getWidth();
+                        }
+
+                        @Override
+                        public void onClickSubmit(String postType) {
+
+                        }
+
+                        @Override
+                        public ControllerCommentsBase getControllerComments() {
+                            return mListener.getControllerComments();
+                        }
+
+                        @Override
+                        public void setSort(Sort sort) {
+
+                        }
+
+                        @Override
+                        public void loadVideoLandscape(int position) {
+
+                        }
+
+                        @Override
+                        public int getRequestedOrientation() {
+                            return mListener.getRequestedOrientation();
+                        }
+
+                    });
         }
 
         observer = new RecyclerView.AdapterDataObserver() {

@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.app.Fragment;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.ActivityInfo;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
@@ -48,6 +49,7 @@ public class FragmentThreadList extends Fragment implements Toolbar.OnMenuItemCl
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
     private static final String ARG_PARAM1 = "param1";
     private static final String ARG_PARAM2 = "param2";
+    private static final String SCROLL_POSITION = "scrollPosition";
 
     // TODO: Rename and change types of parameters
     private String mParam1;
@@ -73,6 +75,7 @@ public class FragmentThreadList extends Fragment implements Toolbar.OnMenuItemCl
     private Toolbar toolbar;
     private AdapterLinkList adapterLinkList;
     private AdapterLinkGrid adapterLinkGrid;
+    private int saveScrollPosition;
 
     /**
      * Use this factory method to create a new instance of
@@ -202,7 +205,7 @@ public class FragmentThreadList extends Fragment implements Toolbar.OnMenuItemCl
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
-            Bundle savedInstanceState) {
+            final Bundle savedInstanceState) {
 
         final View view = inflater.inflate(R.layout.fragment_thread_list, container, false);
 
@@ -367,6 +370,18 @@ public class FragmentThreadList extends Fragment implements Toolbar.OnMenuItemCl
             public void setSort(Sort sort) {
                 menu.findItem(sort.getMenuId()).setChecked(true);
             }
+
+            @Override
+            public void loadVideoLandscape(int position) {
+                saveScrollPosition = position;
+                mListener.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+            }
+
+            @Override
+            public int getRequestedOrientation() {
+                return mListener.getRequestedOrientation();
+            }
+
         };
 
         toolbar = (Toolbar) view.findViewById(R.id.toolbar);
@@ -445,6 +460,11 @@ public class FragmentThreadList extends Fragment implements Toolbar.OnMenuItemCl
                 .addListener(linkClickListener);
 
         return view;
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
     }
 
     @Override
@@ -538,7 +558,7 @@ public class FragmentThreadList extends Fragment implements Toolbar.OnMenuItemCl
             case R.id.item_search:
                 getFragmentManager().beginTransaction()
                         .hide(FragmentThreadList.this)
-                        .add(R.id.frame_fragment, FragmentSearch.newInstance("", ""))
+                        .add(R.id.frame_fragment, FragmentSearch.newInstance("", ""), FragmentSearch.TAG)
                         .addToBackStack(null)
                         .commit();
                 return true;

@@ -594,6 +594,8 @@ public class ControllerProfile implements ControllerLinksBase, ControllerComment
         void loadLink(Comment comment);
         void setIsUser(boolean isUser);
         void setPage(String page);
+        void setRequestedOrientation(int orientation);
+        int getRequestedOrientation();
     }
 
     public interface ListenerCallback {

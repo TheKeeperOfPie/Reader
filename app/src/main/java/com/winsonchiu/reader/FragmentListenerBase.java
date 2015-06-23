@@ -12,4 +12,6 @@ public interface FragmentListenerBase {
     ControllerComments getControllerComments();
     ControllerProfile getControllerProfile();
     ControllerSearch getControllerSearch();
+    void setRequestedOrientation(int orientation);
+    int getRequestedOrientation();
 }

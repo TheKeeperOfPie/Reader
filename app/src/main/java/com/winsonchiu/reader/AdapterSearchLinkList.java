@@ -30,12 +30,12 @@ public class AdapterSearchLinkList extends AdapterLinkList {
         ViewHolder viewHolder = new ViewHolder(LayoutInflater.from(viewGroup.getContext())
                 .inflate(R.layout.row_link, viewGroup, false), this) {
             @Override
-            public void onClickThumbnail(Link link) {
+            public void onClickThumbnail() {
                 InputMethodManager inputManager = (InputMethodManager) activity
                         .getSystemService(Context.INPUT_METHOD_SERVICE);
                 inputManager.hideSoftInputFromWindow(itemView.getWindowToken(),
                         InputMethodManager.HIDE_NOT_ALWAYS);
-                super.onClickThumbnail(link);
+                super.onClickThumbnail();
             }
         };
         viewHolders.add(viewHolder);

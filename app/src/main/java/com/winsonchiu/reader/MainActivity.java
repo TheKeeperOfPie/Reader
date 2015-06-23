@@ -133,6 +133,22 @@ public class MainActivity extends YouTubeBaseActivity
             }
         }
 
+        if (getFragmentManager().findFragmentByTag(FragmentComments.TAG) != null) {
+
+            hideFragment(FragmentThreadList.TAG);
+            hideFragment(FragmentProfile.TAG);
+            hideFragment(FragmentInbox.TAG);
+            hideFragment(FragmentSearch.TAG);
+
+        }
+
+    }
+
+    private void hideFragment(String tag) {
+        Fragment fragment = getFragmentManager().findFragmentByTag(tag);
+        if (fragment != null) {
+            getFragmentManager().beginTransaction().hide(fragment).commit();
+        }
     }
 
     private void inflateNavigationDrawer() {

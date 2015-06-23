@@ -416,6 +416,8 @@ public class ControllerLinks implements ControllerLinksBase {
         void onClickSubmit(String postType);
         ControllerCommentsBase getControllerComments();
         void setSort(Sort sort);
+        void loadVideoLandscape(int position);
+        int getRequestedOrientation();
     }
 
     public interface ListenerCallback {
