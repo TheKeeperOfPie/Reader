@@ -41,13 +41,7 @@ import io.fabric.sdk.android.Fabric;
 
 
 public class MainActivity extends YouTubeBaseActivity
-        implements FragmentThreadList.OnFragmentInteractionListener,
-        FragmentWeb.OnFragmentInteractionListener,
-        FragmentComments.OnFragmentInteractionListener,
-        FragmentAuth.OnFragmentInteractionListener,
-        FragmentProfile.OnFragmentInteractionListener,
-        FragmentInbox.OnFragmentInteractionListener,
-        FragmentSearch.OnFragmentInteractionListener {
+        implements FragmentListenerBase {
 
     public static final String REDDIT_PAGE = "redditPage";
 
@@ -341,7 +335,7 @@ public class MainActivity extends YouTubeBaseActivity
 
                 getFragmentManager().beginTransaction()
                         .replace(R.id.frame_fragment,
-                                FragmentComments.newInstance(subreddit, id, false),
+                                FragmentComments.newInstance(subreddit, id, false, getResources().getColor(R.color.darkThemeBackground)),
                                 FragmentComments.TAG)
                         .commit();
                 fragmentData.getControllerComments().setLinkId(subreddit, id);

@@ -3,6 +3,7 @@ package com.winsonchiu.reader;
 import android.app.Activity;
 import android.app.Fragment;
 import android.content.Context;
+import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.support.design.widget.TabLayout;
@@ -34,15 +35,6 @@ import com.winsonchiu.reader.data.Link;
 import com.winsonchiu.reader.data.Reddit;
 import com.winsonchiu.reader.data.Subreddit;
 
-
-/**
- * A simple {@link Fragment} subclass.
- * Activities that contain this fragment must implement the
- * {@link FragmentSearch.OnFragmentInteractionListener} interface
- * to handle interaction events.
- * Use the {@link FragmentSearch#newInstance} factory method to
- * create an instance of this fragment.
- */
 public class FragmentSearch extends Fragment implements Toolbar.OnMenuItemClickListener {
 
     // TODO: Rename parameter arguments, choose names that match
@@ -56,7 +48,7 @@ public class FragmentSearch extends Fragment implements Toolbar.OnMenuItemClickL
     private String mParam1;
     private String mParam2;
 
-    private OnFragmentInteractionListener mListener;
+    private FragmentListenerBase mListener;
 
     private Activity activity;
     private TabLayout tabLayout;
@@ -250,81 +242,37 @@ public class FragmentSearch extends Fragment implements Toolbar.OnMenuItemClickL
 
         ControllerLinks.LinkClickListener linkClickListener = new ControllerLinks.LinkClickListener() {
             @Override
+            public void requestDisallowInterceptTouchEventVertical(boolean disallow) {
+                recyclerSearchLinks.requestDisallowInterceptTouchEvent(disallow);
+                recyclerSearchLinksSubreddit.requestDisallowInterceptTouchEvent(disallow);
+                viewPager.requestDisallowInterceptTouchEvent(disallow);
+            }
+
+            @Override
+            public void requestDisallowInterceptTouchEventHorizontal(boolean disallow) {
+
+            }
+
+            @Override
             public void onClickComments(final Link link, final RecyclerView.ViewHolder viewHolder) {
 
-                if (link.getNumComments() == 0) {
-                    if (!link.isCommentsClicked()) {
-                        Toast.makeText(activity, activity.getString(R.string.no_comments),
-                                Toast.LENGTH_SHORT).show();
-                        link.setCommentsClicked(true);
-                        return;
-                    }
-                }
 
                 mListener.getControllerComments()
                         .setLink(link);
 
-                if (viewHolder instanceof AdapterLinkGrid.ViewHolder) {
-                    ((StaggeredGridLayoutManager.LayoutParams) viewHolder.itemView.getLayoutParams()).setFullSpan(
-                            true);
-                    viewHolder.itemView.requestLayout();
-                }
-
-                viewHolder.itemView.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        final float viewStartY = viewHolder.itemView.getY();
-                        // Grid layout has a 2 dp layout_margin that needs to be accounted for
-                        final float minY = viewHolder instanceof AdapterLinkGrid.ViewHolder ?
-                                TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 2,
-                                        getResources().getDisplayMetrics()) : 0;
-                        final float viewStartPaddingBottom = viewHolder.itemView.getPaddingBottom();
-                        final float screenHeight = getResources().getDisplayMetrics().heightPixels;
-
-                        float speed = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 1,
-                                activity.getResources()
-                                        .getDisplayMetrics());
-                        long duration = (long) Math.abs(viewStartY / speed);
-
-                        TranslateAnimation translateAnimation = new TranslateAnimation(0, 0, 0,
-                                -viewStartY + minY);
-
-                        Animation heightAnimation = new Animation() {
+                AnimationUtils.loadCommentFragmentAnimation(activity, mListener.getControllerSearch().getCurrentPage() == ControllerSearch.PAGE_LINKS ? recyclerSearchLinks.getLayoutManager() : recyclerSearchLinksSubreddit.getLayoutManager(),
+                        viewHolder,
+                        link, new AnimationUtils.OnAnimationEndListener() {
                             @Override
-                            protected void applyTransformation(float interpolatedTime,
-                                    Transformation t) {
-                                super.applyTransformation(interpolatedTime, t);
-                                viewHolder.itemView.setPadding(viewHolder.itemView.getPaddingLeft(),
-                                        viewHolder.itemView.getPaddingTop(),
-                                        viewHolder.itemView.getPaddingRight(),
-                                        (int) (viewStartPaddingBottom + interpolatedTime * screenHeight));
-                            }
+                            public void onAnimationEnd() {
+                                int color = viewHolder instanceof AdapterLinkGrid.ViewHolder ?
+                                        ((ColorDrawable) viewHolder.itemView.getBackground()).getColor() :
+                                        activity.getResources()
+                                                .getColor(R.color.darkThemeBackground);
 
-                            @Override
-                            public boolean willChangeBounds() {
-                                return true;
-                            }
-                        };
-                        heightAnimation.setStartOffset(duration / 10);
-                        heightAnimation.setInterpolator(new LinearInterpolator());
-
-                        AnimationSet animation = new AnimationSet(false);
-                        animation.addAnimation(translateAnimation);
-                        animation.addAnimation(heightAnimation);
-
-                        animation.setDuration(duration);
-                        animation.setFillAfter(false);
-                        animation.setAnimationListener(new Animation.AnimationListener() {
-                            @Override
-                            public void onAnimationStart(Animation animation) {
-
-                            }
-
-                            @Override
-                            public void onAnimationEnd(Animation animation) {
                                 FragmentComments fragmentComments = FragmentComments.newInstance(
                                         link.getSubreddit(), link.getId(),
-                                        viewHolder instanceof AdapterLinkGrid.ViewHolder);
+                                        viewHolder instanceof AdapterLinkGrid.ViewHolder, color);
 
                                 getFragmentManager().beginTransaction()
                                         .hide(FragmentSearch.this)
@@ -332,29 +280,8 @@ public class FragmentSearch extends Fragment implements Toolbar.OnMenuItemClickL
                                                 FragmentComments.TAG)
                                         .addToBackStack(null)
                                         .commit();
-
-                                viewHolder.itemView.postDelayed(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        viewHolder.itemView.setPadding(
-                                                viewHolder.itemView.getPaddingLeft(),
-                                                viewHolder.itemView.getPaddingTop(),
-                                                viewHolder.itemView.getPaddingRight(),
-                                                (int) viewStartPaddingBottom);
-                                        viewHolder.itemView.clearAnimation();
-                                    }
-                                }, 150);
-                            }
-
-                            @Override
-                            public void onAnimationRepeat(Animation animation) {
-
                             }
                         });
-
-                        viewHolder.itemView.startAnimation(animation);
-                    }
-                });
             }
 
             @Override
@@ -422,12 +349,6 @@ public class FragmentSearch extends Fragment implements Toolbar.OnMenuItemClickL
 
             }
 
-            @Override
-            public void requestDisallowInterceptTouchEvent(boolean disallow) {
-                recyclerSearchLinks.requestDisallowInterceptTouchEvent(disallow);
-                recyclerSearchLinksSubreddit.requestDisallowInterceptTouchEvent(disallow);
-                viewPager.requestDisallowInterceptTouchEvent(disallow);
-            }
         };
 
         adapterLinks = new AdapterSearchLinkList(activity, new ControllerLinksBase() {
@@ -658,7 +579,7 @@ public class FragmentSearch extends Fragment implements Toolbar.OnMenuItemClickL
         super.onAttach(activity);
         this.activity = activity;
         try {
-            mListener = (OnFragmentInteractionListener) activity;
+            mListener = (FragmentListenerBase) activity;
         }
         catch (ClassCastException e) {
             throw new ClassCastException(activity.toString()
@@ -707,24 +628,6 @@ public class FragmentSearch extends Fragment implements Toolbar.OnMenuItemClickL
         super.onDestroy();
 //        CustomApplication.getRefWatcher(getActivity())
 //                .watch(this);
-    }
-
-    /**
-     * This interface must be implemented by activities that contain this
-     * fragment to allow an interaction in this fragment to be communicated
-     * to the activity and potentially other fragments contained in that
-     * activity.
-     * <p/>
-     * See the Android Training lesson <a href=
-     * "http://developer.android.com/training/basics/fragments/communicating.html"
-     * >Communicating with Other Fragments</a> for more information.
-     */
-    public interface OnFragmentInteractionListener extends FragmentListenerBase {
-        ControllerSearch getControllerSearch();
-
-        ControllerLinks getControllerLinks();
-
-        ControllerComments getControllerComments();
     }
 
 }

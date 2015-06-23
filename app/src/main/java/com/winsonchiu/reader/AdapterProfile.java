@@ -78,8 +78,18 @@ public class AdapterProfile extends RecyclerView.Adapter<RecyclerView.ViewHolder
         this.linksCallback = new ControllerLinks.ListenerCallback() {
             @Override
             public ControllerLinks.LinkClickListener getListener() {
-                // Not implemented
                 return new ControllerLinks.LinkClickListener() {
+
+                    @Override
+                    public void requestDisallowInterceptTouchEventVertical(boolean disallow) {
+                        listener.requestDisallowInterceptTouchEventVertical(disallow);
+                    }
+
+                    @Override
+                    public void requestDisallowInterceptTouchEventHorizontal(boolean disallow) {
+                        listener.requestDisallowInterceptTouchEventHorizontal(disallow);
+                    }
+
                     @Override
                     public void onClickComments(Link link,
                                                 RecyclerView.ViewHolder viewHolder) {
@@ -146,15 +156,11 @@ public class AdapterProfile extends RecyclerView.Adapter<RecyclerView.ViewHolder
 
                     }
 
-                    @Override
-                    public void requestDisallowInterceptTouchEvent(boolean disallow) {
-
-                    }
                 };
             }
 
             @Override
-            public ControllerLinksBase getController() {
+            public ControllerLinksBase getControllerLinks() {
                 return controllerProfile;
             }
 
@@ -200,6 +206,17 @@ public class AdapterProfile extends RecyclerView.Adapter<RecyclerView.ViewHolder
             @Override
             public ControllerComments.CommentClickListener getCommentClickListener() {
                 return new ControllerComments.CommentClickListener() {
+
+                    @Override
+                    public void requestDisallowInterceptTouchEventVertical(boolean disallow) {
+                        listener.requestDisallowInterceptTouchEventVertical(disallow);
+                    }
+
+                    @Override
+                    public void requestDisallowInterceptTouchEventHorizontal(boolean disallow) {
+                        listener.requestDisallowInterceptTouchEventHorizontal(disallow);
+                    }
+
                     @Override
                     public void loadUrl(String url) {
                         listener.loadUrl(url);
@@ -241,11 +258,6 @@ public class AdapterProfile extends RecyclerView.Adapter<RecyclerView.ViewHolder
                     public boolean hideYouTube() {
                         // Not implemented
                         return false;
-                    }
-
-                    @Override
-                    public void requestDisallowInterceptTouchEvent(boolean disallow) {
-
                     }
                 };
             }

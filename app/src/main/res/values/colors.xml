@@ -11,7 +11,7 @@
 
     <color name="darkThemeTextColor">#FFFFFFFF</color>
     <color name="darkThemeTextColorAlert">#FFEF5350</color>
-    <color name="darkThemeTextColorMuted">#FFCCCCCC</color>
+    <color name="darkThemeTextColorMuted">#FFDDDDDD</color>
 
     <color name="darkThemeStatusBar">#FF000000</color>
     <color name="darkThemeToolbar">#FF212121</color>

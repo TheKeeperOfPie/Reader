@@ -66,22 +66,24 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
     private final ControllerComments.CommentClickListener listener;
     private final float itemWidth;
     private final int titleMargin;
+    private final int colorLink;
     private User user;
 
     private Activity activity;
+    private SharedPreferences preferences;
     private ControllerComments controllerComments;
     private ControllerLinks.LinkClickListener linkClickListener;
+    private AdapterLink.ViewHolderBase viewHolderLink;
     private int thumbnailWidth;
-    private SharedPreferences preferences;
     private boolean isGrid;
     private boolean isInitialized;
-    private AdapterLink.ViewHolderBase viewHolderLink;
 
     public AdapterCommentList(Activity activity,
             final ControllerComments controllerComments,
             final ControllerComments.CommentClickListener listener,
-            boolean isGrid) {
+            boolean isGrid, int colorLink) {
         this.isGrid = isGrid;
+        this.colorLink = colorLink;
         this.activity = activity;
         this.controllerComments = controllerComments;
         this.listener = listener;
@@ -159,8 +161,13 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
             }
 
             @Override
-            public void requestDisallowInterceptTouchEvent(boolean disallow) {
-                listener.requestDisallowInterceptTouchEvent(disallow);
+            public void requestDisallowInterceptTouchEventVertical(boolean disallow) {
+                listener.requestDisallowInterceptTouchEventVertical(disallow);
+            }
+
+            @Override
+            public void requestDisallowInterceptTouchEventHorizontal(boolean disallow) {
+                listener.requestDisallowInterceptTouchEventHorizontal(disallow);
             }
         };
         // TODO: Move current user to global instance
@@ -175,6 +182,17 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                 e.printStackTrace();
             }
         }
+        setHasStableIds(true);
+    }
+
+    @Override
+    public long getItemId(int position) {
+        if (position == 0) {
+            return 0;
+        }
+
+        return Long.parseLong(controllerComments.getComment(position)
+                .getId(), 36);
     }
 
     @Override
@@ -199,6 +217,11 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                         thumbnailWidth) {
 
                     @Override
+                    public void loadBackgroundColor(Drawable drawable, int position) {
+                        itemView.setBackgroundColor(colorLink);
+                    }
+
+                    @Override
                     public void onBind(Link link) {
                         super.onBind(link);
                         if (link.isSelf() && !TextUtils.isEmpty(link.getSelfTextHtml())) {
@@ -212,7 +235,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                     }
 
                     @Override
-                    public void loadYouTube(Link link, String id) {
+                    public void loadYouTubeVideo(Link link, String id) {
                         listener.loadYouTube(link, id, this);
                     }
 
@@ -251,7 +274,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                     }
 
                     @Override
-                    public void loadYouTube(Link link, String id) {
+                    public void loadYouTubeVideo(Link link, String id) {
                         listener.loadYouTube(link, id, this);
                     }
 
@@ -313,7 +336,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
     }
 
     @Override
-    public ControllerLinksBase getController() {
+    public ControllerLinksBase getControllerLinks() {
         return controllerComments;
     }
 
@@ -330,10 +353,6 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
     @Override
     public RecyclerView.LayoutManager getLayoutManager() {
         return null;
-    }
-
-    public void setIsGrid(boolean isGrid) {
-        this.isGrid = isGrid;
     }
 
     @Override
@@ -361,7 +380,10 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
         return user;
     }
 
-    public static class ViewHolderComment extends RecyclerView.ViewHolder {
+    public static class ViewHolderComment extends RecyclerView.ViewHolder
+            implements Toolbar.OnMenuItemClickListener {
+
+        protected Comment comment;
 
         protected View viewIndent;
         protected View viewIndicator;
@@ -386,12 +408,11 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
         protected Drawable drawableDownvote;
         protected RelativeLayout layoutContainerExpand;
         protected ControllerComments.ListenerCallback callback;
-        private View.OnClickListener clickListenerLink;
-        private Calendar calendar;
 
 
         public ViewHolderComment(final View itemView,
-                ControllerComments.ListenerCallback listenerCallback, final ControllerProfile.ItemClickListener listener) {
+                ControllerComments.ListenerCallback listenerCallback,
+                final ControllerProfile.ItemClickListener listener) {
             this(itemView, listenerCallback);
             itemViewLink.setVisible(true);
             itemViewLink.setEnabled(true);
@@ -400,8 +421,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                     new MenuItem.OnMenuItemClickListener() {
                         @Override
                         public boolean onMenuItemClick(MenuItem item) {
-                            listener.loadLink(callback.getControllerComments()
-                                    .getComment(getAdapterPosition()));
+                            listener.loadLink(comment);
                             return true;
                         }
                     });
@@ -412,61 +432,26 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
             super(itemView);
             this.callback = listenerCallback;
 
-            calendar = Calendar.getInstance();
+            intiialize();
+            initializeToolbar();
+            initializeListeners();
+        }
+
+        private void intiialize() {
+
             Resources resources = callback.getControllerComments()
                     .getActivity()
                     .getResources();
             this.drawableUpvote = resources.getDrawable(R.drawable.ic_keyboard_arrow_up_white_24dp);
             this.drawableDownvote = resources.getDrawable(
                     R.drawable.ic_keyboard_arrow_down_white_24dp);
+
             viewIndent = itemView.findViewById(R.id.view_indent);
             viewIndicator = itemView.findViewById(R.id.view_indicator);
             viewIndicatorContainer = itemView.findViewById(R.id.view_indicator_container);
             viewIndicatorContainerReply = itemView.findViewById(
                     R.id.view_indicator_container_reply);
             textComment = (TextView) itemView.findViewById(R.id.text_comment);
-            textComment.setMovementMethod(LinkMovementMethod.getInstance());
-            textComment.setOnTouchListener(new View.OnTouchListener() {
-
-                float startY;
-
-                @Override
-                public boolean onTouch(View v, MotionEvent event) {
-
-                    switch (event.getAction()) {
-                        case MotionEvent.ACTION_DOWN:
-                            startY = event.getY();
-
-                            if ((textComment.canScrollVertically(
-                                    1) && textComment.canScrollVertically(
-                                    -1))) {
-                                callback.getCommentClickListener()
-                                        .requestDisallowInterceptTouchEvent(true);
-                            }
-                            else {
-                                callback.getCommentClickListener()
-                                        .requestDisallowInterceptTouchEvent(false);
-                            }
-                            break;
-                        case MotionEvent.ACTION_UP:
-                            callback.getCommentClickListener()
-                                    .requestDisallowInterceptTouchEvent(false);
-                            break;
-                        case MotionEvent.ACTION_MOVE:
-                            if (event.getY() - startY < 0 && textComment.canScrollVertically(1)) {
-                                callback.getCommentClickListener()
-                                        .requestDisallowInterceptTouchEvent(true);
-                            }
-                            else if (event.getY() - startY > 0 && textComment.canScrollVertically(
-                                    -1)) {
-                                callback.getCommentClickListener()
-                                        .requestDisallowInterceptTouchEvent(true);
-                            }
-                            break;
-                    }
-                    return false;
-                }
-            });
             textInfo = (TextView) itemView.findViewById(R.id.text_info);
             textHidden = (TextView) itemView.findViewById(R.id.text_hidden);
             layoutContainerExpand = (RelativeLayout) itemView.findViewById(
@@ -474,208 +459,83 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
             layoutContainerReply = (RelativeLayout) itemView.findViewById(
                     R.id.layout_container_reply);
             editTextReply = (EditText) itemView.findViewById(R.id.edit_text_reply);
-            editTextReply.setOnTouchListener(new View.OnTouchListener() {
-
-                float startY;
-
-                @Override
-                public boolean onTouch(View v, MotionEvent event) {
-
-                    switch (event.getAction()) {
-                        case MotionEvent.ACTION_DOWN:
-                            startY = event.getY();
-
-                            if ((editTextReply.canScrollVertically(
-                                    1) && editTextReply.canScrollVertically(
-                                    -1))) {
-                                callback.getCommentClickListener()
-                                        .requestDisallowInterceptTouchEvent(true);
-                            }
-                            else {
-                                callback.getCommentClickListener()
-                                        .requestDisallowInterceptTouchEvent(false);
-                            }
-                            break;
-                        case MotionEvent.ACTION_UP:
-                            callback.getCommentClickListener()
-                                    .requestDisallowInterceptTouchEvent(false);
-                            break;
-                        case MotionEvent.ACTION_MOVE:
-                            if (event.getY() - startY < 0 && editTextReply.canScrollVertically(1)) {
-                                callback.getCommentClickListener()
-                                        .requestDisallowInterceptTouchEvent(true);
-                            }
-                            else if (event.getY() - startY > 0 && editTextReply.canScrollVertically(
-                                    -1)) {
-                                callback.getCommentClickListener()
-                                        .requestDisallowInterceptTouchEvent(true);
-                            }
-                            break;
-                    }
-                    return false;
-                }
-            });
             buttonSendReply = (Button) itemView.findViewById(R.id.button_send_reply);
+        }
+
+        private void initializeListeners() {
+
+            textComment.setMovementMethod(LinkMovementMethod.getInstance());
+            textComment.setOnTouchListener(
+                    new OnTouchListenerDisallow(callback.getCommentClickListener()));
+            editTextReply.setOnTouchListener(
+                    new OnTouchListenerDisallow(callback.getCommentClickListener()));
             buttonSendReply.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
                     if (!TextUtils.isEmpty(editTextReply.getText())) {
-                        Comment comment = callback.getControllerComments()
-                                .getComment(
-                                        getAdapterPosition());
-                        final int parentLevel = comment.getLevel();
-                        Map<String, String> params = new HashMap<>();
-                        params.put("api_type", "json");
-                        params.put("text", editTextReply.getText()
-                                .toString());
-                        params.put("thing_id", comment.getName());
-
-                        // TODO: Move add to immediate on button click, check if failed afterwards
-                        callback.getControllerComments()
-                                .getReddit()
-                                .loadPost(Reddit.OAUTH_URL + "/api/comment",
-                                        new Response.Listener<String>() {
-                                            @Override
-                                            public void onResponse(String response) {
-                                                try {
-                                                    JSONObject jsonObject = new JSONObject(
-                                                            response);
-                                                    Comment newComment = Comment.fromJson(
-                                                            jsonObject.getJSONObject("json")
-                                                                    .getJSONObject("data")
-                                                                    .getJSONArray("things")
-                                                                    .getJSONObject(0),
-                                                            parentLevel + 1);
-                                                    callback.getControllerComments()
-                                                            .insertComment(newComment);
-                                                }
-                                                catch (JSONException e) {
-                                                    e.printStackTrace();
-                                                }
-                                            }
-                                        }, new Response.ErrorListener() {
-                                            @Override
-                                            public void onErrorResponse(VolleyError error) {
-
-                                            }
-                                        }, params, 0);
-                        comment.setReplyExpanded(!comment.isReplyExpanded());
-                        int width = callback.getCommentClickListener()
-                                .getRecyclerWidth();
-                        final float ratio = (width - callback.getControllerComments()
-                                .getIndentWidth(comment)) / width;
-
-                        layoutContainerReply.setVisibility(View.GONE);
-//                        AnimationUtils.animateExpand(layoutContainerReply, ratio, null);
+                        sendReply();
                     }
                 }
             });
+
+            View.OnClickListener clickListenerLink = new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    expandToolbarActions();
+                }
+            };
+            textComment.setOnClickListener(clickListenerLink);
+            textInfo.setOnClickListener(clickListenerLink);
+            this.itemView.setOnClickListener(clickListenerLink);
+        }
+
+        private void sendReply() {
+
+            final int parentLevel = comment.getLevel();
+            Map<String, String> params = new HashMap<>();
+            params.put("api_type", "json");
+            params.put("text", editTextReply.getText()
+                    .toString());
+            params.put("thing_id", comment.getName());
+
+            // TODO: Move add to immediate on button click, check if failed afterwards
+            callback.getControllerComments()
+                    .getReddit()
+                    .loadPost(Reddit.OAUTH_URL + "/api/comment",
+                            new Response.Listener<String>() {
+                                @Override
+                                public void onResponse(String response) {
+                                    try {
+                                        JSONObject jsonObject = new JSONObject(
+                                                response);
+                                        Comment newComment = Comment.fromJson(
+                                                jsonObject.getJSONObject("json")
+                                                        .getJSONObject("data")
+                                                        .getJSONArray("things")
+                                                        .getJSONObject(0),
+                                                parentLevel + 1);
+                                        callback.getControllerComments()
+                                                .insertComment(newComment);
+                                    }
+                                    catch (JSONException e) {
+                                        e.printStackTrace();
+                                    }
+                                }
+                            }, new Response.ErrorListener() {
+                                @Override
+                                public void onErrorResponse(VolleyError error) {
+
+                                }
+                            }, params, 0);
+            comment.setReplyExpanded(!comment.isReplyExpanded());
+            layoutContainerReply.setVisibility(View.GONE);
+        }
+
+        private void initializeToolbar() {
+
             toolbarActions = (Toolbar) itemView.findViewById(R.id.toolbar_actions);
             toolbarActions.inflateMenu(R.menu.menu_comment);
-            toolbarActions.setOnMenuItemClickListener(new Toolbar.OnMenuItemClickListener() {
-                @Override
-                public boolean onMenuItemClick(MenuItem menuItem) {
-                    final int commentIndex = getAdapterPosition();
-                    final Comment comment = callback.getControllerComments()
-                            .getComment(commentIndex);
-                    switch (menuItem.getItemId()) {
-                        case R.id.item_collapse:
-                            if (callback.getControllerComments()
-                                    .toggleComment(commentIndex)) {
-                                menuItem.setIcon(R.drawable.ic_arrow_drop_up_white_24dp);
-                            }
-                            else {
-                                menuItem.setIcon(R.drawable.ic_arrow_drop_down_white_24dp);
-                            }
-                            break;
-                        case R.id.item_upvote:
-                            callback.getControllerComments()
-                                    .voteComment(ViewHolderComment.this, comment, 1);
-                            break;
-                        case R.id.item_downvote:
-                            callback.getControllerComments()
-                                    .voteComment(ViewHolderComment.this, comment, -1);
-                            break;
-                        case R.id.item_reply:
-                            if (TextUtils.isEmpty(callback.getPreferences()
-                                    .getString(AppSettings.REFRESH_TOKEN, ""))) {
-                                Toast.makeText(callback.getControllerComments()
-                                                .getActivity(), callback.getControllerComments()
-                                                .getActivity()
-                                                .getString(R.string.must_be_logged_in_to_reply),
-                                        Toast.LENGTH_SHORT)
-                                        .show();
-                                return false;
-                            }
-                            if (!comment.isReplyExpanded()) {
-                                editTextReply.requestFocus();
-                                editTextReply.setText(null);
-                            }
-                            comment.setReplyExpanded(!comment.isReplyExpanded());
-                            layoutContainerReply.setVisibility(
-                                    comment.isReplyExpanded() ? View.VISIBLE : View.GONE);
-//                            int width = callback.getCommentClickListener()
-//                                    .getRecyclerWidth();
-//                            final float ratio = (width - callback.getControllerComments()
-//                                    .getIndentWidth(comment)) / width;
-//                            AnimationUtils.animateExpand(layoutContainerReply, ratio, null);
-                            break;
-                        case R.id.item_save:
-                            final int position = getAdapterPosition();
-                            if (comment.isSaved()) {
-                                callback.getControllerComments().getReddit().unsave(comment);
-                            }
-                            else {
-                                callback.getControllerComments().getReddit().save(comment, "",
-                                        new Response.ErrorListener() {
-                                            @Override
-                                            public void onErrorResponse(VolleyError error) {
-                                                if (comment.isSaved()) {
-                                                    comment.setSaved(false);
-                                                    if (position == getAdapterPosition()) {
-                                                        syncSaveIcon(comment);
-                                                    }
-                                                }
-                                            }
-                                        });
-                            }
-                            comment.setSaved(!comment.isSaved());
-                            syncSaveIcon(comment);
-                            break;
-                        case R.id.item_view_profile:
-                            Intent intent = new Intent(callback.getControllerComments()
-                                    .getActivity(), MainActivity.class);
-                            intent.setAction(Intent.ACTION_VIEW);
-                            intent.putExtra(MainActivity.REDDIT_PAGE,
-                                    "https://reddit.com/user/" + comment.getAuthor());
-                            callback.getControllerComments()
-                                    .getActivity()
-                                    .startActivity(intent);
-                            break;
-                        case R.id.item_delete:
-                            new AlertDialog.Builder(callback.getControllerComments()
-                                    .getActivity())
-                                    .setTitle("Delete comment?")
-                                    .setMessage(Reddit.getTrimmedHtml(comment.getBodyHtml()))
-                                    .setPositiveButton("Yes",
-                                            new DialogInterface.OnClickListener() {
-                                                @Override
-                                                public void onClick(
-                                                        DialogInterface dialog,
-                                                        int which) {
-
-                                                    callback.getControllerComments()
-                                                            .deleteComment(
-                                                                    comment);
-                                                }
-                                            })
-                                    .setNegativeButton("No", null)
-                                    .show();
-                            break;
-                    }
-                    return true;
-                }
-            });
+            toolbarActions.setOnMenuItemClickListener(this);
 
             Menu menu = toolbarActions.getMenu();
             itemViewLink = menu.findItem(R.id.item_view_link);
@@ -686,48 +546,10 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
             itemSave = menu.findItem(R.id.item_save);
             itemDelete = menu.findItem(R.id.item_delete);
 
-            colorFilterSave = new PorterDuffColorFilter(callback.getControllerComments().getActivity().getResources().getColor(R.color.colorAccent),
+            colorFilterSave = new PorterDuffColorFilter(
+                    callback.getControllerComments().getActivity().getResources()
+                            .getColor(R.color.colorAccent),
                     PorterDuff.Mode.MULTIPLY);
-
-            clickListenerLink = new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    Comment comment = callback.getControllerComments()
-                            .getComment(getAdapterPosition());
-
-                    callback.getControllerComments()
-                            .hasChildren(comment);
-
-                    if (comment.isMore()) {
-                        callback.getControllerComments()
-                                .loadNestedComments(comment);
-                        return;
-                    }
-
-                    boolean isAuthor = comment.getAuthor()
-                            .equals(callback.getUser()
-                                    .getName());
-
-                    if (callback.getControllerComments()
-                            .isCommentExpanded(getAdapterPosition())) {
-                        itemCollapse.setIcon(R.drawable.ic_arrow_drop_up_white_24dp);
-                    }
-                    else {
-                        itemCollapse.setIcon(R.drawable.ic_arrow_drop_down_white_24dp);
-                    }
-
-                    itemDelete.setEnabled(isAuthor);
-                    itemDelete.setVisible(isAuthor);
-
-                    setVoteColors();
-
-                    AnimationUtils.animateExpand(layoutContainerExpand, 1f, null);
-                }
-            };
-            textComment.setOnClickListener(clickListenerLink);
-            textComment.setOnClickListener(clickListenerLink);
-            textInfo.setOnClickListener(clickListenerLink);
-            this.itemView.setOnClickListener(clickListenerLink);
 
             toolbarActions.post(new Runnable() {
                 @Override
@@ -735,6 +557,39 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                     setToolbarMenuVisibility();
                 }
             });
+        }
+
+        private void expandToolbarActions() {
+
+            if (comment.isMore()) {
+                callback.getControllerComments()
+                        .loadNestedComments(comment);
+                return;
+            }
+
+            if (!toolbarActions.isShown()) {
+
+                boolean isAuthor = comment.getAuthor()
+                        .equals(callback.getUser()
+                                .getName());
+
+                if (callback.getControllerComments()
+                        .isCommentExpanded(getAdapterPosition())) {
+                    itemCollapse.setIcon(R.drawable.ic_arrow_drop_up_white_24dp);
+                }
+                else {
+                    itemCollapse.setIcon(R.drawable.ic_arrow_drop_down_white_24dp);
+                }
+
+                itemDelete.setEnabled(isAuthor);
+                itemDelete.setVisible(isAuthor);
+
+                setVoteColors();
+
+                setToolbarMenuVisibility();
+            }
+
+            AnimationUtils.animateExpand(layoutContainerExpand, 1f, null);
         }
 
         private void setToolbarMenuVisibility() {
@@ -752,6 +607,8 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
             itemDownvote.setVisible(loggedIn);
             itemReply.setVisible(loggedIn);
             itemSave.setVisible(loggedIn);
+            itemCollapse.setVisible(callback.getControllerComments()
+                    .hasChildren(comment));
 
             for (int index = 0; index < menu.size(); index++) {
                 if (!loggedIn) {
@@ -780,10 +637,6 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
         }
 
         public void setVoteColors() {
-
-            Comment comment = callback.getControllerComments()
-                    .getComment(
-                            getAdapterPosition());
             switch (comment.isLikes()) {
                 case 1:
                     drawableUpvote.setColorFilter(callback.getControllerComments()
@@ -816,14 +669,12 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
 
         public void onBind(Comment comment) {
 
-            if (comment.isReplyExpanded()) {
-                layoutContainerReply.setVisibility(View.VISIBLE);
-                layoutContainerExpand.setVisibility(View.VISIBLE);
-            }
-            else {
-                layoutContainerReply.setVisibility(View.GONE);
-                layoutContainerExpand.setVisibility(View.GONE);
-            }
+            this.comment = comment;
+
+            layoutContainerReply
+                    .setVisibility(comment.isReplyExpanded() ? View.VISIBLE : View.GONE);
+            layoutContainerExpand
+                    .setVisibility(comment.isReplyExpanded() ? View.VISIBLE : View.GONE);
 
             int alphaLevel = comment.getLevel() * MAX_ALPHA / ALPHA_LEVELS;
 
@@ -852,61 +703,32 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
             else {
                 textComment.setText(Reddit.getTrimmedHtml(comment.getBodyHtml()));
 
-                Spannable spannableInfo = new SpannableString(
-                        comment.getScore() + " by " + comment.getAuthor() + " " + DateUtils.getRelativeTimeSpanString(
-                                comment.getCreatedUtc()) + (comment.getEdited() > 0 ? "*" : ""));
-                spannableInfo.setSpan(new ForegroundColorSpan(
-                                comment.getScore() > 0 ?
-                                        callback.getControllerComments()
-                                                .getActivity()
-                                                .getResources()
-                                                .getColor(
-                                                        R.color.positiveScore) :
-                                        callback.getControllerComments()
-                                                .getActivity()
-                                                .getResources()
-                                                .getColor(
-                                                        R.color.negativeScore)), 0,
-                        String.valueOf(comment.getScore())
-                                .length(), Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
+                Resources resources = callback.getControllerComments().getActivity().getResources();
 
-                int colorAuthor = callback.getControllerComments()
-                        .getMainLink()
-                        .getAuthor()
-                        .equals(comment.getAuthor()) ? callback.getControllerComments()
-                        .getActivity()
-                        .getResources()
-                        .getColor(
-                                R.color.colorAccent) :
-                        callback.getControllerComments()
-                                .getActivity()
-                                .getResources()
-                                .getColor(
-                                        R.color.darkThemeTextColorMuted);
+                int colorPositive = resources.getColor(R.color.positiveScore);
+                int colorNegative = resources.getColor(R.color.negativeScore);
 
-                int indexScore = String.valueOf(comment.getScore())
-                        .length();
-                spannableInfo.setSpan(new ForegroundColorSpan(callback.getControllerComments()
-                                .getActivity()
-                                .getResources()
-                                .getColor(
-                                        R.color.darkThemeTextColorMuted)), indexScore,
-                        indexScore + 4, Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
-                spannableInfo.setSpan(new ForegroundColorSpan(colorAuthor), indexScore + 4,
-                        indexScore + 4 + comment.getAuthor()
-                                .length(), Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
-                spannableInfo.setSpan(new ForegroundColorSpan(callback.getControllerComments()
-                                .getActivity()
-                                .getResources()
-                                .getColor(R.color.darkThemeTextColorMuted)),
-                        indexScore + 4 + comment.getAuthor()
-                                .length(), spannableInfo.length(),
+                Spannable spannableScore = new SpannableString(String.valueOf(comment.getScore()));
+                spannableScore.setSpan(new ForegroundColorSpan(
+                                comment.getScore() > 0 ? colorPositive : colorNegative), 0,
+                        spannableScore.length(),
                         Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
 
-                textInfo.setText(spannableInfo);
+
+                Spannable spannableAuthor = new SpannableString(comment.getAuthor());
+                if (callback.getControllerComments().getMainLink().getAuthor()
+                        .equals(comment.getAuthor())) {
+                    spannableAuthor.setSpan(new ForegroundColorSpan(resources.getColor(R.color.colorAccent)), 0,
+                            spannableAuthor.length(), Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
+                }
+
+                textInfo.setText(TextUtils.concat(spannableScore, " by ", spannableAuthor, " ",
+                        DateUtils.getRelativeTimeSpanString(
+                                comment.getCreatedUtc()) + (comment.getEdited() > 0 ? "*" : "")));
 
                 if (comment.getEdited() > 1) {
-                    textHidden.setText("Edited " + DateUtils.getRelativeTimeSpanString(comment.getEdited()));
+                    textHidden.setText(
+                            "Edited " + DateUtils.getRelativeTimeSpanString(comment.getEdited()));
                 }
 
             }
@@ -924,12 +746,10 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                         .getColor(R.color.darkThemeTextColor));
             }
 
-            itemCollapse.setVisible(callback.getControllerComments()
-                    .hasChildren(comment));
 
         }
 
-        public void syncSaveIcon(Comment comment) {
+        public void syncSaveIcon() {
             if (comment.isSaved()) {
                 itemSave.getIcon().setColorFilter(colorFilterSave);
             }
@@ -938,13 +758,99 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
             }
         }
 
-        public String getFormatttedDate(long time) {
-            calendar.setTimeInMillis(time);
-            int minute = calendar.get(Calendar.MINUTE);
-            return calendar.getDisplayName(Calendar.MONTH, Calendar.SHORT,
-                    Locale.getDefault()) + " " + calendar.get(
-                    Calendar.DAY_OF_MONTH) + " " + calendar.get(Calendar.YEAR) + " " + calendar.get(
-                    Calendar.HOUR_OF_DAY) + (minute < 10 ? ":0" : ":") + minute;
+        public void toggleReply() {
+            if (TextUtils.isEmpty(callback.getPreferences()
+                    .getString(AppSettings.REFRESH_TOKEN, ""))) {
+                Toast.makeText(callback.getControllerComments()
+                                .getActivity(), callback.getControllerComments()
+                                .getActivity()
+                                .getString(R.string.must_be_logged_in_to_reply),
+                        Toast.LENGTH_SHORT)
+                        .show();
+                return;
+            }
+            if (!comment.isReplyExpanded()) {
+                editTextReply.requestFocus();
+                editTextReply.setText(null);
+            }
+            comment.setReplyExpanded(!comment.isReplyExpanded());
+            layoutContainerReply.setVisibility(
+                    comment.isReplyExpanded() ? View.VISIBLE : View.GONE);
+        }
+
+        @Override
+        public boolean onMenuItemClick(MenuItem item) {
+            switch (item.getItemId()) {
+                case R.id.item_collapse:
+                    item.setIcon(
+                            callback.getControllerComments().toggleComment(getAdapterPosition()) ?
+                                    R.drawable.ic_arrow_drop_up_white_24dp :
+                                    R.drawable.ic_arrow_drop_down_white_24dp);
+                    break;
+                case R.id.item_upvote:
+                    callback.getControllerComments()
+                            .voteComment(ViewHolderComment.this, comment, 1);
+                    break;
+                case R.id.item_downvote:
+                    callback.getControllerComments()
+                            .voteComment(ViewHolderComment.this, comment, -1);
+                    break;
+                case R.id.item_reply:
+                    toggleReply();
+                    break;
+                case R.id.item_save:
+                    saveComment(comment);
+                    break;
+                case R.id.item_view_profile:
+                    Intent intent = new Intent(callback.getControllerComments()
+                            .getActivity(), MainActivity.class);
+                    intent.setAction(Intent.ACTION_VIEW);
+                    intent.putExtra(MainActivity.REDDIT_PAGE,
+                            "https://reddit.com/user/" + comment.getAuthor());
+                    callback.getControllerComments()
+                            .getActivity()
+                            .startActivity(intent);
+                    break;
+                case R.id.item_delete:
+                    new AlertDialog.Builder(callback.getControllerComments()
+                            .getActivity())
+                            .setTitle("Delete comment?")
+                            .setMessage(Reddit.getTrimmedHtml(comment.getBodyHtml()))
+                            .setPositiveButton("Yes",
+                                    new DialogInterface.OnClickListener() {
+                                        @Override
+                                        public void onClick(
+                                                DialogInterface dialog,
+                                                int which) {
+
+                                            callback.getControllerComments()
+                                                    .deleteComment(
+                                                            comment);
+                                        }
+                                    })
+                            .setNegativeButton("No", null)
+                            .show();
+                    break;
+            }
+            return true;
+        }
+
+        private void saveComment(final Comment comment) {
+            if (comment.isSaved()) {
+                callback.getControllerComments().getReddit().unsave(comment);
+            }
+            else {
+                callback.getControllerComments().getReddit().save(comment, "",
+                        new Response.ErrorListener() {
+                            @Override
+                            public void onErrorResponse(VolleyError error) {
+                                comment.setSaved(false);
+                                syncSaveIcon();
+                            }
+                        });
+            }
+            comment.setSaved(!comment.isSaved());
+            syncSaveIcon();
         }
     }
 }

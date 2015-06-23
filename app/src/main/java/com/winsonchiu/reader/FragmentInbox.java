@@ -2,6 +2,7 @@ package com.winsonchiu.reader;
 
 import android.app.Activity;
 import android.app.Fragment;
+import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.DefaultItemAnimator;
@@ -24,15 +25,6 @@ import android.widget.Toast;
 
 import com.winsonchiu.reader.data.Link;
 
-
-/**
- * A simple {@link Fragment} subclass.
- * Activities that contain this fragment must implement the
- * {@link FragmentInbox.OnFragmentInteractionListener} interface
- * to handle interaction events.
- * Use the {@link FragmentInbox#newInstance} factory method to
- * create an instance of this fragment.
- */
 public class FragmentInbox extends Fragment {
 
     public static final String TAG = FragmentInbox.class.getCanonicalName();
@@ -47,7 +39,7 @@ public class FragmentInbox extends Fragment {
     private String mParam2;
 
     private Activity activity;
-    private OnFragmentInteractionListener mListener;
+    private FragmentListenerBase mListener;
     private SwipeRefreshLayout swipeRefreshInbox;
     private RecyclerView recyclerInbox;
     private LinearLayoutManager linearLayoutManager;
@@ -101,78 +93,34 @@ public class FragmentInbox extends Fragment {
 
         listener = new ControllerInbox.ItemClickListener() {
             @Override
-            public void onClickComments(final Link link, final RecyclerView.ViewHolder viewHolder) {
+            public void requestDisallowInterceptTouchEventVertical(boolean disallow) {
+                recyclerInbox.requestDisallowInterceptTouchEvent(disallow);
+                swipeRefreshInbox.requestDisallowInterceptTouchEvent(disallow);
+            }
 
-                if (link.getNumComments() == 0) {
-                    if (!link.isCommentsClicked()) {
-                        Toast.makeText(activity, activity.getString(R.string.no_comments),
-                                Toast.LENGTH_SHORT).show();
-                        link.setCommentsClicked(true);
-                        return;
-                    }
-                }
+            @Override
+            public void requestDisallowInterceptTouchEventHorizontal(boolean disallow) {
+
+            }
+
+            @Override
+            public void onClickComments(final Link link, final RecyclerView.ViewHolder viewHolder) {
 
                 mListener.getControllerComments()
                         .setLink(link);
 
-                if (viewHolder instanceof AdapterLinkGrid.ViewHolder) {
-                    ((StaggeredGridLayoutManager.LayoutParams) viewHolder.itemView.getLayoutParams()).setFullSpan(
-                            true);
-                    viewHolder.itemView.requestLayout();
-                }
-
-                viewHolder.itemView.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        final float viewStartY = viewHolder.itemView.getY();
-                        final float viewStartPaddingBottom = viewHolder.itemView.getPaddingBottom();
-                        final float screenHeight = getResources().getDisplayMetrics().heightPixels;
-
-                        float speed = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 1,
-                                activity.getResources()
-                                        .getDisplayMetrics());
-                        long duration = (long) Math.abs(viewStartY / speed);
-
-                        TranslateAnimation translateAnimation = new TranslateAnimation(0, 0, 0,
-                                -viewStartY);
-
-                        Animation heightAnimation = new Animation() {
+                AnimationUtils.loadCommentFragmentAnimation(activity, linearLayoutManager, viewHolder,
+                        link, new AnimationUtils.OnAnimationEndListener() {
                             @Override
-                            protected void applyTransformation(float interpolatedTime,
-                                    Transformation t) {
-                                super.applyTransformation(interpolatedTime, t);
-                                viewHolder.itemView.setPadding(viewHolder.itemView.getPaddingLeft(),
-                                        viewHolder.itemView.getPaddingTop(),
-                                        viewHolder.itemView.getPaddingRight(),
-                                        (int) (viewStartPaddingBottom + interpolatedTime * screenHeight));
-                            }
+                            public void onAnimationEnd() {
+                                int color = viewHolder instanceof AdapterLinkGrid.ViewHolder ?
+                                        ((ColorDrawable) viewHolder.itemView.getBackground()).getColor() :
+                                        activity.getResources()
+                                                .getColor(R.color.darkThemeBackground);
 
-                            @Override
-                            public boolean willChangeBounds() {
-                                return true;
-                            }
-                        };
-                        heightAnimation.setStartOffset(duration / 10);
-                        heightAnimation.setInterpolator(new LinearInterpolator());
-
-                        AnimationSet animation = new AnimationSet(false);
-                        animation.addAnimation(translateAnimation);
-                        animation.addAnimation(heightAnimation);
-
-
-                        animation.setDuration(duration);
-                        animation.setFillAfter(false);
-                        animation.setAnimationListener(new Animation.AnimationListener() {
-                            @Override
-                            public void onAnimationStart(Animation animation) {
-
-                            }
-
-                            @Override
-                            public void onAnimationEnd(Animation animation) {
                                 FragmentComments fragmentComments = FragmentComments.newInstance(
                                         link.getSubreddit(), link.getId(),
-                                        viewHolder instanceof AdapterLinkGrid.ViewHolder);
+                                        viewHolder instanceof AdapterLinkGrid.ViewHolder, color);
 
                                 getFragmentManager().beginTransaction()
                                         .hide(FragmentInbox.this)
@@ -180,29 +128,8 @@ public class FragmentInbox extends Fragment {
                                                 FragmentComments.TAG)
                                         .addToBackStack(null)
                                         .commit();
-
-                                viewHolder.itemView.postDelayed(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        viewHolder.itemView.setPadding(
-                                                viewHolder.itemView.getPaddingLeft(),
-                                                viewHolder.itemView.getPaddingTop(),
-                                                viewHolder.itemView.getPaddingRight(),
-                                                (int) viewStartPaddingBottom);
-                                        viewHolder.itemView.clearAnimation();
-                                    }
-                                }, 150);
-                            }
-
-                            @Override
-                            public void onAnimationRepeat(Animation animation) {
-
                             }
                         });
-
-                        viewHolder.itemView.startAnimation(animation);
-                    }
-                });
             }
 
             @Override
@@ -255,10 +182,6 @@ public class FragmentInbox extends Fragment {
                 return recyclerInbox.getWidth();
             }
 
-            @Override
-            public void requestDisallowInterceptTouchEvent(boolean disallow) {
-
-            }
         };
 
         toolbar = (Toolbar) view.findViewById(R.id.toolbar);
@@ -334,7 +257,7 @@ public class FragmentInbox extends Fragment {
         super.onAttach(activity);
         this.activity = activity;
         try {
-            mListener = (OnFragmentInteractionListener) activity;
+            mListener = (FragmentListenerBase) activity;
         }
         catch (ClassCastException e) {
             throw new ClassCastException(activity.toString()
@@ -354,21 +277,6 @@ public class FragmentInbox extends Fragment {
         super.onDestroy();
 //        CustomApplication.getRefWatcher(getActivity())
 //                .watch(this);
-    }
-
-    /**
-     * This interface must be implemented by activities that contain this
-     * fragment to allow an interaction in this fragment to be communicated
-     * to the activity and potentially other fragments contained in that
-     * activity.
-     * <p/>
-     * See the Android Training lesson <a href=
-     * "http://developer.android.com/training/basics/fragments/communicating.html"
-     * >Communicating with Other Fragments</a> for more information.
-     */
-    public interface OnFragmentInteractionListener extends FragmentListenerBase {
-        ControllerInbox getControllerInbox();
-        ControllerComments getControllerComments();
     }
 
 }

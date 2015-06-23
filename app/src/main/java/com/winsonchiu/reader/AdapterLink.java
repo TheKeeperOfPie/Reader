@@ -65,11 +65,9 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -131,11 +129,19 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         this.listener = listener;
     }
 
-    public abstract ControllerLinks.LinkClickListener getListener();
+    @Override
+    public ControllerLinks.LinkClickListener getListener() {
+        return listener;
+    }
 
     @Override
-    public ControllerLinksBase getController() {
+    public ControllerLinksBase getControllerLinks() {
         return controllerLinks;
+    }
+
+    @Override
+    public ControllerCommentsBase getControllerComments() {
+        return listener.getControllerComments();
     }
 
     public float getItemWidth() {
@@ -147,6 +153,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         return titleMargin;
     }
 
+    @Override
     public LayoutManager getLayoutManager() {
         return layoutManager;
     }
@@ -154,6 +161,13 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
     @Override
     public SharedPreferences getPreferences() {
         return preferences;
+    }
+
+    @Override
+    public void pauseViewHolders() {
+        for (ViewHolderBase viewHolder : viewHolders) {
+            viewHolder.videoFull.stopPlayback();
+        }
     }
 
     @Override
@@ -170,6 +184,24 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
     public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
         if (!controllerLinks.isLoading() && position > controllerLinks.sizeLinks() - 5) {
             controllerLinks.loadMoreLinks();
+        }
+    }
+
+    @Override
+    public void onViewRecycled(RecyclerView.ViewHolder holder) {
+
+        if (holder instanceof ViewHolderBase) {
+            ((ViewHolderBase) holder).onRecycle();
+        }
+
+        super.onViewRecycled(holder);
+    }
+
+    @Override
+    public void onDetachedFromRecyclerView(RecyclerView recyclerView) {
+        super.onDetachedFromRecyclerView(recyclerView);
+        for (ViewHolderBase viewHolder : viewHolders) {
+            viewHolder.destroy();
         }
     }
 
@@ -208,14 +240,14 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             buttonSubmitLink.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    listenerCallback.getListener()
+                    callback.getListener()
                             .onClickSubmit(Reddit.POST_TYPE_LINK);
                 }
             });
             buttomSubmitSelf.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    listenerCallback.getListener()
+                    callback.getListener()
                             .onClickSubmit(Reddit.POST_TYPE_SELF);
                 }
             });
@@ -294,25 +326,19 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         }
     }
 
-    @Override
-    public void onDetachedFromRecyclerView(RecyclerView recyclerView) {
-        super.onDetachedFromRecyclerView(recyclerView);
-        for (ViewHolderBase viewHolder : viewHolders) {
-            viewHolder.destroy();
-        }
-    }
+    protected static abstract class ViewHolderBase extends RecyclerView.ViewHolder
+            implements Toolbar.OnMenuItemClickListener, View.OnClickListener {
 
-    protected static abstract class ViewHolderBase extends RecyclerView.ViewHolder {
+        protected Link link;
 
-        private Calendar calendar;
+        protected FrameLayout frameFull;
         protected MediaController mediaController;
+        protected VideoView videoFull;
         protected ProgressBar progressImage;
         protected ViewPager viewPagerFull;
         protected AdapterAlbum adapterAlbum;
         protected ImageView imagePlay;
         protected ImageView imageThumbnail;
-        protected VideoView videoFull;
-        protected FrameLayout frameFull;
         protected WebViewFixed webFull;
         protected TextView textThreadFlair;
         protected TextView textThreadTitle;
@@ -340,27 +366,151 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         protected MenuItem itemDelete;
         protected MenuItem itemViewSubreddit;
         protected PorterDuffColorFilter colorFilterSave;
+        protected PorterDuffColorFilter colorFilterPositive;
+        protected PorterDuffColorFilter colorFilterNegative;
 
         public ViewHolderBase(View itemView,
                 ControllerLinks.ListenerCallback listenerCallback) {
             super(itemView);
             this.callback = listenerCallback;
+            initialize();
+            initializeToolbar();
+            initializeListeners();
+        }
 
-            calendar = Calendar.getInstance();
-            progressImage = (ProgressBar) itemView.findViewById(R.id.progress_image);
-            imagePlay = (ImageView) itemView.findViewById(R.id.image_play);
-            mediaController = new MediaController(itemView.getContext());
-            videoFull = (VideoView) itemView.findViewById(R.id.video_full);
-            videoFull.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
+        private void expandToolbarActions() {
+
+            if (!toolbarActions.isShown()) {
+                setVoteColors();
+                Intent shareIntent = new Intent(Intent.ACTION_SEND);
+                shareIntent.setType("text/plain");
+                shareIntent.putExtra(Intent.EXTRA_SUBJECT, link.getTitle());
+                shareIntent.putExtra(Intent.EXTRA_TEXT, Reddit.BASE_URL + link.getPermalink());
+
+                setToolbarMenuVisibility();
+                ShareActionProvider shareActionProvider = (ShareActionProvider) MenuItemCompat
+                        .getActionProvider(
+                                itemShare);
+                if (shareActionProvider != null) {
+                    shareActionProvider.setShareIntent(shareIntent);
+                }
+
+                if (Reddit.checkIsImage(link.getUrl()) || Reddit.placeImageUrl(link)) {
+                    itemDownloadImage.setVisible(true);
+                    itemDownloadImage.setEnabled(true);
+                }
+                else {
+                    itemDownloadImage.setVisible(false);
+                    itemDownloadImage.setEnabled(false);
+                }
+
+                boolean isAuthor = link.getAuthor()
+                        .equals(callback.getUser()
+                                .getName());
+
+                itemDelete.setVisible(isAuthor);
+                itemDelete.setEnabled(isAuthor);
+            }
+
+            toolbarActions.post(new Runnable() {
                 @Override
-                public void onPrepared(MediaPlayer mp) {
-                    mediaController.hide();
+                public void run() {
+                    AnimationUtils.animateExpand(layoutContainerExpand,
+                            getRatio(getAdapterPosition()), null);
                 }
             });
-            mediaController.setAnchorView(videoFull);
-            videoFull.setMediaController(mediaController);
+        }
 
-            webFull = new WebViewFixed(callback.getController().getActivity().getApplicationContext());
+        private void sendComment() {
+            // TODO: Move add to immediate on button click, check if failed afterwards
+
+            Map<String, String> params = new HashMap<>();
+            params.put("api_type", "json");
+            params.put("text", editTextReply.getText()
+                    .toString());
+            params.put("thing_id", link.getName());
+
+            request = callback.getControllerLinks()
+                    .getReddit()
+                    .loadPost(Reddit.OAUTH_URL + "/api/comment",
+                            new Response.Listener<String>() {
+                                @Override
+                                public void onResponse(String response) {
+                                    try {
+                                        if (callback.getControllerComments()
+                                                .getMainLink()
+                                                .getName()
+                                                .equals(link.getName())) {
+                                            JSONObject jsonObject = new JSONObject(
+                                                    response);
+                                            Comment newComment = Comment.fromJson(
+                                                    jsonObject.getJSONObject("json")
+                                                            .getJSONObject("data")
+                                                            .getJSONArray("things")
+                                                            .getJSONObject(0), 0);
+                                            callback.getControllerComments()
+                                                    .insertComment(newComment);
+                                        }
+                                    }
+                                    catch (JSONException e) {
+                                        e.printStackTrace();
+                                    }
+                                }
+                            }, new Response.ErrorListener() {
+                                @Override
+                                public void onErrorResponse(VolleyError error) {
+
+                                }
+                            }, params, 0);
+
+            layoutContainerReply.setVisibility(View.GONE);
+        }
+
+        private void initialize() {
+
+            mediaController = new MediaController(itemView.getContext());
+            adapterAlbum = new AdapterAlbum(callback.getControllerLinks()
+                    .getActivity(), new Album(),
+                    new OnTouchListenerDisallow(callback.getListener()));
+
+            progressImage = (ProgressBar) itemView.findViewById(R.id.progress_image);
+            imagePlay = (ImageView) itemView.findViewById(R.id.image_play);
+            videoFull = (VideoView) itemView.findViewById(R.id.video_full);
+            frameFull = (FrameLayout) itemView.findViewById(R.id.frame_full);
+            viewPagerFull = (ViewPager) itemView.findViewById(R.id.view_pager_full);
+            imageThumbnail = (ImageView) itemView.findViewById(R.id.image_thumbnail);
+            textThreadFlair = (TextView) itemView.findViewById(R.id.text_thread_flair);
+            textThreadTitle = (TextView) itemView.findViewById(R.id.text_thread_title);
+            textThreadInfo = (TextView) itemView.findViewById(R.id.text_thread_info);
+            textThreadSelf = (TextView) itemView.findViewById(R.id.text_thread_self);
+            textHidden = (TextView) itemView.findViewById(R.id.text_hidden);
+            buttonComments = (ImageButton) itemView.findViewById(R.id.button_comments);
+            layoutContainerExpand = (RelativeLayout) itemView.findViewById(
+                    R.id.layout_container_expand);
+            layoutContainerReply = (RelativeLayout) itemView.findViewById(
+                    R.id.layout_container_reply);
+            editTextReply = (EditText) itemView.findViewById(R.id.edit_text_reply);
+            buttonSendReply = (Button) itemView.findViewById(R.id.button_send_reply);
+            viewYouTube = (YouTubePlayerView) itemView.findViewById(R.id.youtube);
+
+            viewPagerFull.setAdapter(adapterAlbum);
+            viewPagerFull.setPageTransformer(false, new ViewPager.PageTransformer() {
+                @Override
+                public void transformPage(View page, float position) {
+                    if (page.getTag() instanceof AdapterAlbum.ViewHolder) {
+                        AdapterAlbum.ViewHolder viewHolder = (AdapterAlbum.ViewHolder) page
+                                .getTag();
+                        if (position >= -1 && position <= 1) {
+                            viewHolder.textAlbumIndicator.setTranslationX(
+                                    -position * page.getWidth());
+                        }
+                    }
+                }
+            });
+
+            webFull = new WebViewFixed(callback.getControllerLinks()
+                    .getActivity()
+                    .getApplicationContext());
             webFull.getSettings()
                     .setUseWideViewPort(true);
             webFull.getSettings()
@@ -384,187 +534,91 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                         String description,
                         String failingUrl) {
                     super.onReceivedError(view, errorCode, description, failingUrl);
-                    Toast.makeText(callback.getController().getActivity(), "WebView error: " + description, Toast.LENGTH_SHORT).show();
+                    Toast.makeText(callback.getControllerLinks()
+                            .getActivity(), "WebView error: " + description, Toast.LENGTH_SHORT)
+                            .show();
                 }
             });
-            webFull.setOnTouchListener(new View.OnTouchListener() {
+            webFull.setOnTouchListener(new OnTouchListenerDisallow(callback.getListener()));
+            frameFull.addView(webFull);
+        }
 
-                float startY;
+        private void initializeListeners() {
 
+            itemView.setOnClickListener(this);
+            imageThumbnail.setOnClickListener(this);
+            buttonComments.setOnClickListener(this);
+            buttonSendReply.setOnClickListener(this);
+
+            textThreadSelf.setMovementMethod(LinkMovementMethod.getInstance());
+
+            editTextReply.setOnTouchListener(new OnTouchListenerDisallow(callback.getListener()));
+            textThreadSelf.setOnTouchListener(new View.OnTouchListener() {
                 @Override
                 public boolean onTouch(View v, MotionEvent event) {
-
-                    switch (event.getAction()) {
-                        case MotionEvent.ACTION_DOWN:
-                            startY = event.getY();
-
-                            if ((webFull.canScrollVertically(1) && webFull.canScrollVertically(
-                                    -1))) {
-                                callback.getListener()
-                                        .requestDisallowInterceptTouchEvent(true);
-                            }
-                            else {
-                                callback.getListener()
-                                        .requestDisallowInterceptTouchEvent(false);
-                            }
-                            break;
-                        case MotionEvent.ACTION_UP:
-                            callback.getListener()
-                                    .requestDisallowInterceptTouchEvent(false);
-                            break;
-                        case MotionEvent.ACTION_MOVE:
-                            if (event.getY() - startY < 0 && webFull.canScrollVertically(1)) {
-                                callback.getListener()
-                                        .requestDisallowInterceptTouchEvent(true);
-                            }
-                            else if (event.getY() - startY > 0 && webFull.canScrollVertically(-1)) {
-                                callback.getListener()
-                                        .requestDisallowInterceptTouchEvent(true);
-                            }
-                            break;
-                    }
+                    MotionEvent newEvent = MotionEvent.obtain(event);
+                    newEvent.offsetLocation(v.getLeft(), v.getTop());
+                    ViewHolderBase.this.itemView.onTouchEvent(newEvent);
+                    newEvent.recycle();
                     return false;
                 }
             });
-            frameFull = (FrameLayout) itemView.findViewById(R.id.frame_full);
-            frameFull.addView(webFull);
-            adapterAlbum = new AdapterAlbum(callback.getController()
-                    .getActivity(), new Album(), new AdapterAlbum.DisallowListenerAlbum() {
-                @Override
-                public void requestDisallowInterceptTouchEventViewPager(boolean disallow) {
-                    viewPagerFull.requestDisallowInterceptTouchEvent(disallow);
-                }
 
+            videoFull.setMediaController(mediaController);
+            videoFull.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
                 @Override
-                public void requestDisallowInterceptTouchEvent(boolean disallow) {
-                    callback.getListener().requestDisallowInterceptTouchEvent(disallow);
+                public void onPrepared(MediaPlayer mp) {
+                    mediaController.hide();
                 }
             });
-            viewPagerFull = (ViewPager) itemView.findViewById(R.id.view_pager_full);
-            viewPagerFull.setAdapter(adapterAlbum);
-            viewPagerFull.setPageTransformer(false, new ViewPager.PageTransformer() {
+            videoFull.setOnTouchListener(new View.OnTouchListener() {
                 @Override
-                public void transformPage(View page, float position) {
-                    if (page.getTag() instanceof AdapterAlbum.ViewHolder) {
-                        AdapterAlbum.ViewHolder viewHolder = (AdapterAlbum.ViewHolder) page.getTag();
-                        if (position >= -1 && position <= 1) {
-                            viewHolder.textAlbumIndicator.setTranslationX(-position * page.getWidth());
+                public boolean onTouch(View v, MotionEvent event) {
+                    // TODO: Use custom MediaController
+                    if (event.getAction() == MotionEvent.ACTION_DOWN) {
+                        if (mediaController.isShowing()) {
+                            mediaController.hide();
                         }
-                    }
-                }
-            });
-            imageThumbnail = (ImageView) itemView.findViewById(R.id.image_thumbnail);
-            textThreadFlair = (TextView) itemView.findViewById(R.id.text_thread_flair);
-            textThreadTitle = (TextView) itemView.findViewById(R.id.text_thread_title);
-            textThreadInfo = (TextView) itemView.findViewById(R.id.text_thread_info);
-            textThreadSelf = (TextView) itemView.findViewById(R.id.text_thread_self);
-            textThreadSelf.setMovementMethod(LinkMovementMethod.getInstance());
-            textHidden = (TextView) itemView.findViewById(R.id.text_hidden);
-            buttonComments = (ImageButton) itemView.findViewById(R.id.button_comments);
-            buttonComments.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    callback.pauseViewHolders();
-                    callback.getListener()
-                            .onClickComments(
-                                    callback.getController()
-                                            .getLink(getAdapterPosition()), ViewHolderBase.this);
-                }
-            });
-            toolbarActions = (Toolbar) itemView.findViewById(R.id.toolbar_actions);
-            toolbarActions.inflateMenu(R.menu.menu_link);
-            toolbarActions.setOnMenuItemClickListener(new Toolbar.OnMenuItemClickListener() {
-                @Override
-                public boolean onMenuItemClick(MenuItem menuItem) {
-                    final Link link = callback.getController()
-                            .getLink(getAdapterPosition());
-
-                    switch (menuItem.getItemId()) {
-                        case R.id.item_upvote:
-                            callback.getController()
-                                    .voteLink(ViewHolderBase.this, link, 1);
-                            break;
-                        case R.id.item_downvote:
-                            callback.getController()
-                                    .voteLink(ViewHolderBase.this, link, -1);
-                            break;
-                        case R.id.item_share:
-                            break;
-                        case R.id.item_download_image:
-                            String url = link.getUrl();
-                            // TODO: Consolidate image format checking
-                            if (Reddit.checkIsImage(url)) {
-                                downloadImage(url);
-                            }
-                            break;
-                        case R.id.item_web:
-                            ViewHolderBase.this.callback.getListener()
-                                    .loadUrl(link.getUrl());
-                            break;
-                        case R.id.item_reply:
-                            if (TextUtils.isEmpty(callback.getPreferences()
-                                    .getString(AppSettings.REFRESH_TOKEN, ""))) {
-                                Toast.makeText(callback.getController()
-                                                .getActivity(), callback.getController()
-                                                .getActivity()
-                                                .getString(R.string.must_be_logged_in_to_reply),
-                                        Toast.LENGTH_SHORT)
-                                        .show();
-                                return false;
-                            }
-                            toggleReply();
-                            break;
-                        case R.id.item_save:
-                            final int position = getAdapterPosition();
-                            if (link.isSaved()) {
-                                callback.getController().getReddit().unsave(link);
-                            }
-                            else {
-                                callback.getController().getReddit().save(link, "",
-                                        new Response.ErrorListener() {
-                                            @Override
-                                            public void onErrorResponse(VolleyError error) {
-                                                if (link.isSaved()) {
-                                                    link.setSaved(false);
-                                                    if (position == getAdapterPosition()) {
-                                                        syncSaveIcon(link);
-                                                    }
-                                                }
-                                            }
-                                        });
-                            }
-                            link.setSaved(!link.isSaved());
-                            syncSaveIcon(link);
-                            break;
-                        case R.id.item_view_profile:
-                            Intent intentViewProfile = new Intent(callback.getControllerComments()
-                                    .getActivity(), MainActivity.class);
-                            intentViewProfile.setAction(Intent.ACTION_VIEW);
-                            intentViewProfile.putExtra(MainActivity.REDDIT_PAGE,
-                                    "https://reddit.com/user/" + link.getAuthor());
-                            callback.getControllerComments()
-                                    .getActivity()
-                                    .startActivity(intentViewProfile);
-                            break;
-                        case R.id.item_delete:
-                            callback.getController()
-                                    .deletePost(callback.getController()
-                                            .getLink(getAdapterPosition()));
-                            break;
-                        case R.id.item_view_subreddit:
-                            Intent intentViewSubreddit = new Intent(callback.getController()
-                                    .getActivity(), MainActivity.class);
-                            intentViewSubreddit.setAction(Intent.ACTION_VIEW);
-                            intentViewSubreddit.putExtra(MainActivity.REDDIT_PAGE,
-                                    "https://reddit.com/r/" + link.getSubreddit());
-                            callback.getController()
-                                    .getActivity()
-                                    .startActivity(intentViewSubreddit);
-                            break;
+                        else {
+                            mediaController.show();
+                        }
                     }
                     return true;
                 }
             });
+            mediaController.setAnchorView(videoFull);
+        }
+
+        @Override
+        public void onClick(View v) {
+            switch (v.getId()) {
+                case R.id.button_comments:
+                    callback.pauseViewHolders();
+                    callback.getListener()
+                            .onClickComments(link, ViewHolderBase.this);
+                    break;
+                case R.id.image_thumbnail:
+                    onClickThumbnail(link);
+                    break;
+                case R.id.text_thread_self:
+                    break;
+                case R.id.button_send_reply:
+                    if (!TextUtils.isEmpty(editTextReply.getText())) {
+                        sendComment();
+                    }
+                    break;
+                default:
+                    expandToolbarActions();
+                    break;
+            }
+        }
+
+        private void initializeToolbar() {
+
+            toolbarActions = (Toolbar) itemView.findViewById(R.id.toolbar_actions);
+            toolbarActions.inflateMenu(R.menu.menu_link);
+            toolbarActions.setOnMenuItemClickListener(this);
+
             Menu menu = toolbarActions.getMenu();
             itemUpvote = menu.findItem(R.id.item_upvote);
             itemDownvote = menu.findItem(R.id.item_downvote);
@@ -575,329 +629,249 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             itemDelete = menu.findItem(R.id.item_delete);
             itemViewSubreddit = menu.findItem(R.id.item_view_subreddit);
 
-            colorFilterSave = new PorterDuffColorFilter(callback.getController().getActivity().getResources().getColor(R.color.colorAccent),
+            Resources resources = callback.getControllerLinks().getActivity().getResources();
+            colorFilterPositive = new PorterDuffColorFilter(resources.getColor(
+                    R.color.positiveScore),
                     PorterDuff.Mode.MULTIPLY);
+            colorFilterNegative = new PorterDuffColorFilter(resources.getColor(
+                    R.color.negativeScore),
+                    PorterDuff.Mode.MULTIPLY);
+            colorFilterSave = new PorterDuffColorFilter(resources.getColor(R.color.colorAccent),
+                    PorterDuff.Mode.MULTIPLY);
+        }
 
-            layoutContainerExpand = (RelativeLayout) itemView.findViewById(
-                    R.id.layout_container_expand);
-            layoutContainerReply = (RelativeLayout) itemView.findViewById(
-                    R.id.layout_container_reply);
-            editTextReply = (EditText) itemView.findViewById(R.id.edit_text_reply);
-            editTextReply.setOnTouchListener(new View.OnTouchListener() {
+        @Override
+        public boolean onMenuItemClick(MenuItem menuItem) {
+            switch (menuItem.getItemId()) {
+                case R.id.item_upvote:
+                    callback.getControllerLinks()
+                            .voteLink(ViewHolderBase.this, link, 1);
+                    break;
+                case R.id.item_downvote:
+                    callback.getControllerLinks()
+                            .voteLink(ViewHolderBase.this, link, -1);
+                    break;
+                case R.id.item_share:
+                    break;
+                case R.id.item_download_image:
+                    downloadImage(link.getUrl());
+                    break;
+                case R.id.item_web:
+                    callback.getListener()
+                            .loadUrl(link.getUrl());
+                    break;
+                case R.id.item_reply:
+                    toggleReply();
+                    break;
+                case R.id.item_save:
+                    saveLink(link);
+                    break;
+                case R.id.item_view_profile:
+                    Intent intentViewProfile = new Intent(callback.getControllerComments()
+                            .getActivity(), MainActivity.class);
+                    intentViewProfile.setAction(Intent.ACTION_VIEW);
+                    intentViewProfile.putExtra(MainActivity.REDDIT_PAGE,
+                            "https://reddit.com/user/" + link.getAuthor());
+                    callback.getControllerComments()
+                            .getActivity()
+                            .startActivity(intentViewProfile);
+                    break;
+                case R.id.item_delete:
+                    callback.getControllerLinks()
+                            .deletePost(link);
+                    break;
+                case R.id.item_view_subreddit:
+                    Intent intentViewSubreddit = new Intent(callback.getControllerLinks()
+                            .getActivity(), MainActivity.class);
+                    intentViewSubreddit.setAction(Intent.ACTION_VIEW);
+                    intentViewSubreddit.putExtra(MainActivity.REDDIT_PAGE,
+                            "https://reddit.com/r/" + link.getSubreddit());
+                    callback.getControllerLinks()
+                            .getActivity()
+                            .startActivity(intentViewSubreddit);
+                    break;
+            }
+            return true;
+        }
 
-                float startY;
-
-                @Override
-                public boolean onTouch(View v, MotionEvent event) {
-
-                    switch (event.getAction()) {
-                        case MotionEvent.ACTION_DOWN:
-                            startY = event.getY();
-
-                            if ((editTextReply.canScrollVertically(
-                                    1) && editTextReply.canScrollVertically(
-                                    -1))) {
-                                callback.getListener()
-                                        .requestDisallowInterceptTouchEvent(true);
-                            }
-                            else {
-                                callback.getListener()
-                                        .requestDisallowInterceptTouchEvent(false);
-                            }
-                            break;
-                        case MotionEvent.ACTION_UP:
-                            callback.getListener()
-                                    .requestDisallowInterceptTouchEvent(false);
-                            break;
-                        case MotionEvent.ACTION_MOVE:
-                            if (event.getY() - startY < 0 && editTextReply.canScrollVertically(1)) {
-                                callback.getListener()
-                                        .requestDisallowInterceptTouchEvent(true);
-                            }
-                            else if (event.getY() - startY > 0 && editTextReply.canScrollVertically(
-                                    -1)) {
-                                callback.getListener()
-                                        .requestDisallowInterceptTouchEvent(true);
-                            }
-                            break;
-                    }
-                    return false;
-                }
-            });
-            buttonSendReply = (Button) itemView.findViewById(R.id.button_send_reply);
-            buttonSendReply.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-
-                    if (!TextUtils.isEmpty(editTextReply.getText())) {
-                        final Link link = callback.getController()
-                                .getLink(getAdapterPosition());
-                        Map<String, String> params = new HashMap<>();
-                        params.put("api_type", "json");
-                        params.put("text", editTextReply.getText()
-                                .toString());
-                        params.put("thing_id", link.getName());
-
-                        // TODO: Move add to immediate on button click, check if failed afterwards
-                        request = callback.getController()
-                                .getReddit()
-                                .loadPost(Reddit.OAUTH_URL + "/api/comment",
-                                        new Response.Listener<String>() {
-                                            @Override
-                                            public void onResponse(String response) {
-                                                try {
-                                                    if (callback.getControllerComments()
-                                                            .getMainLink()
-                                                            .getName()
-                                                            .equals(link.getName())) {
-                                                        JSONObject jsonObject = new JSONObject(
-                                                                response);
-                                                        Comment newComment = Comment.fromJson(
-                                                                jsonObject.getJSONObject("json")
-                                                                        .getJSONObject("data")
-                                                                        .getJSONArray("things")
-                                                                        .getJSONObject(0), 0);
-                                                        callback.getControllerComments()
-                                                                .insertComment(newComment);
-                                                    }
-                                                }
-                                                catch (JSONException e) {
-                                                    e.printStackTrace();
-                                                }
-                                            }
-                                        }, new Response.ErrorListener() {
-                                            @Override
-                                            public void onErrorResponse(VolleyError error) {
-
-                                            }
-                                        }, params, 0);
-
-                        layoutContainerReply.setVisibility(View.GONE);
-//                        AnimationUtils.animateExpand(layoutContainerReply,
-//                                getRatio(getAdapterPosition()), null);
-                    }
-                }
-            });
-            viewYouTube = (YouTubePlayerView) itemView.findViewById(R.id.youtube);
-
-            final View.OnClickListener clickListenerLink = new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    setVoteColors();
-                    Link link = callback.getController()
-                            .getLink(getAdapterPosition());
-                    Intent shareIntent = new Intent(Intent.ACTION_SEND);
-                    shareIntent.setType("text/plain");
-                    shareIntent.putExtra(Intent.EXTRA_SUBJECT, link.getTitle());
-                    shareIntent.putExtra(Intent.EXTRA_TEXT, Reddit.BASE_URL + link.getPermalink());
-
-                    setToolbarMenuVisibility(link);
-                    ShareActionProvider shareActionProvider = (ShareActionProvider) MenuItemCompat.getActionProvider(itemShare);
-                    if (shareActionProvider != null) {
-                        shareActionProvider.setShareIntent(shareIntent);
-                    }
-
-                    if (Reddit.checkIsImage(link.getUrl()) || Reddit.placeImageUrl(link)) {
-                        itemDownloadImage.setVisible(true);
-                        itemDownloadImage.setEnabled(true);
-                    }
-                    else {
-                        itemDownloadImage.setVisible(false);
-                        itemDownloadImage.setEnabled(false);
-                    }
-
-                    boolean isAuthor = link.getAuthor()
-                            .equals(callback.getUser()
-                                    .getName());
-
-                    itemDelete.setVisible(isAuthor);
-                    itemDelete.setEnabled(isAuthor);
-
-                    toolbarActions.post(new Runnable() {
-                        @Override
-                        public void run() {
-                            AnimationUtils.animateExpand(layoutContainerExpand,
-                                    getRatio(getAdapterPosition()), null);
-                        }
-                    });
-
-                }
-            };
-
-            this.itemView.setOnClickListener(clickListenerLink);
-
-            this.imageThumbnail.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    Link link = callback.getController()
-                            .getLink(getAdapterPosition());
-                    onClickThumbnail(link);
-                }
-            });
-
-            View.OnTouchListener onTouchListener = new View.OnTouchListener() {
-                @Override
-                public boolean onTouch(View v, MotionEvent event) {
-                    MotionEvent newEvent = MotionEvent.obtain(event);
-                    newEvent.offsetLocation(v.getLeft(), v.getTop());
-                    ViewHolderBase.this.itemView.onTouchEvent(newEvent);
-                    newEvent.recycle();
-                    return false;
-                }
-            };
-            textThreadSelf.setOnTouchListener(onTouchListener);
-
+        private void saveLink(final Link link) {
+            if (link.isSaved()) {
+                callback.getControllerLinks()
+                        .getReddit()
+                        .unsave(link);
+            }
+            else {
+                callback.getControllerLinks()
+                        .getReddit()
+                        .save(link, "",
+                                new Response.ErrorListener() {
+                                    @Override
+                                    public void onErrorResponse(VolleyError error) {
+                                        link.setSaved(false);
+                                        syncSaveIcon();
+                                    }
+                                });
+            }
+            link.setSaved(!link.isSaved());
+            syncSaveIcon();
         }
 
         public void toggleReply() {
-            Link link = callback.getController()
-                    .getLink(getAdapterPosition());
-            if (!link.isReplyExpanded()) {
+            if (TextUtils.isEmpty(callback.getPreferences()
+                    .getString(AppSettings.REFRESH_TOKEN, ""))) {
+                Toast.makeText(callback.getControllerLinks()
+                                .getActivity(), callback.getControllerLinks()
+                                .getActivity()
+                                .getString(R.string.must_be_logged_in_to_reply),
+                        Toast.LENGTH_SHORT)
+                        .show();
+                return;
+            }
+            expandFull(true);
+            link.setReplyExpanded(!link.isReplyExpanded());
+            if (link.isReplyExpanded()) {
                 editTextReply.requestFocus();
                 editTextReply.setText(null);
             }
-            link.setReplyExpanded(!link.isReplyExpanded());
             layoutContainerReply.setVisibility(link.isReplyExpanded() ? View.VISIBLE : View.GONE);
-//            AnimationUtils.animateExpand(layoutContainerReply, getRatio(getAdapterPosition()),
-//                    null);
+            callback.getListener()
+                    .onFullLoaded(getAdapterPosition());
         }
 
         public abstract float getRatio(int adapterPosition);
 
         public void loadFull(final Link link) {
 
-            Log.d(TAG, "loadFull: " + link.getUrl());
-
+            expandFull(true);
             // TODO: Toggle visibility of web and video views
 
             String urlString = link.getUrl();
             if (!TextUtils.isEmpty(urlString)) {
-                if (link.getDomain()
-                        .contains("imgur")) {
-                    int startIndex;
-                    int lastIndex;
-                    if (urlString.contains("imgur.com/a/")) {
-                        if (link.getAlbum() != null) {
-                            loadAlbum(link, link.getAlbum());
-                            Log.d(TAG, "link URL: " + link.getUrl());
-                            Log.d(TAG, "album URL: " + link.getAlbum().getLink());
-                            Toast.makeText(callback.getController().getActivity(), "Cached album loaded: " + link.getAlbum().getTitle(), Toast.LENGTH_SHORT).show();
-                            return;
-                        }
-
-                        startIndex = urlString.indexOf("imgur.com/a/") + 12;
-                        int slashIndex = urlString.substring(startIndex)
-                                .indexOf("/") + startIndex;
-                        lastIndex = slashIndex > startIndex ? slashIndex : urlString.length();
-                        String imgurId = urlString.substring(startIndex, lastIndex);
-                        loadAlbum(imgurId, link);
-                    }
-                    else if (urlString.contains("imgur.com/gallery/")) {
-                        if (link.getAlbum() != null) {
-                            loadAlbum(link, link.getAlbum());
-                            return;
-                        }
-
-                        startIndex = urlString.indexOf("imgur.com/gallery/") + 18;
-                        int slashIndex = urlString.substring(startIndex)
-                                .indexOf("/") + startIndex;
-                        lastIndex = slashIndex > startIndex ? slashIndex : urlString.length();
-                        String imgurId = urlString.substring(startIndex, lastIndex);
-                        loadGallery(imgurId, link);
-                    }
-                    else if (urlString.contains(Reddit.GIFV)) {
-                        startIndex = urlString.indexOf("imgur.com/") + 10;
-                        int dotIndex = urlString.substring(startIndex)
-                                .indexOf(".") + startIndex;
-                        lastIndex = dotIndex > startIndex ? dotIndex : urlString.length();
-                        String imgurId = urlString.substring(startIndex, lastIndex);
-                        loadGifv(imgurId);
-                    }
-                    else {
-                        attemptLoadImage(link);
-                    }
-                }
-                else if (link.getDomain()
-                        .contains("gfycat")) {
-                    int startIndex = urlString.indexOf("gfycat.com/") + 11;
-                    int dotIndex = urlString.substring(startIndex)
-                            .indexOf(".");
-                    int lastIndex = dotIndex > startIndex ? dotIndex : urlString.length();
-                    String gfycatId = urlString.substring(startIndex, lastIndex);
-                    progressImage.setVisibility(View.VISIBLE);
-                    request = callback.getController()
-                            .getReddit()
-                            .loadGet(Reddit.GFYCAT_URL + gfycatId,
-                                    new Response.Listener<String>() {
-                                        @Override
-                                        public void onResponse(String response) {
-                                            try {
-                                                JSONObject jsonObject = new JSONObject(
-                                                        response).getJSONObject(Reddit.GFYCAT_ITEM);
-                                                loadVideo(jsonObject.getString(Reddit.GFYCAT_WEBM),
-                                                        (float) jsonObject.getInt(
-                                                                "height") / jsonObject.getInt(
-                                                                "width"));
-                                            }
-                                            catch (JSONException e) {
-                                                e.printStackTrace();
-                                            }
-                                            finally {
-                                                progressImage.setVisibility(View.GONE);
-                                            }
-                                        }
-                                    }, new Response.ErrorListener() {
-                                        @Override
-                                        public void onErrorResponse(VolleyError error) {
-                                            progressImage.setVisibility(View.GONE);
-                                        }
-                                    }, 0);
-                }
-                else if (link.getDomain()
-                        .contains("youtu")) {
-                    if (viewYouTube.isShown()) {
-                        hideYouTube();
-                        return;
-                    }
-
-                    if (youTubePlayer != null) {
-                        viewYouTube.setVisibility(View.VISIBLE);
-                        return;
-                    }
-                    Log.d(TAG, "youtube");
-                    /*
-                        Regex taken from Gubatron at
-                        http://stackoverflow.com/questions/24048308/how-to-get-the-video-id-from-a-youtube-url-with-regex-in-java
-                    */
-                    Pattern pattern = Pattern.compile(
-                            ".*(?:youtu.be\\/|v\\/|u\\/\\w\\/|embed\\/|watch\\?v=)([^#\\&\\?]*).*");
-                    final Matcher matcher = pattern.matcher(urlString);
-                    if (matcher.matches()) {
-                        loadYouTube(link, matcher.group(1));
-                    }
-                    else {
-                        attemptLoadImage(link);
-                    }
-                }
-                else {
+                if (!checkLinkUrl()) {
                     attemptLoadImage(link);
                 }
             }
         }
 
+        /**
+         * @return true if Link loading has been handled, false otherwise
+         */
+        public boolean checkLinkUrl() {
+
+            if (link.getDomain()
+                    .contains("imgur")) {
+                return loadImgur();
+            }
+            else if (link.getDomain()
+                    .contains("gfycat")) {
+                return loadGfycat();
+            }
+            else if (link.getDomain()
+                    .contains("youtu")) {
+                return loadYouTube();
+            }
+
+            return false;
+        }
+
+        private boolean loadYouTube() {
+
+            if (viewYouTube.isShown()) {
+                hideYouTube();
+                return true;
+            }
+
+            if (youTubePlayer != null) {
+                viewYouTube.setVisibility(View.VISIBLE);
+                return true;
+            }
+            /*
+                Regex taken from Gubatron at
+                http://stackoverflow.com/questions/24048308/how-to-get-the-video-id-from-a-youtube-url-with-regex-in-java
+            */
+            Pattern pattern = Pattern.compile(
+                    ".*(?:youtu.be\\/|v\\/|u\\/\\w\\/|embed\\/|watch\\?v=)([^#\\&\\?]*).*");
+            final Matcher matcher = pattern.matcher(link.getUrl());
+            if (matcher.matches()) {
+                loadYouTubeVideo(link, matcher.group(1));
+                return true;
+            }
+
+            return false;
+        }
+
+        private boolean loadGfycat() {
+            String gfycatId = Reddit.parseUrlId(link.getUrl(), Reddit.GFYCAT_PREFIX, ".");
+            progressImage.setVisibility(View.VISIBLE);
+            request = callback.getControllerLinks()
+                    .getReddit()
+                    .loadGet(Reddit.GFYCAT_URL + gfycatId,
+                            new Response.Listener<String>() {
+                                @Override
+                                public void onResponse(String response) {
+                                    try {
+                                        JSONObject jsonObject = new JSONObject(
+                                                response).getJSONObject(Reddit.GFYCAT_ITEM);
+                                        loadVideo(jsonObject.getString(Reddit.GFYCAT_WEBM),
+                                                (float) jsonObject.getInt(
+                                                        "height") / jsonObject.getInt(
+                                                        "width"));
+                                    }
+                                    catch (JSONException e) {
+                                        e.printStackTrace();
+                                    }
+                                    finally {
+                                        progressImage.setVisibility(View.GONE);
+                                    }
+                                }
+                            }, new Response.ErrorListener() {
+                                @Override
+                                public void onErrorResponse(VolleyError error) {
+                                    progressImage.setVisibility(View.GONE);
+                                }
+                            }, 0);
+            return false;
+        }
+
+        /**
+         * @return true if Link loading has been handled, false otherwise
+         */
+        private boolean loadImgur() {
+            // TODO: Use regex or better parsing system
+            if (link.getUrl().contains(Reddit.IMGUR_PREFIX_ALBUM)) {
+                if (link.getAlbum() == null) {
+                    loadAlbum(Reddit.parseUrlId(link.getUrl(), Reddit.IMGUR_PREFIX_ALBUM, "/"),
+                            link);
+                }
+                else {
+                    setAlbum(link, link.getAlbum());
+                }
+            }
+            else if (link.getUrl().contains(Reddit.IMGUR_PREFIX_GALLERY)) {
+                if (link.getAlbum() == null) {
+                    loadGallery(
+                            Reddit.parseUrlId(link.getUrl(), Reddit.IMGUR_PREFIX_GALLERY, "/"),
+                            link);
+                }
+                else {
+                    setAlbum(link, link.getAlbum());
+                }
+            }
+            else if (link.getUrl().contains(Reddit.GIFV)) {
+                loadGifv(Reddit.parseUrlId(link.getUrl(), Reddit.IMGUR_PREFIX, "."));
+            }
+            else {
+                return false;
+            }
+
+            return true;
+        }
+
         public void onClickThumbnail(Link link) {
-
-            Log.d(TAG, "onClickThumbnail");
-
             if (link.isSelf()) {
                 loadSelfText(link);
             }
             else {
-                if (callback.getLayoutManager() instanceof StaggeredGridLayoutManager) {
-                    ((StaggeredGridLayoutManager.LayoutParams) itemView.getLayoutParams()).setFullSpan(
-                            true);
-                    ((StaggeredGridLayoutManager) callback.getLayoutManager()).invalidateSpanAssignments();
-                }
                 loadFull(link);
             }
         }
@@ -907,64 +881,37 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                 textThreadSelf.setVisibility(View.GONE);
                 // TODO: Check if textThreadSelf is taller than view and optimize animation
 //                AnimationUtils.animateExpand(textThreadSelf, 1f, null);
-                return;
             }
-            if (TextUtils.isEmpty(link.getSelfText())) {
+            else if (TextUtils.isEmpty(link.getSelfText())) {
                 callback.pauseViewHolders();
                 callback.getListener()
                         .onClickComments(link, this);
             }
             else {
-                if (callback.getLayoutManager() instanceof StaggeredGridLayoutManager) {
-                    ((StaggeredGridLayoutManager.LayoutParams) itemView.getLayoutParams()).setFullSpan(
-                            true);
-                    itemView.requestLayout();
-                    itemView.post(new Runnable() {
-                        @Override
-                        public void run() {
-                            ((StaggeredGridLayoutManager) callback.getLayoutManager()).invalidateSpanAssignments();
-                        }
-                    });
-                }
+                expandFull(true);
                 textThreadSelf.setText(Reddit.getTrimmedHtml(link.getSelfTextHtml()));
                 textThreadSelf.setVisibility(View.VISIBLE);
 //                AnimationUtils.animateExpand(textThreadSelf, 1f, null);
             }
         }
 
+        public void expandFull(boolean expand) {
+        }
+
         public void setVoteColors() {
 
-            Menu menu = toolbarActions.getMenu();
-            Link link = callback.getController()
-                    .getLink(getAdapterPosition());
             switch (link.isLikes()) {
                 case 1:
-                    itemUpvote.getIcon()
-                            .setColorFilter(
-                                    callback.getController()
-                                            .getActivity()
-                                            .getResources()
-                                            .getColor(R.color.positiveScore),
-                                    PorterDuff.Mode.MULTIPLY);
-                    itemDownvote.getIcon()
-                            .clearColorFilter();
+                    itemUpvote.getIcon().setColorFilter(colorFilterPositive);
+                    itemDownvote.getIcon().clearColorFilter();
                     break;
                 case -1:
-                    itemDownvote.getIcon()
-                            .setColorFilter(
-                                    callback.getController()
-                                            .getActivity()
-                                            .getResources()
-                                            .getColor(R.color.negativeScore),
-                                    PorterDuff.Mode.MULTIPLY);
-                    itemUpvote.getIcon()
-                            .clearColorFilter();
+                    itemDownvote.getIcon().setColorFilter(colorFilterNegative);
+                    itemUpvote.getIcon().clearColorFilter();
                     break;
                 case 0:
-                    itemUpvote.getIcon()
-                            .clearColorFilter();
-                    itemDownvote.getIcon()
-                            .clearColorFilter();
+                    itemUpvote.getIcon().clearColorFilter();
+                    itemDownvote.getIcon().clearColorFilter();
                     break;
             }
         }
@@ -978,10 +925,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             if (Reddit.placeImageUrl(link)) {
                 webFull.onResume();
                 webFull.resetMaxHeight();
-                webFull.loadData(Reddit.getImageHtml(
-                        callback.getController()
-                                .getLink(getAdapterPosition())
-                                .getUrl()), "text/html", "UTF-8");
+                webFull.loadData(Reddit.getImageHtml(link.getUrl()), "text/html", "UTF-8");
                 webFull.setVisibility(View.VISIBLE);
                 callback.getListener()
                         .onFullLoaded(getAdapterPosition());
@@ -993,15 +937,17 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         }
 
         private void loadGallery(String id, final Link link) {
+            // TODO: Check in onResponse whether the same link is currently attached
+
             progressImage.setVisibility(View.VISIBLE);
-            request = callback.getController()
+            request = callback.getControllerLinks()
                     .getReddit()
                     .loadImgurGallery(id,
                             new Response.Listener<String>() {
                                 @Override
                                 public void onResponse(String response) {
                                     try {
-                                        loadAlbum(link, Album.fromJson(
+                                        setAlbum(link, Album.fromJson(
                                                 new JSONObject(response).getJSONObject("data")));
                                     }
                                     catch (JSONException e) {
@@ -1021,8 +967,10 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         }
 
         private void loadAlbum(String id, final Link link) {
+            // TODO: Check in onResponse whether the same link is currently attached
+
             progressImage.setVisibility(View.VISIBLE);
-            request = callback.getController()
+            request = callback.getControllerLinks()
                     .getReddit()
                     .loadImgurAlbum(id,
                             new Response.Listener<String>() {
@@ -1031,10 +979,14 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                                     try {
                                         Album album = Album.fromJson(
                                                 new JSONObject(response).getJSONObject("data"));
-                                        loadAlbum(link, album);
+                                        setAlbum(link, album);
                                         Log.d(TAG, "link URL: " + link.getUrl());
                                         Log.d(TAG, "album URL: " + album.getLink());
-                                        Toast.makeText(callback.getController().getActivity(), "New album loaded: " + album.getTitle(), Toast.LENGTH_SHORT).show();
+                                        Toast.makeText(callback.getControllerLinks()
+                                                        .getActivity(),
+                                                "New album loaded: " + album.getTitle(),
+                                                Toast.LENGTH_SHORT)
+                                                .show();
                                     }
                                     catch (JSONException e) {
                                         e.printStackTrace();
@@ -1051,7 +1003,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                             }, 0);
         }
 
-        private void loadAlbum(Link link, Album album) {
+        public void setAlbum(Link link, Album album) {
             link.setAlbum(album);
             adapterAlbum.setAlbum(album);
             viewPagerFull.setCurrentItem(0);
@@ -1059,21 +1011,13 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                     .getRecyclerHeight() - itemView.getHeight();
             viewPagerFull.setVisibility(View.VISIBLE);
             viewPagerFull.requestLayout();
-            if (ViewHolderBase.this instanceof AdapterLinkGrid.ViewHolder) {
-                imageThumbnail.setVisibility(View.GONE);
-                ((RelativeLayout.LayoutParams) textThreadTitle.getLayoutParams()).addRule(
-                        RelativeLayout.START_OF,
-                        buttonComments.getId());
-                ((RelativeLayout.LayoutParams) textThreadTitle.getLayoutParams()).setMarginEnd(
-                        0);
-            }
             callback.getListener()
                     .onFullLoaded(getAdapterPosition());
         }
 
         private void loadGifv(String id) {
             Log.d(TAG, "loadGifv: " + id);
-            request = callback.getController()
+            request = callback.getControllerLinks()
                     .getReddit()
                     .loadImgurImage(id,
                             new Response.Listener<String>() {
@@ -1123,7 +1067,8 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             Uri uri = Uri.parse(url);
             videoFull.setVideoURI(uri);
             videoFull.setVisibility(View.VISIBLE);
-            videoFull.getLayoutParams().height = (int) (ViewHolderBase.this.itemView.getWidth() * heightRatio);
+            videoFull.getLayoutParams().height = (int) (ViewHolderBase.this.itemView
+                    .getWidth() * heightRatio);
             videoFull.invalidate();
             videoFull.start();
             videoFull.setOnCompletionListener(
@@ -1137,7 +1082,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                     .onFullLoaded(getAdapterPosition());
         }
 
-        public void loadYouTube(final Link link, final String id) {
+        public void loadYouTubeVideo(final Link link, final String id) {
             viewYouTube.initialize(ApiKeys.YOUTUBE_API_KEY,
                     new YouTubePlayer.OnInitializedListener() {
                         @Override
@@ -1168,7 +1113,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             viewYouTube.setVisibility(View.GONE);
         }
 
-        public void setToolbarMenuVisibility(Link link) {
+        public void setToolbarMenuVisibility() {
             Menu menu = toolbarActions.getMenu();
 
             boolean loggedIn = !TextUtils.isEmpty(callback.getPreferences()
@@ -1206,14 +1151,13 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                 }
             }
 
-            itemViewSubreddit.setVisible(callback.getController()
-                    .showSubreddit());
-            itemViewSubreddit.setEnabled(callback.getController()
-                    .showSubreddit());
+            boolean showSubreddit = callback.getControllerLinks().showSubreddit();
 
-            syncSaveIcon(link);
+            itemViewSubreddit.setVisible(showSubreddit);
+            itemViewSubreddit.setEnabled(showSubreddit);
+
+            syncSaveIcon();
         }
-
 
         public void onRecycle() {
 
@@ -1227,52 +1171,41 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             }
             viewYouTube.setVisibility(View.GONE);
             webFull.loadData(Reddit.getImageHtml(""), "text/html", "UTF-8");
-//            webFull.loadData("<html><head><meta name=\"viewport\" content=\"width=device-width, minimum-scale=0.1\"><style>img {width:100%;}</style></head><body style=\"margin: 0px;\">><img style=\"-webkit-user-select: none; cursor: zoom-in;\"/></body></html>", "text/html", "UTF-8");
             webFull.onPause();
             webFull.resetMaxHeight();
             webFull.setVisibility(View.GONE);
             videoFull.stopPlayback();
             videoFull.setVisibility(View.GONE);
             viewPagerFull.setVisibility(View.GONE);
+            imagePlay.setVisibility(View.GONE);
             imageThumbnail.setVisibility(View.VISIBLE);
             progressImage.setVisibility(View.GONE);
             textThreadSelf.setVisibility(View.GONE);
-            if (this instanceof AdapterLinkGrid.ViewHolder) {
-                ((RelativeLayout.LayoutParams) textThreadTitle.getLayoutParams()).removeRule(
-                        RelativeLayout.START_OF);
-                ((RelativeLayout.LayoutParams) textThreadTitle.getLayoutParams()).setMarginEnd(
-                        callback.getTitleMargin());
-            }
-
             imageThumbnail.setImageBitmap(null);
 
         }
 
         public void onBind(Link link) {
+            this.link = link;
             layoutContainerExpand.setVisibility(View.GONE);
-
-            if (link.isReplyExpanded()) {
-                layoutContainerReply.setVisibility(View.VISIBLE);
-            }
-            else {
-                layoutContainerReply.setVisibility(View.GONE);
-            }
+            layoutContainerReply.setVisibility(link.isReplyExpanded() ? View.VISIBLE : View.GONE);
 
             textThreadSelf.setVisibility(View.GONE);
             adapterAlbum.setAlbum(null);
-            syncSaveIcon(link);
+            syncSaveIcon();
 
         }
 
         public void downloadImage(String url) {
-            Picasso.with(callback.getController()
+            Picasso.with(callback.getControllerLinks()
                     .getActivity())
                     .load(url)
                     .into(new Target() {
                         @Override
                         public void onBitmapLoaded(Bitmap bitmap, Picasso.LoadedFrom from) {
                             File file = new File(Environment.getExternalStorageDirectory()
-                                    .getAbsolutePath() + "/ReaderForReddit/" + System.currentTimeMillis() + ".png");
+                                    .getAbsolutePath() + "/ReaderForReddit/" + System
+                                    .currentTimeMillis() + ".png");
 
                             file.getParentFile()
                                     .mkdirs();
@@ -1296,7 +1229,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                                 }
                             }
 
-                            Toast.makeText(callback.getController()
+                            Toast.makeText(callback.getControllerLinks()
                                             .getActivity(), "Image downloaded",
                                     Toast.LENGTH_SHORT)
                                     .show();
@@ -1314,23 +1247,20 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                     });
         }
 
-        public String getFormatttedDate(long time) {
-            calendar.setTimeInMillis(time);
-            int minute = calendar.get(Calendar.MINUTE);
-            return calendar.getDisplayName(Calendar.MONTH, Calendar.SHORT,
-                    Locale.getDefault()) + " " + calendar.get(
-                    Calendar.DAY_OF_MONTH) + " " + calendar.get(Calendar.YEAR) + " " + calendar.get(
-                    Calendar.HOUR_OF_DAY) + (minute < 10 ? ":0" : ":") + minute;
-        }
-
-        public void syncSaveIcon(Link link) {
+        public void syncSaveIcon() {
             if (link.isSaved()) {
-                itemSave.setTitle(callback.getController().getActivity().getString(R.string.unsave));
-                itemSave.getIcon().setColorFilter(colorFilterSave);
+                itemSave.setTitle(callback.getControllerLinks()
+                        .getActivity()
+                        .getString(R.string.unsave));
+                itemSave.getIcon()
+                        .setColorFilter(colorFilterSave);
             }
             else {
-                itemSave.setTitle(callback.getController().getActivity().getString(R.string.save));
-                itemSave.getIcon().clearColorFilter();
+                itemSave.setTitle(callback.getControllerLinks()
+                        .getActivity()
+                        .getString(R.string.save));
+                itemSave.getIcon()
+                        .clearColorFilter();
             }
         }
 

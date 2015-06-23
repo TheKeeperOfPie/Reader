@@ -75,6 +75,16 @@ public class AdapterInbox extends RecyclerView.Adapter<RecyclerView.ViewHolder>
             public ControllerComments.CommentClickListener getCommentClickListener() {
                 return new ControllerComments.CommentClickListener() {
                     @Override
+                    public void requestDisallowInterceptTouchEventVertical(boolean disallow) {
+                        listener.requestDisallowInterceptTouchEventVertical(disallow);
+                    }
+
+                    @Override
+                    public void requestDisallowInterceptTouchEventHorizontal(boolean disallow) {
+                        listener.requestDisallowInterceptTouchEventHorizontal(disallow);
+                    }
+
+                    @Override
                     public void loadUrl(String url) {
                         listener.loadUrl(url);
                     }
@@ -117,10 +127,6 @@ public class AdapterInbox extends RecyclerView.Adapter<RecyclerView.ViewHolder>
                         return false;
                     }
 
-                    @Override
-                    public void requestDisallowInterceptTouchEvent(boolean disallow) {
-
-                    }
                 };
             }
 

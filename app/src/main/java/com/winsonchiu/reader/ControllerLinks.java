@@ -420,7 +420,7 @@ public class ControllerLinks implements ControllerLinksBase {
 
     public interface ListenerCallback {
         LinkClickListener getListener();
-        ControllerLinksBase getController();
+        ControllerLinksBase getControllerLinks();
         float getItemWidth();
         int getTitleMargin();
         RecyclerView.LayoutManager getLayoutManager();

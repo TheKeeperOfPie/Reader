@@ -181,6 +181,7 @@ public class ControllerComments implements ControllerLinksBase, ControllerCommen
                                 listener.getAdapter()
                                         .notifyDataSetChanged();
                             }
+                            setTitle();
                         }
                         catch (JSONException e1) {
                             e1.printStackTrace();
@@ -681,8 +682,6 @@ public class ControllerComments implements ControllerLinksBase, ControllerCommen
     @Override
     public boolean hasChildren(Comment comment) {
 
-        Log.d(TAG, "comment level: " + comment.getLevel());
-
         int commentIndex = link.getComments()
                 .getChildren()
                 .indexOf(comment);
@@ -693,7 +692,6 @@ public class ControllerComments implements ControllerLinksBase, ControllerCommen
             Comment nextComment = (Comment) link.getComments()
                     .getChildren()
                     .get(commentIndex + 1);
-            Log.d(TAG, "next level: " + nextComment.getLevel());
             return nextComment.getLevel() > comment.getLevel();
 
         }

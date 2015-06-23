@@ -31,14 +31,14 @@ public class AdapterAlbum extends PagerAdapter {
 
     private static final String TAG = AdapterAlbum.class.getCanonicalName();
     private Activity activity;
-    private DisallowListenerAlbum disallowListener;
+    private OnTouchListenerDisallow onTouchListenerDisallow;
     private List<View> recycledViews;
     private Album album;
 
-    public AdapterAlbum(Activity activity, Album album, DisallowListenerAlbum listener) {
+    public AdapterAlbum(Activity activity, Album album, OnTouchListenerDisallow onTouchListenerDisallow) {
         this.activity = activity;
         this.album = album;
-        this.disallowListener = listener;
+        this.onTouchListenerDisallow = onTouchListenerDisallow;
         recycledViews = new ArrayList<>();
     }
 
@@ -53,7 +53,7 @@ public class AdapterAlbum extends PagerAdapter {
 
         Image image = album.getImages().get(position);
         View view;
-        final WebViewFixed webView;
+        final WebView webView;
         final ScrollView scrollText;
 
         if (!recycledViews.isEmpty()) {
@@ -68,7 +68,7 @@ public class AdapterAlbum extends PagerAdapter {
 
         ViewHolder viewHolder = (ViewHolder) view.getTag();
 
-        webView = new WebViewFixed(activity.getApplicationContext());
+        webView = new WebView(activity.getApplicationContext());
         webView.setId(R.id.web);
         webView.getSettings()
                 .setUseWideViewPort(true);
@@ -82,12 +82,6 @@ public class AdapterAlbum extends PagerAdapter {
         webView.setWebChromeClient(null);
         webView.setWebViewClient(new WebViewClient() {
             @Override
-            public void onScaleChanged(WebView view, float oldScale, float newScale) {
-                webView.lockHeight();
-                super.onScaleChanged(view, oldScale, newScale);
-            }
-
-            @Override
             public void onReceivedError(WebView view,
                     int errorCode,
                     String description,
@@ -97,92 +91,21 @@ public class AdapterAlbum extends PagerAdapter {
             }
         });
         webView.setInitialScale(0);
-
-        View.OnTouchListener onTouchListenerWebView = new View.OnTouchListener() {
-
-            float startY;
-
+        webView.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
 
-                if (event.getPointerCount() > 1) {
-                    disallowListener.requestDisallowInterceptTouchEventViewPager(true);
-                    return false;
-                }
+                Log.d(TAG, "canScrollVertically(1)" + webView.canScrollVertically(1));
+                Log.d(TAG, "canScrollVertically(-1)" + webView.canScrollVertically(-1));
 
-                switch (event.getAction()) {
-                    case MotionEvent.ACTION_DOWN:
-                        startY = event.getY();
-
-                        if ((webView.canScrollVertically(1) && webView.canScrollVertically(
-                                -1))) {
-                            disallowListener.requestDisallowInterceptTouchEvent(true);
-                        }
-                        else {
-                            disallowListener.requestDisallowInterceptTouchEvent(false);
-                        }
-                        break;
-                    case MotionEvent.ACTION_UP:
-                        disallowListener.requestDisallowInterceptTouchEvent(false);
-                        break;
-                    case MotionEvent.ACTION_MOVE:
-                        if (event.getY() - startY < 0 && webView.canScrollVertically(1)) {
-                            disallowListener.requestDisallowInterceptTouchEvent(true);
-                        }
-                        else if (event.getY() - startY > 0 && webView.canScrollVertically(-1)) {
-                            disallowListener.requestDisallowInterceptTouchEvent(true);
-                        }
-                        break;
-                }
-                return false;
+                return onTouchListenerDisallow.onTouch(v, event);
             }
-        };
-
-        webView.setOnTouchListener(onTouchListenerWebView);
+        });
         webView.setScrollY(0);
         webView.loadData(Reddit.getImageHtml(image.getLink()), "text/html", "UTF-8");
 
         scrollText = viewHolder.scrollText;
-        View.OnTouchListener onTouchListenerScrollText = new View.OnTouchListener() {
-
-            float startY;
-
-            @Override
-            public boolean onTouch(View v, MotionEvent event) {
-
-                if (event.getPointerCount() > 1) {
-                    disallowListener.requestDisallowInterceptTouchEventViewPager(true);
-                    return false;
-                }
-
-                switch (event.getAction()) {
-                    case MotionEvent.ACTION_DOWN:
-                        startY = event.getY();
-
-                        if ((scrollText.canScrollVertically(1) && scrollText.canScrollVertically(
-                                -1))) {
-                            disallowListener.requestDisallowInterceptTouchEvent(true);
-                        }
-                        else {
-                            disallowListener.requestDisallowInterceptTouchEvent(false);
-                        }
-                        break;
-                    case MotionEvent.ACTION_UP:
-                        disallowListener.requestDisallowInterceptTouchEvent(false);
-                        break;
-                    case MotionEvent.ACTION_MOVE:
-                        if (event.getY() - startY < 0 && scrollText.canScrollVertically(1)) {
-                            disallowListener.requestDisallowInterceptTouchEvent(true);
-                        }
-                        else if (event.getY() - startY > 0 && scrollText.canScrollVertically(-1)) {
-                            disallowListener.requestDisallowInterceptTouchEvent(true);
-                        }
-                        break;
-                }
-                return false;
-            }
-        };
-        scrollText.setOnTouchListener(onTouchListenerScrollText);
+        scrollText.setOnTouchListener(onTouchListenerDisallow);
         scrollText.setVisibility(View.GONE);
 
         viewHolder.textAlbumIndicator.setText((position + 1) + " / " + album.getImages()
@@ -268,10 +191,6 @@ public class AdapterAlbum extends PagerAdapter {
             scrollText = (ScrollView) view.findViewById(R.id.scroll_text);
             textAlbumIndicator = (TextView) view.findViewById(R.id.text_album_indicator);
         }
-    }
-
-    public interface DisallowListenerAlbum extends DisallowListener{
-        void requestDisallowInterceptTouchEventViewPager(boolean disallow);
     }
 
 }

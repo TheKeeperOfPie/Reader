@@ -10,6 +10,7 @@ import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.SearchView;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
+import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -20,15 +21,6 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.Toast;
 
-
-/**
- * A simple {@link Fragment} subclass.
- * Activities that contain this fragment must implement the
- * {@link FragmentWeb.OnFragmentInteractionListener} interface
- * to handle interaction events.
- * Use the {@link FragmentWeb#newInstance} factory method to
- * create an instance of this fragment.
- */
 public class FragmentWeb extends Fragment {
     // TODO: Rename parameter arguments, choose names that match
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
@@ -40,9 +32,9 @@ public class FragmentWeb extends Fragment {
     private String url;
     private String mParam2;
 
-    private OnFragmentInteractionListener mListener;
+    private FragmentListenerBase mListener;
     private WebView webView;
-    private SwipeRefreshLayout swipeRefreshWeb;
+    private CustomSwipeRefreshLayout swipeRefreshWeb;
     private Activity activity;
     private MenuItem itemSearch;
     private Toolbar toolbarActions;
@@ -146,13 +138,14 @@ public class FragmentWeb extends Fragment {
         });
         setUpOptionsMenu();
 
-        swipeRefreshWeb = (SwipeRefreshLayout) view.findViewById(R.id.swipe_refresh_web);
+        swipeRefreshWeb = (CustomSwipeRefreshLayout) view.findViewById(R.id.swipe_refresh_web);
         swipeRefreshWeb.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
                 webView.reload();
             }
         });
+        swipeRefreshWeb.setMinScrollY(TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 150, getResources().getDisplayMetrics()));
 
         webView = (WebView) view.findViewById(R.id.web);
         webView.setBackgroundColor(getResources().getColor(R.color.darkThemeBackground));
@@ -231,7 +224,7 @@ public class FragmentWeb extends Fragment {
         super.onAttach(activity);
         this.activity = activity;
         try {
-            mListener = (OnFragmentInteractionListener) activity;
+            mListener = (FragmentListenerBase) activity;
         }
         catch (ClassCastException e) {
             throw new ClassCastException(activity.toString()
@@ -270,18 +263,6 @@ public class FragmentWeb extends Fragment {
     public void onDestroy() {
         super.onDestroy();
 //        CustomApplication.getRefWatcher(getActivity()).watch(this);
-    }
-    /**
-     * This interface must be implemented by activities that contain this
-     * fragment to allow an interaction in this fragment to be communicated
-     * to the activity and potentially other fragments contained in that
-     * activity.
-     * <p/>
-     * See the Android Training lesson <a href=
-     * "http://developer.android.com/training/basics/fragments/communicating.html"
-     * >Communicating with Other Fragments</a> for more information.
-     */
-    public interface OnFragmentInteractionListener extends FragmentListenerBase {
     }
 
 }

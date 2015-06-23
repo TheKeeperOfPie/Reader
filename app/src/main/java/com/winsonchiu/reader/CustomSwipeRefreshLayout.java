@@ -15,10 +15,7 @@ public class CustomSwipeRefreshLayout extends SwipeRefreshLayout {
     private float initialY;
 
     public CustomSwipeRefreshLayout(Context context) {
-        super(context);
-        minScrollY = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 80,
-                context.getResources()
-                        .getDisplayMetrics());
+        this(context, null);
     }
 
     public CustomSwipeRefreshLayout(Context context, AttributeSet attrs) {
@@ -46,5 +43,9 @@ public class CustomSwipeRefreshLayout extends SwipeRefreshLayout {
         }
 
         return super.onInterceptTouchEvent(event);
+    }
+
+    public void setMinScrollY(float minScrollY) {
+        this.minScrollY = minScrollY;
     }
 }

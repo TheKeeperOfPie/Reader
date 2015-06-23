@@ -2,16 +2,27 @@ package com.winsonchiu.reader;
 
 import android.animation.ObjectAnimator;
 import android.animation.ValueAnimator;
+import android.app.Activity;
+import android.app.Fragment;
 import android.content.Context;
 import android.graphics.Point;
+import android.graphics.drawable.ColorDrawable;
 import android.support.v4.graphics.ColorUtils;
+import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.StaggeredGridLayoutManager;
 import android.util.TypedValue;
 import android.view.Display;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.view.animation.Animation;
+import android.view.animation.AnimationSet;
+import android.view.animation.LinearInterpolator;
 import android.view.animation.Transformation;
+import android.view.animation.TranslateAnimation;
+import android.widget.Toast;
+
+import com.winsonchiu.reader.data.Link;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -210,6 +221,115 @@ public class AnimationUtils {
         int heightMeasureSpec = View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED);
         view.measure(widthMeasureSpec, heightMeasureSpec);
         return view.getMeasuredHeight();
+    }
+
+    public static void loadCommentFragmentAnimation(final Activity activity,
+            final RecyclerView.LayoutManager layoutManager,
+            final RecyclerView.ViewHolder viewHolder,
+            final Link link,
+            final OnAnimationEndListener onAnimationEndListener) {
+
+        if (link.getNumComments() == 0) {
+            if (!link.isCommentsClicked()) {
+                Toast.makeText(activity, activity.getString(R.string.no_comments),
+                        Toast.LENGTH_SHORT)
+                        .show();
+                link.setCommentsClicked(true);
+                return;
+            }
+        }
+
+        if (viewHolder instanceof AdapterLinkGrid.ViewHolder) {
+            ((StaggeredGridLayoutManager.LayoutParams) viewHolder.itemView.getLayoutParams()).setFullSpan(
+                    true);
+            viewHolder.itemView.requestLayout();
+            viewHolder.itemView.post(new Runnable() {
+                @Override
+                public void run() {
+                    ((StaggeredGridLayoutManager) layoutManager).invalidateSpanAssignments();
+                }
+            });
+        }
+
+        viewHolder.itemView.post(new Runnable() {
+            @Override
+            public void run() {
+                final float viewStartY = viewHolder.itemView.getY();
+                // Grid layout has a 2 dp layout_margin that needs to be accounted for
+                final float minY = viewHolder instanceof AdapterLinkGrid.ViewHolder ?
+                        TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 2,
+                                activity.getResources()
+                                        .getDisplayMetrics()) : 0;
+                final float viewStartPaddingBottom = viewHolder.itemView.getPaddingBottom();
+                final float screenHeight = activity.getResources()
+                        .getDisplayMetrics().heightPixels;
+
+                float speed = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 1,
+                        activity.getResources()
+                                .getDisplayMetrics());
+                long duration = (long) Math.abs(viewStartY / speed);
+
+                TranslateAnimation translateAnimation = new TranslateAnimation(0, 0, 0,
+                        -viewStartY + minY);
+
+                Animation heightAnimation = new Animation() {
+                    @Override
+                    protected void applyTransformation(float interpolatedTime,
+                            Transformation t) {
+                        super.applyTransformation(interpolatedTime, t);
+                        viewHolder.itemView.setPadding(viewHolder.itemView.getPaddingLeft(),
+                                viewHolder.itemView.getPaddingTop(),
+                                viewHolder.itemView.getPaddingRight(),
+                                (int) (viewStartPaddingBottom + interpolatedTime * screenHeight));
+                    }
+
+                    @Override
+                    public boolean willChangeBounds() {
+                        return true;
+                    }
+                };
+                heightAnimation.setStartOffset(duration / 10);
+                heightAnimation.setInterpolator(new LinearInterpolator());
+
+                AnimationSet animation = new AnimationSet(false);
+                animation.addAnimation(translateAnimation);
+                animation.addAnimation(heightAnimation);
+
+                animation.setDuration(duration);
+                animation.setFillAfter(false);
+                animation.setAnimationListener(new Animation.AnimationListener() {
+                    @Override
+                    public void onAnimationStart(Animation animation) {
+
+                    }
+
+                    @Override
+                    public void onAnimationEnd(Animation animation) {
+
+                        onAnimationEndListener.onAnimationEnd();
+
+                        viewHolder.itemView.postDelayed(new Runnable() {
+                            @Override
+                            public void run() {
+                                viewHolder.itemView.setPadding(
+                                        viewHolder.itemView.getPaddingLeft(),
+                                        viewHolder.itemView.getPaddingTop(),
+                                        viewHolder.itemView.getPaddingRight(),
+                                        (int) viewStartPaddingBottom);
+                                viewHolder.itemView.clearAnimation();
+                            }
+                        }, 150);
+                    }
+
+                    @Override
+                    public void onAnimationRepeat(Animation animation) {
+
+                    }
+                });
+
+                viewHolder.itemView.startAnimation(animation);
+            }
+        });
     }
 
     public interface OnAnimationEndListener {

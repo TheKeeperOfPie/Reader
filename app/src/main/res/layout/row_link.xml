@@ -4,226 +4,234 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:minHeight="72dp"
-    android:background="?android:selectableItemBackground"
+    android:background="@color/darkThemeBackground"
     >
 
-    <FrameLayout
-        android:id="@+id/frame_full"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        >
-
-        <VideoView
-            android:id="@+id/video_full"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:visibility="gone"
-            />
-
-        <com.google.android.youtube.player.YouTubePlayerView
-            android:id="@+id/youtube"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:visibility="gone"
-            />
-
-        <android.support.v4.view.ViewPager
-            android:id="@+id/view_pager_full"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:visibility="gone"
-            />
-
-    </FrameLayout>
-
-    <ImageView
-        android:id="@+id/image_thumbnail"
-        android:layout_width="40dp"
-        android:layout_height="40dp"
-        android:layout_below="@id/frame_full"
-        android:layout_alignParentStart="true"
-        android:layout_marginTop="@dimen/activity_vertical_margin"
-        android:layout_marginStart="@dimen/activity_horizontal_margin"
-        android:layout_marginEnd="@dimen/activity_horizontal_margin"
-        android:layout_marginBottom="@dimen/activity_horizontal_margin"
-        android:contentDescription="@string/content_description_thread_preview"
-        android:scaleType="centerCrop"
-        />
-
-    <ImageView
-        android:id="@+id/image_play"
-        android:layout_width="40dp"
-        android:layout_height="40dp"
-        android:layout_alignTop="@id/image_thumbnail"
-        android:layout_alignStart="@id/image_thumbnail"
-        android:scaleType="centerInside"
-        android:src="@drawable/ic_play_circle_outline_white_48dp"
-        android:visibility="gone"
-        />
-
-    <ProgressBar
-        style="?android:attr/progressBarStyleLarge"
-        android:id="@+id/progress_image"
-        android:layout_width="40dp"
-        android:layout_height="40dp"
-        android:layout_alignTop="@id/image_thumbnail"
-        android:layout_alignStart="@id/image_thumbnail"
-        android:max="1000"
-        android:visibility="gone"
-        android:indeterminate="false"
-        />
-
-    <TextView
-        android:id="@+id/view_padding"
-        android:layout_width="match_parent"
-        android:layout_height="14dp"
-        android:layout_below="@id/frame_full"
-        android:layout_toEndOf="@+id/image_thumbnail"
-        android:layout_toStartOf="@+id/button_comments"
-        />
-
-    <TextView
-        android:id="@+id/text_thread_flair"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_below="@id/view_padding"
-        android:layout_toEndOf="@+id/image_thumbnail"
-        android:layout_toStartOf="@+id/button_comments"
-        android:layout_marginStart="@dimen/activity_horizontal_margin"
-        android:textSize="12sp"
-        android:textColor="@color/colorAccent"
-        android:clickable="false"
-        android:longClickable="false"
-        />
-
-    <TextView
-        android:id="@+id/text_thread_title"
-        android:minHeight="36dp"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_below="@id/text_thread_flair"
-        android:layout_toEndOf="@+id/image_thumbnail"
-        android:layout_toStartOf="@+id/button_comments"
-        android:layout_marginStart="@dimen/activity_horizontal_margin"
-        android:textSize="14sp"
-        android:clickable="false"
-        android:longClickable="false"
-        />
-
-    <TextView
-        android:id="@+id/text_thread_self"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_below="@id/text_thread_title"
-        android:layout_marginStart="@dimen/activity_horizontal_margin"
-        android:layout_marginEnd="@dimen/activity_horizontal_margin"
-        android:layout_marginTop="8dp"
-        android:layout_marginBottom="8dp"
-        android:textSize="12sp"
-        android:visibility="gone"
-        android:background="?android:selectableItemBackground"
-        />
-
-    <TextView
-        android:id="@+id/text_thread_info"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_below="@id/text_thread_self"
-        android:layout_alignStart="@id/text_thread_self"
-        android:layout_marginStart="@dimen/activity_horizontal_margin"
-        android:layout_marginEnd="@dimen/activity_horizontal_margin"
-        android:layout_alignParentEnd="true"
-        android:gravity="end"
-        android:textSize="12sp"
-        android:paddingTop="4dp"
-        android:paddingBottom="14dp"
-        android:clickable="false"
-        android:longClickable="false"
-        />
-
-    <ImageButton
-        android:id="@+id/button_comments"
-        android:layout_width="56dp"
-        android:layout_height="56dp"
-        android:layout_below="@id/frame_full"
-        android:layout_alignParentEnd="true"
-        android:contentDescription="@string/content_description_button_comments"
-        android:background="@android:color/transparent"
-        android:src="@drawable/ic_mode_comment_white_24dp"
-        android:padding="@dimen/activity_horizontal_margin"
-        />
-
     <RelativeLayout
-        android:id="@+id/layout_container_expand"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_below="@id/text_thread_info"
-        android:layout_alignParentEnd="true"
-        android:visibility="gone"
+        android:background="?android:selectableItemBackground"
         >
+
+        <FrameLayout
+            android:id="@+id/frame_full"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            >
+
+            <VideoView
+                android:id="@+id/video_full"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:visibility="gone"
+                />
+
+            <com.google.android.youtube.player.YouTubePlayerView
+                android:id="@+id/youtube"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:visibility="gone"
+                />
+
+            <android.support.v4.view.ViewPager
+                android:id="@+id/view_pager_full"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:visibility="gone"
+                />
+
+        </FrameLayout>
+
+        <ImageView
+            android:id="@+id/image_thumbnail"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_below="@id/frame_full"
+            android:layout_alignParentStart="true"
+            android:layout_marginTop="@dimen/activity_vertical_margin"
+            android:layout_marginStart="@dimen/activity_horizontal_margin"
+            android:layout_marginEnd="@dimen/activity_horizontal_margin"
+            android:layout_marginBottom="@dimen/activity_horizontal_margin"
+            android:contentDescription="@string/content_description_thread_preview"
+            android:scaleType="centerCrop"
+            />
+
+        <ImageView
+            android:id="@+id/image_play"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_alignTop="@id/image_thumbnail"
+            android:layout_alignStart="@id/image_thumbnail"
+            android:scaleType="centerInside"
+            android:src="@drawable/ic_play_circle_outline_white_48dp"
+            android:visibility="gone"
+            />
+
+        <ProgressBar
+            style="?android:attr/progressBarStyleLarge"
+            android:id="@+id/progress_image"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_alignTop="@id/image_thumbnail"
+            android:layout_alignStart="@id/image_thumbnail"
+            android:max="1000"
+            android:visibility="gone"
+            android:indeterminate="false"
+            />
 
         <TextView
-            android:id="@+id/text_hidden"
+            android:id="@+id/view_padding"
+            android:layout_width="match_parent"
+            android:layout_height="14dp"
+            android:layout_below="@id/frame_full"
+            android:layout_toEndOf="@+id/image_thumbnail"
+            android:layout_toStartOf="@+id/button_comments"
+            />
+
+        <TextView
+            android:id="@+id/text_thread_flair"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_below="@id/view_padding"
+            android:layout_toEndOf="@+id/image_thumbnail"
+            android:layout_toStartOf="@+id/button_comments"
+            android:layout_marginStart="@dimen/activity_horizontal_margin"
+            android:textSize="12sp"
+            android:textColor="@color/colorAccent"
+            android:clickable="false"
+            android:longClickable="false"
+            />
+
+        <TextView
+            android:id="@+id/text_thread_title"
+            android:minHeight="36dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/text_thread_flair"
+            android:layout_toEndOf="@+id/image_thumbnail"
+            android:layout_toStartOf="@+id/button_comments"
+            android:layout_marginStart="@dimen/activity_horizontal_margin"
+            android:textSize="14sp"
+            android:clickable="false"
+            android:longClickable="false"
+            />
+
+        <TextView
+            android:id="@+id/text_thread_self"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/text_thread_title"
             android:layout_marginStart="@dimen/activity_horizontal_margin"
             android:layout_marginEnd="@dimen/activity_horizontal_margin"
-            android:layout_alignParentTop="true"
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="8dp"
+            android:textSize="12sp"
+            android:visibility="gone"
+            android:background="?android:selectableItemBackground"
+            />
+
+        <TextView
+            android:id="@+id/text_thread_info"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/text_thread_self"
+            android:layout_alignStart="@id/text_thread_self"
+            android:layout_marginStart="@dimen/activity_horizontal_margin"
+            android:layout_marginEnd="@dimen/activity_horizontal_margin"
             android:layout_alignParentEnd="true"
-            android:layout_gravity="end"
             android:gravity="end"
             android:textSize="12sp"
-            android:textColor="@color/darkThemeTextColorMuted"
+            android:paddingTop="4dp"
+            android:paddingBottom="14dp"
+            android:clickable="false"
+            android:longClickable="false"
             />
 
-        <android.support.v7.widget.Toolbar
-            android:id="@+id/toolbar_actions"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_below="@id/text_hidden"
-            />
-
-    </RelativeLayout>
-
-    <RelativeLayout
-        android:id="@+id/layout_container_reply"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_below="@id/layout_container_expand"
-        android:layout_alignParentEnd="true"
-        android:visibility="gone"
-        >
-
-        <EditText
-            android:id="@+id/edit_text_reply"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="@dimen/activity_horizontal_margin"
-            android:layout_marginEnd="@dimen/activity_horizontal_margin"
-            android:inputType="textMultiLine"
-            />
-
-        <Button
-            android:id="@+id/button_send_reply"
-            android:layout_width="wrap_content"
-            android:layout_height="48dp"
-            android:layout_below="@id/edit_text_reply"
-            android:layout_marginStart="@dimen/activity_horizontal_margin"
-            android:layout_marginEnd="@dimen/activity_horizontal_margin"
+        <ImageButton
+            android:id="@+id/button_comments"
+            android:layout_width="56dp"
+            android:layout_height="56dp"
+            android:layout_below="@id/frame_full"
             android:layout_alignParentEnd="true"
-            android:textAllCaps="true"
-            android:text="@string/button_send"
+            android:contentDescription="@string/content_description_button_comments"
+            android:background="@android:color/transparent"
+            android:src="@drawable/ic_mode_comment_white_24dp"
+            android:padding="@dimen/activity_horizontal_margin"
+            />
+
+        <RelativeLayout
+            android:id="@+id/layout_container_expand"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/text_thread_info"
+            android:layout_alignParentEnd="true"
+            android:visibility="gone"
+            >
+
+            <TextView
+                android:id="@+id/text_hidden"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="@dimen/activity_horizontal_margin"
+                android:layout_marginEnd="@dimen/activity_horizontal_margin"
+                android:layout_alignParentTop="true"
+                android:layout_alignParentEnd="true"
+                android:layout_gravity="end"
+                android:gravity="end"
+                android:textSize="12sp"
+                android:textColor="@color/darkThemeTextColorMuted"
+                />
+
+            <android.support.v7.widget.Toolbar
+                android:id="@+id/toolbar_actions"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/text_hidden"
+                />
+
+        </RelativeLayout>
+
+        <RelativeLayout
+            android:id="@+id/layout_container_reply"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/layout_container_expand"
+            android:layout_alignParentEnd="true"
+            android:visibility="gone"
+            >
+
+            <EditText
+                android:id="@+id/edit_text_reply"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="@dimen/activity_horizontal_margin"
+                android:layout_marginEnd="@dimen/activity_horizontal_margin"
+                android:inputType="textMultiLine"
+                />
+
+            <Button
+                android:id="@+id/button_send_reply"
+                android:layout_width="wrap_content"
+                android:layout_height="48dp"
+                android:layout_below="@id/edit_text_reply"
+                android:layout_marginStart="@dimen/activity_horizontal_margin"
+                android:layout_marginEnd="@dimen/activity_horizontal_margin"
+                android:layout_alignParentEnd="true"
+                android:textAllCaps="true"
+                android:text="@string/button_send"
+                />
+
+        </RelativeLayout>
+
+        <View
+            android:id="@+id/view_divider"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/layout_container_reply"
+            android:layout_alignParentBottom="true"
+            android:background="?android:listDivider"
             />
 
     </RelativeLayout>
-
-    <View
-        android:id="@+id/view_divider"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_below="@id/layout_container_reply"
-        android:layout_alignParentBottom="true"
-        android:background="?android:listDivider"
-        />
 
 </RelativeLayout>

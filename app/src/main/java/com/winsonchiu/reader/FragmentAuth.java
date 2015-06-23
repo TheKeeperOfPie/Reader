@@ -27,14 +27,6 @@ import org.json.JSONObject;
 import java.util.HashMap;
 import java.util.UUID;
 
-/**
- * A simple {@link Fragment} subclass.
- * Activities that contain this fragment must implement the
- * {@link FragmentAuth.OnFragmentInteractionListener} interface
- * to handle interaction events.
- * Use the {@link FragmentAuth#newInstance} factory method to
- * create an instance of this fragment.
- */
 public class FragmentAuth extends Fragment {
     // TODO: Rename parameter arguments, choose names that match
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
@@ -48,7 +40,7 @@ public class FragmentAuth extends Fragment {
 
     private Activity activity;
     private SharedPreferences preferences;
-    private OnFragmentInteractionListener mListener;
+    private FragmentListenerBase mListener;
     private WebView webAuth;
     private Reddit reddit;
     private String state;
@@ -225,7 +217,7 @@ public class FragmentAuth extends Fragment {
                 activity.getApplicationContext());
         reddit = Reddit.getInstance(activity);
         try {
-            mListener = (OnFragmentInteractionListener) activity;
+            mListener = (FragmentListenerBase) activity;
         }
         catch (ClassCastException e) {
             throw new ClassCastException(activity.toString()
@@ -265,20 +257,6 @@ public class FragmentAuth extends Fragment {
             return true;
         }
         return false;
-    }
-
-    /**
-     * This interface must be implemented by activities that contain this
-     * fragment to allow an interaction in this fragment to be communicated
-     * to the activity and potentially other fragments contained in that
-     * activity.
-     * <p/>
-     * See the Android Training lesson <a href=
-     * "http://developer.android.com/training/basics/fragments/communicating.html"
-     * >Communicating with Other Fragments</a> for more information.
-     */
-    public interface OnFragmentInteractionListener extends FragmentListenerBase {
-        void onAuthFinished(boolean success);
     }
 
 }

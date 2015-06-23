@@ -13,8 +13,10 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.AccelerateInterpolator;
 import android.view.animation.AlphaAnimation;
 import android.view.animation.Animation;
+import android.view.animation.DecelerateInterpolator;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 
@@ -23,15 +25,6 @@ import com.google.android.youtube.player.YouTubePlayer;
 import com.google.android.youtube.player.YouTubePlayerView;
 import com.winsonchiu.reader.data.Link;
 
-
-/**
- * A simple {@link Fragment} subclass.
- * Activities that contain this fragment must implement the
- * {@link FragmentComments.OnFragmentInteractionListener} interface
- * to handle interaction events.
- * Use the {@link FragmentComments#newInstance} factory method to
- * create an instance of this fragment.
- */
 public class FragmentComments extends Fragment {
 
     public static final String TAG = FragmentComments.class.getCanonicalName();
@@ -39,13 +32,16 @@ public class FragmentComments extends Fragment {
     private static final String ARG_PARAM1 = "param1";
     private static final String ARG_PARAM2 = "param2";
     private static final String ARG_IS_GRID = "isGrid";
+    private static final String ARG_COLOR_LINK = "colorLink";
+    private static final long DURATION_COMMENTS_FADE = 300;
     private static final long DURATION_ACTIONS_FADE = 150;
+    private static final float OFFSET_MODIFIER = 0.25f;
 
     // TODO: Rename and change types of parameters
     private String subreddit;
     private String linkId;
 
-    private OnFragmentInteractionListener mListener;
+    private FragmentListenerBase mListener;
     private RecyclerView recyclerCommentList;
     private Activity activity;
     private LinearLayoutManager linearLayoutManager;
@@ -56,12 +52,15 @@ public class FragmentComments extends Fragment {
     private Toolbar toolbar;
     private LinearLayout layoutActions;
     private FloatingActionButton buttonExpandActions;
+    private FloatingActionButton buttonJumpTop;
     private FloatingActionButton buttonCommentPrevious;
     private FloatingActionButton buttonCommentNext;
     private ScrollAwareFloatingActionButtonBehavior behaviorFloatingActionButton;
     private YouTubePlayerView viewYouTube;
     private YouTubePlayer youTubePlayer;
     private RecyclerView.AdapterDataObserver observer;
+    private AccelerateInterpolator accelerateInterpolator;
+    private DecelerateInterpolator decelerateInterpolator;
 
     /**
      * Use this factory method to create a new instance of
@@ -72,12 +71,13 @@ public class FragmentComments extends Fragment {
      * @return A new instance of fragment FragmentComments.
      */
     // TODO: Rename and change types and number of parameters
-    public static FragmentComments newInstance(String param1, String param2, boolean isGrid) {
+    public static FragmentComments newInstance(String param1, String param2, boolean isGrid, int colorLink) {
         FragmentComments fragment = new FragmentComments();
         Bundle args = new Bundle();
         args.putString(ARG_PARAM1, param1);
         args.putString(ARG_PARAM2, param2);
         args.putBoolean(ARG_IS_GRID, isGrid);
+        args.putInt(ARG_COLOR_LINK, colorLink);
         fragment.setArguments(args);
         return fragment;
     }
@@ -93,6 +93,8 @@ public class FragmentComments extends Fragment {
             subreddit = getArguments().getString(ARG_PARAM1);
             linkId = getArguments().getString(ARG_PARAM2);
         }
+        accelerateInterpolator = new AccelerateInterpolator();
+        decelerateInterpolator = new DecelerateInterpolator();
         setHasOptionsMenu(true);
     }
 
@@ -107,6 +109,17 @@ public class FragmentComments extends Fragment {
         View view = inflater.inflate(R.layout.fragment_comments, container, false);
 
         listener = new ControllerComments.CommentClickListener() {
+            @Override
+            public void requestDisallowInterceptTouchEventVertical(boolean disallow) {
+                recyclerCommentList.requestDisallowInterceptTouchEvent(disallow);
+                swipeRefreshCommentList.requestDisallowInterceptTouchEvent(disallow);
+            }
+
+            @Override
+            public void requestDisallowInterceptTouchEventHorizontal(boolean disallow) {
+
+            }
+
             @Override
             public void loadUrl(String url) {
                 getFragmentManager().beginTransaction()
@@ -183,11 +196,6 @@ public class FragmentComments extends Fragment {
                 return true;
             }
 
-            @Override
-            public void requestDisallowInterceptTouchEvent(boolean disallow) {
-                recyclerCommentList.requestDisallowInterceptTouchEvent(disallow);
-                swipeRefreshCommentList.requestDisallowInterceptTouchEvent(disallow);
-            }
         };
 
         toolbar = (Toolbar) view.findViewById(R.id.toolbar);
@@ -227,7 +235,7 @@ public class FragmentComments extends Fragment {
                 new ScrollAwareFloatingActionButtonBehavior.OnVisibilityChangeListener() {
                     @Override
                     public void onStartHideFromScroll() {
-                        hideLayoutActions();
+                        hideLayoutActions(0);
                     }
 
                     @Override
@@ -237,6 +245,14 @@ public class FragmentComments extends Fragment {
 
                 });
         ((CoordinatorLayout.LayoutParams) buttonExpandActions.getLayoutParams()).setBehavior(behaviorFloatingActionButton);
+
+        buttonJumpTop = (FloatingActionButton) view.findViewById(R.id.button_jump_top);
+        buttonJumpTop.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                linearLayoutManager.scrollToPositionWithOffset(0, 0);
+            }
+        });
 
         buttonCommentPrevious = (FloatingActionButton) view.findViewById(R.id.button_comment_previous);
         buttonCommentPrevious.setOnClickListener(new View.OnClickListener() {
@@ -287,7 +303,7 @@ public class FragmentComments extends Fragment {
 
         if (adapterCommentList == null) {
             adapterCommentList = new AdapterCommentList(activity, mListener.getControllerComments(), listener,
-                    getArguments().getBoolean(ARG_IS_GRID, false));
+                    getArguments().getBoolean(ARG_IS_GRID, false), getArguments().getInt(ARG_COLOR_LINK));
         }
 
         observer = new RecyclerView.AdapterDataObserver() {
@@ -311,7 +327,7 @@ public class FragmentComments extends Fragment {
 
     private void toggleLayoutActions() {
         if (buttonCommentPrevious.isShown()) {
-            hideLayoutActions();
+            hideLayoutActions(DURATION_ACTIONS_FADE);
         }
         else {
             showLayoutActions();
@@ -338,14 +354,16 @@ public class FragmentComments extends Fragment {
 
                 }
             });
+            alphaAnimation.setInterpolator(decelerateInterpolator);
             alphaAnimation.setDuration(DURATION_ACTIONS_FADE);
-            alphaAnimation.setStartOffset(index * DURATION_ACTIONS_FADE / 3);
+            alphaAnimation.setStartOffset(
+                    (long) ((layoutActions.getChildCount() - 1 - index) * DURATION_ACTIONS_FADE * OFFSET_MODIFIER));
             view.startAnimation(alphaAnimation);
         }
 
     }
 
-    private void hideLayoutActions() {
+    private void hideLayoutActions(long offset) {
         for (int index = 0; index < layoutActions.getChildCount(); index++) {
             final View view = layoutActions.getChildAt(index);
             AlphaAnimation alphaAnimation = new AlphaAnimation(1f, 0f);
@@ -364,8 +382,9 @@ public class FragmentComments extends Fragment {
 
                 }
             });
+            alphaAnimation.setInterpolator(accelerateInterpolator);
             alphaAnimation.setDuration(DURATION_ACTIONS_FADE);
-            alphaAnimation.setStartOffset(index * DURATION_ACTIONS_FADE / 3);
+            alphaAnimation.setStartOffset((long) (index * offset * OFFSET_MODIFIER));
             view.startAnimation(alphaAnimation);
         }
     }
@@ -409,7 +428,7 @@ public class FragmentComments extends Fragment {
         Log.d(TAG, "onAttach");
         this.activity = activity;
         try {
-            mListener = (OnFragmentInteractionListener) activity;
+            mListener = (FragmentListenerBase) activity;
         }
         catch (ClassCastException e) {
             throw new ClassCastException(activity.toString()
@@ -439,20 +458,6 @@ public class FragmentComments extends Fragment {
         super.onDestroy();
 //        CustomApplication.getRefWatcher(getActivity())
 //                .watch(this);
-    }
-
-    /**
-     * This interface must be implemented by activities that contain this
-     * fragment to allow an interaction in this fragment to be communicated
-     * to the activity and potentially other fragments contained in that
-     * activity.
-     * <p/>
-     * See the Android Training lesson <a href=
-     * "http://developer.android.com/training/basics/fragments/communicating.html"
-     * >Communicating with Other Fragments</a> for more information.
-     */
-    public interface OnFragmentInteractionListener extends FragmentListenerBase {
-        ControllerComments getControllerComments();
     }
 
 }

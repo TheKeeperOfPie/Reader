@@ -1,6 +1,5 @@
 package com.winsonchiu.reader.data;
 
-import android.app.Activity;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
@@ -25,7 +24,6 @@ import com.winsonchiu.reader.AdapterLinkList;
 import com.winsonchiu.reader.ApiKeys;
 import com.winsonchiu.reader.AppSettings;
 import com.winsonchiu.reader.BuildConfig;
-import com.winsonchiu.reader.R;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -56,13 +54,18 @@ public class Reddit {
     public static final String REDIRECT_URI = "https://com.winsonchiu.reader";
     public static final String CLIENT_ID = "zo7k-Nsh7vgn-Q";
 
+    public static final String GFYCAT_PREFIX = "gfycat.com/";
     public static final String GFYCAT_URL = "http://gfycat.com/cajax/get/";
     public static final String GFYCAT_WEBM = "webmUrl";
     public static final String GFYCAT_ITEM = "gfyItem";
 
-    private static final String IMGUR_ALBUM_URL = "https://api.imgur.com/3/album/";
-    private static final String IMGUR_GALLERY_URL = "https://api.imgur.com/3/gallery/";
-    private static final String IMGUR_IMAGE_URL = "https://api.imgur.com/3/image/";
+    public static final String IMGUR_PREFIX = "imgur.com/";
+    public static final String IMGUR_PREFIX_ALBUM = "imgur.com/a/";
+    public static final String IMGUR_PREFIX_GALLERY = "imgur.com/gallery/";
+
+    private static final String IMGUR_URL_ALBUM = "https://api.imgur.com/3/album/";
+    private static final String IMGUR_URL_GALLERY = "https://api.imgur.com/3/gallery/";
+    private static final String IMGUR_URL_IMAGE = "https://api.imgur.com/3/image/";
 
     public static final String GIFV = ".gifv";
     public static final String GIF = ".gif";
@@ -443,6 +446,14 @@ public class Reddit {
         }, params, 0);
     }
 
+    public static String parseUrlId(String url, String prefix, String suffix) {
+        int startIndex = url.indexOf(prefix) + prefix.length();
+        int slashIndex = url.substring(startIndex)
+                .indexOf(suffix) + startIndex;
+        int lastIndex = slashIndex > startIndex ? slashIndex : url.length();
+        return url.substring(startIndex, lastIndex);
+    }
+
     public Request<String> loadImgurImage(String id,
             Listener<String> listener,
             final ErrorListener errorListener,
@@ -453,7 +464,7 @@ public class Reddit {
             return null;
         }
 
-        StringRequest getRequest = new StringRequest(Request.Method.GET, IMGUR_IMAGE_URL + id,
+        StringRequest getRequest = new StringRequest(Request.Method.GET, IMGUR_URL_IMAGE + id,
                 listener, errorListener) {
             @Override
             public Map<String, String> getHeaders() throws AuthFailureError {
@@ -479,7 +490,7 @@ public class Reddit {
             return null;
         }
 
-        StringRequest getRequest = new StringRequest(Request.Method.GET, IMGUR_ALBUM_URL + id,
+        StringRequest getRequest = new StringRequest(Request.Method.GET, IMGUR_URL_ALBUM + id,
                 listener, errorListener) {
             @Override
             public Map<String, String> getHeaders() throws AuthFailureError {
@@ -505,7 +516,7 @@ public class Reddit {
             return null;
         }
 
-        StringRequest getRequest = new StringRequest(Request.Method.GET, IMGUR_GALLERY_URL + id,
+        StringRequest getRequest = new StringRequest(Request.Method.GET, IMGUR_URL_GALLERY + id,
                 listener, errorListener) {
             @Override
             public Map<String, String> getHeaders() throws AuthFailureError {
@@ -528,6 +539,15 @@ public class Reddit {
     public static boolean checkIsImage(String url) {
         return url.endsWith(GIF) || url.endsWith(PNG) || url.endsWith(JPG)
                 || url.endsWith(JPEG) || url.endsWith(WEBP);
+    }
+
+    public static boolean showThumbnail(Link link) {
+        if (link.getThumbnail()
+                .equals("nsfw")) {
+            return false;
+        }
+        String domain = link.getDomain();
+        return domain.contains("gfycat") || domain.contains("imgur") || Reddit.placeImageUrl(link);
     }
 
     /**
