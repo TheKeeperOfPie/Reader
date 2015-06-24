@@ -101,8 +101,7 @@ public class ControllerComments implements ControllerLinksBase, ControllerCommen
     public void addListener(CommentClickListener listener) {
         listeners.add(listener);
         setTitle();
-        listener.getAdapter()
-                .notifyDataSetChanged();
+        listener.notifyDataSetChanged();
     }
 
     public void removeListener(CommentClickListener listener) {
@@ -178,8 +177,7 @@ public class ControllerComments implements ControllerLinksBase, ControllerCommen
                             listingComments = listing;
                             setRefreshing(false);
                             for (CommentClickListener listener : listeners) {
-                                listener.getAdapter()
-                                        .notifyDataSetChanged();
+                                listener.notifyDataSetChanged();
                             }
                             setTitle();
                         }
@@ -211,8 +209,7 @@ public class ControllerComments implements ControllerLinksBase, ControllerCommen
             return drawableSelf;
         }
 
-        if (TextUtils.isEmpty(thumbnail) || thumbnail.equals(Reddit.DEFAULT) || thumbnail.equals(
-                Reddit.NSFW)) {
+        if (Reddit.DEFAULT.equals(thumbnail) || Reddit.NSFW.equals(thumbnail)) {
             return drawableDefault;
         }
 
@@ -736,6 +733,7 @@ public class ControllerComments implements ControllerLinksBase, ControllerCommen
         void loadUrl(String url);
         void setRefreshing(boolean refreshing);
         AdapterCommentList getAdapter();
+        void notifyDataSetChanged();
         int getRecyclerHeight();
         int getRecyclerWidth();
         void setToolbarTitle(CharSequence title);

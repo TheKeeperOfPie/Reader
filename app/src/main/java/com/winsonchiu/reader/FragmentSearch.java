@@ -123,8 +123,8 @@ public class FragmentSearch extends Fragment implements Toolbar.OnMenuItemClickL
                 if (mListener.getControllerSearch().getCurrentPage() == ControllerSearch.PAGE_SUBREDDITS) {
                     mListener.getControllerLinks()
                             .setParameters(query.replaceAll("\\s", ""), Sort.HOT);
-                    mListener.getControllerSearch()
-                            .clearResults();
+//                    mListener.getControllerSearch()
+//                            .clearResults();
                     getFragmentManager().popBackStack();
                 }
                 else {
@@ -147,6 +147,7 @@ public class FragmentSearch extends Fragment implements Toolbar.OnMenuItemClickL
             }
         });
         searchView.setSubmitButtonEnabled(true);
+        searchView.setQuery(mListener.getControllerSearch().getQuery(), false);
 
         menu.findItem(R.id.item_sort_relevance)
                 .setChecked(true);
@@ -272,7 +273,7 @@ public class FragmentSearch extends Fragment implements Toolbar.OnMenuItemClickL
 
                                 FragmentComments fragmentComments = FragmentComments.newInstance(
                                         link.getSubreddit(), link.getId(),
-                                        viewHolder instanceof AdapterLinkGrid.ViewHolder, color);
+                                        viewHolder instanceof AdapterLinkGrid.ViewHolder, color, viewHolder.itemView.getX(), viewHolder.itemView.getY(), viewHolder.itemView.getHeight());
 
                                 getFragmentManager().beginTransaction()
                                         .hide(FragmentSearch.this)
@@ -357,6 +358,11 @@ public class FragmentSearch extends Fragment implements Toolbar.OnMenuItemClickL
             @Override
             public int getRequestedOrientation() {
                 return mListener.getRequestedOrientation();
+            }
+
+            @Override
+            public void showSidebar() {
+
             }
 
         };

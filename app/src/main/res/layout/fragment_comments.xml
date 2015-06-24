@@ -8,6 +8,13 @@
     android:orientation="vertical"
     >
 
+    <View
+        android:id="@+id/view_background"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/darkThemeBackground"
+        />
+
     <include
         layout="@layout/toolbar"
         android:layout_width="match_parent"

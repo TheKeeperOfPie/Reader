@@ -6,9 +6,11 @@ import android.support.v7.widget.RecyclerView;
 import android.text.method.LinkMovementMethod;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageButton;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.winsonchiu.reader.data.Reddit;
@@ -79,6 +81,7 @@ public class AdapterSearchSubreddits extends RecyclerView.Adapter<AdapterSearchS
         protected TextView textDescription;
         protected TextView textInfo;
         protected ImageButton buttonOpen;
+        protected RelativeLayout layoutContainerExpand;
         private ControllerSearch.ListenerCallback callback;
 
         public ViewHolder(View itemView, final ControllerSearch.ListenerCallback listenerCallback) {
@@ -90,6 +93,7 @@ public class AdapterSearchSubreddits extends RecyclerView.Adapter<AdapterSearchS
             textDescription = (TextView) itemView.findViewById(R.id.text_description);
             textDescription.setMovementMethod(LinkMovementMethod.getInstance());
             textInfo = (TextView) itemView.findViewById(R.id.text_info);
+            layoutContainerExpand = (RelativeLayout) itemView.findViewById(R.id.layout_container_expand);
             buttonOpen = (ImageButton) itemView.findViewById(R.id.button_open);
 
             buttonOpen.setOnClickListener(new View.OnClickListener() {
@@ -98,35 +102,36 @@ public class AdapterSearchSubreddits extends RecyclerView.Adapter<AdapterSearchS
                     callback.getListener().onClickSubreddit(callback.getController().getSubreddit(getAdapterPosition()));
                 }
             });
+            textDescription.setOnTouchListener(new View.OnTouchListener() {
+                @Override
+                public boolean onTouch(View v, MotionEvent event) {
+                    MotionEvent newEvent = MotionEvent.obtain(event);
+                    newEvent.offsetLocation(v.getLeft(), v.getTop());
+                    ViewHolder.this.itemView.onTouchEvent(newEvent);
+                    newEvent.recycle();
+                    return false;
+                }
+            });
 
-            View.OnClickListener onClickListener = new View.OnClickListener() {
+            itemView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-
-                    AnimationUtils.animateExpand(textDescription, 1.0f,
-                            new AnimationUtils.OnAnimationEndListener() {
-                                @Override
-                                public void onAnimationEnd() {
-                                    AnimationUtils.animateExpand(textInfo, 1.0f, null);
-                                }
-                            });
+                    AnimationUtils.animateExpand(layoutContainerExpand, 1f, null);
+                    Log.d(TAG, "onClick");
                 }
-            };
-
-            itemView.setOnClickListener(onClickListener);
+            });
 
         }
 
         public void onBind(Subreddit subreddit) {
 
-            textDescription.setVisibility(View.GONE);
-            textInfo.setVisibility(View.GONE);
+            layoutContainerExpand.setVisibility(View.GONE);
 
             textName.setText(subreddit.getDisplayName());
             textTitle.setText(Reddit.getTrimmedHtml(subreddit.getTitle()));
 
             if ("null".equals(subreddit.getPublicDescriptionHtml())) {
-                textDescription.setText("");
+                textDescription.setVisibility(View.GONE);
             }
             else {
                 textDescription.setText(Reddit.getTrimmedHtml(subreddit.getPublicDescriptionHtml()));

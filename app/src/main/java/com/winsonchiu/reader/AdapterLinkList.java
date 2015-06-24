@@ -19,6 +19,8 @@ import com.squareup.picasso.Picasso;
 import com.winsonchiu.reader.data.Link;
 import com.winsonchiu.reader.data.Reddit;
 
+import org.w3c.dom.Text;
+
 /**
  * Created by TheKeeperOfPie on 3/7/2015.
  */
@@ -103,10 +105,15 @@ public class AdapterLinkList extends AdapterLink {
             Drawable drawable = callback.getControllerLinks()
                     .getDrawableForLink(link);
             if (drawable == null) {
-                Picasso.with(callback.getControllerLinks()
-                        .getActivity())
-                        .load(link.getThumbnail())
-                        .into(imageThumbnail);
+                if (TextUtils.isEmpty(link.getThumbnail())) {
+                    imageThumbnail.setImageDrawable(drawableDefault);
+                }
+                else {
+                    Picasso.with(callback.getControllerLinks()
+                            .getActivity())
+                            .load(link.getThumbnail())
+                            .into(imageThumbnail);
+                }
             }
             else {
                 imageThumbnail.setImageDrawable(drawable);

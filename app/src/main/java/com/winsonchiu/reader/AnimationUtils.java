@@ -239,6 +239,11 @@ public class AnimationUtils {
             }
         }
 
+        if (true) {
+            onAnimationEndListener.onAnimationEnd();
+            return;
+        }
+
         if (viewHolder instanceof AdapterLinkGrid.ViewHolder) {
             ((StaggeredGridLayoutManager.LayoutParams) viewHolder.itemView.getLayoutParams()).setFullSpan(
                     true);

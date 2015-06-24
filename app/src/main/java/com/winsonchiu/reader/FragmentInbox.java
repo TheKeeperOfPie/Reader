@@ -120,7 +120,7 @@ public class FragmentInbox extends Fragment {
 
                                 FragmentComments fragmentComments = FragmentComments.newInstance(
                                         link.getSubreddit(), link.getId(),
-                                        viewHolder instanceof AdapterLinkGrid.ViewHolder, color);
+                                        viewHolder instanceof AdapterLinkGrid.ViewHolder, color, viewHolder.itemView.getX(), viewHolder.itemView.getY(), viewHolder.itemView.getHeight());
 
                                 getFragmentManager().beginTransaction()
                                         .hide(FragmentInbox.this)

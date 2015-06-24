@@ -117,7 +117,7 @@ public class ControllerSearch {
 
     public void setQuery(String query) {
         this.query = query;
-        if (TextUtils.isEmpty(query) && currentPage == PAGE_SUBREDDITS) {
+        if ((TextUtils.isEmpty(query) || query.length() < 2) && currentPage == PAGE_SUBREDDITS) {
             subreddits = subredditsSubscribed;
             for (Listener listener : listeners) {
                 listener.getAdapterSearchSubreddits()
@@ -405,8 +405,7 @@ public class ControllerSearch {
             return drawableSelf;
         }
 
-        if (TextUtils.isEmpty(thumbnail) || thumbnail.equals(Reddit.DEFAULT) || thumbnail.equals(
-                Reddit.NSFW)) {
+        if (Reddit.DEFAULT.equals(thumbnail) || Reddit.NSFW.equals(thumbnail)) {
             return drawableDefault;
         }
 
@@ -622,6 +621,7 @@ public class ControllerSearch {
         else {
             subreddits.getChildren()
                     .clear();
+            subreddits = subredditsSubscribed;
         }
         links.getChildren().clear();
         linksSubreddit.getChildren().clear();

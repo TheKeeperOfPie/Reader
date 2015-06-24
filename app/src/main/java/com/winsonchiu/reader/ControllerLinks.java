@@ -193,8 +193,7 @@ public class ControllerLinks implements ControllerLinksBase {
             return drawableSelf;
         }
 
-        if (TextUtils.isEmpty(thumbnail) || thumbnail.equals(Reddit.DEFAULT) || thumbnail.equals(
-                Reddit.NSFW)) {
+        if (Reddit.DEFAULT.equals(thumbnail) || Reddit.NSFW.equals(thumbnail)) {
             return drawableDefault;
         }
 
@@ -401,6 +400,28 @@ public class ControllerLinks implements ControllerLinksBase {
         return "/".equals(subreddit.getUrl()) || "/r/all/".equals(subreddit.getUrl());
     }
 
+    public void subscribe() {
+        String action = subreddit.isUserIsSubscriber() ? "unsub" : "sub";
+        subreddit.setUserIsSubscriber(!subreddit.isUserIsSubscriber());
+
+        Map<String, String> params = new HashMap<>();
+        params.put("action", action);
+        params.put("sr", subreddit.getName());
+
+        reddit.loadPost(Reddit.OAUTH_URL + "/api/subscribe",
+                new Listener<String>() {
+                    @Override
+                    public void onResponse(String response) {
+                        Log.d(TAG, "subscribe response: " + response);
+                    }
+                }, new ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+
+                    }
+                }, params, 0);
+    }
+
     public interface LinkClickListener extends DisallowListener {
 
         void onClickComments(Link link, RecyclerView.ViewHolder viewHolder);
@@ -418,6 +439,7 @@ public class ControllerLinks implements ControllerLinksBase {
         void setSort(Sort sort);
         void loadVideoLandscape(int position);
         int getRequestedOrientation();
+        void showSidebar();
     }
 
     public interface ListenerCallback {

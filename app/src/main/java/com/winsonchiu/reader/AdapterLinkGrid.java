@@ -17,6 +17,7 @@ import android.text.Spanned;
 import android.text.TextUtils;
 import android.text.format.DateUtils;
 import android.text.style.ForegroundColorSpan;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -28,6 +29,8 @@ import com.squareup.picasso.Picasso;
 import com.winsonchiu.reader.data.Link;
 import com.winsonchiu.reader.data.Reddit;
 import com.winsonchiu.reader.data.imgur.Album;
+
+import org.w3c.dom.Text;
 
 /**
  * Created by TheKeeperOfPie on 3/7/2015.
@@ -72,7 +75,6 @@ public class AdapterLinkGrid extends AdapterLink {
 
         ViewHolder viewHolder = new ViewHolder(LayoutInflater.from(viewGroup.getContext())
                 .inflate(R.layout.cell_link, viewGroup, false), this, defaultColor, thumbnailSize);
-        viewHolders.add(viewHolder);
         return viewHolder;
     }
 
@@ -140,6 +142,7 @@ public class AdapterLinkGrid extends AdapterLink {
                             .onClickComments(link, ViewHolder.this);
                 }
             });
+
         }
 
         @Override
@@ -166,7 +169,7 @@ public class AdapterLinkGrid extends AdapterLink {
             else if (Reddit.showThumbnail(link)) {
                 loadThumbnail(link, position);
             }
-            else {
+            else if (!TextUtils.isEmpty(link.getThumbnail())) {
                 imageFull.setVisibility(View.GONE);
                 imageThumbnail.setVisibility(View.VISIBLE);
                 ((RelativeLayout.LayoutParams) textThreadTitle.getLayoutParams()).removeRule(
@@ -176,6 +179,14 @@ public class AdapterLinkGrid extends AdapterLink {
                         .getActivity())
                         .load(link.getThumbnail())
                         .into(imageThumbnail);
+            }
+            else {
+                imageFull.setVisibility(View.GONE);
+                imageThumbnail.setVisibility(View.VISIBLE);
+                imageThumbnail.setImageDrawable(drawableDefault);
+                ((RelativeLayout.LayoutParams) textThreadTitle.getLayoutParams()).removeRule(
+                        RelativeLayout.START_OF);
+                ((RelativeLayout.LayoutParams) textThreadTitle.getLayoutParams()).setMarginEnd(callback.getTitleMargin());
             }
 
             setTextInfo(link);
@@ -202,42 +213,24 @@ public class AdapterLinkGrid extends AdapterLink {
                     RelativeLayout.START_OF, buttonComments.getId());
             ((RelativeLayout.LayoutParams) textThreadTitle.getLayoutParams()).setMarginEnd(0);
 
-            Picasso.with(callback.getControllerLinks()
-                    .getActivity())
-                    .load(link.getThumbnail())
-                    .into(imageFull,
-                            new Callback() {
+            Picasso.with(callback.getControllerLinks().getActivity()).load(android.R.color.transparent).into(imageFull);
+
+            if (TextUtils.isEmpty(link.getThumbnail())) {
+                imageUrl = link.getThumbnail();
+                if (Reddit.placeImageUrl(
+                        link) && position == getAdapterPosition()) {
+                    Picasso.with(callback.getControllerLinks()
+                            .getActivity())
+                            .load(link.getUrl())
+                            .resize(thumbnailSize, thumbnailSize)
+                            .centerCrop()
+                            .into(imageFull, new Callback() {
                                 @Override
                                 public void onSuccess() {
                                     Drawable drawable = imageFull.getDrawable();
                                     loadBackgroundColor(drawable, position);
-
-                                    imageUrl = link.getThumbnail();
-                                    if (Reddit.placeImageUrl(
-                                            link) && position == getAdapterPosition()) {
-                                        Picasso.with(callback.getControllerLinks()
-                                                .getActivity())
-                                                .load(link.getUrl())
-                                                .resize(thumbnailSize, thumbnailSize)
-                                                .centerCrop()
-                                                .into(imageFull, new Callback() {
-                                                    @Override
-                                                    public void onSuccess() {
-                                                        progressImage.setVisibility(
-                                                                View.GONE);
-                                                    }
-
-                                                    @Override
-                                                    public void onError() {
-
-                                                    }
-                                                });
-
-                                    }
-                                    else {
-                                        imagePlay.setVisibility(View.VISIBLE);
-                                        progressImage.setVisibility(View.GONE);
-                                    }
+                                    progressImage.setVisibility(
+                                            View.GONE);
                                 }
 
                                 @Override
@@ -245,6 +238,58 @@ public class AdapterLinkGrid extends AdapterLink {
 
                                 }
                             });
+
+                }
+                else {
+                    imagePlay.setVisibility(View.VISIBLE);
+                    progressImage.setVisibility(View.GONE);
+                }
+            }
+            else {
+                Picasso.with(callback.getControllerLinks()
+                        .getActivity())
+                        .load(link.getThumbnail())
+                        .into(imageFull,
+                                new Callback() {
+                                    @Override
+                                    public void onSuccess() {
+                                        Drawable drawable = imageFull.getDrawable();
+                                        loadBackgroundColor(drawable, position);
+
+                                        imageUrl = link.getThumbnail();
+                                        if (Reddit.placeImageUrl(
+                                                link) && position == getAdapterPosition()) {
+                                            Picasso.with(callback.getControllerLinks()
+                                                    .getActivity())
+                                                    .load(link.getUrl())
+                                                    .resize(thumbnailSize, thumbnailSize)
+                                                    .centerCrop()
+                                                    .into(imageFull, new Callback() {
+                                                        @Override
+                                                        public void onSuccess() {
+                                                            progressImage.setVisibility(
+                                                                    View.GONE);
+                                                        }
+
+                                                        @Override
+                                                        public void onError() {
+
+                                                        }
+                                                    });
+
+                                        }
+                                        else {
+                                            imagePlay.setVisibility(View.VISIBLE);
+                                            progressImage.setVisibility(View.GONE);
+                                        }
+                                    }
+
+                                    @Override
+                                    public void onError() {
+
+                                    }
+                                });
+            }
 
         }
 

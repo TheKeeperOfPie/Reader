@@ -28,6 +28,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewGroup;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.Button;
@@ -90,7 +91,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
     protected float itemWidth;
     protected ControllerLinks.LinkClickListener listener;
     protected SharedPreferences preferences;
-    protected List<ViewHolderBase> viewHolders;
+    protected List<RecyclerView.ViewHolder> viewHolders;
     protected User user;
     private int titleMargin;
 
@@ -166,8 +167,10 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
 
     @Override
     public void pauseViewHolders() {
-        for (ViewHolderBase viewHolder : viewHolders) {
-            viewHolder.videoFull.stopPlayback();
+        for (RecyclerView.ViewHolder viewHolder : viewHolders) {
+            if (viewHolder instanceof ViewHolderBase) {
+                ((ViewHolderBase) viewHolder).videoFull.stopPlayback();
+            }
         }
     }
 
@@ -199,10 +202,17 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
     }
 
     @Override
-    public void onDetachedFromRecyclerView(RecyclerView recyclerView) {
-        super.onDetachedFromRecyclerView(recyclerView);
-        for (ViewHolderBase viewHolder : viewHolders) {
-            viewHolder.destroy();
+    public void onViewAttachedToWindow(RecyclerView.ViewHolder holder) {
+        super.onViewAttachedToWindow(holder);
+        viewHolders.add(holder);
+    }
+
+    @Override
+    public void onViewDetachedFromWindow(RecyclerView.ViewHolder holder) {
+        super.onViewDetachedFromWindow(holder);
+        viewHolders.remove(holder);
+        if (holder instanceof ViewHolderBase) {
+            ((ViewHolderBase) holder).destroyWebViews();
         }
     }
 
@@ -211,12 +221,13 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         protected TextView textName;
         protected TextView textTitle;
         protected TextView textDescription;
-        protected TextView textInfo;
-        protected ImageButton buttonOpen;
+        protected LinearLayout layoutButtons;
         protected Button buttonSubmitLink;
         protected Button buttomSubmitSelf;
-        protected LinearLayout layoutButtons;
+        protected RelativeLayout layoutContainerExpand;
+        protected TextView textHidden;
         protected View viewDivider;
+        protected ImageButton buttonShowSidebar;
 
         private String defaultTextSubmitLink;
         private String defaultTextSubmitText;
@@ -228,16 +239,25 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             super(itemView);
 
             callback = listenerCallback;
+            buttonShowSidebar = (ImageButton) itemView.findViewById(R.id.button_show_sidebar);
             textName = (TextView) itemView.findViewById(R.id.text_name);
             textTitle = (TextView) itemView.findViewById(R.id.text_title);
             textDescription = (TextView) itemView.findViewById(R.id.text_description);
             textDescription.setMovementMethod(LinkMovementMethod.getInstance());
-            textInfo = (TextView) itemView.findViewById(R.id.text_info);
             layoutButtons = (LinearLayout) itemView.findViewById(R.id.layout_buttons);
             buttonSubmitLink = (Button) itemView.findViewById(R.id.button_submit_link);
             buttomSubmitSelf = (Button) itemView.findViewById(R.id.button_submit_self);
+            layoutContainerExpand = (RelativeLayout) itemView.findViewById(R.id.layout_container_expand);
+            textHidden = (TextView) itemView.findViewById(R.id.text_hidden);
             viewDivider = itemView.findViewById(R.id.view_divider);
 
+            // TODO: Implement listener inside ViewHolder
+            buttonShowSidebar.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    callback.getListener().showSidebar();
+                }
+            });
             buttonSubmitLink.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
@@ -250,6 +270,22 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                 public void onClick(View v) {
                     callback.getListener()
                             .onClickSubmit(Reddit.POST_TYPE_SELF);
+                }
+            });
+            this.itemView.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    AnimationUtils.animateExpand(layoutContainerExpand, 1f, null);
+                }
+            });
+            textDescription.setOnTouchListener(new View.OnTouchListener() {
+                @Override
+                public boolean onTouch(View v, MotionEvent event) {
+                    MotionEvent newEvent = MotionEvent.obtain(event);
+                    newEvent.offsetLocation(v.getLeft(), v.getTop());
+                    ViewHolderHeader.this.itemView.onTouchEvent(newEvent);
+                    newEvent.recycle();
+                    return false;
                 }
             });
 
@@ -270,8 +306,9 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             textName.setVisibility(visibility);
             textTitle.setVisibility(visibility);
             textDescription.setVisibility(visibility);
-            textInfo.setVisibility(visibility);
+            textHidden.setVisibility(visibility);
             layoutButtons.setVisibility(visibility);
+            buttonShowSidebar.setVisibility(visibility);
             buttonSubmitLink.setVisibility(visibility);
             buttomSubmitSelf.setVisibility(visibility);
             viewDivider.setVisibility(visibility);
@@ -298,7 +335,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                         Reddit.getTrimmedHtml(subreddit.getPublicDescriptionHtml()));
             }
 
-            textInfo.setText(subreddit.getSubscribers() + " subscribers\n" +
+            textHidden.setText(subreddit.getSubscribers() + " subscribers\n" +
                     "created " + new Date(subreddit.getCreatedUtc()));
 
             if (TextUtils.isEmpty(subreddit.getSubmitLinkLabel()) || "null".equals(
@@ -317,7 +354,11 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                 buttomSubmitSelf.setText(subreddit.getSubmitTextLabel());
             }
 
-            if (Reddit.POST_TYPE_LINK.equalsIgnoreCase(subreddit.getSubmissionType())) {
+            if (!subreddit.isUserIsContributor()) {
+                buttomSubmitSelf.setVisibility(View.GONE);
+                buttonSubmitLink.setVisibility(View.GONE);
+            }
+            else if (Reddit.POST_TYPE_LINK.equalsIgnoreCase(subreddit.getSubmissionType())) {
                 buttomSubmitSelf.setVisibility(View.GONE);
             }
             else if (Reddit.POST_TYPE_SELF.equalsIgnoreCase(subreddit.getSubmissionType())) {
@@ -357,6 +398,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         protected Button buttonSendReply;
         protected YouTubePlayerView viewYouTube;
         protected YouTubePlayer youTubePlayer;
+        protected int viewPagerMargin;
 
         protected MenuItem itemUpvote;
         protected MenuItem itemDownvote;
@@ -369,6 +411,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         protected PorterDuffColorFilter colorFilterSave;
         protected PorterDuffColorFilter colorFilterPositive;
         protected PorterDuffColorFilter colorFilterNegative;
+        protected Drawable drawableDefault;
 
         public ViewHolderBase(View itemView,
                 ControllerLinks.ListenerCallback listenerCallback) {
@@ -469,6 +512,8 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
 
         private void initialize() {
 
+            drawableDefault = callback.getControllerComments().getActivity().getResources().getDrawable(
+                    R.drawable.ic_web_white_48dp);
             mediaController = new MediaController(itemView.getContext());
             adapterAlbum = new AdapterAlbum(callback.getControllerLinks()
                     .getActivity(), new Album(),
@@ -494,7 +539,9 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             buttonSendReply = (Button) itemView.findViewById(R.id.button_send_reply);
             viewYouTube = (YouTubePlayerView) itemView.findViewById(R.id.youtube);
 
+            viewPagerMargin = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 96, callback.getControllerLinks().getActivity().getResources().getDisplayMetrics());
             viewPagerFull.setAdapter(adapterAlbum);
+            viewPagerFull.setMinimumHeight(viewPagerMargin);
             viewPagerFull.setPageTransformer(false, new ViewPager.PageTransformer() {
                 @Override
                 public void transformPage(View page, float position) {
@@ -509,39 +556,40 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                 }
             });
 
-            webFull = new WebViewFixed(callback.getControllerLinks()
-                    .getActivity()
-                    .getApplicationContext());
-            webFull.getSettings()
-                    .setUseWideViewPort(true);
-            webFull.getSettings()
-                    .setLoadWithOverviewMode(true);
-            webFull.getSettings()
-                    .setBuiltInZoomControls(true);
-            webFull.getSettings()
-                    .setDisplayZoomControls(false);
-            webFull.setBackgroundColor(0x000000);
-            webFull.setWebChromeClient(null);
-            webFull.setWebViewClient(new WebViewClient() {
-                @Override
-                public void onScaleChanged(WebView view, float oldScale, float newScale) {
-                    webFull.lockHeight();
-                    super.onScaleChanged(view, oldScale, newScale);
-                }
-
-                @Override
-                public void onReceivedError(WebView view,
-                        int errorCode,
-                        String description,
-                        String failingUrl) {
-                    super.onReceivedError(view, errorCode, description, failingUrl);
-                    Toast.makeText(callback.getControllerLinks()
-                            .getActivity(), "WebView error: " + description, Toast.LENGTH_SHORT)
-                            .show();
-                }
-            });
-            webFull.setOnTouchListener(new OnTouchListenerDisallow(callback.getListener()));
-            frameFull.addView(webFull);
+//            webFull = new WebViewFixed(callback.getControllerLinks()
+//                    .getActivity()
+//                    .getApplicationContext());
+//            Reddit.incrementCreate();
+//            webFull.getSettings()
+//                    .setUseWideViewPort(true);
+//            webFull.getSettings()
+//                    .setLoadWithOverviewMode(true);
+//            webFull.getSettings()
+//                    .setBuiltInZoomControls(true);
+//            webFull.getSettings()
+//                    .setDisplayZoomControls(false);
+//            webFull.setBackgroundColor(0x000000);
+//            webFull.setWebChromeClient(null);
+//            webFull.setWebViewClient(new WebViewClient() {
+//                @Override
+//                public void onScaleChanged(WebView view, float oldScale, float newScale) {
+//                    webFull.lockHeight();
+//                    super.onScaleChanged(view, oldScale, newScale);
+//                }
+//
+//                @Override
+//                public void onReceivedError(WebView view,
+//                        int errorCode,
+//                        String description,
+//                        String failingUrl) {
+//                    super.onReceivedError(view, errorCode, description, failingUrl);
+//                    Toast.makeText(callback.getControllerLinks()
+//                            .getActivity(), "WebView error: " + description, Toast.LENGTH_SHORT)
+//                            .show();
+//                }
+//            });
+//            webFull.setOnTouchListener(new OnTouchListenerDisallow(callback.getListener()));
+//            frameFull.addView(webFull);
         }
 
         private void initializeListeners() {
@@ -831,7 +879,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                                     progressImage.setVisibility(View.GONE);
                                 }
                             }, 0);
-            return false;
+            return true;
         }
 
         /**
@@ -924,12 +972,52 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         public void attemptLoadImage(Link link) {
 
             if (Reddit.placeImageUrl(link)) {
+
+                if (webFull == null) {
+
+                    webFull = new WebViewFixed(callback.getControllerLinks()
+                            .getActivity()
+                            .getApplicationContext());
+                    Reddit.incrementCreate();
+                    webFull.getSettings()
+                            .setUseWideViewPort(true);
+                    webFull.getSettings()
+                            .setLoadWithOverviewMode(true);
+                    webFull.getSettings()
+                            .setBuiltInZoomControls(true);
+                    webFull.getSettings()
+                            .setDisplayZoomControls(false);
+                    webFull.setBackgroundColor(0x000000);
+                    webFull.setWebChromeClient(null);
+                    webFull.setWebViewClient(new WebViewClient() {
+                        @Override
+                        public void onScaleChanged(WebView view, float oldScale, float newScale) {
+                            webFull.lockHeight();
+                            super.onScaleChanged(view, oldScale, newScale);
+                        }
+
+                        @Override
+                        public void onReceivedError(WebView view,
+                                int errorCode,
+                                String description,
+                                String failingUrl) {
+                            super.onReceivedError(view, errorCode, description, failingUrl);
+                            Toast.makeText(callback.getControllerLinks()
+                                            .getActivity(), "WebView error: " + description,
+                                    Toast.LENGTH_SHORT)
+                                    .show();
+                        }
+                    });
+                    webFull.setOnTouchListener(new OnTouchListenerDisallow(callback.getListener()));
+                    frameFull.addView(webFull);
+                    frameFull.requestLayout();
+                    callback.getListener()
+                            .onFullLoaded(getAdapterPosition());
+                }
                 webFull.onResume();
                 webFull.resetMaxHeight();
                 webFull.loadData(Reddit.getImageHtml(link.getUrl()), "text/html", "UTF-8");
                 webFull.setVisibility(View.VISIBLE);
-                callback.getListener()
-                        .onFullLoaded(getAdapterPosition());
             }
             else {
                 callback.getListener()
@@ -1006,12 +1094,14 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
 
         public void setAlbum(Link link, Album album) {
             link.setAlbum(album);
-            adapterAlbum.setAlbum(album);
             viewPagerFull.setCurrentItem(0);
-            viewPagerFull.getLayoutParams().height = callback.getListener()
-                    .getRecyclerHeight() - itemView.getHeight();
+            ViewGroup.LayoutParams layoutParams = viewPagerFull.getLayoutParams();
+            layoutParams.height = callback.getListener()
+                    .getRecyclerHeight() - viewPagerMargin;
+            viewPagerFull.setLayoutParams(layoutParams);
             viewPagerFull.setVisibility(View.VISIBLE);
             viewPagerFull.requestLayout();
+            adapterAlbum.setAlbum(album);
             callback.getListener()
                     .onFullLoaded(getAdapterPosition());
         }
@@ -1189,10 +1279,10 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                 youTubePlayer = null;
             }
             viewYouTube.setVisibility(View.GONE);
-            webFull.loadData(Reddit.getImageHtml(""), "text/html", "UTF-8");
-            webFull.onPause();
-            webFull.resetMaxHeight();
-            webFull.setVisibility(View.GONE);
+//            webFull.loadData(Reddit.getImageHtml(""), "text/html", "UTF-8");
+//            webFull.onPause();
+//            webFull.resetMaxHeight();
+//            webFull.setVisibility(View.GONE);
             videoFull.stopPlayback();
             videoFull.setVisibility(View.GONE);
             viewPagerFull.setVisibility(View.GONE);
@@ -1291,9 +1381,12 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                 youTubePlayer.release();
             }
             videoFull.stopPlayback();
-            webFull.removeAllViews();
-            webFull.destroy();
-            adapterAlbum.setAlbum(null);
+            if (webFull != null) {
+                webFull.removeAllViews();
+                webFull.destroy();
+                Reddit.incrementDestroy();
+                webFull = null;
+            }
             if (viewPagerFull.getChildCount() > 0) {
                 for (int index = 0; index < viewPagerFull.getChildCount(); index++) {
                     View view = viewPagerFull.getChildAt(index);
@@ -1301,13 +1394,40 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                     if (webView != null) {
                         webView.onPause();
                         webView.destroy();
+                        Reddit.incrementDestroy();
                         ((RelativeLayout) view).removeView(webView);
                     }
                 }
             }
-            viewPagerFull.setAdapter(null);
+            adapterAlbum.setAlbum(null);
             viewPagerFull.removeAllViews();
         }
+
+        public void destroyWebViews() {
+
+            if (webFull != null) {
+                frameFull.removeView(webFull);
+                webFull.removeAllViews();
+                webFull.destroy();
+                Reddit.incrementDestroy();
+                webFull = null;
+            }
+            if (viewPagerFull.getChildCount() > 0) {
+                for (int index = 0; index < viewPagerFull.getChildCount(); index++) {
+                    View view = viewPagerFull.getChildAt(index);
+                    WebView webView = (WebView) view.findViewById(R.id.web);
+                    if (webView != null) {
+                        webView.onPause();
+                        webView.destroy();
+                        Reddit.incrementDestroy();
+                        ((RelativeLayout) view).removeView(webView);
+                    }
+                }
+            }
+            adapterAlbum.setAlbum(null);
+            viewPagerFull.removeAllViews();
+        }
+
     }
 
 }

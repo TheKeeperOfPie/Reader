@@ -69,6 +69,7 @@ public class AdapterAlbum extends PagerAdapter {
         ViewHolder viewHolder = (ViewHolder) view.getTag();
 
         webView = new WebView(activity.getApplicationContext());
+        Reddit.incrementCreate();
         webView.setId(R.id.web);
         webView.getSettings()
                 .setUseWideViewPort(true);
@@ -149,6 +150,7 @@ public class AdapterAlbum extends PagerAdapter {
         if (webView != null) {
             webView.onPause();
             webView.destroy();
+            Reddit.incrementDestroy();
             ((RelativeLayout) view).removeView(webView);
         }
         container.removeView(view);
@@ -177,6 +179,7 @@ public class AdapterAlbum extends PagerAdapter {
             if (webView != null) {
                 webView.onPause();
                 webView.destroy();
+                Reddit.incrementDestroy();
                 ((RelativeLayout) view).removeView(webView);
             }
         }

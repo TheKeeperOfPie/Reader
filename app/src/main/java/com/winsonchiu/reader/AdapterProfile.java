@@ -168,6 +168,11 @@ public class AdapterProfile extends RecyclerView.Adapter<RecyclerView.ViewHolder
                         return listener.getRequestedOrientation();
                     }
 
+                    @Override
+                    public void showSidebar() {
+
+                    }
+
                 };
             }
 
@@ -242,6 +247,11 @@ public class AdapterProfile extends RecyclerView.Adapter<RecyclerView.ViewHolder
                     @Override
                     public AdapterCommentList getAdapter() {
                         return null;
+                    }
+
+                    @Override
+                    public void notifyDataSetChanged() {
+                        getAdapter().notifyDataSetChanged();
                     }
 
                     @Override

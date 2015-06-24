@@ -213,7 +213,7 @@ public class FragmentProfile extends Fragment implements Toolbar.OnMenuItemClick
 
                                 FragmentComments fragmentComments = FragmentComments.newInstance(
                                         link.getSubreddit(), link.getId(),
-                                        viewHolder instanceof AdapterLinkGrid.ViewHolder, color);
+                                        viewHolder instanceof AdapterLinkGrid.ViewHolder, color, viewHolder.itemView.getX(), viewHolder.itemView.getY(), viewHolder.itemView.getHeight());
 
                                 getFragmentManager().beginTransaction()
                                         .hide(FragmentProfile.this)

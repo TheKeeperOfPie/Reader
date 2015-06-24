@@ -8,6 +8,7 @@ import android.content.pm.ActivityInfo;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.support.v4.view.GravityCompat;
 import android.support.v4.view.MenuItemCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v4.widget.SwipeRefreshLayout;
@@ -29,6 +30,7 @@ import android.view.animation.AnimationSet;
 import android.view.animation.LinearInterpolator;
 import android.view.animation.Transformation;
 import android.view.animation.TranslateAnimation;
+import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -76,6 +78,7 @@ public class FragmentThreadList extends Fragment implements Toolbar.OnMenuItemCl
     private AdapterLinkList adapterLinkList;
     private AdapterLinkGrid adapterLinkGrid;
     private int saveScrollPosition;
+    private Button buttonSubscribe;
 
     /**
      * Use this factory method to create a new instance of
@@ -236,12 +239,17 @@ public class FragmentThreadList extends Fragment implements Toolbar.OnMenuItemCl
                                         activity.getResources()
                                                 .getColor(R.color.darkThemeBackground);
 
-                                FragmentComments fragmentComments = FragmentComments.newInstance(
-                                        link.getSubreddit(), link.getId(),
-                                        viewHolder instanceof AdapterLinkGrid.ViewHolder, color);
+                                int spanCount = layoutManager instanceof StaggeredGridLayoutManager ? ((StaggeredGridLayoutManager) layoutManager).getSpanCount() : 0;
+
+                                FragmentComments fragmentComments = FragmentComments.newInstance(viewHolder, color, spanCount);
+
+//                                FragmentComments fragmentComments = FragmentComments.newInstance(
+//                                        link.getSubreddit(), link.getId(),
+//                                        viewHolder instanceof AdapterLinkGrid.ViewHolder, color, viewHolder.itemView.getX(), viewHolder.itemView.getY(), viewHolder.itemView.getHeight());
+
+                                fragmentComments.setFragmentToHide(FragmentThreadList.this);
 
                                 getFragmentManager().beginTransaction()
-                                        .hide(FragmentThreadList.this)
                                         .add(R.id.frame_fragment, fragmentComments,
                                                 FragmentComments.TAG)
                                         .addToBackStack(null)
@@ -317,6 +325,13 @@ public class FragmentThreadList extends Fragment implements Toolbar.OnMenuItemCl
                                             textSidebar.setText(Reddit.getTrimmedHtml(loadedSubreddit.getDescriptionHtml()));
                                             drawerLayout.setDrawerLockMode(
                                                     DrawerLayout.LOCK_MODE_UNLOCKED);
+                                            if (mListener.getControllerLinks().getSubreddit().isUserIsSubscriber()) {
+                                                buttonSubscribe.setText(R.string.unsubscribe);
+                                            }
+                                            else {
+                                                buttonSubscribe.setText(R.string.subscribe);
+                                            }
+                                            buttonSubscribe.setVisibility(TextUtils.isEmpty(preferences.getString(AppSettings.ACCOUNT_JSON, "")) ? View.GONE : View.VISIBLE);
                                         }
                                         catch (JSONException e) {
                                             textSidebar.setText(null);
@@ -380,6 +395,11 @@ public class FragmentThreadList extends Fragment implements Toolbar.OnMenuItemCl
             @Override
             public int getRequestedOrientation() {
                 return mListener.getRequestedOrientation();
+            }
+
+            @Override
+            public void showSidebar() {
+                drawerLayout.openDrawer(GravityCompat.END);
             }
 
         };
@@ -454,6 +474,15 @@ public class FragmentThreadList extends Fragment implements Toolbar.OnMenuItemCl
 
         textSidebar = (TextView) view.findViewById(R.id.text_sidebar);
         textSidebar.setMovementMethod(LinkMovementMethod.getInstance());
+
+        buttonSubscribe = (Button) view.findViewById(R.id.button_subscribe);
+        buttonSubscribe.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                buttonSubscribe.setText(mListener.getControllerLinks().getSubreddit().isUserIsSubscriber() ? R.string.subscribe : R.string.unsubscribe);
+                mListener.getControllerLinks().subscribe();
+            }
+        });
 
         textEmpty = (TextView) view.findViewById(R.id.text_empty);
         mListener.getControllerLinks()

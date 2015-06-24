@@ -25,7 +25,6 @@ import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
@@ -39,15 +38,12 @@ import com.android.volley.VolleyError;
 import com.winsonchiu.reader.data.Comment;
 import com.winsonchiu.reader.data.Link;
 import com.winsonchiu.reader.data.Reddit;
-import com.winsonchiu.reader.data.Subreddit;
 import com.winsonchiu.reader.data.User;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.util.Calendar;
 import java.util.HashMap;
-import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -77,6 +73,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
     private int thumbnailWidth;
     private boolean isGrid;
     private boolean isInitialized;
+    private boolean animationFinished;
 
     public AdapterCommentList(Activity activity,
             final ControllerComments controllerComments,
@@ -180,6 +177,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
 //                        margin);
 //                ((RecyclerView.LayoutParams) viewHolderLink.itemView.findViewById(R.id.layout_link).getLayoutParams()).setMarginEnd(
 //                        margin);
+                viewHolderLink.itemView.setBackgroundColor(colorLink);
             }
             else {
                 viewHolderLink = new AdapterLinkList.ViewHolder(
@@ -206,8 +204,10 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
 
                     @Override
                     public void onClickThumbnail() {
+                        Log.d(TAG, "onClickThumbnail");
                         if (listener.hideYouTube()) {
                             super.onClickThumbnail();
+                            Log.d(TAG, "super.onClickThumbnail");
                         }
                     }
                 };
@@ -246,14 +246,20 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
     }
 
     @Override
-    public void onDetachedFromRecyclerView(RecyclerView recyclerView) {
-        super.onDetachedFromRecyclerView(recyclerView);
-        viewHolderLink.destroy();
+    public void onViewDetachedFromWindow(RecyclerView.ViewHolder holder) {
+        super.onViewDetachedFromWindow(holder);
+//        viewHolderLink.destroyWebViews();
     }
 
     @Override
     public int getItemCount() {
-        return controllerComments.getItemCount();
+        int count = controllerComments.getItemCount();
+        if (count > 0) {
+            if (!animationFinished) {
+                return 1;
+            }
+        }
+        return count;
     }
 
     @Override
@@ -304,6 +310,18 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
     @Override
     public User getUser() {
         return user;
+    }
+
+    public void destroyViewHolderLink() {
+        viewHolderLink.destroyWebViews();
+    }
+
+    public boolean isAnimationFinished() {
+        return animationFinished;
+    }
+
+    public void setAnimationFinished(boolean isAnimationFinished) {
+        this.animationFinished = isAnimationFinished;
     }
 
     public static class ViewHolderComment extends RecyclerView.ViewHolder

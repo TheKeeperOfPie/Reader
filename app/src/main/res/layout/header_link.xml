@@ -13,11 +13,14 @@
         android:layout_height="wrap_content"
         android:layout_alignParentTop="true"
         android:layout_alignParentStart="true"
+        android:layout_toStartOf="@+id/button_show_sidebar"
         android:layout_marginTop="@dimen/activity_vertical_margin"
         android:layout_marginStart="@dimen/activity_horizontal_margin"
         android:layout_marginEnd="@dimen/activity_horizontal_margin"
         android:textAppearance="?android:textAppearanceLarge"
         android:textColor="@color/colorPrimary"
+        android:clickable="false"
+        android:longClickable="false"
         />
 
     <TextView
@@ -29,6 +32,20 @@
         android:layout_marginStart="@dimen/activity_horizontal_margin"
         android:layout_marginEnd="@dimen/activity_horizontal_margin"
         android:textSize="14sp"
+        android:clickable="false"
+        android:longClickable="false"
+        />
+
+    <ImageButton
+        android:id="@+id/button_show_sidebar"
+        android:layout_width="56dp"
+        android:layout_height="56dp"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentEnd="true"
+        android:contentDescription="@string/content_description_button_show_sidebar"
+        android:background="?android:selectableItemBackground"
+        android:src="@drawable/ic_info_outline_white_24dp"
+        android:padding="16dp"
         />
 
     <TextView
@@ -41,20 +58,8 @@
         android:layout_marginStart="@dimen/activity_horizontal_margin"
         android:layout_marginEnd="@dimen/activity_horizontal_margin"
         android:textSize="12sp"
-        />
-
-    <TextView
-        android:id="@+id/text_info"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_below="@id/text_description"
-        android:layout_marginStart="@dimen/activity_horizontal_margin"
-        android:layout_marginEnd="@dimen/activity_horizontal_margin"
-        android:layout_marginBottom="8dp"
-        android:textSize="12sp"
-        android:layout_alignParentEnd="true"
-        android:gravity="end"
-        android:textColor="@color/darkThemeTextColorMuted"
+        android:clickable="false"
+        android:longClickable="false"
         />
 
     <LinearLayout
@@ -63,7 +68,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_alignParentEnd="true"
-        android:layout_below="@id/text_info"
+        android:layout_below="@id/text_description"
         android:layout_marginBottom="4dp"
         android:layout_marginTop="4dp"
         >
@@ -113,6 +118,32 @@
             />
 
     </LinearLayout>
+
+    <RelativeLayout
+        android:id="@+id/layout_container_expand"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/layout_buttons"
+        android:layout_alignParentEnd="true"
+        android:visibility="gone"
+        >
+
+        <TextView
+            android:id="@+id/text_hidden"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="@dimen/activity_horizontal_margin"
+            android:layout_marginEnd="@dimen/activity_horizontal_margin"
+            android:layout_marginBottom="16dp"
+            android:layout_alignParentTop="true"
+            android:layout_alignParentEnd="true"
+            android:layout_gravity="end"
+            android:gravity="end"
+            android:textSize="12sp"
+            android:textColor="@color/darkThemeTextColorMuted"
+            />
+
+    </RelativeLayout>
 
     <View
         android:id="@+id/view_divider"

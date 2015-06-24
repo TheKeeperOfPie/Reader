@@ -27,16 +27,31 @@ import com.winsonchiu.reader.BuildConfig;
 
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.w3c.dom.Text;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Created by TheKeeperOfPie on 3/7/2015.
  */
 public class Reddit {
 
+    private static AtomicInteger created = new AtomicInteger();
+    private static AtomicInteger destroyed = new AtomicInteger();
+
+
+    public static void incrementCreate() {
+        Log.d(TAG, "Created: " + created.incrementAndGet());
+        Log.d(TAG, "Destroyed: " + destroyed.get());
+    }
+
+    public static void incrementDestroy() {
+        Log.d(TAG, "Created: " + created.get());
+        Log.d(TAG, "Destroyed: " + destroyed.incrementAndGet());
+    }
 
     // Constant values to represent Thing states
     public enum Distinguished {
@@ -542,8 +557,7 @@ public class Reddit {
     }
 
     public static boolean showThumbnail(Link link) {
-        if (link.getThumbnail()
-                .equals("nsfw")) {
+        if (TextUtils.isEmpty(link.getUrl()) || link.getThumbnail().equals("nsfw")) {
             return false;
         }
         String domain = link.getDomain();

@@ -69,6 +69,7 @@ public class MainActivity extends YouTubeBaseActivity
         sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
 
         webView = new WebView(getApplicationContext());
+        Reddit.incrementCreate();
 
         fragmentData = (FragmentData) getFragmentManager().findFragmentByTag(FragmentData.TAG);
         if (fragmentData == null) {
@@ -351,7 +352,7 @@ public class MainActivity extends YouTubeBaseActivity
 
                 getFragmentManager().beginTransaction()
                         .replace(R.id.frame_fragment,
-                                FragmentComments.newInstance(subreddit, id, false, getResources().getColor(R.color.darkThemeBackground)),
+                                FragmentComments.newInstance(subreddit, id, false, getResources().getColor(R.color.darkThemeBackground), 0, 0, 0),
                                 FragmentComments.TAG)
                         .commit();
                 fragmentData.getControllerComments().setLinkId(subreddit, id);
@@ -540,7 +541,12 @@ public class MainActivity extends YouTubeBaseActivity
     @Override
     public void onNavigationBackClick() {
         if (getFragmentManager().getBackStackEntryCount() > 0) {
-            getFragmentManager().popBackStack();
+            getFragmentManager().popBackStackImmediate();
+            Fragment fragment = getFragmentManager().findFragmentById(R.id.frame_fragment);
+            if (fragment != null) {
+                getFragmentManager().beginTransaction().show(fragment).commit();
+                Log.d(TAG, "Fragment shown");
+            }
         }
         else {
             if (isTaskRoot() && getFragmentManager().getBackStackEntryCount() <= 1) {
@@ -580,5 +586,17 @@ public class MainActivity extends YouTubeBaseActivity
     protected void onPause() {
         super.onPause();
         webView.pauseTimers();
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+    }
+
+    @Override
+    protected void onDestroy() {
+        webView.destroy();
+        Reddit.incrementDestroy();
+        super.onDestroy();
     }
 }

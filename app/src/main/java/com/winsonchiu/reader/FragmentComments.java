@@ -1,5 +1,7 @@
 package com.winsonchiu.reader;
 
+import android.animation.Animator;
+import android.animation.ValueAnimator;
 import android.app.Activity;
 import android.app.Fragment;
 import android.content.pm.ActivityInfo;
@@ -9,18 +11,26 @@ import android.support.design.widget.FloatingActionButton;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.StaggeredGridLayoutManager;
 import android.support.v7.widget.Toolbar;
 import android.util.DisplayMetrics;
 import android.util.Log;
+import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewPropertyAnimator;
+import android.view.ViewTreeObserver;
 import android.view.animation.AccelerateInterpolator;
 import android.view.animation.AlphaAnimation;
 import android.view.animation.Animation;
 import android.view.animation.DecelerateInterpolator;
+import android.view.animation.Transformation;
+import android.view.animation.TranslateAnimation;
 import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
 import android.widget.Toast;
+import android.widget.ViewAnimator;
 
 import com.google.android.youtube.player.YouTubeInitializationResult;
 import com.google.android.youtube.player.YouTubePlayer;
@@ -36,6 +46,11 @@ public class FragmentComments extends Fragment {
     private static final String ARG_PARAM2 = "param2";
     private static final String ARG_IS_GRID = "isGrid";
     private static final String ARG_COLOR_LINK = "colorLink";
+    private static final String ARG_START_X = "startX";
+    private static final String ARG_START_Y = "startY";
+    private static final String ARG_ITEM_HEIGHT = "itemHeight";
+    private static final String ARG_SPANS_FILLED = "spansFilled";
+    private static final String ARG_SPAN_COUNT = "spanCount";
     private static final long DURATION_COMMENTS_FADE = 300;
     private static final long DURATION_ACTIONS_FADE = 150;
     private static final float OFFSET_MODIFIER = 0.25f;
@@ -64,6 +79,7 @@ public class FragmentComments extends Fragment {
     private RecyclerView.AdapterDataObserver observer;
     private AccelerateInterpolator accelerateInterpolator;
     private DecelerateInterpolator decelerateInterpolator;
+    private Fragment fragmentToHide;
 
     /**
      * Use this factory method to create a new instance of
@@ -74,13 +90,39 @@ public class FragmentComments extends Fragment {
      * @return A new instance of fragment FragmentComments.
      */
     // TODO: Rename and change types and number of parameters
-    public static FragmentComments newInstance(String param1, String param2, boolean isGrid, int colorLink) {
+    public static FragmentComments newInstance(String param1,
+            String param2,
+            boolean isGrid,
+            int colorLink,
+            float startX,
+            float startY,
+            int itemHeight) {
         FragmentComments fragment = new FragmentComments();
         Bundle args = new Bundle();
         args.putString(ARG_PARAM1, param1);
         args.putString(ARG_PARAM2, param2);
         args.putBoolean(ARG_IS_GRID, isGrid);
         args.putInt(ARG_COLOR_LINK, colorLink);
+        args.putFloat(ARG_START_X, startX);
+        args.putFloat(ARG_START_Y, startY);
+        args.putInt(ARG_ITEM_HEIGHT, itemHeight);
+        fragment.setArguments(args);
+        return fragment;
+    }
+
+    public static FragmentComments newInstance(RecyclerView.ViewHolder viewHolder, int colorLink, int spanCount) {
+        FragmentComments fragment = new FragmentComments();
+        Bundle args = new Bundle();
+        if (viewHolder.itemView.getLayoutParams() instanceof StaggeredGridLayoutManager.LayoutParams) {
+            int spans = ((StaggeredGridLayoutManager.LayoutParams) viewHolder.itemView.getLayoutParams()).isFullSpan() ? spanCount : 1;
+            args.putBoolean(ARG_IS_GRID, true);
+            args.putInt(ARG_SPANS_FILLED, spans);
+            args.putInt(ARG_SPAN_COUNT, spanCount);
+        }
+        args.putInt(ARG_COLOR_LINK, colorLink);
+        args.putFloat(ARG_START_X, viewHolder.itemView.getX());
+        args.putFloat(ARG_START_Y, viewHolder.itemView.getY());
+        args.putInt(ARG_ITEM_HEIGHT, viewHolder.itemView.getHeight());
         fragment.setArguments(args);
         return fragment;
     }
@@ -109,7 +151,7 @@ public class FragmentComments extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
             Bundle savedInstanceState) {
 
-        View view = inflater.inflate(R.layout.fragment_comments, container, false);
+        final View view = inflater.inflate(R.layout.fragment_comments, container, false);
 
         listener = new ControllerComments.CommentClickListener() {
             @Override
@@ -141,6 +183,13 @@ public class FragmentComments extends Fragment {
             @Override
             public AdapterCommentList getAdapter() {
                 return adapterCommentList;
+            }
+
+            @Override
+            public void notifyDataSetChanged() {
+                if (adapterCommentList.isAnimationFinished()) {
+                    adapterCommentList.notifyDataSetChanged();
+                }
             }
 
             @Override
@@ -350,7 +399,6 @@ public class FragmentComments extends Fragment {
 
         linearLayoutManager = new LinearLayoutManager(activity);
         recyclerCommentList = (RecyclerView) view.findViewById(R.id.recycler_comment_list);
-        recyclerCommentList.setHasFixedSize(true);
         recyclerCommentList.setLayoutManager(linearLayoutManager);
         recyclerCommentList.setItemAnimator(null);
 
@@ -444,6 +492,11 @@ public class FragmentComments extends Fragment {
                             return mListener.getRequestedOrientation();
                         }
 
+                        @Override
+                        public void showSidebar() {
+
+                        }
+
                     });
         }
 
@@ -462,6 +515,118 @@ public class FragmentComments extends Fragment {
 
         recyclerCommentList.setAdapter(adapterCommentList);
         mListener.getControllerComments().addListener(listener);
+
+
+        final int screenWidth = getResources().getDisplayMetrics().widthPixels;
+        int viewHolderWidth = screenWidth / getArguments().getInt(ARG_SPAN_COUNT, 1) * getArguments().getInt(ARG_SPANS_FILLED, 1);
+        float speed = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 0.1f, getResources().getDisplayMetrics());
+        final float startX = getArguments().getFloat(ARG_START_X, 0);
+        final float startY = getArguments().getFloat(ARG_START_Y, 0);
+        final int startMarginEnd = (int) (screenWidth - startX - viewHolderWidth);
+        long duration = 250;//(long) Math.abs(startY / speed);
+
+        Log.d(TAG, "startX: " + startX);
+        Log.d(TAG, "startY: " + startY);
+
+        final View viewBackground = view.findViewById(R.id.view_background);
+
+        viewBackground.setScaleY(0f);
+        viewBackground.setPivotY(startY + getArguments().getInt(ARG_ITEM_HEIGHT, 0));
+        final ViewPropertyAnimator viewPropertyAnimatorBackground = viewBackground.animate()
+                .scaleY(2f)
+                .setDuration(duration)
+                .setListener(new Animator.AnimatorListener() {
+                    @Override
+                    public void onAnimationStart(Animator animation) {
+
+                    }
+
+                    @Override
+                    public void onAnimationEnd(Animator animation) {
+                        viewBackground.postDelayed(new Runnable() {
+                            @Override
+                            public void run() {
+                                viewBackground.setVisibility(View.GONE);
+                            }
+                        }, 250);
+                    }
+
+                    @Override
+                    public void onAnimationCancel(Animator animation) {
+
+                    }
+
+                    @Override
+                    public void onAnimationRepeat(Animator animation) {
+
+                    }
+                });
+
+        final Animation animation = new Animation() {
+            @Override
+            public boolean willChangeBounds() {
+                return true;
+            }
+
+            @Override
+            protected void applyTransformation(float interpolatedTime, Transformation t) {
+                super.applyTransformation(interpolatedTime, t);
+                CoordinatorLayout.LayoutParams layoutParams = (CoordinatorLayout.LayoutParams) swipeRefreshCommentList.getLayoutParams();
+                float reverseInterpolation = 1.0f - interpolatedTime;
+                layoutParams.topMargin = (int) (startY * reverseInterpolation);
+                layoutParams.setMarginStart((int) (startX * reverseInterpolation));
+                layoutParams.setMarginEnd((int) (startMarginEnd * reverseInterpolation));
+                swipeRefreshCommentList.setLayoutParams(layoutParams);
+            }
+        };
+        animation.setDuration(duration);
+        animation.setAnimationListener(new Animation.AnimationListener() {
+            @Override
+            public void onAnimationStart(Animation animation) {
+
+            }
+
+            @Override
+            public void onAnimationEnd(Animation animation) {
+                    if (fragmentToHide != null) {
+                        getFragmentManager().beginTransaction().hide(fragmentToHide).commit();
+                        fragmentToHide = null;
+                    }
+                    swipeRefreshCommentList.postDelayed(new Runnable() {
+                        @Override
+                        public void run() {
+                            adapterCommentList.setAnimationFinished(true);
+                            adapterCommentList.notifyDataSetChanged();
+                        }
+                    }, 150);
+            }
+
+            @Override
+            public void onAnimationRepeat(Animation animation) {
+
+            }
+        });
+
+        swipeRefreshCommentList.setVisibility(View.GONE);
+
+        CoordinatorLayout.LayoutParams layoutParams = (CoordinatorLayout.LayoutParams) swipeRefreshCommentList.getLayoutParams();
+        layoutParams.topMargin = (int) startY;
+        layoutParams.setMarginStart((int) startX);
+        layoutParams.setMarginEnd(startMarginEnd);
+        swipeRefreshCommentList.setLayoutParams(layoutParams);
+
+        view.getViewTreeObserver().addOnPreDrawListener(new ViewTreeObserver.OnPreDrawListener() {
+            @Override
+            public boolean onPreDraw() {
+                view.getViewTreeObserver().removeOnPreDrawListener(this);
+
+                swipeRefreshCommentList.setVisibility(View.VISIBLE);
+                view.startAnimation(animation);
+
+                viewPropertyAnimatorBackground.start();
+                return true;
+            }
+        });
 
         return view;
     }
@@ -559,6 +724,7 @@ public class FragmentComments extends Fragment {
 
     @Override
     public void onStop() {
+        adapterCommentList.destroyViewHolderLink();
         mListener.getControllerComments().removeListener(listener);
         super.onStop();
     }
@@ -601,4 +767,7 @@ public class FragmentComments extends Fragment {
 //                .watch(this);
     }
 
+    public void setFragmentToHide(Fragment fragmentToHide) {
+        this.fragmentToHide = fragmentToHide;
+    }
 }

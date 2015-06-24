@@ -100,6 +100,11 @@ public class AdapterInbox extends RecyclerView.Adapter<RecyclerView.ViewHolder>
                     }
 
                     @Override
+                    public void notifyDataSetChanged() {
+                        getAdapter().notifyDataSetChanged();
+                    }
+
+                    @Override
                     public int getRecyclerHeight() {
                         return listener.getRecyclerHeight();
                     }
