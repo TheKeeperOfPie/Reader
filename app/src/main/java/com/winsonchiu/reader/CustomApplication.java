@@ -2,7 +2,6 @@ package com.winsonchiu.reader;
 
 import android.app.Application;
 
-import com.squareup.picasso.Picasso;
 import com.winsonchiu.reader.data.Reddit;
 
 /**

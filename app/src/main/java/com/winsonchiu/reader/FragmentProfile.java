@@ -4,7 +4,6 @@ import android.app.Activity;
 import android.app.Fragment;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.v4.widget.SwipeRefreshLayout;
@@ -12,33 +11,20 @@ import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.SearchView;
-import android.support.v7.widget.StaggeredGridLayoutManager;
 import android.support.v7.widget.Toolbar;
-import android.text.TextUtils;
 import android.util.Log;
-import android.util.TypedValue;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.animation.Animation;
-import android.view.animation.AnimationSet;
-import android.view.animation.LinearInterpolator;
-import android.view.animation.Transformation;
-import android.view.animation.TranslateAnimation;
 import android.widget.AdapterView;
 import android.widget.Spinner;
-import android.widget.Toast;
 
 import com.winsonchiu.reader.data.Comment;
-import com.winsonchiu.reader.data.Link;
 import com.winsonchiu.reader.data.Reddit;
 import com.winsonchiu.reader.data.User;
-
-import org.json.JSONException;
-import org.json.JSONObject;
 
 public class FragmentProfile extends Fragment implements Toolbar.OnMenuItemClickListener {
     // TODO: Rename parameter arguments, choose names that match
@@ -53,7 +39,7 @@ public class FragmentProfile extends Fragment implements Toolbar.OnMenuItemClick
 
     private FragmentListenerBase mListener;
     private Activity activity;
-    private ControllerProfile.ItemClickListener listener;
+    private ControllerProfile.Listener listener;
     private SwipeRefreshLayout swipeRefreshProfile;
     private RecyclerView recyclerProfile;
     private LinearLayoutManager linearLayoutManager;
@@ -182,131 +168,42 @@ public class FragmentProfile extends Fragment implements Toolbar.OnMenuItemClick
 
         View view = inflater.inflate(R.layout.fragment_profile, container, false);
 
-        listener = new ControllerProfile.ItemClickListener() {
+        listener = new ControllerProfile.Listener() {
             @Override
-            public void requestDisallowInterceptTouchEventVertical(boolean disallow) {
-                recyclerProfile.requestDisallowInterceptTouchEvent(disallow);
-                swipeRefreshProfile.requestDisallowInterceptTouchEvent(disallow);
+            public void setPage(String page) {
+                spinnerPage.setSelection(adapterProfilePage.getPages().indexOf(page));
             }
 
             @Override
-            public void requestDisallowInterceptTouchEventHorizontal(boolean disallow) {
-
-            }
-
-            @Override
-            public void onClickComments(final Link link, final RecyclerView.ViewHolder viewHolder) {
-
-
-                mListener.getControllerComments()
-                        .setLink(link);
-
-                AnimationUtils.loadCommentFragmentAnimation(activity, linearLayoutManager,
-                        viewHolder,
-                        link, new AnimationUtils.OnAnimationEndListener() {
-                            @Override
-                            public void onAnimationEnd() {
-                                int color = viewHolder instanceof AdapterLinkGrid.ViewHolder ?
-                                        ((ColorDrawable) viewHolder.itemView.getBackground()).getColor() :
-                                        activity.getResources()
-                                                .getColor(R.color.darkThemeBackground);
-
-                                FragmentComments fragmentComments = FragmentComments.newInstance(
-                                        link.getSubreddit(), link.getId(),
-                                        viewHolder instanceof AdapterLinkGrid.ViewHolder, color, viewHolder.itemView.getX(), viewHolder.itemView.getY(), viewHolder.itemView.getHeight());
-
-                                getFragmentManager().beginTransaction()
-                                        .hide(FragmentProfile.this)
-                                        .add(R.id.frame_fragment, fragmentComments,
-                                                FragmentComments.TAG)
-                                        .addToBackStack(null)
-                                        .commit();
-                            }
-                        });
-            }
-
-            @Override
-            public void loadUrl(String url) {
-                getFragmentManager().beginTransaction()
-                        .hide(FragmentProfile.this)
-                        .add(R.id.frame_fragment, FragmentWeb
-                                .newInstance(url, ""), FragmentWeb.TAG)
-                        .addToBackStack(null)
-                        .commit();
-            }
-
-            @Override
-            public void onFullLoaded(int position) {
-
-            }
-
-            @Override
-            public void setRefreshing(boolean refreshing) {
-                swipeRefreshProfile.setRefreshing(refreshing);
-            }
-
-            @Override
-            public AdapterProfile getAdapter() {
-                return adapterProfile;
-            }
-
-            @Override
-            public int getRecyclerHeight() {
-                return recyclerProfile.getHeight();
-            }
-
-            @Override
-            public void resetRecycler() {
-                recyclerProfile.setAdapter(null);
-                recyclerProfile.swapAdapter(adapterProfile, true);
-                adapterProfile.notifyDataSetChanged();
-            }
-
-            @Override
-            public void setSwipeRefreshEnabled(boolean enabled) {
-                swipeRefreshProfile.setEnabled(enabled);
-            }
-
-            @Override
-            public int getRecyclerWidth() {
-                return recyclerProfile.getWidth();
-            }
-
-            @Override
-            public ControllerCommentsBase getControllerComments() {
-                return mListener.getControllerComments();
+            public void setIsUser(boolean isUser) {
+                // TODO: Fix set page for Profile view
+                adapterProfilePage.setIsUser(isUser);
             }
 
             @Override
             public void loadLink(Comment comment) {
                 Intent intent = new Intent(activity, MainActivity.class);
                 intent.setAction(Intent.ACTION_VIEW);
-                intent.putExtra(MainActivity.REDDIT_PAGE, "https://reddit.com/r/" + comment.getSubreddit() + "/comments/" + comment.getLinkId().replace("t3_", ""));
+                intent.putExtra(MainActivity.REDDIT_PAGE,
+                        "https://reddit.com/r/" + comment.getSubreddit() + "/comments/" + comment
+                                .getLinkId().replace("t3_", ""));
                 startActivity(intent);
             }
 
             @Override
-            public void setIsUser(boolean isUser) {
-                Log.d(TAG, "isUser: " + isUser);
-                adapterProfilePage.setIsUser(isUser);
+            public RecyclerView.Adapter getAdapter() {
+                return adapterProfile;
             }
 
             @Override
-            public void setPage(String page) {
-                // TODO: Fix set page for Profile view
-                spinnerPage.setSelection(adapterProfilePage.getPages().indexOf(page));
+            public void setToolbarTitle(CharSequence title) {
+                toolbar.setTitle(title);
             }
 
             @Override
-            public void setRequestedOrientation(int orientation) {
-                mListener.setRequestedOrientation(orientation);
+            public void setRefreshing(boolean refreshing) {
+                swipeRefreshProfile.setRefreshing(refreshing);
             }
-
-            @Override
-            public int getRequestedOrientation() {
-                return mListener.getRequestedOrientation();
-            }
-
         };
 
         toolbar = (Toolbar) view.findViewById(R.id.toolbar);
@@ -364,12 +261,62 @@ public class FragmentProfile extends Fragment implements Toolbar.OnMenuItemClick
 
         if (adapterProfile == null) {
             adapterProfile = new AdapterProfile(activity, mListener.getControllerProfile(),
-                    listener);
+                    mListener.getControllerLinks(),
+                    mListener.getControllerUser(),
+                    mListener.getEventListenerBase(),
+                    new AdapterCommentList.ViewHolderComment.EventListener() {
+                        @Override
+                        public void loadNestedComments(Comment comment) {
+                            mListener.getControllerProfile().loadNestedComments(comment);
+                        }
+
+                        @Override
+                        public boolean isCommentExpanded(int position) {
+                            return mListener.getControllerProfile().isCommentExpanded(position);
+                        }
+
+                        @Override
+                        public boolean hasChildren(Comment comment) {
+                            return mListener.getControllerProfile().hasChildren(comment);
+                        }
+
+                        @Override
+                        public void voteComment(AdapterCommentList.ViewHolderComment viewHolderComment,
+                                Comment comment,
+                                int vote) {
+                            mListener.getControllerProfile().voteComment(viewHolderComment, comment, vote);
+                        }
+
+                        @Override
+                        public boolean toggleComment(int position) {
+                            return mListener.getControllerProfile().toggleComment(position);
+                        }
+
+                        @Override
+                        public void deleteComment(Comment comment) {
+                            mListener.getControllerProfile().deleteComment(comment);
+                        }
+                    },
+                    new DisallowListener() {
+                        @Override
+                        public void requestDisallowInterceptTouchEventVertical(boolean disallow) {
+                            recyclerProfile.requestDisallowInterceptTouchEvent(disallow);
+                            swipeRefreshProfile.requestDisallowInterceptTouchEvent(disallow);
+                        }
+
+                        @Override
+                        public void requestDisallowInterceptTouchEventHorizontal(boolean disallow) {
+
+                        }
+                    }, new ScrollCallback() {
+                @Override
+                public void scrollTo(int position) {
+                    linearLayoutManager.scrollToPositionWithOffset(0, 0);
+                }
+            });
         }
 
         recyclerProfile.setAdapter(adapterProfile);
-        mListener.getControllerProfile()
-                .addListener(listener);
 
         return view;
 

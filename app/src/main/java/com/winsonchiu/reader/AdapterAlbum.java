@@ -1,21 +1,16 @@
 package com.winsonchiu.reader;
 
-import android.app.Activity;
 import android.support.v4.view.PagerAdapter;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
-import android.webkit.WebChromeClient;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
-import android.widget.FrameLayout;
 import android.widget.RelativeLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.winsonchiu.reader.data.Reddit;
 import com.winsonchiu.reader.data.imgur.Album;
@@ -30,13 +25,11 @@ import java.util.List;
 public class AdapterAlbum extends PagerAdapter {
 
     private static final String TAG = AdapterAlbum.class.getCanonicalName();
-    private Activity activity;
     private OnTouchListenerDisallow onTouchListenerDisallow;
     private List<View> recycledViews;
     private Album album;
 
-    public AdapterAlbum(Activity activity, Album album, OnTouchListenerDisallow onTouchListenerDisallow) {
-        this.activity = activity;
+    public AdapterAlbum(Album album, OnTouchListenerDisallow onTouchListenerDisallow) {
         this.album = album;
         this.onTouchListenerDisallow = onTouchListenerDisallow;
         recycledViews = new ArrayList<>();
@@ -61,14 +54,14 @@ public class AdapterAlbum extends PagerAdapter {
 
         }
         else {
-            view = LayoutInflater.from(activity)
+            view = LayoutInflater.from(container.getContext())
                     .inflate(R.layout.view_image, container, false);
             view.setTag(new ViewHolder(view));
         }
 
         ViewHolder viewHolder = (ViewHolder) view.getTag();
 
-        webView = new WebView(activity.getApplicationContext());
+        webView = new WebView(container.getContext().getApplicationContext());
         Reddit.incrementCreate();
         webView.setId(R.id.web);
         webView.getSettings()
@@ -88,20 +81,11 @@ public class AdapterAlbum extends PagerAdapter {
                     String description,
                     String failingUrl) {
                 super.onReceivedError(view, errorCode, description, failingUrl);
-                Toast.makeText(activity, "WebView error: " + description, Toast.LENGTH_SHORT).show();
+                Log.e(TAG, "WebView error: " + description);
             }
         });
         webView.setInitialScale(0);
-        webView.setOnTouchListener(new View.OnTouchListener() {
-            @Override
-            public boolean onTouch(View v, MotionEvent event) {
-
-                Log.d(TAG, "canScrollVertically(1)" + webView.canScrollVertically(1));
-                Log.d(TAG, "canScrollVertically(-1)" + webView.canScrollVertically(-1));
-
-                return onTouchListenerDisallow.onTouch(v, event);
-            }
-        });
+        webView.setOnTouchListener(onTouchListenerDisallow);
         webView.setScrollY(0);
         webView.loadData(Reddit.getImageHtml(image.getLink()), "text/html", "UTF-8");
 

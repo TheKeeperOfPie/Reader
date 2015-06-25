@@ -66,6 +66,7 @@
             app:layout_anchorGravity="bottom|end"
             app:elevation="4dp"
             app:borderWidth="0dp"
+            android:visibility="gone"
             />
 
     </android.support.design.widget.CoordinatorLayout>

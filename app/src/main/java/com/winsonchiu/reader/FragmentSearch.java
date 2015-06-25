@@ -3,7 +3,6 @@ package com.winsonchiu.reader;
 import android.app.Activity;
 import android.app.Fragment;
 import android.content.Context;
-import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.support.design.widget.TabLayout;
@@ -13,23 +12,15 @@ import android.support.v4.view.ViewPager;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.SearchView;
-import android.support.v7.widget.StaggeredGridLayoutManager;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
-import android.util.TypedValue;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.animation.Animation;
-import android.view.animation.AnimationSet;
-import android.view.animation.LinearInterpolator;
-import android.view.animation.Transformation;
-import android.view.animation.TranslateAnimation;
 import android.view.inputmethod.InputMethodManager;
-import android.widget.Toast;
 
 import com.winsonchiu.reader.data.Link;
 import com.winsonchiu.reader.data.Reddit;
@@ -37,16 +28,9 @@ import com.winsonchiu.reader.data.Subreddit;
 
 public class FragmentSearch extends Fragment implements Toolbar.OnMenuItemClickListener {
 
-    // TODO: Rename parameter arguments, choose names that match
-    // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-    private static final String ARG_PARAM1 = "param1";
-    private static final String ARG_PARAM2 = "param2";
     private static final int PAGE_COUNT = 3;
     public static final String TAG = FragmentSearch.class.getCanonicalName();
-
-    // TODO: Rename and change types of parameters
-    private String mParam1;
-    private String mParam2;
+    private static final String ARG_HIDE_KEYBOARD = "hideKeyboard";
 
     private FragmentListenerBase mListener;
 
@@ -56,6 +40,9 @@ public class FragmentSearch extends Fragment implements Toolbar.OnMenuItemClickL
     private RecyclerView recyclerSearchSubreddits;
     private RecyclerView recyclerSearchLinks;
     private RecyclerView recyclerSearchLinksSubreddit;
+    private LinearLayoutManager layoutManagerSubreddits;
+    private LinearLayoutManager layoutManagerLinks;
+    private LinearLayoutManager layoutManagerLinksSubreddit;
     private AdapterSearchSubreddits adapterSearchSubreddits;
     private AdapterLink adapterLinks;
     private AdapterLink adapterLinksSubreddit;
@@ -66,20 +53,10 @@ public class FragmentSearch extends Fragment implements Toolbar.OnMenuItemClickL
     private MenuItem itemSortTime;
     private Toolbar toolbar;
 
-    /**
-     * Use this factory method to create a new instance of
-     * this fragment using the provided parameters.
-     *
-     * @param param1 Parameter 1.
-     * @param param2 Parameter 2.
-     * @return A new instance of fragment FragmentSearch.
-     */
-    // TODO: Rename and change types and number of parameters
-    public static FragmentSearch newInstance(String param1, String param2) {
+    public static FragmentSearch newInstance(boolean hideKeyboard) {
         FragmentSearch fragment = new FragmentSearch();
         Bundle args = new Bundle();
-        args.putString(ARG_PARAM1, param1);
-        args.putString(ARG_PARAM2, param2);
+        args.putBoolean(ARG_HIDE_KEYBOARD, hideKeyboard);
         fragment.setArguments(args);
         return fragment;
     }
@@ -91,10 +68,6 @@ public class FragmentSearch extends Fragment implements Toolbar.OnMenuItemClickL
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        if (getArguments() != null) {
-            mParam1 = getArguments().getString(ARG_PARAM1);
-            mParam2 = getArguments().getString(ARG_PARAM2);
-        }
         setHasOptionsMenu(true);
     }
 
@@ -123,8 +96,6 @@ public class FragmentSearch extends Fragment implements Toolbar.OnMenuItemClickL
                 if (mListener.getControllerSearch().getCurrentPage() == ControllerSearch.PAGE_SUBREDDITS) {
                     mListener.getControllerLinks()
                             .setParameters(query.replaceAll("\\s", ""), Sort.HOT);
-//                    mListener.getControllerSearch()
-//                            .clearResults();
                     getFragmentManager().popBackStack();
                 }
                 else {
@@ -156,6 +127,11 @@ public class FragmentSearch extends Fragment implements Toolbar.OnMenuItemClickL
         itemSortTime.setTitle(
                 getString(R.string.time) + Reddit.TIME_SEPARATOR + getString(
                         R.string.item_sort_all));
+
+        if (getArguments().getBoolean(ARG_HIDE_KEYBOARD)) {
+            searchView.clearFocus();
+        }
+
     }
 
     @Override
@@ -188,8 +164,6 @@ public class FragmentSearch extends Fragment implements Toolbar.OnMenuItemClickL
             public void onClickSubreddit(Subreddit subreddit) {
                 mListener.getControllerLinks()
                         .setParameters(subreddit.getDisplayName(), Sort.HOT);
-                mListener.getControllerSearch()
-                        .clearResults();
                 InputMethodManager inputManager = (InputMethodManager) activity
                         .getSystemService(Context.INPUT_METHOD_SERVICE);
                 inputManager.hideSoftInputFromWindow(view.getWindowToken(),
@@ -235,13 +209,14 @@ public class FragmentSearch extends Fragment implements Toolbar.OnMenuItemClickL
 
         adapterSearchSubreddits = new AdapterSearchSubreddits(activity,
                 mListener.getControllerSearch(), listenerSearch);
+
+        layoutManagerSubreddits = new LinearLayoutManager(activity, LinearLayoutManager.VERTICAL, false);
         recyclerSearchSubreddits = (RecyclerView) view.findViewById(
                 R.id.recycler_search_subreddits);
-        recyclerSearchSubreddits.setLayoutManager(
-                new LinearLayoutManager(activity, LinearLayoutManager.VERTICAL, false));
+        recyclerSearchSubreddits.setLayoutManager(layoutManagerSubreddits);
         recyclerSearchSubreddits.setAdapter(adapterSearchSubreddits);
 
-        ControllerLinks.LinkClickListener linkClickListener = new ControllerLinks.LinkClickListener() {
+        DisallowListener disallowListener = new DisallowListener() {
             @Override
             public void requestDisallowInterceptTouchEventVertical(boolean disallow) {
                 recyclerSearchLinks.requestDisallowInterceptTouchEvent(disallow);
@@ -253,118 +228,6 @@ public class FragmentSearch extends Fragment implements Toolbar.OnMenuItemClickL
             public void requestDisallowInterceptTouchEventHorizontal(boolean disallow) {
 
             }
-
-            @Override
-            public void onClickComments(final Link link, final RecyclerView.ViewHolder viewHolder) {
-
-
-                mListener.getControllerComments()
-                        .setLink(link);
-
-                AnimationUtils.loadCommentFragmentAnimation(activity, mListener.getControllerSearch().getCurrentPage() == ControllerSearch.PAGE_LINKS ? recyclerSearchLinks.getLayoutManager() : recyclerSearchLinksSubreddit.getLayoutManager(),
-                        viewHolder,
-                        link, new AnimationUtils.OnAnimationEndListener() {
-                            @Override
-                            public void onAnimationEnd() {
-                                int color = viewHolder instanceof AdapterLinkGrid.ViewHolder ?
-                                        ((ColorDrawable) viewHolder.itemView.getBackground()).getColor() :
-                                        activity.getResources()
-                                                .getColor(R.color.darkThemeBackground);
-
-                                FragmentComments fragmentComments = FragmentComments.newInstance(
-                                        link.getSubreddit(), link.getId(),
-                                        viewHolder instanceof AdapterLinkGrid.ViewHolder, color, viewHolder.itemView.getX(), viewHolder.itemView.getY(), viewHolder.itemView.getHeight());
-
-                                getFragmentManager().beginTransaction()
-                                        .hide(FragmentSearch.this)
-                                        .add(R.id.frame_fragment, fragmentComments,
-                                                FragmentComments.TAG)
-                                        .addToBackStack(null)
-                                        .commit();
-                            }
-                        });
-            }
-
-            @Override
-            public void loadUrl(String url) {
-                getFragmentManager().beginTransaction()
-                        .hide(FragmentSearch.this)
-                        .add(R.id.frame_fragment, FragmentWeb
-                                .newInstance(url, ""), FragmentWeb.TAG)
-                        .addToBackStack(null)
-                        .commit();
-            }
-
-            @Override
-            public void onFullLoaded(int position) {
-
-            }
-
-            @Override
-            public void setRefreshing(boolean refreshing) {
-
-            }
-
-            @Override
-            public void setToolbarTitle(String title) {
-
-            }
-
-            @Override
-            public AdapterLink getAdapter() {
-                return null;
-            }
-
-            @Override
-            public int getRecyclerHeight() {
-                return viewPager.getHeight();
-            }
-
-            @Override
-            public void loadSideBar(Subreddit listingSubreddits) {
-
-            }
-
-            @Override
-            public void setEmptyView(boolean visible) {
-
-            }
-
-            @Override
-            public int getRecyclerWidth() {
-                return viewPager.getWidth();
-            }
-
-            @Override
-            public void onClickSubmit(String postType) {
-
-            }
-
-            @Override
-            public ControllerCommentsBase getControllerComments() {
-                return mListener.getControllerComments();
-            }
-
-            @Override
-            public void setSort(Sort sort) {
-
-            }
-
-            @Override
-            public void loadVideoLandscape(int position) {
-
-            }
-
-            @Override
-            public int getRequestedOrientation() {
-                return mListener.getRequestedOrientation();
-            }
-
-            @Override
-            public void showSidebar() {
-
-            }
-
         };
 
         adapterLinks = new AdapterSearchLinkList(activity, new ControllerLinksBase() {
@@ -430,7 +293,19 @@ public class FragmentSearch extends Fragment implements Toolbar.OnMenuItemClickL
             public void deletePost(Link link) {
                 // Not implemented
             }
-        }, linkClickListener);
+        }, mListener.getControllerComments(), mListener.getControllerUser(),
+                new AdapterLink.ViewHolderHeader.EventListener() {
+                    @Override
+                    public void onClickSubmit(String postType) {
+
+                    }
+                }, mListener.getEventListenerBase(), disallowListener,
+                new ScrollCallback() {
+                    @Override
+                    public void scrollTo(int position) {
+                        layoutManagerLinks.scrollToPositionWithOffset(0, 0);
+                    }
+                });
 
         adapterLinksSubreddit = new AdapterSearchLinkList(activity, new ControllerLinksBase() {
             @Override
@@ -495,17 +370,29 @@ public class FragmentSearch extends Fragment implements Toolbar.OnMenuItemClickL
             public void deletePost(Link link) {
                 // Not implemented
             }
-        }, linkClickListener);
+        }, mListener.getControllerComments(), mListener.getControllerUser(),
+                new AdapterLink.ViewHolderHeader.EventListener() {
+                    @Override
+                    public void onClickSubmit(String postType) {
 
+                    }
+                }, mListener.getEventListenerBase(), disallowListener,
+                new ScrollCallback() {
+                    @Override
+                    public void scrollTo(int position) {
+                        layoutManagerLinksSubreddit.scrollToPositionWithOffset(0, 0);
+                    }
+                });
+
+        layoutManagerLinks = new LinearLayoutManager(activity, LinearLayoutManager.VERTICAL, false);
         recyclerSearchLinks = (RecyclerView) view.findViewById(R.id.recycler_search_links);
-        recyclerSearchLinks.setLayoutManager(
-                new LinearLayoutManager(activity, LinearLayoutManager.VERTICAL, false));
+        recyclerSearchLinks.setLayoutManager(layoutManagerLinks);
         recyclerSearchLinks.setAdapter(adapterLinks);
 
+        layoutManagerLinksSubreddit = new LinearLayoutManager(activity, LinearLayoutManager.VERTICAL, false);
         recyclerSearchLinksSubreddit = (RecyclerView) view.findViewById(
                 R.id.recycler_search_links_subreddit);
-        recyclerSearchLinksSubreddit.setLayoutManager(
-                new LinearLayoutManager(activity, LinearLayoutManager.VERTICAL, false));
+        recyclerSearchLinksSubreddit.setLayoutManager(layoutManagerLinksSubreddit);
         recyclerSearchLinksSubreddit.setAdapter(adapterLinksSubreddit);
 
         pagerAdapter = new PagerAdapter() {

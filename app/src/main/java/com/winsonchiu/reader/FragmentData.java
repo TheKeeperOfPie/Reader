@@ -17,6 +17,7 @@ public class FragmentData extends Fragment {
     private ControllerProfile controllerProfile;
     private ControllerInbox controllerInbox;
     private ControllerSearch controllerSearch;
+    private ControllerUser controllerUser;
 
     public FragmentData() {
         // Required empty public constructor
@@ -34,6 +35,7 @@ public class FragmentData extends Fragment {
         controllerProfile = new ControllerProfile(activity);
         controllerInbox = new ControllerInbox(activity);
         controllerSearch = new ControllerSearch(activity);
+        controllerUser = new ControllerUser(activity);
         controllerComments.setControllerLinks(controllerLinks);
         controllerSearch.setControllerLinks(controllerLinks);
     }
@@ -48,6 +50,7 @@ public class FragmentData extends Fragment {
         controllerProfile.setActivity(activity);
         controllerInbox.setActivity(activity);
         controllerSearch.setActivity(activity);
+        controllerUser.setActivity(activity);
     }
 
     public ControllerLinks getControllerLinks() {
@@ -88,6 +91,14 @@ public class FragmentData extends Fragment {
 
     public void setControllerSearch(ControllerSearch controllerSearch) {
         this.controllerSearch = controllerSearch;
+    }
+
+    public ControllerUser getControllerUser() {
+        return controllerUser;
+    }
+
+    public void setControllerUser(ControllerUser controllerUser) {
+        this.controllerUser = controllerUser;
     }
 
     @Override

@@ -1,12 +1,10 @@
 package com.winsonchiu.reader;
 
 import android.app.Activity;
-import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
-import android.preference.PreferenceManager;
 import android.support.v7.graphics.Palette;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.StaggeredGridLayoutManager;
@@ -17,7 +15,6 @@ import android.text.Spanned;
 import android.text.TextUtils;
 import android.text.format.DateUtils;
 import android.text.style.ForegroundColorSpan;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -30,8 +27,6 @@ import com.winsonchiu.reader.data.Link;
 import com.winsonchiu.reader.data.Reddit;
 import com.winsonchiu.reader.data.imgur.Album;
 
-import org.w3c.dom.Text;
-
 /**
  * Created by TheKeeperOfPie on 3/7/2015.
  */
@@ -39,14 +34,18 @@ public class AdapterLinkGrid extends AdapterLink {
 
     private static final String TAG = AdapterLinkGrid.class.getCanonicalName();
 
-    private int defaultColor;
     private int thumbnailSize;
 
     public AdapterLinkGrid(Activity activity,
             ControllerLinksBase controllerLinks,
-            ControllerLinks.LinkClickListener listener) {
-        super();
-        setControllerLinks(controllerLinks, listener);
+            ControllerCommentsBase controllerComments,
+            ControllerUser controllerUser,
+            ViewHolderHeader.EventListener eventListenerHeader,
+            ViewHolderBase.EventListener eventListenerBase,
+            DisallowListener disallowListener,
+            ScrollCallback scrollCallback) {
+        super(eventListenerHeader, eventListenerBase, disallowListener, scrollCallback);
+        setControllers(controllerLinks, controllerComments, controllerUser);
         setActivity(activity);
     }
 
@@ -57,24 +56,24 @@ public class AdapterLinkGrid extends AdapterLink {
         Resources resources = activity.getResources();
 
         boolean isLandscape = resources.getDisplayMetrics().widthPixels > resources.getDisplayMetrics().heightPixels;
-        layoutManager = new StaggeredGridLayoutManager(isLandscape ? 3 : 2,
+        int spanCount = isLandscape ? 3 : 2;
+        layoutManager = new StaggeredGridLayoutManager(spanCount,
                 StaggeredGridLayoutManager.VERTICAL);
         ((StaggeredGridLayoutManager) this.layoutManager).setGapStrategy(
                 StaggeredGridLayoutManager.GAP_HANDLING_NONE);
 
-        this.defaultColor = resources.getColor(R.color.darkThemeDialog);
-        this.thumbnailSize = (int) (resources.getDisplayMetrics().widthPixels / 2f * 0.75f);
+        this.thumbnailSize = (int) (resources.getDisplayMetrics().widthPixels / spanCount * 0.75f);
     }
 
     @Override
     public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup viewGroup, int viewType) {
 
         if (viewType == VIEW_LINK_HEADER) {
-            return new ViewHolderHeader(LayoutInflater.from(viewGroup.getContext()).inflate(R.layout.header_link, viewGroup, false), this);
+            return new ViewHolderHeader(LayoutInflater.from(viewGroup.getContext()).inflate(R.layout.header_link, viewGroup, false), eventListenerHeader);
         }
 
         ViewHolder viewHolder = new ViewHolder(LayoutInflater.from(viewGroup.getContext())
-                .inflate(R.layout.cell_link, viewGroup, false), this, defaultColor, thumbnailSize);
+                .inflate(R.layout.cell_link, viewGroup, false), eventListenerBase, disallowListener, scrollCallback, thumbnailSize);
         return viewHolder;
     }
 
@@ -90,44 +89,35 @@ public class AdapterLinkGrid extends AdapterLink {
                 break;
             case VIEW_LINK:
                 ViewHolder viewHolder = (ViewHolder) holder;
-                viewHolder.onBind(controllerLinks.getLink(position));
+                viewHolder.onBind(controllerLinks.getLink(position), controllerLinks.showSubreddit(), recyclerHeight, controllerUser.getUser().getName());
                 break;
         }
     }
 
     public static class ViewHolder extends AdapterLink.ViewHolderBase {
 
-        private final int defaultColor;
         private final int thumbnailSize;
         protected ImageView imageFull;
 
         public ViewHolder(View itemView,
-                ControllerLinks.ListenerCallback listenerCallback,
-                int defaultColor,
+                EventListener eventListener,
+                DisallowListener disallowListener,
+                ScrollCallback scrollCallback,
                 int thumbnailSize) {
-            super(itemView, listenerCallback);
-            this.defaultColor = defaultColor;
+            super(itemView, eventListener, disallowListener, scrollCallback);
             this.thumbnailSize = thumbnailSize;
 
-            this.imageFull = (ImageView) itemView.findViewById(R.id.image_full);
-            this.imageFull.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
+        }
 
-                    imageFull.setVisibility(View.GONE);
-                    progressImage.setVisibility(View.GONE);
-                    imagePlay.setVisibility(View.GONE);
+        @Override
+        protected void initialize() {
+            super.initialize();
+            imageFull = (ImageView) itemView.findViewById(R.id.image_full);
+        }
 
-                    loadFull(link);
-                }
-            });
-
-            this.videoFull.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-
-                }
-            });
+        @Override
+        protected void initializeListeners() {
+            super.initializeListeners();
             buttonComments.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
@@ -137,46 +127,49 @@ public class AdapterLinkGrid extends AdapterLink {
                         imageFull.setVisibility(View.VISIBLE);
                         imagePlay.setVisibility(View.VISIBLE);
                     }
-                    callback.pauseViewHolders();
-                    callback.getListener()
-                            .onClickComments(link, ViewHolder.this);
+                    loadComments();
                 }
             });
+            this.imageFull.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
 
+                    imageFull.setVisibility(View.GONE);
+                    progressImage.setVisibility(View.GONE);
+                    imagePlay.setVisibility(View.GONE);
+
+                    loadFull();
+                }
+            });
         }
 
         @Override
-        public void onBind(Link link) {
+        public void onBind(Link link, boolean showSubbreddit, int recyclerHeight, String userName) {
 
-            super.onBind(link);
+            super.onBind(link, showSubbreddit, recyclerHeight, userName);
 
             expandFull(false);
 
             int position = getAdapterPosition();
 
-            itemView.setBackgroundColor(defaultColor);
+            setTextInfo(link);
+
+            itemView.setBackgroundColor(itemView.getContext().getResources().getColor(R.color.darkThemeDialog));
             imagePlay.setVisibility(View.GONE);
-            Drawable drawable = callback.getControllerLinks()
-                    .getDrawableForLink(link);
+            Drawable drawable = Reddit.getDrawableForLink(itemView.getContext(), link);
             if (drawable != null) {
                 imageFull.setVisibility(View.GONE);
                 imageThumbnail.setVisibility(View.VISIBLE);
                 imageThumbnail.setImageDrawable(drawable);
-                ((RelativeLayout.LayoutParams) textThreadTitle.getLayoutParams()).removeRule(
-                        RelativeLayout.START_OF);
-                ((RelativeLayout.LayoutParams) textThreadTitle.getLayoutParams()).setMarginEnd(callback.getTitleMargin());
             }
             else if (Reddit.showThumbnail(link)) {
                 loadThumbnail(link, position);
+                return;
             }
             else if (!TextUtils.isEmpty(link.getThumbnail())) {
                 imageFull.setVisibility(View.GONE);
                 imageThumbnail.setVisibility(View.VISIBLE);
-                ((RelativeLayout.LayoutParams) textThreadTitle.getLayoutParams()).removeRule(
-                        RelativeLayout.START_OF);
-                ((RelativeLayout.LayoutParams) textThreadTitle.getLayoutParams()).setMarginEnd(callback.getTitleMargin());
-                Picasso.with(callback.getControllerLinks()
-                        .getActivity())
+                Picasso.with(itemView.getContext())
                         .load(link.getThumbnail())
                         .into(imageThumbnail);
             }
@@ -184,27 +177,29 @@ public class AdapterLinkGrid extends AdapterLink {
                 imageFull.setVisibility(View.GONE);
                 imageThumbnail.setVisibility(View.VISIBLE);
                 imageThumbnail.setImageDrawable(drawableDefault);
-                ((RelativeLayout.LayoutParams) textThreadTitle.getLayoutParams()).removeRule(
-                        RelativeLayout.START_OF);
-                ((RelativeLayout.LayoutParams) textThreadTitle.getLayoutParams()).setMarginEnd(callback.getTitleMargin());
             }
 
-            setTextInfo(link);
+            ((RelativeLayout.LayoutParams) textThreadTitle.getLayoutParams()).removeRule(
+                    RelativeLayout.START_OF);
+            ((RelativeLayout.LayoutParams) textThreadTitle.getLayoutParams()).setMarginEnd(titleMargin);
         }
 
         @Override
         public void expandFull(boolean expand) {
             super.expandFull(expand);
 
-            if (callback.getLayoutManager() instanceof StaggeredGridLayoutManager) {
+            if (itemView.getLayoutParams() instanceof StaggeredGridLayoutManager.LayoutParams) {
                 ((StaggeredGridLayoutManager.LayoutParams) itemView.getLayoutParams())
                         .setFullSpan(expand);
-                ((StaggeredGridLayoutManager) callback.getLayoutManager())
-                        .invalidateSpanAssignments();
+                // TODO: Check if need invalidateSpanAssignments
+//                ((StaggeredGridLayoutManager) callback.getLayoutManager())
+//                        .invalidateSpanAssignments();
             }
         }
 
         private void loadThumbnail(final Link link, final int position) {
+
+            // TODO: Improve thumbnail loading logic
 
             imageFull.setVisibility(View.VISIBLE);
             imageThumbnail.setVisibility(View.GONE);
@@ -213,14 +208,13 @@ public class AdapterLinkGrid extends AdapterLink {
                     RelativeLayout.START_OF, buttonComments.getId());
             ((RelativeLayout.LayoutParams) textThreadTitle.getLayoutParams()).setMarginEnd(0);
 
-            Picasso.with(callback.getControllerLinks().getActivity()).load(android.R.color.transparent).into(imageFull);
+            Picasso.with(itemView.getContext()).load(android.R.color.transparent).into(imageFull);
 
             if (TextUtils.isEmpty(link.getThumbnail())) {
                 imageUrl = link.getThumbnail();
                 if (Reddit.placeImageUrl(
                         link) && position == getAdapterPosition()) {
-                    Picasso.with(callback.getControllerLinks()
-                            .getActivity())
+                    Picasso.with(itemView.getContext())
                             .load(link.getUrl())
                             .resize(thumbnailSize, thumbnailSize)
                             .centerCrop()
@@ -241,13 +235,17 @@ public class AdapterLinkGrid extends AdapterLink {
 
                 }
                 else {
-                    imagePlay.setVisibility(View.VISIBLE);
-                    progressImage.setVisibility(View.GONE);
+                    imageFull.setVisibility(View.GONE);
+                    imageThumbnail.setVisibility(View.VISIBLE);
+                    imageThumbnail.setImageDrawable(drawableDefault);
+
+                    ((RelativeLayout.LayoutParams) textThreadTitle.getLayoutParams()).removeRule(
+                            RelativeLayout.START_OF);
+                    ((RelativeLayout.LayoutParams) textThreadTitle.getLayoutParams()).setMarginEnd(titleMargin);
                 }
             }
             else {
-                Picasso.with(callback.getControllerLinks()
-                        .getActivity())
+                Picasso.with(itemView.getContext())
                         .load(link.getThumbnail())
                         .into(imageFull,
                                 new Callback() {
@@ -259,8 +257,7 @@ public class AdapterLinkGrid extends AdapterLink {
                                         imageUrl = link.getThumbnail();
                                         if (Reddit.placeImageUrl(
                                                 link) && position == getAdapterPosition()) {
-                                            Picasso.with(callback.getControllerLinks()
-                                                    .getActivity())
+                                            Picasso.with(itemView.getContext())
                                                     .load(link.getUrl())
                                                     .resize(thumbnailSize, thumbnailSize)
                                                     .centerCrop()
@@ -306,7 +303,7 @@ public class AdapterLinkGrid extends AdapterLink {
                                                     ((ColorDrawable) itemView.getBackground()).getColor(),
                                                     palette.getDarkVibrantColor(
                                                             palette.getMutedColor(
-                                                                    defaultColor)));
+                                                                    itemView.getContext().getResources().getColor(R.color.darkThemeDialog))));
                                         }
                                     }
                                 });
@@ -316,9 +313,11 @@ public class AdapterLinkGrid extends AdapterLink {
         @Override
         public float getRatio(int adapterPosition) {
             if (itemView.getLayoutParams() instanceof StaggeredGridLayoutManager.LayoutParams) {
+                int width = itemView.getContext().getResources().getDisplayMetrics().widthPixels;
+
                 return ((StaggeredGridLayoutManager.LayoutParams) itemView.getLayoutParams()).isFullSpan() ?
                         1f :
-                        1f / ((StaggeredGridLayoutManager) callback.getLayoutManager()).getSpanCount();
+                        width / itemView.getWidth();
             }
 
             return 1f;
@@ -339,11 +338,8 @@ public class AdapterLinkGrid extends AdapterLink {
             textThreadTitle.setText(Html.fromHtml(link.getTitle())
                     .toString());
             textThreadTitle.setTextColor(
-                    link.isOver18() ? callback.getControllerLinks()
-                            .getActivity()
-                            .getResources()
-                            .getColor(R.color.darkThemeTextColorAlert) : callback.getControllerLinks()
-                            .getActivity()
+                    link.isOver18() ?itemView.getContext().getResources()
+                            .getColor(R.color.darkThemeTextColorAlert) : itemView.getContext()
                             .getResources()
                             .getColor(
                                     R.color.darkThemeTextColor));
@@ -354,7 +350,7 @@ public class AdapterLinkGrid extends AdapterLink {
             String subreddit;
             Spannable spannableInfo;
 
-            if (callback.getControllerLinks().showSubreddit()) {
+            if (showSubreddit) {
                 subreddit = "/r/" + link.getSubreddit();
                 spannableInfo = new SpannableString(
                         subreddit + "\n" + link.getScore() + " by " + link.getAuthor());
@@ -364,28 +360,20 @@ public class AdapterLinkGrid extends AdapterLink {
                 spannableInfo = new SpannableString(" " + link.getScore() + " by " + link.getAuthor());
             }
 
-            spannableInfo.setSpan(new ForegroundColorSpan(callback.getControllerLinks()
-                            .getActivity()
-                            .getResources()
+            spannableInfo.setSpan(new ForegroundColorSpan(itemView.getContext().getResources()
                             .getColor(
                                     R.color.darkThemeTextColorMuted)), 0,
                     subreddit.length(), Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
             spannableInfo.setSpan(
-                    new ForegroundColorSpan(link.getScore() > 0 ? callback.getControllerLinks()
-                            .getActivity()
-                            .getResources()
+                    new ForegroundColorSpan(link.getScore() > 0 ? itemView.getContext().getResources()
                             .getColor(
                                     R.color.positiveScore) :
-                            callback.getControllerLinks()
-                                    .getActivity()
-                                    .getResources()
+                            itemView.getContext().getResources()
                                     .getColor(
                                             R.color.negativeScore)),
                     subreddit.length() + 1,
                     subreddit.length() + 1 + scoreLength, Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
-            spannableInfo.setSpan(new ForegroundColorSpan(callback.getControllerLinks()
-                            .getActivity()
-                            .getResources()
+            spannableInfo.setSpan(new ForegroundColorSpan(itemView.getContext().getResources()
                             .getColor(
                                     R.color.darkThemeTextColorMuted)),
                     subreddit.length() + 1 + scoreLength, spannableInfo.length(),
@@ -411,8 +399,7 @@ public class AdapterLinkGrid extends AdapterLink {
             super.onRecycle();
             ((RelativeLayout.LayoutParams) textThreadTitle.getLayoutParams()).removeRule(
                     RelativeLayout.START_OF);
-            ((RelativeLayout.LayoutParams) textThreadTitle.getLayoutParams()).setMarginEnd(
-                    callback.getTitleMargin());
+            ((RelativeLayout.LayoutParams) textThreadTitle.getLayoutParams()).setMarginEnd(titleMargin);
         }
     }
 

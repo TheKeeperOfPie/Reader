@@ -1,28 +1,18 @@
 package com.winsonchiu.reader;
 
 import android.app.Activity;
-import android.content.SharedPreferences;
-import android.content.res.Resources;
-import android.preference.PreferenceManager;
 import android.support.v7.widget.RecyclerView;
 import android.text.Spannable;
 import android.text.SpannableString;
 import android.text.Spanned;
-import android.text.TextUtils;
 import android.text.style.ForegroundColorSpan;
-import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
-import com.winsonchiu.reader.data.Link;
-import com.winsonchiu.reader.data.Subreddit;
 import com.winsonchiu.reader.data.User;
-
-import org.json.JSONException;
-import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -30,282 +20,40 @@ import java.util.List;
 /**
  * Created by TheKeeperOfPie on 5/15/2015.
  */
-public class AdapterProfile extends RecyclerView.Adapter<RecyclerView.ViewHolder>
-        implements ControllerProfile.ListenerCallback {
+public class AdapterProfile extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
     private static final String TAG = AdapterProfile.class.getCanonicalName();
 
     protected Activity activity;
     protected RecyclerView.LayoutManager layoutManager;
     protected ControllerProfile controllerProfile;
-    private SharedPreferences preferences;
-    private float itemWidth;
-    private int titleMargin;
-    private ControllerProfile.ItemClickListener listener;
-    private ControllerLinks.ListenerCallback linksCallback;
-    private ControllerComments.ListenerCallback commentsCallback;
-    private List<AdapterLink.ViewHolderBase> viewHolderLinks;
-    private User user;
+    protected ControllerLinksBase controllerLinks;
+    protected ControllerUser controllerUser;
+    private AdapterLink.ViewHolderBase.EventListener eventListenerBase;
+    private AdapterCommentList.ViewHolderComment.EventListener eventListenerComment;
+    private DisallowListener disallowListener;
+    private ScrollCallback scrollCallback;
+    private List<RecyclerView.ViewHolder> viewHolders;
+    private int recyclerHeight;
 
     public AdapterProfile(final Activity activity,
-                          final ControllerProfile controllerProfile,
-                          ControllerProfile.ItemClickListener listener) {
+            final ControllerProfile controllerProfile,
+            ControllerLinksBase controllerLinks,
+            ControllerUser controllerUser,
+            AdapterLink.ViewHolderBase.EventListener eventListenerBase,
+            AdapterCommentList.ViewHolderComment.EventListener eventListenerComment,
+            DisallowListener disallowListener,
+            ScrollCallback scrollCallback) {
+        this.eventListenerBase = eventListenerBase;
+        this.eventListenerComment = eventListenerComment;
+        this.disallowListener = disallowListener;
+        this.scrollCallback = scrollCallback;
         this.activity = activity;
-        this.preferences = PreferenceManager.getDefaultSharedPreferences(activity);
-        Resources resources = activity.getResources();
-        this.itemWidth = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 48,
-                resources.getDisplayMetrics());
-        this.titleMargin = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 16, resources.getDisplayMetrics());
         this.controllerProfile = controllerProfile;
-        this.listener = listener;
-        viewHolderLinks = new ArrayList<>();
-        setCallbacks();
-        this.user = new User();
-
-        if (!TextUtils.isEmpty(preferences.getString(AppSettings.ACCOUNT_JSON, ""))) {
-            try {
-                this.user = User.fromJson(
-                        new JSONObject(preferences.getString(AppSettings.ACCOUNT_JSON, "")));
-            }
-            catch (JSONException e) {
-                e.printStackTrace();
-            }
-        }
+        this.controllerLinks = controllerLinks;
+        this.controllerUser = controllerUser;
+        viewHolders = new ArrayList<>();
     }
-
-    private void setCallbacks() {
-
-        // TODO: Move to FragmentProfile
-
-        this.linksCallback = new ControllerLinks.ListenerCallback() {
-            @Override
-            public ControllerLinks.LinkClickListener getListener() {
-                return new ControllerLinks.LinkClickListener() {
-
-                    @Override
-                    public void requestDisallowInterceptTouchEventVertical(boolean disallow) {
-                        listener.requestDisallowInterceptTouchEventVertical(disallow);
-                    }
-
-                    @Override
-                    public void requestDisallowInterceptTouchEventHorizontal(boolean disallow) {
-                        listener.requestDisallowInterceptTouchEventHorizontal(disallow);
-                    }
-
-                    @Override
-                    public void onClickComments(Link link,
-                                                RecyclerView.ViewHolder viewHolder) {
-                        listener.onClickComments(link, viewHolder);
-                    }
-
-                    @Override
-                    public void loadUrl(String url) {
-                        listener.loadUrl(url);
-                    }
-
-                    @Override
-                    public void onFullLoaded(int position) {
-
-                    }
-
-                    @Override
-                    public void setRefreshing(boolean refreshing) {
-                        listener.setRefreshing(refreshing);
-                    }
-
-                    @Override
-                    public void setToolbarTitle(String title) {
-
-                    }
-
-                    @Override
-                    public AdapterLink getAdapter() {
-                        return null;
-                    }
-
-                    @Override
-                    public int getRecyclerHeight() {
-                        return listener.getRecyclerHeight();
-                    }
-
-                    @Override
-                    public void loadSideBar(Subreddit listingSubreddits) {
-
-                    }
-
-                    @Override
-                    public void setEmptyView(boolean visible) {
-                        // TODO: Implement empty view for profile
-                    }
-
-                    @Override
-                    public int getRecyclerWidth() {
-                        return listener.getRecyclerWidth();
-                    }
-
-                    @Override
-                    public void onClickSubmit(String postType) {
-                        // Not implemented
-                    }
-
-                    @Override
-                    public ControllerCommentsBase getControllerComments() {
-                        return listener.getControllerComments();
-                    }
-
-                    @Override
-                    public void setSort(Sort sort) {
-
-                    }
-
-                    @Override
-                    public void loadVideoLandscape(int position) {
-
-                    }
-
-                    @Override
-                    public int getRequestedOrientation() {
-                        return listener.getRequestedOrientation();
-                    }
-
-                    @Override
-                    public void showSidebar() {
-
-                    }
-
-                };
-            }
-
-            @Override
-            public ControllerLinksBase getControllerLinks() {
-                return controllerProfile;
-            }
-
-            @Override
-            public float getItemWidth() {
-                return itemWidth;
-            }
-
-            @Override
-            public int getTitleMargin() {
-                return titleMargin;
-            }
-
-            @Override
-            public RecyclerView.LayoutManager getLayoutManager() {
-                // Not necessary for Link row
-                return null;
-            }
-
-            @Override
-            public SharedPreferences getPreferences() {
-                return preferences;
-            }
-
-            @Override
-            public ControllerCommentsBase getControllerComments() {
-                return listener.getControllerComments();
-            }
-
-            @Override
-            public User getUser() {
-                return user;
-            }
-
-            @Override
-            public void pauseViewHolders() {
-                for (AdapterLink.ViewHolderBase viewHolder : viewHolderLinks) {
-                    viewHolder.videoFull.stopPlayback();
-                }
-            }
-        };
-        this.commentsCallback = new ControllerComments.ListenerCallback() {
-            @Override
-            public ControllerComments.CommentClickListener getCommentClickListener() {
-                return new ControllerComments.CommentClickListener() {
-
-                    @Override
-                    public void requestDisallowInterceptTouchEventVertical(boolean disallow) {
-                        listener.requestDisallowInterceptTouchEventVertical(disallow);
-                    }
-
-                    @Override
-                    public void requestDisallowInterceptTouchEventHorizontal(boolean disallow) {
-                        listener.requestDisallowInterceptTouchEventHorizontal(disallow);
-                    }
-
-                    @Override
-                    public void loadUrl(String url) {
-                        listener.loadUrl(url);
-                    }
-
-                    @Override
-                    public void setRefreshing(boolean refreshing) {
-
-                    }
-
-                    @Override
-                    public AdapterCommentList getAdapter() {
-                        return null;
-                    }
-
-                    @Override
-                    public void notifyDataSetChanged() {
-                        getAdapter().notifyDataSetChanged();
-                    }
-
-                    @Override
-                    public int getRecyclerHeight() {
-                        return listener.getRecyclerHeight();
-                    }
-
-                    @Override
-                    public int getRecyclerWidth() {
-                        return listener.getRecyclerWidth();
-                    }
-
-                    @Override
-                    public void setToolbarTitle(CharSequence title) {
-                        // Not implemented
-                    }
-
-                    @Override
-                    public void loadYouTube(Link link,
-                            String id,
-                            AdapterLink.ViewHolderBase viewHolderBase) {
-                        // Not implemented
-                    }
-
-                    @Override
-                    public boolean hideYouTube() {
-                        // Not implemented
-                        return false;
-                    }
-                };
-            }
-
-            @Override
-            public ControllerCommentsBase getControllerComments() {
-                return controllerProfile;
-            }
-
-            @Override
-            public SharedPreferences getPreferences() {
-                return preferences;
-            }
-
-            @Override
-            public User getUser() {
-                return controllerProfile.getUser();
-            }
-
-            @Override
-            public float getItemWidth() {
-                return itemWidth;
-            }
-        };
-    }
-
     @Override
     public int getItemViewType(int position) {
 
@@ -328,27 +76,55 @@ public class AdapterProfile extends RecyclerView.Adapter<RecyclerView.ViewHolder
     }
 
     @Override
+    public void onAttachedToRecyclerView(RecyclerView recyclerView) {
+        super.onAttachedToRecyclerView(recyclerView);
+        recyclerHeight = recyclerView.getHeight();
+    }
+
+    @Override
+    public void onViewAttachedToWindow(RecyclerView.ViewHolder holder) {
+        super.onViewAttachedToWindow(holder);
+        viewHolders.add(holder);
+    }
+
+    @Override
+    public void onViewDetachedFromWindow(RecyclerView.ViewHolder holder) {
+        super.onViewDetachedFromWindow(holder);
+        viewHolders.remove(holder);
+        if (holder instanceof AdapterLink.ViewHolderBase) {
+            ((AdapterLink.ViewHolderBase) holder).destroyWebViews();
+        }
+    }
+
+    @Override
     public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
 
         switch (viewType) {
 
             case ControllerProfile.VIEW_TYPE_HEADER:
-                return new ViewHolderHeader(LayoutInflater.from(parent.getContext()).inflate(R.layout.row_header, parent, false), this);
+                return new ViewHolderHeader(LayoutInflater.from(parent.getContext())
+                        .inflate(R.layout.row_header, parent, false));
             case ControllerProfile.VIEW_TYPE_HEADER_TEXT:
-                return new ViewHolderText(LayoutInflater.from(parent.getContext()).inflate(R.layout.row_text, parent, false));
+                return new ViewHolderText(LayoutInflater.from(parent.getContext())
+                        .inflate(R.layout.row_text, parent, false));
             case ControllerProfile.VIEW_TYPE_LINK:
-                AdapterLink.ViewHolderBase viewHolder =  new AdapterLinkList.ViewHolder(LayoutInflater.from(parent.getContext())
-                        .inflate(R.layout.row_link, parent, false), linksCallback);
-                viewHolderLinks.add(viewHolder);
-                viewHolder.toolbarActions.getMenu().findItem(R.id.item_view_profile).setShowAsAction(
-                        MenuItem.SHOW_AS_ACTION_NEVER);
-                viewHolder.toolbarActions.getMenu().findItem(R.id.item_view_profile).setVisible(false);
-                viewHolder.toolbarActions.getMenu().findItem(R.id.item_view_profile).setEnabled(false);
+                AdapterLink.ViewHolderBase viewHolder = new AdapterLinkList.ViewHolder(
+                        LayoutInflater.from(parent.getContext())
+                                .inflate(R.layout.row_link, parent, false), eventListenerBase,
+                        disallowListener, scrollCallback);
+                viewHolders.add(viewHolder);
+                viewHolder.toolbarActions.getMenu().findItem(R.id.item_view_profile)
+                        .setShowAsAction(
+                                MenuItem.SHOW_AS_ACTION_NEVER);
+                viewHolder.toolbarActions.getMenu().findItem(R.id.item_view_profile)
+                        .setVisible(false);
+                viewHolder.toolbarActions.getMenu().findItem(R.id.item_view_profile)
+                        .setEnabled(false);
                 return viewHolder;
             case ControllerProfile.VIEW_TYPE_COMMENT:
                 return new AdapterCommentList.ViewHolderComment(
                         LayoutInflater.from(parent.getContext())
-                                .inflate(R.layout.row_comment, parent, false), commentsCallback, listener);
+                                .inflate(R.layout.row_comment, parent, false), eventListenerBase, eventListenerComment, disallowListener);
 
         }
 
@@ -371,7 +147,8 @@ public class AdapterProfile extends RecyclerView.Adapter<RecyclerView.ViewHolder
                 break;
             case 1:
                 ViewHolderText viewHolderTextLink = (ViewHolderText) holder;
-                viewHolderTextLink.itemView.setVisibility(controllerProfile.getTopLink() == null ? View.GONE : View.VISIBLE);
+                viewHolderTextLink.itemView.setVisibility(
+                        controllerProfile.getTopLink() == null ? View.GONE : View.VISIBLE);
                 viewHolderTextLink.onBind("Top Post");
                 break;
             case 2:
@@ -381,12 +158,13 @@ public class AdapterProfile extends RecyclerView.Adapter<RecyclerView.ViewHolder
                 }
                 else {
                     viewHolderLinkTop.itemView.setVisibility(View.VISIBLE);
-                    viewHolderLinkTop.onBind(controllerProfile.getTopLink());
+                    viewHolderLinkTop.onBind(controllerProfile.getTopLink(), controllerLinks.showSubreddit(), recyclerHeight, controllerUser.getUser().getName());
                 }
                 break;
             case 3:
                 ViewHolderText viewHolderTextComment = (ViewHolderText) holder;
-                viewHolderTextComment.itemView.setVisibility(controllerProfile.getTopComment() == null ? View.GONE : View.VISIBLE);
+                viewHolderTextComment.itemView.setVisibility(
+                        controllerProfile.getTopComment() == null ? View.GONE : View.VISIBLE);
                 viewHolderTextComment.onBind("Top Comment");
                 break;
             case 4:
@@ -396,7 +174,7 @@ public class AdapterProfile extends RecyclerView.Adapter<RecyclerView.ViewHolder
                 }
                 else {
                     viewHolderCommentTop.itemView.setVisibility(View.VISIBLE);
-                    viewHolderCommentTop.onBind(controllerProfile.getTopComment());
+                    viewHolderCommentTop.onBind(controllerProfile.getTopComment(), controllerUser.getUser().getName());
                 }
                 break;
             case 5:
@@ -407,13 +185,13 @@ public class AdapterProfile extends RecyclerView.Adapter<RecyclerView.ViewHolder
                 if (holder instanceof AdapterLinkList.ViewHolder) {
 
                     AdapterLinkList.ViewHolder viewHolderLink = (AdapterLinkList.ViewHolder) holder;
-                    viewHolderLink.onBind(controllerProfile.getLink(position));
+                    viewHolderLink.onBind(controllerProfile.getLink(position), controllerLinks.showSubreddit(), recyclerHeight, controllerUser.getUser().getName());
 
                 }
                 else if (holder instanceof AdapterCommentList.ViewHolderComment) {
 
                     AdapterCommentList.ViewHolderComment viewHolderComment = (AdapterCommentList.ViewHolderComment) holder;
-                    viewHolderComment.onBind(controllerProfile.getComment(position));
+                    viewHolderComment.onBind(controllerProfile.getComment(position), controllerUser.getUser().getName());
                 }
         }
 
@@ -424,30 +202,13 @@ public class AdapterProfile extends RecyclerView.Adapter<RecyclerView.ViewHolder
         return controllerProfile.sizeLinks() > 0 ? controllerProfile.sizeLinks() + 4 : 0;
     }
 
-    @Override
-    public ControllerProfile.ItemClickListener getListener() {
-        return listener;
-    }
-
-    @Override
-    public ControllerProfile getController() {
-        return controllerProfile;
-    }
-
-    @Override
-    public float getItemWidth() {
-        return itemWidth;
-    }
-
     public static class ViewHolderHeader extends RecyclerView.ViewHolder {
 
         protected TextView textUsername;
         protected TextView textKarma;
-        private ControllerProfile.ListenerCallback callback;
 
-        public ViewHolderHeader(View itemView, ControllerProfile.ListenerCallback listenerCallback) {
+        public ViewHolderHeader(View itemView) {
             super(itemView);
-            this.callback = listenerCallback;
 
             textUsername = (TextView) itemView.findViewById(R.id.text_username);
             textKarma = (TextView) itemView.findViewById(R.id.text_karma);
@@ -462,17 +223,21 @@ public class AdapterProfile extends RecyclerView.Adapter<RecyclerView.ViewHolder
                     .length();
 
             Spannable spannableInfo = new SpannableString(
-                    user.getLinkKarma() + " Link Karma\n" + user.getCommentKarma() + " Comment Karma");
+                    user.getLinkKarma() + " Link Karma\n" + user
+                            .getCommentKarma() + " Comment Karma");
             spannableInfo.setSpan(new ForegroundColorSpan(
-                            user.getLinkKarma() > 0 ? callback.getController().getActivity().getResources().getColor(
-                                    R.color.positiveScore) :
-                                    callback.getController().getActivity().getResources().getColor(
+                            user.getLinkKarma() > 0 ?
+                                    itemView.getContext().getResources().getColor(
+                                            R.color.positiveScore) :
+                                    itemView.getContext().getResources().getColor(
                                             R.color.negativeScore)), 0, linkLength,
                     Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
             spannableInfo.setSpan(new ForegroundColorSpan(
-                            user.getCommentKarma() > 0 ? callback.getController().getActivity().getResources().getColor(
-                                    R.color.positiveScore) :
-                                    callback.getController().getActivity().getResources().getColor(R.color.negativeScore)), linkLength + 12,
+                            user.getCommentKarma() > 0 ?
+                                    itemView.getContext().getResources().getColor(
+                                            R.color.positiveScore) :
+                                    itemView.getContext().getResources()
+                                            .getColor(R.color.negativeScore)), linkLength + 12,
                     linkLength + 12 + commentLength, Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
 
             textKarma.setText(spannableInfo);

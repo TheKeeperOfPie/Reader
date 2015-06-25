@@ -15,7 +15,6 @@ import android.widget.Toast;
 
 import com.android.volley.Response;
 import com.android.volley.Response.ErrorListener;
-import com.android.volley.Response.Listener;
 import com.android.volley.VolleyError;
 import com.winsonchiu.reader.data.Comment;
 import com.winsonchiu.reader.data.Link;
@@ -47,7 +46,7 @@ public class ControllerComments implements ControllerLinksBase, ControllerCommen
 
     private Activity activity;
     private SharedPreferences preferences;
-    private Set<CommentClickListener> listeners;
+    private Set<Listener> listeners;
     private Link link;
     private Listing listingComments;
     private String subreddit;
@@ -98,18 +97,19 @@ public class ControllerComments implements ControllerLinksBase, ControllerCommen
         this.drawableDefault = resources.getDrawable(R.drawable.ic_web_white_48dp);
     }
 
-    public void addListener(CommentClickListener listener) {
+    public void addListener(Listener listener) {
         listeners.add(listener);
         setTitle();
-        listener.notifyDataSetChanged();
+        listener.getAdapter().notifyDataSetChanged();
+        listener.setRefreshing(isLoading());
     }
 
-    public void removeListener(CommentClickListener listener) {
+    public void removeListener(Listener listener) {
         listeners.remove(listener);
     }
 
     public void setTitle() {
-        for (CommentClickListener listener : listeners) {
+        for (Listener listener : listeners) {
             listener.setToolbarTitle(link == null ? "" : Reddit.getTrimmedHtml(link.getTitle()));
         }
     }
@@ -127,9 +127,8 @@ public class ControllerComments implements ControllerLinksBase, ControllerCommen
         }
         this.listingComments = listing;
         this.link = link;
-        for (CommentClickListener listener : listeners) {
-            listener.getAdapter()
-                    .notifyDataSetChanged();
+        for (Listener listener : listeners) {
+            listener.getAdapter().notifyDataSetChanged();
         }
     }
 
@@ -153,19 +152,20 @@ public class ControllerComments implements ControllerLinksBase, ControllerCommen
         setRefreshing(true);
         reddit.loadGet(
                 Reddit.OAUTH_URL + "/r/" + subreddit + "/comments/" + linkId + "?depth=10&showmore=true&showedits=true&limit=100",
-                new Listener<String>() {
+                new Response.Listener<String>() {
                     @Override
                     public void onResponse(String response) {
 
-                        for (int index = 0; index < response.length() / 500; index++) {
-                            Log.d(TAG, "reloadAllComments onResponse: " + response.substring(
-                                    index * 500,
-                                    (index + 1) * 500 > response.length() ? response.length() :
-                                            (index + 1) * 500));
-                        }
                         try {
                             Listing listing = new Listing();
                             link = Link.fromJson(new JSONArray(response));
+
+                            // For some reason Reddit doesn't report the link author, so we'll do it manually
+                            for (Thing thing : link.getComments().getChildren()) {
+                                Comment comment = (Comment) thing;
+                                comment.setLinkAuthor(link.getAuthor());
+                            }
+
                             // TODO: Make this logic cleaner
                             if (link.getComments() != null) {
                                 listing.setChildren(new ArrayList<>(link.getComments()
@@ -176,8 +176,8 @@ public class ControllerComments implements ControllerLinksBase, ControllerCommen
                             }
                             listingComments = listing;
                             setRefreshing(false);
-                            for (CommentClickListener listener : listeners) {
-                                listener.notifyDataSetChanged();
+                            for (Listener listener : listeners) {
+                                listener.getAdapter().notifyDataSetChanged();
                             }
                             setTitle();
                         }
@@ -196,7 +196,7 @@ public class ControllerComments implements ControllerLinksBase, ControllerCommen
 
     private void setRefreshing(boolean refreshing) {
         isLoading = refreshing;
-        for (CommentClickListener listener : listeners) {
+        for (Listener listener : listeners) {
             listener.setRefreshing(refreshing);
         }
     }
@@ -266,7 +266,7 @@ public class ControllerComments implements ControllerLinksBase, ControllerCommen
             if (commentIndex >= 0) {
                 listingComments.getChildren()
                         .remove(commentIndex);
-                for (CommentClickListener listener : listeners) {
+                for (Listener listener : listeners) {
                     listener.getAdapter()
                             .notifyItemRemoved(commentIndex + 1);
                 }
@@ -283,7 +283,7 @@ public class ControllerComments implements ControllerLinksBase, ControllerCommen
         params.put("api_type", "json");
 
         reddit.loadPost(url,
-                new Listener<String>() {
+                new Response.Listener<String>() {
                     @Override
                     public void onResponse(String response) {
                         try {
@@ -300,6 +300,10 @@ public class ControllerComments implements ControllerLinksBase, ControllerCommen
                                 Log.d(TAG, "thing: " + jsonArray.getJSONObject(index));
                                 Comment comment = Comment.fromJson(jsonArray.getJSONObject(index),
                                         moreComment.getLevel());
+
+
+                                // For some reason Reddit doesn't report the link author, so we'll do it manually
+                                comment.setLinkAuthor(link.getAuthor());
 
                                 if (comment.getParentId()
                                         .equals(link.getId())) {
@@ -338,7 +342,7 @@ public class ControllerComments implements ControllerLinksBase, ControllerCommen
                                 if (commentIndex >= 0) {
                                     listingComments.getChildren()
                                             .remove(commentIndex);
-                                    for (CommentClickListener listener : listeners) {
+                                    for (Listener listener : listeners) {
                                         listener.getAdapter()
                                                 .notifyItemRemoved(commentIndex + 1);
                                     }
@@ -388,7 +392,7 @@ public class ControllerComments implements ControllerLinksBase, ControllerCommen
         if (commentIndex >= 0) {
             listingComments.getChildren()
                     .remove(commentIndex);
-            for (CommentClickListener listener : listeners) {
+            for (Listener listener : listeners) {
                 listener.getAdapter()
                         .notifyItemRemoved(commentIndex + 1);
             }
@@ -399,7 +403,7 @@ public class ControllerComments implements ControllerLinksBase, ControllerCommen
                         .add(commentIndex, comment);
             }
 
-            for (CommentClickListener listener : listeners) {
+            for (Listener listener : listeners) {
                 listener.getAdapter()
                         .notifyItemRangeInserted(commentIndex + 1, listComments.size());
             }
@@ -413,6 +417,11 @@ public class ControllerComments implements ControllerLinksBase, ControllerCommen
 
     @Override
     public void insertComment(Comment comment) {
+
+        // Check to see if comment is actually a part of the link's comment thread
+        if (!comment.getLinkId().equals(link.getName())) {
+            return;
+        }
 
         Comment parentComment = new Comment();
         parentComment.setId(comment.getParentId());
@@ -434,7 +443,7 @@ public class ControllerComments implements ControllerLinksBase, ControllerCommen
                     .add(commentIndex + 1, comment);
 
             // TODO: Fix index offset as this will not work with Profile page
-            for (CommentClickListener listener : listeners) {
+            for (Listener listener : listeners) {
                 listener.getAdapter()
                         .notifyItemInserted(commentIndex + 2);
             }
@@ -466,7 +475,7 @@ public class ControllerComments implements ControllerLinksBase, ControllerCommen
             newComment.setAuthor("[deleted]");
 //            listingComments.getChildren().set(commentIndex, newComment);
 
-            for (CommentClickListener listener : listeners) {
+            for (Listener listener : listeners) {
                 listener.getAdapter()
                         .notifyItemChanged(commentIndex + 1);
             }
@@ -548,7 +557,7 @@ public class ControllerComments implements ControllerLinksBase, ControllerCommen
             numAdded++;
         }
 
-        for (CommentClickListener listener : listeners) {
+        for (Listener listener : listeners) {
             listener.getAdapter()
                     .notifyItemRangeInserted(position + 2, numAdded);
         }
@@ -565,7 +574,7 @@ public class ControllerComments implements ControllerLinksBase, ControllerCommen
             commentList.remove(position);
             numRemoved++;
         }
-        for (CommentClickListener listener : listeners) {
+        for (Listener listener : listeners) {
             listener.getAdapter()
                     .notifyItemRangeRemoved(position + 1, numRemoved);
         }
@@ -728,21 +737,10 @@ public class ControllerComments implements ControllerLinksBase, ControllerCommen
         return commentIndex;
     }
 
-    public interface CommentClickListener extends DisallowListener {
-
-        void loadUrl(String url);
-        void setRefreshing(boolean refreshing);
-        AdapterCommentList getAdapter();
-        void notifyDataSetChanged();
-        int getRecyclerHeight();
-        int getRecyclerWidth();
-        void setToolbarTitle(CharSequence title);
-        void loadYouTube(Link link, String id, AdapterLink.ViewHolderBase viewHolderBase);
-        boolean hideYouTube();
+    public interface Listener extends ControllerListener{
     }
 
     public interface ListenerCallback {
-        CommentClickListener getCommentClickListener();
         ControllerCommentsBase getControllerComments();
         SharedPreferences getPreferences();
         User getUser();

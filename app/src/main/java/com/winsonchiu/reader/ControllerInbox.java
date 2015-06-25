@@ -39,7 +39,7 @@ public class ControllerInbox implements ControllerCommentsBase {
     private static final String TAG = ControllerInbox.class.getCanonicalName();
 
     private Activity activity;
-    private Set<ItemClickListener> listeners;
+    private Set<Listener> listeners;
     private Listing data;
     private Reddit reddit;
     private Drawable drawableSelf;
@@ -80,18 +80,19 @@ public class ControllerInbox implements ControllerCommentsBase {
         }
     }
 
-    public void addListener(ItemClickListener listener) {
+    public void addListener(Listener listener) {
         listeners.add(listener);
         setTitle();
         listener.getAdapter().notifyDataSetChanged();
+        listener.setRefreshing(isLoading());
     }
 
-    public void removeListener(ItemClickListener listener) {
+    public void removeListener(Listener listener) {
         listeners.remove(listener);
     }
 
     public void setTitle() {
-        for (ItemClickListener listener : listeners) {
+        for (Listener listener : listeners) {
             listener.setToolbarTitle("Inbox");
         }
     }
@@ -147,11 +148,11 @@ public class ControllerInbox implements ControllerCommentsBase {
                         Log.d(TAG, "onResponse: " + response);
                         try {
                             setData(Listing.fromJson(new JSONObject(response)));
-                            for (ItemClickListener listener : listeners) {
+                            for (Listener listener : listeners) {
                                 listener.setRefreshing(
                                         false);
                                 // TODO: Check if reset necessary
-                                listener.resetRecycler();
+                                listener.getAdapter().notifyDataSetChanged();
                             }
                         }
                         catch (JSONException e1) {
@@ -162,10 +163,10 @@ public class ControllerInbox implements ControllerCommentsBase {
                     @Override
                     public void onErrorResponse(VolleyError error) {
                         setData(new Listing());
-                        for (ItemClickListener listener : listeners) {
+                        for (Listener listener : listeners) {
                             listener.setRefreshing(
                                     false);
-                            listener.resetRecycler();
+                            listener.getAdapter().notifyDataSetChanged();
                         }
                     }
                 }, 0);
@@ -269,7 +270,7 @@ public class ControllerInbox implements ControllerCommentsBase {
                     .add(messageIndex + 1, message);
         }
 
-        for (ItemClickListener listener : listeners) {
+        for (Listener listener : listeners) {
             listener.getAdapter().notifyItemInserted(messageIndex + 1);
         }
     }
@@ -291,7 +292,7 @@ public class ControllerInbox implements ControllerCommentsBase {
                     .add(commentIndex + 1, comment);
         }
 
-        for (ItemClickListener listener : listeners) {
+        for (Listener listener : listeners) {
             listener.getAdapter().notifyItemInserted(commentIndex + 1);
         }
     }
@@ -304,7 +305,7 @@ public class ControllerInbox implements ControllerCommentsBase {
                     .remove(commentIndex);
         }
 
-        for (ItemClickListener listener : listeners) {
+        for (Listener listener : listeners) {
             listener.getAdapter().notifyItemRemoved(commentIndex);
         }
 
@@ -378,25 +379,8 @@ public class ControllerInbox implements ControllerCommentsBase {
         return user;
     }
 
-    public interface ItemClickListener extends DisallowListener {
+    public interface Listener extends ControllerListener {
 
-        void onClickComments(Link link, RecyclerView.ViewHolder viewHolder);
-        void loadUrl(String url);
-        void onFullLoaded(int position);
-        void setRefreshing(boolean refreshing);
-        void setToolbarTitle(String title);
-        AdapterInbox getAdapter();
-        int getRecyclerHeight();
-        void resetRecycler();
-        void setSwipeRefreshEnabled(boolean enabled);
-        int getRecyclerWidth();
-    }
-
-    public interface ListenerCallback {
-        ItemClickListener getListener();
-        ControllerInbox getController();
-        float getItemWidth();
-        SharedPreferences getPreferences();
     }
 
 }

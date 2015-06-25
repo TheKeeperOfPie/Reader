@@ -19,8 +19,6 @@ import com.squareup.picasso.Picasso;
 import com.winsonchiu.reader.data.Link;
 import com.winsonchiu.reader.data.Reddit;
 
-import org.w3c.dom.Text;
-
 /**
  * Created by TheKeeperOfPie on 3/7/2015.
  */
@@ -30,9 +28,14 @@ public class AdapterLinkList extends AdapterLink {
 
     public AdapterLinkList(Activity activity,
             ControllerLinksBase controllerLinks,
-            ControllerLinks.LinkClickListener listener) {
-        super();
-        setControllerLinks(controllerLinks, listener);
+            ControllerCommentsBase controllerComments,
+            ControllerUser controllerUser,
+            ViewHolderHeader.EventListener eventListenerHeader,
+            ViewHolderBase.EventListener eventListenerBase,
+            DisallowListener disallowListener,
+            ScrollCallback scrollCallback) {
+        super(eventListenerHeader, eventListenerBase, disallowListener, scrollCallback);
+        setControllers(controllerLinks, controllerComments, controllerUser);
         setActivity(activity);
     }
 
@@ -46,11 +49,11 @@ public class AdapterLinkList extends AdapterLink {
     public RecyclerView.ViewHolder  onCreateViewHolder(ViewGroup viewGroup, int viewType) {
 
         if (viewType == VIEW_LINK_HEADER) {
-            return new ViewHolderHeader(LayoutInflater.from(viewGroup.getContext()).inflate(R.layout.header_link, viewGroup, false), this);
+            return new ViewHolderHeader(LayoutInflater.from(viewGroup.getContext()).inflate(R.layout.header_link, viewGroup, false), eventListenerHeader);
         }
 
         ViewHolder viewHolder = new ViewHolder(LayoutInflater.from(viewGroup.getContext())
-                .inflate(R.layout.row_link, viewGroup, false), this);
+                .inflate(R.layout.row_link, viewGroup, false), eventListenerBase, disallowListener, scrollCallback);
         viewHolders.add(viewHolder);
         return viewHolder;
     }
@@ -67,15 +70,23 @@ public class AdapterLinkList extends AdapterLink {
                 break;
             case VIEW_LINK:
                 ViewHolder viewHolder = (ViewHolder) holder;
-                viewHolder.onBind(controllerLinks.getLink(position));
+                viewHolder.onBind(controllerLinks.getLink(position), controllerLinks.showSubreddit(), recyclerHeight, controllerUser.getUser().getName());
                 break;
         }
     }
 
     public static class ViewHolder extends AdapterLink.ViewHolderBase {
 
-        public ViewHolder(View itemView, final ControllerLinks.ListenerCallback callback) {
-            super(itemView, callback);
+        public ViewHolder(View itemView,
+                EventListener eventListener,
+                DisallowListener disallowListener,
+                ScrollCallback scrollCallback) {
+            super(itemView, eventListener, disallowListener, scrollCallback);
+        }
+
+        @Override
+        protected void initializeListeners() {
+            super.initializeListeners();
             buttonComments.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
@@ -84,9 +95,7 @@ public class AdapterLinkList extends AdapterLink {
                         videoFull.setVisibility(View.GONE);
                         imageThumbnail.setVisibility(View.VISIBLE);
                     }
-                    callback.pauseViewHolders();
-                    callback.getListener()
-                            .onClickComments(link, ViewHolder.this);
+                    loadComments();
                 }
             });
         }
@@ -97,20 +106,18 @@ public class AdapterLinkList extends AdapterLink {
         }
 
         @Override
-        public void onBind(Link link) {
-            super.onBind(link);
+        public void onBind(Link link, boolean showSubreddit, int recyclerHeight, String userName) {
+            super.onBind(link, showSubreddit, recyclerHeight, userName);
 
             imageThumbnail.setVisibility(View.VISIBLE);
 
-            Drawable drawable = callback.getControllerLinks()
-                    .getDrawableForLink(link);
+            Drawable drawable = Reddit.getDrawableForLink(itemView.getContext(), link);
             if (drawable == null) {
                 if (TextUtils.isEmpty(link.getThumbnail())) {
                     imageThumbnail.setImageDrawable(drawableDefault);
                 }
                 else {
-                    Picasso.with(callback.getControllerLinks()
-                            .getActivity())
+                    Picasso.with(itemView.getContext())
                             .load(link.getThumbnail())
                             .into(imageThumbnail);
                 }
@@ -138,12 +145,8 @@ public class AdapterLinkList extends AdapterLink {
             textThreadTitle.setText(Html.fromHtml(link.getTitle())
                     .toString());
             textThreadTitle.setTextColor(
-                    link.isOver18() ? callback.getControllerLinks()
-                            .getActivity()
-                            .getResources()
-                            .getColor(R.color.darkThemeTextColorAlert) : callback.getControllerLinks()
-                            .getActivity()
-                            .getResources()
+                    link.isOver18() ? itemView.getContext().getResources()
+                            .getColor(R.color.darkThemeTextColorAlert) : itemView.getContext().getResources()
                             .getColor(
                                     R.color.darkThemeTextColor));
 
@@ -153,7 +156,7 @@ public class AdapterLinkList extends AdapterLink {
             String subreddit;
             Spannable spannableInfo;
 
-            if (callback.getControllerLinks().showSubreddit()) {
+            if (showSubreddit) {
                 subreddit = "/r/" + link.getSubreddit();
                 spannableInfo = new SpannableString(
                         subreddit + " " + link.getScore() + " by " + link.getAuthor());
@@ -163,27 +166,19 @@ public class AdapterLinkList extends AdapterLink {
                 spannableInfo = new SpannableString(" " + link.getScore() + " by " + link.getAuthor());
             }
 
-            spannableInfo.setSpan(new ForegroundColorSpan(callback.getControllerLinks()
-                    .getActivity()
-                    .getResources()
+            spannableInfo.setSpan(new ForegroundColorSpan(itemView.getContext().getResources()
                     .getColor(
                             R.color.darkThemeTextColorMuted)), 0, subreddit.length(),
                     Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
             spannableInfo.setSpan(
-                    new ForegroundColorSpan(link.getScore() > 0 ? callback.getControllerLinks()
-                            .getActivity()
-                            .getResources()
+                    new ForegroundColorSpan(link.getScore() > 0 ? itemView.getContext().getResources()
                             .getColor(
-                                    R.color.positiveScore) : callback.getControllerLinks()
-                            .getActivity()
-                            .getResources()
+                                    R.color.positiveScore) : itemView.getContext().getResources()
                             .getColor(
                                     R.color.negativeScore)),
                     subreddit.length() + 1,
                     subreddit.length() + 1 + scoreLength, Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
-            spannableInfo.setSpan(new ForegroundColorSpan(callback.getControllerLinks()
-                    .getActivity()
-                    .getResources()
+            spannableInfo.setSpan(new ForegroundColorSpan(itemView.getContext().getResources()
                     .getColor(
                             R.color.darkThemeTextColorMuted)), subreddit.length() + 1 + scoreLength,
                     spannableInfo.length(), Spanned.SPAN_INCLUSIVE_EXCLUSIVE);

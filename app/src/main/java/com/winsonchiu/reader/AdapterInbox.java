@@ -1,9 +1,6 @@
 package com.winsonchiu.reader;
 
 import android.app.Activity;
-import android.content.SharedPreferences;
-import android.content.res.Resources;
-import android.preference.PreferenceManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.text.Spannable;
@@ -12,6 +9,7 @@ import android.text.TextUtils;
 import android.text.method.LinkMovementMethod;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
+import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
@@ -19,142 +17,44 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
-import android.widget.Toast;
 
-import com.android.volley.Response;
-import com.android.volley.VolleyError;
-import com.winsonchiu.reader.data.Link;
 import com.winsonchiu.reader.data.Message;
 import com.winsonchiu.reader.data.Reddit;
-import com.winsonchiu.reader.data.User;
-
-import org.json.JSONException;
-import org.json.JSONObject;
 
 import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
 
-import static com.winsonchiu.reader.ControllerInbox.ItemClickListener;
-import static com.winsonchiu.reader.ControllerInbox.ListenerCallback;
 import static com.winsonchiu.reader.ControllerInbox.VIEW_TYPE_COMMENT;
 import static com.winsonchiu.reader.ControllerInbox.VIEW_TYPE_MESSAGE;
 
 /**
  * Created by TheKeeperOfPie on 5/15/2015.
  */
-public class AdapterInbox extends RecyclerView.Adapter<RecyclerView.ViewHolder>
-        implements ListenerCallback {
+public class AdapterInbox extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
     private static final String TAG = AdapterInbox.class.getCanonicalName();
-    private static final int MESSAGE_MENU_SIZE = 1;
 
     protected Activity activity;
     private ControllerInbox controllerInbox;
-    private SharedPreferences preferences;
-    private float itemWidth;
-    private ItemClickListener listener;
-    private ControllerComments.ListenerCallback commentsCallback;
+    private ControllerUser controllerUser;
+    private AdapterLink.ViewHolderBase.EventListener eventListenerBase;
+    private AdapterCommentList.ViewHolderComment.EventListener eventListenerComment;
+    private ViewHolderMessage.EventListener eventListenerInbox;
+    private DisallowListener disallowListener;
 
     public AdapterInbox(final Activity activity,
             final ControllerInbox controllerInbox,
-            ItemClickListener listener) {
+            ControllerUser controllerUser,
+            AdapterLink.ViewHolderBase.EventListener eventListenerBase,
+            AdapterCommentList.ViewHolderComment.EventListener eventListenerComment,
+            ViewHolderMessage.EventListener eventListenerInbox,
+            DisallowListener disallowListener) {
         this.activity = activity;
-        this.preferences = PreferenceManager.getDefaultSharedPreferences(activity);
-        Resources resources = activity.getResources();
-        this.itemWidth = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 48,
-                resources.getDisplayMetrics());
         this.controllerInbox = controllerInbox;
-        this.listener = listener;
-        setCallbacks();
-    }
-
-    private void setCallbacks() {
-        this.commentsCallback = new ControllerComments.ListenerCallback() {
-            @Override
-            public ControllerComments.CommentClickListener getCommentClickListener() {
-                return new ControllerComments.CommentClickListener() {
-                    @Override
-                    public void requestDisallowInterceptTouchEventVertical(boolean disallow) {
-                        listener.requestDisallowInterceptTouchEventVertical(disallow);
-                    }
-
-                    @Override
-                    public void requestDisallowInterceptTouchEventHorizontal(boolean disallow) {
-                        listener.requestDisallowInterceptTouchEventHorizontal(disallow);
-                    }
-
-                    @Override
-                    public void loadUrl(String url) {
-                        listener.loadUrl(url);
-                    }
-
-                    @Override
-                    public void setRefreshing(boolean refreshing) {
-
-                    }
-
-                    @Override
-                    public AdapterCommentList getAdapter() {
-                        return null;
-                    }
-
-                    @Override
-                    public void notifyDataSetChanged() {
-                        getAdapter().notifyDataSetChanged();
-                    }
-
-                    @Override
-                    public int getRecyclerHeight() {
-                        return listener.getRecyclerHeight();
-                    }
-
-                    @Override
-                    public int getRecyclerWidth() {
-                        return listener.getRecyclerWidth();
-                    }
-
-                    @Override
-                    public void setToolbarTitle(CharSequence title) {
-                        // Not implemented
-                    }
-
-                    @Override
-                    public void loadYouTube(Link link,
-                            String id,
-                            AdapterLink.ViewHolderBase viewHolderBase) {
-                        // Not implemented
-                    }
-
-                    @Override
-                    public boolean hideYouTube() {
-                        // Not implemented
-                        return false;
-                    }
-
-                };
-            }
-
-            @Override
-            public ControllerCommentsBase getControllerComments() {
-                return controllerInbox;
-            }
-
-            @Override
-            public SharedPreferences getPreferences() {
-                return preferences;
-            }
-
-            @Override
-            public User getUser() {
-                return controllerInbox.getUser();
-            }
-
-            @Override
-            public float getItemWidth() {
-                return itemWidth;
-            }
-        };
+        this.controllerUser = controllerUser;
+        this.eventListenerBase = eventListenerBase;
+        this.eventListenerComment = eventListenerComment;
+        this.eventListenerInbox = eventListenerInbox;
+        this.disallowListener = disallowListener;
     }
 
     @Override
@@ -170,11 +70,11 @@ public class AdapterInbox extends RecyclerView.Adapter<RecyclerView.ViewHolder>
             case VIEW_TYPE_MESSAGE:
                 return new ViewHolderMessage(
                         LayoutInflater.from(parent.getContext())
-                                .inflate(R.layout.row_message, parent, false), this);
+                                .inflate(R.layout.row_message, parent, false), eventListenerInbox);
             case VIEW_TYPE_COMMENT:
                 return new AdapterCommentList.ViewHolderComment(
                         LayoutInflater.from(parent.getContext())
-                                .inflate(R.layout.row_comment, parent, false), commentsCallback);
+                                .inflate(R.layout.row_comment, parent, false), eventListenerBase, eventListenerComment, disallowListener);
 
         }
 
@@ -187,11 +87,11 @@ public class AdapterInbox extends RecyclerView.Adapter<RecyclerView.ViewHolder>
         switch (getItemViewType(position)) {
             case VIEW_TYPE_MESSAGE:
                 ViewHolderMessage viewHolderMessage = (ViewHolderMessage) holder;
-                viewHolderMessage.onBind(position);
+                viewHolderMessage.onBind(controllerInbox.getMessage(position));
                 break;
             case VIEW_TYPE_COMMENT:
                 AdapterCommentList.ViewHolderComment viewHolderComment = (AdapterCommentList.ViewHolderComment) holder;
-                viewHolderComment.onBind(controllerInbox.getComment(position));
+                viewHolderComment.onBind(controllerInbox.getComment(position), controllerUser.getUser().getName());
                 break;
         }
 
@@ -202,27 +102,9 @@ public class AdapterInbox extends RecyclerView.Adapter<RecyclerView.ViewHolder>
         return controllerInbox.getItemCount();
     }
 
-    @Override
-    public ItemClickListener getListener() {
-        return listener;
-    }
+    protected static class ViewHolderMessage extends RecyclerView.ViewHolder {
 
-    @Override
-    public ControllerInbox getController() {
-        return controllerInbox;
-    }
-
-    @Override
-    public float getItemWidth() {
-        return itemWidth;
-    }
-
-    @Override
-    public SharedPreferences getPreferences() {
-        return preferences;
-    }
-
-    private static class ViewHolderMessage extends RecyclerView.ViewHolder {
+        protected Message message;
 
         protected TextView textMessage;
         protected TextView textInfo;
@@ -231,15 +113,17 @@ public class AdapterInbox extends RecyclerView.Adapter<RecyclerView.ViewHolder>
         protected Button buttonSendReply;
         protected Toolbar toolbarActions;
         private View.OnClickListener clickListenerLink;
-        private ListenerCallback callback;
+        protected EventListener eventListener;
 
-        public ViewHolderMessage(View itemView, ListenerCallback listenerCallback) {
+        protected int toolbarItemWidth;
+
+        public ViewHolderMessage(View itemView, final EventListener eventListener) {
             super(itemView);
-            this.callback = listenerCallback;
+            this.eventListener = eventListener;
 
-            Resources resources = callback.getController()
-                    .getActivity()
-                    .getResources();
+            toolbarItemWidth = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 48,
+                    itemView.getContext().getResources().getDisplayMetrics());
+
             textMessage = (TextView) itemView.findViewById(R.id.text_message);
             textMessage.setMovementMethod(LinkMovementMethod.getInstance());
             textInfo = (TextView) itemView.findViewById(R.id.text_info);
@@ -252,54 +136,9 @@ public class AdapterInbox extends RecyclerView.Adapter<RecyclerView.ViewHolder>
                 public void onClick(View v) {
 
                     if (!TextUtils.isEmpty(editTextReply.getText())) {
-                        final int messageIndex = getAdapterPosition();
-                        Message message = callback.getController()
-                                .getMessage(messageIndex);
-                        Map<String, String> params = new HashMap<>();
-                        params.put("api_type", "json");
-                        params.put("text", editTextReply.getText()
-                                .toString());
-                        params.put("thing_id", message.getName());
-
-                        // TODO: Move add to immediate on button click, check if failed afterwards
-                        callback.getController()
-                                .getReddit()
-                                .loadPost(Reddit.OAUTH_URL + "/api/comment",
-                                        new Response.Listener<String>() {
-                                            @Override
-                                            public void onResponse(String response) {
-                                                try {
-                                                    JSONObject jsonObject = new JSONObject(
-                                                            response);
-                                                    Message newMessage = Message.fromJson(
-                                                            jsonObject.getJSONObject("json")
-                                                                    .getJSONObject("data")
-                                                                    .getJSONArray("things")
-                                                                    .getJSONObject(0));
-                                                    callback.getController()
-                                                            .insertMessage(newMessage);
-                                                }
-                                                catch (JSONException e) {
-                                                    e.printStackTrace();
-                                                }
-                                            }
-                                        }, new Response.ErrorListener() {
-                                            @Override
-                                            public void onErrorResponse(VolleyError error) {
-
-                                            }
-                                        }, params, 0);
+                        eventListener.sendMessage(message.getName(), editTextReply.getText().toString());
                         message.setReplyExpanded(!message.isReplyExpanded());
-
                         layoutContainerReply.setVisibility(View.GONE);
-
-//                        AnimationUtils.animateExpand(editTextReply, 1f,
-//                                new AnimationUtils.OnAnimationEndListener() {
-//                                    @Override
-//                                    public void onAnimationEnd() {
-//                                        AnimationUtils.animateExpand(buttonSendReply, 1f, null);
-//                                    }
-//                                });
                     }
                 }
             });
@@ -308,21 +147,8 @@ public class AdapterInbox extends RecyclerView.Adapter<RecyclerView.ViewHolder>
             toolbarActions.setOnMenuItemClickListener(new Toolbar.OnMenuItemClickListener() {
                 @Override
                 public boolean onMenuItemClick(MenuItem menuItem) {
-                    final int messageIndex = getAdapterPosition();
                     switch (menuItem.getItemId()) {
                         case R.id.item_reply:
-                            if (TextUtils.isEmpty(callback.getPreferences()
-                                    .getString(AppSettings.REFRESH_TOKEN, ""))) {
-                                Toast.makeText(callback.getController()
-                                        .getActivity(), callback.getController()
-                                        .getActivity()
-                                        .getString(R.string.must_be_logged_in_to_reply),
-                                        Toast.LENGTH_SHORT)
-                                        .show();
-                                return false;
-                            }
-                            Message message = callback.getController()
-                                    .getMessage(messageIndex);
                             if (!message.isReplyExpanded()) {
                                 editTextReply.requestFocus();
                                 editTextReply.setText(null);
@@ -330,14 +156,6 @@ public class AdapterInbox extends RecyclerView.Adapter<RecyclerView.ViewHolder>
                             message.setReplyExpanded(!message.isReplyExpanded());
                             layoutContainerReply.setVisibility(
                                     message.isReplyExpanded() ? View.VISIBLE : View.GONE);
-
-//                            AnimationUtils.animateExpand(editTextReply, 1f,
-//                                    new AnimationUtils.OnAnimationEndListener() {
-//                                        @Override
-//                                        public void onAnimationEnd() {
-//                                            AnimationUtils.animateExpand(buttonSendReply, 1f, null);
-//                                        }
-//                                    });
                             break;
                     }
                     return true;
@@ -363,28 +181,27 @@ public class AdapterInbox extends RecyclerView.Adapter<RecyclerView.ViewHolder>
         }
 
         private void setToolbarMenuVisibility() {
-            int maxNum = (int) (itemView.getWidth() / callback.getItemWidth());
+            int maxNum = itemView.getWidth() / toolbarItemWidth;
 
-            for (int index = 0; index < MESSAGE_MENU_SIZE; index++) {
+            Menu menu = toolbarActions.getMenu();
+
+            for (int index = 0; index < menu.size(); index++) {
                 if (index < maxNum) {
-                    toolbarActions.getMenu()
-                            .getItem(index)
+                    menu.getItem(index)
                             .setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
                 }
                 else {
-                    toolbarActions.getMenu()
-                            .getItem(index)
+                    menu.getItem(index)
                             .setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
                 }
             }
         }
 
-        public void onBind(int position) {
+        public void onBind(Message message) {
+
+            this.message = message;
 
             toolbarActions.setVisibility(View.GONE);
-
-            Message message = callback.getController()
-                    .getMessage(position);
 
             if (message.isReplyExpanded()) {
                 layoutContainerReply.setVisibility(View.VISIBLE);
@@ -400,10 +217,12 @@ public class AdapterInbox extends RecyclerView.Adapter<RecyclerView.ViewHolder>
                             message.getCreatedUtc()).toString());
 
             textInfo.setText(spannableInfo);
-            textInfo.setTextColor(callback.getController()
-                    .getActivity()
-                    .getResources()
+            textInfo.setTextColor(itemView.getContext().getResources()
                     .getColor(R.color.darkThemeTextColorMuted));
+        }
+
+        public interface EventListener {
+            void sendMessage(String name, String text);
         }
     }
 

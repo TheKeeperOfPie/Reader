@@ -1,17 +1,18 @@
 package com.winsonchiu.reader;
 
 import android.app.Activity;
+import android.content.ClipData;
+import android.content.ClipboardManager;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.content.pm.ActivityInfo;
 import android.content.res.Resources;
-import android.graphics.Bitmap;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
+import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.media.MediaPlayer;
 import android.net.Uri;
-import android.os.Environment;
 import android.preference.PreferenceManager;
 import android.support.v4.view.MenuItemCompat;
 import android.support.v4.view.ViewPager;
@@ -30,7 +31,6 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.webkit.WebView;
-import android.webkit.WebViewClient;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.FrameLayout;
@@ -41,17 +41,15 @@ import android.widget.MediaController;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
-import android.widget.Toast;
 import android.widget.VideoView;
 
 import com.android.volley.Request;
 import com.android.volley.Response;
+import com.android.volley.Response.Listener;
 import com.android.volley.VolleyError;
 import com.google.android.youtube.player.YouTubeInitializationResult;
 import com.google.android.youtube.player.YouTubePlayer;
 import com.google.android.youtube.player.YouTubePlayerView;
-import com.squareup.picasso.Picasso;
-import com.squareup.picasso.Target;
 import com.winsonchiu.reader.data.Comment;
 import com.winsonchiu.reader.data.Link;
 import com.winsonchiu.reader.data.Reddit;
@@ -63,22 +61,16 @@ import com.winsonchiu.reader.data.imgur.Image;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
  * Created by TheKeeperOfPie on 3/14/2015.
  */
-public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.ViewHolder>
-        implements ControllerLinks.ListenerCallback {
+public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
     public static final int VIEW_LINK_HEADER = 0;
     public static final int VIEW_LINK = 1;
@@ -88,22 +80,30 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
     protected Activity activity;
     protected LayoutManager layoutManager;
     protected ControllerLinksBase controllerLinks;
+    protected ControllerCommentsBase controllerComments;
     protected float itemWidth;
-    protected ControllerLinks.LinkClickListener listener;
     protected SharedPreferences preferences;
     protected List<RecyclerView.ViewHolder> viewHolders;
     protected User user;
     private int titleMargin;
+    protected int recyclerHeight;
 
-    public AdapterLink() {
+    protected ViewHolderHeader.EventListener eventListenerHeader;
+    protected ViewHolderBase.EventListener eventListenerBase;
+    protected DisallowListener disallowListener;
+    protected ScrollCallback scrollCallback;
+    protected ControllerUser controllerUser;
+
+    public AdapterLink(ViewHolderHeader.EventListener eventListenerHeader,
+            ViewHolderBase.EventListener eventListenerBase,
+            DisallowListener disallowListener, ScrollCallback scrollCallback) {
         super();
-        viewHolders = new ArrayList<>();
+        this.eventListenerHeader = eventListenerHeader;
+        this.eventListenerBase = eventListenerBase;
+        this.disallowListener = disallowListener;
+        this.scrollCallback = scrollCallback;
         this.user = new User();
-    }
-
-    @Override
-    public User getUser() {
-        return user;
+        viewHolders = new ArrayList<>();
     }
 
     public void setActivity(Activity activity) {
@@ -125,53 +125,16 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         }
     }
 
-    public void setControllerLinks(ControllerLinksBase controllerLinks,
-            ControllerLinks.LinkClickListener listener) {
+    public void setControllers(ControllerLinksBase controllerLinks,
+            ControllerCommentsBase controllerComments,
+            ControllerUser controllerUser) {
         this.controllerLinks = controllerLinks;
-        this.listener = listener;
+        this.controllerComments = controllerComments;
+        this.controllerUser = controllerUser;
     }
 
-    @Override
-    public ControllerLinks.LinkClickListener getListener() {
-        return listener;
-    }
-
-    @Override
-    public ControllerLinksBase getControllerLinks() {
-        return controllerLinks;
-    }
-
-    @Override
-    public ControllerCommentsBase getControllerComments() {
-        return listener.getControllerComments();
-    }
-
-    public float getItemWidth() {
-        return itemWidth;
-    }
-
-    @Override
-    public int getTitleMargin() {
-        return titleMargin;
-    }
-
-    @Override
     public LayoutManager getLayoutManager() {
         return layoutManager;
-    }
-
-    @Override
-    public SharedPreferences getPreferences() {
-        return preferences;
-    }
-
-    @Override
-    public void pauseViewHolders() {
-        for (RecyclerView.ViewHolder viewHolder : viewHolders) {
-            if (viewHolder instanceof ViewHolderBase) {
-                ((ViewHolderBase) viewHolder).videoFull.stopPlayback();
-            }
-        }
     }
 
     @Override
@@ -202,6 +165,12 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
     }
 
     @Override
+    public void onAttachedToRecyclerView(RecyclerView recyclerView) {
+        recyclerHeight = recyclerView.getHeight();
+        super.onAttachedToRecyclerView(recyclerView);
+    }
+
+    @Override
     public void onViewAttachedToWindow(RecyclerView.ViewHolder holder) {
         super.onViewAttachedToWindow(holder);
         viewHolders.add(holder);
@@ -216,8 +185,10 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         }
     }
 
-    protected static class ViewHolderHeader extends RecyclerView.ViewHolder {
+    protected static class ViewHolderHeader extends RecyclerView.ViewHolder
+            implements View.OnClickListener {
 
+        private final EventListener eventListener;
         protected TextView textName;
         protected TextView textTitle;
         protected TextView textDescription;
@@ -232,13 +203,11 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         private String defaultTextSubmitLink;
         private String defaultTextSubmitText;
 
-        private ControllerLinks.ListenerCallback callback;
-
         public ViewHolderHeader(View itemView,
-                final ControllerLinks.ListenerCallback listenerCallback) {
+                EventListener eventListener) {
             super(itemView);
 
-            callback = listenerCallback;
+            this.eventListener = eventListener;
             buttonShowSidebar = (ImageButton) itemView.findViewById(R.id.button_show_sidebar);
             textName = (TextView) itemView.findViewById(R.id.text_name);
             textTitle = (TextView) itemView.findViewById(R.id.text_title);
@@ -247,31 +216,15 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             layoutButtons = (LinearLayout) itemView.findViewById(R.id.layout_buttons);
             buttonSubmitLink = (Button) itemView.findViewById(R.id.button_submit_link);
             buttomSubmitSelf = (Button) itemView.findViewById(R.id.button_submit_self);
-            layoutContainerExpand = (RelativeLayout) itemView.findViewById(R.id.layout_container_expand);
+            layoutContainerExpand = (RelativeLayout) itemView
+                    .findViewById(R.id.layout_container_expand);
             textHidden = (TextView) itemView.findViewById(R.id.text_hidden);
             viewDivider = itemView.findViewById(R.id.view_divider);
 
             // TODO: Implement listener inside ViewHolder
-            buttonShowSidebar.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    callback.getListener().showSidebar();
-                }
-            });
-            buttonSubmitLink.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    callback.getListener()
-                            .onClickSubmit(Reddit.POST_TYPE_LINK);
-                }
-            });
-            buttomSubmitSelf.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    callback.getListener()
-                            .onClickSubmit(Reddit.POST_TYPE_SELF);
-                }
-            });
+            buttonShowSidebar.setOnClickListener(this);
+            buttonSubmitLink.setOnClickListener(this);
+            buttomSubmitSelf.setOnClickListener(this);
             this.itemView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
@@ -366,6 +319,27 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             }
 
         }
+
+        @Override
+        public void onClick(View v) {
+            switch (v.getId()) {
+                case R.id.button_show_sidebar:
+                    break;
+                case R.id.button_submit_link:
+                    eventListener.onClickSubmit(Reddit.POST_TYPE_LINK);
+                    break;
+                case R.id.button_submit_self:
+                    eventListener.onClickSubmit(Reddit.POST_TYPE_SELF);
+                    break;
+                default:
+                    AnimationUtils.animateExpand(layoutContainerExpand, 1f, null);
+                    break;
+            }
+        }
+
+        public interface EventListener {
+            void onClickSubmit(String postType);
+        }
     }
 
     protected static abstract class ViewHolderBase extends RecyclerView.ViewHolder
@@ -390,7 +364,6 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         protected ImageButton buttonComments;
         protected RelativeLayout layoutContainerExpand;
         protected Toolbar toolbarActions;
-        protected ControllerLinks.ListenerCallback callback;
         protected Request request;
         protected String imageUrl;
         protected RelativeLayout layoutContainerReply;
@@ -398,7 +371,15 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         protected Button buttonSendReply;
         protected YouTubePlayerView viewYouTube;
         protected YouTubePlayer youTubePlayer;
+
         protected int viewPagerMargin;
+        protected int toolbarItemWidth;
+        protected int titleMargin;
+
+        protected EventListener eventListener;
+        protected DisallowListener disallowListener;
+        protected ScrollCallback scrollCallback;
+        protected int recyclerHeight;
 
         protected MenuItem itemUpvote;
         protected MenuItem itemDownvote;
@@ -408,15 +389,22 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         protected MenuItem itemDownloadImage;
         protected MenuItem itemDelete;
         protected MenuItem itemViewSubreddit;
+        protected MenuItem itemCopyText;
         protected PorterDuffColorFilter colorFilterSave;
         protected PorterDuffColorFilter colorFilterPositive;
         protected PorterDuffColorFilter colorFilterNegative;
         protected Drawable drawableDefault;
+        protected boolean showSubreddit;
+        protected String userName;
 
         public ViewHolderBase(View itemView,
-                ControllerLinks.ListenerCallback listenerCallback) {
+                EventListener eventListener,
+                DisallowListener disallowListener,
+                ScrollCallback scrollCallback) {
             super(itemView);
-            this.callback = listenerCallback;
+            this.eventListener = eventListener;
+            this.disallowListener = disallowListener;
+            this.scrollCallback = scrollCallback;
             initialize();
             initializeToolbar();
             initializeListeners();
@@ -431,7 +419,6 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                 shareIntent.putExtra(Intent.EXTRA_SUBJECT, link.getTitle());
                 shareIntent.putExtra(Intent.EXTRA_TEXT, Reddit.BASE_URL + link.getPermalink());
 
-                setToolbarMenuVisibility();
                 ShareActionProvider shareActionProvider = (ShareActionProvider) MenuItemCompat
                         .getActionProvider(
                                 itemShare);
@@ -448,12 +435,11 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                     itemDownloadImage.setEnabled(false);
                 }
 
-                boolean isAuthor = link.getAuthor()
-                        .equals(callback.getUser()
-                                .getName());
+                boolean isAuthor = link.getAuthor().equals(userName);
 
                 itemDelete.setVisible(isAuthor);
                 itemDelete.setEnabled(isAuthor);
+                setToolbarMenuVisibility();
             }
 
             toolbarActions.post(new Runnable() {
@@ -468,56 +454,22 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         private void sendComment() {
             // TODO: Move add to immediate on button click, check if failed afterwards
 
-            Map<String, String> params = new HashMap<>();
-            params.put("api_type", "json");
-            params.put("text", editTextReply.getText()
-                    .toString());
-            params.put("thing_id", link.getName());
-
-            request = callback.getControllerLinks()
-                    .getReddit()
-                    .loadPost(Reddit.OAUTH_URL + "/api/comment",
-                            new Response.Listener<String>() {
-                                @Override
-                                public void onResponse(String response) {
-                                    try {
-                                        if (callback.getControllerComments()
-                                                .getMainLink()
-                                                .getName()
-                                                .equals(link.getName())) {
-                                            JSONObject jsonObject = new JSONObject(
-                                                    response);
-                                            Comment newComment = Comment.fromJson(
-                                                    jsonObject.getJSONObject("json")
-                                                            .getJSONObject("data")
-                                                            .getJSONArray("things")
-                                                            .getJSONObject(0), 0);
-                                            callback.getControllerComments()
-                                                    .insertComment(newComment);
-                                        }
-                                    }
-                                    catch (JSONException e) {
-                                        e.printStackTrace();
-                                    }
-                                }
-                            }, new Response.ErrorListener() {
-                                @Override
-                                public void onErrorResponse(VolleyError error) {
-
-                                }
-                            }, params, 0);
-
+            eventListener.sendComment(link.getName(), editTextReply.getText().toString());
             layoutContainerReply.setVisibility(View.GONE);
         }
 
-        private void initialize() {
+        protected void initialize() {
 
-            drawableDefault = callback.getControllerComments().getActivity().getResources().getDrawable(
+            toolbarItemWidth = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 48,
+                    itemView.getContext().getResources().getDisplayMetrics());
+            titleMargin = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 16,
+                    itemView.getContext().getResources().getDisplayMetrics());
+
+            drawableDefault = itemView.getContext().getResources().getDrawable(
                     R.drawable.ic_web_white_48dp);
             mediaController = new MediaController(itemView.getContext());
-            adapterAlbum = new AdapterAlbum(callback.getControllerLinks()
-                    .getActivity(), new Album(),
-                    new OnTouchListenerDisallow(callback.getListener()));
+            adapterAlbum = new AdapterAlbum(new Album(),
+                    new OnTouchListenerDisallow(disallowListener));
 
             progressImage = (ProgressBar) itemView.findViewById(R.id.progress_image);
             imagePlay = (ImageView) itemView.findViewById(R.id.image_play);
@@ -539,7 +491,8 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             buttonSendReply = (Button) itemView.findViewById(R.id.button_send_reply);
             viewYouTube = (YouTubePlayerView) itemView.findViewById(R.id.youtube);
 
-            viewPagerMargin = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 96, callback.getControllerLinks().getActivity().getResources().getDisplayMetrics());
+            viewPagerMargin = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 96,
+                    itemView.getContext().getResources().getDisplayMetrics());
             viewPagerFull.setAdapter(adapterAlbum);
             viewPagerFull.setMinimumHeight(viewPagerMargin);
             viewPagerFull.setPageTransformer(false, new ViewPager.PageTransformer() {
@@ -555,44 +508,9 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                     }
                 }
             });
-
-//            webFull = new WebViewFixed(callback.getControllerLinks()
-//                    .getActivity()
-//                    .getApplicationContext());
-//            Reddit.incrementCreate();
-//            webFull.getSettings()
-//                    .setUseWideViewPort(true);
-//            webFull.getSettings()
-//                    .setLoadWithOverviewMode(true);
-//            webFull.getSettings()
-//                    .setBuiltInZoomControls(true);
-//            webFull.getSettings()
-//                    .setDisplayZoomControls(false);
-//            webFull.setBackgroundColor(0x000000);
-//            webFull.setWebChromeClient(null);
-//            webFull.setWebViewClient(new WebViewClient() {
-//                @Override
-//                public void onScaleChanged(WebView view, float oldScale, float newScale) {
-//                    webFull.lockHeight();
-//                    super.onScaleChanged(view, oldScale, newScale);
-//                }
-//
-//                @Override
-//                public void onReceivedError(WebView view,
-//                        int errorCode,
-//                        String description,
-//                        String failingUrl) {
-//                    super.onReceivedError(view, errorCode, description, failingUrl);
-//                    Toast.makeText(callback.getControllerLinks()
-//                            .getActivity(), "WebView error: " + description, Toast.LENGTH_SHORT)
-//                            .show();
-//                }
-//            });
-//            webFull.setOnTouchListener(new OnTouchListenerDisallow(callback.getListener()));
-//            frameFull.addView(webFull);
         }
 
-        private void initializeListeners() {
+        protected void initializeListeners() {
 
             itemView.setOnClickListener(this);
             imageThumbnail.setOnClickListener(this);
@@ -601,7 +519,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
 
             textThreadSelf.setMovementMethod(LinkMovementMethod.getInstance());
 
-            editTextReply.setOnTouchListener(new OnTouchListenerDisallow(callback.getListener()));
+            editTextReply.setOnTouchListener(new OnTouchListenerDisallow(disallowListener));
             textThreadSelf.setOnTouchListener(new View.OnTouchListener() {
                 @Override
                 public boolean onTouch(View v, MotionEvent event) {
@@ -642,9 +560,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         public void onClick(View v) {
             switch (v.getId()) {
                 case R.id.button_comments:
-                    callback.pauseViewHolders();
-                    callback.getListener()
-                            .onClickComments(link, ViewHolderBase.this);
+                    loadComments();
                     break;
                 case R.id.image_thumbnail:
                     onClickThumbnail();
@@ -662,7 +578,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             }
         }
 
-        private void initializeToolbar() {
+        protected void initializeToolbar() {
 
             toolbarActions = (Toolbar) itemView.findViewById(R.id.toolbar_actions);
             toolbarActions.inflateMenu(R.menu.menu_link);
@@ -677,8 +593,9 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             itemDownloadImage = menu.findItem(R.id.item_download_image);
             itemDelete = menu.findItem(R.id.item_delete);
             itemViewSubreddit = menu.findItem(R.id.item_view_subreddit);
+            itemCopyText = menu.findItem(R.id.item_copy_text);
 
-            Resources resources = callback.getControllerLinks().getActivity().getResources();
+            Resources resources = itemView.getContext().getResources();
             colorFilterPositive = new PorterDuffColorFilter(resources.getColor(
                     R.color.positiveScore),
                     PorterDuff.Mode.MULTIPLY);
@@ -693,21 +610,18 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         public boolean onMenuItemClick(MenuItem menuItem) {
             switch (menuItem.getItemId()) {
                 case R.id.item_upvote:
-                    callback.getControllerLinks()
-                            .voteLink(ViewHolderBase.this, link, 1);
+                    eventListener.voteLink(ViewHolderBase.this, link, 1);
                     break;
                 case R.id.item_downvote:
-                    callback.getControllerLinks()
-                            .voteLink(ViewHolderBase.this, link, -1);
+                    eventListener.voteLink(ViewHolderBase.this, link, -1);
                     break;
                 case R.id.item_share:
                     break;
                 case R.id.item_download_image:
-                    downloadImage(link.getUrl());
+                    eventListener.downloadImage(link);
                     break;
                 case R.id.item_web:
-                    callback.getListener()
-                            .loadUrl(link.getUrl());
+                    eventListener.loadUrl(link.getUrl());
                     break;
                 case R.id.item_reply:
                     toggleReply();
@@ -716,66 +630,42 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                     saveLink(link);
                     break;
                 case R.id.item_view_profile:
-                    Intent intentViewProfile = new Intent(callback.getControllerComments()
-                            .getActivity(), MainActivity.class);
+                    Intent intentViewProfile = new Intent(itemView.getContext(),
+                            MainActivity.class);
                     intentViewProfile.setAction(Intent.ACTION_VIEW);
                     intentViewProfile.putExtra(MainActivity.REDDIT_PAGE,
                             "https://reddit.com/user/" + link.getAuthor());
-                    callback.getControllerComments()
-                            .getActivity()
-                            .startActivity(intentViewProfile);
+                    eventListener.startActivity(intentViewProfile);
+                    break;
+                case R.id.item_copy_text:
+                    ClipboardManager clipboard = (ClipboardManager) itemView.getContext().getSystemService(
+                            Context.CLIPBOARD_SERVICE);
+                    ClipData clip = ClipData.newPlainText(
+                            itemView.getContext().getResources().getString(R.string.comment), link.getSelfText());
+                    clipboard.setPrimaryClip(clip);
+                    eventListener.toast(itemView.getContext().getResources().getString(R.string.copied));
                     break;
                 case R.id.item_delete:
-                    callback.getControllerLinks()
-                            .deletePost(link);
+                    eventListener.deletePost(link);
                     break;
                 case R.id.item_view_subreddit:
-                    Intent intentViewSubreddit = new Intent(callback.getControllerLinks()
-                            .getActivity(), MainActivity.class);
+                    Intent intentViewSubreddit = new Intent(itemView.getContext(),
+                            MainActivity.class);
                     intentViewSubreddit.setAction(Intent.ACTION_VIEW);
                     intentViewSubreddit.putExtra(MainActivity.REDDIT_PAGE,
                             "https://reddit.com/r/" + link.getSubreddit());
-                    callback.getControllerLinks()
-                            .getActivity()
-                            .startActivity(intentViewSubreddit);
+                    eventListener.startActivity(intentViewSubreddit);
                     break;
             }
             return true;
         }
 
         private void saveLink(final Link link) {
-            if (link.isSaved()) {
-                callback.getControllerLinks()
-                        .getReddit()
-                        .unsave(link);
-            }
-            else {
-                callback.getControllerLinks()
-                        .getReddit()
-                        .save(link, "",
-                                new Response.ErrorListener() {
-                                    @Override
-                                    public void onErrorResponse(VolleyError error) {
-                                        link.setSaved(false);
-                                        syncSaveIcon();
-                                    }
-                                });
-            }
-            link.setSaved(!link.isSaved());
+            eventListener.save(link);
             syncSaveIcon();
         }
 
         public void toggleReply() {
-            if (TextUtils.isEmpty(callback.getPreferences()
-                    .getString(AppSettings.REFRESH_TOKEN, ""))) {
-                Toast.makeText(callback.getControllerLinks()
-                                .getActivity(), callback.getControllerLinks()
-                                .getActivity()
-                                .getString(R.string.must_be_logged_in_to_reply),
-                        Toast.LENGTH_SHORT)
-                        .show();
-                return;
-            }
             expandFull(true);
             link.setReplyExpanded(!link.isReplyExpanded());
             if (link.isReplyExpanded()) {
@@ -783,13 +673,12 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                 editTextReply.setText(null);
             }
             layoutContainerReply.setVisibility(link.isReplyExpanded() ? View.VISIBLE : View.GONE);
-            callback.getListener()
-                    .onFullLoaded(getAdapterPosition());
+            scrollCallback.scrollTo(getAdapterPosition());
         }
 
         public abstract float getRatio(int adapterPosition);
 
-        public void loadFull(final Link link) {
+        public void loadFull() {
 
             expandFull(true);
             // TODO: Toggle visibility of web and video views
@@ -797,7 +686,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             String urlString = link.getUrl();
             if (!TextUtils.isEmpty(urlString)) {
                 if (!checkLinkUrl()) {
-                    attemptLoadImage(link);
+                    attemptLoadImage();
                 }
             }
         }
@@ -852,33 +741,31 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         private boolean loadGfycat() {
             String gfycatId = Reddit.parseUrlId(link.getUrl(), Reddit.GFYCAT_PREFIX, ".");
             progressImage.setVisibility(View.VISIBLE);
-            request = callback.getControllerLinks()
-                    .getReddit()
-                    .loadGet(Reddit.GFYCAT_URL + gfycatId,
-                            new Response.Listener<String>() {
-                                @Override
-                                public void onResponse(String response) {
-                                    try {
-                                        JSONObject jsonObject = new JSONObject(
-                                                response).getJSONObject(Reddit.GFYCAT_ITEM);
-                                        loadVideo(jsonObject.getString(Reddit.GFYCAT_WEBM),
-                                                (float) jsonObject.getInt(
-                                                        "height") / jsonObject.getInt(
-                                                        "width"));
-                                    }
-                                    catch (JSONException e) {
-                                        e.printStackTrace();
-                                    }
-                                    finally {
-                                        progressImage.setVisibility(View.GONE);
-                                    }
-                                }
-                            }, new Response.ErrorListener() {
-                                @Override
-                                public void onErrorResponse(VolleyError error) {
-                                    progressImage.setVisibility(View.GONE);
-                                }
-                            }, 0);
+            request = eventListener.getReddit().loadGet(Reddit.GFYCAT_URL + gfycatId,
+                    new Listener<String>() {
+                        @Override
+                        public void onResponse(String response) {
+                            try {
+                                JSONObject jsonObject = new JSONObject(
+                                        response).getJSONObject(Reddit.GFYCAT_ITEM);
+                                loadVideo(jsonObject.getString(Reddit.GFYCAT_WEBM),
+                                        (float) jsonObject.getInt(
+                                                "height") / jsonObject.getInt(
+                                                "width"));
+                            }
+                            catch (JSONException e) {
+                                e.printStackTrace();
+                            }
+                            finally {
+                                progressImage.setVisibility(View.GONE);
+                            }
+                        }
+                    }, new Response.ErrorListener() {
+                        @Override
+                        public void onErrorResponse(VolleyError error) {
+                            progressImage.setVisibility(View.GONE);
+                        }
+                    }, 0);
             return true;
         }
 
@@ -918,30 +805,31 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
 
         public void onClickThumbnail() {
             if (link.isSelf()) {
-                loadSelfText(link);
+                if (textThreadSelf.isShown()) {
+                    textThreadSelf.setVisibility(View.GONE);
+                    // TODO: Check if textThreadSelf is taller than view and optimize animation
+//                AnimationUtils.animateExpand(textThreadSelf, 1f, null);
+                }
+                else if (TextUtils.isEmpty(link.getSelfText())) {
+                    loadComments();
+                }
+                else {
+                    loadSelfText();
+                }
             }
             else {
-                loadFull(link);
+                loadFull();
             }
         }
 
-        public void loadSelfText(Link link) {
-            if (textThreadSelf.isShown()) {
-                textThreadSelf.setVisibility(View.GONE);
-                // TODO: Check if textThreadSelf is taller than view and optimize animation
-//                AnimationUtils.animateExpand(textThreadSelf, 1f, null);
-            }
-            else if (TextUtils.isEmpty(link.getSelfText())) {
-                callback.pauseViewHolders();
-                callback.getListener()
-                        .onClickComments(link, this);
-            }
-            else {
-                expandFull(true);
-                textThreadSelf.setText(Reddit.getTrimmedHtml(link.getSelfTextHtml()));
-                textThreadSelf.setVisibility(View.VISIBLE);
-//                AnimationUtils.animateExpand(textThreadSelf, 1f, null);
-            }
+        public void loadComments() {
+            eventListener.onClickComments(link, this);
+        }
+
+        public void loadSelfText() {
+            expandFull(true);
+            textThreadSelf.setText(Reddit.getTrimmedHtml(link.getSelfTextHtml()));
+            textThreadSelf.setVisibility(View.VISIBLE);
         }
 
         public void expandFull(boolean expand) {
@@ -969,59 +857,24 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
 
         }
 
-        public void attemptLoadImage(Link link) {
+        public void attemptLoadImage() {
 
             if (Reddit.placeImageUrl(link)) {
 
                 if (webFull == null) {
+                    webFull = eventListener.getNewWebView(disallowListener);
 
-                    webFull = new WebViewFixed(callback.getControllerLinks()
-                            .getActivity()
-                            .getApplicationContext());
-                    Reddit.incrementCreate();
-                    webFull.getSettings()
-                            .setUseWideViewPort(true);
-                    webFull.getSettings()
-                            .setLoadWithOverviewMode(true);
-                    webFull.getSettings()
-                            .setBuiltInZoomControls(true);
-                    webFull.getSettings()
-                            .setDisplayZoomControls(false);
-                    webFull.setBackgroundColor(0x000000);
-                    webFull.setWebChromeClient(null);
-                    webFull.setWebViewClient(new WebViewClient() {
-                        @Override
-                        public void onScaleChanged(WebView view, float oldScale, float newScale) {
-                            webFull.lockHeight();
-                            super.onScaleChanged(view, oldScale, newScale);
-                        }
-
-                        @Override
-                        public void onReceivedError(WebView view,
-                                int errorCode,
-                                String description,
-                                String failingUrl) {
-                            super.onReceivedError(view, errorCode, description, failingUrl);
-                            Toast.makeText(callback.getControllerLinks()
-                                            .getActivity(), "WebView error: " + description,
-                                    Toast.LENGTH_SHORT)
-                                    .show();
-                        }
-                    });
-                    webFull.setOnTouchListener(new OnTouchListenerDisallow(callback.getListener()));
-                    frameFull.addView(webFull);
-                    frameFull.requestLayout();
-                    callback.getListener()
-                            .onFullLoaded(getAdapterPosition());
                 }
                 webFull.onResume();
                 webFull.resetMaxHeight();
                 webFull.loadData(Reddit.getImageHtml(link.getUrl()), "text/html", "UTF-8");
                 webFull.setVisibility(View.VISIBLE);
+                frameFull.addView(webFull);
+                frameFull.requestLayout();
+                scrollCallback.scrollTo(getAdapterPosition());
             }
             else {
-                callback.getListener()
-                        .loadUrl(link.getUrl());
+                eventListener.loadUrl(link.getUrl());
             }
         }
 
@@ -1029,10 +882,9 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             // TODO: Check in onResponse whether the same link is currently attached
 
             progressImage.setVisibility(View.VISIBLE);
-            request = callback.getControllerLinks()
-                    .getReddit()
+            request = eventListener.getReddit()
                     .loadImgurGallery(id,
-                            new Response.Listener<String>() {
+                            new Listener<String>() {
                                 @Override
                                 public void onResponse(String response) {
                                     try {
@@ -1059,10 +911,9 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             // TODO: Check in onResponse whether the same link is currently attached
 
             progressImage.setVisibility(View.VISIBLE);
-            request = callback.getControllerLinks()
-                    .getReddit()
+            request = eventListener.getReddit()
                     .loadImgurAlbum(id,
-                            new Response.Listener<String>() {
+                            new Listener<String>() {
                                 @Override
                                 public void onResponse(String response) {
                                     try {
@@ -1071,11 +922,8 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                                         setAlbum(link, album);
                                         Log.d(TAG, "link URL: " + link.getUrl());
                                         Log.d(TAG, "album URL: " + album.getLink());
-                                        Toast.makeText(callback.getControllerLinks()
-                                                        .getActivity(),
-                                                "New album loaded: " + album.getTitle(),
-                                                Toast.LENGTH_SHORT)
-                                                .show();
+                                        eventListener
+                                                .toast("New album loaded: " + album.getTitle());
                                     }
                                     catch (JSONException e) {
                                         e.printStackTrace();
@@ -1096,22 +944,19 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             link.setAlbum(album);
             viewPagerFull.setCurrentItem(0);
             ViewGroup.LayoutParams layoutParams = viewPagerFull.getLayoutParams();
-            layoutParams.height = callback.getListener()
-                    .getRecyclerHeight() - viewPagerMargin;
+            layoutParams.height = recyclerHeight - viewPagerMargin;
             viewPagerFull.setLayoutParams(layoutParams);
             viewPagerFull.setVisibility(View.VISIBLE);
             viewPagerFull.requestLayout();
             adapterAlbum.setAlbum(album);
-            callback.getListener()
-                    .onFullLoaded(getAdapterPosition());
+            scrollCallback.scrollTo(getAdapterPosition());
         }
 
         private void loadGifv(String id) {
             Log.d(TAG, "loadGifv: " + id);
-            request = callback.getControllerLinks()
-                    .getReddit()
+            request = eventListener.getReddit()
                     .loadImgurImage(id,
-                            new Response.Listener<String>() {
+                            new Listener<String>() {
                                 @Override
                                 public void onResponse(String response) {
                                     try {
@@ -1169,8 +1014,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                             videoFull.start();
                         }
                     });
-            callback.getListener()
-                    .onFullLoaded(getAdapterPosition());
+            scrollCallback.scrollTo(getAdapterPosition());
         }
 
         public void loadYouTubeVideo(final Link link, final String id) {
@@ -1183,34 +1027,16 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                             ViewHolderBase.this.youTubePlayer = youTubePlayer;
                             youTubePlayer.setManageAudioFocus(false);
                             youTubePlayer.loadVideo(id);
-                            if (callback.getListener().getRequestedOrientation() != ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE) {
-                                youTubePlayer.setOnFullscreenListener(
-                                        new YouTubePlayer.OnFullscreenListener() {
-                                            @Override
-                                            public void onFullscreen(boolean b) {
-                                                callback.getListener().loadVideoLandscape(getAdapterPosition());
-                                            }
-                                        });
-                            }
-                            else {
-                                youTubePlayer.setFullscreen(true);
-                                youTubePlayer.setOnFullscreenListener(
-                                        new YouTubePlayer.OnFullscreenListener() {
-                                            @Override
-                                            public void onFullscreen(boolean fullscreen) {
-                                                youTubePlayer.setFullscreen(fullscreen);
-                                            }
-                                        });
-                            }
+                            youTubePlayer.setFullscreenControlFlags(
+                                    YouTubePlayer.FULLSCREEN_FLAG_CONTROL_SYSTEM_UI);
                             viewYouTube.setVisibility(View.VISIBLE);
-                            callback.getListener()
-                                    .onFullLoaded(getAdapterPosition());
+                            scrollCallback.scrollTo(getAdapterPosition());
                         }
 
                         @Override
                         public void onInitializationFailure(YouTubePlayer.Provider provider,
                                 YouTubeInitializationResult youTubeInitializationResult) {
-                            attemptLoadImage(link);
+                            eventListener.toast(itemView.getContext().getResources().getString(R.string.error_youtube));
                         }
                     });
         }
@@ -1225,45 +1051,37 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         public void setToolbarMenuVisibility() {
             Menu menu = toolbarActions.getMenu();
 
-            boolean loggedIn = !TextUtils.isEmpty(callback.getPreferences()
-                    .getString(AppSettings.REFRESH_TOKEN, ""));
+            boolean loggedIn = eventListener.isUserLoggedIn();
 
             itemUpvote.setVisible(loggedIn);
             itemDownvote.setVisible(loggedIn);
             itemReply.setVisible(loggedIn);
             itemSave.setVisible(loggedIn);
+            itemViewSubreddit.setVisible(showSubreddit);
+            itemViewSubreddit.setEnabled(showSubreddit);
+            itemCopyText.setVisible(link.isSelf());
+            itemCopyText.setEnabled(link.isSelf());
 
-            int maxNum = (int) (itemView.getWidth() / callback.getItemWidth());
+            int maxNum = itemView.getWidth() / toolbarItemWidth;
             int numShown = 0;
 
             for (int index = 0; index < menu.size(); index++) {
 
-                if (!loggedIn) {
-                    switch (menu.getItem(index)
-                            .getItemId()) {
-                        case R.id.item_upvote:
-                        case R.id.item_downvote:
-                        case R.id.item_reply:
-                        case R.id.item_view_subreddit:
-                        case R.id.item_save:
-                            continue;
-                    }
+                MenuItem menuItem = menu.getItem(index);
+
+                if (!menuItem.isVisible()) {
+                    continue;
                 }
 
                 if (numShown++ < maxNum - 1) {
-                    menu.getItem(index)
+                    menuItem
                             .setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
                 }
                 else {
-                    menu.getItem(index)
+                    menuItem
                             .setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
                 }
             }
-
-            boolean showSubreddit = callback.getControllerLinks().showSubreddit();
-
-            itemViewSubreddit.setVisible(showSubreddit);
-            itemViewSubreddit.setEnabled(showSubreddit);
 
             syncSaveIcon();
         }
@@ -1294,8 +1112,11 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
 
         }
 
-        public void onBind(Link link) {
+        public void onBind(Link link, boolean showSubreddit, int recyclerHeight, String userName) {
             this.link = link;
+            this.showSubreddit = showSubreddit;
+            this.recyclerHeight = recyclerHeight;
+            this.userName = userName;
             layoutContainerExpand.setVisibility(View.GONE);
             layoutContainerReply.setVisibility(link.isReplyExpanded() ? View.VISIBLE : View.GONE);
 
@@ -1305,102 +1126,17 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
 
         }
 
-        public void downloadImage(String url) {
-            Picasso.with(callback.getControllerLinks()
-                    .getActivity())
-                    .load(url)
-                    .into(new Target() {
-                        @Override
-                        public void onBitmapLoaded(Bitmap bitmap, Picasso.LoadedFrom from) {
-                            File file = new File(Environment.getExternalStorageDirectory()
-                                    .getAbsolutePath() + "/ReaderForReddit/" + System
-                                    .currentTimeMillis() + ".png");
-
-                            file.getParentFile()
-                                    .mkdirs();
-
-                            FileOutputStream out = null;
-                            try {
-                                out = new FileOutputStream(file);
-                                bitmap.compress(Bitmap.CompressFormat.PNG, 90, out);
-                            }
-                            catch (FileNotFoundException e) {
-                                e.printStackTrace();
-                            }
-                            finally {
-                                try {
-                                    if (out != null) {
-                                        out.close();
-                                    }
-                                }
-                                catch (Throwable e) {
-                                    e.printStackTrace();
-                                }
-                            }
-
-                            Toast.makeText(callback.getControllerLinks()
-                                            .getActivity(), "Image downloaded",
-                                    Toast.LENGTH_SHORT)
-                                    .show();
-                        }
-
-                        @Override
-                        public void onBitmapFailed(Drawable errorDrawable) {
-
-                        }
-
-                        @Override
-                        public void onPrepareLoad(Drawable placeHolderDrawable) {
-
-                        }
-                    });
-        }
-
         public void syncSaveIcon() {
             if (link.isSaved()) {
-                itemSave.setTitle(callback.getControllerLinks()
-                        .getActivity()
-                        .getString(R.string.unsave));
+                itemSave.setTitle(itemView.getContext().getResources().getString(R.string.unsave));
                 itemSave.getIcon()
                         .setColorFilter(colorFilterSave);
             }
             else {
-                itemSave.setTitle(callback.getControllerLinks()
-                        .getActivity()
-                        .getString(R.string.save));
+                itemSave.setTitle(itemView.getContext().getResources().getString(R.string.save));
                 itemSave.getIcon()
                         .clearColorFilter();
             }
-        }
-
-        public void destroy() {
-            if (request != null) {
-                request.cancel();
-            }
-            if (youTubePlayer != null) {
-                youTubePlayer.release();
-            }
-            videoFull.stopPlayback();
-            if (webFull != null) {
-                webFull.removeAllViews();
-                webFull.destroy();
-                Reddit.incrementDestroy();
-                webFull = null;
-            }
-            if (viewPagerFull.getChildCount() > 0) {
-                for (int index = 0; index < viewPagerFull.getChildCount(); index++) {
-                    View view = viewPagerFull.getChildAt(index);
-                    WebView webView = (WebView) view.findViewById(R.id.web);
-                    if (webView != null) {
-                        webView.onPause();
-                        webView.destroy();
-                        Reddit.incrementDestroy();
-                        ((RelativeLayout) view).removeView(webView);
-                    }
-                }
-            }
-            adapterAlbum.setAlbum(null);
-            viewPagerFull.removeAllViews();
         }
 
         public void destroyWebViews() {
@@ -1426,6 +1162,31 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             }
             adapterAlbum.setAlbum(null);
             viewPagerFull.removeAllViews();
+            frameFull.requestLayout();
+        }
+
+        public int getBackgroundColor() {
+            if (itemView.getBackground() instanceof ColorDrawable) {
+                return ((ColorDrawable) itemView.getBackground()).getColor();
+            }
+            return 0x00000000;
+        }
+
+        public interface EventListener {
+
+            void sendComment(String name, String text);
+            void onClickComments(Link link, ViewHolderBase viewHolderBase);
+            void save(Link link);
+            void save(Comment comment);
+            void loadUrl(String url);
+            void downloadImage(Link link);
+            Reddit getReddit();
+            WebViewFixed getNewWebView(DisallowListener disallowListener);
+            void toast(String text);
+            boolean isUserLoggedIn();
+            void voteLink(ViewHolderBase viewHolderBase, Link link, int vote);
+            void startActivity(Intent intent);
+            void deletePost(Link link);
         }
 
     }

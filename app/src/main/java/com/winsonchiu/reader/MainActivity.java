@@ -5,7 +5,11 @@ import android.app.FragmentTransaction;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.Bitmap;
+import android.graphics.drawable.Drawable;
+import android.media.MediaScannerConnection;
 import android.os.Bundle;
+import android.os.Environment;
 import android.preference.PreferenceManager;
 import android.provider.Browser;
 import android.support.design.widget.NavigationView;
@@ -28,12 +32,18 @@ import com.android.volley.VolleyError;
 import com.crashlytics.android.Crashlytics;
 import com.google.android.youtube.player.YouTubeBaseActivity;
 import com.squareup.picasso.Picasso;
+import com.squareup.picasso.Target;
+import com.winsonchiu.reader.data.Comment;
+import com.winsonchiu.reader.data.Link;
 import com.winsonchiu.reader.data.Reddit;
 import com.winsonchiu.reader.data.User;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 
@@ -61,6 +71,9 @@ public class MainActivity extends YouTubeBaseActivity
     private TextView textAccountInfo;
 
     private WebView webView;
+    private Reddit reddit;
+    private AdapterLink.ViewHolderBase.EventListener eventListenerBase;
+    private AdapterCommentList.ViewHolderComment.EventListener eventListenerComment;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -68,6 +81,7 @@ public class MainActivity extends YouTubeBaseActivity
         Fabric.with(this, new Crashlytics());
         sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
 
+        reddit = Reddit.getInstance(this);
         webView = new WebView(getApplicationContext());
         Reddit.incrementCreate();
 
@@ -126,10 +140,12 @@ public class MainActivity extends YouTubeBaseActivity
                 }
                 else {
                     Log.d(TAG, "Not valid URL: " + urlString);
+                    getControllerLinks().loadFrontPage(Sort.HOT, true);
                     selectNavigationItem(R.id.item_home);
                 }
             }
             else {
+                getControllerLinks().loadFrontPage(Sort.HOT, true);
                 selectNavigationItem(R.id.item_home);
             }
         }
@@ -142,6 +158,241 @@ public class MainActivity extends YouTubeBaseActivity
             hideFragment(FragmentSearch.TAG);
 
         }
+
+        eventListenerBase = new AdapterLink.ViewHolderBase.EventListener() {
+
+            @Override
+            public void sendComment(String name, String text) {
+                reddit.sendComment(name, text, new Response.Listener<String>() {
+                    @Override
+                    public void onResponse(String response) {
+                        try {
+                            JSONObject jsonObject = new JSONObject(response);
+                            Comment newComment = Comment.fromJson(
+                                    jsonObject.getJSONObject("json")
+                                            .getJSONObject("data")
+                                            .getJSONArray("things")
+                                            .getJSONObject(0), 0);
+                            getControllerComments().insertComment(newComment);
+                        }
+                        catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }, null);
+            }
+
+            @Override
+            public void onClickComments(Link link, AdapterLink.ViewHolderBase viewHolderBase) {
+
+                Log.d(TAG, "onClickComments: " + link);
+
+                if (link.getNumComments() == 0) {
+                    if (!link.isCommentsClicked()) {
+                        Toast.makeText(MainActivity.this, getString(R.string.no_comments),
+                                Toast.LENGTH_SHORT)
+                                .show();
+                        link.setCommentsClicked(true);
+                        return;
+                    }
+                }
+
+                // TODO: Implemented pausing ViewHolders on Fragment hide
+//                adapterLink.pauseViewHolders();
+                getControllerComments()
+                        .setLink(link);
+
+                int color = viewHolderBase.getBackgroundColor();
+
+                FragmentComments fragmentComments = FragmentComments
+                        .newInstance(viewHolderBase, color);
+                fragmentComments.setFragmentToHide(getFragmentManager().findFragmentById(R.id.frame_fragment));
+
+                getFragmentManager().beginTransaction()
+                        .add(R.id.frame_fragment, fragmentComments,
+                                FragmentComments.TAG)
+                        .addToBackStack(null)
+                        .commit();
+            }
+
+            @Override
+            public void save(Link link) {
+                link.setSaved(!link.isSaved());
+                if (link.isSaved()) {
+                    reddit.save(link, "", new Response.ErrorListener() {
+                        @Override
+                        public void onErrorResponse(VolleyError error) {
+
+                        }
+                    });
+                }
+                else {
+                    reddit.unsave(link);
+                }
+            }
+
+            @Override
+            public void save(Comment comment) {
+                comment.setSaved(!comment.isSaved());
+                if (comment.isSaved()) {
+                    reddit.save(comment, "", new Response.ErrorListener() {
+                        @Override
+                        public void onErrorResponse(VolleyError error) {
+
+                        }
+                    });
+                }
+                else {
+                    reddit.unsave(comment);
+                }
+            }
+
+            @Override
+            public void loadUrl(String url) {
+                getFragmentManager().beginTransaction()
+                        .hide(getFragmentManager().findFragmentById(R.id.frame_fragment))
+                        .add(R.id.frame_fragment, FragmentWeb
+                                .newInstance(url, ""), FragmentWeb.TAG)
+                        .addToBackStack(null)
+                        .commit();
+            }
+
+            @Override
+            public void downloadImage(final Link link) {
+
+                Picasso.with(MainActivity.this)
+                        .load(link.getUrl())
+                        .into(new Target() {
+                            @Override
+                            public void onBitmapLoaded(Bitmap bitmap, Picasso.LoadedFrom from) {
+
+                                boolean created = false;
+                                File file = new File(Environment.getExternalStoragePublicDirectory(
+                                        Environment.DIRECTORY_PICTURES)
+                                        .getAbsolutePath() + "/ReaderForReddit/" + link.getId() + ".png");
+
+                                file.getParentFile()
+                                        .mkdirs();
+
+                                FileOutputStream out = null;
+                                try {
+                                    out = new FileOutputStream(file);
+                                    bitmap.compress(Bitmap.CompressFormat.PNG, 90, out);
+                                    created = true;
+                                }
+                                catch (FileNotFoundException e) {
+                                    e.printStackTrace();
+                                }
+                                finally {
+                                    try {
+                                        if (out != null) {
+                                            out.close();
+                                        }
+                                    }
+                                    catch (Throwable e) {
+                                        e.printStackTrace();
+                                    }
+                                }
+
+                                if (created) {
+                                    MediaScannerConnection.scanFile(MainActivity.this,
+                                            new String[]{file.toString()}, null, null);
+                                }
+
+                                Toast.makeText(MainActivity.this, "Image downloaded",
+                                        Toast.LENGTH_SHORT)
+                                        .show();
+                            }
+
+                            @Override
+                            public void onBitmapFailed(Drawable errorDrawable) {
+
+                            }
+
+                            @Override
+                            public void onPrepareLoad(Drawable placeHolderDrawable) {
+
+                            }
+                        });
+            }
+
+            @Override
+            public Reddit getReddit() {
+                return reddit;
+            }
+
+            @Override
+            public WebViewFixed getNewWebView(DisallowListener disallowListener) {
+                return WebViewFixed.newInstance(getApplicationContext(), disallowListener);
+            }
+
+            @Override
+            public void toast(String text) {
+                Toast.makeText(MainActivity.this, text, Toast.LENGTH_SHORT).show();
+            }
+
+            @Override
+            public boolean isUserLoggedIn() {
+                return !TextUtils.isEmpty(sharedPreferences.getString(AppSettings.ACCOUNT_JSON, ""));
+            }
+
+            @Override
+            public void voteLink(AdapterLink.ViewHolderBase viewHolderBase, Link link, int vote) {
+                reddit.voteLink(viewHolderBase, link, vote,
+                        new Reddit.VoteResponseListener() {
+                            @Override
+                            public void onVoteFailed() {
+                                Toast.makeText(MainActivity.this, "Error voting", Toast.LENGTH_SHORT)
+                                        .show();
+                            }
+                        });
+            }
+
+            @Override
+            public void startActivity(Intent intent) {
+                MainActivity.this.startActivity(intent);
+            }
+
+            @Override
+            public void deletePost(Link link) {
+                getControllerLinks().deletePost(link);
+            }
+        };
+
+        eventListenerComment = new AdapterCommentList.ViewHolderComment.EventListener() {
+            @Override
+            public void loadNestedComments(Comment comment) {
+                getControllerComments().loadNestedComments(comment);
+            }
+
+            @Override
+            public boolean isCommentExpanded(int position) {
+                return getControllerComments().isCommentExpanded(position);
+            }
+
+            @Override
+            public boolean hasChildren(Comment comment) {
+                return getControllerComments().hasChildren(comment);
+            }
+
+            @Override
+            public void voteComment(AdapterCommentList.ViewHolderComment viewHolderComment,
+                    Comment comment,
+                    int vote) {
+                getControllerComments().voteComment(viewHolderComment, comment, vote);
+            }
+
+            @Override
+            public boolean toggleComment(int position) {
+                return getControllerComments().toggleComment(position);
+            }
+
+            @Override
+            public void deleteComment(Comment comment) {
+                getControllerComments().deleteComment(comment);
+            }
+
+        };
 
     }
 
@@ -192,7 +443,7 @@ public class MainActivity extends YouTubeBaseActivity
         switch (id) {
             case R.id.item_home:
                 if (getFragmentManager().findFragmentByTag(FragmentThreadList.TAG) != null) {
-                    fragmentData.getControllerLinks().loadFrontPage(Sort.HOT, false);
+                    getControllerLinks().loadFrontPage(Sort.HOT, false);
                 }
                 else {
                     getFragmentManager().beginTransaction()
@@ -221,6 +472,7 @@ public class MainActivity extends YouTubeBaseActivity
 
                 break;
             case R.id.item_inbox:
+                getControllerInbox().reload();
                 getFragmentManager().beginTransaction()
                         .replace(R.id.frame_fragment,
                                 FragmentInbox.newInstance("", ""),
@@ -536,6 +788,26 @@ public class MainActivity extends YouTubeBaseActivity
     @Override
     public ControllerSearch getControllerSearch() {
         return fragmentData.getControllerSearch();
+    }
+
+    @Override
+    public ControllerUser getControllerUser() {
+        return fragmentData.getControllerUser();
+    }
+
+    @Override
+    public Reddit getReddit() {
+        return reddit;
+    }
+
+    @Override
+    public AdapterLink.ViewHolderBase.EventListener getEventListenerBase() {
+        return eventListenerBase;
+    }
+
+    @Override
+    public AdapterCommentList.ViewHolderComment.EventListener getEventListenerComment() {
+        return eventListenerComment;
     }
 
     @Override

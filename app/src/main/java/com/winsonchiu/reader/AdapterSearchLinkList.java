@@ -7,8 +7,6 @@ import android.view.LayoutInflater;
 import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
 
-import com.winsonchiu.reader.data.Link;
-
 /**
  * Created by TheKeeperOfPie on 6/21/2015.
  */
@@ -16,8 +14,13 @@ public class AdapterSearchLinkList extends AdapterLinkList {
 
     public AdapterSearchLinkList(Activity activity,
             ControllerLinksBase controllerLinks,
-            ControllerLinks.LinkClickListener listener) {
-        super(activity, controllerLinks, listener);
+            ControllerCommentsBase controllerComments,
+            ControllerUser controllerUser,
+            ViewHolderHeader.EventListener eventListenerHeader,
+            ViewHolderBase.EventListener eventListenerBase,
+            DisallowListener disallowListener,
+            ScrollCallback scrollCallback) {
+        super(activity, controllerLinks, controllerComments, controllerUser, eventListenerHeader, eventListenerBase, disallowListener, scrollCallback);
     }
 
     @Override
@@ -28,7 +31,7 @@ public class AdapterSearchLinkList extends AdapterLinkList {
         }
 
         ViewHolder viewHolder = new ViewHolder(LayoutInflater.from(viewGroup.getContext())
-                .inflate(R.layout.row_link, viewGroup, false), this) {
+                .inflate(R.layout.row_link, viewGroup, false), eventListenerBase, disallowListener, scrollCallback) {
             @Override
             public void onClickThumbnail() {
                 InputMethodManager inputManager = (InputMethodManager) activity

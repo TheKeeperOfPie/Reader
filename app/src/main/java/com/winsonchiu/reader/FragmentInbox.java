@@ -2,28 +2,29 @@ package com.winsonchiu.reader;
 
 import android.app.Activity;
 import android.app.Fragment;
-import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.support.v7.widget.StaggeredGridLayoutManager;
 import android.support.v7.widget.Toolbar;
-import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.animation.Animation;
-import android.view.animation.AnimationSet;
-import android.view.animation.LinearInterpolator;
-import android.view.animation.Transformation;
-import android.view.animation.TranslateAnimation;
-import android.widget.Toast;
 
-import com.winsonchiu.reader.data.Link;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.winsonchiu.reader.data.Comment;
+import com.winsonchiu.reader.data.Message;
+import com.winsonchiu.reader.data.Reddit;
+
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class FragmentInbox extends Fragment {
 
@@ -44,7 +45,8 @@ public class FragmentInbox extends Fragment {
     private RecyclerView recyclerInbox;
     private LinearLayoutManager linearLayoutManager;
     private AdapterInbox adapterInbox;
-    private ControllerInbox.ItemClickListener listener;
+    private AdapterInbox.ViewHolderMessage.EventListener eventListener;
+    private ControllerInbox.Listener listener;
     private Toolbar toolbar;
 
     /**
@@ -91,97 +93,61 @@ public class FragmentInbox extends Fragment {
 
         View view = inflater.inflate(R.layout.fragment_inbox, container, false);
 
-        listener = new ControllerInbox.ItemClickListener() {
+        listener = new ControllerInbox.Listener() {
             @Override
-            public void requestDisallowInterceptTouchEventVertical(boolean disallow) {
-                recyclerInbox.requestDisallowInterceptTouchEvent(disallow);
-                swipeRefreshInbox.requestDisallowInterceptTouchEvent(disallow);
+            public RecyclerView.Adapter getAdapter() {
+                return adapterInbox;
             }
 
             @Override
-            public void requestDisallowInterceptTouchEventHorizontal(boolean disallow) {
-
-            }
-
-            @Override
-            public void onClickComments(final Link link, final RecyclerView.ViewHolder viewHolder) {
-
-                mListener.getControllerComments()
-                        .setLink(link);
-
-                AnimationUtils.loadCommentFragmentAnimation(activity, linearLayoutManager, viewHolder,
-                        link, new AnimationUtils.OnAnimationEndListener() {
-                            @Override
-                            public void onAnimationEnd() {
-                                int color = viewHolder instanceof AdapterLinkGrid.ViewHolder ?
-                                        ((ColorDrawable) viewHolder.itemView.getBackground()).getColor() :
-                                        activity.getResources()
-                                                .getColor(R.color.darkThemeBackground);
-
-                                FragmentComments fragmentComments = FragmentComments.newInstance(
-                                        link.getSubreddit(), link.getId(),
-                                        viewHolder instanceof AdapterLinkGrid.ViewHolder, color, viewHolder.itemView.getX(), viewHolder.itemView.getY(), viewHolder.itemView.getHeight());
-
-                                getFragmentManager().beginTransaction()
-                                        .hide(FragmentInbox.this)
-                                        .add(R.id.frame_fragment, fragmentComments,
-                                                FragmentComments.TAG)
-                                        .addToBackStack(null)
-                                        .commit();
-                            }
-                        });
-            }
-
-            @Override
-            public void loadUrl(String url) {
-                getFragmentManager().beginTransaction()
-                        .hide(FragmentInbox.this)
-                        .add(R.id.frame_fragment, FragmentWeb
-                                .newInstance(url, ""), FragmentWeb.TAG)
-                        .addToBackStack(null)
-                        .commit();
-            }
-
-            @Override
-            public void onFullLoaded(int position) {
-
+            public void setToolbarTitle(CharSequence title) {
+                toolbar.setTitle(title);
             }
 
             @Override
             public void setRefreshing(boolean refreshing) {
                 swipeRefreshInbox.setRefreshing(refreshing);
             }
+        };
 
+        eventListener = new AdapterInbox.ViewHolderMessage.EventListener() {
             @Override
-            public void setToolbarTitle(String title) {
-                toolbar.setTitle(title);
-            }
+            public void sendMessage(String name, String text) {
 
-            @Override
-            public AdapterInbox getAdapter() {
-                return adapterInbox;
-            }
 
-            @Override
-            public int getRecyclerHeight() {
-                return recyclerInbox.getHeight();
-            }
+                Map<String, String> params = new HashMap<>();
+                params.put("api_type", "json");
+                params.put("thing_id", name);
+                params.put("text", text);
 
-            @Override
-            public void resetRecycler() {
-                adapterInbox.notifyDataSetChanged();
-            }
+                // TODO: Move add to immediate on button click, check if failed afterwards
+                mListener.getReddit()
+                        .loadPost(Reddit.OAUTH_URL + "/api/comment",
+                                new Response.Listener<String>() {
+                                    @Override
+                                    public void onResponse(String response) {
+                                        try {
+                                            JSONObject jsonObject = new JSONObject(
+                                                    response);
+                                            Message newMessage = Message.fromJson(
+                                                    jsonObject.getJSONObject("json")
+                                                            .getJSONObject("data")
+                                                            .getJSONArray("things")
+                                                            .getJSONObject(0));
+                                            mListener.getControllerInbox()
+                                                    .insertMessage(newMessage);
+                                        }
+                                        catch (JSONException e) {
+                                            e.printStackTrace();
+                                        }
+                                    }
+                                }, new Response.ErrorListener() {
+                                    @Override
+                                    public void onErrorResponse(VolleyError error) {
 
-            @Override
-            public void setSwipeRefreshEnabled(boolean enabled) {
-                swipeRefreshInbox.setEnabled(enabled);
+                                    }
+                                }, params, 0);
             }
-
-            @Override
-            public int getRecyclerWidth() {
-                return recyclerInbox.getWidth();
-            }
-
         };
 
         toolbar = (Toolbar) view.findViewById(R.id.toolbar);
@@ -209,16 +175,60 @@ public class FragmentInbox extends Fragment {
         recyclerInbox.getItemAnimator()
                 .setRemoveDuration(AnimationUtils.EXPAND_ACTION_DURATION);
         recyclerInbox.setLayoutManager(linearLayoutManager);
-//        recyclerInbox.addItemDecoration(
-//                new DividerItemDecoration(activity, DividerItemDecoration.VERTICAL_LIST));
 
         if (adapterInbox == null) {
-            adapterInbox = new AdapterInbox(activity, mListener.getControllerInbox(), listener);
+            adapterInbox = new AdapterInbox(activity, mListener.getControllerInbox(),
+                    mListener.getControllerUser(),
+                    mListener.getEventListenerBase(),
+                    new AdapterCommentList.ViewHolderComment.EventListener() {
+                        @Override
+                        public void loadNestedComments(Comment comment) {
+                            mListener.getControllerInbox().loadNestedComments(comment);
+                        }
+
+                        @Override
+                        public boolean isCommentExpanded(int position) {
+                            return mListener.getControllerInbox().isCommentExpanded(position);
+                        }
+
+                        @Override
+                        public boolean hasChildren(Comment comment) {
+                            return mListener.getControllerInbox().hasChildren(comment);
+                        }
+
+                        @Override
+                        public void voteComment(AdapterCommentList.ViewHolderComment viewHolderComment,
+                                Comment comment,
+                                int vote) {
+                            mListener.getControllerInbox().voteComment(viewHolderComment, comment, vote);
+                        }
+
+                        @Override
+                        public boolean toggleComment(int position) {
+                            return mListener.getControllerInbox().toggleComment(position);
+                        }
+
+                        @Override
+                        public void deleteComment(Comment comment) {
+                            mListener.getControllerInbox().deleteComment(comment);
+                        }
+                    },
+                    eventListener,
+                    new DisallowListener() {
+                        @Override
+                        public void requestDisallowInterceptTouchEventVertical(boolean disallow) {
+                            recyclerInbox.requestDisallowInterceptTouchEvent(disallow);
+                            swipeRefreshInbox.requestDisallowInterceptTouchEvent(disallow);
+                        }
+
+                        @Override
+                        public void requestDisallowInterceptTouchEventHorizontal(boolean disallow) {
+
+                        }
+                    });
         }
 
         recyclerInbox.setAdapter(adapterInbox);
-        mListener.getControllerInbox()
-                .addListener(listener);
 
         return view;
 
@@ -227,15 +237,6 @@ public class FragmentInbox extends Fragment {
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
-
-        swipeRefreshInbox.post(new Runnable() {
-            @Override
-            public void run() {
-                swipeRefreshInbox.setRefreshing(true);
-                mListener.getControllerInbox()
-                        .reload();
-            }
-        });
     }
 
     @Override

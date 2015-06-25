@@ -106,4 +106,8 @@
     <string name="content_description_button_show_sidebar">Show sidebar</string>
     <string name="subscribe">Subscribe</string>
     <string name="unsubscribe">Unsubscribe</string>
+    <string name="item_copy_text">Copy text</string>
+    <string name="comment">Comment</string>
+    <string name="copied">Copied</string>
+    <string name="error_youtube">Error loading YouTube video</string>
 </resources>

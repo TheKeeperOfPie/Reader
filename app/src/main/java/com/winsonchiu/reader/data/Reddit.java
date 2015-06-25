@@ -2,6 +2,7 @@ package com.winsonchiu.reader.data;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.graphics.drawable.Drawable;
 import android.preference.PreferenceManager;
 import android.support.v7.widget.RecyclerView;
 import android.text.Html;
@@ -24,10 +25,10 @@ import com.winsonchiu.reader.AdapterLinkList;
 import com.winsonchiu.reader.ApiKeys;
 import com.winsonchiu.reader.AppSettings;
 import com.winsonchiu.reader.BuildConfig;
+import com.winsonchiu.reader.R;
 
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.w3c.dom.Text;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -51,6 +52,20 @@ public class Reddit {
     public static void incrementDestroy() {
         Log.d(TAG, "Created: " + created.get());
         Log.d(TAG, "Destroyed: " + destroyed.incrementAndGet());
+    }
+
+    public static Drawable getDrawableForLink(Context context, Link link) {
+        String thumbnail = link.getThumbnail();
+
+        if (link.isSelf()) {
+            return context.getDrawable(R.drawable.ic_chat_white_48dp);
+        }
+
+        if (Reddit.DEFAULT.equals(thumbnail) || Reddit.NSFW.equals(thumbnail)) {
+            return context.getDrawable(R.drawable.ic_web_white_48dp);
+        }
+
+        return null;
     }
 
     // Constant values to represent Thing states
@@ -274,7 +289,9 @@ public class Reddit {
             public void onErrorResponse(VolleyError error) {
                 Log.d(TAG, "loadPost error: " + error);
                 Toast.makeText(context, "loadPost error: " + error, Toast.LENGTH_SHORT).show();
-                errorListener.onErrorResponse(error);
+                if (errorListener != null) {
+                    errorListener.onErrorResponse(error);
+                }
             }
         }) {
 
@@ -330,7 +347,9 @@ public class Reddit {
             public void onErrorResponse(VolleyError error) {
                 Log.d(TAG, "loadGet error: " + error);
                 Toast.makeText(context, "loadGet error: " + error, Toast.LENGTH_SHORT).show();
-                errorListener.onErrorResponse(error);
+                if (errorListener != null) {
+                    errorListener.onErrorResponse(error);
+                }
             }
         }) {
             @Override
@@ -395,7 +414,25 @@ public class Reddit {
         }, params, 0);
     }
 
-    public boolean voteComment(final AdapterCommentList.ViewHolderComment viewHolder, final Comment comment, int vote, final VoteResponseListener voteResponseListener) {
+    public Request<String> sendComment(String name,
+            String text,
+            Listener<String> listener,
+            ErrorListener errorListener) {
+        Map<String, String> params = new HashMap<>();
+        params.put("api_type", "json");
+        params.put("thing_id", name);
+        params.put("text", text);
+
+        Request<String> request = loadPost(Reddit.OAUTH_URL + "/api/comment", listener,
+                errorListener, params, 0);
+
+        return requestQueue.add(request);
+    }
+
+    public boolean voteComment(final AdapterCommentList.ViewHolderComment viewHolder,
+            final Comment comment,
+            int vote,
+            final VoteResponseListener voteResponseListener) {
 
         final int position = viewHolder.getAdapterPosition();
         final int oldVote = comment.isLikes();

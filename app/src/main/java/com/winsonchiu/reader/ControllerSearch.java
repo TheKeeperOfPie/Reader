@@ -22,13 +22,11 @@ import com.winsonchiu.reader.data.User;
 
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.w3c.dom.Text;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
@@ -105,6 +103,10 @@ public class ControllerSearch {
         setTitle();
         listener.getAdapterSearchSubreddits().notifyDataSetChanged();
         listener.setSort(sort);
+        reloadCurrentPage();
+        Log.d(TAG, "addListener: " + listener);
+        Log.d(TAG, "query: " + query);
+        Log.d(TAG, "subreddits: " + subreddits.getChildren().size());
     }
 
     public void removeListener(Listener listener) {
@@ -233,7 +235,7 @@ public class ControllerSearch {
         Log.d(TAG, "reloadCurrentPage");
         switch (currentPage) {
             case PAGE_SUBREDDITS:
-                if (TextUtils.isEmpty(query)) {
+                if (TextUtils.isEmpty(query) || query.length() < 2) {
                     for (Listener listener : listeners) {
                         listener.getAdapterSearchSubreddits()
                                 .notifyDataSetChanged();
@@ -615,10 +617,7 @@ public class ControllerSearch {
     }
 
     public void clearResults() {
-        if (subreddits == subredditsSubscribed) {
-            subreddits = new Listing();
-        }
-        else {
+        if (subreddits != subredditsSubscribed) {
             subreddits.getChildren()
                     .clear();
             subreddits = subredditsSubscribed;

@@ -43,7 +43,7 @@ public class ControllerProfile implements ControllerLinksBase, ControllerComment
     private static final String TAG = ControllerProfile.class.getCanonicalName();
 
     private Activity activity;
-    private Set<ItemClickListener> listeners;
+    private Set<Listener> listeners;
     private Listing data;
     private Reddit reddit;
     private Drawable drawableSelf;
@@ -95,14 +95,14 @@ public class ControllerProfile implements ControllerLinksBase, ControllerComment
                         .getDisplayMetrics());
     }
 
-    public void addListener(ItemClickListener listener) {
+    public void addListener(Listener listener) {
         listeners.add(listener);
-        listener.setRefreshing(isLoading);
+        listener.setRefreshing(isLoading());
         listener.getAdapter().notifyDataSetChanged();
         listener.setIsUser(user.getName().equals(currentUser.getName()));
     }
 
-    public void removeListener(ItemClickListener listener) {
+    public void removeListener(Listener listener) {
         listeners.remove(listener);
     }
 
@@ -167,7 +167,7 @@ public class ControllerProfile implements ControllerLinksBase, ControllerComment
         this.user = user;
         sort = Sort.HOT;
         page = "Overview";
-        for (ItemClickListener listener : listeners) {
+        for (Listener listener : listeners) {
             listener.setIsUser(user.getName()
                     .equals(currentUser.getName()));
         }
@@ -189,9 +189,9 @@ public class ControllerProfile implements ControllerLinksBase, ControllerComment
                         Log.d(TAG, "onResponse: " + response);
                         try {
                             setData(Listing.fromJson(new JSONObject(response)));
-                            for (ControllerProfile.ItemClickListener listener : listeners) {
+                            for (Listener listener : listeners) {
                                 listener.setPage(page);
-                                listener.resetRecycler();
+                                listener.getAdapter().notifyDataSetChanged();
                             }
                             setLoading(false);
                             if (!TextUtils.isEmpty(user.getName()) && page.equalsIgnoreCase(
@@ -241,7 +241,7 @@ public class ControllerProfile implements ControllerLinksBase, ControllerComment
                             data.addChildren(listing.getChildren());
                             data.setAfter(listing.getAfter());
 
-                            for (ItemClickListener listener : listeners) {
+                            for (Listener listener : listeners) {
 
                                 listener.getAdapter()
                                         .notifyItemRangeInserted(positionStart,
@@ -258,10 +258,10 @@ public class ControllerProfile implements ControllerLinksBase, ControllerComment
                     @Override
                     public void onErrorResponse(VolleyError error) {
                         setData(new Listing());
-                        for (ControllerProfile.ItemClickListener listener : listeners) {
+                        for (Listener listener : listeners) {
                             listener.setRefreshing(
                                     false);
-                            listener.resetRecycler();
+                            listener.getAdapter().notifyDataSetChanged();
                         }
                     }
                 }, 0);
@@ -280,7 +280,7 @@ public class ControllerProfile implements ControllerLinksBase, ControllerComment
                             if (!listingLink.getChildren().isEmpty()) {
                                 topLink = (Link) listingLink.getChildren()
                                         .get(0);
-                                for (ControllerProfile.ItemClickListener listener : listeners) {
+                                for (Listener listener : listeners) {
                                     listener.setRefreshing(false);
                                     listener.getAdapter().notifyItemRangeChanged(1, 2);
                                 }
@@ -301,7 +301,7 @@ public class ControllerProfile implements ControllerLinksBase, ControllerComment
                                                     topComment = (Comment) listingComment.getChildren()
                                                             .get(0);
                                                     topComment.setLevel(0);
-                                                    for (ControllerProfile.ItemClickListener listener : listeners) {
+                                                    for (Listener listener : listeners) {
                                                         listener.setRefreshing(
                                                                 false);
                                                         listener.getAdapter().notifyItemRangeChanged(
@@ -365,7 +365,7 @@ public class ControllerProfile implements ControllerLinksBase, ControllerComment
 
     public void setLoading(boolean loading) {
         isLoading = loading;
-        for (ItemClickListener listener : listeners) {
+        for (Listener listener : listeners) {
             listener.setRefreshing(loading);
         }
     }
@@ -418,7 +418,7 @@ public class ControllerProfile implements ControllerLinksBase, ControllerComment
             data.getChildren()
                     .add(commentIndex + 1, comment);
 
-            for (ItemClickListener listener : listeners) {
+            for (Listener listener : listeners) {
 //                listener.getAdapter().notifyDataSetChanged();
                 listener.getAdapter()
                         .notifyItemInserted(commentIndex + 7);
@@ -432,7 +432,7 @@ public class ControllerProfile implements ControllerLinksBase, ControllerComment
         int commentIndex = data.getChildren().indexOf(comment);
         data.getChildren().remove(commentIndex);
 
-        for (ControllerProfile.ItemClickListener listener : listeners) {
+        for (Listener listener : listeners) {
             listener.getAdapter().notifyItemRemoved(commentIndex + 6);
 
         }
@@ -579,29 +579,11 @@ public class ControllerProfile implements ControllerLinksBase, ControllerComment
         return page.equalsIgnoreCase("overview") ? topComment : null;
     }
 
-    public interface ItemClickListener extends DisallowListener {
-
-        void onClickComments(Link link, RecyclerView.ViewHolder viewHolder);
-        void loadUrl(String url);
-        void onFullLoaded(int position);
-        void setRefreshing(boolean refreshing);
-        AdapterProfile getAdapter();
-        int getRecyclerHeight();
-        void resetRecycler();
-        void setSwipeRefreshEnabled(boolean enabled);
-        int getRecyclerWidth();
-        ControllerCommentsBase getControllerComments();
-        void loadLink(Comment comment);
-        void setIsUser(boolean isUser);
+    public interface Listener
+            extends ControllerListener {
         void setPage(String page);
-        void setRequestedOrientation(int orientation);
-        int getRequestedOrientation();
-    }
-
-    public interface ListenerCallback {
-        ItemClickListener getListener();
-        ControllerProfile getController();
-        float getItemWidth();
+        void setIsUser(boolean isUser);
+        void loadLink(Comment comment);
     }
 
 }

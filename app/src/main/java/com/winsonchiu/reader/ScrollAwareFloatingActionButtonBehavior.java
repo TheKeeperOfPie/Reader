@@ -21,23 +21,18 @@ package com.winsonchiu.reader;
  */
 
 import android.content.Context;
-import android.os.Build;
 import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.view.ViewCompat;
 import android.support.v4.view.ViewPropertyAnimatorListener;
 import android.support.v4.view.animation.FastOutSlowInInterpolator;
 import android.util.AttributeSet;
-import android.util.Log;
-import android.util.TypedValue;
 import android.view.View;
-import android.view.animation.Animation;
-import android.view.animation.AnimationUtils;
 import android.view.animation.Interpolator;
 
 public class ScrollAwareFloatingActionButtonBehavior extends FloatingActionButton.Behavior {
 
-    private static final Interpolator INTERPOLATOR = new FastOutSlowInInterpolator();
+    public static final Interpolator INTERPOLATOR = new FastOutSlowInInterpolator();
     private static final String TAG = ScrollAwareFloatingActionButtonBehavior.class.getCanonicalName();
 
     private boolean mIsAnimatingOut = false;

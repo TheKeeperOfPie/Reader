@@ -4,11 +4,8 @@ import android.app.Activity;
 import android.app.Fragment;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.content.pm.ActivityInfo;
-import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
-import android.support.v4.view.GravityCompat;
 import android.support.v4.view.MenuItemCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v4.widget.SwipeRefreshLayout;
@@ -25,18 +22,13 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.animation.Animation;
-import android.view.animation.AnimationSet;
-import android.view.animation.LinearInterpolator;
-import android.view.animation.Transformation;
-import android.view.animation.TranslateAnimation;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.android.volley.Response;
+import com.android.volley.Response.Listener;
 import com.android.volley.VolleyError;
-import com.winsonchiu.reader.data.Link;
 import com.winsonchiu.reader.data.Reddit;
 import com.winsonchiu.reader.data.Subreddit;
 
@@ -67,7 +59,6 @@ public class FragmentThreadList extends Fragment implements Toolbar.OnMenuItemCl
     private RecyclerView.LayoutManager layoutManager;
     private MenuItem itemInterface;
 
-    private ControllerLinks.LinkClickListener linkClickListener;
     private MenuItem itemSearch;
     private TextView textSidebar;
     private DrawerLayout drawerLayout;
@@ -79,6 +70,10 @@ public class FragmentThreadList extends Fragment implements Toolbar.OnMenuItemCl
     private AdapterLinkGrid adapterLinkGrid;
     private int saveScrollPosition;
     private Button buttonSubscribe;
+    private AdapterLink.ViewHolderHeader.EventListener eventListenerHeader;
+    private DisallowListener disallowListener;
+    private ScrollCallback scrollCallback;
+    private ControllerLinks.Listener listener;
 
     /**
      * Use this factory method to create a new instance of
@@ -162,6 +157,10 @@ public class FragmentThreadList extends Fragment implements Toolbar.OnMenuItemCl
 
     }
 
+    public void temp() {
+
+    }
+
     @Override
     public void onDestroyOptionsMenu() {
         MenuItemCompat.setOnActionExpandListener(itemSearch, null);
@@ -183,7 +182,8 @@ public class FragmentThreadList extends Fragment implements Toolbar.OnMenuItemCl
     private void resetAdapter(AdapterLink newAdapter) {
         int[] currentPosition = new int[3];
         if (layoutManager instanceof LinearLayoutManager) {
-            currentPosition[0] = ((LinearLayoutManager) layoutManager).findFirstVisibleItemPosition();
+            currentPosition[0] = ((LinearLayoutManager) layoutManager)
+                    .findFirstVisibleItemPosition();
         }
         else if (layoutManager instanceof StaggeredGridLayoutManager) {
             ((StaggeredGridLayoutManager) layoutManager).findFirstCompletelyVisibleItemPositions(
@@ -197,7 +197,8 @@ public class FragmentThreadList extends Fragment implements Toolbar.OnMenuItemCl
             recyclerThreadList.setPadding(0, 0, 0, 0);
         }
         else {
-            int padding = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 2, getResources().getDisplayMetrics());
+            int padding = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 2,
+                    getResources().getDisplayMetrics());
             recyclerThreadList.setPadding(padding, 0, padding, 0);
         }
 
@@ -212,7 +213,33 @@ public class FragmentThreadList extends Fragment implements Toolbar.OnMenuItemCl
 
         final View view = inflater.inflate(R.layout.fragment_thread_list, container, false);
 
-        linkClickListener = new ControllerLinks.LinkClickListener() {
+        eventListenerHeader = new AdapterLink.ViewHolderHeader.EventListener() {
+            @Override
+            public void onClickSubmit(String postType) {
+
+                if (TextUtils.isEmpty(mListener.getControllerUser().getUser().getName())) {
+                    Toast.makeText(activity, getString(R.string.must_be_logged_in),
+                            Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
+                Intent intent = new Intent(activity, ActivityNewPost.class);
+                intent.putExtra(ActivityNewPost.USER,
+                        mListener.getControllerInbox().getUser().getName());
+                intent.putExtra(ActivityNewPost.SUBREDDIT,
+                        mListener.getControllerLinks().getSubreddit().getUrl().substring(
+                                3, mListener.getControllerLinks()
+                                        .getSubreddit()
+                                        .getUrl()
+                                        .length() - 1));
+                intent.putExtra(ActivityNewPost.POST_TYPE, postType);
+                intent.putExtra(ActivityNewPost.SUBMIT_TEXT_HTML,
+                        mListener.getControllerLinks().getSubreddit().getSubmitTextHtml());
+                startActivityForResult(intent, ActivityNewPost.REQUEST_CODE);
+            }
+        };
+
+        disallowListener = new DisallowListener() {
             @Override
             public void requestDisallowInterceptTouchEventVertical(boolean disallow) {
                 recyclerThreadList.requestDisallowInterceptTouchEvent(disallow);
@@ -223,53 +250,11 @@ public class FragmentThreadList extends Fragment implements Toolbar.OnMenuItemCl
             public void requestDisallowInterceptTouchEventHorizontal(boolean disallow) {
 
             }
+        };
 
+        scrollCallback = new ScrollCallback() {
             @Override
-            public void onClickComments(final Link link, final RecyclerView.ViewHolder viewHolder) {
-
-                mListener.getControllerComments()
-                        .setLink(link);
-
-                AnimationUtils.loadCommentFragmentAnimation(activity, layoutManager, viewHolder,
-                        link, new AnimationUtils.OnAnimationEndListener() {
-                            @Override
-                            public void onAnimationEnd() {
-                                int color = viewHolder instanceof AdapterLinkGrid.ViewHolder ?
-                                        ((ColorDrawable) viewHolder.itemView.getBackground()).getColor() :
-                                        activity.getResources()
-                                                .getColor(R.color.darkThemeBackground);
-
-                                int spanCount = layoutManager instanceof StaggeredGridLayoutManager ? ((StaggeredGridLayoutManager) layoutManager).getSpanCount() : 0;
-
-                                FragmentComments fragmentComments = FragmentComments.newInstance(viewHolder, color, spanCount);
-
-//                                FragmentComments fragmentComments = FragmentComments.newInstance(
-//                                        link.getSubreddit(), link.getId(),
-//                                        viewHolder instanceof AdapterLinkGrid.ViewHolder, color, viewHolder.itemView.getX(), viewHolder.itemView.getY(), viewHolder.itemView.getHeight());
-
-                                fragmentComments.setFragmentToHide(FragmentThreadList.this);
-
-                                getFragmentManager().beginTransaction()
-                                        .add(R.id.frame_fragment, fragmentComments,
-                                                FragmentComments.TAG)
-                                        .addToBackStack(null)
-                                        .commit();
-                            }
-                        });
-            }
-
-            @Override
-            public void loadUrl(String url) {
-                getFragmentManager().beginTransaction()
-                        .hide(FragmentThreadList.this)
-                        .add(R.id.frame_fragment, FragmentWeb
-                                .newInstance(url, ""), FragmentWeb.TAG)
-                        .addToBackStack(null)
-                        .commit();
-            }
-
-            @Override
-            public void onFullLoaded(final int position) {
+            public void scrollTo(final int position) {
                 recyclerThreadList.requestLayout();
                 recyclerThreadList.post(new Runnable() {
                     @Override
@@ -285,30 +270,23 @@ public class FragmentThreadList extends Fragment implements Toolbar.OnMenuItemCl
                     }
                 });
             }
+        };
 
+        listener = new ControllerLinks.Listener() {
             @Override
-            public void setRefreshing(boolean refreshing) {
-                swipeRefreshThreadList.setRefreshing(refreshing);
+            public void setSort(Sort sort) {
+                menu.findItem(sort.getMenuId()).setChecked(true);
             }
 
             @Override
-            public void setToolbarTitle(String title) {
-                toolbar.setTitle(title);
-            }
-
-            @Override
-            public AdapterLink getAdapter() {
-                return adapterLink;
-            }
-
-            @Override
-            public int getRecyclerHeight() {
-                return recyclerThreadList.getHeight();
+            public void showEmptyView(boolean isEmpty) {
+                textEmpty.setVisibility(isEmpty ? View.VISIBLE : View.GONE);
             }
 
             @Override
             public void loadSideBar(Subreddit subreddit) {
-                if (subreddit.getUrl().equals("/") || "/r/all/".equalsIgnoreCase(subreddit.getUrl())) {
+                if (subreddit.getUrl().equals("/") || "/r/all/"
+                        .equalsIgnoreCase(subreddit.getUrl())) {
                     return;
                 }
 
@@ -316,95 +294,71 @@ public class FragmentThreadList extends Fragment implements Toolbar.OnMenuItemCl
                         .getReddit()
                         .loadGet(
                                 Reddit.OAUTH_URL + subreddit.getUrl() + "about",
-                                new Response.Listener<String>() {
+                                new Listener<String>() {
                                     @Override
                                     public void onResponse(String response) {
                                         try {
                                             Subreddit loadedSubreddit = Subreddit.fromJson(
                                                     new JSONObject(response));
-                                            textSidebar.setText(Reddit.getTrimmedHtml(loadedSubreddit.getDescriptionHtml()));
+                                            textSidebar.setText(Reddit.getTrimmedHtml(
+                                                    loadedSubreddit.getDescriptionHtml()));
                                             drawerLayout.setDrawerLockMode(
                                                     DrawerLayout.LOCK_MODE_UNLOCKED);
-                                            if (mListener.getControllerLinks().getSubreddit().isUserIsSubscriber()) {
+                                            if (mListener.getControllerLinks().getSubreddit()
+                                                    .isUserIsSubscriber()) {
                                                 buttonSubscribe.setText(R.string.unsubscribe);
                                             }
                                             else {
                                                 buttonSubscribe.setText(R.string.subscribe);
                                             }
-                                            buttonSubscribe.setVisibility(TextUtils.isEmpty(preferences.getString(AppSettings.ACCOUNT_JSON, "")) ? View.GONE : View.VISIBLE);
+                                            buttonSubscribe.setVisibility(TextUtils.isEmpty(
+                                                    preferences.getString(AppSettings.ACCOUNT_JSON,
+                                                            "")) ? View.GONE : View.VISIBLE);
                                         }
                                         catch (JSONException e) {
                                             textSidebar.setText(null);
-                                            drawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED);
+                                            drawerLayout.setDrawerLockMode(
+                                                    DrawerLayout.LOCK_MODE_LOCKED_CLOSED);
                                         }
                                     }
                                 }, new Response.ErrorListener() {
                                     @Override
                                     public void onErrorResponse(VolleyError error) {
                                         textSidebar.setText(null);
-                                        drawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED);
+                                        drawerLayout.setDrawerLockMode(
+                                                DrawerLayout.LOCK_MODE_LOCKED_CLOSED);
                                     }
                                 }, 0);
             }
 
             @Override
-            public void setEmptyView(boolean visible) {
-                textEmpty.setVisibility(visible ? View.VISIBLE : View.GONE);
+            public RecyclerView.Adapter getAdapter() {
+                return adapterLink;
             }
 
             @Override
-            public int getRecyclerWidth() {
-                return recyclerThreadList.getWidth();
+            public void setToolbarTitle(CharSequence title) {
+                toolbar.setTitle(title);
             }
 
             @Override
-            public void onClickSubmit(String postType) {
-                if (TextUtils.isEmpty(mListener.getControllerInbox().getUser().getName())) {
-                    Toast.makeText(activity, getString(R.string.must_be_logged_in), Toast.LENGTH_SHORT).show();
-                    return;
-                }
-
-                Intent intent = new Intent(activity, ActivityNewPost.class);
-                intent.putExtra(ActivityNewPost.USER, mListener.getControllerInbox().getUser().getName());
-                intent.putExtra(ActivityNewPost.SUBREDDIT, mListener.getControllerLinks().getSubreddit().getUrl().substring(
-                        3, mListener.getControllerLinks()
-                        .getSubreddit()
-                        .getUrl()
-                        .length() - 1));
-                intent.putExtra(ActivityNewPost.POST_TYPE, postType);
-                intent.putExtra(ActivityNewPost.SUBMIT_TEXT_HTML, mListener.getControllerLinks().getSubreddit().getSubmitTextHtml());
-                startActivityForResult(intent, ActivityNewPost.REQUEST_CODE);
+            public void setRefreshing(boolean refreshing) {
+                swipeRefreshThreadList.setRefreshing(refreshing);
             }
-
-            @Override
-            public ControllerCommentsBase getControllerComments() {
-                return mListener.getControllerComments();
-            }
-
-            @Override
-            public void setSort(Sort sort) {
-                menu.findItem(sort.getMenuId()).setChecked(true);
-            }
-
-            @Override
-            public void loadVideoLandscape(int position) {
-                saveScrollPosition = position;
-                mListener.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
-            }
-
-            @Override
-            public int getRequestedOrientation() {
-                return mListener.getRequestedOrientation();
-            }
-
-            @Override
-            public void showSidebar() {
-                drawerLayout.openDrawer(GravityCompat.END);
-            }
-
         };
 
         toolbar = (Toolbar) view.findViewById(R.id.toolbar);
+        toolbar.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                getFragmentManager().beginTransaction()
+                        .hide(FragmentThreadList.this)
+                        .add(R.id.frame_fragment, FragmentSearch.newInstance(true),
+                                FragmentSearch.TAG)
+                        .addToBackStack(null)
+                        .commit();
+            }
+        });
         if (getFragmentManager().getBackStackEntryCount() <= 1) {
             toolbar.setNavigationIcon(R.drawable.ic_menu_white_24dp);
             toolbar.setNavigationOnClickListener(new View.OnClickListener() {
@@ -436,11 +390,21 @@ public class FragmentThreadList extends Fragment implements Toolbar.OnMenuItemCl
         });
         if (adapterLinkList == null) {
             adapterLinkList = new AdapterLinkList(activity, mListener.getControllerLinks(),
-                    linkClickListener);
+                    mListener.getControllerComments(),
+                    mListener.getControllerUser(),
+                    eventListenerHeader,
+                    mListener.getEventListenerBase(),
+                    disallowListener,
+                    scrollCallback);
         }
         if (adapterLinkGrid == null) {
             adapterLinkGrid = new AdapterLinkGrid(activity, mListener.getControllerLinks(),
-                    linkClickListener);
+                    mListener.getControllerComments(),
+                    mListener.getControllerUser(),
+                    eventListenerHeader,
+                    mListener.getEventListenerBase(),
+                    disallowListener,
+                    scrollCallback);
         }
 
         if (AppSettings.MODE_LIST.equals(
@@ -466,7 +430,8 @@ public class FragmentThreadList extends Fragment implements Toolbar.OnMenuItemCl
             recyclerThreadList.setPadding(0, 0, 0, 0);
         }
         else {
-            int padding = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 2, getResources().getDisplayMetrics());
+            int padding = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 2,
+                    getResources().getDisplayMetrics());
             recyclerThreadList.setPadding(padding, 0, padding, 0);
         }
 
@@ -479,15 +444,14 @@ public class FragmentThreadList extends Fragment implements Toolbar.OnMenuItemCl
         buttonSubscribe.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                buttonSubscribe.setText(mListener.getControllerLinks().getSubreddit().isUserIsSubscriber() ? R.string.subscribe : R.string.unsubscribe);
+                buttonSubscribe.setText(
+                        mListener.getControllerLinks().getSubreddit().isUserIsSubscriber() ?
+                                R.string.subscribe : R.string.unsubscribe);
                 mListener.getControllerLinks().subscribe();
             }
         });
 
         textEmpty = (TextView) view.findViewById(R.id.text_empty);
-        mListener.getControllerLinks()
-                .addListener(linkClickListener);
-
         return view;
     }
 
@@ -509,18 +473,6 @@ public class FragmentThreadList extends Fragment implements Toolbar.OnMenuItemCl
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
-
-        Log.d(TAG, "onActivityCreated");
-
-        swipeRefreshThreadList.post(new Runnable() {
-            @Override
-            public void run() {
-                swipeRefreshThreadList.setRefreshing(true);
-                mListener.getControllerLinks()
-                        .reloadAllLinks(false);
-
-            }
-        });
     }
 
     @Override
@@ -550,13 +502,13 @@ public class FragmentThreadList extends Fragment implements Toolbar.OnMenuItemCl
     public void onStart() {
         super.onStart();
         mListener.getControllerLinks()
-                .addListener(linkClickListener);
+                .addListener(listener);
     }
 
     @Override
     public void onStop() {
         mListener.getControllerLinks()
-                .removeListener(linkClickListener);
+                .removeListener(listener);
         super.onStop();
     }
 
@@ -587,23 +539,22 @@ public class FragmentThreadList extends Fragment implements Toolbar.OnMenuItemCl
             case R.id.item_search:
                 getFragmentManager().beginTransaction()
                         .hide(FragmentThreadList.this)
-                        .add(R.id.frame_fragment, FragmentSearch.newInstance("", ""), FragmentSearch.TAG)
+                        .add(R.id.frame_fragment, FragmentSearch.newInstance(false),
+                                FragmentSearch.TAG)
                         .addToBackStack(null)
                         .commit();
                 return true;
             case R.id.item_interface:
                 if (AppSettings.MODE_LIST.equals(
                         preferences.getString(AppSettings.INTERFACE_MODE, AppSettings.MODE_LIST))) {
-                    resetAdapter(new AdapterLinkGrid(activity, mListener.getControllerLinks(),
-                            linkClickListener));
+                    resetAdapter(adapterLinkGrid);
                     item.setIcon(getResources().getDrawable(R.drawable.ic_view_list_white_24dp));
                     preferences.edit()
                             .putString(AppSettings.INTERFACE_MODE, AppSettings.MODE_GRID)
                             .commit();
                 }
                 else {
-                    resetAdapter(new AdapterLinkList(activity, mListener.getControllerLinks(),
-                            linkClickListener));
+                    resetAdapter(adapterLinkList);
                     item.setIcon(getResources().getDrawable(R.drawable.ic_view_module_white_24dp));
                     preferences.edit()
                             .putString(AppSettings.INTERFACE_MODE, AppSettings.MODE_LIST)

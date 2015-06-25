@@ -12,7 +12,6 @@ import android.widget.Toast;
 
 import com.android.volley.Response;
 import com.android.volley.Response.ErrorListener;
-import com.android.volley.Response.Listener;
 import com.android.volley.VolleyError;
 import com.winsonchiu.reader.data.Link;
 import com.winsonchiu.reader.data.Listing;
@@ -44,7 +43,7 @@ public class ControllerLinks implements ControllerLinksBase {
     private Drawable drawableSelf;
     private Drawable drawableDefault;
     private Reddit reddit;
-    private Set<LinkClickListener> listeners;
+    private Set<Listener> listeners;
     private SharedPreferences preferences;
 
     public ControllerLinks(Activity activity, String subredditName, Sort sort) {
@@ -92,15 +91,16 @@ public class ControllerLinks implements ControllerLinksBase {
         return jsonObject.toString();
     }
 
-    public void addListener(LinkClickListener listener) {
+    public void addListener(Listener listener) {
         listeners.add(listener);
         setTitle();
         listener.setSort(sort);
-        listener.getAdapter()
-                .notifyDataSetChanged();
+        listener.getAdapter().notifyDataSetChanged();
+        listener.setRefreshing(isLoading());
+        Log.d(TAG, "addListener: " + listener);
     }
 
-    public void removeListener(LinkClickListener listener) {
+    public void removeListener(Listener listener) {
         listeners.remove(listener);
     }
 
@@ -112,7 +112,7 @@ public class ControllerLinks implements ControllerLinksBase {
             subreddit.setUrl("/r/" + subredditName + "/");
             int size = sizeLinks();
             listingLinks = new Listing();
-            for (LinkClickListener listener : listeners) {
+            for (Listener listener : listeners) {
                 listener.setSort(sort);
                 listener.getAdapter()
                         .notifyItemRangeRemoved(0, size + 1);
@@ -146,7 +146,7 @@ public class ControllerLinks implements ControllerLinksBase {
 
     public void loadFrontPage(Sort sort, boolean force) {
         if (force || !TextUtils.isEmpty(subreddit.getDisplayName())) {
-            for (LinkClickListener listener : listeners) {
+            for (Listener listener : listeners) {
                 listener.setRefreshing(true);
             }
             this.sort = sort;
@@ -154,6 +154,7 @@ public class ControllerLinks implements ControllerLinksBase {
             subreddit.setUrl("/");
             reloadAllLinks(false);
         }
+        Log.d(TAG, "loadFrontPage");
     }
 
     public void setSort(Sort sort) {
@@ -176,7 +177,7 @@ public class ControllerLinks implements ControllerLinksBase {
             subredditName = subreddit.getUrl();
         }
 
-        for (LinkClickListener listener : listeners) {
+        for (Listener listener : listeners) {
             listener.setToolbarTitle(subredditName);
         }
     }
@@ -211,7 +212,7 @@ public class ControllerLinks implements ControllerLinksBase {
 
         String url = Reddit.OAUTH_URL + subreddit.getUrl() + sort.toString() + "?t=" + time.toString() + "&limit=25&showAll=true";
 
-        reddit.loadGet(url, new Listener<String>() {
+        reddit.loadGet(url, new Response.Listener<String>() {
             @Override
             public void onResponse(final String response) {
                 // TODO: Catch null errors in parent method call
@@ -236,12 +237,10 @@ public class ControllerLinks implements ControllerLinksBase {
                     e.printStackTrace();
                 }
 
-                for (LinkClickListener listener : listeners) {
-                    listener.getAdapter()
-                            .notifyDataSetChanged();
-                    listener.onFullLoaded(0);
+                for (Listener listener : listeners) {
+                    listener.getAdapter().notifyDataSetChanged();
                     listener.loadSideBar(subreddit);
-                    listener.setEmptyView(listingLinks.getChildren()
+                    listener.showEmptyView(listingLinks.getChildren()
                             .isEmpty());
                 }
                 setTitle();
@@ -266,7 +265,7 @@ public class ControllerLinks implements ControllerLinksBase {
         String url = Reddit.OAUTH_URL + subreddit.getUrl() + sort.toString() + "?t=" + time.toString() + "&limit=15&showAll=true&after=" + listingLinks.getAfter();
 
         reddit.loadGet(url,
-                new Listener<String>() {
+                new Response.Listener<String>() {
                     @Override
                     public void onResponse(String response) {
                         try {
@@ -275,7 +274,7 @@ public class ControllerLinks implements ControllerLinksBase {
                             Listing listing = Listing.fromJson(new JSONObject(response));
                             listingLinks.addChildren(listing.getChildren());
                             listingLinks.setAfter(listing.getAfter());
-                            for (LinkClickListener listener : listeners) {
+                            for (Listener listener : listeners) {
                                 listener.getAdapter()
                                         .notifyItemRangeInserted(positionStart + 1,
                                                 listingLinks.getChildren()
@@ -317,7 +316,7 @@ public class ControllerLinks implements ControllerLinksBase {
         if (index >= 0) {
             listingLinks.getChildren()
                     .remove(index);
-            for (LinkClickListener listener : listeners) {
+            for (Listener listener : listeners) {
                 listener.getAdapter()
                         .notifyItemRemoved(index + 1);
             }
@@ -359,7 +358,7 @@ public class ControllerLinks implements ControllerLinksBase {
 
     public void setLoading(boolean loading) {
         isLoading = loading;
-        for (LinkClickListener listener : listeners) {
+        for (Listener listener : listeners) {
             listener.setRefreshing(loading);
         }
     }
@@ -409,7 +408,7 @@ public class ControllerLinks implements ControllerLinksBase {
         params.put("sr", subreddit.getName());
 
         reddit.loadPost(Reddit.OAUTH_URL + "/api/subscribe",
-                new Listener<String>() {
+                new Response.Listener<String>() {
                     @Override
                     public void onResponse(String response) {
                         Log.d(TAG, "subscribe response: " + response);
@@ -422,28 +421,13 @@ public class ControllerLinks implements ControllerLinksBase {
                 }, params, 0);
     }
 
-    public interface LinkClickListener extends DisallowListener {
-
-        void onClickComments(Link link, RecyclerView.ViewHolder viewHolder);
-        void loadUrl(String url);
-        void onFullLoaded(int position);
-        void setRefreshing(boolean refreshing);
-        void setToolbarTitle(String title);
-        AdapterLink getAdapter();
-        int getRecyclerHeight();
-        void loadSideBar(Subreddit listingSubreddits);
-        void setEmptyView(boolean visible);
-        int getRecyclerWidth();
-        void onClickSubmit(String postType);
-        ControllerCommentsBase getControllerComments();
+    public interface Listener extends ControllerListener {
         void setSort(Sort sort);
-        void loadVideoLandscape(int position);
-        int getRequestedOrientation();
-        void showSidebar();
+        void showEmptyView(boolean isEmpty);
+        void loadSideBar(Subreddit subreddit);
     }
 
     public interface ListenerCallback {
-        LinkClickListener getListener();
         ControllerLinksBase getControllerLinks();
         float getItemWidth();
         int getTitleMargin();
