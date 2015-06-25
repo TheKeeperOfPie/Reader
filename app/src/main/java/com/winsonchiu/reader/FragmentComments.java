@@ -477,6 +477,9 @@ public class FragmentComments extends Fragment {
 
             @Override
             public void onAnimationEnd(Animation animation) {
+                if (!isAdded()) {
+                    return;
+                }
                 if (fragmentToHide != null) {
                     getFragmentManager().beginTransaction().hide(fragmentToHide).commit();
                     fragmentToHide = null;

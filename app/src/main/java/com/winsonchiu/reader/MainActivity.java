@@ -59,8 +59,7 @@ public class MainActivity extends YouTubeBaseActivity
 
     private FragmentData fragmentData;
 
-    private CharSequence mTitle;
-    private int oldId = -1;
+    private int loadId = -1;
 
     private SharedPreferences sharedPreferences;
     private DrawerLayout mDrawerLayout;
@@ -117,6 +116,9 @@ public class MainActivity extends YouTubeBaseActivity
             @Override
             public void onDrawerClosed(View drawerView) {
                 invalidateOptionsMenu();
+                if (loadId >= 0) {
+                    selectNavigationItem(loadId);
+                }
             }
 
             @Override
@@ -124,8 +126,6 @@ public class MainActivity extends YouTubeBaseActivity
 
             }
         });
-
-        mTitle = getTitle();
 
         if (savedInstanceState == null) {
             if (Intent.ACTION_VIEW.equals(getIntent().getAction())) {
@@ -431,18 +431,20 @@ public class MainActivity extends YouTubeBaseActivity
                 new NavigationView.OnNavigationItemSelectedListener() {
                     @Override
                     public boolean onNavigationItemSelected(MenuItem menuItem) {
-                        selectNavigationItem(menuItem.getItemId());
+                        mDrawerLayout.closeDrawer(GravityCompat.START);
+                        loadId = menuItem.getItemId();
                         return true;
                     }
                 });
 
     }
 
-    private void selectNavigationItem(int id) {
+    private void selectNavigationItem(final int id) {
         getFragmentManager().popBackStackImmediate();
         switch (id) {
             case R.id.item_home:
-                if (getFragmentManager().findFragmentByTag(FragmentThreadList.TAG) != null) {
+                if (getFragmentManager()
+                        .findFragmentByTag(FragmentThreadList.TAG) != null) {
                     getControllerLinks().loadFrontPage(Sort.HOT, false);
                 }
                 else {
@@ -460,10 +462,12 @@ public class MainActivity extends YouTubeBaseActivity
                                 FragmentProfile.TAG)
                         .commit();
 
-                if (!TextUtils.isEmpty(sharedPreferences.getString(AppSettings.ACCOUNT_JSON, ""))) {
+                if (!TextUtils.isEmpty(
+                        sharedPreferences.getString(AppSettings.ACCOUNT_JSON, ""))) {
                     try {
                         getControllerProfile().setUser(User.fromJson(
-                                new JSONObject(sharedPreferences.getString(AppSettings.ACCOUNT_JSON, ""))));
+                                new JSONObject(sharedPreferences
+                                        .getString(AppSettings.ACCOUNT_JSON, ""))));
                     }
                     catch (JSONException e) {
                         e.printStackTrace();
@@ -480,8 +484,9 @@ public class MainActivity extends YouTubeBaseActivity
                         .commit();
                 break;
             case R.id.item_settings:
-                SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(
-                        getApplicationContext());
+                SharedPreferences preferences = PreferenceManager
+                        .getDefaultSharedPreferences(
+                                getApplicationContext());
                 // TODO: Manually invalidate access token
                 preferences.edit()
                         .putString(AppSettings.ACCESS_TOKEN, "")
@@ -497,13 +502,13 @@ public class MainActivity extends YouTubeBaseActivity
                         .apply();
                 getControllerLinks().loadFrontPage(Sort.HOT, true);
                 getControllerSearch().reloadSubscriptionList();
-                Toast.makeText(MainActivity.this, "Cleared refresh token", Toast.LENGTH_SHORT)
+                Toast.makeText(MainActivity.this, "Cleared refresh token",
+                        Toast.LENGTH_SHORT)
                         .show();
                 break;
         }
 
-        oldId = id;
-        mDrawerLayout.closeDrawer(GravityCompat.START);
+        loadId = -1;
     }
 
     public void loadAccountInfo() {
