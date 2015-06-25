@@ -47,6 +47,7 @@ public class Comment extends Thing {
     private String linkTitle = "";
     private String linkUrl = "";
     private List<String> children;
+    private boolean isNew;
 
     private int level;
     private boolean isMore;
@@ -176,6 +177,8 @@ public class Comment extends Thing {
         comment.setLinkAuthor(jsonObject.optString("link_author"));
         comment.setLinkTitle(jsonObject.optString("link_title"));
         comment.setLinkUrl(jsonObject.optString("link_url"));
+
+        comment.setIsNew(jsonObject.optBoolean("new"));
 
 //        JSONArray arrayReplies = jsonObject.getJSONArray("replies");
 //        ArrayList<Comment> listReplies = new ArrayList<>(arrayReplies.length());
@@ -447,5 +450,13 @@ public class Comment extends Thing {
 
     public void setCreatedUtc(long createdUtc) {
         this.createdUtc = createdUtc;
+    }
+
+    public boolean isNew() {
+        return isNew;
+    }
+
+    public void setIsNew(boolean isNew) {
+        this.isNew = isNew;
     }
 }

@@ -19,6 +19,7 @@ import com.android.volley.VolleyError;
 import com.winsonchiu.reader.data.Comment;
 import com.winsonchiu.reader.data.Message;
 import com.winsonchiu.reader.data.Reddit;
+import com.winsonchiu.reader.data.Thing;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -113,8 +114,6 @@ public class FragmentInbox extends Fragment {
         eventListener = new AdapterInbox.ViewHolderMessage.EventListener() {
             @Override
             public void sendMessage(String name, String text) {
-
-
                 Map<String, String> params = new HashMap<>();
                 params.put("api_type", "json");
                 params.put("thing_id", name);
@@ -140,6 +139,26 @@ public class FragmentInbox extends Fragment {
                                         catch (JSONException e) {
                                             e.printStackTrace();
                                         }
+                                    }
+                                }, new Response.ErrorListener() {
+                                    @Override
+                                    public void onErrorResponse(VolleyError error) {
+
+                                    }
+                                }, params, 0);
+            }
+
+            @Override
+            public void markRead(Thing thing) {
+
+                Map<String, String> params = new HashMap<>();
+                params.put("id", thing.getName());
+
+                mListener.getReddit()
+                        .loadPost(Reddit.OAUTH_URL + "/api/read_message",
+                                new Response.Listener<String>() {
+                                    @Override
+                                    public void onResponse(String response) {
                                     }
                                 }, new Response.ErrorListener() {
                                     @Override

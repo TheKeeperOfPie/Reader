@@ -443,7 +443,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
 
         }
 
-        private void expandToolbarActions() {
+        public void expandToolbarActions() {
 
             if (comment.isMore()) {
                 eventListener.loadNestedComments(comment);
@@ -599,6 +599,10 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                 textInfo.setText(TextUtils.concat(spannableScore, " by ", spannableAuthor, " ",
                         DateUtils.getRelativeTimeSpanString(
                                 comment.getCreatedUtc()) + (comment.getEdited() > 0 ? "*" : "")));
+
+                textInfo.setTextColor(comment.isNew() ? itemView.getContext().getResources()
+                        .getColor(R.color.darkThemeTextColorAlert) : itemView.getContext().getResources()
+                        .getColor(R.color.darkThemeTextColorMuted));
 
                 if (comment.getEdited() > 1) {
                     textHidden.setText(

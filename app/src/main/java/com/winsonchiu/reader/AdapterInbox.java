@@ -20,6 +20,7 @@ import android.widget.TextView;
 
 import com.winsonchiu.reader.data.Message;
 import com.winsonchiu.reader.data.Reddit;
+import com.winsonchiu.reader.data.Thing;
 
 import java.util.Date;
 
@@ -72,9 +73,24 @@ public class AdapterInbox extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
                         LayoutInflater.from(parent.getContext())
                                 .inflate(R.layout.row_message, parent, false), eventListenerInbox);
             case VIEW_TYPE_COMMENT:
+                // TODO: Move to different ViewHolderComment constructor
                 return new AdapterCommentList.ViewHolderComment(
                         LayoutInflater.from(parent.getContext())
-                                .inflate(R.layout.row_comment, parent, false), eventListenerBase, eventListenerComment, disallowListener);
+                                .inflate(R.layout.row_comment, parent, false), eventListenerBase, eventListenerComment, disallowListener) {
+                    @Override
+                    public void expandToolbarActions() {
+                        super.expandToolbarActions();
+
+                        if (comment.isNew()) {
+                            eventListenerInbox.markRead(comment);
+                            comment.setIsNew(false);
+
+                            textInfo.setTextColor(comment.isNew() ? itemView.getContext().getResources()
+                                    .getColor(R.color.darkThemeTextColorAlert) : itemView.getContext().getResources()
+                                    .getColor(R.color.darkThemeTextColorMuted));
+                        }
+                    }
+                };
 
         }
 
@@ -164,6 +180,12 @@ public class AdapterInbox extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
             clickListenerLink = new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
+                    if (message.isNew()) {
+                        eventListener.markRead(message);
+                        message.setIsNew(false);
+                        onBind(message);
+                    }
+
                     AnimationUtils.animateExpand(toolbarActions, 1f, null);
                 }
             };
@@ -217,12 +239,14 @@ public class AdapterInbox extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
                             message.getCreatedUtc()).toString());
 
             textInfo.setText(spannableInfo);
-            textInfo.setTextColor(itemView.getContext().getResources()
+            textInfo.setTextColor(message.isNew() ? itemView.getContext().getResources()
+                    .getColor(R.color.darkThemeTextColorAlert) : itemView.getContext().getResources()
                     .getColor(R.color.darkThemeTextColorMuted));
         }
 
         public interface EventListener {
             void sendMessage(String name, String text);
+            void markRead(Thing thing);
         }
     }
 
