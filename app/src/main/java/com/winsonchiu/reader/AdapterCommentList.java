@@ -6,12 +6,10 @@ import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
 import android.graphics.drawable.Drawable;
-import android.preference.PreferenceManager;
 import android.support.v4.graphics.ColorUtils;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.RecyclerView;
@@ -37,10 +35,6 @@ import android.widget.TextView;
 import com.winsonchiu.reader.data.Comment;
 import com.winsonchiu.reader.data.Link;
 import com.winsonchiu.reader.data.Reddit;
-import com.winsonchiu.reader.data.User;
-
-import org.json.JSONException;
-import org.json.JSONObject;
 
 /**
  * Created by TheKeeperOfPie on 3/12/2015.
@@ -62,7 +56,6 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
     private RecyclerCallback recyclerCallback;
     private FragmentComments.YouTubeListener youTubeListener;
 
-    private SharedPreferences preferences;
     private ControllerComments controllerComments;
     private AdapterLink.ViewHolderBase viewHolderLink;
     private int thumbnailWidth;
@@ -88,7 +81,6 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
         this.isGrid = isGrid;
         this.colorLink = colorLink;
         this.controllerComments = controllerComments;
-        this.preferences = PreferenceManager.getDefaultSharedPreferences(activity);
         Resources resources = activity.getResources();
         this.thumbnailWidth = resources.getDisplayMetrics().widthPixels / 2;
     }
@@ -116,7 +108,12 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
 
                     @Override
                     public void loadBackgroundColor(Drawable drawable, int position) {
-                        itemView.setBackgroundColor(colorLink);
+                        if (colorLink != 0) {
+                            itemView.setBackgroundColor(colorLink);
+                        }
+                        else {
+                            super.loadBackgroundColor(drawable, position);
+                        }
                     }
 
                     @Override
@@ -154,7 +151,9 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
 //                        margin);
 //                ((RecyclerView.LayoutParams) viewHolderLink.itemView.findViewById(R.id.layout_link).getLayoutParams()).setMarginEnd(
 //                        margin);
-                viewHolderLink.itemView.setBackgroundColor(colorLink);
+                if (colorLink != 0) {
+                    viewHolderLink.itemView.setBackgroundColor(colorLink);
+                }
             }
             else {
                 viewHolderLink = new AdapterLinkList.ViewHolder(
@@ -242,10 +241,6 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
         if (viewHolderLink != null) {
             viewHolderLink.destroyWebViews();
         }
-    }
-
-    public boolean isAnimationFinished() {
-        return animationFinished;
     }
 
     public void setAnimationFinished(boolean isAnimationFinished) {
@@ -382,8 +377,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                 comment.setEdited(System.currentTimeMillis());
             }
             else {
-                eventListenerBase
-                        .sendComment(comment.getName(), editTextReply.getText().toString());
+                eventListener.sendComment(comment.getName(), editTextReply.getText().toString());
             }
             comment.setReplyExpanded(!comment.isReplyExpanded());
             layoutContainerReply.setVisibility(View.GONE);
@@ -665,7 +659,6 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                     toggleReply();
                     break;
                 case R.id.item_delete:
-                    // TODO: Test to see if itemView Context is valid for this action
                     new AlertDialog.Builder(itemView.getContext())
                             .setTitle("Delete comment?")
                             .setMessage(Reddit.getTrimmedHtml(comment.getBodyHtml()))
@@ -701,6 +694,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
             boolean toggleComment(int position);
             void deleteComment(Comment comment);
             void editComment(Comment comment, String text);
+            void sendComment(String name, String text);
         }
 
     }

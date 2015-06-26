@@ -1,7 +1,6 @@
 package com.winsonchiu.reader;
 
 import android.app.Activity;
-import android.app.Fragment;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
@@ -40,16 +39,6 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
 
     public static final String TAG = FragmentThreadList.class.getCanonicalName();
 
-    // TODO: Rename parameter arguments, choose names that match
-    // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-    private static final String ARG_PARAM1 = "param1";
-    private static final String ARG_PARAM2 = "param2";
-    private static final String SCROLL_POSITION = "scrollPosition";
-
-    // TODO: Rename and change types of parameters
-    private String mParam1;
-    private String mParam2;
-
     private Activity activity;
     private FragmentListenerBase mListener;
 
@@ -69,27 +58,15 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
     private Toolbar toolbar;
     private AdapterLinkList adapterLinkList;
     private AdapterLinkGrid adapterLinkGrid;
-    private int saveScrollPosition;
     private Button buttonSubscribe;
     private AdapterLink.ViewHolderHeader.EventListener eventListenerHeader;
     private DisallowListener disallowListener;
     private RecyclerCallback recyclerCallback;
     private ControllerLinks.Listener listener;
 
-    /**
-     * Use this factory method to create a new instance of
-     * this fragment using the provided parameters.
-     *
-     * @param param1 Parameter 1.
-     * @param param2 Parameter 2.
-     * @return A new instance of fragment FragmentThreadList.
-     */
-    // TODO: Rename and change types and number of parameters
-    public static FragmentThreadList newInstance(String param1, String param2) {
+    public static FragmentThreadList newInstance() {
         FragmentThreadList fragment = new FragmentThreadList();
         Bundle args = new Bundle();
-        args.putString(ARG_PARAM1, param1);
-        args.putString(ARG_PARAM2, param2);
         fragment.setArguments(args);
         return fragment;
     }
@@ -101,11 +78,6 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
-        if (getArguments() != null) {
-            mParam1 = getArguments().getString(ARG_PARAM1);
-            mParam2 = getArguments().getString(ARG_PARAM2);
-        }
         setHasOptionsMenu(true);
     }
 
@@ -118,7 +90,7 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
                 activity.getApplicationContext());
 
         itemInterface = menu.findItem(R.id.item_interface);
-        switch (preferences.getString(AppSettings.INTERFACE_MODE, AppSettings.MODE_LIST)) {
+        switch (preferences.getString(AppSettings.INTERFACE_MODE, AppSettings.MODE_GRID)) {
             case AppSettings.MODE_LIST:
                 itemInterface.setIcon(R.drawable.ic_view_module_white_24dp);
                 break;
@@ -155,10 +127,6 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
         onMenuItemClick(menu.findItem(mListener.getControllerLinks()
                 .getTime()
                 .getMenuId()));
-
-    }
-
-    public void temp() {
 
     }
 
@@ -226,7 +194,7 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
 
                 Intent intent = new Intent(activity, ActivityNewPost.class);
                 intent.putExtra(ActivityNewPost.USER,
-                        mListener.getControllerInbox().getUser().getName());
+                        mListener.getControllerUser().getUser().getName());
                 intent.putExtra(ActivityNewPost.SUBREDDIT,
                         mListener.getControllerLinks().getSubreddit().getUrl().substring(
                                 3, mListener.getControllerLinks()
@@ -280,6 +248,11 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
             @Override
             public int getRecyclerHeight() {
                 return recyclerThreadList.getHeight();
+            }
+
+            @Override
+            public RecyclerView.LayoutManager getLayoutManager() {
+                return layoutManager;
             }
         };
 
@@ -396,12 +369,11 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
             @Override
             public void onRefresh() {
                 mListener.getControllerLinks()
-                        .reloadAllLinks(false);
+                        .reloadAllLinks();
             }
         });
         if (adapterLinkList == null) {
             adapterLinkList = new AdapterLinkList(activity, mListener.getControllerLinks(),
-                    mListener.getControllerComments(),
                     mListener.getControllerUser(),
                     eventListenerHeader,
                     mListener.getEventListenerBase(),
@@ -410,7 +382,6 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
         }
         if (adapterLinkGrid == null) {
             adapterLinkGrid = new AdapterLinkGrid(activity, mListener.getControllerLinks(),
-                    mListener.getControllerComments(),
                     mListener.getControllerUser(),
                     eventListenerHeader,
                     mListener.getEventListenerBase(),
@@ -420,7 +391,7 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
 
         if (AppSettings.MODE_LIST.equals(
                 PreferenceManager.getDefaultSharedPreferences(activity.getApplicationContext())
-                        .getString(AppSettings.INTERFACE_MODE, AppSettings.MODE_LIST))) {
+                        .getString(AppSettings.INTERFACE_MODE, AppSettings.MODE_GRID))) {
             adapterLink = adapterLinkList;
         }
         else {
@@ -476,7 +447,7 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
         super.onActivityResult(requestCode, resultCode, data);
 
         if (resultCode == Activity.RESULT_OK) {
-            mListener.getControllerLinks().reloadAllLinks(false);
+            mListener.getControllerLinks().reloadAllLinks();
         }
 
     }
@@ -557,7 +528,7 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
                 return true;
             case R.id.item_interface:
                 if (AppSettings.MODE_LIST.equals(
-                        preferences.getString(AppSettings.INTERFACE_MODE, AppSettings.MODE_LIST))) {
+                        preferences.getString(AppSettings.INTERFACE_MODE, AppSettings.MODE_GRID))) {
                     resetAdapter(adapterLinkGrid);
                     item.setIcon(getResources().getDrawable(R.drawable.ic_view_list_white_24dp));
                     preferences.edit()

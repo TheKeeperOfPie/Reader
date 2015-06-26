@@ -38,14 +38,13 @@ public class AdapterLinkGrid extends AdapterLink {
 
     public AdapterLinkGrid(Activity activity,
             ControllerLinksBase controllerLinks,
-            ControllerCommentsBase controllerComments,
             ControllerUser controllerUser,
             ViewHolderHeader.EventListener eventListenerHeader,
             ViewHolderBase.EventListener eventListenerBase,
             DisallowListener disallowListener,
             RecyclerCallback recyclerCallback) {
         super(eventListenerHeader, eventListenerBase, disallowListener, recyclerCallback);
-        setControllers(controllerLinks, controllerComments, controllerUser);
+        setControllers(controllerLinks, controllerUser);
         setActivity(activity);
     }
 
@@ -189,9 +188,13 @@ public class AdapterLinkGrid extends AdapterLink {
             if (itemView.getLayoutParams() instanceof StaggeredGridLayoutManager.LayoutParams) {
                 ((StaggeredGridLayoutManager.LayoutParams) itemView.getLayoutParams())
                         .setFullSpan(expand);
-                // TODO: Check if need invalidateSpanAssignments
-//                ((StaggeredGridLayoutManager) callback.getLayoutManager())
-//                        .invalidateSpanAssignments();
+                if (expand) {
+                    if (recyclerCallback.getLayoutManager() instanceof StaggeredGridLayoutManager) {
+                        ((StaggeredGridLayoutManager) recyclerCallback.getLayoutManager())
+                                .invalidateSpanAssignments();
+                    }
+                    recyclerCallback.scrollTo(getAdapterPosition());
+                }
             }
         }
 
@@ -209,7 +212,6 @@ public class AdapterLinkGrid extends AdapterLink {
             Picasso.with(itemView.getContext()).load(android.R.color.transparent).into(imageFull);
 
             if (TextUtils.isEmpty(link.getThumbnail())) {
-                imageUrl = link.getThumbnail();
                 if (Reddit.placeImageUrl(
                         link) && position == getAdapterPosition()) {
                     Picasso.with(itemView.getContext())
@@ -253,7 +255,6 @@ public class AdapterLinkGrid extends AdapterLink {
                                         Drawable drawable = imageFull.getDrawable();
                                         loadBackgroundColor(drawable, position);
 
-                                        imageUrl = link.getThumbnail();
                                         if (Reddit.placeImageUrl(
                                                 link) && position == getAdapterPosition()) {
                                             Picasso.with(itemView.getContext())
@@ -310,7 +311,7 @@ public class AdapterLinkGrid extends AdapterLink {
         }
 
         @Override
-        public float getRatio(int adapterPosition) {
+        public float getRatio() {
             if (itemView.getLayoutParams() instanceof StaggeredGridLayoutManager.LayoutParams) {
                 int width = itemView.getContext().getResources().getDisplayMetrics().widthPixels;
 
@@ -396,6 +397,7 @@ public class AdapterLinkGrid extends AdapterLink {
         @Override
         public void onRecycle() {
             super.onRecycle();
+            expandFull(false);
             ((RelativeLayout.LayoutParams) textThreadTitle.getLayoutParams()).removeRule(
                     RelativeLayout.START_OF);
             ((RelativeLayout.LayoutParams) textThreadTitle.getLayoutParams()).setMarginEnd(titleMargin);

@@ -2,10 +2,7 @@ package com.winsonchiu.reader;
 
 import android.app.Activity;
 import android.content.SharedPreferences;
-import android.content.res.Resources;
-import android.graphics.drawable.Drawable;
 import android.preference.PreferenceManager;
-import android.support.v7.widget.RecyclerView;
 import android.text.TextUtils;
 import android.util.Log;
 import android.widget.Toast;
@@ -18,7 +15,6 @@ import com.winsonchiu.reader.data.Listing;
 import com.winsonchiu.reader.data.Reddit;
 import com.winsonchiu.reader.data.Subreddit;
 import com.winsonchiu.reader.data.Thing;
-import com.winsonchiu.reader.data.User;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -87,24 +83,19 @@ public class ControllerSearch {
         listener.getAdapterSearchSubreddits().notifyDataSetChanged();
         listener.setSort(sort);
         reloadCurrentPage();
-        Log.d(TAG, "addListener: " + listener);
-        Log.d(TAG, "query: " + query);
-        Log.d(TAG, "subreddits: " + subreddits.getChildren().size());
     }
 
     public void removeListener(Listener listener) {
         listeners.remove(listener);
     }
 
-    public Reddit getReddit() {
-        return reddit;
-    }
-
     public void setQuery(String query) {
         this.query = query;
         setTitle();
         if ((TextUtils.isEmpty(query) || query.length() < 2) && currentPage == PAGE_SUBREDDITS) {
-            requestSubreddits.cancel();
+            if (requestSubreddits != null) {
+                requestSubreddits.cancel();
+            }
             subreddits = subredditsSubscribed;
             for (Listener listener : listeners) {
                 listener.getAdapterSearchSubreddits()
@@ -530,27 +521,11 @@ public class ControllerSearch {
         isLoadingLinksSubreddit = loading;
     }
 
-    public Activity getActivity() {
-        return activity;
-    }
-
-    public Subreddit getSubreddit() {
-        return new Subreddit();
-    }
-
-    public Sort getSort() {
-        return sort;
-    }
-
     public void setSort(Sort sort) {
         if (this.sort != sort) {
             this.sort = sort;
             reloadCurrentPage();
         }
-    }
-
-    public Time getTime() {
-        return time;
     }
 
     public void setTime(Time time) {

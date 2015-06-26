@@ -1,16 +1,9 @@
 package com.winsonchiu.reader;
 
-import android.animation.ObjectAnimator;
 import android.app.Activity;
-import android.content.SharedPreferences;
-import android.content.res.Resources;
-import android.graphics.drawable.Drawable;
-import android.preference.PreferenceManager;
-import android.support.v7.widget.RecyclerView;
 import android.text.TextUtils;
 import android.util.Log;
 import android.util.TypedValue;
-import android.view.View;
 import android.widget.Toast;
 
 import com.android.volley.Response;
@@ -22,7 +15,6 @@ import com.winsonchiu.reader.data.Listing;
 import com.winsonchiu.reader.data.Reddit;
 import com.winsonchiu.reader.data.Subreddit;
 import com.winsonchiu.reader.data.Thing;
-import com.winsonchiu.reader.data.User;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -39,9 +31,8 @@ import java.util.Set;
 /**
  * Created by TheKeeperOfPie on 3/20/2015.
  */
-public class ControllerComments implements ControllerCommentsBase {
+public class ControllerComments {
 
-    private static final long ALPHA_DURATION = 500;
     private static final String TAG = ControllerComments.class.getCanonicalName();
 
     private Activity activity;
@@ -175,32 +166,26 @@ public class ControllerComments implements ControllerCommentsBase {
         }
     }
 
-    @Override
     public int sizeLinks() {
         return 1;
     }
 
-    @Override
     public boolean isLoading() {
         return isLoading;
     }
 
-    @Override
     public void loadMoreLinks() {
         // Not implemented
     }
 
-    @Override
     public Subreddit getSubreddit() {
         return new Subreddit();
     }
 
-    @Override
     public boolean showSubreddit() {
         return true;
     }
 
-    @Override
     public void loadNestedComments(final Comment moreComment) {
 
         Log.d(TAG, "loadNestedComments");
@@ -317,7 +302,6 @@ public class ControllerComments implements ControllerCommentsBase {
                 }, params, 0);
     }
 
-    @Override
     public void insertComments(Comment moreComment, Listing listing) {
 
         List<Thing> listComments = listing.getChildren();
@@ -364,7 +348,6 @@ public class ControllerComments implements ControllerCommentsBase {
 
     }
 
-    @Override
     public void insertComment(Comment comment) {
 
         // Check to see if comment is actually a part of the link's comment thread
@@ -391,7 +374,6 @@ public class ControllerComments implements ControllerCommentsBase {
             listingComments.getChildren()
                     .add(commentIndex + 1, comment);
 
-            // TODO: Fix index offset as this will not work with Profile page
             for (Listener listener : listeners) {
                 listener.getAdapter()
                         .notifyItemInserted(commentIndex + 2);
@@ -399,7 +381,6 @@ public class ControllerComments implements ControllerCommentsBase {
         }
     }
 
-    @Override
     public void deleteComment(Comment comment) {
 
         int commentIndex = link.getComments()
@@ -411,7 +392,6 @@ public class ControllerComments implements ControllerCommentsBase {
                     .get(commentIndex);
             newComment.setBodyHtml(Comment.HTML_DELETED);
             newComment.setAuthor("[deleted]");
-//            link.getComments().getChildren().set(commentIndex, newComment);
         }
 
         commentIndex = listingComments.getChildren()
@@ -422,7 +402,6 @@ public class ControllerComments implements ControllerCommentsBase {
                     .get(commentIndex);
             newComment.setBodyHtml(Comment.HTML_DELETED);
             newComment.setAuthor("[deleted]");
-//            listingComments.getChildren().set(commentIndex, newComment);
 
             for (Listener listener : listeners) {
                 listener.getAdapter()
@@ -449,7 +428,6 @@ public class ControllerComments implements ControllerCommentsBase {
                 }, params, 0);
     }
 
-    @Override
     /**
      * Toggles children of comment
      *
@@ -483,7 +461,6 @@ public class ControllerComments implements ControllerCommentsBase {
 
     }
 
-    @Override
     public void expandComment(int position) {
         List<Thing> commentList = link.getComments()
                 .getChildren();
@@ -512,7 +489,6 @@ public class ControllerComments implements ControllerCommentsBase {
         }
     }
 
-    @Override
     public void collapseComment(int position) {
         List<Thing> commentList = listingComments.getChildren();
         Comment comment = (Comment) commentList.get(position);
@@ -529,7 +505,6 @@ public class ControllerComments implements ControllerCommentsBase {
         }
     }
 
-    @Override
     public void voteComment(final AdapterCommentList.ViewHolderComment viewHolder,
             final Comment comment, final int vote) {
 
@@ -542,17 +517,10 @@ public class ControllerComments implements ControllerCommentsBase {
         });
     }
 
-    @Override
-    public int getIndentWidth(Comment comment) {
-        return indentWidth * comment.getLevel();
-    }
-
-    @Override
     public Link getLink(int position) {
         return link;
     }
 
-    @Override
     public Reddit getReddit() {
         return reddit;
     }
@@ -571,13 +539,11 @@ public class ControllerComments implements ControllerCommentsBase {
                 .size() + 1;
     }
 
-    @Override
     public Comment getComment(int position) {
         return (Comment) listingComments.getChildren()
                 .get(position - 1);
     }
 
-    @Override
     public boolean isCommentExpanded(int position) {
         position = position - 1;
 
@@ -600,16 +566,13 @@ public class ControllerComments implements ControllerCommentsBase {
         return false;
     }
 
-    @Override
     public Link getMainLink() {
         return link;
     }
 
-    @Override
     public void loadMoreComments() {
     }
 
-    @Override
     public boolean hasChildren(Comment comment) {
 
         int commentIndex = link.getComments()
@@ -629,7 +592,6 @@ public class ControllerComments implements ControllerCommentsBase {
         return false;
     }
 
-    @Override
     public void editComment(final Comment comment, String text) {
         Map<String, String> params = new HashMap<>();
         params.put("api_type", "json");

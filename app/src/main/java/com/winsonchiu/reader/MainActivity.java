@@ -252,7 +252,7 @@ public class MainActivity extends YouTubeBaseActivity
                 getFragmentManager().beginTransaction()
                         .hide(getFragmentManager().findFragmentById(R.id.frame_fragment))
                         .add(R.id.frame_fragment, FragmentWeb
-                                .newInstance(url, ""), FragmentWeb.TAG)
+                                .newInstance(url), FragmentWeb.TAG)
                         .addToBackStack(null)
                         .commit();
             }
@@ -397,6 +397,27 @@ public class MainActivity extends YouTubeBaseActivity
                 getControllerComments().editComment(comment, text);
             }
 
+            @Override
+            public void sendComment(String name, String text) {
+                reddit.sendComment(name, text, new Response.Listener<String>() {
+                    @Override
+                    public void onResponse(String response) {
+                        try {
+                            JSONObject jsonObject = new JSONObject(response);
+                            Comment newComment = Comment.fromJson(
+                                    jsonObject.getJSONObject("json")
+                                            .getJSONObject("data")
+                                            .getJSONArray("things")
+                                            .getJSONObject(0), 0);
+                            getControllerComments().insertComment(newComment);
+                        }
+                        catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }, null);
+            }
+
         };
 
     }
@@ -414,7 +435,6 @@ public class MainActivity extends YouTubeBaseActivity
         View viewHeader = LayoutInflater.from(this)
                 .inflate(R.layout.header_navigation,
                         viewNavigation, false);
-
 
         imageNavHeader = (ImageView) viewHeader.findViewById(R.id.image_nav_header);
         textAccountName = (TextView) viewHeader.findViewById(R.id.text_account_name);
@@ -455,7 +475,7 @@ public class MainActivity extends YouTubeBaseActivity
                 else {
                     getFragmentManager().beginTransaction()
                             .replace(R.id.frame_fragment,
-                                    FragmentThreadList.newInstance("", ""),
+                                    FragmentThreadList.newInstance(),
                                     FragmentThreadList.TAG)
                             .commit();
                 }
@@ -463,7 +483,7 @@ public class MainActivity extends YouTubeBaseActivity
             case R.id.item_profile:
                 getFragmentManager().beginTransaction()
                         .replace(R.id.frame_fragment,
-                                FragmentProfile.newInstance("", ""),
+                                FragmentProfile.newInstance(),
                                 FragmentProfile.TAG)
                         .commit();
 
@@ -484,7 +504,7 @@ public class MainActivity extends YouTubeBaseActivity
                 getControllerInbox().reload();
                 getFragmentManager().beginTransaction()
                         .replace(R.id.frame_fragment,
-                                FragmentInbox.newInstance("", ""),
+                                FragmentInbox.newInstance(),
                                 FragmentInbox.TAG)
                         .commit();
                 break;
@@ -556,7 +576,7 @@ public class MainActivity extends YouTubeBaseActivity
 
     private void onClickAccount() {
         FragmentTransaction fragmentTransaction = getFragmentManager().beginTransaction()
-                .add(R.id.frame_fragment, FragmentAuth.newInstance("", ""), FragmentAuth.TAG)
+                .add(R.id.frame_fragment, FragmentAuth.newInstance(), FragmentAuth.TAG)
                 .addToBackStack(null);
 
         Fragment fragment = getFragmentManager().findFragmentById(R.id.frame_fragment);
@@ -578,7 +598,7 @@ public class MainActivity extends YouTubeBaseActivity
                     .contains("redd")) {
                 FragmentTransaction fragmentTransaction = getFragmentManager().beginTransaction()
                         .add(R.id.frame_fragment, FragmentWeb
-                                .newInstance(urlString, ""), FragmentWeb.TAG)
+                                .newInstance(urlString), FragmentWeb.TAG)
                         .addToBackStack(null);
 
                 Fragment fragment = getFragmentManager().findFragmentById(R.id.frame_fragment);
@@ -614,7 +634,7 @@ public class MainActivity extends YouTubeBaseActivity
 
                 getFragmentManager().beginTransaction()
                         .replace(R.id.frame_fragment,
-                                FragmentComments.newInstance(subreddit, id, false, getResources().getColor(R.color.darkThemeBackground), 0, 0, 0),
+                                FragmentComments.newInstance(),
                                 FragmentComments.TAG)
                         .commit();
                 fragmentData.getControllerComments().setLinkId(subreddit, id);
@@ -622,7 +642,7 @@ public class MainActivity extends YouTubeBaseActivity
             else if (path.contains("/u/")) {
                 int indexUser = path.indexOf("u/") + 2;
                 getFragmentManager().beginTransaction()
-                        .replace(R.id.frame_fragment, FragmentProfile.newInstance("", ""),
+                        .replace(R.id.frame_fragment, FragmentProfile.newInstance(),
                                 FragmentProfile.TAG)
                         .commit();
                 fragmentData.getControllerProfile().loadUser(
@@ -631,7 +651,7 @@ public class MainActivity extends YouTubeBaseActivity
             else if (path.contains("/user/")) {
                 int indexUser = path.indexOf("user/") + 5;
                 getFragmentManager().beginTransaction()
-                        .replace(R.id.frame_fragment, FragmentProfile.newInstance("", ""),
+                        .replace(R.id.frame_fragment, FragmentProfile.newInstance(),
                                 FragmentProfile.TAG)
                         .commit();
 
@@ -649,7 +669,7 @@ public class MainActivity extends YouTubeBaseActivity
             }
             else {
                 getFragmentManager().beginTransaction()
-                        .replace(R.id.frame_fragment, FragmentThreadList.newInstance("", ""),
+                        .replace(R.id.frame_fragment, FragmentThreadList.newInstance(),
                                 FragmentThreadList.TAG)
                         .commit();
                 int indexSort = path.indexOf("/", subreddit.length() + 1);
@@ -732,7 +752,7 @@ public class MainActivity extends YouTubeBaseActivity
             else if (URLUtil.isValidUrl(urlString)) {
                 FragmentTransaction fragmentTransaction = getFragmentManager().beginTransaction()
                         .add(R.id.frame_fragment, FragmentWeb
-                                .newInstance(urlString, ""), FragmentWeb.TAG)
+                                .newInstance(urlString), FragmentWeb.TAG)
                         .addToBackStack(null);
 
                 Fragment fragment = getFragmentManager().findFragmentById(R.id.frame_fragment);

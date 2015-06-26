@@ -1,11 +1,8 @@
 package com.winsonchiu.reader;
 
 import android.app.Activity;
-import android.app.Fragment;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.preference.PreferenceManager;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.LinearLayoutManager;
@@ -24,18 +21,10 @@ import android.widget.Spinner;
 
 import com.winsonchiu.reader.data.Comment;
 import com.winsonchiu.reader.data.Reddit;
-import com.winsonchiu.reader.data.User;
 
 public class FragmentProfile extends FragmentBase implements Toolbar.OnMenuItemClickListener {
-    // TODO: Rename parameter arguments, choose names that match
-    // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-    private static final String ARG_PARAM1 = "param1";
-    private static final String ARG_PARAM2 = "param2";
-    public static final String TAG = FragmentProfile.class.getCanonicalName();
 
-    // TODO: Rename and change types of parameters
-    private String mParam1;
-    private String mParam2;
+    public static final String TAG = FragmentProfile.class.getCanonicalName();
 
     private FragmentListenerBase mListener;
     private Activity activity;
@@ -43,9 +32,7 @@ public class FragmentProfile extends FragmentBase implements Toolbar.OnMenuItemC
     private SwipeRefreshLayout swipeRefreshProfile;
     private RecyclerView recyclerProfile;
     private LinearLayoutManager linearLayoutManager;
-    private User user;
     private AdapterProfile adapterProfile;
-    private SharedPreferences preferences;
     private MenuItem itemSearch;
     private Menu menu;
     private MenuItem itemSortTime;
@@ -53,20 +40,9 @@ public class FragmentProfile extends FragmentBase implements Toolbar.OnMenuItemC
     private Spinner spinnerPage;
     private AdapterProfilePage adapterProfilePage;
 
-    /**
-     * Use this factory method to create a new instance of
-     * this fragment using the provided parameters.
-     *
-     * @param param1 Parameter 1.
-     * @param param2 Parameter 2.
-     * @return A new instance of fragment FragmentProfile.
-     */
-    // TODO: Rename and change types and number of parameters
-    public static FragmentProfile newInstance(String param1, String param2) {
+    public static FragmentProfile newInstance() {
         FragmentProfile fragment = new FragmentProfile();
         Bundle args = new Bundle();
-        args.putString(ARG_PARAM1, param1);
-        args.putString(ARG_PARAM2, param2);
         fragment.setArguments(args);
         return fragment;
     }
@@ -78,13 +54,6 @@ public class FragmentProfile extends FragmentBase implements Toolbar.OnMenuItemC
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        if (getArguments() != null) {
-            mParam1 = getArguments().getString(ARG_PARAM1);
-            mParam2 = getArguments().getString(ARG_PARAM2);
-        }
-        preferences = PreferenceManager.getDefaultSharedPreferences(
-                activity.getApplicationContext());
-        this.user = new User();
     }
 
     private void setUpOptionsMenu() {
@@ -260,7 +229,7 @@ public class FragmentProfile extends FragmentBase implements Toolbar.OnMenuItemC
         recyclerProfile.setLayoutManager(linearLayoutManager);
 
         if (adapterProfile == null) {
-            adapterProfile = new AdapterProfile(activity, mListener.getControllerProfile(),
+            adapterProfile = new AdapterProfile(mListener.getControllerProfile(),
                     mListener.getControllerLinks(),
                     mListener.getControllerUser(),
                     mListener.getEventListenerBase(),
@@ -301,6 +270,11 @@ public class FragmentProfile extends FragmentBase implements Toolbar.OnMenuItemC
                         public void editComment(Comment comment, String text) {
                             mListener.getControllerProfile().editComment(comment, text);
                         }
+
+                        @Override
+                        public void sendComment(String name, String text) {
+                            mListener.getControllerProfile().sendComment(name, text);
+                        }
                     },
                     new DisallowListener() {
                         @Override
@@ -322,6 +296,11 @@ public class FragmentProfile extends FragmentBase implements Toolbar.OnMenuItemC
                 @Override
                 public int getRecyclerHeight() {
                     return recyclerProfile.getHeight();
+                }
+
+                @Override
+                public RecyclerView.LayoutManager getLayoutManager() {
+                    return linearLayoutManager;
                 }
             }, listener);
         }

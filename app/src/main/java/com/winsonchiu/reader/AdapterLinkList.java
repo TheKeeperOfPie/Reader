@@ -28,14 +28,13 @@ public class AdapterLinkList extends AdapterLink {
 
     public AdapterLinkList(Activity activity,
             ControllerLinksBase controllerLinks,
-            ControllerCommentsBase controllerComments,
             ControllerUser controllerUser,
             ViewHolderHeader.EventListener eventListenerHeader,
             ViewHolderBase.EventListener eventListenerBase,
             DisallowListener disallowListener,
             RecyclerCallback recyclerCallback) {
         super(eventListenerHeader, eventListenerBase, disallowListener, recyclerCallback);
-        setControllers(controllerLinks, controllerComments, controllerUser);
+        setControllers(controllerLinks, controllerUser);
         setActivity(activity);
     }
 
@@ -102,7 +101,7 @@ public class AdapterLinkList extends AdapterLink {
         }
 
         @Override
-        public float getRatio(int adapterPosition) {
+        public float getRatio() {
             return 1f;
         }
 

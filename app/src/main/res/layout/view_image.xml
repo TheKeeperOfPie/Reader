@@ -47,7 +47,7 @@
 
     </ScrollView>
 
-    <com.winsonchiu.reader.TextViewShadow
+    <TextView
         android:id="@+id/text_album_indicator"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"

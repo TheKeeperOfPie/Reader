@@ -15,8 +15,6 @@ public interface FragmentListenerBase {
     ControllerProfile getControllerProfile();
     ControllerSearch getControllerSearch();
     ControllerUser getControllerUser();
-    void setRequestedOrientation(int orientation);
-    int getRequestedOrientation();
     Reddit getReddit();
     AdapterLink.ViewHolderBase.EventListener getEventListenerBase();
     AdapterCommentList.ViewHolderComment.EventListener getEventListenerComment();

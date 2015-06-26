@@ -1,7 +1,6 @@
 package com.winsonchiu.reader;
 
 import android.app.Activity;
-import android.app.Fragment;
 import android.content.Context;
 import android.os.Bundle;
 import android.support.design.widget.TabLayout;
@@ -239,12 +238,6 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
             }
 
             @Override
-            public Reddit getReddit() {
-                return mListener.getControllerLinks()
-                        .getReddit();
-            }
-
-            @Override
             public int sizeLinks() {
                 return mListener.getControllerSearch()
                         .sizeLinks();
@@ -272,7 +265,7 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
                 return true;
             }
 
-        }, mListener.getControllerComments(), mListener.getControllerUser(),
+        }, mListener.getControllerUser(),
                 new AdapterLink.ViewHolderHeader.EventListener() {
                     @Override
                     public void onClickSubmit(String postType) {
@@ -294,6 +287,11 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
                     public int getRecyclerHeight() {
                         return recyclerSearchLinks.getHeight();
                     }
+
+                    @Override
+                    public RecyclerView.LayoutManager getLayoutManager() {
+                        return layoutManagerLinks;
+                    }
                 });
 
         adapterLinksSubreddit = new AdapterSearchLinkList(activity, new ControllerLinksBase() {
@@ -301,12 +299,6 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
             public Link getLink(int position) {
                 return mListener.getControllerSearch()
                         .getLinkSubreddit(position);
-            }
-
-            @Override
-            public Reddit getReddit() {
-                return mListener.getControllerLinks()
-                        .getReddit();
             }
 
             @Override
@@ -337,7 +329,7 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
                 return true;
             }
 
-        }, mListener.getControllerComments(), mListener.getControllerUser(),
+        }, mListener.getControllerUser(),
                 new AdapterLink.ViewHolderHeader.EventListener() {
                     @Override
                     public void onClickSubmit(String postType) {
@@ -358,6 +350,11 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
                     @Override
                     public int getRecyclerHeight() {
                         return recyclerSearchLinksSubreddit.getHeight();
+                    }
+
+                    @Override
+                    public RecyclerView.LayoutManager getLayoutManager() {
+                        return layoutManagerLinksSubreddit;
                     }
                 });
 

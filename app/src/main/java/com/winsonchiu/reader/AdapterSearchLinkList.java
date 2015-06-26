@@ -14,13 +14,12 @@ public class AdapterSearchLinkList extends AdapterLinkList {
 
     public AdapterSearchLinkList(Activity activity,
             ControllerLinksBase controllerLinks,
-            ControllerCommentsBase controllerComments,
             ControllerUser controllerUser,
             ViewHolderHeader.EventListener eventListenerHeader,
             ViewHolderBase.EventListener eventListenerBase,
             DisallowListener disallowListener,
             RecyclerCallback recyclerCallback) {
-        super(activity, controllerLinks, controllerComments, controllerUser, eventListenerHeader, eventListenerBase, disallowListener,
+        super(activity, controllerLinks,  controllerUser, eventListenerHeader, eventListenerBase, disallowListener,
                 recyclerCallback);
     }
 

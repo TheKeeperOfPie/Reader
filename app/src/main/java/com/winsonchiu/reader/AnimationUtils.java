@@ -1,12 +1,9 @@
 package com.winsonchiu.reader;
 
-import android.animation.ObjectAnimator;
 import android.animation.ValueAnimator;
-import android.app.Activity;
 import android.content.Context;
 import android.graphics.Point;
 import android.support.v4.graphics.ColorUtils;
-import android.support.v7.widget.RecyclerView;
 import android.util.TypedValue;
 import android.view.Display;
 import android.view.View;
@@ -14,9 +11,6 @@ import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.view.animation.Animation;
 import android.view.animation.Transformation;
-import android.widget.Toast;
-
-import com.winsonchiu.reader.data.Link;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -29,7 +23,6 @@ public class AnimationUtils {
     public static final long EXPAND_ACTION_DURATION = 150;
     public static final long ALPHA_DURATION = 500;
     public static final long BACKGROUND_DURATION = 500;
-    public static final long MOVE_DURATION = 350;
     private static final String TAG = AnimationUtils.class.getCanonicalName();
 
     public static void animateBackgroundColor(final View view, final int start, final int end) {
@@ -50,21 +43,6 @@ public class AnimationUtils {
         });
 
         valueAnimator.start();
-    }
-
-    public static void animateAlpha(View view, float start, float end) {
-        ObjectAnimator objectAnimator = ObjectAnimator.ofFloat(view, "alpha", start, end);
-        objectAnimator.setDuration(ALPHA_DURATION);
-        objectAnimator.start();
-    }
-
-    public static void animateExpandActions(final ViewGroup viewGroup, boolean skipFirst) {
-
-        final int height = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 48,
-                viewGroup.getContext()
-                        .getResources()
-                        .getDisplayMetrics());
-        animateExpandActionsWithHeight(viewGroup, skipFirst, height);
     }
 
     public static void animateExpandActionsWithHeight(final ViewGroup viewGroup,
@@ -215,28 +193,6 @@ public class AnimationUtils {
         int heightMeasureSpec = View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED);
         view.measure(widthMeasureSpec, heightMeasureSpec);
         return view.getMeasuredHeight();
-    }
-
-    public static void loadCommentFragmentAnimation(final Activity activity,
-            final RecyclerView.LayoutManager layoutManager,
-            final RecyclerView.ViewHolder viewHolder,
-            final Link link,
-            final OnAnimationEndListener onAnimationEndListener) {
-
-        if (link.getNumComments() == 0) {
-            if (!link.isCommentsClicked()) {
-                Toast.makeText(activity, activity.getString(R.string.no_comments),
-                        Toast.LENGTH_SHORT)
-                        .show();
-                link.setCommentsClicked(true);
-                return;
-            }
-        }
-
-        if (true) {
-            onAnimationEndListener.onAnimationEnd();
-            return;
-        }
     }
 
     public interface OnAnimationEndListener {

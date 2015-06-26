@@ -51,10 +51,6 @@ public class AdapterSearchSubreddits extends RecyclerView.Adapter<AdapterSearchS
         return controllerSubreddits.getSubredditCount();
     }
 
-    public RecyclerView.LayoutManager getLayoutManager() {
-        return layoutManager;
-    }
-
     public static class ViewHolder extends RecyclerView.ViewHolder {
 
         protected EventListener eventListener;

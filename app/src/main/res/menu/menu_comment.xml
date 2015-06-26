@@ -19,7 +19,7 @@
         android:title="@string/item_collapse"
         android:icon="@drawable/ic_arrow_drop_down_white_24dp"
         android:orderInCategory="200"
-        app:showAsAction="always"
+        app:showAsAction="ifRoom"
         />
 
     <item
@@ -27,7 +27,7 @@
         android:title="@string/item_upvote"
         android:icon="@drawable/ic_keyboard_arrow_up_white_24dp"
         android:orderInCategory="300"
-        app:showAsAction="always"
+        app:showAsAction="ifRoom"
         />
 
     <item
@@ -35,7 +35,7 @@
         android:title="@string/item_downvote"
         android:icon="@drawable/ic_keyboard_arrow_down_white_24dp"
         android:orderInCategory="400"
-        app:showAsAction="always"
+        app:showAsAction="ifRoom"
         />
 
     <item
@@ -43,7 +43,7 @@
         android:title="@string/item_reply"
         android:orderInCategory="500"
         android:icon="@drawable/ic_reply_white_24dp"
-        app:showAsAction="always"
+        app:showAsAction="ifRoom"
         />
 
     <item

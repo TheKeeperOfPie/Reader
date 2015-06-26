@@ -1,6 +1,5 @@
 package com.winsonchiu.reader;
 
-import android.app.Activity;
 import android.support.v7.widget.RecyclerView;
 import android.text.Spannable;
 import android.text.SpannableString;
@@ -24,8 +23,6 @@ public class AdapterProfile extends RecyclerView.Adapter<RecyclerView.ViewHolder
 
     private static final String TAG = AdapterProfile.class.getCanonicalName();
 
-    protected Activity activity;
-    protected RecyclerView.LayoutManager layoutManager;
     protected ControllerProfile controllerProfile;
     protected ControllerLinksBase controllerLinks;
     protected ControllerUser controllerUser;
@@ -36,8 +33,7 @@ public class AdapterProfile extends RecyclerView.Adapter<RecyclerView.ViewHolder
     private ControllerProfile.Listener listener;
     private List<RecyclerView.ViewHolder> viewHolders;
 
-    public AdapterProfile(final Activity activity,
-            ControllerProfile controllerProfile,
+    public AdapterProfile(ControllerProfile controllerProfile,
             ControllerLinksBase controllerLinks,
             ControllerUser controllerUser,
             AdapterLink.ViewHolderBase.EventListener eventListenerBase,
@@ -50,7 +46,6 @@ public class AdapterProfile extends RecyclerView.Adapter<RecyclerView.ViewHolder
         this.disallowListener = disallowListener;
         this.recyclerCallback = recyclerCallback;
         this.listener = listener;
-        this.activity = activity;
         this.controllerProfile = controllerProfile;
         this.controllerLinks = controllerLinks;
         this.controllerUser = controllerUser;

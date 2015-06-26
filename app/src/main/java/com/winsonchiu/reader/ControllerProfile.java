@@ -1,11 +1,6 @@
 package com.winsonchiu.reader;
 
 import android.app.Activity;
-import android.content.SharedPreferences;
-import android.content.res.Resources;
-import android.graphics.drawable.Drawable;
-import android.preference.PreferenceManager;
-import android.support.v7.widget.RecyclerView;
 import android.text.TextUtils;
 import android.util.Log;
 import android.util.TypedValue;
@@ -33,7 +28,7 @@ import java.util.Set;
 /**
  * Created by TheKeeperOfPie on 5/16/2015.
  */
-public class ControllerProfile implements ControllerLinksBase, ControllerCommentsBase {
+public class ControllerProfile implements ControllerLinksBase {
 
     public static final int VIEW_TYPE_HEADER = 0;
     public static final int VIEW_TYPE_HEADER_TEXT = 1;
@@ -43,20 +38,17 @@ public class ControllerProfile implements ControllerLinksBase, ControllerComment
     private static final String TAG = ControllerProfile.class.getCanonicalName();
 
     private Activity activity;
+    private ControllerUser controllerUser;
     private Set<Listener> listeners;
     private Listing data;
     private Reddit reddit;
-    private Drawable drawableSelf;
-    private Drawable drawableDefault;
     private Link link;
     private Link topLink;
     private Comment topComment;
-    private User currentUser;
     private User user;
     private String page;
     private Sort sort;
     private Time time;
-    private SharedPreferences preferences;
     private boolean isLoading;
     private int indentWidth;
 
@@ -67,29 +59,15 @@ public class ControllerProfile implements ControllerLinksBase, ControllerComment
         link = new Link();
         topLink = new Link();
         topComment = new Comment();
-        currentUser = new User();
         user = new User();
         page = "Overview";
         sort = Sort.HOT;
         time = Time.ALL;
-        if (!TextUtils.isEmpty(preferences.getString(AppSettings.ACCOUNT_JSON, ""))) {
-            try {
-                this.currentUser = User.fromJson(
-                        new JSONObject(preferences.getString(AppSettings.ACCOUNT_JSON, "")));
-            }
-            catch (JSONException e) {
-                e.printStackTrace();
-            }
-        }
     }
 
     public void setActivity(Activity activity) {
         this.activity = activity;
         this.reddit = Reddit.getInstance(activity);
-        Resources resources = activity.getResources();
-        this.drawableSelf = resources.getDrawable(R.drawable.ic_chat_white_48dp);
-        this.drawableDefault = resources.getDrawable(R.drawable.ic_web_white_48dp);
-        this.preferences = PreferenceManager.getDefaultSharedPreferences(activity);
         this.indentWidth = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 8,
                 activity.getResources()
                         .getDisplayMetrics());
@@ -99,7 +77,7 @@ public class ControllerProfile implements ControllerLinksBase, ControllerComment
         listeners.add(listener);
         listener.setRefreshing(isLoading());
         listener.getAdapter().notifyDataSetChanged();
-        listener.setIsUser(user.getName().equals(currentUser.getName()));
+        listener.setIsUser(user.getName().equals(controllerUser.getUser().getName()));
     }
 
     public void removeListener(Listener listener) {
@@ -140,18 +118,12 @@ public class ControllerProfile implements ControllerLinksBase, ControllerComment
         return page.equalsIgnoreCase("overview") ? topLink : null;
     }
 
-    @Override
     public Comment getComment(int position) {
         if (position == 4) {
             return getTopComment();
         }
 
         return (Comment) data.getChildren().get(position - 6);
-    }
-
-    @Override
-    public Reddit getReddit() {
-        return reddit;
     }
 
     public void setPage(String page) {
@@ -169,11 +141,9 @@ public class ControllerProfile implements ControllerLinksBase, ControllerComment
         page = "Overview";
         for (Listener listener : listeners) {
             listener.setIsUser(user.getName()
-                    .equals(currentUser.getName()));
+                    .equals(controllerUser.getUser().getName()));
         }
         reload();
-        Log.d(TAG, "setUser: " + (user.getName()
-                .equals(currentUser.getName())));
     }
 
     public void reload() {
@@ -364,12 +334,10 @@ public class ControllerProfile implements ControllerLinksBase, ControllerComment
         return true;
     }
 
-    @Override
     public void insertComments(Comment moreComment, Listing listing) {
         // Not implemented
     }
 
-    @Override
     public void insertComment(Comment comment) {
 
         Comment parentComment = new Comment();
@@ -391,7 +359,6 @@ public class ControllerProfile implements ControllerLinksBase, ControllerComment
 
     }
 
-    @Override
     public void deleteComment(Comment comment) {
         int commentIndex = data.getChildren().indexOf(comment);
         data.getChildren().remove(commentIndex);
@@ -420,23 +387,19 @@ public class ControllerProfile implements ControllerLinksBase, ControllerComment
                 }, params, 0);
     }
 
-    @Override
     public boolean toggleComment(int position) {
         // Not implemented
         return true;
     }
 
-    @Override
     public void expandComment(int position) {
         // Not implemented
     }
 
-    @Override
     public void collapseComment(int position) {
         // Not implemented
     }
 
-    @Override
     public void voteComment(final AdapterCommentList.ViewHolderComment viewHolder,
             final Comment comment,
             int vote) {
@@ -450,38 +413,27 @@ public class ControllerProfile implements ControllerLinksBase, ControllerComment
         });
     }
 
-    @Override
-    public int getIndentWidth(Comment comment) {
-        return indentWidth * comment.getLevel();
-    }
-
-    @Override
     public void loadNestedComments(Comment moreComment) {
         // Not implemented
     }
 
-    @Override
     public boolean isCommentExpanded(int position) {
         // Not implemented
         return true;
     }
 
-    @Override
     public Link getMainLink() {
         return link;
     }
 
-    @Override
     public void loadMoreComments() {
         // Not implemented
     }
 
-    @Override
     public boolean hasChildren(Comment comment) {
         return false;
     }
 
-    @Override
     public void editComment(final Comment comment, String text) {
 
         Map<String, String> params = new HashMap<>();
@@ -583,6 +535,30 @@ public class ControllerProfile implements ControllerLinksBase, ControllerComment
 
     public Comment getTopComment() {
         return page.equalsIgnoreCase("overview") ? topComment : null;
+    }
+
+    public void setControllerUser(ControllerUser controllerUser) {
+        this.controllerUser = controllerUser;
+    }
+
+    public void sendComment(String name, String text) {
+        reddit.sendComment(name, text, new Response.Listener<String>() {
+            @Override
+            public void onResponse(String response) {
+                try {
+                    JSONObject jsonObject = new JSONObject(response);
+                    Comment newComment = Comment.fromJson(
+                            jsonObject.getJSONObject("json")
+                                    .getJSONObject("data")
+                                    .getJSONArray("things")
+                                    .getJSONObject(0), 0);
+                    insertComment(newComment);
+                }
+                catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }
+        }, null);
     }
 
     public interface Listener

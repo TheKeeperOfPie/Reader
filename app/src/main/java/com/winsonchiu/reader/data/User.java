@@ -1,6 +1,5 @@
 package com.winsonchiu.reader.data;
 
-import org.json.JSONException;
 import org.json.JSONObject;
 
 /**
@@ -28,7 +27,7 @@ public class User {
     private int inboxCount;
 
 
-    public static User fromJson(JSONObject rootJsonObject) throws JSONException {
+    public static User fromJson(JSONObject rootJsonObject) {
 
         User user = new User();
 

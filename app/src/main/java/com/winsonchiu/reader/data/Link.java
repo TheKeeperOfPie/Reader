@@ -1,17 +1,12 @@
 package com.winsonchiu.reader.data;
 
 import android.text.Html;
-import android.text.TextUtils;
-import android.webkit.URLUtil;
 
 import com.winsonchiu.reader.data.imgur.Album;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-
-import java.io.UnsupportedEncodingException;
-import java.net.URLDecoder;
 
 /**
  * Created by TheKeeperOfPie on 3/7/2015.

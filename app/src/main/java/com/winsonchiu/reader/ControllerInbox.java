@@ -1,11 +1,6 @@
 package com.winsonchiu.reader;
 
 import android.app.Activity;
-import android.content.SharedPreferences;
-import android.content.res.Resources;
-import android.graphics.drawable.Drawable;
-import android.preference.PreferenceManager;
-import android.support.v7.widget.RecyclerView;
 import android.text.TextUtils;
 import android.util.Log;
 import android.widget.Toast;
@@ -19,7 +14,6 @@ import com.winsonchiu.reader.data.Message;
 import com.winsonchiu.reader.data.Reddit;
 import com.winsonchiu.reader.data.Subreddit;
 import com.winsonchiu.reader.data.Thing;
-import com.winsonchiu.reader.data.User;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -32,7 +26,7 @@ import java.util.Set;
 /**
  * Created by TheKeeperOfPie on 5/17/2015.
  */
-public class ControllerInbox implements ControllerCommentsBase {
+public class ControllerInbox {
 
     public static final int VIEW_TYPE_MESSAGE = 0;
     public static final int VIEW_TYPE_COMMENT = 1;
@@ -42,12 +36,8 @@ public class ControllerInbox implements ControllerCommentsBase {
     private Set<Listener> listeners;
     private Listing data;
     private Reddit reddit;
-    private Drawable drawableSelf;
-    private Drawable drawableDefault;
     private Link link;
     private String page;
-    private User user;
-    private SharedPreferences preferences;
 
     public ControllerInbox(Activity activity) {
         setActivity(activity);
@@ -55,29 +45,11 @@ public class ControllerInbox implements ControllerCommentsBase {
         listeners = new HashSet<>();
         link = new Link();
         page = "Inbox";
-
-        // TODO: Support reloading user data
     }
 
     public void setActivity(Activity activity) {
         this.activity = activity;
         this.reddit = Reddit.getInstance(activity);
-        Resources resources = activity.getResources();
-        this.drawableSelf = resources.getDrawable(R.drawable.ic_chat_white_48dp);
-        this.drawableDefault = resources.getDrawable(R.drawable.ic_web_white_48dp);
-        preferences = PreferenceManager.getDefaultSharedPreferences(activity);
-        if (!TextUtils.isEmpty(preferences.getString(AppSettings.ACCOUNT_JSON, ""))) {
-            try {
-                this.user = User.fromJson(
-                        new JSONObject(preferences.getString(AppSettings.ACCOUNT_JSON, "")));
-            }
-            catch (JSONException e) {
-                e.printStackTrace();
-            }
-        }
-        else {
-            user = new User();
-        }
     }
 
     public void addListener(Listener listener) {
@@ -116,7 +88,6 @@ public class ControllerInbox implements ControllerCommentsBase {
         return data.getChildren().size();
     }
 
-    @Override
     public Link getLink(int position) {
         return link;
     }
@@ -125,7 +96,6 @@ public class ControllerInbox implements ControllerCommentsBase {
         return (Message) data.getChildren().get(position);
     }
 
-    @Override
     public Comment getComment(int position) {
         return (Comment) data.getChildren().get(position);
     }
@@ -176,22 +146,10 @@ public class ControllerInbox implements ControllerCommentsBase {
         this.data = data;
     }
 
-    @Override
-    public Link getMainLink() {
-        return link;
-    }
-
-    @Override
-    public void loadMoreComments() {
-        // Not implemented
-    }
-
-    @Override
     public boolean hasChildren(Comment comment) {
         return false;
     }
 
-    @Override
     public void editComment(final Comment comment, String text) {
 
         Map<String, String> params = new HashMap<>();
@@ -227,33 +185,18 @@ public class ControllerInbox implements ControllerCommentsBase {
         }, params, 0);
     }
 
-    @Override
     public Reddit getReddit() {
         return reddit;
     }
 
-    @Override
-    public int sizeLinks() {
-        // Not necessary
-        return data.getChildren().size();
-    }
-
-    @Override
     public boolean isLoading() {
         return false;
     }
 
-    @Override
-    public void loadMoreLinks() {
-        // Not implemented
-    }
-
-    @Override
     public Subreddit getSubreddit() {
         return new Subreddit();
     }
 
-    @Override
     public boolean showSubreddit() {
         return true;
     }
@@ -274,12 +217,6 @@ public class ControllerInbox implements ControllerCommentsBase {
         }
     }
 
-    @Override
-    public void insertComments(Comment moreComment, Listing listing) {
-        // Not implemented
-    }
-
-    @Override
     public void insertComment(Comment comment) {
 
         Comment parentComment = new Comment();
@@ -296,7 +233,6 @@ public class ControllerInbox implements ControllerCommentsBase {
         }
     }
 
-    @Override
     public void deleteComment(Comment comment) {
         int commentIndex = data.getChildren().indexOf(comment);
         if (commentIndex > -1) {
@@ -327,23 +263,11 @@ public class ControllerInbox implements ControllerCommentsBase {
                 }, params, 0);
     }
 
-    @Override
     public boolean toggleComment(int position) {
         // Not implemented
         return true;
     }
 
-    @Override
-    public void expandComment(int position) {
-        // Not implemented
-    }
-
-    @Override
-    public void collapseComment(int position) {
-        // Not implemented
-    }
-
-    @Override
     public void voteComment(final AdapterCommentList.ViewHolderComment viewHolder,
             final Comment comment,
             int vote) {
@@ -357,25 +281,34 @@ public class ControllerInbox implements ControllerCommentsBase {
         });
     }
 
-    @Override
-    public int getIndentWidth(Comment comment) {
-        // Not implemented
-        return 0;
-    }
-
-    @Override
     public void loadNestedComments(Comment moreComment) {
         // Not implemented
     }
 
-    @Override
     public boolean isCommentExpanded(int position) {
         // Not implemented
         return true;
     }
 
-    public User getUser() {
-        return user;
+    public void sendComment(String name, String text) {
+
+        reddit.sendComment(name, text, new Response.Listener<String>() {
+            @Override
+            public void onResponse(String response) {
+                try {
+                    JSONObject jsonObject = new JSONObject(response);
+                    Comment newComment = Comment.fromJson(
+                            jsonObject.getJSONObject("json")
+                                    .getJSONObject("data")
+                                    .getJSONArray("things")
+                                    .getJSONObject(0), 0);
+                    insertComment(newComment);
+                }
+                catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }
+        }, null);
     }
 
     public interface Listener extends ControllerListener {

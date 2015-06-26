@@ -1,13 +1,12 @@
 package com.winsonchiu.reader;
 
+import android.animation.Animator;
 import android.app.Activity;
 import android.app.Fragment;
 import android.os.Bundle;
 import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.view.ViewCompat;
-import android.support.v4.view.ViewPropertyAnimatorCompat;
-import android.support.v4.view.ViewPropertyAnimatorListener;
 import android.support.v4.view.animation.FastOutSlowInInterpolator;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.LinearLayoutManager;
@@ -20,12 +19,12 @@ import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewPropertyAnimator;
 import android.view.ViewTreeObserver;
 import android.view.animation.AlphaAnimation;
 import android.view.animation.Animation;
 import android.view.animation.Transformation;
 import android.widget.LinearLayout;
-import android.widget.Toast;
 
 import com.google.android.youtube.player.YouTubeInitializationResult;
 import com.google.android.youtube.player.YouTubePlayer;
@@ -36,8 +35,6 @@ public class FragmentComments extends FragmentBase {
 
     public static final String TAG = FragmentComments.class.getCanonicalName();
 
-    private static final String ARG_PARAM1 = "param1";
-    private static final String ARG_PARAM2 = "param2";
     private static final String ARG_IS_GRID = "isGrid";
     private static final String ARG_COLOR_LINK = "colorLink";
     private static final String ARG_START_X = "startX";
@@ -48,10 +45,6 @@ public class FragmentComments extends FragmentBase {
     private static final long DURATION_ACTIONS_FADE = 150;
     private static final float OFFSET_MODIFIER = 0.25f;
 
-    // TODO: Rename and change types of parameters
-    private String subreddit;
-    private String linkId;
-
     private FragmentListenerBase mListener;
     private RecyclerView recyclerCommentList;
     private Activity activity;
@@ -59,7 +52,6 @@ public class FragmentComments extends FragmentBase {
     private AdapterCommentList adapterCommentList;
     private SwipeRefreshLayout swipeRefreshCommentList;
     private ControllerComments.Listener listener;
-    private RecyclerView.ViewHolder viewHolder;
     private Toolbar toolbar;
     private LinearLayout layoutActions;
     private FloatingActionButton buttonExpandActions;
@@ -74,31 +66,14 @@ public class FragmentComments extends FragmentBase {
     private Fragment fragmentToHide;
     private boolean isFullscreen;
 
-    /**
-     * Use this factory method to create a new instance of
-     * this fragment using the provided parameters.
-     *
-     * @param param1 Parameter 1.
-     * @param param2 Parameter 2.
-     * @return A new instance of fragment FragmentComments.
-     */
-    // TODO: Rename and change types and number of parameters
-    public static FragmentComments newInstance(String param1,
-            String param2,
-            boolean isGrid,
-            int colorLink,
-            float startX,
-            float startY,
-            int itemHeight) {
+    public static FragmentComments newInstance() {
         FragmentComments fragment = new FragmentComments();
         Bundle args = new Bundle();
-        args.putString(ARG_PARAM1, param1);
-        args.putString(ARG_PARAM2, param2);
-        args.putBoolean(ARG_IS_GRID, isGrid);
-        args.putInt(ARG_COLOR_LINK, colorLink);
-        args.putFloat(ARG_START_X, startX);
-        args.putFloat(ARG_START_Y, startY);
-        args.putInt(ARG_ITEM_HEIGHT, itemHeight);
+        args.putBoolean(ARG_IS_GRID, false);
+        args.putInt(ARG_COLOR_LINK, 0);
+        args.putFloat(ARG_START_X, 0);
+        args.putFloat(ARG_START_Y, 0);
+        args.putInt(ARG_ITEM_HEIGHT, 0);
         fragment.setArguments(args);
         return fragment;
     }
@@ -127,16 +102,12 @@ public class FragmentComments extends FragmentBase {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        if (getArguments() != null) {
-            subreddit = getArguments().getString(ARG_PARAM1);
-            linkId = getArguments().getString(ARG_PARAM2);
-        }
         fastOutSlowInInterpolator = new FastOutSlowInInterpolator();
         setHasOptionsMenu(true);
     }
 
     private void setUpOptionsMenu() {
-        toolbar.inflateMenu(R.menu.menu_comments);
+        // No menu items needed
     }
 
     @Override
@@ -283,6 +254,11 @@ public class FragmentComments extends FragmentBase {
                 public int getRecyclerHeight() {
                     return recyclerCommentList.getHeight();
                 }
+
+                @Override
+                public RecyclerView.LayoutManager getLayoutManager() {
+                    return linearLayoutManager;
+                }
             }, new YouTubeListener() {
                 @Override
                 public void loadYouTube(Link link,
@@ -343,7 +319,38 @@ public class FragmentComments extends FragmentBase {
                                                     public void onVideoStarted() {
                                                         youTubePlayer.setFullscreen(true);
                                                         youTubePlayer.seekToMillis(timeInMillis);
-                                                        youTubePlayer.setPlayerStateChangeListener(null);
+                                                        youTubePlayer.setPlayerStateChangeListener(
+                                                                new YouTubePlayer.PlayerStateChangeListener() {
+                                                                    @Override
+                                                                    public void onLoading() {
+
+                                                                    }
+
+                                                                    @Override
+                                                                    public void onLoaded(String s) {
+
+                                                                    }
+
+                                                                    @Override
+                                                                    public void onAdStarted() {
+
+                                                                    }
+
+                                                                    @Override
+                                                                    public void onVideoStarted() {
+
+                                                                    }
+
+                                                                    @Override
+                                                                    public void onVideoEnded() {
+
+                                                                    }
+
+                                                                    @Override
+                                                                    public void onError(YouTubePlayer.ErrorReason errorReason) {
+
+                                                                    }
+                                                                });
                                                     }
 
                                                     @Override
@@ -385,7 +392,38 @@ public class FragmentComments extends FragmentBase {
                                                     @Override
                                                     public void onVideoStarted() {
                                                         youTubePlayer.seekToMillis(timeInMillis);
-                                                        youTubePlayer.setPlayerStateChangeListener(null);
+                                                        youTubePlayer.setPlayerStateChangeListener(
+                                                                new YouTubePlayer.PlayerStateChangeListener() {
+                                                                    @Override
+                                                                    public void onLoading() {
+
+                                                                    }
+
+                                                                    @Override
+                                                                    public void onLoaded(String s) {
+
+                                                                    }
+
+                                                                    @Override
+                                                                    public void onAdStarted() {
+
+                                                                    }
+
+                                                                    @Override
+                                                                    public void onVideoStarted() {
+
+                                                                    }
+
+                                                                    @Override
+                                                                    public void onVideoEnded() {
+
+                                                                    }
+
+                                                                    @Override
+                                                                    public void onError(YouTubePlayer.ErrorReason errorReason) {
+
+                                                                    }
+                                                                });
                                                     }
 
                                                     @Override
@@ -459,29 +497,34 @@ public class FragmentComments extends FragmentBase {
 
         viewBackground.setScaleY(0f);
         viewBackground.setPivotY(startY + getArguments().getInt(ARG_ITEM_HEIGHT, 0));
-        final ViewPropertyAnimatorCompat viewPropertyAnimatorBackground = ViewCompat.animate(
-                viewBackground)
+
+        final ViewPropertyAnimator viewPropertyAnimator = viewBackground.animate()
                 .scaleY(2f)
                 .setDuration(duration)
                 .setInterpolator(fastOutSlowInInterpolator)
-                .setListener(new ViewPropertyAnimatorListener() {
+                .setListener(new Animator.AnimatorListener() {
                     @Override
-                    public void onAnimationStart(View view) {
+                    public void onAnimationStart(Animator animation) {
 
                     }
 
                     @Override
-                    public void onAnimationEnd(View view) {
+                    public void onAnimationEnd(Animator animation) {
                         viewBackground.postDelayed(new Runnable() {
                             @Override
                             public void run() {
                                 viewBackground.setVisibility(View.GONE);
                             }
-                        }, 250);
+                        }, 150);
                     }
 
                     @Override
-                    public void onAnimationCancel(View view) {
+                    public void onAnimationCancel(Animator animation) {
+
+                    }
+
+                    @Override
+                    public void onAnimationRepeat(Animator animation) {
 
                     }
                 });
@@ -565,7 +608,7 @@ public class FragmentComments extends FragmentBase {
                 swipeRefreshCommentList.setVisibility(View.VISIBLE);
                 view.startAnimation(animation);
 
-                viewPropertyAnimatorBackground.start();
+                viewPropertyAnimator.start();
                 return true;
             }
         });

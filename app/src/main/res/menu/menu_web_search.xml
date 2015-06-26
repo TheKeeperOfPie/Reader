@@ -9,7 +9,7 @@
         android:title="@string/search_previous"
         android:icon="@drawable/ic_keyboard_arrow_up_white_24dp"
         android:orderInCategory="100"
-        app:showAsAction="always"
+        app:showAsAction="ifRoom"
         />
 
     <item
@@ -17,7 +17,7 @@
         android:title="@string/search_next"
         android:icon="@drawable/ic_keyboard_arrow_down_white_24dp"
         android:orderInCategory="200"
-        app:showAsAction="always"
+        app:showAsAction="ifRoom"
         />
 
 </menu>

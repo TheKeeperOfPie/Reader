@@ -107,7 +107,7 @@
             android:padding="12dp"
             />
 
-        <com.winsonchiu.reader.TextViewShadow
+        <TextView
             android:id="@+id/text_thread_flair"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -126,7 +126,7 @@
             android:longClickable="false"
             />
 
-        <com.winsonchiu.reader.TextViewShadow
+        <TextView
             android:id="@+id/text_thread_title"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -156,7 +156,7 @@
             android:longClickable="false"
             />
 
-        <com.winsonchiu.reader.TextViewShadow
+        <TextView
             android:id="@+id/text_thread_info"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -182,7 +182,7 @@
             android:visibility="gone"
             >
 
-            <com.winsonchiu.reader.TextViewShadow
+            <TextView
                 android:id="@+id/text_hidden"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"

@@ -1,6 +1,5 @@
 package com.winsonchiu.reader;
 
-import android.app.Activity;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.text.Spannable;
@@ -34,7 +33,6 @@ public class AdapterInbox extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
 
     private static final String TAG = AdapterInbox.class.getCanonicalName();
 
-    protected Activity activity;
     private ControllerInbox controllerInbox;
     private ControllerUser controllerUser;
     private AdapterLink.ViewHolderBase.EventListener eventListenerBase;
@@ -42,14 +40,12 @@ public class AdapterInbox extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
     private ViewHolderMessage.EventListener eventListenerInbox;
     private DisallowListener disallowListener;
 
-    public AdapterInbox(final Activity activity,
-            final ControllerInbox controllerInbox,
+    public AdapterInbox(ControllerInbox controllerInbox,
             ControllerUser controllerUser,
             AdapterLink.ViewHolderBase.EventListener eventListenerBase,
             AdapterCommentList.ViewHolderComment.EventListener eventListenerComment,
             ViewHolderMessage.EventListener eventListenerInbox,
             DisallowListener disallowListener) {
-        this.activity = activity;
         this.controllerInbox = controllerInbox;
         this.controllerUser = controllerUser;
         this.eventListenerBase = eventListenerBase;
@@ -133,9 +129,9 @@ public class AdapterInbox extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
 
         protected int toolbarItemWidth;
 
-        public ViewHolderMessage(View itemView, final EventListener eventListener) {
+        public ViewHolderMessage(View itemView, final EventListener listener) {
             super(itemView);
-            this.eventListener = eventListener;
+            this.eventListener = listener;
 
             toolbarItemWidth = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 48,
                     itemView.getContext().getResources().getDisplayMetrics());

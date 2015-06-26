@@ -5,7 +5,6 @@ import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
@@ -13,8 +12,6 @@ import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.media.MediaPlayer;
 import android.net.Uri;
-import android.preference.PreferenceManager;
-import android.support.v4.view.GravityCompat;
 import android.support.v4.view.MenuItemCompat;
 import android.support.v4.view.ViewPager;
 import android.support.v7.widget.RecyclerView;
@@ -56,7 +53,6 @@ import com.winsonchiu.reader.data.Comment;
 import com.winsonchiu.reader.data.Link;
 import com.winsonchiu.reader.data.Reddit;
 import com.winsonchiu.reader.data.Subreddit;
-import com.winsonchiu.reader.data.User;
 import com.winsonchiu.reader.data.imgur.Album;
 import com.winsonchiu.reader.data.imgur.Image;
 
@@ -82,9 +78,6 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
     protected Activity activity;
     protected LayoutManager layoutManager;
     protected ControllerLinksBase controllerLinks;
-    protected ControllerCommentsBase controllerComments;
-    protected float itemWidth;
-    protected SharedPreferences preferences;
     protected List<RecyclerView.ViewHolder> viewHolders;
 
     protected ViewHolderHeader.EventListener eventListenerHeader;
@@ -105,18 +98,12 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
     }
 
     public void setActivity(Activity activity) {
-        Resources resources = activity.getResources();
         this.activity = activity;
-        this.preferences = PreferenceManager.getDefaultSharedPreferences(activity);
-        this.itemWidth = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 48,
-                resources.getDisplayMetrics());
     }
 
     public void setControllers(ControllerLinksBase controllerLinks,
-            ControllerCommentsBase controllerComments,
             ControllerUser controllerUser) {
         this.controllerLinks = controllerLinks;
-        this.controllerComments = controllerComments;
         this.controllerUser = controllerUser;
     }
 
@@ -202,16 +189,10 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             textHidden = (TextView) itemView.findViewById(R.id.text_hidden);
             viewDivider = itemView.findViewById(R.id.view_divider);
 
-            // TODO: Implement listener inside ViewHolder
             buttonShowSidebar.setOnClickListener(this);
             buttonSubmitLink.setOnClickListener(this);
             buttomSubmitSelf.setOnClickListener(this);
-            this.itemView.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    AnimationUtils.animateExpand(layoutContainerExpand, 1f, null);
-                }
-            });
+            itemView.setOnClickListener(this);
             textDescription.setOnTouchListener(new View.OnTouchListener() {
                 @Override
                 public boolean onTouch(View v, MotionEvent event) {
@@ -348,7 +329,6 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         protected RelativeLayout layoutContainerExpand;
         protected Toolbar toolbarActions;
         protected Request request;
-        protected String imageUrl;
         protected RelativeLayout layoutContainerReply;
         protected EditText editTextReply;
         protected Button buttonSendReply;
@@ -431,7 +411,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                 @Override
                 public void run() {
                     AnimationUtils.animateExpand(layoutContainerExpand,
-                            getRatio(getAdapterPosition()), null);
+                            getRatio(), null);
                 }
             });
         }
@@ -667,7 +647,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             recyclerCallback.scrollTo(getAdapterPosition());
         }
 
-        public abstract float getRatio(int adapterPosition);
+        public abstract float getRatio();
 
         public void loadFull() {
 
@@ -721,7 +701,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                 http://stackoverflow.com/questions/24048308/how-to-get-the-video-id-from-a-youtube-url-with-regex-in-java
             */
             Pattern pattern = Pattern.compile(
-                    ".*(?:youtu.be\\/|v\\/|u\\/\\w\\/|embed\\/|watch\\?v=)([^#\\&\\?]*).*");
+                    ".*(?:youtu.be/|v/|u/\\w/|embed/|watch\\?v=)([^#&\\?]*).*");
             final Matcher matcher = pattern.matcher(link.getUrl());
             if (matcher.matches()) {
                 int time = 0;
@@ -886,8 +866,6 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         }
 
         private void loadGallery(String id, final Link link) {
-            // TODO: Check in onResponse whether the same link is currently attached
-
             progressImage.setVisibility(View.VISIBLE);
             request = eventListener.getReddit()
                     .loadImgurGallery(id,
@@ -915,8 +893,6 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         }
 
         private void loadAlbum(String id, final Link link) {
-            // TODO: Check in onResponse whether the same link is currently attached
-
             progressImage.setVisibility(View.VISIBLE);
             request = eventListener.getReddit()
                     .loadImgurAlbum(id,
@@ -988,15 +964,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                             }, new Response.ErrorListener() {
                                 @Override
                                 public void onErrorResponse(VolleyError error) {
-                                    try {
-                                        Log.d(TAG, "" + error.networkResponse.statusCode);
-                                        Log.d(TAG, error.networkResponse.headers.toString());
-                                        Log.d(TAG, new String(error.networkResponse.data));
-                                    }
-                                    catch (Throwable e) {
-
-                                    }
-                                    Log.d(TAG, "error on loadGifv");
+                                    Log.d(TAG, "error on loadGifv: " + error);
                                     progressImage.setVisibility(View.GONE);
                                 }
                             }, 0);
@@ -1053,7 +1021,38 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                                         @Override
                                         public void onVideoStarted() {
                                             youTubePlayer.seekToMillis(timeInMillis);
-                                            youTubePlayer.setPlayerStateChangeListener(null);
+                                            youTubePlayer.setPlayerStateChangeListener(
+                                                    new YouTubePlayer.PlayerStateChangeListener() {
+                                                        @Override
+                                                        public void onLoading() {
+
+                                                        }
+
+                                                        @Override
+                                                        public void onLoaded(String s) {
+
+                                                        }
+
+                                                        @Override
+                                                        public void onAdStarted() {
+
+                                                        }
+
+                                                        @Override
+                                                        public void onVideoStarted() {
+
+                                                        }
+
+                                                        @Override
+                                                        public void onVideoEnded() {
+
+                                                        }
+
+                                                        @Override
+                                                        public void onError(YouTubePlayer.ErrorReason errorReason) {
+
+                                                        }
+                                                    });
                                         }
 
                                         @Override
@@ -1200,8 +1199,6 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             adapterAlbum.setAlbum(null);
             viewPagerFull.removeAllViews();
             frameFull.requestLayout();
-
-            expandFull(false);
         }
 
         public int getBackgroundColor() {
