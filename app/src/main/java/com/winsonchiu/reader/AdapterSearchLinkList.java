@@ -19,8 +19,9 @@ public class AdapterSearchLinkList extends AdapterLinkList {
             ViewHolderHeader.EventListener eventListenerHeader,
             ViewHolderBase.EventListener eventListenerBase,
             DisallowListener disallowListener,
-            ScrollCallback scrollCallback) {
-        super(activity, controllerLinks, controllerComments, controllerUser, eventListenerHeader, eventListenerBase, disallowListener, scrollCallback);
+            RecyclerCallback recyclerCallback) {
+        super(activity, controllerLinks, controllerComments, controllerUser, eventListenerHeader, eventListenerBase, disallowListener,
+                recyclerCallback);
     }
 
     @Override
@@ -31,7 +32,8 @@ public class AdapterSearchLinkList extends AdapterLinkList {
         }
 
         ViewHolder viewHolder = new ViewHolder(LayoutInflater.from(viewGroup.getContext())
-                .inflate(R.layout.row_link, viewGroup, false), eventListenerBase, disallowListener, scrollCallback) {
+                .inflate(R.layout.row_link, viewGroup, false), eventListenerBase, disallowListener,
+                recyclerCallback) {
             @Override
             public void onClickThumbnail() {
                 InputMethodManager inputManager = (InputMethodManager) activity

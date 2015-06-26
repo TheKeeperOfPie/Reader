@@ -17,13 +17,9 @@ public interface ControllerLinksBase {
 
     Link getLink(int position);
     Reddit getReddit();
-    void voteLink(final RecyclerView.ViewHolder viewHolder, Link link, final int vote);
-    Drawable getDrawableForLink(Link link);
     int sizeLinks();
     boolean isLoading();
     void loadMoreLinks();
-    Activity getActivity();
     Subreddit getSubreddit();
     boolean showSubreddit();
-    void deletePost(Link link);
 }

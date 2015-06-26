@@ -27,7 +27,7 @@ import org.json.JSONObject;
 import java.util.HashMap;
 import java.util.UUID;
 
-public class FragmentAuth extends Fragment {
+public class FragmentAuth extends FragmentBase {
     // TODO: Rename parameter arguments, choose names that match
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
     private static final String ARG_PARAM1 = "param1";
@@ -254,9 +254,9 @@ public class FragmentAuth extends Fragment {
     public boolean navigateBack() {
         if (webAuth.canGoBack()) {
             webAuth.goBack();
-            return true;
+            return false;
         }
-        return false;
+        return true;
     }
 
 }

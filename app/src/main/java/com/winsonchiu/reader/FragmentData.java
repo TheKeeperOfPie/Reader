@@ -8,7 +8,7 @@ import android.os.Bundle;
 /**
  * A simple {@link Fragment} subclass.
  */
-public class FragmentData extends Fragment {
+public class FragmentData extends FragmentBase {
 
     public static final String TAG = FragmentData.class.getCanonicalName();
 
@@ -36,7 +36,6 @@ public class FragmentData extends Fragment {
         controllerInbox = new ControllerInbox(activity);
         controllerSearch = new ControllerSearch(activity);
         controllerUser = new ControllerUser(activity);
-        controllerComments.setControllerLinks(controllerLinks);
         controllerSearch.setControllerLinks(controllerLinks);
     }
 
@@ -106,5 +105,10 @@ public class FragmentData extends Fragment {
         super.onDestroy();
 //        CustomApplication.getRefWatcher(getActivity())
 //                .watch(this);
+    }
+
+    @Override
+    boolean navigateBack() {
+        throw new IllegalStateException("FragmentData should never be in the back stack");
     }
 }

@@ -32,4 +32,5 @@ public interface ControllerCommentsBase extends ControllerLinksBase {
     Link getMainLink();
     void loadMoreComments();
     boolean hasChildren(Comment comment);
+    void editComment(Comment comment, String text);
 }

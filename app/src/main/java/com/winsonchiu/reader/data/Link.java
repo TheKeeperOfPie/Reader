@@ -1,10 +1,17 @@
 package com.winsonchiu.reader.data;
 
+import android.text.Html;
+import android.text.TextUtils;
+import android.webkit.URLUtil;
+
 import com.winsonchiu.reader.data.imgur.Album;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
 
 /**
  * Created by TheKeeperOfPie on 3/7/2015.
@@ -47,6 +54,7 @@ public class Link extends Thing {
     private Album album;
     private boolean replyExpanded;
     private boolean commentsClicked;
+    private int backgroundColor;
 
     public static Link fromJson(JSONObject rootJsonObject) throws JSONException {
 
@@ -100,7 +108,7 @@ public class Link extends Thing {
         link.setSubredditId(jsonObject.optString("subreddit_id"));
         link.setThumbnail(jsonObject.optString("thumbnail"));
         link.setTitle(jsonObject.optString("title"));
-        link.setUrl(jsonObject.optString("url"));
+        link.setUrl(String.valueOf(Html.fromHtml(jsonObject.optString("url"))));
 
         String edited = jsonObject.optString("edited");
         switch (edited) {
@@ -416,5 +424,13 @@ public class Link extends Thing {
 
     public void setAlbum(Album album) {
         this.album = album;
+    }
+
+    public int getBackgroundColor() {
+        return backgroundColor;
+    }
+
+    public void setBackgroundColor(int backgroundColor) {
+        this.backgroundColor = backgroundColor;
     }
 }

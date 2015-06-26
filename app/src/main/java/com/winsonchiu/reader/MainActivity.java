@@ -392,6 +392,11 @@ public class MainActivity extends YouTubeBaseActivity
                 getControllerComments().deleteComment(comment);
             }
 
+            @Override
+            public void editComment(Comment comment, String text) {
+                getControllerComments().editComment(comment, text);
+            }
+
         };
 
     }
@@ -693,25 +698,14 @@ public class MainActivity extends YouTubeBaseActivity
     @Override
     public void onBackPressed() {
         if (getFragmentManager().getBackStackEntryCount() > 0) {
-            FragmentWeb fragmentWeb = (FragmentWeb) getFragmentManager().findFragmentByTag(
-                    FragmentWeb.TAG);
-
-            if (fragmentWeb != null && fragmentWeb.navigateBack()) {
+            // Fetch top Fragment to see if we should override the back action
+            FragmentBase fragmentBase = (FragmentBase) getFragmentManager().findFragmentById(R.id.frame_fragment);
+            if (fragmentBase != null && !fragmentBase.navigateBack()) {
                 return;
             }
-
-            FragmentAuth fragmentAuth = (FragmentAuth) getFragmentManager().findFragmentByTag(
-                    FragmentAuth.TAG);
-
-            if (fragmentAuth != null && fragmentAuth.navigateBack()) {
-                return;
-            }
-
-            onNavigationBackClick();
         }
-        else {
-            onNavigationBackClick();
-        }
+
+        onNavigationBackClick();
 
     }
 
@@ -781,6 +775,7 @@ public class MainActivity extends YouTubeBaseActivity
             Toast.makeText(this, "Login successful", Toast.LENGTH_SHORT)
                     .show();
             loadAccountInfo();
+            getControllerUser().reloadUser();
             getControllerSearch().reloadSubscriptionList();
             getControllerLinks().loadFrontPage(Sort.HOT, true);
         }

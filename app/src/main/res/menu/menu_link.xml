@@ -70,10 +70,18 @@
         />
 
     <item
+        android:id="@+id/item_edit"
+        android:title="@string/item_edit"
+        android:icon="@drawable/ic_edit_white_24dp"
+        android:orderInCategory="900"
+        app:showAsAction="ifRoom"
+        />
+
+    <item
         android:id="@+id/item_delete"
         android:title="@string/item_delete"
         android:icon="@drawable/ic_delete_white_24dp"
-        android:orderInCategory="900"
+        android:orderInCategory="1000"
         app:showAsAction="ifRoom"
         />
 
@@ -81,7 +89,7 @@
         android:id="@+id/item_view_subreddit"
         android:title="@string/item_view_subreddit"
         android:icon="@drawable/ic_open_in_new_white_24dp"
-        android:orderInCategory="1000"
+        android:orderInCategory="1100"
         android:visible="false"
         android:enabled="false"
         app:showAsAction="ifRoom"
@@ -91,7 +99,7 @@
         android:id="@+id/item_download_image"
         android:title="@string/item_download_image"
         android:icon="@drawable/ic_file_download_white_24dp"
-        android:orderInCategory="1100"
+        android:orderInCategory="1200"
         app:showAsAction="ifRoom"
         />
 

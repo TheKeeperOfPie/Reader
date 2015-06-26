@@ -174,7 +174,7 @@ public class ControllerLinks implements ControllerLinksBase {
     public void setTitle() {
         String subredditName = Reddit.FRONT_PAGE;
         if (!TextUtils.isEmpty(subreddit.getDisplayName())) {
-            subredditName = subreddit.getUrl();
+            subredditName = "/r/" + subreddit.getDisplayName();
         }
 
         for (Listener listener : listeners) {
@@ -299,16 +299,10 @@ public class ControllerLinks implements ControllerLinksBase {
     }
 
     @Override
-    public Activity getActivity() {
-        return activity;
-    }
-
-    @Override
     public Subreddit getSubreddit() {
         return subreddit;
     }
 
-    @Override
     public void deletePost(Link link) {
         int index = listingLinks.getChildren()
                 .indexOf(link);
@@ -339,17 +333,6 @@ public class ControllerLinks implements ControllerLinksBase {
                         }
                     }, params, 0);
         }
-    }
-
-    @Override
-    public void voteLink(final RecyclerView.ViewHolder viewHolder, final Link link, int vote) {
-        reddit.voteLink(viewHolder, link, vote, new Reddit.VoteResponseListener() {
-            @Override
-            public void onVoteFailed() {
-                Toast.makeText(activity, "Error voting", Toast.LENGTH_SHORT)
-                        .show();
-            }
-        });
     }
 
     public Reddit getReddit() {
@@ -425,17 +408,6 @@ public class ControllerLinks implements ControllerLinksBase {
         void setSort(Sort sort);
         void showEmptyView(boolean isEmpty);
         void loadSideBar(Subreddit subreddit);
-    }
-
-    public interface ListenerCallback {
-        ControllerLinksBase getControllerLinks();
-        float getItemWidth();
-        int getTitleMargin();
-        RecyclerView.LayoutManager getLayoutManager();
-        SharedPreferences getPreferences();
-        ControllerCommentsBase getControllerComments();
-        User getUser();
-        void pauseViewHolders();
     }
 
 }

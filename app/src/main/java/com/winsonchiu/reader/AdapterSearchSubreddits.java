@@ -21,28 +21,24 @@ import java.util.Date;
 /**
  * Created by TheKeeperOfPie on 5/17/2015.
  */
-public class AdapterSearchSubreddits extends RecyclerView.Adapter<AdapterSearchSubreddits.ViewHolder>
-        implements ControllerSearch.ListenerCallback {
+public class AdapterSearchSubreddits extends RecyclerView.Adapter<AdapterSearchSubreddits.ViewHolder> {
 
     private static final String TAG = AdapterSearchSubreddits.class.getCanonicalName();
     private RecyclerView.LayoutManager layoutManager;
-    private Activity activity;
     private ControllerSearch controllerSubreddits;
-    private ControllerSearch.Listener listener;
+    private ViewHolder.EventListener eventListener;
 
     public AdapterSearchSubreddits(Activity activity,
             ControllerSearch controllerSubreddits,
-            ControllerSearch.Listener subredditListener) {
-        this.activity = activity;
+            ViewHolder.EventListener eventListener) {
         this.controllerSubreddits = controllerSubreddits;
-        this.listener = subredditListener;
+        this.eventListener = eventListener;
         this.layoutManager = new LinearLayoutManager(activity, LinearLayoutManager.VERTICAL, false);
-        Log.d(TAG, "AdapterSearchSubreddits created");
     }
 
     @Override
     public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-        return new ViewHolder(LayoutInflater.from(parent.getContext()).inflate(R.layout.row_subreddit, parent, false), this);
+        return new ViewHolder(LayoutInflater.from(parent.getContext()).inflate(R.layout.row_subreddit, parent, false), eventListener);
     }
 
     @Override
@@ -55,38 +51,24 @@ public class AdapterSearchSubreddits extends RecyclerView.Adapter<AdapterSearchS
         return controllerSubreddits.getSubredditCount();
     }
 
-    @Override
-    public ControllerSearch.Listener getListener() {
-        return listener;
-    }
-
-    @Override
-    public ControllerSearch getController() {
-        return controllerSubreddits;
-    }
-
-    @Override
-    public Activity getActivity() {
-        return activity;
-    }
-
     public RecyclerView.LayoutManager getLayoutManager() {
         return layoutManager;
     }
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
 
+        protected EventListener eventListener;
         protected TextView textName;
         protected TextView textTitle;
         protected TextView textDescription;
         protected TextView textInfo;
         protected ImageButton buttonOpen;
         protected RelativeLayout layoutContainerExpand;
-        private ControllerSearch.ListenerCallback callback;
+        private Subreddit subreddit;
 
-        public ViewHolder(View itemView, final ControllerSearch.ListenerCallback listenerCallback) {
+        public ViewHolder(View itemView, EventListener eventListener) {
             super(itemView);
-            this.callback = listenerCallback;
+            this.eventListener = eventListener;
 
             textName = (TextView) itemView.findViewById(R.id.text_name);
             textTitle = (TextView) itemView.findViewById(R.id.text_title);
@@ -99,7 +81,7 @@ public class AdapterSearchSubreddits extends RecyclerView.Adapter<AdapterSearchS
             buttonOpen.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    callback.getListener().onClickSubreddit(callback.getController().getSubreddit(getAdapterPosition()));
+                    ViewHolder.this.eventListener.onClickSubreddit(subreddit);
                 }
             });
             textDescription.setOnTouchListener(new View.OnTouchListener() {
@@ -124,6 +106,7 @@ public class AdapterSearchSubreddits extends RecyclerView.Adapter<AdapterSearchS
         }
 
         public void onBind(Subreddit subreddit) {
+            this.subreddit = subreddit;
 
             layoutContainerExpand.setVisibility(View.GONE);
 
@@ -141,6 +124,11 @@ public class AdapterSearchSubreddits extends RecyclerView.Adapter<AdapterSearchS
                     "created " + new Date(subreddit.getCreatedUtc()));
 
         }
+
+        public interface EventListener {
+            void onClickSubreddit(Subreddit subreddit);
+        }
+
     }
 
 }

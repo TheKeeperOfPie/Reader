@@ -52,15 +52,12 @@ public class ControllerSearch {
     private Listing links;
     private Listing linksSubreddit;
     private String query;
-    private Drawable drawableSelf;
-    private Drawable drawableDefault;
     private Sort sort;
     private Time time;
     private volatile int currentPage;
     private Request<String> requestSubreddits;
     private Request<String> requestLinks;
     private Request<String> requestLinksSubreddit;
-    private User user;
     private boolean isLoadingLinks;
     private boolean isLoadingLinksSubreddit;
 
@@ -82,20 +79,6 @@ public class ControllerSearch {
         this.reddit = Reddit.getInstance(activity);
         this.preferences = PreferenceManager.getDefaultSharedPreferences(
                 activity.getApplicationContext());
-        Resources resources = activity.getResources();
-        this.drawableSelf = resources.getDrawable(R.drawable.ic_chat_white_48dp);
-        this.drawableDefault = resources.getDrawable(R.drawable.ic_web_white_48dp);
-        this.user = new User();
-
-        if (!TextUtils.isEmpty(preferences.getString(AppSettings.ACCOUNT_JSON, ""))) {
-            try {
-                this.user = User.fromJson(
-                        new JSONObject(preferences.getString(AppSettings.ACCOUNT_JSON, "")));
-            }
-            catch (JSONException e) {
-                e.printStackTrace();
-            }
-        }
     }
 
     public void addListener(Listener listener) {
@@ -119,16 +102,18 @@ public class ControllerSearch {
 
     public void setQuery(String query) {
         this.query = query;
+        setTitle();
         if ((TextUtils.isEmpty(query) || query.length() < 2) && currentPage == PAGE_SUBREDDITS) {
+            requestSubreddits.cancel();
             subreddits = subredditsSubscribed;
             for (Listener listener : listeners) {
                 listener.getAdapterSearchSubreddits()
                         .notifyDataSetChanged();
             }
-            return;
         }
-        setTitle();
-        reloadCurrentPage();
+        else {
+            reloadCurrentPage();
+        }
     }
 
     public void setTitle() {
@@ -400,32 +385,8 @@ public class ControllerSearch {
                 .size();
     }
 
-    public Drawable getDrawableForLink(Link link) {
-        String thumbnail = link.getThumbnail();
-
-        if (link.isSelf()) {
-            return drawableSelf;
-        }
-
-        if (Reddit.DEFAULT.equals(thumbnail) || Reddit.NSFW.equals(thumbnail)) {
-            return drawableDefault;
-        }
-
-        return null;
-    }
-
     public Link getLink(int position) {
         return (Link) links.getChildren().get(position - 1);
-    }
-
-    public void voteLink(final RecyclerView.ViewHolder viewHolder, final Link link, int vote) {
-        reddit.voteLink(viewHolder, link, vote, new Reddit.VoteResponseListener() {
-            @Override
-            public void onVoteFailed() {
-                Toast.makeText(activity, "Error voting", Toast.LENGTH_SHORT)
-                        .show();
-            }
-        });
     }
 
     public int sizeLinks() {
@@ -494,10 +455,6 @@ public class ControllerSearch {
 
     public Link getLinkSubreddit(int position) {
         return (Link) linksSubreddit.getChildren().get(position - 1);
-    }
-
-    public void voteLinkSubreddit(RecyclerView.ViewHolder viewHolder, final Link link, int vote) {
-
     }
 
     public int sizeLinksSubreddit() {
@@ -639,7 +596,6 @@ public class ControllerSearch {
     }
 
     public interface Listener {
-        void onClickSubreddit(Subreddit subreddit);
         AdapterSearchSubreddits getAdapterSearchSubreddits();
         AdapterLink getAdapterLinks();
         AdapterLink getAdapterLinksSubreddit();
@@ -647,9 +603,4 @@ public class ControllerSearch {
         void setSort(Sort sort);
     }
 
-    public interface ListenerCallback {
-        ControllerSearch.Listener getListener();
-        ControllerSearch getController();
-        Activity getActivity();
-    }
 }

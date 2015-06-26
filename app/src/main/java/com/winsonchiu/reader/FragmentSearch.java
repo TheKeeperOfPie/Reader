@@ -3,7 +3,6 @@ package com.winsonchiu.reader;
 import android.app.Activity;
 import android.app.Fragment;
 import android.content.Context;
-import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.support.design.widget.TabLayout;
 import android.support.v4.view.MenuItemCompat;
@@ -26,7 +25,7 @@ import com.winsonchiu.reader.data.Link;
 import com.winsonchiu.reader.data.Reddit;
 import com.winsonchiu.reader.data.Subreddit;
 
-public class FragmentSearch extends Fragment implements Toolbar.OnMenuItemClickListener {
+public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemClickListener {
 
     private static final int PAGE_COUNT = 3;
     public static final String TAG = FragmentSearch.class.getCanonicalName();
@@ -160,16 +159,6 @@ public class FragmentSearch extends Fragment implements Toolbar.OnMenuItemClickL
         final View view = inflater.inflate(R.layout.fragment_search, container, false);
 
         listenerSearch = new ControllerSearch.Listener() {
-            @Override
-            public void onClickSubreddit(Subreddit subreddit) {
-                mListener.getControllerLinks()
-                        .setParameters(subreddit.getDisplayName(), Sort.HOT);
-                InputMethodManager inputManager = (InputMethodManager) activity
-                        .getSystemService(Context.INPUT_METHOD_SERVICE);
-                inputManager.hideSoftInputFromWindow(view.getWindowToken(),
-                        InputMethodManager.HIDE_NOT_ALWAYS);
-                getFragmentManager().popBackStack();
-            }
 
             @Override
             public AdapterSearchSubreddits getAdapterSearchSubreddits() {
@@ -208,7 +197,19 @@ public class FragmentSearch extends Fragment implements Toolbar.OnMenuItemClickL
         setUpOptionsMenu();
 
         adapterSearchSubreddits = new AdapterSearchSubreddits(activity,
-                mListener.getControllerSearch(), listenerSearch);
+                mListener.getControllerSearch(),
+                new AdapterSearchSubreddits.ViewHolder.EventListener() {
+                    @Override
+                    public void onClickSubreddit(Subreddit subreddit) {
+                        mListener.getControllerLinks()
+                                .setParameters(subreddit.getDisplayName(), Sort.HOT);
+                        InputMethodManager inputManager = (InputMethodManager) activity
+                                .getSystemService(Context.INPUT_METHOD_SERVICE);
+                        inputManager.hideSoftInputFromWindow(view.getWindowToken(),
+                                InputMethodManager.HIDE_NOT_ALWAYS);
+                        getFragmentManager().popBackStack();
+                    }
+                });
 
         layoutManagerSubreddits = new LinearLayoutManager(activity, LinearLayoutManager.VERTICAL, false);
         recyclerSearchSubreddits = (RecyclerView) view.findViewById(
@@ -244,18 +245,6 @@ public class FragmentSearch extends Fragment implements Toolbar.OnMenuItemClickL
             }
 
             @Override
-            public void voteLink(RecyclerView.ViewHolder viewHolder, final Link link, int vote) {
-                mListener.getControllerSearch()
-                        .voteLink(viewHolder, link, vote);
-            }
-
-            @Override
-            public Drawable getDrawableForLink(Link link) {
-                return mListener.getControllerSearch()
-                        .getDrawableForLink(link);
-            }
-
-            @Override
             public int sizeLinks() {
                 return mListener.getControllerSearch()
                         .sizeLinks();
@@ -274,12 +263,6 @@ public class FragmentSearch extends Fragment implements Toolbar.OnMenuItemClickL
             }
 
             @Override
-            public Activity getActivity() {
-                return mListener.getControllerSearch()
-                        .getActivity();
-            }
-
-            @Override
             public Subreddit getSubreddit() {
                 return new Subreddit();
             }
@@ -289,21 +272,27 @@ public class FragmentSearch extends Fragment implements Toolbar.OnMenuItemClickL
                 return true;
             }
 
-            @Override
-            public void deletePost(Link link) {
-                // Not implemented
-            }
         }, mListener.getControllerComments(), mListener.getControllerUser(),
                 new AdapterLink.ViewHolderHeader.EventListener() {
                     @Override
                     public void onClickSubmit(String postType) {
 
                     }
+
+                    @Override
+                    public void showSidebar() {
+
+                    }
                 }, mListener.getEventListenerBase(), disallowListener,
-                new ScrollCallback() {
+                new RecyclerCallback() {
                     @Override
                     public void scrollTo(int position) {
-                        layoutManagerLinks.scrollToPositionWithOffset(0, 0);
+                        layoutManagerLinks.scrollToPositionWithOffset(position, 0);
+                    }
+
+                    @Override
+                    public int getRecyclerHeight() {
+                        return recyclerSearchLinks.getHeight();
                     }
                 });
 
@@ -318,18 +307,6 @@ public class FragmentSearch extends Fragment implements Toolbar.OnMenuItemClickL
             public Reddit getReddit() {
                 return mListener.getControllerLinks()
                         .getReddit();
-            }
-
-            @Override
-            public void voteLink(RecyclerView.ViewHolder viewHolder, final Link link, int vote) {
-                mListener.getControllerSearch()
-                        .voteLinkSubreddit(viewHolder, link, vote);
-            }
-
-            @Override
-            public Drawable getDrawableForLink(Link link) {
-                return mListener.getControllerSearch()
-                        .getDrawableForLink(link);
             }
 
             @Override
@@ -351,12 +328,6 @@ public class FragmentSearch extends Fragment implements Toolbar.OnMenuItemClickL
             }
 
             @Override
-            public Activity getActivity() {
-                return mListener.getControllerSearch()
-                        .getActivity();
-            }
-
-            @Override
             public Subreddit getSubreddit() {
                 return new Subreddit();
             }
@@ -366,21 +337,27 @@ public class FragmentSearch extends Fragment implements Toolbar.OnMenuItemClickL
                 return true;
             }
 
-            @Override
-            public void deletePost(Link link) {
-                // Not implemented
-            }
         }, mListener.getControllerComments(), mListener.getControllerUser(),
                 new AdapterLink.ViewHolderHeader.EventListener() {
                     @Override
                     public void onClickSubmit(String postType) {
 
                     }
+
+                    @Override
+                    public void showSidebar() {
+
+                    }
                 }, mListener.getEventListenerBase(), disallowListener,
-                new ScrollCallback() {
+                new RecyclerCallback() {
                     @Override
                     public void scrollTo(int position) {
-                        layoutManagerLinksSubreddit.scrollToPositionWithOffset(0, 0);
+                        layoutManagerLinksSubreddit.scrollToPositionWithOffset(position, 0);
+                    }
+
+                    @Override
+                    public int getRecyclerHeight() {
+                        return recyclerSearchLinksSubreddit.getHeight();
                     }
                 });
 
@@ -533,4 +510,8 @@ public class FragmentSearch extends Fragment implements Toolbar.OnMenuItemClickL
 //                .watch(this);
     }
 
+    @Override
+    boolean navigateBack() {
+        return true;
+    }
 }

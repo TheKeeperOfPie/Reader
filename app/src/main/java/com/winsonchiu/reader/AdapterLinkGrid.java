@@ -43,8 +43,8 @@ public class AdapterLinkGrid extends AdapterLink {
             ViewHolderHeader.EventListener eventListenerHeader,
             ViewHolderBase.EventListener eventListenerBase,
             DisallowListener disallowListener,
-            ScrollCallback scrollCallback) {
-        super(eventListenerHeader, eventListenerBase, disallowListener, scrollCallback);
+            RecyclerCallback recyclerCallback) {
+        super(eventListenerHeader, eventListenerBase, disallowListener, recyclerCallback);
         setControllers(controllerLinks, controllerComments, controllerUser);
         setActivity(activity);
     }
@@ -72,9 +72,9 @@ public class AdapterLinkGrid extends AdapterLink {
             return new ViewHolderHeader(LayoutInflater.from(viewGroup.getContext()).inflate(R.layout.header_link, viewGroup, false), eventListenerHeader);
         }
 
-        ViewHolder viewHolder = new ViewHolder(LayoutInflater.from(viewGroup.getContext())
-                .inflate(R.layout.cell_link, viewGroup, false), eventListenerBase, disallowListener, scrollCallback, thumbnailSize);
-        return viewHolder;
+        return new ViewHolder(LayoutInflater.from(viewGroup.getContext())
+                .inflate(R.layout.cell_link, viewGroup, false), eventListenerBase, disallowListener,
+                recyclerCallback, thumbnailSize);
     }
 
     @Override
@@ -89,7 +89,7 @@ public class AdapterLinkGrid extends AdapterLink {
                 break;
             case VIEW_LINK:
                 ViewHolder viewHolder = (ViewHolder) holder;
-                viewHolder.onBind(controllerLinks.getLink(position), controllerLinks.showSubreddit(), recyclerHeight, controllerUser.getUser().getName());
+                viewHolder.onBind(controllerLinks.getLink(position), controllerLinks.showSubreddit(), controllerUser.getUser().getName());
                 break;
         }
     }
@@ -102,9 +102,9 @@ public class AdapterLinkGrid extends AdapterLink {
         public ViewHolder(View itemView,
                 EventListener eventListener,
                 DisallowListener disallowListener,
-                ScrollCallback scrollCallback,
+                RecyclerCallback recyclerCallback,
                 int thumbnailSize) {
-            super(itemView, eventListener, disallowListener, scrollCallback);
+            super(itemView, eventListener, disallowListener, recyclerCallback);
             this.thumbnailSize = thumbnailSize;
 
         }
@@ -144,11 +144,9 @@ public class AdapterLinkGrid extends AdapterLink {
         }
 
         @Override
-        public void onBind(Link link, boolean showSubbreddit, int recyclerHeight, String userName) {
+        public void onBind(Link link, boolean showSubbreddit, String userName) {
 
-            super.onBind(link, showSubbreddit, recyclerHeight, userName);
-
-            expandFull(false);
+            super.onBind(link, showSubbreddit, userName);
 
             int position = getAdapterPosition();
 
@@ -238,6 +236,7 @@ public class AdapterLinkGrid extends AdapterLink {
                     imageFull.setVisibility(View.GONE);
                     imageThumbnail.setVisibility(View.VISIBLE);
                     imageThumbnail.setImageDrawable(drawableDefault);
+                    progressImage.setVisibility(View.GONE);
 
                     ((RelativeLayout.LayoutParams) textThreadTitle.getLayoutParams()).removeRule(
                             RelativeLayout.START_OF);
@@ -283,7 +282,7 @@ public class AdapterLinkGrid extends AdapterLink {
 
                                     @Override
                                     public void onError() {
-
+                                        progressImage.setVisibility(View.GONE);
                                     }
                                 });
             }

@@ -192,35 +192,44 @@ public class ControllerInbox implements ControllerCommentsBase {
     }
 
     @Override
+    public void editComment(final Comment comment, String text) {
+
+        Map<String, String> params = new HashMap<>();
+        params.put("api_type", "json");
+        params.put("text", TextUtils.htmlEncode(text));
+        params.put("thing_id", comment.getName());
+
+        reddit.loadPost(Reddit.OAUTH_URL + "/api/editusertext", new Response.Listener<String>() {
+            @Override
+            public void onResponse(String response) {
+                try {
+                    Comment newComment = Comment.fromJson(new JSONObject(response).getJSONObject("json").getJSONObject("data").getJSONArray("things").getJSONObject(0), comment.getLevel());
+                    comment.setBodyHtml(newComment.getBodyHtml());
+                    int commentIndex = data.getChildren()
+                            .indexOf(comment);
+                    Log.d(TAG, "commentIndex: " + commentIndex);
+
+                    if (commentIndex > -1) {
+                        for (Listener listener : listeners) {
+                            listener.getAdapter().notifyItemChanged(commentIndex);
+                        }
+                    }
+
+                }
+                catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }
+        }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+            }
+        }, params, 0);
+    }
+
+    @Override
     public Reddit getReddit() {
         return reddit;
-    }
-
-    @Override
-    public void voteLink(final RecyclerView.ViewHolder viewHolder, final Link link, int vote) {
-
-        reddit.voteLink(viewHolder, link, vote, new Reddit.VoteResponseListener() {
-            @Override
-            public void onVoteFailed() {
-                Toast.makeText(activity, "Error voting", Toast.LENGTH_SHORT)
-                        .show();
-            }
-        });
-    }
-
-    @Override
-    public Drawable getDrawableForLink(Link link) {
-        String thumbnail = link.getThumbnail();
-
-        if (link.isSelf()) {
-            return drawableSelf;
-        }
-
-        if (Reddit.DEFAULT.equals(thumbnail) || Reddit.NSFW.equals(thumbnail)) {
-            return drawableDefault;
-        }
-
-        return null;
     }
 
     @Override
@@ -240,11 +249,6 @@ public class ControllerInbox implements ControllerCommentsBase {
     }
 
     @Override
-    public Activity getActivity() {
-        return activity;
-    }
-
-    @Override
     public Subreddit getSubreddit() {
         return new Subreddit();
     }
@@ -252,11 +256,6 @@ public class ControllerInbox implements ControllerCommentsBase {
     @Override
     public boolean showSubreddit() {
         return true;
-    }
-
-    @Override
-    public void deletePost(Link link) {
-        // Not implemented
     }
 
     public void insertMessage(Message message) {

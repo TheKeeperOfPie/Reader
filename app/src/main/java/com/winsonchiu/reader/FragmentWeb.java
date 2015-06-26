@@ -21,7 +21,7 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.Toast;
 
-public class FragmentWeb extends Fragment {
+public class FragmentWeb extends FragmentBase {
     // TODO: Rename parameter arguments, choose names that match
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
     private static final String ARG_URL = "url";
@@ -254,9 +254,9 @@ public class FragmentWeb extends Fragment {
     public boolean navigateBack() {
         if (webView.canGoBack()) {
             webView.goBack();
-            return true;
+            return false;
         }
-        return false;
+        return true;
     }
 
     @Override

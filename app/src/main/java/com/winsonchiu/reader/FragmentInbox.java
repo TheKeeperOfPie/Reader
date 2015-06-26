@@ -27,7 +27,7 @@ import org.json.JSONObject;
 import java.util.HashMap;
 import java.util.Map;
 
-public class FragmentInbox extends Fragment {
+public class FragmentInbox extends FragmentBase {
 
     public static final String TAG = FragmentInbox.class.getCanonicalName();
 
@@ -231,6 +231,11 @@ public class FragmentInbox extends Fragment {
                         public void deleteComment(Comment comment) {
                             mListener.getControllerInbox().deleteComment(comment);
                         }
+
+                        @Override
+                        public void editComment(Comment comment, String text) {
+                            mListener.getControllerInbox().editComment(comment, text);
+                        }
                     },
                     eventListener,
                     new DisallowListener() {
@@ -299,4 +304,8 @@ public class FragmentInbox extends Fragment {
 //                .watch(this);
     }
 
+    @Override
+    boolean navigateBack() {
+        return true;
+    }
 }

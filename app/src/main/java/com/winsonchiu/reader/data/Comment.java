@@ -52,7 +52,9 @@ public class Comment extends Thing {
     private int level;
     private boolean isMore;
     private List<Comment> replies;
+    private String replyText;
     private boolean replyExpanded;
+    private boolean editMode;
 
     public static void addAllFromJson(List<Comment> comments, JSONObject rootJsonObject, int level) throws JSONException {
 
@@ -458,5 +460,21 @@ public class Comment extends Thing {
 
     public void setIsNew(boolean isNew) {
         this.isNew = isNew;
+    }
+
+    public boolean isEditMode() {
+        return editMode;
+    }
+
+    public void setEditMode(boolean editMode) {
+        this.editMode = editMode;
+    }
+
+    public String getReplyText() {
+        return replyText;
+    }
+
+    public void setReplyText(String replyText) {
+        this.replyText = replyText;
     }
 }

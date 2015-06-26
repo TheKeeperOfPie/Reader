@@ -71,9 +71,17 @@
         />
 
     <item
+        android:id="@+id/item_edit"
+        android:title="@string/item_edit"
+        android:icon="@drawable/ic_edit_white_24dp"
+        android:orderInCategory="900"
+        app:showAsAction="ifRoom"
+        />
+
+    <item
         android:id="@+id/item_delete"
         android:title="@string/item_delete"
-        android:orderInCategory="900"
+        android:orderInCategory="1000"
         android:icon="@drawable/ic_delete_white_24dp"
         app:showAsAction="ifRoom"
         />

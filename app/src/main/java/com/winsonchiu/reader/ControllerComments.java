@@ -39,24 +39,20 @@ import java.util.Set;
 /**
  * Created by TheKeeperOfPie on 3/20/2015.
  */
-public class ControllerComments implements ControllerLinksBase, ControllerCommentsBase {
+public class ControllerComments implements ControllerCommentsBase {
 
     private static final long ALPHA_DURATION = 500;
     private static final String TAG = ControllerComments.class.getCanonicalName();
 
     private Activity activity;
-    private SharedPreferences preferences;
     private Set<Listener> listeners;
     private Link link;
     private Listing listingComments;
     private String subreddit;
     private String linkId;
     private int indentWidth;
-    private Drawable drawableSelf;
-    private Drawable drawableDefault;
     private Reddit reddit;
     private boolean isLoading;
-    private ControllerLinks controllerLinks;
 
     public ControllerComments(Activity activity,
             String subreddit,
@@ -67,34 +63,12 @@ public class ControllerComments implements ControllerLinksBase, ControllerCommen
         this.linkId = linkId;
     }
 
-    public ControllerComments(Activity activity, JSONObject data) {
-        this(activity, "", "");
-        try {
-            setLinkId(data.getString("subreddit"), data.getString("linkId"));
-        }
-        catch (JSONException e) {
-            e.printStackTrace();
-        }
-    }
-
-    public String saveData() throws JSONException {
-        JSONObject jsonObject = new JSONObject();
-        jsonObject.put("subreddit", subreddit);
-        jsonObject.put("linkId", linkId);
-        return jsonObject.toString();
-    }
-
     public void setActivity(Activity activity) {
         this.activity = activity;
-        this.preferences = PreferenceManager.getDefaultSharedPreferences(
-                activity.getApplicationContext());
         this.reddit = Reddit.getInstance(activity);
         this.indentWidth = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 8,
                 activity.getResources()
                         .getDisplayMetrics());
-        Resources resources = activity.getResources();
-        this.drawableSelf = resources.getDrawable(R.drawable.ic_chat_white_48dp);
-        this.drawableDefault = resources.getDrawable(R.drawable.ic_web_white_48dp);
     }
 
     public void addListener(Listener listener) {
@@ -202,21 +176,6 @@ public class ControllerComments implements ControllerLinksBase, ControllerCommen
     }
 
     @Override
-    public Drawable getDrawableForLink(Link link) {
-        String thumbnail = link.getThumbnail();
-
-        if (link.isSelf()) {
-            return drawableSelf;
-        }
-
-        if (Reddit.DEFAULT.equals(thumbnail) || Reddit.NSFW.equals(thumbnail)) {
-            return drawableDefault;
-        }
-
-        return null;
-    }
-
-    @Override
     public int sizeLinks() {
         return 1;
     }
@@ -232,11 +191,6 @@ public class ControllerComments implements ControllerLinksBase, ControllerCommen
     }
 
     @Override
-    public Activity getActivity() {
-        return activity;
-    }
-
-    @Override
     public Subreddit getSubreddit() {
         return new Subreddit();
     }
@@ -244,11 +198,6 @@ public class ControllerComments implements ControllerLinksBase, ControllerCommen
     @Override
     public boolean showSubreddit() {
         return true;
-    }
-
-    @Override
-    public void deletePost(Link link) {
-        controllerLinks.deletePost(link);
     }
 
     @Override
@@ -594,20 +543,6 @@ public class ControllerComments implements ControllerLinksBase, ControllerCommen
     }
 
     @Override
-    public void voteLink(final RecyclerView.ViewHolder viewHolder,
-            final Link link,
-            final int vote) {
-
-        reddit.voteLink(viewHolder, link, vote, new Reddit.VoteResponseListener() {
-            @Override
-            public void onVoteFailed() {
-                Toast.makeText(activity, "Error voting", Toast.LENGTH_SHORT)
-                        .show();
-            }
-        });
-    }
-
-    @Override
     public int getIndentWidth(Comment comment) {
         return indentWidth * comment.getLevel();
     }
@@ -620,17 +555,6 @@ public class ControllerComments implements ControllerLinksBase, ControllerCommen
     @Override
     public Reddit getReddit() {
         return reddit;
-    }
-
-    public void animateAlpha(View view, float start, float end) {
-        ObjectAnimator objectAnimator = ObjectAnimator.ofFloat(view, "alpha", start, end);
-        objectAnimator.setDuration(ALPHA_DURATION);
-        objectAnimator.start();
-    }
-
-    public void clear() {
-        listingComments = new Listing();
-        link = new Link();
     }
 
     public int getItemCount() {
@@ -705,8 +629,41 @@ public class ControllerComments implements ControllerLinksBase, ControllerCommen
         return false;
     }
 
-    public void setControllerLinks(ControllerLinks controllerLinks) {
-        this.controllerLinks = controllerLinks;
+    @Override
+    public void editComment(final Comment comment, String text) {
+        Map<String, String> params = new HashMap<>();
+        params.put("api_type", "json");
+        params.put("text", TextUtils.htmlEncode(text));
+        params.put("thing_id", comment.getName());
+
+        reddit.loadPost(Reddit.OAUTH_URL + "/api/editusertext", new Response.Listener<String>() {
+            @Override
+            public void onResponse(String response) {
+                try {
+                    Log.d(TAG, "response: " + response);
+                    Comment newComment = Comment.fromJson(new JSONObject(response).getJSONObject("json").getJSONObject("data").getJSONArray("things").getJSONObject(0), comment.getLevel());
+                    comment.setBodyHtml(newComment.getBodyHtml());
+                    int commentIndex = listingComments.getChildren()
+                            .indexOf(comment);
+
+                    Log.d(TAG, "commentIndex: " + commentIndex);
+
+                    if (commentIndex > -1) {
+                        for (Listener listener : listeners) {
+                            listener.getAdapter().notifyItemChanged(commentIndex + 1);
+                        }
+                    }
+
+                }
+                catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }
+        }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+            }
+        }, params, 0);
     }
 
     public int getPreviousCommentPosition(int commentIndex) {
@@ -738,13 +695,6 @@ public class ControllerComments implements ControllerLinksBase, ControllerCommen
     }
 
     public interface Listener extends ControllerListener{
-    }
-
-    public interface ListenerCallback {
-        ControllerCommentsBase getControllerComments();
-        SharedPreferences getPreferences();
-        User getUser();
-        float getItemWidth();
     }
 
 }

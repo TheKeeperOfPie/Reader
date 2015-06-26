@@ -33,8 +33,8 @@ public class AdapterLinkList extends AdapterLink {
             ViewHolderHeader.EventListener eventListenerHeader,
             ViewHolderBase.EventListener eventListenerBase,
             DisallowListener disallowListener,
-            ScrollCallback scrollCallback) {
-        super(eventListenerHeader, eventListenerBase, disallowListener, scrollCallback);
+            RecyclerCallback recyclerCallback) {
+        super(eventListenerHeader, eventListenerBase, disallowListener, recyclerCallback);
         setControllers(controllerLinks, controllerComments, controllerUser);
         setActivity(activity);
     }
@@ -53,7 +53,8 @@ public class AdapterLinkList extends AdapterLink {
         }
 
         ViewHolder viewHolder = new ViewHolder(LayoutInflater.from(viewGroup.getContext())
-                .inflate(R.layout.row_link, viewGroup, false), eventListenerBase, disallowListener, scrollCallback);
+                .inflate(R.layout.row_link, viewGroup, false), eventListenerBase, disallowListener,
+                recyclerCallback);
         viewHolders.add(viewHolder);
         return viewHolder;
     }
@@ -70,7 +71,7 @@ public class AdapterLinkList extends AdapterLink {
                 break;
             case VIEW_LINK:
                 ViewHolder viewHolder = (ViewHolder) holder;
-                viewHolder.onBind(controllerLinks.getLink(position), controllerLinks.showSubreddit(), recyclerHeight, controllerUser.getUser().getName());
+                viewHolder.onBind(controllerLinks.getLink(position), controllerLinks.showSubreddit(), controllerUser.getUser().getName());
                 break;
         }
     }
@@ -80,8 +81,8 @@ public class AdapterLinkList extends AdapterLink {
         public ViewHolder(View itemView,
                 EventListener eventListener,
                 DisallowListener disallowListener,
-                ScrollCallback scrollCallback) {
-            super(itemView, eventListener, disallowListener, scrollCallback);
+                RecyclerCallback recyclerCallback) {
+            super(itemView, eventListener, disallowListener, recyclerCallback);
         }
 
         @Override
@@ -106,8 +107,8 @@ public class AdapterLinkList extends AdapterLink {
         }
 
         @Override
-        public void onBind(Link link, boolean showSubreddit, int recyclerHeight, String userName) {
-            super.onBind(link, showSubreddit, recyclerHeight, userName);
+        public void onBind(Link link, boolean showSubreddit, String userName) {
+            super.onBind(link, showSubreddit, userName);
 
             imageThumbnail.setVisibility(View.VISIBLE);
 

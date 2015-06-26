@@ -110,4 +110,7 @@
     <string name="comment">Comment</string>
     <string name="copied">Copied</string>
     <string name="error_youtube">Error loading YouTube video</string>
+    <string name="item_edit">Edit</string>
+    <string name="send_reply">Send reply</string>
+    <string name="send_edit">Send edit</string>
 </resources>

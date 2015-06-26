@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.support.v4.view.GravityCompat;
 import android.support.v4.view.MenuItemCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v4.widget.SwipeRefreshLayout;
@@ -35,7 +36,7 @@ import com.winsonchiu.reader.data.Subreddit;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-public class FragmentThreadList extends Fragment implements Toolbar.OnMenuItemClickListener {
+public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuItemClickListener {
 
     public static final String TAG = FragmentThreadList.class.getCanonicalName();
 
@@ -72,7 +73,7 @@ public class FragmentThreadList extends Fragment implements Toolbar.OnMenuItemCl
     private Button buttonSubscribe;
     private AdapterLink.ViewHolderHeader.EventListener eventListenerHeader;
     private DisallowListener disallowListener;
-    private ScrollCallback scrollCallback;
+    private RecyclerCallback recyclerCallback;
     private ControllerLinks.Listener listener;
 
     /**
@@ -237,6 +238,11 @@ public class FragmentThreadList extends Fragment implements Toolbar.OnMenuItemCl
                         mListener.getControllerLinks().getSubreddit().getSubmitTextHtml());
                 startActivityForResult(intent, ActivityNewPost.REQUEST_CODE);
             }
+
+            @Override
+            public void showSidebar() {
+                drawerLayout.openDrawer(GravityCompat.END);
+            }
         };
 
         disallowListener = new DisallowListener() {
@@ -252,7 +258,7 @@ public class FragmentThreadList extends Fragment implements Toolbar.OnMenuItemCl
             }
         };
 
-        scrollCallback = new ScrollCallback() {
+        recyclerCallback = new RecyclerCallback() {
             @Override
             public void scrollTo(final int position) {
                 recyclerThreadList.requestLayout();
@@ -269,6 +275,11 @@ public class FragmentThreadList extends Fragment implements Toolbar.OnMenuItemCl
                         }
                     }
                 });
+            }
+
+            @Override
+            public int getRecyclerHeight() {
+                return recyclerThreadList.getHeight();
             }
         };
 
@@ -395,7 +406,7 @@ public class FragmentThreadList extends Fragment implements Toolbar.OnMenuItemCl
                     eventListenerHeader,
                     mListener.getEventListenerBase(),
                     disallowListener,
-                    scrollCallback);
+                    recyclerCallback);
         }
         if (adapterLinkGrid == null) {
             adapterLinkGrid = new AdapterLinkGrid(activity, mListener.getControllerLinks(),
@@ -404,7 +415,7 @@ public class FragmentThreadList extends Fragment implements Toolbar.OnMenuItemCl
                     eventListenerHeader,
                     mListener.getEventListenerBase(),
                     disallowListener,
-                    scrollCallback);
+                    recyclerCallback);
         }
 
         if (AppSettings.MODE_LIST.equals(
@@ -587,4 +598,8 @@ public class FragmentThreadList extends Fragment implements Toolbar.OnMenuItemCl
         return false;
     }
 
+    @Override
+    boolean navigateBack() {
+        return true;
+    }
 }

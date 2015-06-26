@@ -26,7 +26,7 @@ import com.winsonchiu.reader.data.Comment;
 import com.winsonchiu.reader.data.Reddit;
 import com.winsonchiu.reader.data.User;
 
-public class FragmentProfile extends Fragment implements Toolbar.OnMenuItemClickListener {
+public class FragmentProfile extends FragmentBase implements Toolbar.OnMenuItemClickListener {
     // TODO: Rename parameter arguments, choose names that match
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
     private static final String ARG_PARAM1 = "param1";
@@ -296,6 +296,11 @@ public class FragmentProfile extends Fragment implements Toolbar.OnMenuItemClick
                         public void deleteComment(Comment comment) {
                             mListener.getControllerProfile().deleteComment(comment);
                         }
+
+                        @Override
+                        public void editComment(Comment comment, String text) {
+                            mListener.getControllerProfile().editComment(comment, text);
+                        }
                     },
                     new DisallowListener() {
                         @Override
@@ -308,12 +313,17 @@ public class FragmentProfile extends Fragment implements Toolbar.OnMenuItemClick
                         public void requestDisallowInterceptTouchEventHorizontal(boolean disallow) {
 
                         }
-                    }, new ScrollCallback() {
+                    }, new RecyclerCallback() {
                 @Override
                 public void scrollTo(int position) {
                     linearLayoutManager.scrollToPositionWithOffset(0, 0);
                 }
-            });
+
+                @Override
+                public int getRecyclerHeight() {
+                    return recyclerProfile.getHeight();
+                }
+            }, listener);
         }
 
         recyclerProfile.setAdapter(adapterProfile);
@@ -394,4 +404,8 @@ public class FragmentProfile extends Fragment implements Toolbar.OnMenuItemClick
         return false;
     }
 
+    @Override
+    boolean navigateBack() {
+        return true;
+    }
 }

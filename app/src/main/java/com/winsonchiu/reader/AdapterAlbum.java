@@ -18,6 +18,7 @@ import com.winsonchiu.reader.data.imgur.Image;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Stack;
 
 /**
  * Created by TheKeeperOfPie on 3/19/2015.
@@ -25,14 +26,14 @@ import java.util.List;
 public class AdapterAlbum extends PagerAdapter {
 
     private static final String TAG = AdapterAlbum.class.getCanonicalName();
-    private OnTouchListenerDisallow onTouchListenerDisallow;
-    private List<View> recycledViews;
+    private DisallowListener disallowListener;
+    private Stack<View> recycledViews;
     private Album album;
 
-    public AdapterAlbum(Album album, OnTouchListenerDisallow onTouchListenerDisallow) {
+    public AdapterAlbum(Album album, DisallowListener disallowListener) {
         this.album = album;
-        this.onTouchListenerDisallow = onTouchListenerDisallow;
-        recycledViews = new ArrayList<>();
+        this.disallowListener = disallowListener;
+        recycledViews = new Stack<>();
     }
 
     @Override
@@ -50,8 +51,7 @@ public class AdapterAlbum extends PagerAdapter {
         final ScrollView scrollText;
 
         if (!recycledViews.isEmpty()) {
-            view = recycledViews.remove(0);
-
+            view = recycledViews.pop();
         }
         else {
             view = LayoutInflater.from(container.getContext())
@@ -61,36 +61,13 @@ public class AdapterAlbum extends PagerAdapter {
 
         ViewHolder viewHolder = (ViewHolder) view.getTag();
 
-        webView = new WebView(container.getContext().getApplicationContext());
-        Reddit.incrementCreate();
-        webView.setId(R.id.web);
-        webView.getSettings()
-                .setUseWideViewPort(true);
-        webView.getSettings()
-                .setLoadWithOverviewMode(true);
-        webView.getSettings()
-                .setBuiltInZoomControls(true);
-        webView.getSettings()
-                .setDisplayZoomControls(false);
-        webView.setBackgroundColor(0x000000);
-        webView.setWebChromeClient(null);
-        webView.setWebViewClient(new WebViewClient() {
-            @Override
-            public void onReceivedError(WebView view,
-                    int errorCode,
-                    String description,
-                    String failingUrl) {
-                super.onReceivedError(view, errorCode, description, failingUrl);
-                Log.e(TAG, "WebView error: " + description);
-            }
-        });
-        webView.setInitialScale(0);
-        webView.setOnTouchListener(onTouchListenerDisallow);
+        webView = WebViewFixed.newInstance(container.getContext().getApplicationContext(), disallowListener);
+        webView.setScrollbarFadingEnabled(false);
         webView.setScrollY(0);
         webView.loadData(Reddit.getImageHtml(image.getLink()), "text/html", "UTF-8");
 
         scrollText = viewHolder.scrollText;
-        scrollText.setOnTouchListener(onTouchListenerDisallow);
+        scrollText.setOnTouchListener(new OnTouchListenerDisallow(disallowListener));
         scrollText.setVisibility(View.GONE);
 
         viewHolder.textAlbumIndicator.setText((position + 1) + " / " + album.getImages()
@@ -121,7 +98,9 @@ public class AdapterAlbum extends PagerAdapter {
         layoutParams.addRule(RelativeLayout.ALIGN_PARENT_END, RelativeLayout.TRUE);
         layoutParams.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM, RelativeLayout.TRUE);
         layoutParams.addRule(RelativeLayout.BELOW, scrollText.getId());
-        ((RelativeLayout) view).addView(webView, layoutParams);
+
+        RelativeLayout relativeLayout = (RelativeLayout) view;
+        relativeLayout.addView(webView, relativeLayout.getChildCount() - 2, layoutParams);
 
         container.addView(view);
         return view;

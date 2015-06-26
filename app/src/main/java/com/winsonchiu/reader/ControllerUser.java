@@ -22,6 +22,18 @@ public class ControllerUser {
         super();
         preferences = PreferenceManager.getDefaultSharedPreferences(activity);
         user = new User();
+        reloadUser();
+    }
+
+    public User getUser() {
+        return user;
+    }
+
+    public void setActivity(Activity activity) {
+
+    }
+
+    public void reloadUser() {
         if (!TextUtils.isEmpty(preferences.getString(AppSettings.ACCOUNT_JSON, ""))) {
             try {
                 this.user = User.fromJson(
@@ -31,13 +43,5 @@ public class ControllerUser {
                 e.printStackTrace();
             }
         }
-    }
-
-    public User getUser() {
-        return user;
-    }
-
-    public void setActivity(Activity activity) {
-
     }
 }

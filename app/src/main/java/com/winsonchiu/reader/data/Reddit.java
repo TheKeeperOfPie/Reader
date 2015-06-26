@@ -54,20 +54,6 @@ public class Reddit {
         Log.d(TAG, "Destroyed: " + destroyed.incrementAndGet());
     }
 
-    public static Drawable getDrawableForLink(Context context, Link link) {
-        String thumbnail = link.getThumbnail();
-
-        if (link.isSelf()) {
-            return context.getDrawable(R.drawable.ic_chat_white_48dp);
-        }
-
-        if (Reddit.DEFAULT.equals(thumbnail) || Reddit.NSFW.equals(thumbnail)) {
-            return context.getDrawable(R.drawable.ic_web_white_48dp);
-        }
-
-        return null;
-    }
-
     // Constant values to represent Thing states
     public enum Distinguished {
         NOT_DISTINGUISHED, MODERATOR, ADMIN, SPECIAL
@@ -418,13 +404,14 @@ public class Reddit {
             String text,
             Listener<String> listener,
             ErrorListener errorListener) {
+        Log.d(TAG, "sendComment");
         Map<String, String> params = new HashMap<>();
         params.put("api_type", "json");
         params.put("thing_id", name);
         params.put("text", text);
 
         Request<String> request = loadPost(Reddit.OAUTH_URL + "/api/comment", listener,
-                errorListener, params, 0);
+                errorListener, params, 2);
 
         return requestQueue.add(request);
     }
@@ -506,6 +493,21 @@ public class Reddit {
         return url.substring(startIndex, lastIndex);
     }
 
+
+    public static Drawable getDrawableForLink(Context context, Link link) {
+        String thumbnail = link.getThumbnail();
+
+        if (link.isSelf()) {
+            return context.getResources().getDrawable(R.drawable.ic_chat_white_48dp);
+        }
+
+        if (Reddit.DEFAULT.equals(thumbnail) || Reddit.NSFW.equals(thumbnail)) {
+            return context.getResources().getDrawable(R.drawable.ic_web_white_48dp);
+        }
+
+        return null;
+    }
+    
     public Request<String> loadImgurImage(String id,
             Listener<String> listener,
             final ErrorListener errorListener,

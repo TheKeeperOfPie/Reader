@@ -32,7 +32,7 @@ import com.google.android.youtube.player.YouTubePlayer;
 import com.google.android.youtube.player.YouTubePlayerView;
 import com.winsonchiu.reader.data.Link;
 
-public class FragmentComments extends Fragment {
+public class FragmentComments extends FragmentBase {
 
     public static final String TAG = FragmentComments.class.getCanonicalName();
 
@@ -72,6 +72,7 @@ public class FragmentComments extends Fragment {
     private RecyclerView.AdapterDataObserver observer;
     private FastOutSlowInInterpolator fastOutSlowInInterpolator;
     private Fragment fragmentToHide;
+    private boolean isFullscreen;
 
     /**
      * Use this factory method to create a new instance of
@@ -163,19 +164,6 @@ public class FragmentComments extends Fragment {
 
         toolbar = (Toolbar) view.findViewById(R.id.toolbar);
         toolbar.setNavigationIcon(R.drawable.ic_arrow_back_white_24dp);
-        toolbar.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                linearLayoutManager.scrollToPositionWithOffset(0, 0);
-            }
-        });
-        toolbar.setOnLongClickListener(new View.OnLongClickListener() {
-            @Override
-            public boolean onLongClick(View v) {
-                Toast.makeText(activity, "Return to top", Toast.LENGTH_LONG).show();
-                return true;
-            }
-        });
         toolbar.setNavigationOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -285,16 +273,21 @@ public class FragmentComments extends Fragment {
                         public void requestDisallowInterceptTouchEventHorizontal(boolean disallow) {
 
                         }
-                    }, new ScrollCallback() {
+                    }, new RecyclerCallback() {
                 @Override
                 public void scrollTo(int position) {
                     linearLayoutManager.scrollToPositionWithOffset(position, 0);
+                }
+
+                @Override
+                public int getRecyclerHeight() {
+                    return recyclerCommentList.getHeight();
                 }
             }, new YouTubeListener() {
                 @Override
                 public void loadYouTube(Link link,
                         final String id,
-                        AdapterLink.ViewHolderBase viewHolderBase) {
+                        final int timeInMillis) {
 
                     if (youTubePlayer != null) {
                         viewYouTube.setVisibility(View.VISIBLE);
@@ -320,6 +313,7 @@ public class FragmentComments extends Fragment {
                                                 new YouTubePlayer.OnFullscreenListener() {
                                                     @Override
                                                     public void onFullscreen(boolean fullscreen) {
+                                                        isFullscreen = fullscreen;
                                                         Log.d(TAG, "fullscreen: " + fullscreen);
                                                         if (!fullscreen) {
                                                             youTubePlayer.pause();
@@ -348,7 +342,50 @@ public class FragmentComments extends Fragment {
                                                     @Override
                                                     public void onVideoStarted() {
                                                         youTubePlayer.setFullscreen(true);
+                                                        youTubePlayer.seekToMillis(timeInMillis);
+                                                        youTubePlayer.setPlayerStateChangeListener(null);
+                                                    }
 
+                                                    @Override
+                                                    public void onVideoEnded() {
+
+                                                    }
+
+                                                    @Override
+                                                    public void onError(YouTubePlayer.ErrorReason errorReason) {
+
+                                                    }
+                                                });
+                                    }
+                                    else {
+                                        youTubePlayer.setOnFullscreenListener(
+                                                new YouTubePlayer.OnFullscreenListener() {
+                                                    @Override
+                                                    public void onFullscreen(boolean fullscreen) {
+                                                        isFullscreen = fullscreen;
+                                                    }
+                                                });
+                                        youTubePlayer.setPlayerStateChangeListener(
+                                                new YouTubePlayer.PlayerStateChangeListener() {
+                                                    @Override
+                                                    public void onLoading() {
+
+                                                    }
+
+                                                    @Override
+                                                    public void onLoaded(String s) {
+
+                                                    }
+
+                                                    @Override
+                                                    public void onAdStarted() {
+
+                                                    }
+
+                                                    @Override
+                                                    public void onVideoStarted() {
+                                                        youTubePlayer.seekToMillis(timeInMillis);
+                                                        youTubePlayer.setPlayerStateChangeListener(null);
                                                     }
 
                                                     @Override
@@ -673,8 +710,18 @@ public class FragmentComments extends Fragment {
         this.fragmentToHide = fragmentToHide;
     }
 
+    @Override
+    boolean navigateBack() {
+        if (youTubePlayer != null && isFullscreen) {
+            youTubePlayer.setFullscreen(false);
+            return false;
+        }
+
+        return true;
+    }
+
     public interface YouTubeListener {
-        void loadYouTube(Link link, String id, AdapterLink.ViewHolderBase viewHolderBase);
+        void loadYouTube(Link link, String id, int timeInMillis);
         boolean hideYouTube();
     }
 

@@ -32,22 +32,24 @@ public class AdapterProfile extends RecyclerView.Adapter<RecyclerView.ViewHolder
     private AdapterLink.ViewHolderBase.EventListener eventListenerBase;
     private AdapterCommentList.ViewHolderComment.EventListener eventListenerComment;
     private DisallowListener disallowListener;
-    private ScrollCallback scrollCallback;
+    private RecyclerCallback recyclerCallback;
+    private ControllerProfile.Listener listener;
     private List<RecyclerView.ViewHolder> viewHolders;
-    private int recyclerHeight;
 
     public AdapterProfile(final Activity activity,
-            final ControllerProfile controllerProfile,
+            ControllerProfile controllerProfile,
             ControllerLinksBase controllerLinks,
             ControllerUser controllerUser,
             AdapterLink.ViewHolderBase.EventListener eventListenerBase,
             AdapterCommentList.ViewHolderComment.EventListener eventListenerComment,
             DisallowListener disallowListener,
-            ScrollCallback scrollCallback) {
+            RecyclerCallback recyclerCallback,
+            ControllerProfile.Listener listener) {
         this.eventListenerBase = eventListenerBase;
         this.eventListenerComment = eventListenerComment;
         this.disallowListener = disallowListener;
-        this.scrollCallback = scrollCallback;
+        this.recyclerCallback = recyclerCallback;
+        this.listener = listener;
         this.activity = activity;
         this.controllerProfile = controllerProfile;
         this.controllerLinks = controllerLinks;
@@ -73,12 +75,6 @@ public class AdapterProfile extends RecyclerView.Adapter<RecyclerView.ViewHolder
             default:
                 return controllerProfile.getViewType(position - 6);
         }
-    }
-
-    @Override
-    public void onAttachedToRecyclerView(RecyclerView recyclerView) {
-        super.onAttachedToRecyclerView(recyclerView);
-        recyclerHeight = recyclerView.getHeight();
     }
 
     @Override
@@ -111,7 +107,7 @@ public class AdapterProfile extends RecyclerView.Adapter<RecyclerView.ViewHolder
                 AdapterLink.ViewHolderBase viewHolder = new AdapterLinkList.ViewHolder(
                         LayoutInflater.from(parent.getContext())
                                 .inflate(R.layout.row_link, parent, false), eventListenerBase,
-                        disallowListener, scrollCallback);
+                        disallowListener, recyclerCallback);
                 viewHolders.add(viewHolder);
                 viewHolder.toolbarActions.getMenu().findItem(R.id.item_view_profile)
                         .setShowAsAction(
@@ -124,7 +120,7 @@ public class AdapterProfile extends RecyclerView.Adapter<RecyclerView.ViewHolder
             case ControllerProfile.VIEW_TYPE_COMMENT:
                 return new AdapterCommentList.ViewHolderComment(
                         LayoutInflater.from(parent.getContext())
-                                .inflate(R.layout.row_comment, parent, false), eventListenerBase, eventListenerComment, disallowListener);
+                                .inflate(R.layout.row_comment, parent, false), eventListenerBase, eventListenerComment, disallowListener, listener);
 
         }
 
@@ -158,7 +154,7 @@ public class AdapterProfile extends RecyclerView.Adapter<RecyclerView.ViewHolder
                 }
                 else {
                     viewHolderLinkTop.itemView.setVisibility(View.VISIBLE);
-                    viewHolderLinkTop.onBind(controllerProfile.getTopLink(), controllerLinks.showSubreddit(), recyclerHeight, controllerUser.getUser().getName());
+                    viewHolderLinkTop.onBind(controllerProfile.getTopLink(), controllerLinks.showSubreddit(), controllerUser.getUser().getName());
                 }
                 break;
             case 3:
@@ -185,7 +181,7 @@ public class AdapterProfile extends RecyclerView.Adapter<RecyclerView.ViewHolder
                 if (holder instanceof AdapterLinkList.ViewHolder) {
 
                     AdapterLinkList.ViewHolder viewHolderLink = (AdapterLinkList.ViewHolder) holder;
-                    viewHolderLink.onBind(controllerProfile.getLink(position), controllerLinks.showSubreddit(), recyclerHeight, controllerUser.getUser().getName());
+                    viewHolderLink.onBind(controllerProfile.getLink(position), controllerLinks.showSubreddit(), controllerUser.getUser().getName());
 
                 }
                 else if (holder instanceof AdapterCommentList.ViewHolderComment) {

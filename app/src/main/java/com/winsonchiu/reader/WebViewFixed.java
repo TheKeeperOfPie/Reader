@@ -42,9 +42,11 @@ public class WebViewFixed extends WebView {
         this.maxHeight = Integer.MAX_VALUE;
         setMeasuredDimension(getMeasuredWidth(), 0);
         ViewGroup.LayoutParams layoutParams = getLayoutParams();
-        layoutParams.height = ViewGroup.LayoutParams.WRAP_CONTENT;
-        setLayoutParams(layoutParams);
-        requestLayout();
+        if (layoutParams != null) {
+            layoutParams.height = ViewGroup.LayoutParams.WRAP_CONTENT;
+            setLayoutParams(layoutParams);
+            requestLayout();
+        }
     }
 
     @Override
@@ -84,6 +86,7 @@ public class WebViewFixed extends WebView {
         webViewFixed.getSettings()
                 .setDisplayZoomControls(false);
         webViewFixed.setBackgroundColor(0x000000);
+        webViewFixed.setInitialScale(1);
         webViewFixed.setWebChromeClient(null);
         webViewFixed.setWebViewClient(new WebViewClient() {
             @Override
@@ -102,6 +105,7 @@ public class WebViewFixed extends WebView {
             }
         });
         webViewFixed.setOnTouchListener(new OnTouchListenerDisallow(disallowListener));
+        webViewFixed.resetMaxHeight();
         return webViewFixed;
     }
 }
