@@ -2,6 +2,8 @@
 
 A Reddit client created to practice good UI/UX design
 
+Licenses and attributions have not been added to this repository nor the application itself. That will be done before publishing.
+
 ## Screenshots
 <b>Thread list</b>
 
@@ -73,7 +75,7 @@ This section address how the IDs and variables will be named.
 View IDs: view_name_modifier
 Example: R.id.recycler_view_thread_list_main
 
-## Documentation
+## ~~Documentation~~ (Really, really old and needs to be updated, please ignore)
 
 ### Setting Up
 
