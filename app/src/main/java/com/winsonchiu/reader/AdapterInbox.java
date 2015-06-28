@@ -39,19 +39,22 @@ public class AdapterInbox extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
     private AdapterCommentList.ViewHolderComment.EventListener eventListenerComment;
     private ViewHolderMessage.EventListener eventListenerInbox;
     private DisallowListener disallowListener;
+    private ControllerProfile.Listener listener;
 
     public AdapterInbox(ControllerInbox controllerInbox,
             ControllerUser controllerUser,
             AdapterLink.ViewHolderBase.EventListener eventListenerBase,
             AdapterCommentList.ViewHolderComment.EventListener eventListenerComment,
             ViewHolderMessage.EventListener eventListenerInbox,
-            DisallowListener disallowListener) {
+            DisallowListener disallowListener,
+            ControllerProfile.Listener listener) {
         this.controllerInbox = controllerInbox;
         this.controllerUser = controllerUser;
         this.eventListenerBase = eventListenerBase;
         this.eventListenerComment = eventListenerComment;
         this.eventListenerInbox = eventListenerInbox;
         this.disallowListener = disallowListener;
+        this.listener = listener;
     }
 
     @Override
@@ -72,7 +75,7 @@ public class AdapterInbox extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
                 // TODO: Move to different ViewHolderComment constructor
                 return new AdapterCommentList.ViewHolderComment(
                         LayoutInflater.from(parent.getContext())
-                                .inflate(R.layout.row_comment, parent, false), eventListenerBase, eventListenerComment, disallowListener) {
+                                .inflate(R.layout.row_comment, parent, false), eventListenerBase, eventListenerComment, disallowListener, listener) {
                     @Override
                     public void expandToolbarActions() {
                         super.expandToolbarActions();
@@ -95,6 +98,10 @@ public class AdapterInbox extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
 
     @Override
     public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
+
+        if (!controllerInbox.isLoading() && position > controllerInbox.getItemCount() - 5) {
+            controllerInbox.loadMore();
+        }
 
         switch (getItemViewType(position)) {
             case VIEW_TYPE_MESSAGE:

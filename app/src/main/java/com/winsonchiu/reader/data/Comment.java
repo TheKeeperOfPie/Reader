@@ -48,9 +48,13 @@ public class Comment extends Thing {
     private String linkUrl = "";
     private List<String> children;
     private boolean isNew;
+    private String context;
+
+    // For More entries
+    private boolean isMore;
+    private int count;
 
     private int level;
-    private boolean isMore;
     private List<Comment> replies;
     private String replyText;
     private boolean replyExpanded;
@@ -104,6 +108,7 @@ public class Comment extends Thing {
 
         if (comment.getKind().equals("more")) {
             comment.setIsMore(true);
+            comment.setCount(jsonObject.optInt("count"));
             List<String> children = new LinkedList<>();
             JSONArray childrenArray = jsonObject.getJSONArray("children");
             for (int index = 0; index < childrenArray.length(); index++) {
@@ -181,6 +186,7 @@ public class Comment extends Thing {
         comment.setLinkUrl(jsonObject.optString("link_url"));
 
         comment.setIsNew(jsonObject.optBoolean("new"));
+        comment.setContext(jsonObject.optString("context"));
 
 //        JSONArray arrayReplies = jsonObject.getJSONArray("replies");
 //        ArrayList<Comment> listReplies = new ArrayList<>(arrayReplies.length());
@@ -476,5 +482,21 @@ public class Comment extends Thing {
 
     public void setReplyText(String replyText) {
         this.replyText = replyText;
+    }
+
+    public String getContext() {
+        return context;
+    }
+
+    public void setContext(String context) {
+        this.context = context;
+    }
+
+    public int getCount() {
+        return count;
+    }
+
+    public void setCount(int count) {
+        this.count = count;
     }
 }

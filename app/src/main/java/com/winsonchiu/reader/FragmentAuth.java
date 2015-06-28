@@ -135,7 +135,7 @@ public class FragmentAuth extends FragmentBase {
                     String description,
                     String failingUrl) {
                 super.onReceivedError(view, errorCode, description, failingUrl);
-                Toast.makeText(activity, "WebView error: " + description, Toast.LENGTH_SHORT).show();
+                Log.e(TAG, "WebView error: " + description);
             }
         });
         webAuth.loadUrl(reddit.getUserAuthUrl(state));
@@ -173,6 +173,7 @@ public class FragmentAuth extends FragmentBase {
 
                                     }
                                 }, 0);
+                        webAuth.destroy();
                         getFragmentManager().popBackStack();
                         mListener.onAuthFinished(true);
                     }
@@ -180,8 +181,9 @@ public class FragmentAuth extends FragmentBase {
                     @Override
                     public void onErrorResponse(VolleyError error) {
                         // TODO: Check user info error
+                        webAuth.destroy();
                         getFragmentManager().popBackStack();
-                        mListener.onAuthFinished(true);
+                        mListener.onAuthFinished(false);
                     }
                 }, 0);
     }

@@ -65,6 +65,12 @@ public class FragmentComments extends FragmentBase {
     private FastOutSlowInInterpolator fastOutSlowInInterpolator;
     private Fragment fragmentToHide;
     private boolean isFullscreen;
+    private int screenWidth;
+    private int viewHolderWidth;
+    private float startX;
+    private float startY;
+    private int startMarginEnd;
+    private View viewBackground;
 
     public static FragmentComments newInstance() {
         FragmentComments fragment = new FragmentComments();
@@ -102,6 +108,14 @@ public class FragmentComments extends FragmentBase {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        if (getArguments() != null) {
+            screenWidth = getResources().getDisplayMetrics().widthPixels;
+            viewHolderWidth = getArguments().getInt(ARG_ITEM_WIDTH, screenWidth);
+            startX = getArguments().getFloat(ARG_START_X, 0);
+            startY = getArguments().getFloat(ARG_START_Y, 0);
+            startMarginEnd = (int) (screenWidth - startX - viewHolderWidth);
+        }
+
         fastOutSlowInInterpolator = new FastOutSlowInInterpolator();
         setHasOptionsMenu(true);
     }
@@ -481,26 +495,17 @@ public class FragmentComments extends FragmentBase {
 
         recyclerCommentList.setAdapter(adapterCommentList);
 
-        final int screenWidth = getResources().getDisplayMetrics().widthPixels;
-        int viewHolderWidth = getArguments().getInt(ARG_ITEM_WIDTH, screenWidth);
-        float speed = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 0.1f,
-                getResources().getDisplayMetrics());
-        final float startX = getArguments().getFloat(ARG_START_X, 0);
-        final float startY = getArguments().getFloat(ARG_START_Y, 0);
-        final int startMarginEnd = (int) (screenWidth - startX - viewHolderWidth);
-        long duration = DURATION_ENTER;//
-
         Log.d(TAG, "startX: " + startX);
         Log.d(TAG, "startY: " + startY);
 
-        final View viewBackground = view.findViewById(R.id.view_background);
+        viewBackground = view.findViewById(R.id.view_background);
 
         viewBackground.setScaleY(0f);
         viewBackground.setPivotY(startY + getArguments().getInt(ARG_ITEM_HEIGHT, 0));
 
         final ViewPropertyAnimator viewPropertyAnimator = viewBackground.animate()
                 .scaleY(2f)
-                .setDuration(duration)
+                .setDuration(DURATION_ENTER)
                 .setInterpolator(fastOutSlowInInterpolator)
                 .setListener(new Animator.AnimatorListener() {
                     @Override
@@ -547,7 +552,7 @@ public class FragmentComments extends FragmentBase {
                 swipeRefreshCommentList.setLayoutParams(layoutParams);
             }
         };
-        animation.setDuration(duration);
+        animation.setDuration(DURATION_ENTER);
         animation.setInterpolator(fastOutSlowInInterpolator);
         animation.setAnimationListener(new Animation.AnimationListener() {
             @Override
@@ -568,7 +573,6 @@ public class FragmentComments extends FragmentBase {
                     @Override
                     public void run() {
                         adapterCommentList.setAnimationFinished(true);
-                        adapterCommentList.notifyDataSetChanged();
                     }
                 }, 150);
                 buttonExpandActions.setVisibility(View.VISIBLE);
@@ -759,8 +763,67 @@ public class FragmentComments extends FragmentBase {
             youTubePlayer.setFullscreen(false);
             return false;
         }
+        else {
 
-        return true;
+            adapterCommentList.setAnimationFinished(false);
+
+            viewBackground.setVisibility(View.VISIBLE);
+
+            final ViewPropertyAnimator viewPropertyAnimator = viewBackground.animate()
+                    .scaleY(0f)
+                    .setDuration(DURATION_ENTER)
+                    .setInterpolator(fastOutSlowInInterpolator);
+
+            final Animation animation = new Animation() {
+                @Override
+                public boolean willChangeBounds() {
+                    return true;
+                }
+
+                @Override
+                protected void applyTransformation(float interpolatedTime, Transformation t) {
+                    super.applyTransformation(interpolatedTime, t);
+                    CoordinatorLayout.LayoutParams layoutParams = (CoordinatorLayout.LayoutParams) swipeRefreshCommentList
+                            .getLayoutParams();
+                    layoutParams.topMargin = (int) (startY * interpolatedTime);
+                    layoutParams.setMarginStart((int) (startX * interpolatedTime));
+                    layoutParams.setMarginEnd((int) (startMarginEnd * interpolatedTime));
+                    swipeRefreshCommentList.setLayoutParams(layoutParams);
+                }
+            };
+            animation.setDuration(DURATION_ENTER);
+            animation.setInterpolator(fastOutSlowInInterpolator);
+            animation.setAnimationListener(new Animation.AnimationListener() {
+                @Override
+                public void onAnimationStart(Animation animation) {
+                    Fragment fragment = getFragmentManager().findFragmentByTag(FragmentThreadList.TAG);
+                    if (fragment != null) {
+                        getFragmentManager().beginTransaction().show(fragment).commit();
+                    }
+                }
+
+                @Override
+                public void onAnimationEnd(Animation animation) {
+                    mListener.onNavigationBackClick();
+                }
+
+                @Override
+                public void onAnimationRepeat(Animation animation) {
+
+                }
+            });
+
+            if (getView() != null) {
+                viewPropertyAnimator.start();
+                getView().startAnimation(animation);
+            }
+            else {
+                mListener.onNavigationBackClick();
+            }
+
+            return false;
+        }
+
     }
 
     public interface YouTubeListener {

@@ -21,6 +21,7 @@ import android.text.TextUtils;
 import android.text.format.DateUtils;
 import android.text.method.LinkMovementMethod;
 import android.text.style.ForegroundColorSpan;
+import android.util.DisplayMetrics;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -58,7 +59,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
 
     private ControllerComments controllerComments;
     private AdapterLink.ViewHolderBase viewHolderLink;
-    private int thumbnailWidth;
+    private int thumbnailSize;
     private boolean isGrid;
     private boolean isInitialized;
     private boolean animationFinished;
@@ -81,8 +82,8 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
         this.isGrid = isGrid;
         this.colorLink = colorLink;
         this.controllerComments = controllerComments;
-        Resources resources = activity.getResources();
-        this.thumbnailWidth = resources.getDisplayMetrics().widthPixels / 2;
+        DisplayMetrics displayMetrics = activity.getResources().getDisplayMetrics();
+        this.thumbnailSize = (int) (displayMetrics.widthPixels / 2 * (displayMetrics.widthPixels > displayMetrics.heightPixels ? 1f : 0.75f));
     }
 
     @Override
@@ -104,7 +105,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                                 .inflate(R.layout.cell_link, parent, false), eventListenerBase,
                         disallowListener,
                         recyclerCallback,
-                        thumbnailWidth) {
+                        thumbnailSize) {
 
                     @Override
                     public void loadBackgroundColor(Drawable drawable, int position) {
@@ -245,6 +246,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
 
     public void setAnimationFinished(boolean isAnimationFinished) {
         this.animationFinished = isAnimationFinished;
+        notifyDataSetChanged();
     }
 
     public static class ViewHolderComment extends RecyclerView.ViewHolder
@@ -255,13 +257,13 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
         protected View viewIndent;
         protected View viewIndicator;
         protected View viewIndicatorContainer;
-        protected View viewIndicatorContainerReply;
         protected TextView textComment;
         protected TextView textInfo;
         protected TextView textHidden;
         protected RelativeLayout layoutContainerReply;
         protected EditText editTextReply;
         protected Button buttonSendReply;
+        protected RelativeLayout layoutContainerExpand;
         protected Toolbar toolbarActions;
         protected MenuItem itemViewLink;
         protected MenuItem itemCollapse;
@@ -271,10 +273,11 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
         protected MenuItem itemSave;
         protected MenuItem itemEdit;
         protected MenuItem itemDelete;
-        protected PorterDuffColorFilter colorFilterSave;
         protected Drawable drawableUpvote;
         protected Drawable drawableDownvote;
-        protected RelativeLayout layoutContainerExpand;
+        protected PorterDuffColorFilter colorFilterSave;
+        protected PorterDuffColorFilter colorFilterPositive;
+        protected PorterDuffColorFilter colorFilterNegative;
 
         protected AdapterLink.ViewHolderBase.EventListener eventListenerBase;
         protected EventListener eventListener;
@@ -333,8 +336,6 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
             viewIndent = itemView.findViewById(R.id.view_indent);
             viewIndicator = itemView.findViewById(R.id.view_indicator);
             viewIndicatorContainer = itemView.findViewById(R.id.view_indicator_container);
-            viewIndicatorContainerReply = itemView.findViewById(
-                    R.id.view_indicator_container_reply);
             textComment = (TextView) itemView.findViewById(R.id.text_comment);
             textInfo = (TextView) itemView.findViewById(R.id.text_info);
             textHidden = (TextView) itemView.findViewById(R.id.text_hidden);
@@ -399,9 +400,14 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
             itemEdit = menu.findItem(R.id.item_edit);
             itemDelete = menu.findItem(R.id.item_delete);
 
-            colorFilterSave = new PorterDuffColorFilter(
-                    itemView.getContext().getResources()
-                            .getColor(R.color.colorAccent),
+            Resources resources = itemView.getContext().getResources();
+            colorFilterPositive = new PorterDuffColorFilter(resources.getColor(
+                    R.color.positiveScore),
+                    PorterDuff.Mode.MULTIPLY);
+            colorFilterNegative = new PorterDuffColorFilter(resources.getColor(
+                    R.color.negativeScore),
+                    PorterDuff.Mode.MULTIPLY);
+            colorFilterSave = new PorterDuffColorFilter(resources.getColor(R.color.colorAccent),
                     PorterDuff.Mode.MULTIPLY);
 
         }
@@ -483,17 +489,13 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
         public void setVoteColors() {
             switch (comment.isLikes()) {
                 case 1:
-                    drawableUpvote.setColorFilter(itemView.getContext().getResources()
-                            .getColor(
-                                    R.color.positiveScore), PorterDuff.Mode.MULTIPLY);
+                    drawableUpvote.mutate().setColorFilter(colorFilterPositive);
                     itemUpvote.setIcon(drawableUpvote);
                     drawableDownvote.clearColorFilter();
                     itemDownvote.setIcon(drawableDownvote);
                     break;
                 case -1:
-                    drawableDownvote.setColorFilter(itemView.getContext().getResources()
-                            .getColor(
-                                    R.color.negativeScore), PorterDuff.Mode.MULTIPLY);
+                    drawableDownvote.mutate().setColorFilter(colorFilterNegative);
                     itemDownvote.setIcon(drawableDownvote);
                     drawableUpvote.clearColorFilter();
                     itemUpvote.setIcon(drawableUpvote);
@@ -528,7 +530,6 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
 
             viewIndicator.setBackgroundColor(indicatorColor);
             viewIndicatorContainer.setBackgroundColor(indicatorColor);
-            viewIndicatorContainerReply.setBackgroundColor(indicatorColor);
 
             ViewGroup.LayoutParams layoutParams = viewIndent.getLayoutParams();
             layoutParams.width =
@@ -536,7 +537,12 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
             viewIndent.setLayoutParams(layoutParams);
 
             if (comment.isMore()) {
-                textComment.setText(R.string.load_more_comments);
+                if (comment.getCount() == 0) {
+                    textComment.setText(R.string.continue_thread);
+                }
+                else {
+                    textComment.setText(R.string.load_more_comments);
+                }
                 textInfo.setText("");
             }
             else {
@@ -594,7 +600,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
 
         public void syncSaveIcon() {
             if (comment.isSaved()) {
-                itemSave.getIcon().setColorFilter(colorFilterSave);
+                itemSave.getIcon().mutate().setColorFilter(colorFilterSave);
             }
             else {
                 itemSave.getIcon().clearColorFilter();
@@ -684,6 +690,21 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
             eventListenerBase.save(comment);
             comment.setSaved(!comment.isSaved());
             syncSaveIcon();
+        }
+
+        public void setVisibility(int visibility) {
+            viewIndent.setVisibility(visibility);
+            viewIndicator.setVisibility(visibility);
+            viewIndicatorContainer.setVisibility(visibility);
+            textComment.setVisibility(visibility);
+            textInfo.setVisibility(visibility);
+            textHidden.setVisibility(visibility);
+            layoutContainerReply.setVisibility(visibility);
+            editTextReply.setVisibility(visibility);
+            buttonSendReply.setVisibility(visibility);
+            toolbarActions.setVisibility(visibility);
+            layoutContainerExpand.setVisibility(visibility);
+            itemView.setVisibility(visibility);
         }
 
         public interface EventListener {

@@ -15,6 +15,7 @@ import android.text.Spanned;
 import android.text.TextUtils;
 import android.text.format.DateUtils;
 import android.text.style.ForegroundColorSpan;
+import android.util.DisplayMetrics;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -61,7 +62,9 @@ public class AdapterLinkGrid extends AdapterLink {
         ((StaggeredGridLayoutManager) this.layoutManager).setGapStrategy(
                 StaggeredGridLayoutManager.GAP_HANDLING_NONE);
 
-        this.thumbnailSize = (int) (resources.getDisplayMetrics().widthPixels / spanCount * 0.75f);
+        DisplayMetrics displayMetrics = resources.getDisplayMetrics();
+
+        this.thumbnailSize = (int) (displayMetrics.widthPixels / 2 * (displayMetrics.widthPixels > displayMetrics.heightPixels ? 1f : 0.75f));
     }
 
     @Override

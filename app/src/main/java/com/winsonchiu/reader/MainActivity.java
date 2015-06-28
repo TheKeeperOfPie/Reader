@@ -69,7 +69,6 @@ public class MainActivity extends YouTubeBaseActivity
     private TextView textAccountName;
     private TextView textAccountInfo;
 
-    private WebView webView;
     private Reddit reddit;
     private AdapterLink.ViewHolderBase.EventListener eventListenerBase;
     private AdapterCommentList.ViewHolderComment.EventListener eventListenerComment;
@@ -81,8 +80,6 @@ public class MainActivity extends YouTubeBaseActivity
         sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
 
         reddit = Reddit.getInstance(this);
-        webView = new WebView(getApplicationContext());
-        Reddit.incrementCreate();
 
         fragmentData = (FragmentData) getFragmentManager().findFragmentByTag(FragmentData.TAG);
         if (fragmentData == null) {
@@ -322,8 +319,8 @@ public class MainActivity extends YouTubeBaseActivity
             }
 
             @Override
-            public WebViewFixed getNewWebView(DisallowListener disallowListener) {
-                return WebViewFixed.newInstance(getApplicationContext(), disallowListener);
+            public WebViewFixed getNewWebView() {
+                return WebViewFixed.newInstance(getApplicationContext());
             }
 
             @Override
@@ -362,7 +359,17 @@ public class MainActivity extends YouTubeBaseActivity
         eventListenerComment = new AdapterCommentList.ViewHolderComment.EventListener() {
             @Override
             public void loadNestedComments(Comment comment) {
-                getControllerComments().loadNestedComments(comment);
+
+                if (comment.getCount() == 0) {
+                    Intent intentCommentThread = new Intent(MainActivity.this, MainActivity.class);
+                    intentCommentThread.setAction(Intent.ACTION_VIEW);
+                    // Double slashes used to trigger parseUrl correctly
+                    intentCommentThread.putExtra(REDDIT_PAGE, Reddit.BASE_URL + "/r/" + getControllerComments().getSubredditName() + "/comments/" + getControllerComments().getMainLink().getId() + "//" + comment.getId() + "/");
+                    startActivity(intentCommentThread);
+                }
+                else {
+                    getControllerComments().loadNestedComments(comment);
+                }
             }
 
             @Override
@@ -611,13 +618,14 @@ public class MainActivity extends YouTubeBaseActivity
             }
 
             // TODO: Handle special cases like redd.it and / for Front Page
+            // TODO: Change it using regex
 
-            String path = url.getPath();
+            String path = url.getPath() + "/";
             Log.d(TAG, "Path: " + path);
             int indexFirstSlash = path.indexOf("/", 1);
             int indexSecondSlash = path.indexOf("/", indexFirstSlash + 1);
             if (indexFirstSlash < 0) {
-                fragmentData.getControllerLinks().setParameters("", Sort.HOT);
+                getControllerLinks().setParameters("", Sort.HOT);
                 return;
             }
             String subreddit = path.substring(indexFirstSlash + 1,
@@ -627,17 +635,34 @@ public class MainActivity extends YouTubeBaseActivity
 
             if (path.contains("comments")) {
                 int indexComments = path.indexOf("comments") + 9;
-                int indexFourthSlash = path.indexOf("/", indexComments + 1);
+                int indexFifthSlash = path.indexOf("/", indexComments + 1);
                 String id = path.substring(indexComments,
-                        indexFourthSlash > -1 ? indexFourthSlash : path.length());
+                        indexFifthSlash > -1 ? indexFifthSlash : path.length());
                 Log.d(TAG, "Comments ID: " + id);
+
+                int indexSixthSlash = path.indexOf("/", indexFifthSlash + 1);
+                Log.d(TAG, "indexSixthSlash: " + indexSixthSlash);
+
+                if (indexSixthSlash > -1) {
+                    int indexSeventhSlash = path.indexOf("/", indexSixthSlash + 1);
+                    Log.d(TAG, "indexSeventhSlash: " + indexSeventhSlash);
+                    String commentId = path.substring(indexSixthSlash + 1, indexSeventhSlash > -1 ? indexSeventhSlash : path.length());
+                    Log.d(TAG, "commentId: " + commentId);
+                    getFragmentManager().beginTransaction()
+                            .replace(R.id.frame_fragment,
+                                    FragmentComments.newInstance(),
+                                    FragmentComments.TAG)
+                            .commit();
+                    getControllerComments().loadThread(subreddit, id, commentId);
+                    return;
+                }
 
                 getFragmentManager().beginTransaction()
                         .replace(R.id.frame_fragment,
                                 FragmentComments.newInstance(),
                                 FragmentComments.TAG)
                         .commit();
-                fragmentData.getControllerComments().setLinkId(subreddit, id);
+                getControllerComments().setLinkId(subreddit, id);
             }
             else if (path.contains("/u/")) {
                 int indexUser = path.indexOf("u/") + 2;
@@ -645,7 +670,7 @@ public class MainActivity extends YouTubeBaseActivity
                         .replace(R.id.frame_fragment, FragmentProfile.newInstance(),
                                 FragmentProfile.TAG)
                         .commit();
-                fragmentData.getControllerProfile().loadUser(
+                getControllerProfile().loadUser(
                         path.substring(indexUser, path.indexOf("/", indexUser)));
             }
             else if (path.contains("/user/")) {
@@ -657,12 +682,12 @@ public class MainActivity extends YouTubeBaseActivity
 
                 int endIndex = path.indexOf("/", indexUser);
                 if (endIndex > -1) {
-                    fragmentData.getControllerProfile()
+                    getControllerProfile()
                             .loadUser(
                                     path.substring(indexUser, endIndex));
                 }
                 else {
-                    fragmentData.getControllerProfile()
+                    getControllerProfile()
                             .loadUser(
                                     path.substring(indexUser));
                 }
@@ -677,7 +702,7 @@ public class MainActivity extends YouTubeBaseActivity
                         indexSort > -1 ? path.substring(subreddit.length() + 1, indexSort) :
                                 "hot";
                 Log.d(TAG, "Sort: " + sort);
-                fragmentData.getControllerLinks().setParameters(subreddit, Sort.HOT);
+                getControllerLinks().setParameters(subreddit, Sort.HOT);
             }
         }
         catch (MalformedURLException e) {
@@ -868,27 +893,4 @@ public class MainActivity extends YouTubeBaseActivity
         mDrawerLayout.openDrawer(GravityCompat.START);
     }
 
-    @Override
-    protected void onResume() {
-        super.onResume();
-        webView.resumeTimers();
-    }
-
-    @Override
-    protected void onPause() {
-        super.onPause();
-        webView.pauseTimers();
-    }
-
-    @Override
-    protected void onStop() {
-        super.onStop();
-    }
-
-    @Override
-    protected void onDestroy() {
-        webView.destroy();
-        Reddit.incrementDestroy();
-        super.onDestroy();
-    }
 }

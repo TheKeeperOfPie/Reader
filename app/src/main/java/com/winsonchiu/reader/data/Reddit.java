@@ -410,10 +410,8 @@ public class Reddit {
         params.put("thing_id", name);
         params.put("text", text);
 
-        Request<String> request = loadPost(Reddit.OAUTH_URL + "/api/comment", listener,
-                errorListener, params, 2);
-
-        return requestQueue.add(request);
+        return loadPost(Reddit.OAUTH_URL + "/api/comment", listener,
+                errorListener, params, 0);
     }
 
     public boolean voteComment(final AdapterCommentList.ViewHolderComment viewHolder,

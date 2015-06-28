@@ -60,6 +60,9 @@ public class ControllerLinks implements ControllerLinksBase {
         listener.setSort(sort);
         listener.getAdapter().notifyDataSetChanged();
         listener.setRefreshing(isLoading());
+        if (listingLinks.getChildren().isEmpty()) {
+            reloadSubreddit();
+        }
         Log.d(TAG, "addListener: " + listener);
     }
 

@@ -113,4 +113,5 @@
     <string name="item_edit">Edit</string>
     <string name="send_reply">Send reply</string>
     <string name="send_edit">Send edit</string>
+    <string name="continue_thread">Continue thread</string>
 </resources>

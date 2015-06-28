@@ -151,6 +151,7 @@ public class FragmentProfile extends FragmentBase implements Toolbar.OnMenuItemC
 
             @Override
             public void loadLink(Comment comment) {
+                Log.d(TAG, "Link ID: " + comment.getLinkId());
                 Intent intent = new Intent(activity, MainActivity.class);
                 intent.setAction(Intent.ACTION_VIEW);
                 intent.putExtra(MainActivity.REDDIT_PAGE,

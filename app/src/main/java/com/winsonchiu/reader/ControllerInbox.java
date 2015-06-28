@@ -38,6 +38,7 @@ public class ControllerInbox {
     private Reddit reddit;
     private Link link;
     private String page;
+    private boolean isLoading;
 
     public ControllerInbox(Activity activity) {
         setActivity(activity);
@@ -119,11 +120,9 @@ public class ControllerInbox {
                         try {
                             setData(Listing.fromJson(new JSONObject(response)));
                             for (Listener listener : listeners) {
-                                listener.setRefreshing(
-                                        false);
-                                // TODO: Check if reset necessary
                                 listener.getAdapter().notifyDataSetChanged();
                             }
+                            setLoading(false);
                         }
                         catch (JSONException e1) {
                             e1.printStackTrace();
@@ -132,12 +131,7 @@ public class ControllerInbox {
                 }, new Response.ErrorListener() {
                     @Override
                     public void onErrorResponse(VolleyError error) {
-                        setData(new Listing());
-                        for (Listener listener : listeners) {
-                            listener.setRefreshing(
-                                    false);
-                            listener.getAdapter().notifyDataSetChanged();
-                        }
+                        setLoading(false);
                     }
                 }, 0);
     }
@@ -154,7 +148,7 @@ public class ControllerInbox {
 
         Map<String, String> params = new HashMap<>();
         params.put("api_type", "json");
-        params.put("text", TextUtils.htmlEncode(text));
+        params.put("text", text);
         params.put("thing_id", comment.getName());
 
         reddit.loadPost(Reddit.OAUTH_URL + "/api/editusertext", new Response.Listener<String>() {
@@ -190,7 +184,7 @@ public class ControllerInbox {
     }
 
     public boolean isLoading() {
-        return false;
+        return isLoading;
     }
 
     public Subreddit getSubreddit() {
@@ -224,6 +218,7 @@ public class ControllerInbox {
 
         int commentIndex = link.getComments().getChildren().indexOf(parentComment);
         if (commentIndex > -1) {
+            comment.setLevel(((Comment) link.getComments().getChildren().get(commentIndex)).getLevel() + 1);
             data.getChildren()
                     .add(commentIndex + 1, comment);
         }
@@ -309,6 +304,46 @@ public class ControllerInbox {
                 }
             }
         }, null);
+    }
+
+    public void loadMore() {
+
+        setLoading(true);
+
+        reddit.loadGet(
+                Reddit.OAUTH_URL + "/message/" + page.toLowerCase() + "?after=" + data.getAfter(),
+                new Response.Listener<String>() {
+                    @Override
+                    public void onResponse(String response) {
+                        Log.d(TAG, "onResponse: " + response);
+                        try {
+                            int startSize = data.getChildren().size();
+                            Listing listing = Listing.fromJson(new JSONObject(response));
+                            data.addChildren(listing.getChildren());
+                            data.setAfter(listing.getAfter());
+                            for (Listener listener : listeners) {
+                                listener.getAdapter().notifyItemRangeInserted(startSize,
+                                        data.getChildren().size() - startSize);
+                            }
+                            setLoading(false);
+                        }
+                        catch (JSONException e1) {
+                            e1.printStackTrace();
+                        }
+                    }
+                }, new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        setLoading(false);
+                    }
+                }, 0);
+    }
+
+    public void setLoading(boolean loading) {
+        this.isLoading = loading;
+        for (Listener listener : listeners) {
+            listener.setRefreshing(isLoading());
+        }
     }
 
     public interface Listener extends ControllerListener {

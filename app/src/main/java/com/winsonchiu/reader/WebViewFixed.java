@@ -68,7 +68,7 @@ public class WebViewFixed extends WebView {
         requestLayout();
     }
 
-    public static WebViewFixed newInstance(Context context, DisallowListener disallowListener) {
+    public static WebViewFixed newInstance(Context context) {
         WebViewFixed webViewFixed = new WebViewFixed(context.getApplicationContext());
         Reddit.incrementCreate();
         webViewFixed.setMinimumHeight(
@@ -100,7 +100,6 @@ public class WebViewFixed extends WebView {
                 Log.e(TAG, "WebView error: " + description);
             }
         });
-        webViewFixed.setOnTouchListener(new OnTouchListenerDisallow(disallowListener));
         webViewFixed.resetMaxHeight();
         return webViewFixed;
     }

@@ -312,11 +312,9 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         protected Link link;
 
         protected FrameLayout frameFull;
-        protected MediaController mediaController;
         protected VideoView videoFull;
         protected ProgressBar progressImage;
         protected ViewPager viewPagerFull;
-        protected AdapterAlbum adapterAlbum;
         protected ImageView imagePlay;
         protected ImageView imageThumbnail;
         protected WebViewFixed webFull;
@@ -328,11 +326,14 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         protected ImageButton buttonComments;
         protected RelativeLayout layoutContainerExpand;
         protected Toolbar toolbarActions;
-        protected Request request;
         protected RelativeLayout layoutContainerReply;
         protected EditText editTextReply;
         protected Button buttonSendReply;
         protected YouTubePlayerView viewYouTube;
+
+        protected Request request;
+        protected MediaController mediaController;
+        protected AdapterAlbum adapterAlbum;
         protected YouTubePlayer youTubePlayer;
 
         protected int viewPagerMargin;
@@ -433,7 +434,17 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             drawableDefault = itemView.getContext().getResources().getDrawable(
                     R.drawable.ic_web_white_48dp);
             mediaController = new MediaController(itemView.getContext());
-            adapterAlbum = new AdapterAlbum(new Album(), disallowListener);
+            adapterAlbum = new AdapterAlbum(new Album(), new DisallowListener() {
+                @Override
+                public void requestDisallowInterceptTouchEventVertical(boolean disallow) {
+                    disallowListener.requestDisallowInterceptTouchEventVertical(disallow);
+                }
+
+                @Override
+                public void requestDisallowInterceptTouchEventHorizontal(boolean disallow) {
+                    viewPagerFull.requestDisallowInterceptTouchEvent(disallow);
+                }
+            });
 
             progressImage = (ProgressBar) itemView.findViewById(R.id.progress_image);
             imagePlay = (ImageView) itemView.findViewById(R.id.image_play);
@@ -821,11 +832,11 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
 
             switch (link.isLikes()) {
                 case 1:
-                    itemUpvote.getIcon().setColorFilter(colorFilterPositive);
+                    itemUpvote.getIcon().mutate().setColorFilter(colorFilterPositive);
                     itemDownvote.getIcon().clearColorFilter();
                     break;
                 case -1:
-                    itemDownvote.getIcon().setColorFilter(colorFilterNegative);
+                    itemDownvote.getIcon().mutate().setColorFilter(colorFilterNegative);
                     itemUpvote.getIcon().clearColorFilter();
                     break;
                 case 0:
@@ -845,7 +856,8 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                 expandFull(true);
 
                 if (webFull == null) {
-                    webFull = eventListener.getNewWebView(disallowListener);
+                    webFull = eventListener.getNewWebView();
+                    webFull.setOnTouchListener(new OnTouchListenerDisallow(disallowListener));
                     FrameLayout.LayoutParams layoutParams = new FrameLayout.LayoutParams(
                             ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
                     layoutParams.gravity = Gravity.FILL_HORIZONTAL;
@@ -983,10 +995,10 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                         @Override
                         public void onCompletion(MediaPlayer mp) {
                             videoFull.start();
-                            progressImage.setVisibility(View.GONE);
                         }
                     });
             videoFull.start();
+            progressImage.setVisibility(View.GONE);
             recyclerCallback.scrollTo(getAdapterPosition());
         }
 
@@ -1165,8 +1177,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         public void syncSaveIcon() {
             if (link.isSaved()) {
                 itemSave.setTitle(itemView.getContext().getResources().getString(R.string.unsave));
-                itemSave.getIcon()
-                        .setColorFilter(colorFilterSave);
+                itemSave.getIcon().mutate().setColorFilter(colorFilterSave);
             }
             else {
                 itemSave.setTitle(itemView.getContext().getResources().getString(R.string.save));
@@ -1208,6 +1219,28 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             return 0x00000000;
         }
 
+        public void setVisibility(int visibility) {
+            frameFull.setVisibility(visibility);
+            videoFull.setVisibility(visibility);
+            progressImage.setVisibility(visibility);
+            viewPagerFull.setVisibility(visibility);
+            imagePlay.setVisibility(visibility);
+            imageThumbnail.setVisibility(visibility);
+            textThreadFlair.setVisibility(visibility);
+            textThreadTitle.setVisibility(visibility);
+            textThreadSelf.setVisibility(visibility);
+            textThreadInfo.setVisibility(visibility);
+            textHidden.setVisibility(visibility);
+            buttonComments.setVisibility(visibility);
+            layoutContainerExpand.setVisibility(visibility);
+            toolbarActions.setVisibility(visibility);
+            layoutContainerReply.setVisibility(visibility);
+            editTextReply.setVisibility(visibility);
+            buttonSendReply.setVisibility(visibility);
+            viewYouTube.setVisibility(visibility);
+            itemView.setVisibility(visibility);
+        }
+
         public interface EventListener {
 
             void sendComment(String name, String text);
@@ -1217,7 +1250,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             void loadUrl(String url);
             void downloadImage(Link link);
             Reddit getReddit();
-            WebViewFixed getNewWebView(DisallowListener disallowListener);
+            WebViewFixed getNewWebView();
             void toast(String text);
             boolean isUserLoggedIn();
             void voteLink(ViewHolderBase viewHolderBase, Link link, int vote);

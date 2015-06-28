@@ -150,7 +150,7 @@ public class ControllerProfile implements ControllerLinksBase {
 
         setLoading(true);
 
-        String url = Reddit.OAUTH_URL + "/user/" + user.getName() + "/" + page.toLowerCase() + "?sort=" + sort.toString() + "&t=" + time.toString();
+        String url = Reddit.OAUTH_URL + "/user/" + user.getName() + "/" + page.toLowerCase() + "?limit=15&sort=" + sort.toString() + "&t=" + time.toString();
 
         reddit.loadGet(url,
                 new Response.Listener<String>() {
@@ -191,7 +191,7 @@ public class ControllerProfile implements ControllerLinksBase {
 
         setLoading(true);
 
-        String url = Reddit.OAUTH_URL + "/user/" + user.getName() + "/" + page.toLowerCase() + "?sort=" + sort.toString() + "&t=" + time.toString() + "&after=" + data.getAfter();
+        String url = Reddit.OAUTH_URL + "/user/" + user.getName() + "/" + page.toLowerCase() + "?limit=15&sort=" + sort.toString() + "&t=" + time.toString() + "&after=" + data.getAfter();
 
         reddit.loadGet(url,
                 new Response.Listener<String>() {
@@ -203,10 +203,6 @@ public class ControllerProfile implements ControllerLinksBase {
                             int positionStart = startSize + 5;
 
                             Listing listing = Listing.fromJson(new JSONObject(response));
-//                            for (Thing thing : listing.getChildren()) {
-//                                Comment comment = (Comment) thing;
-//                                comment.setLevel(0);
-//                            }
 
                             data.addChildren(listing.getChildren());
                             data.setAfter(listing.getAfter());
@@ -334,10 +330,6 @@ public class ControllerProfile implements ControllerLinksBase {
         return true;
     }
 
-    public void insertComments(Comment moreComment, Listing listing) {
-        // Not implemented
-    }
-
     public void insertComment(Comment comment) {
 
         Comment parentComment = new Comment();
@@ -346,12 +338,11 @@ public class ControllerProfile implements ControllerLinksBase {
                     .indexOf(parentComment);
 
         if (commentIndex > -1) {
-            comment.setLevel(parentComment.getLevel() + 1);
+            comment.setLevel(((Comment) data.getChildren().get(commentIndex)).getLevel() + 1);
             data.getChildren()
                     .add(commentIndex + 1, comment);
 
             for (Listener listener : listeners) {
-//                listener.getAdapter().notifyDataSetChanged();
                 listener.getAdapter()
                         .notifyItemInserted(commentIndex + 7);
             }
@@ -392,14 +383,6 @@ public class ControllerProfile implements ControllerLinksBase {
         return true;
     }
 
-    public void expandComment(int position) {
-        // Not implemented
-    }
-
-    public void collapseComment(int position) {
-        // Not implemented
-    }
-
     public void voteComment(final AdapterCommentList.ViewHolderComment viewHolder,
             final Comment comment,
             int vote) {
@@ -422,14 +405,6 @@ public class ControllerProfile implements ControllerLinksBase {
         return true;
     }
 
-    public Link getMainLink() {
-        return link;
-    }
-
-    public void loadMoreComments() {
-        // Not implemented
-    }
-
     public boolean hasChildren(Comment comment) {
         return false;
     }
@@ -438,7 +413,7 @@ public class ControllerProfile implements ControllerLinksBase {
 
         Map<String, String> params = new HashMap<>();
         params.put("api_type", "json");
-        params.put("text", TextUtils.htmlEncode(text));
+        params.put("text", text);
         params.put("thing_id", comment.getName());
 
         reddit.loadPost(Reddit.OAUTH_URL + "/api/editusertext", new Response.Listener<String>() {

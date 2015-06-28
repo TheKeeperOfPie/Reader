@@ -1,12 +1,14 @@
 package com.winsonchiu.reader;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -194,7 +196,8 @@ public class FragmentInbox extends FragmentBase {
                         public void voteComment(AdapterCommentList.ViewHolderComment viewHolderComment,
                                 Comment comment,
                                 int vote) {
-                            mListener.getControllerInbox().voteComment(viewHolderComment, comment, vote);
+                            mListener.getControllerInbox()
+                                    .voteComment(viewHolderComment, comment, vote);
                         }
 
                         @Override
@@ -229,7 +232,41 @@ public class FragmentInbox extends FragmentBase {
                         public void requestDisallowInterceptTouchEventHorizontal(boolean disallow) {
 
                         }
-                    });
+                    }, new ControllerProfile.Listener() {
+                @Override
+                public void setPage(String page) {
+
+                }
+
+                @Override
+                public void setIsUser(boolean isUser) {
+
+                }
+
+                @Override
+                public void loadLink(Comment comment) {
+                    Intent intent = new Intent(activity, MainActivity.class);
+                    intent.setAction(Intent.ACTION_VIEW);
+                    intent.putExtra(MainActivity.REDDIT_PAGE,
+                           Reddit.BASE_URL + comment.getContext());
+                    startActivity(intent);
+                }
+
+                @Override
+                public RecyclerView.Adapter getAdapter() {
+                    return null;
+                }
+
+                @Override
+                public void setToolbarTitle(CharSequence title) {
+
+                }
+
+                @Override
+                public void setRefreshing(boolean refreshing) {
+
+                }
+            });
         }
 
         recyclerInbox.setAdapter(adapterInbox);

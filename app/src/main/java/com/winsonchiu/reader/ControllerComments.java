@@ -140,7 +140,6 @@ public class ControllerComments {
                                 listing.setChildren(new ArrayList<Thing>());
                             }
                             listingComments = listing;
-                            setRefreshing(false);
                             for (Listener listener : listeners) {
                                 listener.getAdapter().notifyDataSetChanged();
                             }
@@ -149,6 +148,7 @@ public class ControllerComments {
                         catch (JSONException e1) {
                             e1.printStackTrace();
                         }
+                        setRefreshing(false);
                     }
                 }, new ErrorListener() {
                     @Override
@@ -178,8 +178,8 @@ public class ControllerComments {
         // Not implemented
     }
 
-    public Subreddit getSubreddit() {
-        return new Subreddit();
+    public String getSubredditName() {
+        return subreddit;
     }
 
     public boolean showSubreddit() {
@@ -287,19 +287,76 @@ public class ControllerComments {
                                 listing.setChildren(things);
                                 insertComments(moreComment, listing);
                             }
-
-                            setRefreshing(false);
                         }
                         catch (JSONException e1) {
                             e1.printStackTrace();
                         }
+
+                        setRefreshing(false);
                     }
                 }, new ErrorListener() {
                     @Override
                     public void onErrorResponse(VolleyError error) {
+                        setRefreshing(false);
                         Log.d(TAG, "error" + error.toString());
                     }
                 }, params, 0);
+    }
+
+    public void loadThread(String subreddit, String linkId, String commentId) {
+
+        link = new Link();
+        link.setSubreddit(subreddit);
+        link.setId(linkId);
+
+        this.subreddit = subreddit;
+        this.linkId = linkId;
+
+        Log.d(TAG, "URL: " + (Reddit.OAUTH_URL + "/r/" + subreddit + "/comments/" + linkId + "?depth=10&showmore=true&showedits=true&limit=100&comment=" + commentId));
+
+        setRefreshing(true);
+        reddit.loadGet(
+                Reddit.OAUTH_URL + "/r/" + subreddit + "/comments/" + linkId + "?depth=10&showmore=true&showedits=true&limit=100&comment=" + commentId,
+                new Response.Listener<String>() {
+                    @Override
+                    public void onResponse(String response) {
+
+                        try {
+                            Listing listing = new Listing();
+                            link = Link.fromJson(new JSONArray(response));
+
+                            // For some reason Reddit doesn't report the link author, so we'll do it manually
+                            for (Thing thing : link.getComments().getChildren()) {
+                                Comment comment = (Comment) thing;
+                                comment.setLinkAuthor(link.getAuthor());
+                            }
+
+                            // TODO: Make this logic cleaner
+                            if (link.getComments() != null) {
+                                listing.setChildren(new ArrayList<>(link.getComments()
+                                        .getChildren()));
+                            }
+                            else {
+                                listing.setChildren(new ArrayList<Thing>());
+                            }
+                            listingComments = listing;
+                            for (Listener listener : listeners) {
+                                listener.getAdapter().notifyDataSetChanged();
+                            }
+                            setTitle();
+                        }
+                        catch (JSONException e1) {
+                            e1.printStackTrace();
+                        }
+                        setRefreshing(false);
+                    }
+                }, new ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        Log.d(TAG, "onErrorResponse: " + error.toString());
+                        setRefreshing(false);
+                    }
+                }, 0);
     }
 
     public void insertComments(Comment moreComment, Listing listing) {
@@ -363,6 +420,10 @@ public class ControllerComments {
             commentIndex = link.getComments()
                     .getChildren()
                     .indexOf(parentComment);
+            if (commentIndex > -1) {
+                comment.setLevel(
+                        ((Comment) link.getComments().getChildren().get(commentIndex)).getLevel() + 1);
+            }
             link.getComments()
                     .getChildren()
                     .add(commentIndex + 1, comment);
@@ -374,6 +435,9 @@ public class ControllerComments {
             listingComments.getChildren()
                     .add(commentIndex + 1, comment);
 
+            if (commentIndex > -1) {
+                comment.setLevel(((Comment) listingComments.getChildren().get(commentIndex)).getLevel() + 1);
+            }
             for (Listener listener : listeners) {
                 listener.getAdapter()
                         .notifyItemInserted(commentIndex + 2);
@@ -595,7 +659,7 @@ public class ControllerComments {
     public void editComment(final Comment comment, String text) {
         Map<String, String> params = new HashMap<>();
         params.put("api_type", "json");
-        params.put("text", TextUtils.htmlEncode(text));
+        params.put("text", text);
         params.put("thing_id", comment.getName());
 
         reddit.loadPost(Reddit.OAUTH_URL + "/api/editusertext", new Response.Listener<String>() {

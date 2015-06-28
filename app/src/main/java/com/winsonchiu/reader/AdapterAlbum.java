@@ -5,6 +5,7 @@ import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.widget.RelativeLayout;
 import android.widget.ScrollView;
@@ -23,13 +24,13 @@ public class AdapterAlbum extends PagerAdapter {
 
     private static final String TAG = AdapterAlbum.class.getCanonicalName();
     private DisallowListener disallowListener;
-    private Stack<View> recycledViews;
+//    private Stack<View> recycledViews;
     private Album album;
 
     public AdapterAlbum(Album album, DisallowListener disallowListener) {
         this.album = album;
         this.disallowListener = disallowListener;
-        recycledViews = new Stack<>();
+//        recycledViews = new Stack<>();
     }
 
     @Override
@@ -46,18 +47,16 @@ public class AdapterAlbum extends PagerAdapter {
         final WebView webView;
         final ScrollView scrollText;
 
-        if (!recycledViews.isEmpty()) {
-            view = recycledViews.pop();
-        }
-        else {
-            view = LayoutInflater.from(container.getContext())
-                    .inflate(R.layout.view_image, container, false);
-            view.setTag(new ViewHolder(view));
-        }
+        view = LayoutInflater.from(container.getContext())
+                .inflate(R.layout.view_image, container, false);
+        view.setTag(new ViewHolder(view));
 
         ViewHolder viewHolder = (ViewHolder) view.getTag();
 
-        webView = WebViewFixed.newInstance(container.getContext().getApplicationContext(), disallowListener);
+        webView = WebViewFixed.newInstance(container.getContext().getApplicationContext());
+        webView.setOnTouchListener(new OnTouchListenerDisallow(disallowListener));
+        webView.getSettings().setCacheMode(WebSettings.LOAD_CACHE_ELSE_NETWORK);
+        webView.setId(R.id.web);
         webView.setScrollbarFadingEnabled(false);
         webView.setScrollY(0);
         webView.loadData(Reddit.getImageHtml(image.getLink()), "text/html", "UTF-8");
@@ -113,7 +112,6 @@ public class AdapterAlbum extends PagerAdapter {
             ((RelativeLayout) view).removeView(webView);
         }
         container.removeView(view);
-        recycledViews.add(view);
     }
 
     @Override
@@ -133,15 +131,15 @@ public class AdapterAlbum extends PagerAdapter {
     }
 
     public void destroyViews() {
-        for (View view : recycledViews) {
-            WebView webView = (WebView) view.findViewById(R.id.web);
-            if (webView != null) {
-                webView.onPause();
-                webView.destroy();
-                Reddit.incrementDestroy();
-                ((RelativeLayout) view).removeView(webView);
-            }
-        }
+//        for (View view : recycledViews) {
+//            WebView webView = (WebView) view.findViewById(R.id.web);
+//            if (webView != null) {
+//                webView.onPause();
+//                webView.destroy();
+//                Reddit.incrementDestroy();
+//                ((RelativeLayout) view).removeView(webView);
+//            }
+//        }
     }
 
     public static class ViewHolder {
