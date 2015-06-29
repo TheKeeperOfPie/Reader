@@ -106,7 +106,6 @@
 
         <TextView
             android:id="@+id/text_thread_title"
-            android:minHeight="36dp"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_below="@id/text_thread_flair"
@@ -119,10 +118,26 @@
             />
 
         <TextView
+            android:id="@+id/text_thread_info"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/text_thread_title"
+            android:layout_toEndOf="@+id/image_thumbnail"
+            android:layout_marginStart="@dimen/activity_horizontal_margin"
+            android:layout_marginEnd="@dimen/activity_horizontal_margin"
+            android:gravity="start"
+            android:textSize="12sp"
+            android:paddingTop="4dp"
+            android:paddingBottom="14dp"
+            android:clickable="false"
+            android:longClickable="false"
+            />
+
+        <TextView
             android:id="@+id/text_thread_self"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_below="@id/text_thread_title"
+            android:layout_below="@id/text_thread_info"
             android:layout_marginStart="@dimen/activity_horizontal_margin"
             android:layout_marginEnd="@dimen/activity_horizontal_margin"
             android:layout_marginTop="8dp"
@@ -130,23 +145,6 @@
             android:textSize="12sp"
             android:visibility="gone"
             android:background="?attr/selectableItemBackgroundBorderless"
-            />
-
-        <TextView
-            android:id="@+id/text_thread_info"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_below="@id/text_thread_self"
-            android:layout_alignStart="@id/text_thread_self"
-            android:layout_marginStart="@dimen/activity_horizontal_margin"
-            android:layout_marginEnd="@dimen/activity_horizontal_margin"
-            android:layout_alignParentEnd="true"
-            android:gravity="end"
-            android:textSize="12sp"
-            android:paddingTop="4dp"
-            android:paddingBottom="14dp"
-            android:clickable="false"
-            android:longClickable="false"
             />
 
         <ImageButton
@@ -165,7 +163,7 @@
             android:id="@+id/layout_container_expand"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_below="@id/text_thread_info"
+            android:layout_below="@id/text_thread_self"
             android:layout_alignParentEnd="true"
             android:visibility="gone"
             >

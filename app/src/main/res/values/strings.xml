@@ -116,4 +116,13 @@
     <string name="send_edit">Send edit</string>
     <string name="continue_thread">Continue thread</string>
     <string name="item_load_full_comments">Load full comments</string>
+    <string name="item_report">Report</string>
+    <string name="item_report_spam">Spam</string>
+    <string name="item_report_vote_manipulation">Vote manipulation</string>
+    <string name="item_report_personal_information">Personal information</string>
+    <string name="item_report_sexualizing_minors">Sexualizing minors</string>
+    <string name="item_report_breaking_reddit">Breaking Reddit</string>
+    <string name="item_report_other">Other</string>
+    <string name="ok">OK</string>
+    <string name="cancel">Cancel</string>
 </resources>

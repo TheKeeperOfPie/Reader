@@ -224,8 +224,7 @@ public class AdapterLinkGrid extends AdapterLink {
                             .into(imageFull, new Callback() {
                                 @Override
                                 public void onSuccess() {
-                                    Drawable drawable = imageFull.getDrawable();
-                                    loadBackgroundColor(drawable, position);
+                                    loadBackgroundColor();
                                     progressImage.setVisibility(
                                             View.GONE);
                                 }
@@ -255,8 +254,7 @@ public class AdapterLinkGrid extends AdapterLink {
                                 new Callback() {
                                     @Override
                                     public void onSuccess() {
-                                        Drawable drawable = imageFull.getDrawable();
-                                        loadBackgroundColor(drawable, position);
+                                        loadBackgroundColor();
 
                                         if (Reddit.placeImageUrl(
                                                 link) && position == getAdapterPosition()) {
@@ -293,7 +291,9 @@ public class AdapterLinkGrid extends AdapterLink {
 
         }
 
-        public void loadBackgroundColor(Drawable drawable, final int position) {
+        public void loadBackgroundColor() {
+            final int position = getAdapterPosition();
+            Drawable drawable = imageFull.getDrawable();
             if (drawable instanceof BitmapDrawable) {
                 Palette.from(((BitmapDrawable) drawable).getBitmap())
                         .generate(

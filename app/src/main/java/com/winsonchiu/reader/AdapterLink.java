@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.res.Resources;
 import android.graphics.PorterDuff;
@@ -14,16 +15,19 @@ import android.media.MediaPlayer;
 import android.net.Uri;
 import android.support.v4.view.MenuItemCompat;
 import android.support.v4.view.ViewPager;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.RecyclerView.LayoutManager;
 import android.support.v7.widget.ShareActionProvider;
 import android.support.v7.widget.StaggeredGridLayoutManager;
 import android.support.v7.widget.Toolbar;
+import android.text.InputFilter;
 import android.text.TextUtils;
 import android.text.method.LinkMovementMethod;
 import android.util.Log;
 import android.util.TypedValue;
 import android.view.Gravity;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
@@ -54,6 +58,7 @@ import com.winsonchiu.reader.data.Comment;
 import com.winsonchiu.reader.data.Link;
 import com.winsonchiu.reader.data.Reddit;
 import com.winsonchiu.reader.data.Subreddit;
+import com.winsonchiu.reader.data.Thing;
 import com.winsonchiu.reader.data.imgur.Album;
 import com.winsonchiu.reader.data.imgur.Image;
 
@@ -140,7 +145,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
     }
 
     public void setVisibility(int visibility) {
-        for (RecyclerView.ViewHolder  viewHolder : viewHolders) {
+        for (RecyclerView.ViewHolder viewHolder : viewHolders) {
             viewHolder.itemView.setVisibility(visibility);
         }
     }
@@ -162,7 +167,15 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
     }
 
     public void pauseViewHolders() {
-
+        for (RecyclerView.ViewHolder viewHolder : viewHolders) {
+            if (viewHolder instanceof AdapterLink.ViewHolderBase) {
+                AdapterLink.ViewHolderBase viewHolderBase = (AdapterLink.ViewHolderBase) viewHolder;
+                viewHolderBase.videoFull.pause();
+                if (viewHolderBase.youTubePlayer != null) {
+                    viewHolderBase.youTubePlayer.pause();
+                }
+            }
+        }
     }
 
     protected static class ViewHolderHeader extends RecyclerView.ViewHolder
@@ -364,6 +377,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         protected MenuItem itemDownloadImage;
         protected MenuItem itemEdit;
         protected MenuItem itemDelete;
+        protected MenuItem itemReport;
         protected MenuItem itemViewSubreddit;
         protected MenuItem itemCopyText;
         protected PorterDuffColorFilter colorFilterSave;
@@ -568,6 +582,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             itemDownloadImage = menu.findItem(R.id.item_download_image);
             itemEdit = menu.findItem(R.id.item_edit);
             itemDelete = menu.findItem(R.id.item_delete);
+            itemReport = menu.findItem(R.id.item_report);
             itemViewSubreddit = menu.findItem(R.id.item_view_subreddit);
             itemCopyText = menu.findItem(R.id.item_copy_text);
 
@@ -614,12 +629,15 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                     eventListener.startActivity(intentViewProfile);
                     break;
                 case R.id.item_copy_text:
-                    ClipboardManager clipboard = (ClipboardManager) itemView.getContext().getSystemService(
-                            Context.CLIPBOARD_SERVICE);
+                    ClipboardManager clipboard = (ClipboardManager) itemView.getContext()
+                            .getSystemService(
+                                    Context.CLIPBOARD_SERVICE);
                     ClipData clip = ClipData.newPlainText(
-                            itemView.getContext().getResources().getString(R.string.comment), link.getSelfText());
+                            itemView.getContext().getResources().getString(R.string.comment),
+                            link.getSelfText());
                     clipboard.setPrimaryClip(clip);
-                    eventListener.toast(itemView.getContext().getResources().getString(R.string.copied));
+                    eventListener
+                            .toast(itemView.getContext().getResources().getString(R.string.copied));
                     break;
                 case R.id.item_edit:
                     Intent intentEdit = new Intent(itemView.getContext(), ActivityNewPost.class);
@@ -637,6 +655,46 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                     intentViewSubreddit.putExtra(MainActivity.REDDIT_PAGE,
                             "https://reddit.com/r/" + link.getSubreddit());
                     eventListener.startActivity(intentViewSubreddit);
+                    break;
+                // Reporting
+                case R.id.item_report_spam:
+                    eventListener.report(link, "spam", null);
+                    break;
+                case R.id.item_report_vote_manipulation:
+                    eventListener.report(link, "vote manipulation", null);
+                    break;
+                case R.id.item_report_personal_information:
+                    eventListener.report(link, "personal information", null);
+                    break;
+                case R.id.item_report_sexualizing_minors:
+                    eventListener.report(link, "sexualizing minors", null);
+                    break;
+                case R.id.item_report_breaking_reddit:
+                    eventListener.report(link, "breaking reddit", null);
+                    break;
+                case R.id.item_report_other:
+                    View viewDialog = LayoutInflater.from(itemView.getContext()).inflate(R.layout.dialog_text_input, null, false);
+                    InputFilter[] filterArray = new InputFilter[1];
+                    filterArray[0] = new InputFilter.LengthFilter(100);
+                    final EditText editText = (EditText) viewDialog.findViewById(R.id.edit_text);
+                    editText.setFilters(filterArray);
+                    new AlertDialog.Builder(itemView.getContext())
+                            .setView(viewDialog)
+                            .setTitle(R.string.item_report)
+                            .setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    eventListener.report(link, "other", editText.getText().toString());
+                                }
+                            })
+                            .setNegativeButton(R.string.cancel,
+                                    new DialogInterface.OnClickListener() {
+                                        @Override
+                                        public void onClick(DialogInterface dialog, int which) {
+
+                                        }
+                                    })
+                            .show();
                     break;
             }
             return true;
@@ -1081,7 +1139,8 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                         @Override
                         public void onInitializationFailure(YouTubePlayer.Provider provider,
                                 YouTubeInitializationResult youTubeInitializationResult) {
-                            eventListener.toast(itemView.getContext().getResources().getString(R.string.error_youtube));
+                            eventListener.toast(itemView.getContext().getResources()
+                                    .getString(R.string.error_youtube));
                         }
                     });
         }
@@ -1102,6 +1161,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             itemDownvote.setVisible(loggedIn);
             itemReply.setVisible(loggedIn);
             itemSave.setVisible(loggedIn);
+            itemReport.setVisible(loggedIn);
             itemViewSubreddit.setVisible(showSubreddit);
             itemViewSubreddit.setEnabled(showSubreddit);
             itemCopyText.setVisible(link.isSelf());
@@ -1164,9 +1224,10 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             layoutContainerExpand.setVisibility(View.GONE);
             layoutContainerReply.setVisibility(link.isReplyExpanded() ? View.VISIBLE : View.GONE);
 
+            frameFull.requestLayout();
+
             textThreadSelf.setVisibility(View.GONE);
             adapterAlbum.setAlbum(null);
-            syncSaveIcon();
 
         }
 
@@ -1252,6 +1313,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             void voteLink(ViewHolderBase viewHolderBase, Link link, int vote);
             void startActivity(Intent intent);
             void deletePost(Link link);
+            void report(Thing thing, String reason, String otherReason);
         }
 
     }

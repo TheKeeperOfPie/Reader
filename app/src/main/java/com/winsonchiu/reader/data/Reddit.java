@@ -68,7 +68,6 @@ public class Reddit {
     public static final String USER_AGENT = "User-Agent";
     public static final String CUSTOM_USER_AGENT = "android:com.winsonchiu.reader:" + BuildConfig.VERSION_NAME + " (by /u/TheKeeperOfPie)";
     public static final String REDIRECT_URI = "https://com.winsonchiu.reader";
-    public static final String CLIENT_ID = "zo7k-Nsh7vgn-Q";
 
     public static final String GFYCAT_PREFIX = "gfycat.com/";
     public static final String GFYCAT_URL = "http://gfycat.com/cajax/get/";
@@ -153,7 +152,7 @@ public class Reddit {
 
     public String getUserAuthUrl(String state) {
 
-        return USER_AUTHENTICATION_URL + QUERY_CLIENT_ID + "=" + CLIENT_ID + "&response_type=code&state=" + state + "&" + QUERY_REDIRECT_URI + "=" + REDIRECT_URI + "&" + QUERY_DURATION + "=permanent&scope=" + AUTH_SCOPES;
+        return USER_AUTHENTICATION_URL + QUERY_CLIENT_ID + "=" + ApiKeys.REDDIT_CLIENT_ID + "&response_type=code&state=" + state + "&" + QUERY_REDIRECT_URI + "=" + REDIRECT_URI + "&" + QUERY_DURATION + "=permanent&scope=" + AUTH_SCOPES;
     }
 
     public Request<String> fetchToken(final RedditErrorListener listener) {
@@ -226,7 +225,7 @@ public class Reddit {
             @Override
             public Map<String, String> getHeaders() throws AuthFailureError {
                 HashMap<String, String> headers = new HashMap<>(3);
-                String credentials = CLIENT_ID + ":";
+                String credentials = ApiKeys.REDDIT_CLIENT_ID + ":";
                 String auth = "Basic " + Base64.encodeToString(credentials.getBytes(),
                         Base64.DEFAULT);
                 headers.put(USER_AGENT, CUSTOM_USER_AGENT);

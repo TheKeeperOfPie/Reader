@@ -14,6 +14,7 @@ import android.support.v4.graphics.ColorUtils;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
+import android.text.InputFilter;
 import android.text.Spannable;
 import android.text.SpannableString;
 import android.text.Spanned;
@@ -109,12 +110,12 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                         thumbnailSize) {
 
                     @Override
-                    public void loadBackgroundColor(Drawable drawable, int position) {
+                    public void loadBackgroundColor() {
                         if (colorLink != 0) {
                             itemView.setBackgroundColor(colorLink);
                         }
                         else {
-                            super.loadBackgroundColor(drawable, position);
+                            super.loadBackgroundColor();
                         }
                     }
 
@@ -292,6 +293,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
         protected MenuItem itemSave;
         protected MenuItem itemEdit;
         protected MenuItem itemDelete;
+        protected MenuItem itemReport;
         protected Drawable drawableUpvote;
         protected Drawable drawableDownvote;
         protected PorterDuffColorFilter colorFilterSave;
@@ -417,6 +419,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
             itemSave = menu.findItem(R.id.item_save);
             itemEdit = menu.findItem(R.id.item_edit);
             itemDelete = menu.findItem(R.id.item_delete);
+            itemReport = menu.findItem(R.id.item_report);
 
             Resources resources = itemView.getContext().getResources();
             colorFilterPositive = new PorterDuffColorFilter(resources.getColor(
@@ -467,7 +470,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
 
             Menu menu = toolbarActions.getMenu();
 
-            int maxNum = itemView.getWidth() / toolbarItemWidth;
+            int maxNum = (itemView.getWidth() - getIndentWidth()) / toolbarItemWidth;
             int numShown = 0;
 
             boolean loggedIn = !TextUtils.isEmpty(userName);
@@ -476,6 +479,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
             itemDownvote.setVisible(loggedIn);
             itemReply.setVisible(loggedIn);
             itemSave.setVisible(loggedIn);
+            itemReport.setVisible(loggedIn);
             itemCollapse.setVisible(eventListener.hasChildren(comment));
 
             for (int index = 0; index < menu.size(); index++) {
@@ -502,6 +506,8 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                             .setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
                 }
             }
+
+            syncSaveIcon();
         }
 
         public void setVoteColors() {
@@ -527,6 +533,10 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
             }
         }
 
+        private int getIndentWidth() {
+            return comment.getLevel() > 10 ? indentWidth * 10 : indentWidth * comment.getLevel();
+        }
+
         public void onBind(Comment comment, String userName) {
 
             this.comment = comment;
@@ -550,8 +560,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
             viewIndicatorContainer.setBackgroundColor(indicatorColor);
 
             ViewGroup.LayoutParams layoutParams = viewIndent.getLayoutParams();
-            layoutParams.width =
-                    comment.getLevel() > 10 ? indentWidth * 10 : indentWidth * comment.getLevel();
+            layoutParams.width = getIndentWidth();
             viewIndent.setLayoutParams(layoutParams);
 
             if (comment.isMore()) {
@@ -612,7 +621,6 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                 textComment.setTextColor(itemView.getContext().getResources()
                         .getColor(R.color.darkThemeTextColor));
             }
-
 
         }
 
@@ -700,13 +708,52 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                             .setNegativeButton("No", null)
                             .show();
                     break;
+                // Reporting
+                case R.id.item_report_spam:
+                    eventListenerBase.report(comment, "spam", null);
+                    break;
+                case R.id.item_report_vote_manipulation:
+                    eventListenerBase.report(comment, "vote manipulation", null);
+                    break;
+                case R.id.item_report_personal_information:
+                    eventListenerBase.report(comment, "personal information", null);
+                    break;
+                case R.id.item_report_sexualizing_minors:
+                    eventListenerBase.report(comment, "sexualizing minors", null);
+                    break;
+                case R.id.item_report_breaking_reddit:
+                    eventListenerBase.report(comment, "breaking reddit", null);
+                    break;
+                case R.id.item_report_other:
+                    View viewDialog = LayoutInflater.from(itemView.getContext()).inflate(R.layout.dialog_text_input, null, false);
+                    InputFilter[] filterArray = new InputFilter[1];
+                    filterArray[0] = new InputFilter.LengthFilter(100);
+                    final EditText editText = (EditText) viewDialog.findViewById(R.id.edit_text);
+                    editText.setFilters(filterArray);
+                    new AlertDialog.Builder(itemView.getContext())
+                            .setView(viewDialog)
+                            .setTitle(R.string.item_report)
+                            .setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    eventListenerBase.report(comment, "other", editText.getText().toString());
+                                }
+                            })
+                            .setNegativeButton(R.string.cancel,
+                                    new DialogInterface.OnClickListener() {
+                                        @Override
+                                        public void onClick(DialogInterface dialog, int which) {
+
+                                        }
+                                    })
+                            .show();
+                    break;
             }
             return true;
         }
 
         private void saveComment(final Comment comment) {
             eventListenerBase.save(comment);
-            comment.setSaved(!comment.isSaved());
             syncSaveIcon();
         }
 

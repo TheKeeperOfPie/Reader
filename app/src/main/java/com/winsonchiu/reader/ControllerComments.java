@@ -126,7 +126,7 @@ public class ControllerComments {
 
         if (!link.getComments().getChildren().isEmpty()) {
             Comment commentFirst = ((Comment) link.getComments().getChildren().get(0));
-            if (!commentFirst.getParentId().equals(link.getName())) {
+            if (!commentFirst.getParentId().equals(link.getId())) {
                 loadCommentThread(commentFirst.getId());
                 return;
             }

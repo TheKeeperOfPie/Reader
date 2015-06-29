@@ -23,6 +23,8 @@ public class AppSettings {
     public static final String SUBSCRIBED_SUBREDDITS = "subscribedSubreddits";
     public static final String REFRESH_TOKEN = "refreshToken";
 
+    public static final String HISTORY_SET = "historySet";
+
     public static boolean initPrefs(Context context) {
 
         SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context.getApplicationContext());

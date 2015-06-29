@@ -36,6 +36,7 @@ import com.squareup.picasso.Target;
 import com.winsonchiu.reader.data.Comment;
 import com.winsonchiu.reader.data.Link;
 import com.winsonchiu.reader.data.Reddit;
+import com.winsonchiu.reader.data.Thing;
 import com.winsonchiu.reader.data.User;
 
 import org.json.JSONException;
@@ -46,6 +47,8 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.HashMap;
+import java.util.Map;
 
 import io.fabric.sdk.android.Fabric;
 
@@ -359,6 +362,29 @@ public class MainActivity extends YouTubeBaseActivity
             @Override
             public void deletePost(Link link) {
                 getControllerLinks().deletePost(link);
+            }
+
+            @Override
+            public void report(Thing thing, String reason, String otherReason) {
+                Map<String, String> params = new HashMap<>();
+                params.put("api_type", "json");
+                params.put("thing_id", thing.getName());
+                params.put("reason", reason);
+                if (!TextUtils.isEmpty(otherReason)) {
+                    params.put("other_reason", otherReason);
+                }
+
+                reddit.loadPost(Reddit.OAUTH_URL + "/api/report", new Response.Listener<String>() {
+                    @Override
+                    public void onResponse(String response) {
+
+                    }
+                }, new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+
+                    }
+                }, params, 0);
             }
         };
 
