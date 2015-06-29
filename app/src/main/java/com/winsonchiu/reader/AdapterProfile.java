@@ -203,6 +203,18 @@ public class AdapterProfile extends RecyclerView.Adapter<RecyclerView.ViewHolder
         }
     }
 
+    public void pauseViewHolders() {
+        for (RecyclerView.ViewHolder viewHolder : viewHolders) {
+            if (viewHolder instanceof AdapterLink.ViewHolderBase) {
+                AdapterLink.ViewHolderBase viewHolderBase = (AdapterLink.ViewHolderBase) viewHolder;
+                viewHolderBase.videoFull.pause();
+                if (viewHolderBase.youTubePlayer != null) {
+                    viewHolderBase.youTubePlayer.pause();
+                }
+            }
+        }
+    }
+
     public static class ViewHolderHeader extends RecyclerView.ViewHolder {
 
         protected TextView textUsername;

@@ -3,6 +3,7 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="?attr/selectableItemBackground"
     >
 
     <View
@@ -34,6 +35,7 @@
         android:paddingEnd="8dp"
         android:paddingRight="8dp"
         android:textSize="14sp"
+        android:background="?attr/selectableItemBackgroundBorderless"
         />
 
     <TextView

@@ -503,20 +503,10 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             imageThumbnail.setOnClickListener(this);
             buttonComments.setOnClickListener(this);
             buttonSendReply.setOnClickListener(this);
-
+            textThreadSelf.setOnClickListener(this);
             textThreadSelf.setMovementMethod(LinkMovementMethod.getInstance());
 
             editTextReply.setOnTouchListener(new OnTouchListenerDisallow(disallowListener));
-            textThreadSelf.setOnTouchListener(new View.OnTouchListener() {
-                @Override
-                public boolean onTouch(View v, MotionEvent event) {
-                    MotionEvent newEvent = MotionEvent.obtain(event);
-                    newEvent.offsetLocation(v.getLeft(), v.getTop());
-                    ViewHolderBase.this.itemView.onTouchEvent(newEvent);
-                    newEvent.recycle();
-                    return false;
-                }
-            });
 
             videoFull.setMediaController(mediaController);
             videoFull.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
@@ -551,8 +541,6 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                     break;
                 case R.id.image_thumbnail:
                     onClickThumbnail();
-                    break;
-                case R.id.text_thread_self:
                     break;
                 case R.id.button_send_reply:
                     if (!TextUtils.isEmpty(editTextReply.getText())) {
@@ -838,6 +826,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         }
 
         public void expandFull(boolean expand) {
+            setToolbarMenuVisibility();
         }
 
         public void setVoteColors() {

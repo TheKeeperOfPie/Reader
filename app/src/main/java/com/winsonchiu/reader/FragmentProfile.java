@@ -385,6 +385,14 @@ public class FragmentProfile extends FragmentBase implements Toolbar.OnMenuItemC
     }
 
     @Override
+    public void onHiddenChanged(boolean hidden) {
+        super.onHiddenChanged(hidden);
+        if (hidden) {
+            adapterProfile.pauseViewHolders();
+        }
+    }
+
+    @Override
     boolean navigateBack() {
         return true;
     }

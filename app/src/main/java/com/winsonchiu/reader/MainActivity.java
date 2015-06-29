@@ -210,7 +210,12 @@ public class MainActivity extends YouTubeBaseActivity
                                 FragmentComments.TAG)
                         .addToBackStack(null)
                         .commit();
-                viewHolderBase.itemView.setVisibility(View.INVISIBLE);
+                viewHolderBase.itemView.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        viewHolderBase.itemView.setVisibility(View.INVISIBLE);
+                    }
+                }, 20);
             }
 
             @Override

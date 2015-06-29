@@ -10,7 +10,7 @@
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="?android:selectableItemBackground"
+        android:background="?attr/selectableItemBackground"
         >
 
         <FrameLayout
@@ -129,7 +129,7 @@
             android:layout_marginBottom="8dp"
             android:textSize="12sp"
             android:visibility="gone"
-            android:background="?android:selectableItemBackground"
+            android:background="?attr/selectableItemBackgroundBorderless"
             />
 
         <TextView
@@ -156,7 +156,7 @@
             android:layout_below="@id/frame_full"
             android:layout_alignParentEnd="true"
             android:contentDescription="@string/content_description_button_comments"
-            android:background="@android:color/transparent"
+            android:background="?attr/selectableItemBackgroundBorderless"
             android:src="@drawable/ic_mode_comment_white_24dp"
             android:padding="@dimen/activity_horizontal_margin"
             />

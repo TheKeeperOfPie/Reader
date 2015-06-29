@@ -341,7 +341,6 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
 
         private void intiialize() {
 
-
             Resources resources = itemView.getContext().getResources();
             this.drawableUpvote = resources.getDrawable(R.drawable.ic_keyboard_arrow_up_white_24dp);
             this.drawableDownvote = resources.getDrawable(

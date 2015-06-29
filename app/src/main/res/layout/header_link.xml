@@ -3,7 +3,7 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="?android:selectableItemBackground"
+    android:background="?attr/selectableItemBackground"
     android:layout_marginBottom="1dp"
     >
 
@@ -43,7 +43,7 @@
         android:layout_alignParentTop="true"
         android:layout_alignParentEnd="true"
         android:contentDescription="@string/content_description_button_show_sidebar"
-        android:background="?android:selectableItemBackground"
+        android:background="?attr/selectableItemBackgroundBorderless"
         android:src="@drawable/ic_info_outline_white_24dp"
         android:padding="16dp"
         />

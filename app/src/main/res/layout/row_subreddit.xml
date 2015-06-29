@@ -3,7 +3,7 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="?android:selectableItemBackground"
+    android:background="?attr/selectableItemBackground"
     >
 
     <TextView
@@ -42,7 +42,7 @@
         android:layout_alignParentTop="true"
         android:layout_alignParentEnd="true"
         android:contentDescription="@string/content_description_button_open"
-        android:background="?android:selectableItemBackground"
+        android:background="?attr/selectableItemBackgroundBorderless"
         android:src="@drawable/ic_open_in_new_white_24dp"
         android:padding="@dimen/activity_horizontal_margin"
         />
