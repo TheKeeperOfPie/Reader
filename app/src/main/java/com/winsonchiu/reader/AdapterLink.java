@@ -29,6 +29,7 @@ import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.webkit.WebChromeClient;
 import android.webkit.WebView;
 import android.widget.Button;
 import android.widget.EditText;
@@ -138,10 +139,17 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         super.onViewRecycled(holder);
     }
 
+    public void setVisibility(int visibility) {
+        for (RecyclerView.ViewHolder  viewHolder : viewHolders) {
+            viewHolder.itemView.setVisibility(visibility);
+        }
+    }
+
     @Override
     public void onViewAttachedToWindow(RecyclerView.ViewHolder holder) {
         super.onViewAttachedToWindow(holder);
         viewHolders.add(holder);
+        holder.itemView.setVisibility(View.VISIBLE);
     }
 
     @Override
@@ -151,6 +159,10 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         if (holder instanceof ViewHolderBase) {
             ((ViewHolderBase) holder).destroyWebViews();
         }
+    }
+
+    public void pauseViewHolders() {
+
     }
 
     protected static class ViewHolderHeader extends RecyclerView.ViewHolder
@@ -853,24 +865,19 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         public void attemptLoadImage() {
 
             if (Reddit.placeImageUrl(link)) {
-                expandFull(true);
 
                 if (webFull == null) {
                     webFull = eventListener.getNewWebView();
                     webFull.setOnTouchListener(new OnTouchListenerDisallow(disallowListener));
-                    FrameLayout.LayoutParams layoutParams = new FrameLayout.LayoutParams(
-                            ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-                    layoutParams.gravity = Gravity.FILL_HORIZONTAL;
                     frameFull.addView(webFull);
 
                 }
-                webFull.onResume();
-                webFull.resetMaxHeight();
-                webFull.loadData(Reddit.getImageHtml(link.getUrl()), "text/html", "UTF-8");
-                webFull.setVisibility(View.VISIBLE);
-                frameFull.requestLayout();
-                webFull.requestLayout();
+                expandFull(true);
                 recyclerCallback.scrollTo(getAdapterPosition());
+                webFull.onResume();
+                webFull.loadData(Reddit.getImageHtml(link.getUrl()), "text/html", "UTF-8");
+                webFull.requestLayout();
+                frameFull.requestLayout();
             }
             else {
                 eventListener.loadUrl(link.getUrl());

@@ -147,7 +147,6 @@ public class AdapterProfile extends RecyclerView.Adapter<RecyclerView.ViewHolder
             case 2:
                 if (controllerProfile.getPage().equalsIgnoreCase("Overview")) {
                     AdapterLinkList.ViewHolder viewHolderLinkTop = (AdapterLinkList.ViewHolder) holder;
-                    viewHolderLinkTop.setVisibility(View.VISIBLE);
                     viewHolderLinkTop.onRecycle();
                     viewHolderLinkTop.onBind(controllerProfile.getTopLink(), controllerLinks.showSubreddit(), controllerUser.getUser().getName());
                 }
@@ -166,7 +165,6 @@ public class AdapterProfile extends RecyclerView.Adapter<RecyclerView.ViewHolder
             case 4:
                 if (controllerProfile.getPage().equalsIgnoreCase("Overview")) {
                     AdapterCommentList.ViewHolderComment viewHolderCommentTop = (AdapterCommentList.ViewHolderComment) holder;
-                    viewHolderCommentTop.setVisibility(View.VISIBLE);
                     viewHolderCommentTop.onBind(controllerProfile.getTopComment(), controllerUser.getUser().getName());
                 }
                 else {
@@ -197,6 +195,12 @@ public class AdapterProfile extends RecyclerView.Adapter<RecyclerView.ViewHolder
     @Override
     public int getItemCount() {
         return controllerProfile.sizeLinks() > 0 ? controllerProfile.sizeLinks() + 4 : 0;
+    }
+
+    public void setVisibility(int visibility) {
+        for (RecyclerView.ViewHolder viewHolder : viewHolders) {
+            viewHolder.itemView.setVisibility(visibility);
+        }
     }
 
     public static class ViewHolderHeader extends RecyclerView.ViewHolder {

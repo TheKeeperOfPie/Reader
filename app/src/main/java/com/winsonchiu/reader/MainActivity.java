@@ -180,7 +180,7 @@ public class MainActivity extends YouTubeBaseActivity
             }
 
             @Override
-            public void onClickComments(Link link, AdapterLink.ViewHolderBase viewHolderBase) {
+            public void onClickComments(Link link, final AdapterLink.ViewHolderBase viewHolderBase) {
 
                 Log.d(TAG, "onClickComments: " + link);
 
@@ -210,6 +210,7 @@ public class MainActivity extends YouTubeBaseActivity
                                 FragmentComments.TAG)
                         .addToBackStack(null)
                         .commit();
+                viewHolderBase.itemView.setVisibility(View.INVISIBLE);
             }
 
             @Override
@@ -653,7 +654,7 @@ public class MainActivity extends YouTubeBaseActivity
                                     FragmentComments.newInstance(),
                                     FragmentComments.TAG)
                             .commit();
-                    getControllerComments().loadThread(subreddit, id, commentId);
+                    getControllerComments().setLinkId(subreddit, id, commentId);
                     return;
                 }
 

@@ -51,11 +51,9 @@ public class AdapterLinkList extends AdapterLink {
             return new ViewHolderHeader(LayoutInflater.from(viewGroup.getContext()).inflate(R.layout.header_link, viewGroup, false), eventListenerHeader);
         }
 
-        ViewHolder viewHolder = new ViewHolder(LayoutInflater.from(viewGroup.getContext())
+        return new ViewHolder(LayoutInflater.from(viewGroup.getContext())
                 .inflate(R.layout.row_link, viewGroup, false), eventListenerBase, disallowListener,
                 recyclerCallback);
-        viewHolders.add(viewHolder);
-        return viewHolder;
     }
 
     @Override

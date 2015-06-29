@@ -12,5 +12,7 @@ public abstract class FragmentBase extends Fragment {
      * @return true if back action should continue, false otherwise
      */
     abstract boolean navigateBack();
+    public void onShown() {
 
+    }
 }

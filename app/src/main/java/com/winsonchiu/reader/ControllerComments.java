@@ -44,6 +44,7 @@ public class ControllerComments {
     private int indentWidth;
     private Reddit reddit;
     private boolean isLoading;
+    private boolean isCommentThread;
 
     public ControllerComments(Activity activity,
             String subreddit,
@@ -67,6 +68,7 @@ public class ControllerComments {
         setTitle();
         listener.getAdapter().notifyDataSetChanged();
         listener.setRefreshing(isLoading());
+        listener.setIsCommentThread(isCommentThread);
     }
 
     public void removeListener(Listener listener) {
@@ -81,31 +83,39 @@ public class ControllerComments {
 
     public void setLink(Link link) {
         setLinkId(link.getSubreddit(), link.getId());
-        Listing listing = new Listing();
-        // TODO: Make this logic cleaner
-        if (link.getComments() != null) {
-            listing.setChildren(new ArrayList<>(link.getComments()
-                    .getChildren()));
-        }
-        else {
-            listing.setChildren(new ArrayList<Thing>());
-        }
-        this.listingComments = listing;
+//        Listing listing = new Listing();
+//        // TODO: Make this logic cleaner
+//        if (link.getComments() != null) {
+//            listing.setChildren(new ArrayList<>(link.getComments()
+//                    .getChildren()));
+//        }
+//        else {
+//            listing.setChildren(new ArrayList<Thing>());
+//        }
+        this.listingComments = new Listing();
         this.link = link;
-        for (Listener listener : listeners) {
-            listener.getAdapter().notifyDataSetChanged();
-        }
+//        for (Listener listener : listeners) {
+//            listener.getAdapter().notifyDataSetChanged();
+//        }
     }
 
     public void setLinkId(String subreddit, String linkId) {
+        setLinkIdValues(subreddit, linkId);
+        reloadAllComments();
+    }
 
+    public void setLinkId(String subreddit, String linkId, String commentId) {
+        setLinkIdValues(subreddit, linkId);
+        loadCommentThread(commentId);
+    }
+
+    private void setLinkIdValues(String subreddit, String linkId) {
         link = new Link();
         link.setSubreddit(subreddit);
         link.setId(linkId);
 
         this.subreddit = subreddit;
         this.linkId = linkId;
-        reloadAllComments();
     }
 
     public void reloadAllComments() {
@@ -114,7 +124,21 @@ public class ControllerComments {
             return;
         }
 
+        if (!link.getComments().getChildren().isEmpty()) {
+            Comment commentFirst = ((Comment) link.getComments().getChildren().get(0));
+            if (!commentFirst.getParentId().equals(link.getName())) {
+                loadCommentThread(commentFirst.getId());
+                return;
+            }
+        }
+
+        loadLinkComments();
+
+    }
+
+    public void loadLinkComments() {
         setRefreshing(true);
+
         reddit.loadGet(
                 Reddit.OAUTH_URL + "/r/" + subreddit + "/comments/" + linkId + "?depth=10&showmore=true&showedits=true&limit=100",
                 new Response.Listener<String>() {
@@ -148,12 +172,62 @@ public class ControllerComments {
                         catch (JSONException e1) {
                             e1.printStackTrace();
                         }
+                        setIsCommentThread(false);
                         setRefreshing(false);
                     }
                 }, new ErrorListener() {
                     @Override
                     public void onErrorResponse(VolleyError error) {
                         Log.d(TAG, "reloadAllComments onErrorResponse: " + error.toString());
+                        setRefreshing(false);
+                    }
+                }, 0);
+    }
+
+    public void loadCommentThread(String commentId) {
+
+        setRefreshing(true);
+
+        reddit.loadGet(
+                Reddit.OAUTH_URL + "/r/" + subreddit + "/comments/" + linkId + "?depth=10&showmore=true&showedits=true&limit=100&context=3&comment=" + commentId,
+                new Response.Listener<String>() {
+                    @Override
+                    public void onResponse(String response) {
+
+                        try {
+                            Listing listing = new Listing();
+                            link = Link.fromJson(new JSONArray(response));
+
+                            // For some reason Reddit doesn't report the link author, so we'll do it manually
+                            for (Thing thing : link.getComments().getChildren()) {
+                                Comment comment = (Comment) thing;
+                                comment.setLinkAuthor(link.getAuthor());
+                            }
+
+                            // TODO: Make this logic cleaner
+                            if (link.getComments() != null) {
+                                listing.setChildren(new ArrayList<>(link.getComments()
+                                        .getChildren()));
+                            }
+                            else {
+                                listing.setChildren(new ArrayList<Thing>());
+                            }
+                            listingComments = listing;
+                            for (Listener listener : listeners) {
+                                listener.getAdapter().notifyDataSetChanged();
+                            }
+                            setTitle();
+                        }
+                        catch (JSONException e1) {
+                            e1.printStackTrace();
+                        }
+                        setIsCommentThread(true);
+                        setRefreshing(false);
+                    }
+                }, new ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        Log.d(TAG, "onErrorResponse: " + error.toString());
                         setRefreshing(false);
                     }
                 }, 0);
@@ -166,16 +240,19 @@ public class ControllerComments {
         }
     }
 
+    private void setIsCommentThread(boolean isCommentThread) {
+        this.isCommentThread = isCommentThread;
+        for (Listener listener : listeners) {
+            listener.setIsCommentThread(isCommentThread);
+        }
+    }
+
     public int sizeLinks() {
         return 1;
     }
 
     public boolean isLoading() {
         return isLoading;
-    }
-
-    public void loadMoreLinks() {
-        // Not implemented
     }
 
     public String getSubredditName() {
@@ -301,62 +378,6 @@ public class ControllerComments {
                         Log.d(TAG, "error" + error.toString());
                     }
                 }, params, 0);
-    }
-
-    public void loadThread(String subreddit, String linkId, String commentId) {
-
-        link = new Link();
-        link.setSubreddit(subreddit);
-        link.setId(linkId);
-
-        this.subreddit = subreddit;
-        this.linkId = linkId;
-
-        Log.d(TAG, "URL: " + (Reddit.OAUTH_URL + "/r/" + subreddit + "/comments/" + linkId + "?depth=10&showmore=true&showedits=true&limit=100&comment=" + commentId));
-
-        setRefreshing(true);
-        reddit.loadGet(
-                Reddit.OAUTH_URL + "/r/" + subreddit + "/comments/" + linkId + "?depth=10&showmore=true&showedits=true&limit=100&comment=" + commentId,
-                new Response.Listener<String>() {
-                    @Override
-                    public void onResponse(String response) {
-
-                        try {
-                            Listing listing = new Listing();
-                            link = Link.fromJson(new JSONArray(response));
-
-                            // For some reason Reddit doesn't report the link author, so we'll do it manually
-                            for (Thing thing : link.getComments().getChildren()) {
-                                Comment comment = (Comment) thing;
-                                comment.setLinkAuthor(link.getAuthor());
-                            }
-
-                            // TODO: Make this logic cleaner
-                            if (link.getComments() != null) {
-                                listing.setChildren(new ArrayList<>(link.getComments()
-                                        .getChildren()));
-                            }
-                            else {
-                                listing.setChildren(new ArrayList<Thing>());
-                            }
-                            listingComments = listing;
-                            for (Listener listener : listeners) {
-                                listener.getAdapter().notifyDataSetChanged();
-                            }
-                            setTitle();
-                        }
-                        catch (JSONException e1) {
-                            e1.printStackTrace();
-                        }
-                        setRefreshing(false);
-                    }
-                }, new ErrorListener() {
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
-                        Log.d(TAG, "onErrorResponse: " + error.toString());
-                        setRefreshing(false);
-                    }
-                }, 0);
     }
 
     public void insertComments(Comment moreComment, Listing listing) {
@@ -721,6 +742,7 @@ public class ControllerComments {
     }
 
     public interface Listener extends ControllerListener{
+        void setIsCommentThread(boolean isCommentThread);
     }
 
 }

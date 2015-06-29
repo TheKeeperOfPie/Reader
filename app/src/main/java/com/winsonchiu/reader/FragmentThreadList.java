@@ -29,6 +29,8 @@ import android.widget.Toast;
 import com.android.volley.Response;
 import com.android.volley.Response.Listener;
 import com.android.volley.VolleyError;
+import com.winsonchiu.reader.data.Comment;
+import com.winsonchiu.reader.data.Link;
 import com.winsonchiu.reader.data.Reddit;
 import com.winsonchiu.reader.data.Subreddit;
 
@@ -570,7 +572,21 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
     }
 
     @Override
+    public void onHiddenChanged(boolean hidden) {
+        super.onHiddenChanged(hidden);
+        if (hidden) {
+            // TODO: Implement hidden for other Fragments
+            adapterLink.pauseViewHolders();
+        }
+    }
+
+    @Override
     boolean navigateBack() {
         return true;
+    }
+
+    @Override
+    public void onShown() {
+        adapterLink.setVisibility(View.VISIBLE);
     }
 }

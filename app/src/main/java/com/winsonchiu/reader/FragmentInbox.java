@@ -325,4 +325,9 @@ public class FragmentInbox extends FragmentBase {
     boolean navigateBack() {
         return true;
     }
+
+    @Override
+    public void onShown() {
+        adapterInbox.setVisibility(View.VISIBLE);
+    }
 }

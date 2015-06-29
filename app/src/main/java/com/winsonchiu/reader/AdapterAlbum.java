@@ -106,6 +106,7 @@ public class AdapterAlbum extends PagerAdapter {
         View view = (View) object;
         WebView webView = (WebView) view.findViewById(R.id.web);
         if (webView != null) {
+            webView.stopLoading();
             webView.onPause();
             webView.destroy();
             Reddit.incrementDestroy();

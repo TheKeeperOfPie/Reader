@@ -30,7 +30,7 @@ public class AdapterSearchLinkList extends AdapterLinkList {
             return super.onCreateViewHolder(viewGroup, viewType);
         }
 
-        ViewHolder viewHolder = new ViewHolder(LayoutInflater.from(viewGroup.getContext())
+        return new ViewHolder(LayoutInflater.from(viewGroup.getContext())
                 .inflate(R.layout.row_link, viewGroup, false), eventListenerBase, disallowListener,
                 recyclerCallback) {
             @Override
@@ -42,7 +42,5 @@ public class AdapterSearchLinkList extends AdapterLinkList {
                 super.onClickThumbnail();
             }
         };
-        viewHolders.add(viewHolder);
-        return viewHolder;
     }
 }

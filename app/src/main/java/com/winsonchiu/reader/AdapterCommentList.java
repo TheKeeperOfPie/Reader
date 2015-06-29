@@ -22,6 +22,7 @@ import android.text.format.DateUtils;
 import android.text.method.LinkMovementMethod;
 import android.text.style.ForegroundColorSpan;
 import android.util.DisplayMetrics;
+import android.util.Log;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -61,8 +62,8 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
     private AdapterLink.ViewHolderBase viewHolderLink;
     private int thumbnailSize;
     private boolean isGrid;
-    private boolean isInitialized;
     private boolean animationFinished;
+    private boolean isSelfTextLoaded;
 
     public AdapterCommentList(Activity activity,
             ControllerComments controllerComments,
@@ -122,8 +123,17 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                             boolean showSubbreddit,
                             String userName) {
                         super.onBind(link, showSubbreddit, userName);
-                        if (link.isSelf() && !TextUtils.isEmpty(link.getSelfText())) {
-                            textThreadSelf.setVisibility(View.VISIBLE);
+                        if (animationFinished) {
+                            if (!isSelfTextLoaded) {
+                                if (!TextUtils.isEmpty(link.getSelfText())) {
+                                    loadSelfText();
+                                }
+                                isSelfTextLoaded = true;
+                            }
+                            else if (link.isSelf() && !TextUtils
+                                    .isEmpty(link.getSelfText())) {
+                                textThreadSelf.setVisibility(View.VISIBLE);
+                            }
                         }
                     }
 
@@ -144,14 +154,6 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                         }
                     }
                 };
-                // TODO: Fix margin when expanding comment thread from grid UI
-//                int margin = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 4,
-//                        activity.getResources()
-//                                .getDisplayMetrics());
-//                ((RecyclerView.LayoutParams) viewHolderLink.itemView.findViewById(R.id.layout_link).getLayoutParams()).setMarginStart(
-//                        margin);
-//                ((RecyclerView.LayoutParams) viewHolderLink.itemView.findViewById(R.id.layout_link).getLayoutParams()).setMarginEnd(
-//                        margin);
                 if (colorLink != 0) {
                     viewHolderLink.itemView.setBackgroundColor(colorLink);
                 }
@@ -168,8 +170,17 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                             boolean showSubreddit,
                             String userName) {
                         super.onBind(link, showSubreddit, userName);
-                        if (link.isSelf() && !TextUtils.isEmpty(link.getSelfText())) {
-                            textThreadSelf.setVisibility(View.VISIBLE);
+                        if (animationFinished) {
+                            if (!isSelfTextLoaded) {
+                                if (!TextUtils.isEmpty(link.getSelfText())) {
+                                    loadSelfText();
+                                }
+                                isSelfTextLoaded = true;
+                            }
+                            else if (link.isSelf() && !TextUtils
+                                    .isEmpty(link.getSelfText())) {
+                                textThreadSelf.setVisibility(View.VISIBLE);
+                            }
                         }
                     }
 
@@ -212,12 +223,6 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
             viewHolderBase
                     .onBind(controllerComments.getMainLink(), controllerComments.showSubreddit(),
                             controllerUser.getUser().getName());
-            if (!isInitialized) {
-                if (controllerComments.getMainLink().isSelf() && !TextUtils.isEmpty(controllerComments.getMainLink().getSelfText())) {
-                    viewHolderBase.loadSelfText();
-                }
-                isInitialized = true;
-            }
         }
         else {
             ViewHolderComment viewHolderComment = (ViewHolderComment) holder;
@@ -236,6 +241,20 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
             }
         }
         return count;
+    }
+
+    public void collapseViewHolderLink() {
+        // TODO: Support collapsing enlarged thumbnail and self text
+        if (controllerComments.getMainLink().isSelf()) {
+            viewHolderLink.textThreadSelf.setVisibility(View.GONE);
+        }
+        else {
+            viewHolderLink.destroyWebViews();
+            viewHolderLink.onRecycle();
+            viewHolderLink.onBind(controllerComments.getMainLink(),
+                    controllerComments.showSubreddit(),
+                    controllerUser.getUser().getName());
+        }
     }
 
     public void destroyViewHolderLink() {

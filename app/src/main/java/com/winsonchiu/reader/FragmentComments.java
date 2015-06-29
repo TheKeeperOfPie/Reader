@@ -7,6 +7,7 @@ import android.os.Bundle;
 import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.view.ViewCompat;
+import android.support.v4.view.ViewPropertyAnimatorListener;
 import android.support.v4.view.animation.FastOutSlowInInterpolator;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.LinearLayoutManager;
@@ -17,6 +18,7 @@ import android.util.DisplayMetrics;
 import android.util.Log;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewPropertyAnimator;
@@ -41,7 +43,8 @@ public class FragmentComments extends FragmentBase {
     private static final String ARG_START_Y = "startY";
     private static final String ARG_ITEM_HEIGHT = "itemHeight";
     private static final String ARG_ITEM_WIDTH = "itemWidth";
-    private static final long DURATION_ENTER = 350;
+    private static final long DURATION_ENTER = 250;
+    private static final long DURATION_EXIT = 150;
     private static final long DURATION_ACTIONS_FADE = 150;
     private static final float OFFSET_MODIFIER = 0.25f;
 
@@ -64,6 +67,7 @@ public class FragmentComments extends FragmentBase {
     private RecyclerView.AdapterDataObserver observer;
     private FastOutSlowInInterpolator fastOutSlowInInterpolator;
     private Fragment fragmentToHide;
+    private String fragmentParentTag;
     private boolean isFullscreen;
     private int screenWidth;
     private int viewHolderWidth;
@@ -71,6 +75,7 @@ public class FragmentComments extends FragmentBase {
     private float startY;
     private int startMarginEnd;
     private View viewBackground;
+    private MenuItem itemLoadFullComments;
 
     public static FragmentComments newInstance() {
         FragmentComments fragment = new FragmentComments();
@@ -108,20 +113,25 @@ public class FragmentComments extends FragmentBase {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        if (getArguments() != null) {
-            screenWidth = getResources().getDisplayMetrics().widthPixels;
-            viewHolderWidth = getArguments().getInt(ARG_ITEM_WIDTH, screenWidth);
-            startX = getArguments().getFloat(ARG_START_X, 0);
-            startY = getArguments().getFloat(ARG_START_Y, 0);
-            startMarginEnd = (int) (screenWidth - startX - viewHolderWidth);
-        }
-
         fastOutSlowInInterpolator = new FastOutSlowInInterpolator();
         setHasOptionsMenu(true);
     }
 
     private void setUpOptionsMenu() {
         // No menu items needed
+        toolbar.inflateMenu(R.menu.menu_comments);
+        itemLoadFullComments = toolbar.getMenu().findItem(R.id.item_load_full_comments);
+        toolbar.setOnMenuItemClickListener(new Toolbar.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                switch (item.getItemId()) {
+                    case R.id.item_load_full_comments:
+                        mListener.getControllerComments().loadLinkComments();
+                        break;
+                }
+                return true;
+            }
+        });
     }
 
     @Override
@@ -130,7 +140,27 @@ public class FragmentComments extends FragmentBase {
 
         final View view = inflater.inflate(R.layout.fragment_comments, container, false);
 
+        if (getArguments() != null) {
+            screenWidth = getResources().getDisplayMetrics().widthPixels;
+            viewHolderWidth = getArguments().getInt(ARG_ITEM_WIDTH, screenWidth);
+            startX = getArguments().getFloat(ARG_START_X, 0);
+            startY = getArguments().getFloat(ARG_START_Y, 0);
+            if (getArguments().getBoolean(ARG_IS_GRID)) {
+                float margin = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 1, getResources().getDisplayMetrics());
+                startX -= margin;
+                startY -= margin;
+                viewHolderWidth += 2 * margin;
+            }
+            startMarginEnd = (int) (screenWidth - startX - viewHolderWidth);
+        }
+
         listener = new ControllerComments.Listener() {
+            @Override
+            public void setIsCommentThread(boolean isCommentThread) {
+                itemLoadFullComments.setEnabled(isCommentThread);
+                itemLoadFullComments.setVisible(isCommentThread);
+            }
+
             @Override
             public RecyclerView.Adapter getAdapter() {
                 return adapterCommentList;
@@ -501,7 +531,8 @@ public class FragmentComments extends FragmentBase {
         viewBackground = view.findViewById(R.id.view_background);
 
         viewBackground.setScaleY(0f);
-        viewBackground.setPivotY(startY + getArguments().getInt(ARG_ITEM_HEIGHT, 0));
+        viewBackground.setPivotY(startY);
+//        viewBackground.setPivotY(startY + getArguments().getInt(ARG_ITEM_HEIGHT, 0)));
 
         final ViewPropertyAnimator viewPropertyAnimator = viewBackground.animate()
                 .scaleY(2f)
@@ -583,9 +614,9 @@ public class FragmentComments extends FragmentBase {
                         .scaleX(1.0F)
                         .scaleY(1.0F)
                         .alpha(1.0F)
+                        .setDuration(DURATION_ACTIONS_FADE)
                         .setInterpolator(ScrollAwareFloatingActionButtonBehavior.INTERPOLATOR)
                         .setListener(null)
-                        .withLayer()
                         .start();
             }
 
@@ -698,11 +729,6 @@ public class FragmentComments extends FragmentBase {
     }
 
     @Override
-    public void onPause() {
-        super.onPause();
-    }
-
-    @Override
     public void onStart() {
         super.onStart();
         mListener.getControllerComments().addListener(listener);
@@ -755,6 +781,7 @@ public class FragmentComments extends FragmentBase {
 
     public void setFragmentToHide(Fragment fragmentToHide) {
         this.fragmentToHide = fragmentToHide;
+        fragmentParentTag = fragmentToHide.getTag();
     }
 
     @Override
@@ -766,60 +793,93 @@ public class FragmentComments extends FragmentBase {
         else {
 
             adapterCommentList.setAnimationFinished(false);
+            adapterCommentList.collapseViewHolderLink();
 
             viewBackground.setVisibility(View.VISIBLE);
 
-            final ViewPropertyAnimator viewPropertyAnimator = viewBackground.animate()
+            ViewCompat.animate(buttonExpandActions)
+                    .scaleX(0f)
                     .scaleY(0f)
-                    .setDuration(DURATION_ENTER)
-                    .setInterpolator(fastOutSlowInInterpolator);
+                    .alpha(0f)
+                    .setInterpolator(ScrollAwareFloatingActionButtonBehavior.INTERPOLATOR)
+                    .setListener(new ViewPropertyAnimatorListener() {
+                        @Override
+                        public void onAnimationStart(View view) {
 
-            final Animation animation = new Animation() {
-                @Override
-                public boolean willChangeBounds() {
-                    return true;
-                }
+                        }
 
-                @Override
-                protected void applyTransformation(float interpolatedTime, Transformation t) {
-                    super.applyTransformation(interpolatedTime, t);
-                    CoordinatorLayout.LayoutParams layoutParams = (CoordinatorLayout.LayoutParams) swipeRefreshCommentList
-                            .getLayoutParams();
-                    layoutParams.topMargin = (int) (startY * interpolatedTime);
-                    layoutParams.setMarginStart((int) (startX * interpolatedTime));
-                    layoutParams.setMarginEnd((int) (startMarginEnd * interpolatedTime));
-                    swipeRefreshCommentList.setLayoutParams(layoutParams);
-                }
-            };
-            animation.setDuration(DURATION_ENTER);
-            animation.setInterpolator(fastOutSlowInInterpolator);
-            animation.setAnimationListener(new Animation.AnimationListener() {
-                @Override
-                public void onAnimationStart(Animation animation) {
-                    Fragment fragment = getFragmentManager().findFragmentByTag(FragmentThreadList.TAG);
-                    if (fragment != null) {
-                        getFragmentManager().beginTransaction().show(fragment).commit();
-                    }
-                }
+                        @Override
+                        public void onAnimationEnd(View view) {
+                            final ViewPropertyAnimator viewPropertyAnimator = viewBackground
+                                    .animate()
+                                    .scaleY(0f)
+                                    .setDuration(DURATION_EXIT)
+                                    .setInterpolator(fastOutSlowInInterpolator);
 
-                @Override
-                public void onAnimationEnd(Animation animation) {
-                    mListener.onNavigationBackClick();
-                }
+                            final Animation animation = new Animation() {
+                                @Override
+                                public boolean willChangeBounds() {
+                                    return true;
+                                }
 
-                @Override
-                public void onAnimationRepeat(Animation animation) {
+                                @Override
+                                protected void applyTransformation(float interpolatedTime,
+                                        Transformation t) {
+                                    super.applyTransformation(interpolatedTime, t);
+                                    CoordinatorLayout.LayoutParams layoutParams = (CoordinatorLayout.LayoutParams) swipeRefreshCommentList
+                                            .getLayoutParams();
+                                    layoutParams.topMargin = (int) (startY * interpolatedTime);
+                                    layoutParams.setMarginStart((int) (startX * interpolatedTime));
+                                    layoutParams.setMarginEnd(
+                                            (int) (startMarginEnd * interpolatedTime));
+                                    swipeRefreshCommentList.setLayoutParams(layoutParams);
+                                }
+                            };
+                            animation.setDuration(DURATION_EXIT);
+                            animation.setInterpolator(fastOutSlowInInterpolator);
+                            animation.setAnimationListener(new Animation.AnimationListener() {
+                                @Override
+                                public void onAnimationStart(Animation animation) {
+                                    Fragment fragment = getFragmentManager()
+                                            .findFragmentByTag(fragmentParentTag);
+                                    if (fragment != null) {
+                                        getFragmentManager().beginTransaction().show(fragment)
+                                                .commit();
+                                    }
+                                }
 
-                }
-            });
+                                @Override
+                                public void onAnimationEnd(Animation animation) {
+                                    FragmentBase fragment = (FragmentBase) getFragmentManager()
+                                            .findFragmentByTag(fragmentParentTag);
+                                    if (fragment != null) {
+                                        fragment.onShown();
+                                    }
+                                    mListener.onNavigationBackClick();
+                                }
 
-            if (getView() != null) {
-                viewPropertyAnimator.start();
-                getView().startAnimation(animation);
-            }
-            else {
-                mListener.onNavigationBackClick();
-            }
+                                @Override
+                                public void onAnimationRepeat(Animation animation) {
+
+                                }
+                            });
+
+                            if (getView() != null) {
+                                viewPropertyAnimator.start();
+                                getView().startAnimation(animation);
+                            }
+                            else {
+                                mListener.onNavigationBackClick();
+                            }
+
+                        }
+
+                        @Override
+                        public void onAnimationCancel(View view) {
+
+                        }
+                    })
+                    .start();
 
             return false;
         }

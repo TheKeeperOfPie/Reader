@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    >
+
+    <item
+        android:id="@+id/item_load_full_comments"
+        android:title="@string/item_load_full_comments"
+        android:icon="@drawable/ic_mode_comment_white_24dp"
+        android:orderInCategory="100"
+        android:visible="false"
+        android:enabled="false"
+        app:showAsAction="ifRoom"
+        />
+
+</menu>

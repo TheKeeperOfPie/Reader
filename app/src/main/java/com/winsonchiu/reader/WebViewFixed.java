@@ -2,10 +2,12 @@ package com.winsonchiu.reader;
 
 import android.annotation.TargetApi;
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.os.Build;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.util.TypedValue;
+import android.view.View;
 import android.view.ViewGroup;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
@@ -19,6 +21,7 @@ public class WebViewFixed extends WebView {
 
     private static final String TAG = WebViewFixed.class.getCanonicalName();
 
+    private boolean finished;
     private int maxHeight = Integer.MAX_VALUE;
 
     public WebViewFixed(Context context) {
@@ -38,24 +41,18 @@ public class WebViewFixed extends WebView {
         super(context, attrs, defStyleAttr, defStyleRes);
     }
 
-    public void resetMaxHeight() {
-        this.maxHeight = Integer.MAX_VALUE;
-        setMeasuredDimension(getMeasuredWidth(), 0);
-        ViewGroup.LayoutParams layoutParams = getLayoutParams();
-        if (layoutParams != null) {
-            layoutParams.height = ViewGroup.LayoutParams.WRAP_CONTENT;
-            setLayoutParams(layoutParams);
-            requestLayout();
-        }
+    @Override
+    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+        super.onMeasure(widthMeasureSpec, heightMeasureSpec);
     }
 
     @Override
-    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-        if (maxHeight == Integer.MAX_VALUE) {
-            super.onMeasure(widthMeasureSpec, heightMeasureSpec);
-        }
-        else {
-            setMeasuredDimension(getMeasuredWidth(), maxHeight);
+    protected void onLayout(boolean changed, int l, int t, int r, int b) {
+        super.onLayout(changed, l, t, r, b);
+        if (getHeight() > 0 && getHeight() < getMinimumHeight()) {
+            setMeasuredDimension(getMeasuredWidth(), 500);
+            ViewGroup.LayoutParams layoutParams = getLayoutParams();
+            setLayoutParams(layoutParams);
         }
     }
 
@@ -63,7 +60,6 @@ public class WebViewFixed extends WebView {
         if (maxHeight == Integer.MAX_VALUE) {
             maxHeight = AnimationUtils.getMeasuredHeight(this, 1.0f);
         }
-        setMeasuredDimension(getMeasuredWidth(), maxHeight);
         getLayoutParams().height = maxHeight;
         requestLayout();
     }
@@ -83,7 +79,6 @@ public class WebViewFixed extends WebView {
                 .setDisplayZoomControls(false);
         webViewFixed.setBackgroundColor(0x000000);
         webViewFixed.setInitialScale(1);
-        webViewFixed.setWebChromeClient(null);
         webViewFixed.setWebViewClient(new WebViewClient() {
             @Override
             public void onScaleChanged(WebView view, float oldScale, float newScale) {
@@ -100,7 +95,7 @@ public class WebViewFixed extends WebView {
                 Log.e(TAG, "WebView error: " + description);
             }
         });
-        webViewFixed.resetMaxHeight();
         return webViewFixed;
     }
+
 }

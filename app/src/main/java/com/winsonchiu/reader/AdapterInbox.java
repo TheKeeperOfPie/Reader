@@ -21,7 +21,9 @@ import com.winsonchiu.reader.data.Message;
 import com.winsonchiu.reader.data.Reddit;
 import com.winsonchiu.reader.data.Thing;
 
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 import static com.winsonchiu.reader.ControllerInbox.VIEW_TYPE_COMMENT;
 import static com.winsonchiu.reader.ControllerInbox.VIEW_TYPE_MESSAGE;
@@ -40,6 +42,7 @@ public class AdapterInbox extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
     private ViewHolderMessage.EventListener eventListenerInbox;
     private DisallowListener disallowListener;
     private ControllerProfile.Listener listener;
+    private List<RecyclerView.ViewHolder> viewHolders;
 
     public AdapterInbox(ControllerInbox controllerInbox,
             ControllerUser controllerUser,
@@ -55,6 +58,7 @@ public class AdapterInbox extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
         this.eventListenerInbox = eventListenerInbox;
         this.disallowListener = disallowListener;
         this.listener = listener;
+        this.viewHolders = new ArrayList<>();
     }
 
     @Override
@@ -119,6 +123,25 @@ public class AdapterInbox extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
     @Override
     public int getItemCount() {
         return controllerInbox.getItemCount();
+    }
+
+    @Override
+    public void onViewAttachedToWindow(RecyclerView.ViewHolder holder) {
+        super.onViewAttachedToWindow(holder);
+        viewHolders.add(holder);
+        holder.itemView.setVisibility(View.VISIBLE);
+    }
+
+    @Override
+    public void onViewDetachedFromWindow(RecyclerView.ViewHolder holder) {
+        super.onViewDetachedFromWindow(holder);
+        viewHolders.remove(holder);
+    }
+
+    public void setVisibility(int visibility) {
+        for (RecyclerView.ViewHolder viewHolder : viewHolders) {
+            viewHolder.itemView.setVisibility(visibility);
+        }
     }
 
     protected static class ViewHolderMessage extends RecyclerView.ViewHolder {

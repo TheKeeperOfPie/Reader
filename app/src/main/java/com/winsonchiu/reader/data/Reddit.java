@@ -646,7 +646,23 @@ public class Reddit {
     }
 
     public static String getImageHtml(String src) {
-        return "<html><head><meta name=\"viewport\" content=\"width=device-width, minimum-scale=0.1\"><style>img {width:100%;}</style></head><body style=\"margin: 0px;\"><img style=\"-webkit-user-select: none; cursor: zoom-in;\" src=\"" + src + "\"/></body></html>";
+        return "<html>" +
+                "<head>" +
+                "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1, minimum-scale=0.1\">" +
+                "<style>" +
+                "    img {" +
+                "        width:100%;" +
+                "    }" +
+                "    body {" +
+                "        margin:0px;" +
+                "    }" +
+                "</style>" +
+                "</head>" +
+                "<body>" +
+                "<img src=\"" + src + "\"/>" +
+                "</body>" +
+                "</html>";
+//            return "<html><head><meta name=\"viewport\" content=\"width=device-width, minimum-scale=0.1\"><style>img {width:100%;}</style></head><body style=\"margin: 0px;\"><img style=\"-webkit-user-select: none; cursor: zoom-in;\" src=\"" + src + "\"/></body></html>";
     }
 
     public static CharSequence getTrimmedHtml(String html) {
