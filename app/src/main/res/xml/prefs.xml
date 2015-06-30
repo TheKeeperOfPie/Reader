@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:title="@string/settings"
+    android:persistent="false"
+    >
+        <PreferenceScreen
+            android:key="prefs_category_display"
+            android:title="@string/prefs_category_display"
+            android:persistent="false">
+
+            <CheckBoxPreference
+                android:key="pref_full_timestamps"
+                android:title="@string/pref_full_timestamps"
+                android:summary="@string/pref_full_timestamps_summary"
+                android:defaultValue="false"
+                />
+
+            <CheckBoxPreference
+                android:key="pref_show_thumbnails"
+                android:title="@string/pref_show_thumbnails"
+                android:defaultValue="true"
+                />
+
+            <CheckBoxPreference
+                android:key="pref_nsfw_thumbnails"
+                android:title="@string/pref_nsfw_thumbnails"
+                android:defaultValue="false"
+                />
+
+            <ListPreference
+                android:key="pref_grid_thumbnail_size"
+                android:title="@string/pref_grid_thumbnail_size"
+                android:entries="@array/pref_grid_thumbnail_size_entries"
+                android:entryValues="@array/pref_grid_thumbnail_size_values"
+                android:defaultValue="0.75"
+                android:negativeButtonText="@null"
+                android:positiveButtonText="@null" />
+
+        </PreferenceScreen>
+
+        <PreferenceScreen
+            android:key="prefs_category_user"
+            android:title="@string/prefs_category_user"
+            android:persistent="false">
+
+        </PreferenceScreen>
+
+</PreferenceScreen>

@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="pref_full_timestamps">Full timestamps</string>
+    <string name="pref_full_timestamps_summary">Show full date and time for posts and comments
+    </string>
+
+    <string name="pref_show_thumbnails">Show thumbnails</string>
+    <string name="pref_grid_thumbnail_size">Grid UI thumbnail size</string>
+    <string name="pref_nsfw_thumbnails">Hide NSFW thumbnails</string>
+
+    <string name="prefs_category_display">Display</string>
+    <string name="prefs_category_user">User</string>
+    <string-array name="pref_grid_thumbnail_size_entries">
+        <item>25%</item>
+        <item>50%</item>
+        <item>75%</item>
+        <item>100%</item>
+    </string-array>
+    <string-array name="pref_grid_thumbnail_size_values">
+        <item>0.25</item>
+        <item>0.50</item>
+        <item>0.75</item>
+        <item>1</item>
+    </string-array>
+
+</resources>

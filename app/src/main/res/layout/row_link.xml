@@ -131,6 +131,7 @@
             android:paddingBottom="14dp"
             android:clickable="false"
             android:longClickable="false"
+            android:textColor="@color/darkThemeTextColorMuted"
             />
 
         <TextView

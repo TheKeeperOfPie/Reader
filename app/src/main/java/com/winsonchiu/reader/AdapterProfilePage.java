@@ -20,6 +20,8 @@ public class AdapterProfilePage extends BaseAdapter {
 
     public AdapterProfilePage(Activity activity) {
         super();
+
+        // TODO: IMPORTANT FOR TRANSLATIONS, decouple UI title of page from actual page value
         pages = new ArrayList<>();
         pages.add(activity.getString(R.string.profile_page_overview));
         pages.add(activity.getString(R.string.profile_page_submitted));

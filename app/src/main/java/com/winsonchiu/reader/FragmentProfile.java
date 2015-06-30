@@ -98,7 +98,10 @@ public class FragmentProfile extends FragmentBase implements Toolbar.OnMenuItemC
         });
         searchView.setSubmitButtonEnabled(true);
 
-        resetSubmenuSelected();
+        menu.findItem(R.id.item_sort_hot).setChecked(true);
+        menu.findItem(R.id.item_sort_time).setTitle(
+                getString(R.string.time) + Reddit.TIME_SEPARATOR + getString(R.string.item_sort_all));
+//        resetSubmenuSelected();
     }
 
     private void resetSubmenuSelected() {

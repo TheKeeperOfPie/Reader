@@ -93,7 +93,7 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
             public boolean onQueryTextSubmit(String query) {
                 if (mListener.getControllerSearch().getCurrentPage() == ControllerSearch.PAGE_SUBREDDITS) {
                     mListener.getControllerLinks()
-                            .setParameters(query.replaceAll("\\s", ""), Sort.HOT);
+                            .setParameters(query.replaceAll("\\s", ""), Sort.HOT, Time.ALL);
                     getFragmentManager().popBackStack();
                 }
                 else {
@@ -201,7 +201,7 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
                     @Override
                     public void onClickSubreddit(Subreddit subreddit) {
                         mListener.getControllerLinks()
-                                .setParameters(subreddit.getDisplayName(), Sort.HOT);
+                                .setParameters(subreddit.getDisplayName(), Sort.HOT, Time.ALL);
                         InputMethodManager inputManager = (InputMethodManager) activity
                                 .getSystemService(Context.INPUT_METHOD_SERVICE);
                         inputManager.hideSoftInputFromWindow(view.getWindowToken(),

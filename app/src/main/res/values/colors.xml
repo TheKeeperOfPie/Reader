@@ -15,8 +15,8 @@
 
     <color name="darkThemeStatusBar">#FF000000</color>
     <color name="darkThemeToolbar">#FF212121</color>
-    <color name="darkThemeBackground">#FF303030</color>
-    <color name="darkThemeDialog">#FF424242</color>
+    <color name="darkThemeBackground">#FF252525</color>
+    <color name="darkThemeDialog">#FF353535</color>
     <color name="gildedComment">#FFD8C161</color>
     <color name="darkThemeShadowTranslucent">#55303030</color>
 

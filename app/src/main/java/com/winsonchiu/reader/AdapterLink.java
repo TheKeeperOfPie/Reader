@@ -812,7 +812,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                             try {
                                 JSONObject jsonObject = new JSONObject(
                                         response).getJSONObject(Reddit.GFYCAT_ITEM);
-                                loadVideo(jsonObject.getString(Reddit.GFYCAT_WEBM),
+                                loadVideo(jsonObject.getString(Reddit.GFYCAT_MP4),
                                         (float) jsonObject.getInt(
                                                 "height") / jsonObject.getInt(
                                                 "width"));
@@ -1028,8 +1028,8 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                                             loadVideo(image.getMp4(),
                                                     (float) image.getHeight() / image.getWidth());
                                         }
-                                        else if (!TextUtils.isEmpty(image.getWebm())) {
-                                            loadVideo(image.getWebm(),
+                                        else if (!TextUtils.isEmpty(image.getMp4())) {
+                                            loadVideo(image.getMp4(),
                                                     (float) image.getHeight() / image.getWidth());
                                         }
                                     }
@@ -1238,6 +1238,8 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
 
             textThreadSelf.setVisibility(View.GONE);
             adapterAlbum.setAlbum(null);
+
+            setTextInfo(link);
 
         }
 

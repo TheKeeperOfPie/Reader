@@ -1,6 +1,7 @@
 package com.winsonchiu.reader;
 
 import android.app.Activity;
+import android.content.res.Resources;
 import android.graphics.drawable.Drawable;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -124,8 +125,6 @@ public class AdapterLinkList extends AdapterLink {
                 imageThumbnail.setImageDrawable(drawable);
             }
 
-            setTextInfo(link);
-
         }
 
         @Override
@@ -148,39 +147,23 @@ public class AdapterLinkList extends AdapterLink {
                             .getColor(
                                     R.color.darkThemeTextColor));
 
-            int scoreLength = String.valueOf(link.getScore())
-                    .length();
+            Resources resources = itemView.getContext().getResources();
 
-            String subreddit;
-            Spannable spannableInfo;
+            int colorPositive = resources.getColor(R.color.positiveScore);
+            int colorNegative = resources.getColor(R.color.negativeScore);
 
-            if (showSubreddit) {
-                subreddit = "/r/" + link.getSubreddit();
-                spannableInfo = new SpannableString(
-                        subreddit + " " + link.getScore() + " by " + link.getAuthor());
-            }
-            else {
-                subreddit = "";
-                spannableInfo = new SpannableString(" " + link.getScore() + " by " + link.getAuthor());
-            }
+            String subreddit = showSubreddit ? "/r/" + link.getSubreddit() : "";
 
-            spannableInfo.setSpan(new ForegroundColorSpan(itemView.getContext().getResources()
-                    .getColor(
-                            R.color.darkThemeTextColorMuted)), 0, subreddit.length(),
+            Spannable spannableScore = new SpannableString(" " + link.getScore() + " ");
+            spannableScore.setSpan(new ForegroundColorSpan(
+                            link.getScore() > 0 ? colorPositive : colorNegative), 0,
+                    spannableScore.length(),
                     Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
-            spannableInfo.setSpan(
-                    new ForegroundColorSpan(link.getScore() > 0 ? itemView.getContext().getResources()
-                            .getColor(
-                                    R.color.positiveScore) : itemView.getContext().getResources()
-                            .getColor(
-                                    R.color.negativeScore)),
-                    subreddit.length() + 1,
-                    subreddit.length() + 1 + scoreLength, Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
-            spannableInfo.setSpan(new ForegroundColorSpan(itemView.getContext().getResources()
-                    .getColor(
-                            R.color.darkThemeTextColorMuted)), subreddit.length() + 1 + scoreLength,
-                    spannableInfo.length(), Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
-            textThreadInfo.setText(spannableInfo);
+
+            String flair = TextUtils.isEmpty(link.getAuthorFlairText()) || "null".equals(link.getAuthorFlairText()) ? "" : " (" + Html
+                    .fromHtml(link.getAuthorFlairText()) + ") ";
+
+            textThreadInfo.setText(TextUtils.concat(subreddit, spannableScore, "by " + link.getAuthor(), flair));
 
             // TODO: Add link edited indicator
 

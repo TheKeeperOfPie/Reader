@@ -14,6 +14,7 @@ import android.support.v4.graphics.ColorUtils;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
+import android.text.Html;
 import android.text.InputFilter;
 import android.text.Spannable;
 import android.text.SpannableString;
@@ -594,7 +595,10 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                             spannableAuthor.length(), Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
                 }
 
-                textInfo.setText(TextUtils.concat(spannableScore, " by ", spannableAuthor, " ",
+                String flair = TextUtils.isEmpty(comment.getAuthorFlairText()) || "null".equals(comment.getAuthorFlairText()) ? " " : " (" + Html
+                        .fromHtml(comment.getAuthorFlairText()) + ") ";
+
+                textInfo.setText(TextUtils.concat(spannableScore, " by ", spannableAuthor, flair,
                         DateUtils.getRelativeTimeSpanString(
                                 comment.getCreatedUtc()) + (comment.getEdited() > 0 ? "*" : "")));
 

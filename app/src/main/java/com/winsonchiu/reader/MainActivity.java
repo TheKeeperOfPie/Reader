@@ -536,8 +536,7 @@ public class MainActivity extends YouTubeBaseActivity
         getFragmentManager().popBackStackImmediate();
         switch (id) {
             case R.id.item_home:
-                if (getFragmentManager()
-                        .findFragmentByTag(FragmentThreadList.TAG) != null) {
+                if (getFragmentManager().findFragmentByTag(FragmentThreadList.TAG) != null) {
                     getControllerLinks().loadFrontPage(Sort.HOT, false);
                 }
                 else {
@@ -549,11 +548,6 @@ public class MainActivity extends YouTubeBaseActivity
                 }
                 break;
             case R.id.item_profile:
-                getFragmentManager().beginTransaction()
-                        .replace(R.id.frame_fragment,
-                                FragmentProfile.newInstance(),
-                                FragmentProfile.TAG)
-                        .commit();
 
                 if (!TextUtils.isEmpty(
                         sharedPreferences.getString(AppSettings.ACCOUNT_JSON, ""))) {
@@ -567,6 +561,12 @@ public class MainActivity extends YouTubeBaseActivity
                     }
                 }
 
+                getFragmentManager().beginTransaction()
+                        .replace(R.id.frame_fragment,
+                                FragmentProfile.newInstance(),
+                                FragmentProfile.TAG)
+                        .commit();
+
                 break;
             case R.id.item_inbox:
                 getControllerInbox().reload();
@@ -577,27 +577,33 @@ public class MainActivity extends YouTubeBaseActivity
                         .commit();
                 break;
             case R.id.item_settings:
-                SharedPreferences preferences = PreferenceManager
-                        .getDefaultSharedPreferences(
-                                getApplicationContext());
-                // TODO: Manually invalidate access token
-                preferences.edit()
-                        .putString(AppSettings.ACCESS_TOKEN, "")
-                        .apply();
-                preferences.edit()
-                        .putString(AppSettings.REFRESH_TOKEN, "")
-                        .apply();
-                preferences.edit()
-                        .putString(AppSettings.ACCOUNT_JSON, "")
-                        .apply();
-                preferences.edit()
-                        .putString(AppSettings.SUBSCRIBED_SUBREDDITS, "")
-                        .apply();
-                getControllerLinks().loadFrontPage(Sort.HOT, true);
-                getControllerSearch().reloadSubscriptionList();
-                Toast.makeText(MainActivity.this, "Cleared refresh token",
-                        Toast.LENGTH_SHORT)
-                        .show();
+
+                getFragmentManager().beginTransaction()
+                        .replace(R.id.frame_fragment,
+                                FragmentPreferences.newInstance(),
+                                FragmentPreferences.TAG)
+                        .commit();
+//                SharedPreferences preferences = PreferenceManager
+//                        .getDefaultSharedPreferences(
+//                                getApplicationContext());
+//                // TODO: Manually invalidate access token
+//                preferences.edit()
+//                        .putString(AppSettings.ACCESS_TOKEN, "")
+//                        .apply();
+//                preferences.edit()
+//                        .putString(AppSettings.REFRESH_TOKEN, "")
+//                        .apply();
+//                preferences.edit()
+//                        .putString(AppSettings.ACCOUNT_JSON, "")
+//                        .apply();
+//                preferences.edit()
+//                        .putString(AppSettings.SUBSCRIBED_SUBREDDITS, "")
+//                        .apply();
+//                getControllerLinks().loadFrontPage(Sort.HOT, true);
+//                getControllerSearch().reloadSubscriptionList();
+//                Toast.makeText(MainActivity.this, "Cleared refresh token",
+//                        Toast.LENGTH_SHORT)
+//                        .show();
                 break;
         }
 
@@ -686,7 +692,7 @@ public class MainActivity extends YouTubeBaseActivity
             int indexFirstSlash = path.indexOf("/", 1);
             int indexSecondSlash = path.indexOf("/", indexFirstSlash + 1);
             if (indexFirstSlash < 0) {
-                getControllerLinks().setParameters("", Sort.HOT);
+                getControllerLinks().setParameters("", Sort.HOT, Time.ALL);
                 return;
             }
             String subreddit = path.substring(indexFirstSlash + 1,
@@ -763,7 +769,8 @@ public class MainActivity extends YouTubeBaseActivity
                         indexSort > -1 ? path.substring(subreddit.length() + 1, indexSort) :
                                 "hot";
                 Log.d(TAG, "Sort: " + sort);
-                getControllerLinks().setParameters(subreddit, Sort.HOT);
+                // TODO: Parse time
+                getControllerLinks().setParameters(subreddit, Sort.HOT, Time.ALL);
             }
         }
         catch (MalformedURLException e) {

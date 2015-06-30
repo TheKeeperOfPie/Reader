@@ -60,7 +60,7 @@ public class ControllerLinks implements ControllerLinksBase {
         listener.setSort(sort);
         listener.getAdapter().notifyDataSetChanged();
         listener.setRefreshing(isLoading());
-        if (listingLinks.getChildren().isEmpty()) {
+        if (!isLoading() && listingLinks.getChildren().isEmpty()) {
             reloadSubreddit();
         }
         Log.d(TAG, "addListener: " + listener);
@@ -70,9 +70,10 @@ public class ControllerLinks implements ControllerLinksBase {
         listeners.remove(listener);
     }
 
-    public void setParameters(String subredditName, Sort sort) {
+    public void setParameters(String subredditName, Sort sort, Time time) {
         if (!TextUtils.equals(subredditName, subreddit.getDisplayName())) {
             this.sort = sort;
+            this.time = time;
             subreddit = new Subreddit();
             subreddit.setDisplayName(subredditName);
             subreddit.setUrl("/r/" + subredditName + "/");
@@ -88,6 +89,8 @@ public class ControllerLinks implements ControllerLinksBase {
     }
 
     public void reloadSubreddit() {
+        setLoading(true);
+
         reddit.loadGet(
                 Reddit.OAUTH_URL + subreddit.getUrl() + "about",
                 new Response.Listener<String>() {

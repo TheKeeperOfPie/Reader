@@ -42,7 +42,6 @@ public class ControllerProfile implements ControllerLinksBase {
     private Set<Listener> listeners;
     private Listing data;
     private Reddit reddit;
-    private Link link;
     private Link topLink;
     private Comment topComment;
     private User user;
@@ -50,13 +49,11 @@ public class ControllerProfile implements ControllerLinksBase {
     private Sort sort;
     private Time time;
     private boolean isLoading;
-    private int indentWidth;
 
     public ControllerProfile(Activity activity) {
         setActivity(activity);
         data = new Listing();
         listeners = new HashSet<>();
-        link = new Link();
         topLink = new Link();
         topComment = new Comment();
         user = new User();
@@ -68,9 +65,6 @@ public class ControllerProfile implements ControllerLinksBase {
     public void setActivity(Activity activity) {
         this.activity = activity;
         this.reddit = Reddit.getInstance(activity);
-        this.indentWidth = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 8,
-                activity.getResources()
-                        .getDisplayMetrics());
     }
 
     public void addListener(Listener listener) {
@@ -127,8 +121,10 @@ public class ControllerProfile implements ControllerLinksBase {
     }
 
     public void setPage(String page) {
-        this.page = page;
-        reload();
+        if (!this.page.equals(page)) {
+            this.page = page;
+            reload();
+        }
     }
 
     public String getPage() {
@@ -234,6 +230,21 @@ public class ControllerProfile implements ControllerLinksBase {
     }
 
     private void loadTopEntries() {
+
+        // TODO: Support loading trophies
+//        reddit.loadGet(Reddit.OAUTH_URL + "/api/v1/user/" + user.getName() + "/trophies",
+//                new Response.Listener<String>() {
+//                    @Override
+//                    public void onResponse(String response) {
+//                        Log.d(TAG, "Trophies response: " + response);
+//                    }
+//                }, new Response.ErrorListener() {
+//                    @Override
+//                    public void onErrorResponse(VolleyError error) {
+//
+//                    }
+//                }, 0);
+
         reddit.loadGet(
                 Reddit.OAUTH_URL + "/user/" + user.getName() + "/submitted?sort=top&limit=1&",
                 new Response.Listener<String>() {
@@ -251,40 +262,40 @@ public class ControllerProfile implements ControllerLinksBase {
                                     listener.getAdapter().notifyItemRangeChanged(1, 2);
                                 }
                             }
+                        }
+                        catch (JSONException e1) {
+                            e1.printStackTrace();
+                        }
+                    }
+                }, new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
 
-                            reddit.loadGet(
-                                    Reddit.OAUTH_URL + "/user/" + user.getName() + "/comments?sort=top&limit=1&",
-                                    new Response.Listener<String>() {
-                                        @Override
-                                        public void onResponse(String response) {
-                                            Log.d(TAG,
-                                                    "onResponse: " + response);
-                                            try {
-                                                Listing listingComment = Listing.fromJson(
-                                                        new JSONObject(
-                                                                response));
-                                                if (!listingComment.getChildren().isEmpty()) {
-                                                    topComment = (Comment) listingComment.getChildren()
-                                                            .get(0);
-                                                    topComment.setLevel(0);
-                                                    for (Listener listener : listeners) {
-                                                        listener.setRefreshing(
-                                                                false);
-                                                        listener.getAdapter().notifyItemRangeChanged(
-                                                                3, 2);
-                                                    }
-                                                }
-                                            }
-                                            catch (JSONException e1) {
-                                                e1.printStackTrace();
-                                            }
-                                        }
-                                    }, new Response.ErrorListener() {
-                                        @Override
-                                        public void onErrorResponse(VolleyError error) {
+                    }
+                }, 0);
 
-                                        }
-                                    }, 0);
+        reddit.loadGet(
+                Reddit.OAUTH_URL + "/user/" + user.getName() + "/comments?sort=top&limit=1&",
+                new Response.Listener<String>() {
+                    @Override
+                    public void onResponse(String response) {
+                        Log.d(TAG,
+                                "onResponse: " + response);
+                        try {
+                            Listing listingComment = Listing.fromJson(
+                                    new JSONObject(
+                                            response));
+                            if (!listingComment.getChildren().isEmpty()) {
+                                topComment = (Comment) listingComment.getChildren()
+                                        .get(0);
+                                topComment.setLevel(0);
+                                for (Listener listener : listeners) {
+                                    listener.setRefreshing(
+                                            false);
+                                    listener.getAdapter().notifyItemRangeChanged(
+                                            3, 2);
+                                }
+                            }
                         }
                         catch (JSONException e1) {
                             e1.printStackTrace();

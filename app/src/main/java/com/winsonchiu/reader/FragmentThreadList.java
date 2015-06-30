@@ -81,108 +81,6 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setHasOptionsMenu(true);
-    }
-
-    private void setUpOptionsMenu() {
-        toolbar.inflateMenu(R.menu.menu_thread_list);
-        toolbar.setOnMenuItemClickListener(this);
-        menu = toolbar.getMenu();
-
-        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(
-                activity.getApplicationContext());
-
-        itemInterface = menu.findItem(R.id.item_interface);
-        switch (preferences.getString(AppSettings.INTERFACE_MODE, AppSettings.MODE_GRID)) {
-            case AppSettings.MODE_LIST:
-                itemInterface.setIcon(R.drawable.ic_view_module_white_24dp);
-                break;
-            case AppSettings.MODE_GRID:
-                itemInterface.setIcon(R.drawable.ic_view_list_white_24dp);
-                break;
-        }
-
-        itemSortTime = menu.findItem(R.id.item_sort_time);
-        itemSearch = menu.findItem(R.id.item_search);
-
-        MenuItemCompat.setOnActionExpandListener(itemSearch,
-                new MenuItemCompat.OnActionExpandListener() {
-                    @Override
-                    public boolean onMenuItemActionExpand(MenuItem item) {
-                        itemSearch.collapseActionView();
-                        return false;
-                    }
-
-                    @Override
-                    public boolean onMenuItemActionCollapse(MenuItem item) {
-                        return true;
-                    }
-                });
-
-        resetSubmenuSelected();
-
-    }
-
-    private void resetSubmenuSelected() {
-        onMenuItemClick(menu.findItem(mListener.getControllerLinks()
-                .getSort()
-                .getMenuId()));
-        onMenuItemClick(menu.findItem(mListener.getControllerLinks()
-                .getTime()
-                .getMenuId()));
-
-    }
-
-    @Override
-    public void onDestroyOptionsMenu() {
-        MenuItemCompat.setOnActionExpandListener(itemSearch, null);
-        itemSearch = null;
-        super.onDestroyOptionsMenu();
-    }
-
-    /*
-        Workaround for Android's drag-to-select menu bug, where the
-        menu becomes unusable after a drag gesture
-     */
-    private void flashSearchView() {
-        if (itemSearch != null) {
-            itemSearch.expandActionView();
-            itemSearch.collapseActionView();
-        }
-    }
-
-    private void resetAdapter(AdapterLink newAdapter) {
-        int[] currentPosition = new int[3];
-        if (layoutManager instanceof LinearLayoutManager) {
-            currentPosition[0] = ((LinearLayoutManager) layoutManager)
-                    .findFirstVisibleItemPosition();
-        }
-        else if (layoutManager instanceof StaggeredGridLayoutManager) {
-            ((StaggeredGridLayoutManager) layoutManager).findFirstCompletelyVisibleItemPositions(
-                    currentPosition);
-        }
-
-        adapterLink = newAdapter;
-        layoutManager = adapterLink.getLayoutManager();
-
-        if (layoutManager instanceof LinearLayoutManager) {
-            recyclerThreadList.setPadding(0, 0, 0, 0);
-        }
-        else {
-            int padding = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 2,
-                    getResources().getDisplayMetrics());
-            recyclerThreadList.setPadding(padding, 0, padding, 0);
-        }
-
-        recyclerThreadList.setLayoutManager(layoutManager);
-        recyclerThreadList.setAdapter(adapterLink);
-        recyclerThreadList.scrollToPosition(currentPosition[0]);
-    }
-
-    @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
-            final Bundle savedInstanceState) {
-
-        final View view = inflater.inflate(R.layout.fragment_thread_list, container, false);
 
         eventListenerHeader = new AdapterLink.ViewHolderHeader.EventListener() {
             @Override
@@ -332,6 +230,108 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
                 swipeRefreshThreadList.setRefreshing(refreshing);
             }
         };
+    }
+
+    private void setUpOptionsMenu() {
+
+        toolbar.inflateMenu(R.menu.menu_thread_list);
+        toolbar.setOnMenuItemClickListener(this);
+        menu = toolbar.getMenu();
+
+        itemInterface = menu.findItem(R.id.item_interface);
+        switch (preferences.getString(AppSettings.INTERFACE_MODE, AppSettings.MODE_GRID)) {
+            case AppSettings.MODE_LIST:
+                itemInterface.setIcon(R.drawable.ic_view_module_white_24dp);
+                break;
+            case AppSettings.MODE_GRID:
+                itemInterface.setIcon(R.drawable.ic_view_list_white_24dp);
+                break;
+        }
+
+        itemSortTime = menu.findItem(R.id.item_sort_time);
+        itemSearch = menu.findItem(R.id.item_search);
+
+        MenuItemCompat.setOnActionExpandListener(itemSearch,
+                new MenuItemCompat.OnActionExpandListener() {
+                    @Override
+                    public boolean onMenuItemActionExpand(MenuItem item) {
+                        itemSearch.collapseActionView();
+                        return false;
+                    }
+
+                    @Override
+                    public boolean onMenuItemActionCollapse(MenuItem item) {
+                        return true;
+                    }
+                });
+
+        menu.findItem(mListener.getControllerLinks().getSort().getMenuId()).setChecked(true);
+        itemSortTime.setTitle(
+                getString(R.string.time) + Reddit.TIME_SEPARATOR + mListener.getControllerLinks().getTime().toString());
+
+    }
+
+    private void resetSubmenuSelected() {
+        onMenuItemClick(menu.findItem(mListener.getControllerLinks()
+                .getSort()
+                .getMenuId()));
+        onMenuItemClick(menu.findItem(mListener.getControllerLinks()
+                .getTime()
+                .getMenuId()));
+
+    }
+
+    @Override
+    public void onDestroyOptionsMenu() {
+        MenuItemCompat.setOnActionExpandListener(itemSearch, null);
+        itemSearch = null;
+        super.onDestroyOptionsMenu();
+    }
+
+    /*
+        Workaround for Android's drag-to-select menu bug, where the
+        menu becomes unusable after a drag gesture
+     */
+    private void flashSearchView() {
+        if (itemSearch != null) {
+            itemSearch.expandActionView();
+            itemSearch.collapseActionView();
+        }
+    }
+
+    private void resetAdapter(AdapterLink newAdapter) {
+        int[] currentPosition = new int[3];
+        if (layoutManager instanceof LinearLayoutManager) {
+            currentPosition[0] = ((LinearLayoutManager) layoutManager)
+                    .findFirstVisibleItemPosition();
+        }
+        else if (layoutManager instanceof StaggeredGridLayoutManager) {
+            ((StaggeredGridLayoutManager) layoutManager).findFirstCompletelyVisibleItemPositions(
+                    currentPosition);
+        }
+
+        adapterLink = newAdapter;
+        layoutManager = adapterLink.getLayoutManager();
+
+        if (layoutManager instanceof LinearLayoutManager) {
+            recyclerThreadList.setPadding(0, 0, 0, 0);
+        }
+        else {
+            int padding = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 2,
+                    getResources().getDisplayMetrics());
+            recyclerThreadList.setPadding(padding, 0, padding, 0);
+        }
+
+        recyclerThreadList.setLayoutManager(layoutManager);
+        recyclerThreadList.setAdapter(adapterLink);
+        recyclerThreadList.scrollToPosition(currentPosition[0]);
+    }
+
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+            final Bundle savedInstanceState) {
+
+        final View view = inflater.inflate(R.layout.fragment_thread_list, container, false);
 
         toolbar = (Toolbar) view.findViewById(R.id.toolbar);
         toolbar.setOnClickListener(new View.OnClickListener() {
@@ -391,9 +391,8 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
                     recyclerCallback);
         }
 
-        if (AppSettings.MODE_LIST.equals(
-                PreferenceManager.getDefaultSharedPreferences(activity.getApplicationContext())
-                        .getString(AppSettings.INTERFACE_MODE, AppSettings.MODE_GRID))) {
+        if (AppSettings.MODE_LIST.equals(preferences.getString(AppSettings.INTERFACE_MODE,
+                AppSettings.MODE_GRID))) {
             adapterLink = adapterLinkList;
         }
         else {
@@ -437,6 +436,7 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
         });
 
         textEmpty = (TextView) view.findViewById(R.id.text_empty);
+
         return view;
     }
 
@@ -515,9 +515,6 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
 
     @Override
     public boolean onMenuItemClick(MenuItem item) {
-
-        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(
-                activity.getApplicationContext());
 
         item.setChecked(true);
         switch (item.getItemId()) {

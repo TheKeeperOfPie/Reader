@@ -152,8 +152,6 @@ public class AdapterLinkGrid extends AdapterLink {
 
             int position = getAdapterPosition();
 
-            setTextInfo(link);
-
             itemView.setBackgroundColor(itemView.getContext().getResources().getColor(R.color.darkThemeDialog));
             imagePlay.setVisibility(View.GONE);
             Drawable drawable = Reddit.getDrawableForLink(itemView.getContext(), link);
@@ -347,41 +345,23 @@ public class AdapterLinkGrid extends AdapterLink {
                             .getColor(
                                     R.color.darkThemeTextColor));
 
-            int scoreLength = String.valueOf(link.getScore())
-                    .length();
+            Resources resources = itemView.getContext().getResources();
 
-            String subreddit;
-            Spannable spannableInfo;
+            int colorPositive = resources.getColor(R.color.positiveScore);
+            int colorNegative = resources.getColor(R.color.negativeScore);
 
-            if (showSubreddit) {
-                subreddit = "/r/" + link.getSubreddit();
-                spannableInfo = new SpannableString(
-                        subreddit + "\n" + link.getScore() + " by " + link.getAuthor());
-            }
-            else {
-                subreddit = "";
-                spannableInfo = new SpannableString(" " + link.getScore() + " by " + link.getAuthor());
-            }
+            String subreddit = showSubreddit ? "/r/" + link.getSubreddit() + "\n" : "";
 
-            spannableInfo.setSpan(new ForegroundColorSpan(itemView.getContext().getResources()
-                            .getColor(
-                                    R.color.darkThemeTextColorMuted)), 0,
-                    subreddit.length(), Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
-            spannableInfo.setSpan(
-                    new ForegroundColorSpan(link.getScore() > 0 ? itemView.getContext().getResources()
-                            .getColor(
-                                    R.color.positiveScore) :
-                            itemView.getContext().getResources()
-                                    .getColor(
-                                            R.color.negativeScore)),
-                    subreddit.length() + 1,
-                    subreddit.length() + 1 + scoreLength, Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
-            spannableInfo.setSpan(new ForegroundColorSpan(itemView.getContext().getResources()
-                            .getColor(
-                                    R.color.darkThemeTextColorMuted)),
-                    subreddit.length() + 1 + scoreLength, spannableInfo.length(),
+            Spannable spannableScore = new SpannableString(" " + link.getScore() + " ");
+            spannableScore.setSpan(new ForegroundColorSpan(
+                            link.getScore() > 0 ? colorPositive : colorNegative), 0,
+                    spannableScore.length(),
                     Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
-            textThreadInfo.setText(spannableInfo);
+
+            String flair = TextUtils.isEmpty(link.getAuthorFlairText()) || "null".equals(link.getAuthorFlairText()) ? "" : " (" + Html
+                    .fromHtml(link.getAuthorFlairText()) + ") ";
+
+            textThreadInfo.setText(TextUtils.concat(subreddit, spannableScore, "by " + link.getAuthor(), flair));
 
             textHidden.setText(DateUtils.getRelativeTimeSpanString(link.getCreatedUtc()) + "\n" + link.getNumComments() + " comments");
         }

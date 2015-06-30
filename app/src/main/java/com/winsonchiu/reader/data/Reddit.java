@@ -77,6 +77,7 @@ public class Reddit {
     public static final String GFYCAT_PREFIX = "gfycat.com/";
     public static final String GFYCAT_URL = "http://gfycat.com/cajax/get/";
     public static final String GFYCAT_WEBM = "webmUrl";
+    public static final String GFYCAT_MP4 = "mp4Url";
     public static final String GFYCAT_ITEM = "gfyItem";
 
     public static final String IMGUR_PREFIX = "imgur.com/";

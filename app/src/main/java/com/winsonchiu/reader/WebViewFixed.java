@@ -1,9 +1,11 @@
 package com.winsonchiu.reader;
 
+import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.os.Build;
+import android.support.v4.app.NavUtils;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.util.TypedValue;
@@ -11,6 +13,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.widget.RelativeLayout;
 import android.widget.Toast;
 
 import com.winsonchiu.reader.data.Reddit;
@@ -41,17 +44,17 @@ public class WebViewFixed extends WebView {
         super(context, attrs, defStyleAttr, defStyleRes);
     }
 
+    @SuppressLint("DrawAllocation")
     @Override
     protected void onLayout(boolean changed, int l, int t, int r, int b) {
         super.onLayout(changed, l, t, r, b);
         if (getHeight() > 0 && getHeight() < getMinimumHeight()) {
-            setMeasuredDimension(getMeasuredWidth(), 500);
-            ViewGroup.LayoutParams layoutParams = getLayoutParams();
-            layoutParams.height = ViewGroup.LayoutParams.WRAP_CONTENT;
-            setLayoutParams(layoutParams);
-            invalidate();
-            requestLayout();
-            Toast.makeText(getContext(), "onLayout height set", Toast.LENGTH_SHORT).show();
+            Toast.makeText(getContext(), "onLayout incorrect", Toast.LENGTH_SHORT).show();
+            if (getLayoutParams() instanceof  RelativeLayout.LayoutParams) {
+                setLayoutParams(new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.MATCH_PARENT,
+                                RelativeLayout.LayoutParams.WRAP_CONTENT));
+                Toast.makeText(getContext(), "onLayout height reset", Toast.LENGTH_SHORT).show();
+            }
         }
     }
 
