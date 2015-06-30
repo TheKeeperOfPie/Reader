@@ -17,6 +17,7 @@ import com.android.volley.RequestQueue;
 import com.android.volley.Response.ErrorListener;
 import com.android.volley.Response.Listener;
 import com.android.volley.VolleyError;
+import com.android.volley.toolbox.ImageRequest;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 import com.winsonchiu.reader.AdapterCommentList;
@@ -52,6 +53,10 @@ public class Reddit {
     public static void incrementDestroy() {
         Log.d(TAG, "Created: " + created.get());
         Log.d(TAG, "Destroyed: " + destroyed.incrementAndGet());
+    }
+
+    public RequestQueue getRequestQueue() {
+        return requestQueue;
     }
 
     // Constant values to represent Thing states

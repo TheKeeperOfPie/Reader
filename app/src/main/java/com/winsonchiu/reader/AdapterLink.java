@@ -163,6 +163,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         viewHolders.remove(holder);
         if (holder instanceof ViewHolderBase) {
             ((ViewHolderBase) holder).destroyWebViews();
+            ((ViewHolderBase) holder).onDetach();
         }
     }
 
@@ -416,14 +417,12 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                     shareActionProvider.setShareIntent(shareIntent);
                 }
 
-                if (Reddit.checkIsImage(link.getUrl()) || Reddit.placeImageUrl(link)) {
-                    itemDownloadImage.setVisible(true);
-                    itemDownloadImage.setEnabled(true);
-                }
-                else {
-                    itemDownloadImage.setVisible(false);
-                    itemDownloadImage.setEnabled(false);
-                }
+                itemDownloadImage.setVisible(
+                        Reddit.checkIsImage(link.getUrl()) || Reddit.placeImageUrl(link) && !link
+                                .getUrl().endsWith(Reddit.GIF));
+                itemDownloadImage.setEnabled(
+                        Reddit.checkIsImage(link.getUrl()) || Reddit.placeImageUrl(link) && !link
+                                .getUrl().endsWith(Reddit.GIF));
 
                 boolean isAuthor = link.getAuthor().equals(userName);
 
@@ -460,7 +459,12 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             drawableDefault = itemView.getContext().getResources().getDrawable(
                     R.drawable.ic_web_white_48dp);
             mediaController = new MediaController(itemView.getContext());
-            adapterAlbum = new AdapterAlbum(new Album(), new DisallowListener() {
+            adapterAlbum = new AdapterAlbum(new Album(), new AdapterAlbum.EventListener() {
+                @Override
+                public void downloadImage(String fileName, String url) {
+                    eventListener.downloadImage(fileName, url);
+                }
+            }, new DisallowListener() {
                 @Override
                 public void requestDisallowInterceptTouchEventVertical(boolean disallow) {
                     disallowListener.requestDisallowInterceptTouchEventVertical(disallow);
@@ -492,7 +496,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             buttonSendReply = (Button) itemView.findViewById(R.id.button_send_reply);
             viewYouTube = (YouTubePlayerView) itemView.findViewById(R.id.youtube);
 
-            viewPagerMargin = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 96,
+            viewPagerMargin = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 48,
                     itemView.getContext().getResources().getDisplayMetrics());
             viewPagerFull.setAdapter(adapterAlbum);
             viewPagerFull.setMinimumHeight(viewPagerMargin);
@@ -504,6 +508,10 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                                 .getTag();
                         if (position >= -1 && position <= 1) {
                             viewHolder.textAlbumIndicator.setTranslationX(
+                                    -position * page.getWidth());
+                            viewHolder.layoutDownloadImage.setTranslationX(
+                                    -position * page.getWidth());
+                            viewHolder.layoutInfo.setTranslationX(
                                     -position * page.getWidth());
                         }
                     }
@@ -609,7 +617,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                 case R.id.item_share:
                     break;
                 case R.id.item_download_image:
-                    eventListener.downloadImage(link);
+                    eventListener.downloadImage(link.getId(), link.getUrl());
                     break;
                 case R.id.item_web:
                     eventListener.loadUrl(link.getUrl());
@@ -673,7 +681,8 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                     eventListener.report(link, "breaking reddit", null);
                     break;
                 case R.id.item_report_other:
-                    View viewDialog = LayoutInflater.from(itemView.getContext()).inflate(R.layout.dialog_text_input, null, false);
+                    View viewDialog = LayoutInflater.from(itemView.getContext())
+                            .inflate(R.layout.dialog_text_input, null, false);
                     InputFilter[] filterArray = new InputFilter[1];
                     filterArray[0] = new InputFilter.LengthFilter(100);
                     final EditText editText = (EditText) viewDialog.findViewById(R.id.edit_text);
@@ -684,7 +693,8 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                             .setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
                                 @Override
                                 public void onClick(DialogInterface dialog, int which) {
-                                    eventListener.report(link, "other", editText.getText().toString());
+                                    eventListener
+                                            .report(link, "other", editText.getText().toString());
                                 }
                             })
                             .setNegativeButton(R.string.cancel,
@@ -1191,6 +1201,10 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             syncSaveIcon();
         }
 
+        public void onDetach() {
+
+        }
+
         public void onRecycle() {
 
             if (request != null) {
@@ -1202,10 +1216,6 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                 youTubePlayer = null;
             }
             viewYouTube.setVisibility(View.GONE);
-//            webFull.loadData(Reddit.getImageHtml(""), "text/html", "UTF-8");
-//            webFull.onPause();
-//            webFull.resetMaxHeight();
-//            webFull.setVisibility(View.GONE);
             videoFull.stopPlayback();
             videoFull.setVisibility(View.GONE);
             viewPagerFull.setVisibility(View.GONE);
@@ -1305,7 +1315,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             void save(Link link);
             void save(Comment comment);
             void loadUrl(String url);
-            void downloadImage(Link link);
+            void downloadImage(String fileName, String url);
             Reddit getReddit();
             WebViewFixed getNewWebView();
             void toast(String text);

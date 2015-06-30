@@ -125,4 +125,6 @@
     <string name="item_report_other">Other</string>
     <string name="ok">OK</string>
     <string name="cancel">Cancel</string>
+    <string name="item_open_in_browser">Open in browser</string>
+    <string name="error_downloading">Error downloading</string>
 </resources>

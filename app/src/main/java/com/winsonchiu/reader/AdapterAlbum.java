@@ -7,6 +7,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
+import android.widget.HorizontalScrollView;
+import android.widget.ImageButton;
 import android.widget.RelativeLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
@@ -23,14 +25,16 @@ import java.util.Stack;
 public class AdapterAlbum extends PagerAdapter {
 
     private static final String TAG = AdapterAlbum.class.getCanonicalName();
+    private final EventListener eventListener;
     private DisallowListener disallowListener;
-//    private Stack<View> recycledViews;
     private Album album;
+    private Stack<View> recycledViews;
 
-    public AdapterAlbum(Album album, DisallowListener disallowListener) {
+    public AdapterAlbum(Album album, EventListener eventListener, DisallowListener disallowListener) {
         this.album = album;
+        this.eventListener = eventListener;
         this.disallowListener = disallowListener;
-//        recycledViews = new Stack<>();
+        recycledViews = new Stack<>();
     }
 
     @Override
@@ -41,63 +45,43 @@ public class AdapterAlbum extends PagerAdapter {
     @Override
     public Object instantiateItem(ViewGroup container, int position) {
 
-
-        Image image = album.getImages().get(position);
+        final Image image = album.getImages().get(position);
         View view;
-        final WebView webView;
-        final ScrollView scrollText;
 
-        view = LayoutInflater.from(container.getContext())
-                .inflate(R.layout.view_image, container, false);
-        view.setTag(new ViewHolder(view));
+        if (recycledViews.isEmpty()) {
+            view = LayoutInflater.from(container.getContext())
+                    .inflate(R.layout.view_image, container, false);
+            view.setTag(new ViewHolder(view, eventListener, disallowListener));
+        }
+        else {
+            view = recycledViews.pop();
+        }
 
         ViewHolder viewHolder = (ViewHolder) view.getTag();
+        viewHolder.instantiate(image, position, album.getImagesCount());
 
-        webView = WebViewFixed.newInstance(container.getContext().getApplicationContext());
+        WebViewFixed webView = WebViewFixed.newInstance(
+                container.getContext().getApplicationContext());
+        webView.setVisibility(View.GONE);
         webView.setOnTouchListener(new OnTouchListenerDisallow(disallowListener));
         webView.getSettings().setCacheMode(WebSettings.LOAD_CACHE_ELSE_NETWORK);
         webView.setId(R.id.web);
         webView.setScrollbarFadingEnabled(false);
         webView.setScrollY(0);
-        webView.loadData(Reddit.getImageHtml(image.getLink()), "text/html", "UTF-8");
-
-        scrollText = viewHolder.scrollText;
-        scrollText.setOnTouchListener(new OnTouchListenerDisallow(disallowListener));
-        scrollText.setVisibility(View.GONE);
-
-        viewHolder.textAlbumIndicator.setText((position + 1) + " / " + album.getImages()
-                .size());
-        viewHolder.textAlbumIndicator.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                webView.reload();
-            }
-        });
-
-        if (!TextUtils.isEmpty(image.getTitle()) && !"null".equals(image.getTitle())) {
-            TextView textTitle = (TextView) view.findViewById(R.id.text_image_title);
-            textTitle.setText(image.getTitle());
-            textTitle.setVisibility(View.VISIBLE);
-            scrollText.setVisibility(View.VISIBLE);
-        }
-
-        if (!TextUtils.isEmpty(image.getDescription()) && !"null".equals(image.getDescription())) {
-            TextView textDescription = (TextView) view.findViewById(R.id.text_image_description);
-            textDescription.setText(image.getDescription());
-            textDescription.setVisibility(View.VISIBLE);
-            scrollText.setVisibility(View.VISIBLE);
-        }
 
         RelativeLayout.LayoutParams layoutParams = new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
         layoutParams.addRule(RelativeLayout.ALIGN_PARENT_START, RelativeLayout.TRUE);
         layoutParams.addRule(RelativeLayout.ALIGN_PARENT_END, RelativeLayout.TRUE);
         layoutParams.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM, RelativeLayout.TRUE);
-        layoutParams.addRule(RelativeLayout.BELOW, scrollText.getId());
+        layoutParams.addRule(RelativeLayout.BELOW, R.id.scroll_title);
 
-        RelativeLayout relativeLayout = (RelativeLayout) view;
-        relativeLayout.addView(webView, relativeLayout.getChildCount() - 2, layoutParams);
+        ((RelativeLayout) view).addView(webView, 0, layoutParams);
+
+        webView.loadData(Reddit.getImageHtml(image.getLink()), "text/html", "UTF-8");
+        webView.setVisibility(View.VISIBLE);
 
         container.addView(view);
+
         return view;
     }
 
@@ -113,6 +97,7 @@ public class AdapterAlbum extends PagerAdapter {
             ((RelativeLayout) view).removeView(webView);
         }
         container.removeView(view);
+        recycledViews.add(view);
     }
 
     @Override
@@ -143,15 +128,77 @@ public class AdapterAlbum extends PagerAdapter {
 //        }
     }
 
+    public interface EventListener {
+        void downloadImage(String fileName, String url);
+    }
+
     public static class ViewHolder {
 
-        protected ScrollView scrollText;
-        protected TextView textAlbumIndicator;
+        private Image image;
+        private EventListener eventListener;
+        private DisallowListener disallowListener;
 
-        public ViewHolder(View view) {
-            scrollText = (ScrollView) view.findViewById(R.id.scroll_text);
+        protected RelativeLayout layoutRelative;
+        protected TextView textTitle;
+        protected TextView textDescription;
+        protected RelativeLayout layoutInfo;
+        protected RelativeLayout layoutDownloadImage;
+        protected ImageButton buttonInfo;
+        protected ImageButton buttonDownload;
+        protected TextView textAlbumIndicator;
+        protected WebViewFixed webView;
+
+        public ViewHolder(View view, EventListener listener, DisallowListener disallowListener) {
+            this.eventListener = listener;
+            this.disallowListener = disallowListener;
+            layoutRelative = (RelativeLayout) view;
             textAlbumIndicator = (TextView) view.findViewById(R.id.text_album_indicator);
+            textTitle = (TextView) view.findViewById(R.id.text_image_title);
+            textDescription = (TextView) view.findViewById(R.id.text_image_description);
+            layoutInfo = (RelativeLayout) view.findViewById(R.id.layout_info);
+            layoutDownloadImage = (RelativeLayout) view.findViewById(R.id.layout_download_image);
+            buttonInfo = (ImageButton) view.findViewById(R.id.button_info);
+            buttonDownload = (ImageButton) view.findViewById(R.id.button_download_image);
+
+            buttonInfo.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    textDescription.setVisibility(textDescription.isShown() ? View.GONE : View.VISIBLE);
+                }
+            });
+
+            buttonInfo.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    textDescription.setVisibility(textDescription.isShown() ? View.GONE : View.VISIBLE);
+                }
+            });
+
+            buttonDownload.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    eventListener.downloadImage("Imgur" + image.getId(), image.getLink());
+                }
+            });
         }
+
+        public void instantiate(Image image, int position, int maxImages) {
+            this.image = image;
+            textDescription.setVisibility(View.GONE);
+
+            textAlbumIndicator.setText((position + 1) + " / " + maxImages);
+
+            if (!TextUtils.isEmpty(image.getTitle()) && !"null".equals(image.getTitle())) {
+                textTitle.setText(image.getTitle());
+            }
+
+            if (!TextUtils.isEmpty(image.getDescription()) && !"null".equals(image.getDescription())) {
+                textDescription.setText(image.getDescription());
+                layoutInfo.setVisibility(View.VISIBLE);
+            }
+
+        }
+
     }
 
 }

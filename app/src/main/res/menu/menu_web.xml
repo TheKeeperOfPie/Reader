@@ -13,4 +13,12 @@
         app:showAsAction="collapseActionView|ifRoom"
         />
 
+    <item
+        android:id="@+id/item_open_in_browser"
+        android:title="@string/item_open_in_browser"
+        android:icon="@drawable/ic_open_in_browser_white_24dp"
+        android:orderInCategory="200"
+        app:showAsAction="ifRoom"
+        />
+
 </menu>

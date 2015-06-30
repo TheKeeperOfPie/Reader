@@ -18,5 +18,6 @@
     <color name="darkThemeBackground">#FF303030</color>
     <color name="darkThemeDialog">#FF424242</color>
     <color name="gildedComment">#FFD8C161</color>
+    <color name="darkThemeShadowTranslucent">#55303030</color>
 
 </resources>

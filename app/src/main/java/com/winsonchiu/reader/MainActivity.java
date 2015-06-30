@@ -29,6 +29,7 @@ import android.widget.Toast;
 
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
+import com.android.volley.toolbox.ImageRequest;
 import com.crashlytics.android.Crashlytics;
 import com.google.android.youtube.player.YouTubeBaseActivity;
 import com.squareup.picasso.Picasso;
@@ -264,18 +265,28 @@ public class MainActivity extends YouTubeBaseActivity
             }
 
             @Override
-            public void downloadImage(final Link link) {
+            public void downloadImage(final String fileName, final String url) {
 
-                Picasso.with(MainActivity.this)
-                        .load(link.getUrl())
-                        .into(new Target() {
+                ImageRequest imageRequest = new ImageRequest(url,
+                        new Response.Listener<Bitmap>() {
                             @Override
-                            public void onBitmapLoaded(Bitmap bitmap, Picasso.LoadedFrom from) {
+                            public void onResponse(Bitmap response) {
 
                                 boolean created = false;
-                                File file = new File(Environment.getExternalStoragePublicDirectory(
+                                String path = Environment.getExternalStoragePublicDirectory(
                                         Environment.DIRECTORY_PICTURES)
-                                        .getAbsolutePath() + "/ReaderForReddit/" + link.getId() + ".png");
+                                        .getAbsolutePath() + "/ReaderForReddit/" + fileName;
+
+                                int index = url.lastIndexOf(".");
+                                if (index > -1) {
+                                    String extension = url.substring(index, index + 4);
+                                    path += extension;
+                                }
+                                else {
+                                    path += ".png";
+                                }
+
+                                File file = new File(path);
 
                                 file.getParentFile()
                                         .mkdirs();
@@ -283,7 +294,7 @@ public class MainActivity extends YouTubeBaseActivity
                                 FileOutputStream out = null;
                                 try {
                                     out = new FileOutputStream(file);
-                                    bitmap.compress(Bitmap.CompressFormat.PNG, 90, out);
+                                    response.compress(Bitmap.CompressFormat.PNG, 90, out);
                                     created = true;
                                 }
                                 catch (FileNotFoundException e) {
@@ -303,23 +314,41 @@ public class MainActivity extends YouTubeBaseActivity
                                 if (created) {
                                     MediaScannerConnection.scanFile(MainActivity.this,
                                             new String[]{file.toString()}, null, null);
+
+                                    Toast.makeText(MainActivity.this, "Image downloaded",
+                                            Toast.LENGTH_SHORT)
+                                            .show();
                                 }
-
-                                Toast.makeText(MainActivity.this, "Image downloaded",
-                                        Toast.LENGTH_SHORT)
-                                        .show();
                             }
-
+                        }, 0, 0, ImageView.ScaleType.CENTER, Bitmap.Config.ARGB_8888,
+                        new Response.ErrorListener() {
                             @Override
-                            public void onBitmapFailed(Drawable errorDrawable) {
-
-                            }
-
-                            @Override
-                            public void onPrepareLoad(Drawable placeHolderDrawable) {
-
+                            public void onErrorResponse(VolleyError error) {
+                                Toast.makeText(MainActivity.this, getString(R.string.error_downloading), Toast.LENGTH_SHORT).show();
                             }
                         });
+
+                reddit.getRequestQueue().add(imageRequest);
+
+//
+//                Picasso.with(MainActivity.this)
+//                        .load(link.getUrl())
+//                        .into(new Target() {
+//                            @Override
+//                            public void onBitmapLoaded(Bitmap bitmap, Picasso.LoadedFrom from) {
+//
+//                            }
+//
+//                            @Override
+//                            public void onBitmapFailed(Drawable errorDrawable) {
+//
+//                            }
+//
+//                            @Override
+//                            public void onPrepareLoad(Drawable placeHolderDrawable) {
+//
+//                            }
+//                        });
             }
 
             @Override

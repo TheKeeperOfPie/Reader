@@ -6,47 +6,6 @@
     android:layout_height="match_parent"
     >
 
-    <ScrollView
-        xmlns:android="http://schemas.android.com/apk/res/android"
-        android:id="@+id/scroll_text"
-        android:layout_width="match_parent"
-        android:layout_height="72dp"
-        android:layout_alignParentTop="true"
-        >
-
-        <RelativeLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            >
-
-            <TextView
-                android:id="@+id/text_image_title"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:visibility="gone"
-                android:layout_alignParentTop="true"
-                android:textAppearance="?android:textAppearanceMedium"
-                android:paddingTop="8dp"
-                android:layout_marginStart="@dimen/activity_horizontal_margin"
-                android:layout_marginEnd="@dimen/activity_horizontal_margin"
-                />
-
-            <TextView
-                android:id="@+id/text_image_description"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:visibility="gone"
-                android:layout_below="@id/text_image_title"
-                android:paddingTop="8dp"
-                android:layout_marginStart="@dimen/activity_horizontal_margin"
-                android:layout_marginEnd="@dimen/activity_horizontal_margin"
-                android:layout_marginBottom="8dp"
-                />
-
-        </RelativeLayout>
-
-    </ScrollView>
-
     <TextView
         android:id="@+id/text_album_indicator"
         android:layout_width="wrap_content"
@@ -58,5 +17,86 @@
         android:shadowColor="@color/darkThemeDialog"
         android:shadowRadius="3"
         />
+
+    <TextView
+        android:id="@+id/text_image_description"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:paddingTop="56dp"
+        android:paddingStart="@dimen/activity_horizontal_margin"
+        android:paddingEnd="@dimen/activity_horizontal_margin"
+        android:visibility="gone"
+        android:background="@color/darkThemeBackground"
+        android:alpha="0.85"
+        />
+
+    <HorizontalScrollView
+        android:id="@+id/scroll_title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_marginStart="@dimen/activity_horizontal_margin"
+        android:layout_marginEnd="@dimen/activity_horizontal_margin"
+        android:layout_toStartOf="@+id/layout_info"
+        android:scrollbarSize="4dp"
+        >
+
+        <TextView
+            android:id="@+id/text_image_title"
+            android:minHeight="48dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:textAppearanceMedium"
+            android:paddingTop="8dp"
+            android:singleLine="true"
+            android:shadowColor="@android:color/black"
+            android:shadowRadius="3"
+            />
+
+    </HorizontalScrollView>
+
+    <RelativeLayout
+        android:id="@+id/layout_info"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_alignParentTop="true"
+        android:layout_toStartOf="@+id/layout_download_image"
+        android:background="@drawable/circular_shadow"
+        android:visibility="gone"
+        >
+
+        <ImageButton
+            android:id="@+id/button_info"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:contentDescription="@string/content_description_button_open"
+            android:background="?attr/selectableItemBackground"
+            android:src="@drawable/ic_info_outline_white_24dp"
+            android:padding="12dp"
+            />
+
+    </RelativeLayout>
+
+    <RelativeLayout
+        android:id="@+id/layout_download_image"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentEnd="true"
+        android:layout_marginEnd="4dp"
+        android:background="@drawable/circular_shadow"
+        >
+
+        <ImageButton
+            android:id="@+id/button_download_image"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:contentDescription="@string/content_description_button_open"
+            android:background="?attr/selectableItemBackground"
+            android:src="@drawable/ic_file_download_white_24dp"
+            android:padding="12dp"
+            />
+
+    </RelativeLayout>
 
 </RelativeLayout>

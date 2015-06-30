@@ -11,6 +11,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.widget.Toast;
 
 import com.winsonchiu.reader.data.Reddit;
 
@@ -20,8 +21,7 @@ import com.winsonchiu.reader.data.Reddit;
 public class WebViewFixed extends WebView {
 
     private static final String TAG = WebViewFixed.class.getCanonicalName();
-
-    private boolean finished;
+;
     private int maxHeight = Integer.MAX_VALUE;
 
     public WebViewFixed(Context context) {
@@ -42,17 +42,16 @@ public class WebViewFixed extends WebView {
     }
 
     @Override
-    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-        super.onMeasure(widthMeasureSpec, heightMeasureSpec);
-    }
-
-    @Override
     protected void onLayout(boolean changed, int l, int t, int r, int b) {
         super.onLayout(changed, l, t, r, b);
         if (getHeight() > 0 && getHeight() < getMinimumHeight()) {
             setMeasuredDimension(getMeasuredWidth(), 500);
             ViewGroup.LayoutParams layoutParams = getLayoutParams();
+            layoutParams.height = ViewGroup.LayoutParams.WRAP_CONTENT;
             setLayoutParams(layoutParams);
+            invalidate();
+            requestLayout();
+            Toast.makeText(getContext(), "onLayout height set", Toast.LENGTH_SHORT).show();
         }
     }
 

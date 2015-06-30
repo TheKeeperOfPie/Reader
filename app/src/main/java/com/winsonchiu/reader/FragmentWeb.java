@@ -1,7 +1,9 @@
 package com.winsonchiu.reader;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.graphics.Bitmap;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.graphics.ColorUtils;
 import android.support.v4.view.MenuItemCompat;
@@ -91,6 +93,20 @@ public class FragmentWeb extends FragmentBase {
             @Override
             public boolean onQueryTextChange(String newText) {
                 webView.findAllAsync(newText);
+                return false;
+            }
+        });
+
+        toolbar.setOnMenuItemClickListener(new Toolbar.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                switch (item.getItemId()) {
+                    case R.id.item_open_in_browser:
+                        Intent intent = new Intent(Intent.ACTION_VIEW);
+                        intent.setData(Uri.parse(webView.getUrl()));
+                        startActivity(intent);
+                        break;
+                }
                 return false;
             }
         });
