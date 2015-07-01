@@ -13,29 +13,23 @@ import java.util.List;
 /**
  * Created by TheKeeperOfPie on 6/21/2015.
  */
-public class AdapterProfilePage extends BaseAdapter {
+public class AdapterInboxPage extends BaseAdapter {
 
     private List<String> pages;
-    private boolean isUser;
 
-    public AdapterProfilePage(Activity activity) {
+    public AdapterInboxPage(Activity activity) {
         super();
 
         // TODO: IMPORTANT FOR TRANSLATIONS, decouple UI title of page from actual page value
         pages = new ArrayList<>();
-        pages.add(activity.getString(R.string.profile_page_overview));
-        pages.add(activity.getString(R.string.profile_page_submitted));
-        pages.add(activity.getString(R.string.profile_page_comments));
-        pages.add(activity.getString(R.string.profile_page_gilded));
-        pages.add(activity.getString(R.string.profile_page_upvoted));
-        pages.add(activity.getString(R.string.profile_page_downvoted));
-        pages.add(activity.getString(R.string.profile_page_hidden));
-        pages.add(activity.getString(R.string.profile_page_saved));
+        pages.add(activity.getString(R.string.inbox_page_inbox));
+        pages.add(activity.getString(R.string.inbox_page_unread));
+        pages.add(activity.getString(R.string.inbox_page_sent));
     }
 
     @Override
     public int getCount() {
-        return isUser ? pages.size() : 4;
+        return pages.size();
     }
 
     @Override
@@ -58,15 +52,6 @@ public class AdapterProfilePage extends BaseAdapter {
         textPage.setText(pages.get(position));
 
         return convertView;
-    }
-
-    public boolean isUser() {
-        return isUser;
-    }
-
-    public void setIsUser(boolean isUser) {
-        this.isUser = isUser;
-        notifyDataSetChanged();
     }
 
     public List<String> getPages() {

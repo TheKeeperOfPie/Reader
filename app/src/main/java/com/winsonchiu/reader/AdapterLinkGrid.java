@@ -64,7 +64,7 @@ public class AdapterLinkGrid extends AdapterLink {
 
         DisplayMetrics displayMetrics = resources.getDisplayMetrics();
 
-        this.thumbnailSize = (int) (displayMetrics.widthPixels / 2 * (displayMetrics.widthPixels > displayMetrics.heightPixels ? 1f : 0.75f));
+        this.thumbnailSize = displayMetrics.widthPixels / spanCount;
     }
 
     @Override
@@ -152,13 +152,19 @@ public class AdapterLinkGrid extends AdapterLink {
 
             int position = getAdapterPosition();
 
-            itemView.setBackgroundColor(itemView.getContext().getResources().getColor(R.color.darkThemeDialog));
+            itemView.setBackgroundColor(itemView.getResources().getColor(R.color.darkThemeDialog));
             imagePlay.setVisibility(View.GONE);
             Drawable drawable = Reddit.getDrawableForLink(itemView.getContext(), link);
             if (drawable != null) {
                 imageFull.setVisibility(View.GONE);
                 imageThumbnail.setVisibility(View.VISIBLE);
                 imageThumbnail.setImageDrawable(drawable);
+            }
+            else if (!preferences.getBoolean(AppSettings.PREF_SHOW_THUMBNAILS, true) ||
+                    (link.isOver18() && !preferences.getBoolean(AppSettings.PREF_NSFW_THUMBNAILS, true))) {
+                imageFull.setVisibility(View.GONE);
+                imageThumbnail.setVisibility(View.VISIBLE);
+                imageThumbnail.setImageDrawable(drawableDefault);
             }
             else if (Reddit.showThumbnail(link)) {
                 loadThumbnail(link, position);
@@ -199,6 +205,15 @@ public class AdapterLinkGrid extends AdapterLink {
             }
         }
 
+        private int getAdjustedThumbnailSize() {
+            float modifier = Float.parseFloat(preferences.getString(AppSettings.PREF_GRID_THUMBNAIL_SIZE, "0.75"));
+            if (modifier > 0) {
+                return (int) (thumbnailSize * modifier);
+            }
+
+            return itemView.getResources().getDisplayMetrics().widthPixels;
+        }
+
         private void loadThumbnail(final Link link, final int position) {
 
             // TODO: Improve thumbnail loading logic
@@ -215,9 +230,11 @@ public class AdapterLinkGrid extends AdapterLink {
             if (TextUtils.isEmpty(link.getThumbnail())) {
                 if (Reddit.placeImageUrl(
                         link) && position == getAdapterPosition()) {
+                    int size = getAdjustedThumbnailSize();
+
                     Picasso.with(itemView.getContext())
                             .load(link.getUrl())
-                            .resize(thumbnailSize, thumbnailSize)
+                            .resize(size, size)
                             .centerCrop()
                             .into(imageFull, new Callback() {
                                 @Override
@@ -256,9 +273,10 @@ public class AdapterLinkGrid extends AdapterLink {
 
                                         if (Reddit.placeImageUrl(
                                                 link) && position == getAdapterPosition()) {
+                                            int size = getAdjustedThumbnailSize();
                                             Picasso.with(itemView.getContext())
                                                     .load(link.getUrl())
-                                                    .resize(thumbnailSize, thumbnailSize)
+                                                    .resize(size, size)
                                                     .centerCrop()
                                                     .into(imageFull, new Callback() {
                                                         @Override
@@ -301,10 +319,11 @@ public class AdapterLinkGrid extends AdapterLink {
                                         if (position == getAdapterPosition()) {
                                             AnimationUtils.animateBackgroundColor(
                                                     itemView,
-                                                    ((ColorDrawable) itemView.getBackground()).getColor(),
+                                                    ((ColorDrawable) itemView.getBackground())
+                                                            .getColor(),
                                                     palette.getDarkVibrantColor(
                                                             palette.getMutedColor(
-                                                                    itemView.getContext().getResources().getColor(R.color.darkThemeDialog))));
+                                                                    itemView.getResources().getColor(R.color.darkThemeDialog))));
                                         }
                                     }
                                 });
@@ -314,7 +333,7 @@ public class AdapterLinkGrid extends AdapterLink {
         @Override
         public float getRatio() {
             if (itemView.getLayoutParams() instanceof StaggeredGridLayoutManager.LayoutParams) {
-                int width = itemView.getContext().getResources().getDisplayMetrics().widthPixels;
+                int width = itemView.getResources().getDisplayMetrics().widthPixels;
 
                 return ((StaggeredGridLayoutManager.LayoutParams) itemView.getLayoutParams()).isFullSpan() ?
                         1f :
@@ -339,13 +358,12 @@ public class AdapterLinkGrid extends AdapterLink {
             textThreadTitle.setText(Html.fromHtml(link.getTitle())
                     .toString());
             textThreadTitle.setTextColor(
-                    link.isOver18() ?itemView.getContext().getResources()
-                            .getColor(R.color.darkThemeTextColorAlert) : itemView.getContext()
-                            .getResources()
+                    link.isOver18() ? itemView.getResources()
+                            .getColor(R.color.darkThemeTextColorAlert) : itemView.getResources()
                             .getColor(
                                     R.color.darkThemeTextColor));
 
-            Resources resources = itemView.getContext().getResources();
+            Resources resources = itemView.getResources();
 
             int colorPositive = resources.getColor(R.color.positiveScore);
             int colorNegative = resources.getColor(R.color.negativeScore);
@@ -363,7 +381,9 @@ public class AdapterLinkGrid extends AdapterLink {
 
             textThreadInfo.setText(TextUtils.concat(subreddit, spannableScore, "by " + link.getAuthor(), flair));
 
-            textHidden.setText(DateUtils.getRelativeTimeSpanString(link.getCreatedUtc()) + "\n" + link.getNumComments() + " comments");
+            CharSequence timestamp = preferences.getBoolean(AppSettings.PREF_FULL_TIMESTAMPS, false) ? DateUtils.formatDateTime(itemView.getContext(), link.getCreatedUtc(), DateUtils.FORMAT_SHOW_TIME | DateUtils.FORMAT_SHOW_DATE | DateUtils.FORMAT_SHOW_YEAR) : DateUtils.getRelativeTimeSpanString(link.getCreatedUtc());
+
+            textHidden.setText(timestamp + "\n" + link.getNumComments() + " comments");
         }
 
         @Override

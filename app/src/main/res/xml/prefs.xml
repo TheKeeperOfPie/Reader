@@ -25,7 +25,7 @@
             <CheckBoxPreference
                 android:key="pref_nsfw_thumbnails"
                 android:title="@string/pref_nsfw_thumbnails"
-                android:defaultValue="false"
+                android:defaultValue="true"
                 />
 
             <ListPreference
@@ -44,6 +44,20 @@
             android:title="@string/prefs_category_user"
             android:persistent="false">
 
+            <ListPreference
+                android:key="pref_inbox_check_interval"
+                android:title="@string/pref_inbox_check_interval"
+                android:entries="@array/pref_inbox_check_interval_entries"
+                android:entryValues="@array/pref_inbox_check_interval_values"
+                android:defaultValue="1800000"
+                android:negativeButtonText="@null"
+                android:positiveButtonText="@null" />
+
         </PreferenceScreen>
+
+        <Preference
+            android:key="pref_logout"
+            android:title="@string/logout"
+            />
 
 </PreferenceScreen>

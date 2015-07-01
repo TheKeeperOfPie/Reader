@@ -3,15 +3,26 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     tools:context="com.winsonchiu.reader.FragmentInbox"
     >
 
-    <include
-        layout="@layout/toolbar"
+    <android.support.v7.widget.Toolbar
+        android:id="@+id/toolbar"
+        android:minHeight="?android:actionBarSize"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_alignParentTop="true"
-        />
+        android:background="@color/colorPrimary"
+        app:layout_collapseMode="pin"
+        >
+
+        <Spinner
+            android:id="@+id/spinner_page"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            />
+
+    </android.support.v7.widget.Toolbar>
 
     <com.winsonchiu.reader.CustomSwipeRefreshLayout
         android:id="@+id/swipe_refresh_inbox"
@@ -29,5 +40,21 @@
             />
 
     </com.winsonchiu.reader.CustomSwipeRefreshLayout>
+
+    <android.support.design.widget.FloatingActionButton
+        android:id="@+id/fab_new_message"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentBottom="true"
+        android:layout_margin="16dp"
+        android:src="@drawable/ic_add_white_24dp"
+        app:layout_anchor="@id/swipe_refresh_inbox"
+        app:layout_anchorGravity="bottom|end"
+        app:fabSize="normal"
+        app:elevation="6dp"
+        app:pressedTranslationZ="12dp"
+        app:borderWidth="0dp"
+        />
 
 </RelativeLayout>

@@ -46,7 +46,6 @@
         android:layout_height="wrap_content"
         android:layout_below="@id/toolbar_actions"
         android:layout_alignParentStart="true"
-        android:layout_alignParentBottom="true"
         android:layout_alignParentEnd="true"
         >
 
@@ -74,5 +73,14 @@
             />
 
     </RelativeLayout>
+
+    <View
+        android:id="@+id/view_divider"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/layout_container_reply"
+        android:layout_alignParentBottom="true"
+        android:background="?android:listDivider"
+        />
 
 </RelativeLayout>

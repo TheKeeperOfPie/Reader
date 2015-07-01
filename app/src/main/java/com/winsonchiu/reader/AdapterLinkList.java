@@ -112,7 +112,7 @@ public class AdapterLinkList extends AdapterLink {
 
             Drawable drawable = Reddit.getDrawableForLink(itemView.getContext(), link);
             if (drawable == null) {
-                if (TextUtils.isEmpty(link.getThumbnail())) {
+                if (TextUtils.isEmpty(link.getThumbnail()) || !preferences.getBoolean(AppSettings.PREF_SHOW_THUMBNAILS, true) || (link.isOver18() && !preferences.getBoolean(AppSettings.PREF_NSFW_THUMBNAILS, true))) {
                     imageThumbnail.setImageDrawable(drawableDefault);
                 }
                 else {
@@ -142,12 +142,12 @@ public class AdapterLinkList extends AdapterLink {
             textThreadTitle.setText(Html.fromHtml(link.getTitle())
                     .toString());
             textThreadTitle.setTextColor(
-                    link.isOver18() ? itemView.getContext().getResources()
-                            .getColor(R.color.darkThemeTextColorAlert) : itemView.getContext().getResources()
+                    link.isOver18() ? itemView.getResources()
+                            .getColor(R.color.darkThemeTextColorAlert) : itemView.getResources()
                             .getColor(
                                     R.color.darkThemeTextColor));
 
-            Resources resources = itemView.getContext().getResources();
+            Resources resources = itemView.getResources();
 
             int colorPositive = resources.getColor(R.color.positiveScore);
             int colorNegative = resources.getColor(R.color.negativeScore);
@@ -167,7 +167,9 @@ public class AdapterLinkList extends AdapterLink {
 
             // TODO: Add link edited indicator
 
-            textHidden.setText(DateUtils.getRelativeTimeSpanString(link.getCreatedUtc()) + ", " + link.getNumComments() + " comments");
+            CharSequence timestamp = preferences.getBoolean(AppSettings.PREF_FULL_TIMESTAMPS, false) ? DateUtils.formatDateTime(itemView.getContext(), link.getCreatedUtc(), DateUtils.FORMAT_SHOW_TIME | DateUtils.FORMAT_SHOW_DATE | DateUtils.FORMAT_SHOW_YEAR) : DateUtils.getRelativeTimeSpanString(link.getCreatedUtc());
+
+            textHidden.setText(timestamp + ", " + link.getNumComments() + " comments");
         }
     }
 

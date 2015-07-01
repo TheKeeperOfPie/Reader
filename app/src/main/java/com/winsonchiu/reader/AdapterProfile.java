@@ -240,16 +240,16 @@ public class AdapterProfile extends RecyclerView.Adapter<RecyclerView.ViewHolder
                             .getCommentKarma() + " Comment Karma");
             spannableInfo.setSpan(new ForegroundColorSpan(
                             user.getLinkKarma() > 0 ?
-                                    itemView.getContext().getResources().getColor(
+                                    itemView.getResources().getColor(
                                             R.color.positiveScore) :
-                                    itemView.getContext().getResources().getColor(
+                                    itemView.getResources().getColor(
                                             R.color.negativeScore)), 0, linkLength,
                     Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
             spannableInfo.setSpan(new ForegroundColorSpan(
                             user.getCommentKarma() > 0 ?
-                                    itemView.getContext().getResources().getColor(
+                                    itemView.getResources().getColor(
                                             R.color.positiveScore) :
-                                    itemView.getContext().getResources()
+                                    itemView.getResources()
                                             .getColor(R.color.negativeScore)), linkLength + 12,
                     linkLength + 12 + commentLength, Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
 

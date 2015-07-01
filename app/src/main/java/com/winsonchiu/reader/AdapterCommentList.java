@@ -6,10 +6,12 @@ import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
 import android.graphics.drawable.Drawable;
+import android.preference.PreferenceManager;
 import android.support.v4.graphics.ColorUtils;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.RecyclerView;
@@ -307,6 +309,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
         protected String userName;
         protected int indentWidth;
         protected int toolbarItemWidth;
+        protected SharedPreferences preferences;
 
         public ViewHolderComment(final View itemView,
                 AdapterLink.ViewHolderBase.EventListener eventListenerBase,
@@ -344,7 +347,9 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
 
         private void intiialize() {
 
-            Resources resources = itemView.getContext().getResources();
+            preferences = PreferenceManager.getDefaultSharedPreferences(itemView.getContext());
+
+            Resources resources = itemView.getResources();
             this.drawableUpvote = resources.getDrawable(R.drawable.ic_keyboard_arrow_up_white_24dp);
             this.drawableDownvote = resources.getDrawable(
                     R.drawable.ic_keyboard_arrow_down_white_24dp);
@@ -352,7 +357,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
             indentWidth = (int) TypedValue
                     .applyDimension(TypedValue.COMPLEX_UNIT_DIP, 8, resources.getDisplayMetrics());
             toolbarItemWidth = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 48,
-                    itemView.getContext().getResources().getDisplayMetrics());
+                    itemView.getResources().getDisplayMetrics());
 
             viewIndent = itemView.findViewById(R.id.view_indent);
             viewIndicator = itemView.findViewById(R.id.view_indicator);
@@ -422,7 +427,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
             itemDelete = menu.findItem(R.id.item_delete);
             itemReport = menu.findItem(R.id.item_report);
 
-            Resources resources = itemView.getContext().getResources();
+            Resources resources = itemView.getResources();
             colorFilterPositive = new PorterDuffColorFilter(resources.getColor(
                     R.color.positiveScore),
                     PorterDuff.Mode.MULTIPLY);
@@ -553,7 +558,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
             int overlayColor = ColorUtils.setAlphaComponent(0xFF000000,
                     alphaLevel <= MAX_ALPHA ? alphaLevel : MAX_ALPHA);
             int indicatorColor = ColorUtils.compositeColors(overlayColor,
-                    itemView.getContext().getResources()
+                    itemView.getResources()
                             .getColor(
                                     R.color.colorPrimary));
 
@@ -576,7 +581,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
             else {
                 textComment.setText(Reddit.getTrimmedHtml(comment.getBodyHtml()));
 
-                Resources resources = itemView.getContext().getResources();
+                Resources resources = itemView.getResources();
 
                 int colorPositive = resources.getColor(R.color.positiveScore);
                 int colorNegative = resources.getColor(R.color.negativeScore);
@@ -598,12 +603,13 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                 String flair = TextUtils.isEmpty(comment.getAuthorFlairText()) || "null".equals(comment.getAuthorFlairText()) ? " " : " (" + Html
                         .fromHtml(comment.getAuthorFlairText()) + ") ";
 
-                textInfo.setText(TextUtils.concat(spannableScore, " by ", spannableAuthor, flair,
-                        DateUtils.getRelativeTimeSpanString(
-                                comment.getCreatedUtc()) + (comment.getEdited() > 0 ? "*" : "")));
+                CharSequence timestamp = preferences.getBoolean(AppSettings.PREF_FULL_TIMESTAMPS, false) ? DateUtils.formatDateTime(itemView.getContext(), comment.getCreatedUtc(), DateUtils.FORMAT_SHOW_TIME | DateUtils.FORMAT_SHOW_DATE | DateUtils.FORMAT_SHOW_YEAR) : DateUtils.getRelativeTimeSpanString(comment.getCreatedUtc());
 
-                textInfo.setTextColor(comment.isNew() ? itemView.getContext().getResources()
-                        .getColor(R.color.darkThemeTextColorAlert) : itemView.getContext().getResources()
+                textInfo.setText(TextUtils.concat(spannableScore, " by ", spannableAuthor, flair,
+                        timestamp, comment.getEdited() > 0 ? "*" : ""));
+
+                textInfo.setTextColor(comment.isNew() ? itemView.getResources()
+                        .getColor(R.color.darkThemeTextColorAlert) : itemView.getResources()
                         .getColor(R.color.darkThemeTextColorMuted));
 
                 if (comment.getEdited() > 1) {
@@ -618,11 +624,11 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
             }
 
             if (comment.getGilded() > 0) {
-                textComment.setTextColor(itemView.getContext().getResources()
+                textComment.setTextColor(itemView.getResources()
                         .getColor(R.color.gildedComment));
             }
             else {
-                textComment.setTextColor(itemView.getContext().getResources()
+                textComment.setTextColor(itemView.getResources()
                         .getColor(R.color.darkThemeTextColor));
             }
 
@@ -683,10 +689,10 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                             .getSystemService(
                                     Context.CLIPBOARD_SERVICE);
                     ClipData clip = ClipData.newPlainText(
-                            itemView.getContext().getResources().getString(R.string.comment),
+                            itemView.getResources().getString(R.string.comment),
                             comment.getBody());
                     clipboard.setPrimaryClip(clip);
-                    eventListenerBase.toast(itemView.getContext().getResources().getString(
+                    eventListenerBase.toast(itemView.getResources().getString(
                             R.string.copied));
                     break;
                 case R.id.item_edit:

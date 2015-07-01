@@ -6,22 +6,42 @@
     </string>
 
     <string name="pref_show_thumbnails">Show thumbnails</string>
+    <string name="pref_nsfw_thumbnails">Show NSFW thumbnails</string>
     <string name="pref_grid_thumbnail_size">Grid UI thumbnail size</string>
-    <string name="pref_nsfw_thumbnails">Hide NSFW thumbnails</string>
-
-    <string name="prefs_category_display">Display</string>
-    <string name="prefs_category_user">User</string>
     <string-array name="pref_grid_thumbnail_size_entries">
-        <item>25%</item>
-        <item>50%</item>
-        <item>75%</item>
-        <item>100%</item>
+        <item>25 percent</item>
+        <item>50 percent</item>
+        <item>75 percent</item>
+        <item>100 percent</item>
+        <item>Full size</item>
     </string-array>
     <string-array name="pref_grid_thumbnail_size_values">
         <item>0.25</item>
         <item>0.50</item>
         <item>0.75</item>
         <item>1</item>
+        <item>0</item>
     </string-array>
+
+    <string name="pref_inbox_check_interval">Check for new messages</string>
+    <string-array name="pref_inbox_check_interval_entries">
+        <item>Off</item>
+        <item>Every 15 minutes</item>
+        <item>Every 30 minutes</item>
+        <item>Every 1 hour</item>
+        <item>Every 6 hours</item>
+        <item>Every day</item>
+    </string-array>
+    <string-array name="pref_inbox_check_interval_values">
+        <item>0</item>
+        <item>900000</item>
+        <item>1800000</item>
+        <item>3600000</item>
+        <item>21600000</item>
+        <item>86400000</item>
+    </string-array>
+
+    <string name="prefs_category_display">Display</string>
+    <string name="prefs_category_user">User</string>
 
 </resources>

@@ -121,6 +121,7 @@
             android:layout_alignParentStart="true"
             android:layout_alignParentEnd="true"
             android:inputType="textMultiLine"
+            android:maxLength="10000"
             />
 
         <Button

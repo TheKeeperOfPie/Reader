@@ -102,8 +102,10 @@ public class ControllerInbox {
     }
 
     public void setPage(String page) {
-        this.page = page;
-        reload();
+        if (!this.page.equals(page)) {
+            this.page = page;
+            reload();
+        }
     }
 
     public String getPage() {
@@ -120,6 +122,7 @@ public class ControllerInbox {
                         try {
                             setData(Listing.fromJson(new JSONObject(response)));
                             for (Listener listener : listeners) {
+                                listener.setPage(page);
                                 listener.getAdapter().notifyDataSetChanged();
                             }
                             setLoading(false);
@@ -347,7 +350,7 @@ public class ControllerInbox {
     }
 
     public interface Listener extends ControllerListener {
-
+        void setPage(String page);
     }
 
 }

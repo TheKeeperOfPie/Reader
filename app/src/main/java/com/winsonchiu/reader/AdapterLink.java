@@ -6,6 +6,7 @@ import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
@@ -13,6 +14,7 @@ import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.media.MediaPlayer;
 import android.net.Uri;
+import android.preference.PreferenceManager;
 import android.support.v4.view.MenuItemCompat;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AlertDialog;
@@ -21,6 +23,7 @@ import android.support.v7.widget.RecyclerView.LayoutManager;
 import android.support.v7.widget.ShareActionProvider;
 import android.support.v7.widget.StaggeredGridLayoutManager;
 import android.support.v7.widget.Toolbar;
+import android.text.Html;
 import android.text.InputFilter;
 import android.text.TextUtils;
 import android.text.method.LinkMovementMethod;
@@ -82,6 +85,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
     private static final String TAG = AdapterLink.class.getCanonicalName();
 
     protected Activity activity;
+    protected SharedPreferences preferences;
     protected LayoutManager layoutManager;
     protected ControllerLinksBase controllerLinks;
     protected List<RecyclerView.ViewHolder> viewHolders;
@@ -105,6 +109,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
 
     public void setActivity(Activity activity) {
         this.activity = activity;
+        this.preferences = PreferenceManager.getDefaultSharedPreferences(activity);
     }
 
     public void setControllers(ControllerLinksBase controllerLinks,
@@ -387,6 +392,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         protected Drawable drawableDefault;
         protected boolean showSubreddit;
         protected String userName;
+        protected SharedPreferences preferences;
 
         public ViewHolderBase(View itemView,
                 EventListener eventListener,
@@ -451,12 +457,14 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
 
         protected void initialize() {
 
-            toolbarItemWidth = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 48,
-                    itemView.getContext().getResources().getDisplayMetrics());
-            titleMargin = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 16,
-                    itemView.getContext().getResources().getDisplayMetrics());
+            preferences = PreferenceManager.getDefaultSharedPreferences(itemView.getContext());
 
-            drawableDefault = itemView.getContext().getResources().getDrawable(
+            toolbarItemWidth = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 48,
+                    itemView.getResources().getDisplayMetrics());
+            titleMargin = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 16,
+                    itemView.getResources().getDisplayMetrics());
+
+            drawableDefault = itemView.getResources().getDrawable(
                     R.drawable.ic_web_white_48dp);
             mediaController = new MediaController(itemView.getContext());
             adapterAlbum = new AdapterAlbum(new Album(), new AdapterAlbum.EventListener() {
@@ -497,7 +505,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             viewYouTube = (YouTubePlayerView) itemView.findViewById(R.id.youtube);
 
             viewPagerMargin = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 48,
-                    itemView.getContext().getResources().getDisplayMetrics());
+                    itemView.getResources().getDisplayMetrics());
             viewPagerFull.setAdapter(adapterAlbum);
             viewPagerFull.setMinimumHeight(viewPagerMargin);
             viewPagerFull.setPageTransformer(false, new ViewPager.PageTransformer() {
@@ -594,7 +602,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             itemViewSubreddit = menu.findItem(R.id.item_view_subreddit);
             itemCopyText = menu.findItem(R.id.item_copy_text);
 
-            Resources resources = itemView.getContext().getResources();
+            Resources resources = itemView.getResources();
             colorFilterPositive = new PorterDuffColorFilter(resources.getColor(
                     R.color.positiveScore),
                     PorterDuff.Mode.MULTIPLY);
@@ -641,11 +649,11 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                             .getSystemService(
                                     Context.CLIPBOARD_SERVICE);
                     ClipData clip = ClipData.newPlainText(
-                            itemView.getContext().getResources().getString(R.string.comment),
+                            itemView.getResources().getString(R.string.comment),
                             link.getSelfText());
                     clipboard.setPrimaryClip(clip);
                     eventListener
-                            .toast(itemView.getContext().getResources().getString(R.string.copied));
+                            .toast(itemView.getResources().getString(R.string.copied));
                     break;
                 case R.id.item_edit:
                     Intent intentEdit = new Intent(itemView.getContext(), ActivityNewPost.class);
@@ -654,7 +662,21 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                     eventListener.startActivity(intentEdit);
                     break;
                 case R.id.item_delete:
-                    eventListener.deletePost(link);
+                    new AlertDialog.Builder(itemView.getContext())
+                            .setTitle("Delete post?")
+                            .setMessage(Html.fromHtml(link.getTitle()))
+                            .setPositiveButton("Yes",
+                                    new DialogInterface.OnClickListener() {
+                                        @Override
+                                        public void onClick(
+                                                DialogInterface dialog,
+                                                int which) {
+
+                                            eventListener.deletePost(link);
+                                        }
+                                    })
+                            .setNegativeButton("No", null)
+                            .show();
                     break;
                 case R.id.item_view_subreddit:
                     Intent intentViewSubreddit = new Intent(itemView.getContext(),
@@ -922,6 +944,8 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         public void attemptLoadImage() {
 
             if (Reddit.placeImageUrl(link)) {
+                expandFull(true);
+                recyclerCallback.scrollTo(getAdapterPosition());
 
                 if (webFull == null) {
                     webFull = eventListener.getNewWebView();
@@ -929,8 +953,6 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                     frameFull.addView(webFull);
 
                 }
-                expandFull(true);
-                recyclerCallback.scrollTo(getAdapterPosition());
                 webFull.onResume();
                 webFull.loadData(Reddit.getImageHtml(link.getUrl()), "text/html", "UTF-8");
                 webFull.requestLayout();
@@ -979,10 +1001,6 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                                         Album album = Album.fromJson(
                                                 new JSONObject(response).getJSONObject("data"));
                                         setAlbum(link, album);
-                                        Log.d(TAG, "link URL: " + link.getUrl());
-                                        Log.d(TAG, "album URL: " + album.getLink());
-                                        eventListener
-                                                .toast("New album loaded: " + album.getTitle());
                                     }
                                     catch (JSONException e) {
                                         e.printStackTrace();
@@ -1149,7 +1167,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                         @Override
                         public void onInitializationFailure(YouTubePlayer.Provider provider,
                                 YouTubeInitializationResult youTubeInitializationResult) {
-                            eventListener.toast(itemView.getContext().getResources()
+                            eventListener.toast(itemView.getResources()
                                     .getString(R.string.error_youtube));
                         }
                     });
@@ -1245,11 +1263,11 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
 
         public void syncSaveIcon() {
             if (link.isSaved()) {
-                itemSave.setTitle(itemView.getContext().getResources().getString(R.string.unsave));
+                itemSave.setTitle(itemView.getResources().getString(R.string.unsave));
                 itemSave.getIcon().mutate().setColorFilter(colorFilterSave);
             }
             else {
-                itemSave.setTitle(itemView.getContext().getResources().getString(R.string.save));
+                itemSave.setTitle(itemView.getResources().getString(R.string.save));
                 itemSave.getIcon()
                         .clearColorFilter();
             }

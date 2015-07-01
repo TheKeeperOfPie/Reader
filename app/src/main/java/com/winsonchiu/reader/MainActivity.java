@@ -1,7 +1,10 @@
 package com.winsonchiu.reader;
 
+import android.app.AlarmManager;
 import android.app.Fragment;
 import android.app.FragmentTransaction;
+import android.app.PendingIntent;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -58,6 +61,7 @@ public class MainActivity extends YouTubeBaseActivity
         implements FragmentListenerBase {
 
     public static final String REDDIT_PAGE = "redditPage";
+    public static final String NAV_PAGE = "navPage";
 
     private static final String TAG = MainActivity.class.getCanonicalName();
 
@@ -101,6 +105,8 @@ public class MainActivity extends YouTubeBaseActivity
 
         inflateNavigationDrawer();
 
+        Receiver.setAlarm(this);
+
         mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
         mDrawerLayout.setDrawerShadow(R.drawable.drawer_shadow, GravityCompat.START);
         mDrawerLayout.setDrawerListener(new DrawerLayout.DrawerListener() {
@@ -142,12 +148,12 @@ public class MainActivity extends YouTubeBaseActivity
                 else {
                     Log.d(TAG, "Not valid URL: " + urlString);
                     getControllerLinks().loadFrontPage(Sort.HOT, true);
-                    selectNavigationItem(R.id.item_home);
+                    selectNavigationItem(getIntent().getIntExtra(NAV_PAGE, R.id.item_home));
                 }
             }
             else {
                 getControllerLinks().loadFrontPage(Sort.HOT, true);
-                selectNavigationItem(R.id.item_home);
+                selectNavigationItem(getIntent().getIntExtra(NAV_PAGE, R.id.item_home));
             }
         }
 
@@ -583,27 +589,6 @@ public class MainActivity extends YouTubeBaseActivity
                                 FragmentPreferences.newInstance(),
                                 FragmentPreferences.TAG)
                         .commit();
-//                SharedPreferences preferences = PreferenceManager
-//                        .getDefaultSharedPreferences(
-//                                getApplicationContext());
-//                // TODO: Manually invalidate access token
-//                preferences.edit()
-//                        .putString(AppSettings.ACCESS_TOKEN, "")
-//                        .apply();
-//                preferences.edit()
-//                        .putString(AppSettings.REFRESH_TOKEN, "")
-//                        .apply();
-//                preferences.edit()
-//                        .putString(AppSettings.ACCOUNT_JSON, "")
-//                        .apply();
-//                preferences.edit()
-//                        .putString(AppSettings.SUBSCRIBED_SUBREDDITS, "")
-//                        .apply();
-//                getControllerLinks().loadFrontPage(Sort.HOT, true);
-//                getControllerSearch().reloadSubscriptionList();
-//                Toast.makeText(MainActivity.this, "Cleared refresh token",
-//                        Toast.LENGTH_SHORT)
-//                        .show();
                 break;
         }
 

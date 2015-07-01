@@ -208,6 +208,7 @@
                 android:layout_marginStart="@dimen/activity_horizontal_margin"
                 android:layout_marginEnd="@dimen/activity_horizontal_margin"
                 android:inputType="textMultiLine"
+                android:maxLength="10000"
                 />
 
             <Button

@@ -47,10 +47,26 @@
             android:label="@string/app_name" >
         </activity>
 
+        <receiver
+            android:name=".Receiver"
+            android:exported="false" >
+            <intent-filter>
+                <action android:name="com.winsonchiu.reader.Receiver.INTENT_INBOX" />
+            </intent-filter>
+        </receiver>
+
         <meta-data
             android:name="io.fabric.ApiKey"
             android:value="ffde8327e4ffacbe347101a90afc33a9fec234cb" />
 
+        <activity
+            android:name=".ActivityNewMessage"
+            android:label="@string/title_activity_activity_new_message"
+            android:parentActivityName=".MainActivity" >
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="com.winsonchiu.reader.MainActivity" />
+        </activity>
     </application>
 
 </manifest>

@@ -25,6 +25,12 @@ public class AppSettings {
 
     public static final String HISTORY_SET = "historySet";
 
+    public static final String PREF_FULL_TIMESTAMPS = "pref_full_timestamps";
+    public static final String PREF_SHOW_THUMBNAILS = "pref_show_thumbnails";
+    public static final String PREF_NSFW_THUMBNAILS = "pref_nsfw_thumbnails";
+    public static final String PREF_GRID_THUMBNAIL_SIZE = "pref_grid_thumbnail_size";
+    public static final String PREF_INBOX_CHECK_INTERVAL = "pref_inbox_check_interval";
+
     public static boolean initPrefs(Context context) {
 
         SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context.getApplicationContext());

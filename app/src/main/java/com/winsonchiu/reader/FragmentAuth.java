@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.v7.widget.Toolbar;
@@ -12,6 +13,8 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.webkit.CookieManager;
+import android.webkit.ValueCallback;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.Toast;
@@ -173,19 +176,27 @@ public class FragmentAuth extends FragmentBase {
 
                                     }
                                 }, 0);
-                        webAuth.destroy();
-                        getFragmentManager().popBackStack();
                         mListener.onAuthFinished(true);
                     }
                 }, new Response.ErrorListener() {
                     @Override
                     public void onErrorResponse(VolleyError error) {
                         // TODO: Check user info error
-                        webAuth.destroy();
-                        getFragmentManager().popBackStack();
+                        destroy();
                         mListener.onAuthFinished(false);
                     }
                 }, 0);
+    }
+
+    private void destroy() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            CookieManager.getInstance().removeAllCookies(null);
+        }
+        else {
+            CookieManager.getInstance().removeAllCookie();
+        }
+        webAuth.destroy();
+        getFragmentManager().popBackStack();
     }
 
     @Override
@@ -235,6 +246,7 @@ public class FragmentAuth extends FragmentBase {
             webAuth.goBack();
             return false;
         }
+        destroy();
         return true;
     }
 

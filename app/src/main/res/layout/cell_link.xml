@@ -221,24 +221,17 @@
             android:visibility="gone"
             >
 
-            <!--<ScrollView-->
-                <!--android:id="@+id/scroll_reply"-->
-                <!--android:layout_width="match_parent"-->
-                <!--android:layout_height="140dp"-->
-                <!-->-->
-
-                <EditText
-                    android:id="@+id/edit_text_reply"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_alignParentTop="true"
-                    android:layout_marginStart="@dimen/activity_horizontal_margin"
-                    android:layout_marginEnd="@dimen/activity_horizontal_margin"
-                    android:inputType="textMultiLine"
-                    android:scrollbars="vertical"
-                    />
-
-            <!--</ScrollView>-->
+            <EditText
+                android:id="@+id/edit_text_reply"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_alignParentTop="true"
+                android:layout_marginStart="@dimen/activity_horizontal_margin"
+                android:layout_marginEnd="@dimen/activity_horizontal_margin"
+                android:inputType="textMultiLine"
+                android:scrollbars="vertical"
+                android:maxLength="10000"
+                />
 
             <Button
                 android:id="@+id/button_send_reply"

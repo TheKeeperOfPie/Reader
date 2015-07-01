@@ -82,7 +82,9 @@ public class ActivityNewPost extends AppCompatActivity {
 
         setSupportActionBar(toolbar);
 
-        textInfo.setText(getString(R.string.submitting_to) + " /r/" + getIntent().getStringExtra(SUBREDDIT) + " " + getString(R.string.as) + " /u/" + getIntent().getStringExtra(USER));
+        textInfo.setText(getString(R.string.submitting_to) + " /r/" + getIntent()
+                .getStringExtra(SUBREDDIT) + " " + getString(R.string.as) + " /u/" + getIntent()
+                .getStringExtra(USER));
 
         String submitTextHtml = getIntent().getStringExtra(SUBMIT_TEXT_HTML);
         Log.d(TAG, "submitTextHtml: " + submitTextHtml);
@@ -147,6 +149,37 @@ public class ActivityNewPost extends AppCompatActivity {
 
     }
 
+
+    private void loadCaptcha() {
+
+        Map<String, String> params = new HashMap<>();
+        params.put("api_type", "json");
+
+        reddit.loadPost(Reddit.OAUTH_URL + "/api/new_captcha", new Response.Listener<String>() {
+            @Override
+            public void onResponse(String response) {
+                try {
+                    JSONObject jsonObject = new JSONObject(response);
+                    captchaId = jsonObject.getJSONObject("json").getJSONObject("data").getString(
+                            "iden");
+                    Log.d(TAG, "captchaId: " + captchaId);
+                    Picasso.with(ActivityNewPost.this)
+                            .load(Reddit.BASE_URL + "/captcha/" + captchaId + ".png")
+                            .resize(getResources().getDisplayMetrics().widthPixels, 0).into(
+                            imageCaptcha);
+                }
+                catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }
+        }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+
+            }
+        }, params, 0);
+    }
+
     private void loadEditValues() {
         reddit.loadGet(Reddit.OAUTH_URL + "/api/info?id=" + getIntent().getStringExtra(EDIT_ID),
                 new Response.Listener<String>() {
@@ -179,32 +212,42 @@ public class ActivityNewPost extends AppCompatActivity {
 
         Map<String, String> params = new HashMap<>();
         params.put("api_type", "json");
-        params.put("text", TextUtils.htmlEncode(editTextBody.getText()
-                .toString()));
+        params.put("text", editTextBody.getText().toString());
         params.put("thing_id", getIntent().getStringExtra(EDIT_ID));
 
         reddit.loadPost(Reddit.OAUTH_URL + "/api/editusertext", new Response.Listener<String>() {
             @Override
             public void onResponse(String response) {
+                setResult(Activity.RESULT_OK);
+                finish();
             }
         }, new Response.ErrorListener() {
             @Override
             public void onErrorResponse(VolleyError error) {
+                Toast.makeText(ActivityNewPost.this, "Error submitting post", Toast.LENGTH_LONG)
+                        .show();
             }
         }, params, 0);
-        
-        setResult(Activity.RESULT_OK);
-        finish();
     }
 
     private void submitNew() {
+        String text = editTextBody.getText().toString();
+
         if (TextUtils.isEmpty(editTextTitle.getText().toString())) {
-            Toast.makeText(ActivityNewPost.this, getString(R.string.empty_title), Toast.LENGTH_LONG).show();
+            Toast.makeText(ActivityNewPost.this, getString(R.string.empty_title), Toast.LENGTH_LONG)
+                    .show();
             return;
         }
-        else if (Reddit.POST_TYPE_LINK.equals(getIntent().getStringExtra(POST_TYPE)) && !URLUtil.isValidUrl(editTextBody.getText().toString())) {
-            Toast.makeText(ActivityNewPost.this, getString(R.string.invalid_url), Toast.LENGTH_LONG).show();
-            return;
+        else if (Reddit.POST_TYPE_LINK.equals(getIntent().getStringExtra(POST_TYPE)) && !URLUtil
+                .isValidUrl(text)) {
+
+            text = "http://" + text;
+
+            if (!URLUtil.isValidUrl(text)) {
+                Toast.makeText(ActivityNewPost.this, getString(R.string.invalid_url),
+                        Toast.LENGTH_LONG).show();
+                return;
+            }
         }
 
         Map<String, String> params = new HashMap<>();
@@ -217,11 +260,10 @@ public class ActivityNewPost extends AppCompatActivity {
         params.put("sr", getIntent().getStringExtra(SUBREDDIT));
         params.put("title", editTextTitle.getText().toString());
         if (Reddit.POST_TYPE_LINK.equalsIgnoreCase(getIntent().getStringExtra(POST_TYPE))) {
-            params.put("url", editTextBody.getText().toString());
+            params.put("url", text);
         }
         else {
-            params.put("text", TextUtils.htmlEncode(editTextBody.getText()
-                    .toString()));
+            params.put("text", text);
         }
         if (layoutCaptcha.isShown()) {
             params.put("iden", captchaId);
@@ -231,33 +273,42 @@ public class ActivityNewPost extends AppCompatActivity {
         reddit.loadPost(Reddit.OAUTH_URL + "/api/submit", new Response.Listener<String>() {
             @Override
             public void onResponse(String response) {
+                Log.d(TAG, "Submit new response: " + response);
+
+                try {
+                    JSONObject jsonObject = new JSONObject(response).getJSONObject("json");
+                    String error = jsonObject.getJSONArray("errors").optString(
+                            0);
+                    if (!TextUtils.isEmpty(error)) {
+
+                        String captcha = jsonObject.optString("captcha");
+
+                        if (!TextUtils.isEmpty(captcha)) {
+                            captchaId = captcha;
+                            editCaptcha.setText("");
+                            Picasso.with(ActivityNewPost.this)
+                                    .load(Reddit.BASE_URL + "/captcha/" + captchaId + ".png")
+                                    .resize(getResources().getDisplayMetrics().widthPixels, 0).into(
+                                    imageCaptcha);
+                        }
+
+                        Toast.makeText(ActivityNewPost.this, "Error: " + error, Toast.LENGTH_LONG)
+                                .show();
+                        return;
+                    }
+                }
+                catch (JSONException e) {
+                    e.printStackTrace();
+                }
+
+                setResult(Activity.RESULT_OK);
+                finish();
             }
         }, new Response.ErrorListener() {
             @Override
             public void onErrorResponse(VolleyError error) {
-            }
-        }, params, 0);
-
-        setResult(Activity.RESULT_OK);
-        finish();
-    }
-
-    private void loadCaptcha() {
-
-        Map<String, String> params = new HashMap<>();
-        params.put("api_type", "json");
-
-        reddit.loadPost(Reddit.OAUTH_URL + "/api/new_captcha", new Response.Listener<String>() {
-            @Override
-            public void onResponse(String response) {
-                captchaId = response;
-                Picasso.with(ActivityNewPost.this).load(Reddit.OAUTH_URL + "/captcha/" + response).into(
-                        imageCaptcha);
-            }
-        }, new Response.ErrorListener() {
-            @Override
-            public void onErrorResponse(VolleyError error) {
-
+                Toast.makeText(ActivityNewPost.this, "Error submitting post", Toast.LENGTH_LONG)
+                        .show();
             }
         }, params, 0);
     }

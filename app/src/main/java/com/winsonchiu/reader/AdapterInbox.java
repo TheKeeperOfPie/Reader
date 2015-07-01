@@ -88,8 +88,8 @@ public class AdapterInbox extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
                             eventListenerInbox.markRead(comment);
                             comment.setIsNew(false);
 
-                            textInfo.setTextColor(comment.isNew() ? itemView.getContext().getResources()
-                                    .getColor(R.color.darkThemeTextColorAlert) : itemView.getContext().getResources()
+                            textInfo.setTextColor(comment.isNew() ? itemView.getResources()
+                                    .getColor(R.color.darkThemeTextColorAlert) : itemView.getResources()
                                     .getColor(R.color.darkThemeTextColorMuted));
                         }
                     }
@@ -110,7 +110,7 @@ public class AdapterInbox extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
         switch (getItemViewType(position)) {
             case VIEW_TYPE_MESSAGE:
                 ViewHolderMessage viewHolderMessage = (ViewHolderMessage) holder;
-                viewHolderMessage.onBind(controllerInbox.getMessage(position));
+                viewHolderMessage.onBind(controllerInbox.getMessage(position), controllerUser.getUser().getName());
                 break;
             case VIEW_TYPE_COMMENT:
                 AdapterCommentList.ViewHolderComment viewHolderComment = (AdapterCommentList.ViewHolderComment) holder;
@@ -154,17 +154,18 @@ public class AdapterInbox extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
         protected EditText editTextReply;
         protected Button buttonSendReply;
         protected Toolbar toolbarActions;
-        private View.OnClickListener clickListenerLink;
         protected EventListener eventListener;
+        private View.OnClickListener clickListenerLink;
 
         protected int toolbarItemWidth;
+        protected String userName;
 
         public ViewHolderMessage(View itemView, final EventListener listener) {
             super(itemView);
             this.eventListener = listener;
 
             toolbarItemWidth = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 48,
-                    itemView.getContext().getResources().getDisplayMetrics());
+                    itemView.getResources().getDisplayMetrics());
 
             textMessage = (TextView) itemView.findViewById(R.id.text_message);
             textMessage.setMovementMethod(LinkMovementMethod.getInstance());
@@ -209,7 +210,7 @@ public class AdapterInbox extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
                     if (message.isNew()) {
                         eventListener.markRead(message);
                         message.setIsNew(false);
-                        onBind(message);
+                        onBind(message, userName);
                     }
 
                     AnimationUtils.animateExpand(toolbarActions, 1f, null);
@@ -245,9 +246,10 @@ public class AdapterInbox extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
             }
         }
 
-        public void onBind(Message message) {
+        public void onBind(Message message, String userName) {
 
             this.message = message;
+            this.userName = userName;
 
             toolbarActions.setVisibility(View.GONE);
 
@@ -260,13 +262,22 @@ public class AdapterInbox extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
 
             textMessage.setText(Reddit.getTrimmedHtml(message.getBodyHtml()));
 
+            String prefix;
+
+            if (message.getAuthor().equals(userName)) {
+                prefix = "to " + message.getDest().replaceAll("#", "/r/");
+            }
+            else {
+                prefix = "by " + message.getAuthor();
+            }
+
             Spannable spannableInfo = new SpannableString(
-                    "by " + message.getAuthor() + " on " + new Date(
+                    prefix + " on " + new Date(
                             message.getCreatedUtc()).toString());
 
             textInfo.setText(spannableInfo);
-            textInfo.setTextColor(message.isNew() ? itemView.getContext().getResources()
-                    .getColor(R.color.darkThemeTextColorAlert) : itemView.getContext().getResources()
+            textInfo.setTextColor(message.isNew() ? itemView.getResources()
+                    .getColor(R.color.darkThemeTextColorAlert) : itemView.getResources()
                     .getColor(R.color.darkThemeTextColorMuted));
         }
 

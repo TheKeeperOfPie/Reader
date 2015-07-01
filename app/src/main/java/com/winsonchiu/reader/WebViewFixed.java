@@ -13,6 +13,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.widget.FrameLayout;
 import android.widget.RelativeLayout;
 import android.widget.Toast;
 
@@ -55,6 +56,20 @@ public class WebViewFixed extends WebView {
                                 RelativeLayout.LayoutParams.WRAP_CONTENT));
                 Toast.makeText(getContext(), "onLayout height reset", Toast.LENGTH_SHORT).show();
             }
+            else if (getLayoutParams() instanceof ViewGroup.MarginLayoutParams){
+                setLayoutParams(
+                        new ViewGroup.MarginLayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
+                                ViewGroup.LayoutParams.WRAP_CONTENT));
+                Toast.makeText(getContext(), "onLayout height reset", Toast.LENGTH_SHORT).show();
+            }
+            else {
+                setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
+                        ViewGroup.LayoutParams.WRAP_CONTENT));
+                Toast.makeText(getContext(), "onLayout height reset", Toast.LENGTH_SHORT).show();
+            }
+            getParent().requestLayout();
+            setVisibility(GONE);
+            setVisibility(VISIBLE);
         }
     }
 

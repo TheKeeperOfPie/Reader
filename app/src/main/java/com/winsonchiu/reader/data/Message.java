@@ -12,6 +12,7 @@ public class Message extends Thing {
     private String body;
     private String bodyHtml;
     private String context;
+    private String dest;
     private String firstMessageName;
     private int likes;
     private String linkTitle;
@@ -62,6 +63,7 @@ public class Message extends Thing {
         message.setBody(jsonObject.optString("body"));
         message.setBodyHtml(jsonObject.optString("body_html"));
         message.setContext(jsonObject.optString("context"));
+        message.setDest(jsonObject.optString("dest"));
         message.setFirstMessageName(jsonObject.optString("first_message_name"));
 
         switch (jsonObject.optString("likes")) {
@@ -235,4 +237,11 @@ public class Message extends Thing {
         return getId().hashCode();
     }
 
+    public String getDest() {
+        return dest;
+    }
+
+    public void setDest(String dest) {
+        this.dest = dest;
+    }
 }
