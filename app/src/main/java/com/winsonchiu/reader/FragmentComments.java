@@ -3,7 +3,10 @@ package com.winsonchiu.reader;
 import android.animation.Animator;
 import android.app.Activity;
 import android.app.Fragment;
+import android.graphics.Rect;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.SystemClock;
 import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.view.ViewCompat;
@@ -19,6 +22,7 @@ import android.util.Log;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewPropertyAnimator;
@@ -27,6 +31,7 @@ import android.view.animation.AlphaAnimation;
 import android.view.animation.Animation;
 import android.view.animation.Transformation;
 import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
 
 import com.google.android.youtube.player.YouTubeInitializationResult;
 import com.google.android.youtube.player.YouTubePlayer;
@@ -192,9 +197,6 @@ public class FragmentComments extends FragmentBase {
         buttonExpandActions.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                buttonExpandActions.setImageResource(
-                        buttonCommentPrevious.isShown() ? R.drawable.ic_unfold_more_white_24dp :
-                                android.R.color.transparent);
                 toggleLayoutActions();
             }
         });
@@ -228,14 +230,30 @@ public class FragmentComments extends FragmentBase {
         buttonCommentPrevious.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                int position = linearLayoutManager.findFirstVisibleItemPosition();
+                int position = getIndexAtCenter();
                 if (position == 1) {
                     linearLayoutManager.scrollToPositionWithOffset(0, 0);
                     return;
                 }
-                linearLayoutManager.scrollToPositionWithOffset(
-                        mListener.getControllerComments().getPreviousCommentPosition(
-                                position - 1) + 1, 0);
+                final int newPosition = mListener.getControllerComments().getPreviousCommentPosition(
+                        position - 1) + 1;
+                linearLayoutManager.scrollToPositionWithOffset(newPosition, recyclerCommentList.getHeight() / 2 - toolbar.getHeight());
+                recyclerCommentList.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        final RecyclerView.ViewHolder viewHolder = recyclerCommentList.findViewHolderForAdapterPosition(
+                                newPosition);
+                        if (viewHolder != null) {
+                            viewHolder.itemView.getBackground().setState(new int[] {android.R.attr.state_pressed, android.R.attr.state_enabled});
+                            recyclerCommentList.postDelayed(new Runnable() {
+                                @Override
+                                public void run() {
+                                    viewHolder.itemView.getBackground().setState(new int[0]);
+                                }
+                            }, 150);
+                        }
+                    }
+                }, 200);
             }
         });
 
@@ -243,17 +261,57 @@ public class FragmentComments extends FragmentBase {
         buttonCommentNext.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                int position = linearLayoutManager.findFirstVisibleItemPosition();
+                int position = getIndexAtCenter();
                 if (position == 0) {
                     if (adapterCommentList.getItemCount() > 0) {
-                        linearLayoutManager.scrollToPositionWithOffset(1, 0);
+                        linearLayoutManager.scrollToPositionWithOffset(1, recyclerCommentList.getHeight() / 2 - toolbar.getHeight());
                     }
                     return;
                 }
-                linearLayoutManager.scrollToPositionWithOffset(mListener.getControllerComments()
-                        .getNextCommentPosition(position - 1) + 1, 0);
+                final int newPosition = mListener.getControllerComments().getNextCommentPosition(position - 1) + 1;
+                linearLayoutManager.scrollToPositionWithOffset(newPosition, recyclerCommentList.getHeight() / 2 - toolbar.getHeight());
+                recyclerCommentList.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        final RecyclerView.ViewHolder viewHolder = recyclerCommentList.findViewHolderForAdapterPosition(
+                                newPosition);
+                        if (viewHolder != null) {
+                            viewHolder.itemView.getBackground().setState(new int[] {android.R.attr.state_pressed, android.R.attr.state_enabled});
+                            recyclerCommentList.postDelayed(new Runnable() {
+                                @Override
+                                public void run() {
+                                    viewHolder.itemView.getBackground().setState(new int[0]);
+                                }
+                            }, 150);
+                        }
+                    }
+                }, 200);
+
             }
         });
+
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
+            ((CoordinatorLayout.LayoutParams) buttonExpandActions.getLayoutParams()).setMargins(0, 0, 0, 0);
+
+            int margin = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 8, getResources().getDisplayMetrics());
+
+            LinearLayout.LayoutParams layoutParamsJumpTop = (LinearLayout.LayoutParams) buttonJumpTop.getLayoutParams();
+            layoutParamsJumpTop.setMargins(0, 0, 0, 0);
+            buttonJumpTop.setLayoutParams(layoutParamsJumpTop);
+
+            LinearLayout.LayoutParams layoutParamsPrevious = (LinearLayout.LayoutParams) buttonCommentPrevious.getLayoutParams();
+            layoutParamsPrevious.setMargins(0, 0, 0, 0);
+            buttonCommentPrevious.setLayoutParams(layoutParamsPrevious);
+
+            LinearLayout.LayoutParams layoutParamsNext = (LinearLayout.LayoutParams) buttonCommentNext.getLayoutParams();
+            layoutParamsNext.setMargins(0, 0, 0, 0);
+            buttonCommentNext.setLayoutParams(layoutParamsNext);
+
+            RelativeLayout.LayoutParams layoutParamsActions = (RelativeLayout.LayoutParams) layoutActions.getLayoutParams();
+            layoutParamsActions.setMarginStart(margin);
+            layoutParamsActions.setMarginEnd(margin);
+            layoutActions.setLayoutParams(layoutParamsActions);
+        }
 
         viewYouTube = (YouTubePlayerView) view.findViewById(R.id.youtube);
 
@@ -504,8 +562,7 @@ public class FragmentComments extends FragmentBase {
 
                     return true;
                 }
-            }, getArguments().getBoolean(ARG_IS_GRID,
-                    false),
+            }, getArguments().getBoolean(ARG_IS_GRID, false),
                     getArguments().getInt(ARG_COLOR_LINK));
 
         }
@@ -651,6 +708,39 @@ public class FragmentComments extends FragmentBase {
         return view;
     }
 
+    private int getIndexAtCenter() {
+
+        if (adapterCommentList.getItemCount() < 2) {
+            return 0;
+        }
+
+        int start = linearLayoutManager.findFirstVisibleItemPosition();
+        int end = linearLayoutManager.findLastVisibleItemPosition();
+
+        int[] locationRecycler = new int[2];
+        recyclerCommentList.getLocationOnScreen(locationRecycler);
+
+        int centerY = locationRecycler[1] + 10 + recyclerCommentList.getHeight() / 2 - toolbar.getHeight();
+        int[] location = new int[2];
+
+        for (int index = start; index <= end; index++) {
+
+            RecyclerView.ViewHolder viewHolder = recyclerCommentList.findViewHolderForAdapterPosition(index);
+            if (viewHolder != null) {
+                viewHolder.itemView.getLocationOnScreen(location);
+                Rect bounds = new Rect(location[0], location[1], location[0] + viewHolder.itemView.getWidth(), location[1] + viewHolder.itemView.getHeight());
+                if (bounds.contains(bounds.centerX(), centerY)) {
+                    return index;
+                }
+
+            }
+
+        }
+
+        return linearLayoutManager.findFirstCompletelyVisibleItemPosition();
+
+    }
+
     private void toggleLayoutActions() {
         if (buttonCommentPrevious.isShown()) {
             hideLayoutActions(DURATION_ACTIONS_FADE);
@@ -669,6 +759,7 @@ public class FragmentComments extends FragmentBase {
                 @Override
                 public void onAnimationStart(Animation animation) {
                     view.setVisibility(View.VISIBLE);
+                    buttonExpandActions.setImageResource(android.R.color.transparent);
                 }
 
                 @Override
@@ -702,6 +793,7 @@ public class FragmentComments extends FragmentBase {
                 @Override
                 public void onAnimationEnd(Animation animation) {
                     view.setVisibility(View.GONE);
+                    buttonExpandActions.setImageResource(R.drawable.ic_unfold_more_white_24dp);
                 }
 
                 @Override
@@ -724,7 +816,7 @@ public class FragmentComments extends FragmentBase {
     @Override
     public void onResume() {
         super.onResume();
-        swipeRefreshCommentList.setRefreshing(mListener.getControllerLinks()
+        swipeRefreshCommentList.setRefreshing(mListener.getControllerComments()
                 .isLoading());
     }
 

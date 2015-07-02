@@ -3,13 +3,10 @@ package com.winsonchiu.reader;
 import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.content.Context;
-import android.graphics.Bitmap;
 import android.os.Build;
-import android.support.v4.app.NavUtils;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.util.TypedValue;
-import android.view.View;
 import android.view.ViewGroup;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
@@ -25,7 +22,7 @@ import com.winsonchiu.reader.data.Reddit;
 public class WebViewFixed extends WebView {
 
     private static final String TAG = WebViewFixed.class.getCanonicalName();
-;
+    ;
     private int maxHeight = Integer.MAX_VALUE;
 
     public WebViewFixed(Context context) {
@@ -51,24 +48,26 @@ public class WebViewFixed extends WebView {
         super.onLayout(changed, l, t, r, b);
         if (getHeight() > 0 && getHeight() < getMinimumHeight()) {
             Toast.makeText(getContext(), "onLayout incorrect", Toast.LENGTH_SHORT).show();
-            if (getLayoutParams() instanceof  RelativeLayout.LayoutParams) {
-                setLayoutParams(new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.MATCH_PARENT,
-                                RelativeLayout.LayoutParams.WRAP_CONTENT));
-                Toast.makeText(getContext(), "onLayout height reset", Toast.LENGTH_SHORT).show();
-            }
-            else if (getLayoutParams() instanceof ViewGroup.MarginLayoutParams){
-                setLayoutParams(
-                        new ViewGroup.MarginLayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
-                                ViewGroup.LayoutParams.WRAP_CONTENT));
-                Toast.makeText(getContext(), "onLayout height reset", Toast.LENGTH_SHORT).show();
-            }
-            else {
-                setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
-                        ViewGroup.LayoutParams.WRAP_CONTENT));
-                Toast.makeText(getContext(), "onLayout height reset", Toast.LENGTH_SHORT).show();
-            }
-            getParent().requestLayout();
             setVisibility(GONE);
+
+            ViewGroup.LayoutParams layoutParams = null;
+
+            if (getLayoutParams() instanceof FrameLayout.LayoutParams) {
+                layoutParams = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
+                        ViewGroup.LayoutParams.WRAP_CONTENT);
+            }
+            else if (getLayoutParams() instanceof RelativeLayout.LayoutParams) {
+                layoutParams = new RelativeLayout.LayoutParams(
+                        RelativeLayout.LayoutParams.MATCH_PARENT,
+                        RelativeLayout.LayoutParams.WRAP_CONTENT);
+            }
+
+            if (layoutParams != null) {
+                setLayoutParams(layoutParams);
+                Toast.makeText(getContext(), "onLayout height reset", Toast.LENGTH_SHORT).show();
+            }
+
+            getParent().requestLayout();
             setVisibility(VISIBLE);
         }
     }
@@ -85,7 +84,8 @@ public class WebViewFixed extends WebView {
         WebViewFixed webViewFixed = new WebViewFixed(context.getApplicationContext());
         Reddit.incrementCreate();
         webViewFixed.setMinimumHeight(
-                (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 48, context.getResources().getDisplayMetrics()));
+                (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 48,
+                        context.getResources().getDisplayMetrics()));
         webViewFixed.getSettings()
                 .setUseWideViewPort(true);
         webViewFixed.getSettings()

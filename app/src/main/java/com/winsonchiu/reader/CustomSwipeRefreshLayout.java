@@ -13,6 +13,8 @@ public class CustomSwipeRefreshLayout extends SwipeRefreshLayout {
 
     private float minScrollY;
     private float initialY;
+    private boolean measured;
+    private boolean refreshing;
 
     public CustomSwipeRefreshLayout(Context context) {
         this(context, null);
@@ -47,5 +49,24 @@ public class CustomSwipeRefreshLayout extends SwipeRefreshLayout {
 
     public void setMinScrollY(float minScrollY) {
         this.minScrollY = minScrollY;
+    }
+
+    @Override
+    public void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+        super.onMeasure(widthMeasureSpec, heightMeasureSpec);
+        if (!measured) {
+            measured = true;
+            setRefreshing(refreshing);
+        }
+    }
+
+    @Override
+    public void setRefreshing(boolean refreshing) {
+        if (measured) {
+            super.setRefreshing(refreshing);
+        }
+        else {
+            this.refreshing = refreshing;
+        }
     }
 }

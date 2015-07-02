@@ -88,7 +88,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
         this.colorLink = colorLink;
         this.controllerComments = controllerComments;
         DisplayMetrics displayMetrics = activity.getResources().getDisplayMetrics();
-        this.thumbnailSize = (int) (displayMetrics.widthPixels / 2 * (displayMetrics.widthPixels > displayMetrics.heightPixels ? 1f : 0.75f));
+        this.thumbnailSize = displayMetrics.widthPixels / 2;
     }
 
     @Override
@@ -111,6 +111,11 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                         disallowListener,
                         recyclerCallback,
                         thumbnailSize) {
+
+                    @Override
+                    public boolean isInHistory() {
+                        return false;
+                    }
 
                     @Override
                     public void loadBackgroundColor() {
@@ -168,6 +173,11 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                                 .inflate(R.layout.row_link, parent, false), eventListenerBase,
                         disallowListener,
                         recyclerCallback) {
+
+                    @Override
+                    public boolean isInHistory() {
+                        return false;
+                    }
 
                     @Override
                     public void onBind(Link link,

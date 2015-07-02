@@ -10,13 +10,16 @@
     <color name="negativeScore">#FF9494FF</color>
 
     <color name="darkThemeTextColor">#FFFFFFFF</color>
-    <color name="darkThemeTextColorAlert">#FFEF5350</color>
-    <color name="darkThemeTextColorMuted">#FFCCCCCC</color>
+    <color name="darkThemeTextColorAlert">#FFF44336</color>
+
+    <color name="darkThemeTextColorMuted">#FFBDBDBD</color>
+    <color name="darkThemeTextColorAlertMuted">#FFC62828</color>
 
     <color name="darkThemeStatusBar">#FF000000</color>
     <color name="darkThemeToolbar">#FF212121</color>
     <color name="darkThemeBackground">#FF252525</color>
     <color name="darkThemeDialog">#FF353535</color>
+    <color name="darkThemeOverlay">#99252525</color>
     <color name="gildedComment">#FFD8C161</color>
     <color name="darkThemeShadowTranslucent">#55303030</color>
 

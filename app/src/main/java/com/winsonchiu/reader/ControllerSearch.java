@@ -39,6 +39,7 @@ public class ControllerSearch {
     private static final String TAG = ControllerSearch.class.getCanonicalName();
 
     private ControllerLinks controllerLinks;
+    private ControllerUser controllerUser;
     private Set<Listener> listeners;
     private Activity activity;
     private SharedPreferences preferences;
@@ -67,7 +68,6 @@ public class ControllerSearch {
         subreddits = new Listing();
         links = new Listing();
         linksSubreddit = new Listing();
-        reloadSubscriptionList();
     }
 
     public void setActivity(Activity activity) {
@@ -116,7 +116,7 @@ public class ControllerSearch {
     public void reloadSubscriptionList() {
         String url;
 
-        if (TextUtils.isEmpty(preferences.getString(AppSettings.ACCOUNT_JSON, ""))) {
+        if (TextUtils.isEmpty(controllerUser.getUser().getName())) {
             url = Reddit.OAUTH_URL + "/subreddits/default?show=all&limit=100";
         }
         else {
@@ -146,6 +146,9 @@ public class ControllerSearch {
                             if (listing.getChildren().size() == 100) {
                                 loadMoreSubscriptions();
                             }
+                            else {
+                                loadContributorSubreddits();
+                            }
 
                         }
                         catch (JSONException e) {
@@ -163,7 +166,7 @@ public class ControllerSearch {
     private void loadMoreSubscriptions() {
         String url;
 
-        if (TextUtils.isEmpty(preferences.getString(AppSettings.ACCOUNT_JSON, ""))) {
+        if (TextUtils.isEmpty(controllerUser.getUser().getName())) {
             url = Reddit.OAUTH_URL + "/subreddits/default?show=all&limit=100&after=" + subredditsSubscribed.getAfter();
         }
         else {
@@ -192,6 +195,94 @@ public class ControllerSearch {
                             }
                             if (listing.getChildren().size() == 100) {
                                 loadMoreSubscriptions();
+                            }
+                            else {
+                                loadContributorSubreddits();
+                            }
+
+                        }
+                        catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }, new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+
+                    }
+                }, 0);
+    }
+
+    private void loadContributorSubreddits() {
+
+        if (TextUtils.isEmpty(controllerUser.getUser().getName())) {
+            return;
+        }
+
+        reddit.loadGet(Reddit.OAUTH_URL + "/subreddits/mine/contributor?show=all&limit=100&after=" + subredditsSubscribed.getAfter(),
+                new Response.Listener<String>() {
+                    @Override
+                    public void onResponse(String response) {
+                        try {
+                            Listing listing = Listing.fromJson(new JSONObject(response));
+                            subredditsSubscribed.addChildren(listing.getChildren());
+                            Collections.sort(subredditsSubscribed.getChildren(), new Comparator<Thing>() {
+                                @Override
+                                public int compare(Thing lhs, Thing rhs) {
+                                    return ((Subreddit) lhs).getDisplayName().compareToIgnoreCase(((Subreddit) rhs).getDisplayName());
+                                }
+                            });
+                            if (TextUtils.isEmpty(query)) {
+                                subreddits = subredditsSubscribed;
+                                for (Listener listener : listeners) {
+                                    listener.getAdapterSearchSubreddits()
+                                            .notifyDataSetChanged();
+                                }
+                            }
+                            if (listing.getChildren().size() == 100) {
+                                loadMoreContributorSubreddits();
+                            }
+
+                        }
+                        catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }, new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+
+                    }
+                }, 0);
+    }
+
+    private void loadMoreContributorSubreddits() {
+
+        reddit.loadGet(Reddit.OAUTH_URL + "/subreddits/mine/contributor?show=all&limit=100",
+                new Response.Listener<String>() {
+                    @Override
+                    public void onResponse(String response) {
+                        try {
+                            Listing listing = Listing.fromJson(new JSONObject(response));
+                            subredditsSubscribed.addChildren(listing.getChildren());
+                            Collections.sort(subredditsSubscribed.getChildren(), new Comparator<Thing>() {
+                                @Override
+                                public int compare(Thing lhs, Thing rhs) {
+                                    return ((Subreddit) lhs).getDisplayName().compareToIgnoreCase(((Subreddit) rhs).getDisplayName());
+                                }
+                            });
+                            if (TextUtils.isEmpty(query)) {
+                                subreddits = subredditsSubscribed;
+                                for (Listener listener : listeners) {
+                                    listener.getAdapterSearchSubreddits()
+                                            .notifyDataSetChanged();
+                                }
+                            }
+                            if (listing.getChildren().size() == 100) {
+                                loadMoreSubscriptions();
+                            }
+                            else {
+                                loadContributorSubreddits();
                             }
 
                         }
@@ -566,8 +657,10 @@ public class ControllerSearch {
         }
     }
 
-    public void setControllerLinks(ControllerLinks controllerLinks) {
+    public void setControllers(ControllerLinks controllerLinks, ControllerUser controllerUser) {
         this.controllerLinks = controllerLinks;
+        this.controllerUser = controllerUser;
+        reloadSubscriptionList();
     }
 
     public interface Listener {

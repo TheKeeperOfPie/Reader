@@ -11,6 +11,7 @@ import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
 import android.media.MediaScannerConnection;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.preference.PreferenceManager;
@@ -64,6 +65,7 @@ public class MainActivity extends YouTubeBaseActivity
     public static final String NAV_PAGE = "navPage";
 
     private static final String TAG = MainActivity.class.getCanonicalName();
+    private static final int REQUEST_SETTINGS = 0;
 
     private FragmentData fragmentData;
 
@@ -262,6 +264,13 @@ public class MainActivity extends YouTubeBaseActivity
 
             @Override
             public void loadUrl(String url) {
+                if (sharedPreferences.getBoolean(AppSettings.PREF_EXTERNAL_BROWSER, false)) {
+                    Intent intent = new Intent(Intent.ACTION_VIEW);
+                    intent.setData(Uri.parse(url));
+                    startActivity(intent);
+                    return;
+                }
+
                 getFragmentManager().beginTransaction()
                         .hide(getFragmentManager().findFragmentById(R.id.frame_fragment))
                         .add(R.id.frame_fragment, FragmentWeb
@@ -584,15 +593,22 @@ public class MainActivity extends YouTubeBaseActivity
                 break;
             case R.id.item_settings:
 
-                getFragmentManager().beginTransaction()
-                        .replace(R.id.frame_fragment,
-                                FragmentPreferences.newInstance(),
-                                FragmentPreferences.TAG)
-                        .commit();
+                Intent intentSettings = new Intent(this, ActivitySettings.class);
+                startActivityForResult(intentSettings, REQUEST_SETTINGS);
                 break;
         }
 
         loadId = -1;
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if (requestCode == REQUEST_SETTINGS) {
+            recreate();
+        }
+
     }
 
     public void loadAccountInfo() {
@@ -622,15 +638,11 @@ public class MainActivity extends YouTubeBaseActivity
                             }, 0);
         }
         else {
-            textAccountName.setText(R.string.add_account);
+            textAccountName.setText(R.string.login);
         }
 
-        viewNavigation.getMenu().findItem(R.id.item_profile).setVisible(visible);
-        viewNavigation.getMenu().findItem(R.id.item_profile).setEnabled(visible);
         viewNavigation.getMenu().findItem(R.id.item_inbox).setVisible(visible);
         viewNavigation.getMenu().findItem(R.id.item_inbox).setEnabled(visible);
-        viewNavigation.getMenu().findItem(R.id.item_settings).setVisible(visible);
-        viewNavigation.getMenu().findItem(R.id.item_settings).setEnabled(visible);
     }
 
     private void onClickAccount() {
@@ -653,19 +665,11 @@ public class MainActivity extends YouTubeBaseActivity
 
             // TODO: Implement a history stack inside the Controllers
 
-            if (!url.getHost()
-                    .contains("redd")) {
-                FragmentTransaction fragmentTransaction = getFragmentManager().beginTransaction()
-                        .add(R.id.frame_fragment, FragmentWeb
+            if (!url.getHost().contains("reddit")) {
+                getFragmentManager().beginTransaction()
+                        .replace(R.id.frame_fragment, FragmentWeb
                                 .newInstance(urlString), FragmentWeb.TAG)
-                        .addToBackStack(null);
-
-                Fragment fragment = getFragmentManager().findFragmentById(R.id.frame_fragment);
-                if (fragment != null) {
-                    fragmentTransaction.hide(fragment);
-                }
-
-                fragmentTransaction.commit();
+                        .commit();
                 return;
             }
 
@@ -811,21 +815,27 @@ public class MainActivity extends YouTubeBaseActivity
     public void startActivity(Intent intent) {
         Log.d(TAG, "startActivity: " + intent.toString());
 
-        if (Intent.ACTION_VIEW.equals(intent.getAction()) && TextUtils.equals(
-                getApplicationContext().getPackageName(), intent.getStringExtra(
-                        Browser.EXTRA_APPLICATION_ID))) {
+//        Log.d(TAG, "three: " + (TextUtils.equals(
+//                getApplicationContext().getPackageName(), intent.getStringExtra(
+//                        Browser.EXTRA_APPLICATION_ID))));
+
+        if (!sharedPreferences.getBoolean(AppSettings.PREF_EXTERNAL_BROWSER, false) && Intent.ACTION_VIEW.equals(intent.getAction())) {
             String urlString = intent.getDataString();
+
+            Log.d(TAG, "index: " + urlString.indexOf("reddit.com"));
+
             Intent intentActivity = new Intent(this, MainActivity.class);
             intentActivity.setAction(Intent.ACTION_VIEW);
             if (urlString.startsWith("/r/") || urlString.startsWith("/u/")) {
                 intentActivity.putExtra(REDDIT_PAGE, Reddit.BASE_URL + urlString);
-                startActivity(intentActivity);
+                Log.d(TAG, "startActivity with REDDIT_PAGE");
+                super.startActivity(intentActivity);
 
             }
-            else if (urlString.toLowerCase()
-                    .contains("reddit")) {
+            else if (urlString.indexOf("reddit.com") < 20) {
                 intentActivity.putExtra(REDDIT_PAGE, urlString);
-                startActivity(intentActivity);
+                Log.d(TAG, "startActivity with REDDIT_PAGE");
+                super.startActivity(intentActivity);
             }
             else if (URLUtil.isValidUrl(urlString)) {
                 FragmentTransaction fragmentTransaction = getFragmentManager().beginTransaction()
@@ -946,4 +956,9 @@ public class MainActivity extends YouTubeBaseActivity
         mDrawerLayout.openDrawer(GravityCompat.START);
     }
 
+    @Override
+    protected void onPause() {
+        AppSettings.saveHistory(sharedPreferences);
+        super.onPause();
+    }
 }

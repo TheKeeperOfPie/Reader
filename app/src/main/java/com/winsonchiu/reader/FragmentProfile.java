@@ -9,6 +9,7 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.SearchView;
 import android.support.v7.widget.Toolbar;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
@@ -101,6 +102,11 @@ public class FragmentProfile extends FragmentBase implements Toolbar.OnMenuItemC
         menu.findItem(R.id.item_sort_hot).setChecked(true);
         menu.findItem(R.id.item_sort_time).setTitle(
                 getString(R.string.time) + Reddit.TIME_SEPARATOR + getString(R.string.item_sort_all));
+
+        if (TextUtils.isEmpty(mListener.getControllerUser().getUser().getName())) {
+            itemSearch.expandActionView();
+        }
+
 //        resetSubmenuSelected();
     }
 
@@ -393,6 +399,12 @@ public class FragmentProfile extends FragmentBase implements Toolbar.OnMenuItemC
         if (hidden) {
             adapterProfile.pauseViewHolders();
         }
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        swipeRefreshProfile.setRefreshing(mListener.getControllerProfile().isLoading());
     }
 
     @Override

@@ -8,6 +8,7 @@
     >
 
     <RelativeLayout
+        android:id="@+id/layout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="?attr/selectableItemBackground"
@@ -225,15 +226,25 @@
 
         </RelativeLayout>
 
-        <View
-            android:id="@+id/view_divider"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_below="@id/layout_container_reply"
-            android:layout_alignParentBottom="true"
-            android:background="?android:listDivider"
-            />
-
     </RelativeLayout>
+
+    <View
+        android:id="@+id/view_overlay"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_alignTop="@id/layout"
+        android:layout_alignBottom="@id/layout"
+        android:background="@color/darkThemeOverlay"
+        android:visibility="gone"
+        />
+
+    <View
+        android:id="@+id/view_divider"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/layout"
+        android:layout_alignParentBottom="true"
+        android:background="?android:listDivider"
+        />
 
 </RelativeLayout>

@@ -138,4 +138,16 @@
     <string name="inbox_page_inbox">Inbox</string>
     <string name="inbox_page_unread">Unread</string>
     <string name="inbox_page_sent">Sent</string>
+    <string name="pref_save_history">Save history</string>
+    <string name="pref_save_history_summary">Keep track of which links have been viewed</string>
+    <string name="pref_clear_history">Clear history</string>
+    <string name="pref_dim_posts">Dim posts</string>
+    <string name="pref_dim_posts_summary">Darken viewed links</string>
+    <string name="item_refresh">Refresh</string>
+    <string name="pref_external_browser">Use external browser</string>
+    <string name="pref_external_browser_summary">Open links outside of Reader</string>
+    <string name="title_activity_activity_settings">ActivitySettings</string>
+    <string name="confirm_logout">Logout?</string>
+    <string name="url_copied">URL copied to clipboard</string>
+    <string name="sidebar_note_mobile">Note that not all sidebar links work on mobile</string>
 </resources>

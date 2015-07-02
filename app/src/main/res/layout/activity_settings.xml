@@ -3,7 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="com.winsonchiu.reader.FragmentAuth"
+    tools:context="com.winsonchiu.reader.ActivitySettings"
     >
 
     <include
@@ -13,20 +13,11 @@
         android:layout_alignParentTop="true"
         />
 
-    <com.winsonchiu.reader.CustomSwipeRefreshLayout
-        android:id="@+id/swipe_refresh_auth"
+    <FrameLayout
+        android:id="@+id/frame_fragment"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_below="@id/toolbar"
-        >
-
-        <WebView
-            android:id="@+id/web_auth"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_below="@id/toolbar"
-            />
-
-    </com.winsonchiu.reader.CustomSwipeRefreshLayout>
+        />
 
 </RelativeLayout>

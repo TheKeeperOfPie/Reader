@@ -10,6 +10,7 @@ buildscript {
     }
 }
 apply plugin: 'com.android.application'
+apply plugin: 'com.zeroturnaround.jrebel.android'
 apply plugin: 'io.fabric'
 
 repositories {
@@ -25,8 +26,8 @@ android {
         applicationId "com.winsonchiu.reader"
         minSdkVersion 17
         targetSdkVersion 22
-        versionCode 25
-        versionName "0.9.7"
+        versionCode 26
+        versionName "0.9.8"
     }
     buildTypes {
         release {

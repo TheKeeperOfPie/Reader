@@ -1,6 +1,9 @@
 package com.winsonchiu.reader;
 
 import android.app.Activity;
+import android.content.ClipData;
+import android.content.ClipboardManager;
+import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.net.Uri;
@@ -20,6 +23,7 @@ import android.view.ViewGroup;
 import android.webkit.WebChromeClient;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.widget.ProgressBar;
 import android.widget.Toast;
 
 public class FragmentWeb extends FragmentBase {
@@ -31,12 +35,12 @@ public class FragmentWeb extends FragmentBase {
 
     private FragmentListenerBase mListener;
     private WebView webView;
-    private CustomSwipeRefreshLayout swipeRefreshWeb;
     private Activity activity;
     private MenuItem itemSearch;
     private Toolbar toolbarActions;
     private Toolbar toolbar;
     private Menu menu;
+    private ProgressBar progressBar;
 
     public static FragmentWeb newInstance(String url) {
         FragmentWeb fragment = new FragmentWeb();
@@ -101,6 +105,9 @@ public class FragmentWeb extends FragmentBase {
             @Override
             public boolean onMenuItemClick(MenuItem item) {
                 switch (item.getItemId()) {
+                    case R.id.item_refresh:
+                        webView.reload();
+                        break;
                     case R.id.item_open_in_browser:
                         Intent intent = new Intent(Intent.ACTION_VIEW);
                         intent.setData(Uri.parse(webView.getUrl()));
@@ -129,6 +136,18 @@ public class FragmentWeb extends FragmentBase {
 
         toolbar = (Toolbar) view.findViewById(R.id.toolbar);
         toolbar.setTitle(getString(R.string.loading_web_page));
+        toolbar.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                ClipboardManager clipboard = (ClipboardManager) activity.getSystemService(
+                                Context.CLIPBOARD_SERVICE);
+                ClipData clip = ClipData.newPlainText(
+                        getResources().getString(R.string.comment),
+                        webView.getUrl());
+                clipboard.setPrimaryClip(clip);
+                Toast.makeText(activity, R.string.url_copied, Toast.LENGTH_SHORT).show();
+            }
+        });
         toolbar.setNavigationIcon(R.drawable.ic_arrow_back_white_24dp);
         toolbar.setNavigationOnClickListener(new View.OnClickListener() {
             @Override
@@ -138,14 +157,7 @@ public class FragmentWeb extends FragmentBase {
         });
         setUpOptionsMenu();
 
-        swipeRefreshWeb = (CustomSwipeRefreshLayout) view.findViewById(R.id.swipe_refresh_web);
-        swipeRefreshWeb.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
-            @Override
-            public void onRefresh() {
-                webView.reload();
-            }
-        });
-        swipeRefreshWeb.setMinScrollY(TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 150, getResources().getDisplayMetrics()));
+        progressBar = (ProgressBar) view.findViewById(R.id.progress_web);
 
         webView = (WebView) view.findViewById(R.id.web);
         webView.setBackgroundColor(getResources().getColor(R.color.darkThemeBackground));
@@ -153,14 +165,14 @@ public class FragmentWeb extends FragmentBase {
             @Override
             public void onPageStarted(WebView view, String url, Bitmap favicon) {
                 super.onPageStarted(view, url, favicon);
-                toolbar.setTitle(view.getTitle());
+                toolbar.setTitle(url);
+                progressBar.setVisibility(View.VISIBLE);
             }
 
             @Override
             public void onPageFinished(WebView view, String url) {
                 super.onPageFinished(view, url);
-                swipeRefreshWeb.setRefreshing(false);
-                webView.setBackgroundColor(0xFFFFFFFF);
+                progressBar.setVisibility(View.GONE);
                 toolbar.setTitle(view.getTitle());
             }
 
@@ -177,8 +189,7 @@ public class FragmentWeb extends FragmentBase {
             @Override
             public void onProgressChanged(WebView view, int newProgress) {
                 super.onProgressChanged(view, newProgress);
-                webView.setBackgroundColor(
-                        ColorUtils.setAlphaComponent(0xFFFFFFFF, (int) (newProgress / 100f * 255)));
+                progressBar.setProgress(newProgress);
             }
         });
         webView.getSettings().setUseWideViewPort(true);
@@ -189,15 +200,9 @@ public class FragmentWeb extends FragmentBase {
         webView.getSettings().setDomStorageEnabled(true);
         webView.getSettings().setDatabaseEnabled(true);
         webView.getSettings().setAppCacheEnabled(true);
+        webView.setBackgroundColor(0xFFFFFFFF);
         webView.setScrollBarStyle(View.SCROLLBARS_INSIDE_OVERLAY);
-
-        swipeRefreshWeb.post(new Runnable() {
-            @Override
-            public void run() {
-                swipeRefreshWeb.setRefreshing(true);
-                webView.loadUrl(url);
-            }
-        });
+        webView.loadUrl(url);
 
         toolbarActions = (Toolbar) view.findViewById(R.id.toolbar_actions);
         toolbarActions.inflateMenu(R.menu.menu_web_search);
@@ -254,9 +259,14 @@ public class FragmentWeb extends FragmentBase {
     public boolean navigateBack() {
         if (webView.canGoBack()) {
             webView.goBack();
-            return false;
         }
-        return true;
+        else if (itemSearch.isActionViewExpanded()) {
+            itemSearch.collapseActionView();
+        }
+        else {
+            return true;
+        }
+        return false;
     }
 
     @Override

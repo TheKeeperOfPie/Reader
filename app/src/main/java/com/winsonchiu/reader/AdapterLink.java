@@ -367,7 +367,6 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         protected AdapterAlbum adapterAlbum;
         protected YouTubePlayer youTubePlayer;
 
-        protected int viewPagerMargin;
         protected int toolbarItemWidth;
         protected int titleMargin;
 
@@ -393,6 +392,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         protected boolean showSubreddit;
         protected String userName;
         protected SharedPreferences preferences;
+        protected View viewOverlay;
 
         public ViewHolderBase(View itemView,
                 EventListener eventListener,
@@ -437,6 +437,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                 itemDelete.setVisible(isAuthor);
                 itemDelete.setEnabled(isAuthor);
                 setToolbarMenuVisibility();
+                viewOverlay.setVisibility(View.GONE);
             }
 
             toolbarActions.post(new Runnable() {
@@ -503,11 +504,9 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             editTextReply = (EditText) itemView.findViewById(R.id.edit_text_reply);
             buttonSendReply = (Button) itemView.findViewById(R.id.button_send_reply);
             viewYouTube = (YouTubePlayerView) itemView.findViewById(R.id.youtube);
+            viewOverlay = itemView.findViewById(R.id.view_overlay);
 
-            viewPagerMargin = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 48,
-                    itemView.getResources().getDisplayMetrics());
             viewPagerFull.setAdapter(adapterAlbum);
-            viewPagerFull.setMinimumHeight(viewPagerMargin);
             viewPagerFull.setPageTransformer(false, new ViewPager.PageTransformer() {
                 @Override
                 public void transformPage(View page, float position) {
@@ -752,6 +751,9 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
 
         public void loadFull() {
 
+            AppSettings.getHistorySet(preferences).add(link.getName());
+            viewOverlay.setVisibility(View.GONE);
+
             // TODO: Toggle visibility of web and video views
 
             String urlString = link.getUrl();
@@ -887,6 +889,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         }
 
         public void onClickThumbnail() {
+
             if (link.isSelf()) {
                 if (textThreadSelf.isShown()) {
                     textThreadSelf.setVisibility(View.GONE);
@@ -906,10 +909,16 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         }
 
         public void loadComments() {
+
+            AppSettings.getHistorySet(preferences).add(link.getName());
+            viewOverlay.setVisibility(View.GONE);
+
             eventListener.onClickComments(link, this);
         }
 
         public void loadSelfText() {
+            AppSettings.getHistorySet(preferences).add(link.getName());
+            viewOverlay.setVisibility(View.GONE);
             expandFull(true);
             textThreadSelf.setText(Reddit.getTrimmedHtml(link.getSelfTextHtml()));
             textThreadSelf.setVisibility(View.VISIBLE);
@@ -939,6 +948,10 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
 
         public void setTextInfo(Link link) {
 
+        }
+
+        public boolean isInHistory() {
+            return AppSettings.getHistorySet(preferences).contains(link.getName());
         }
 
         public void attemptLoadImage() {
@@ -1019,13 +1032,13 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
 
         public void setAlbum(Link link, Album album) {
             link.setAlbum(album);
-            viewPagerFull.setCurrentItem(0);
             ViewGroup.LayoutParams layoutParams = viewPagerFull.getLayoutParams();
-            layoutParams.height = recyclerCallback.getRecyclerHeight() - viewPagerMargin;
+            layoutParams.height = recyclerCallback.getRecyclerHeight();
             viewPagerFull.setLayoutParams(layoutParams);
             viewPagerFull.setVisibility(View.VISIBLE);
             viewPagerFull.requestLayout();
             adapterAlbum.setAlbum(album);
+            viewPagerFull.setCurrentItem(0, false);
             recyclerCallback.scrollTo(getAdapterPosition());
         }
 
@@ -1066,11 +1079,16 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
 
         private void loadVideo(String url, float heightRatio) {
             Log.d(TAG, "loadVideo: " + url + " : " + heightRatio);
+            int height =  (int) (ViewHolderBase.this.itemView
+                    .getWidth() * heightRatio);
+            if (height > recyclerCallback.getRecyclerHeight()) {
+                height = recyclerCallback.getRecyclerHeight();
+            }
+
             Uri uri = Uri.parse(url);
             videoFull.setVideoURI(uri);
             videoFull.setVisibility(View.VISIBLE);
-            videoFull.getLayoutParams().height = (int) (ViewHolderBase.this.itemView
-                    .getWidth() * heightRatio);
+            videoFull.getLayoutParams().height = height;
             videoFull.invalidate();
             videoFull.setOnCompletionListener(
                     new MediaPlayer.OnCompletionListener() {
@@ -1258,6 +1276,10 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             adapterAlbum.setAlbum(null);
 
             setTextInfo(link);
+
+            if (preferences.getBoolean(AppSettings.PREF_DIM_POSTS, true)) {
+                viewOverlay.setVisibility(isInHistory() ? View.VISIBLE : View.GONE);
+            }
 
         }
 

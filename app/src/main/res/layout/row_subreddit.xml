@@ -30,6 +30,7 @@
         android:layout_alignParentStart="true"
         android:layout_marginStart="@dimen/activity_horizontal_margin"
         android:layout_marginEnd="@dimen/activity_horizontal_margin"
+        android:layout_toStartOf="@id/button_open"
         android:textSize="14sp"
         android:clickable="false"
         android:longClickable="false"

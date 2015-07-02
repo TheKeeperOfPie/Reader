@@ -7,17 +7,17 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.Toolbar;
 import android.text.TextUtils;
 import android.util.Log;
+import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.webkit.CookieManager;
-import android.webkit.ValueCallback;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
-import android.widget.Toast;
 
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
@@ -40,6 +40,7 @@ public class FragmentAuth extends FragmentBase {
     private Reddit reddit;
     private String state;
     private Toolbar toolbar;
+    private CustomSwipeRefreshLayout swipeRefreshAuth;
 
     public static FragmentAuth newInstance() {
         FragmentAuth fragment = new FragmentAuth();
@@ -75,17 +76,29 @@ public class FragmentAuth extends FragmentBase {
             }
         });
 
+
+        swipeRefreshAuth = (CustomSwipeRefreshLayout) view.findViewById(R.id.swipe_refresh_auth);
+        swipeRefreshAuth.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+            @Override
+            public void onRefresh() {
+                webAuth.reload();
+            }
+        });
+        swipeRefreshAuth.setMinScrollY(TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 150,
+                getResources().getDisplayMetrics()));
+
         webAuth = (WebView) view.findViewById(R.id.web_auth);
         webAuth.setWebViewClient(new WebViewClient() {
             @Override
             public void onPageStarted(WebView view, String url, Bitmap favicon) {
+                swipeRefreshAuth.setRefreshing(true);
                 Uri uri = Uri.parse(url);
                 if (uri.getHost()
                         .equals(Reddit.REDIRECT_URI.replaceFirst("https://", ""))) {
                     String error = uri.getQueryParameter("error");
                     String returnedState = uri.getQueryParameter("state");
                     if (!TextUtils.isEmpty(error) || !state.equals(returnedState)) {
-                        mListener.onAuthFinished(false);
+                        destroy(false);
                         return;
                     }
                     // TODO: Failsafe with error and state
@@ -133,6 +146,12 @@ public class FragmentAuth extends FragmentBase {
             }
 
             @Override
+            public void onPageFinished(WebView view, String url) {
+                super.onPageFinished(view, url);
+                swipeRefreshAuth.setRefreshing(false);
+            }
+
+            @Override
             public void onReceivedError(WebView view,
                     int errorCode,
                     String description,
@@ -157,38 +176,18 @@ public class FragmentAuth extends FragmentBase {
                                 .putString(AppSettings.ACCOUNT_JSON,
                                         response)
                                 .commit();
-                        reddit.loadGet(
-                                Reddit.OAUTH_URL + "/subreddits/mine/subscriber?limit=100&show=all",
-                                new Response.Listener<String>() {
-                                    @Override
-                                    public void onResponse(String response) {
-                                        preferences.edit()
-                                                .putString(
-                                                        AppSettings.SUBSCRIBED_SUBREDDITS,
-                                                        response)
-                                                .commit();
-                                        Log.d(TAG,
-                                                "subscribed response: " + response);
-                                    }
-                                }, new Response.ErrorListener() {
-                                    @Override
-                                    public void onErrorResponse(VolleyError error) {
-
-                                    }
-                                }, 0);
-                        mListener.onAuthFinished(true);
+                        destroy(true);
                     }
                 }, new Response.ErrorListener() {
                     @Override
                     public void onErrorResponse(VolleyError error) {
                         // TODO: Check user info error
-                        destroy();
-                        mListener.onAuthFinished(false);
+                        destroy(false);
                     }
                 }, 0);
     }
 
-    private void destroy() {
+    private void destroy(boolean success) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             CookieManager.getInstance().removeAllCookies(null);
         }
@@ -196,7 +195,7 @@ public class FragmentAuth extends FragmentBase {
             CookieManager.getInstance().removeAllCookie();
         }
         webAuth.destroy();
-        getFragmentManager().popBackStack();
+        mListener.onAuthFinished(success);
     }
 
     @Override
@@ -246,7 +245,7 @@ public class FragmentAuth extends FragmentBase {
             webAuth.goBack();
             return false;
         }
-        destroy();
+        destroy(false);
         return true;
     }
 

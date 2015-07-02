@@ -717,9 +717,10 @@ public class ControllerComments {
 
         Log.d(TAG, "commentIndex: " + commentIndex);
 
+        List<Thing> things = listingComments.getChildren();
+
         for (int index = commentIndex - 1; index >= 0; index--) {
-            if (((Comment) listingComments.getChildren()
-                    .get(index)).getLevel() == 0) {
+            if (((Comment) things.get(index)).getLevel() == 0) {
                 return index;
             }
         }
@@ -730,10 +731,11 @@ public class ControllerComments {
     public int getNextCommentPosition(int commentIndex) {
         Log.d(TAG, "commentIndex: " + commentIndex);
 
+        List<Thing> things = listingComments.getChildren();
+
         for (int index = commentIndex + 1; index < listingComments.getChildren()
                 .size(); index++) {
-            if (((Comment) listingComments.getChildren()
-                    .get(index)).getLevel() == 0) {
+            if (((Comment) things.get(index)).getLevel() == 0) {
                 return index;
             }
         }

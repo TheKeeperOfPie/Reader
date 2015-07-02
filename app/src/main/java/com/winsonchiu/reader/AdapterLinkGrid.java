@@ -64,7 +64,7 @@ public class AdapterLinkGrid extends AdapterLink {
 
         DisplayMetrics displayMetrics = resources.getDisplayMetrics();
 
-        this.thumbnailSize = displayMetrics.widthPixels / spanCount;
+        this.thumbnailSize = displayMetrics.widthPixels / 2;
     }
 
     @Override

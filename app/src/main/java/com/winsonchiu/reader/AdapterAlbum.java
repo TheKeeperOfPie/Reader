@@ -146,6 +146,7 @@ public class AdapterAlbum extends PagerAdapter {
         protected ImageButton buttonInfo;
         protected ImageButton buttonDownload;
         protected TextView textAlbumIndicator;
+        protected HorizontalScrollView scrollTitle;
         protected WebViewFixed webView;
 
         public ViewHolder(View view, EventListener listener, DisallowListener disallowListener) {
@@ -153,6 +154,7 @@ public class AdapterAlbum extends PagerAdapter {
             this.disallowListener = disallowListener;
             layoutRelative = (RelativeLayout) view;
             textAlbumIndicator = (TextView) view.findViewById(R.id.text_album_indicator);
+            scrollTitle = (HorizontalScrollView) view.findViewById(R.id.scroll_title);
             textTitle = (TextView) view.findViewById(R.id.text_image_title);
             textDescription = (TextView) view.findViewById(R.id.text_image_description);
             layoutInfo = (RelativeLayout) view.findViewById(R.id.layout_info);
@@ -196,6 +198,8 @@ public class AdapterAlbum extends PagerAdapter {
                 textDescription.setText(image.getDescription());
                 layoutInfo.setVisibility(View.VISIBLE);
             }
+
+            scrollTitle.scrollTo(0, 0);
 
         }
 

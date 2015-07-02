@@ -43,5 +43,7 @@
 
     <string name="prefs_category_display">Display</string>
     <string name="prefs_category_user">User</string>
+    <string name="prefs_category_mail">Mail</string>
+    <string name="prefs_category_behavior">Behavior</string>
 
 </resources>

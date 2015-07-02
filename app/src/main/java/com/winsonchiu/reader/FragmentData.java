@@ -37,7 +37,7 @@ public class FragmentData extends FragmentBase {
         controllerSearch = new ControllerSearch(activity);
         controllerUser = new ControllerUser(activity);
         controllerProfile.setControllerUser(controllerUser);
-        controllerSearch.setControllerLinks(controllerLinks);
+        controllerSearch.setControllers(controllerLinks, controllerUser);
     }
 
     public void resetActivity(Activity activity) {

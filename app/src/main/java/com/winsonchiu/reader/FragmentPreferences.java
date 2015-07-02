@@ -5,12 +5,14 @@ import android.app.AlarmManager;
 import android.app.Fragment;
 import android.app.PendingIntent;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.preference.ListPreference;
 import android.preference.Preference;
 import android.preference.PreferenceFragment;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.Toolbar;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -24,10 +26,9 @@ public class FragmentPreferences extends PreferenceFragment
         implements SharedPreferences.OnSharedPreferenceChangeListener {
 
     public static final String TAG = FragmentPreferences.class.getCanonicalName();
-    
-    private Toolbar toolbar;
-    private FragmentListenerBase mListener;
+
     private Activity activity;
+    private SharedPreferences preferences;
 
     public static Fragment newInstance() {
         return new FragmentPreferences();
@@ -38,6 +39,8 @@ public class FragmentPreferences extends PreferenceFragment
         super.onCreate(savedInstanceState);
         addPreferencesFromResource(R.xml.prefs);
 
+        preferences = getPreferenceManager().getSharedPreferences();
+
         bindPreferenceListenerSummary(findPreference(AppSettings.PREF_INBOX_CHECK_INTERVAL));
         bindPreferenceListenerSummary(findPreference(AppSettings.PREF_GRID_THUMBNAIL_SIZE));
 
@@ -45,65 +48,63 @@ public class FragmentPreferences extends PreferenceFragment
                 new Preference.OnPreferenceClickListener() {
                     @Override
                     public boolean onPreferenceClick(Preference preference) {
-                        SharedPreferences preferences = getPreferenceManager().getSharedPreferences();
 
-                        // TODO: Manually invalidate access token
-                        preferences.edit()
-                                .putString(AppSettings.ACCESS_TOKEN, "")
-                                .apply();
-                        preferences.edit()
-                                .putString(AppSettings.REFRESH_TOKEN, "")
-                                .apply();
-                        preferences.edit()
-                                .putString(AppSettings.ACCOUNT_JSON, "")
-                                .apply();
-                        preferences.edit()
-                                .putString(AppSettings.SUBSCRIBED_SUBREDDITS, "")
-                                .apply();
-                        Toast.makeText(activity, "Logged out", Toast.LENGTH_SHORT).show();
-                        activity.recreate();
+                        new AlertDialog.Builder(activity)
+                                .setTitle(R.string.confirm_logout)
+                                .setPositiveButton(R.string.ok,
+                                        new DialogInterface.OnClickListener() {
+                                            @Override
+                                            public void onClick(DialogInterface dialog, int which) {
+                                                // TODO: Manually invalidate access token
+                                                preferences.edit()
+                                                        .putString(AppSettings.ACCESS_TOKEN, "")
+                                                        .apply();
+                                                preferences.edit()
+                                                        .putString(AppSettings.REFRESH_TOKEN, "")
+                                                        .apply();
+                                                preferences.edit()
+                                                        .putString(AppSettings.ACCOUNT_JSON, "")
+                                                        .apply();
+                                                preferences.edit()
+                                                        .putString(AppSettings.SUBSCRIBED_SUBREDDITS, "")
+                                                        .apply();
+                                                Toast.makeText(activity, "Logged out", Toast.LENGTH_SHORT).show();
+                                                activity.recreate();
+                                            }
+                                        })
+                                .setNegativeButton(R.string.cancel,
+                                        new DialogInterface.OnClickListener() {
+                                            @Override
+                                            public void onClick(DialogInterface dialog, int which) {
+
+                                            }
+                                        })
+                                .show();
+                        return true;
+                    }
+                });
+
+        findPreference(AppSettings.PREF_CLEAR_HISTORY).setOnPreferenceClickListener(
+                new Preference.OnPreferenceClickListener() {
+                    @Override
+                    public boolean onPreferenceClick(Preference preference) {
+                        AppSettings.clearHistory(preferences);
+                        Toast.makeText(activity, "History cleared", Toast.LENGTH_SHORT).show();
                         return true;
                     }
                 });
     }
 
     @Override
-    public View onCreateView(LayoutInflater inflater,
-            ViewGroup container,
-            Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.fragment_preferences, container, false);
-
-        toolbar = (Toolbar) view.findViewById(R.id.toolbar);
-        toolbar.setTitle(R.string.settings);
-        toolbar.setNavigationIcon(R.drawable.ic_menu_white_24dp);
-        toolbar.setNavigationOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                mListener.openDrawer();
-            }
-        });
-
-        return view;
-    }
-
-    @Override
     public void onAttach(Activity activity) {
         super.onAttach(activity);
         this.activity = activity;
-        try {
-            mListener = (FragmentListenerBase) activity;
-        }
-        catch (ClassCastException e) {
-            throw new ClassCastException(activity.toString()
-                    + " must implement OnFragmentInteractionListener");
-        }
     }
 
     @Override
     public void onDetach() {
         super.onDetach();
         activity = null;
-        mListener = null;
     }
 
     @Override
