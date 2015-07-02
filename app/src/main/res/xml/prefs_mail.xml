@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <PreferenceCategory
+        android:key="prefs_category_mail"
+        android:title="@string/prefs_category_mail"
+        >
+
+        <ListPreference
+            android:key="pref_inbox_check_interval"
+            android:title="@string/pref_inbox_check_interval"
+            android:entries="@array/pref_inbox_check_interval_entries"
+            android:entryValues="@array/pref_inbox_check_interval_values"
+            android:defaultValue="1800000"
+            android:negativeButtonText="@null"
+            android:positiveButtonText="@null" />
+
+    </PreferenceCategory>
+
+</PreferenceScreen>

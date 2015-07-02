@@ -16,7 +16,7 @@
 
     <View
         android:id="@+id/view_indicator"
-        android:layout_width="8dp"
+        android:layout_width="6dp"
         android:layout_height="match_parent"
         android:layout_alignTop="@+id/text_comment"
         android:layout_alignBottom="@+id/text_info"

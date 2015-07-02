@@ -551,6 +551,13 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
                 mListener.getControllerLinks()
                         .setSort(sort);
                 flashSearchView();
+
+                if (layoutManager instanceof LinearLayoutManager) {
+                    ((LinearLayoutManager) layoutManager).scrollToPositionWithOffset(0, 0);
+                }
+                else if (layoutManager instanceof StaggeredGridLayoutManager) {
+                    ((StaggeredGridLayoutManager) layoutManager).scrollToPositionWithOffset(0, 0);
+                }
                 return true;
             }
         }
@@ -562,6 +569,13 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
                 itemSortTime.setTitle(
                         getString(R.string.time) + Reddit.TIME_SEPARATOR + item.toString());
                 flashSearchView();
+
+                if (layoutManager instanceof LinearLayoutManager) {
+                    ((LinearLayoutManager) layoutManager).scrollToPositionWithOffset(0, 0);
+                }
+                else if (layoutManager instanceof StaggeredGridLayoutManager) {
+                    ((StaggeredGridLayoutManager) layoutManager).scrollToPositionWithOffset(0, 0);
+                }
                 return true;
             }
         }

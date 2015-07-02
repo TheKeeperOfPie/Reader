@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <PreferenceCategory
+        android:key="prefs_category_behavior"
+        android:title="@string/prefs_category_behavior"
+        >
+
+        <CheckBoxPreference
+            android:key="pref_save_history"
+            android:title="@string/pref_save_history"
+            android:summary="@string/pref_save_history_summary"
+            android:defaultValue="true"
+            />
+
+        <CheckBoxPreference
+            android:key="pref_dim_posts"
+            android:title="@string/pref_dim_posts"
+            android:summary="@string/pref_dim_posts_summary"
+            android:defaultValue="true"
+            />
+
+        <Preference
+            android:key="pref_clear_history"
+            android:title="@string/pref_clear_history"
+            />
+
+        <CheckBoxPreference
+            android:key="pref_external_browser"
+            android:title="@string/pref_external_browser"
+            android:summary="@string/pref_external_browser_summary"
+            android:defaultValue="false"
+            />
+
+    </PreferenceCategory>
+
+</PreferenceScreen>

@@ -3,7 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="com.winsonchiu.reader.ActivitySettings"
+    tools:context="com.winsonchiu.reader.settings.FragmentPreferences.ActivitySettings"
     >
 
     <include
@@ -14,7 +14,7 @@
         />
 
     <FrameLayout
-        android:id="@+id/frame_fragment"
+        android:id="@id/frame_fragment"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_below="@id/toolbar"

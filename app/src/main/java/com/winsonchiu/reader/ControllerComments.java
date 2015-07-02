@@ -13,7 +13,6 @@ import com.winsonchiu.reader.data.Comment;
 import com.winsonchiu.reader.data.Link;
 import com.winsonchiu.reader.data.Listing;
 import com.winsonchiu.reader.data.Reddit;
-import com.winsonchiu.reader.data.Subreddit;
 import com.winsonchiu.reader.data.Thing;
 
 import org.json.JSONArray;
@@ -45,6 +44,7 @@ public class ControllerComments {
     private Reddit reddit;
     private boolean isLoading;
     private boolean isCommentThread;
+    private Sort sort;
 
     public ControllerComments(Activity activity,
             String subreddit,
@@ -53,6 +53,7 @@ public class ControllerComments {
         this.listeners = new HashSet<>();
         this.subreddit = subreddit;
         this.linkId = linkId;
+        this.sort = Sort.CONFIDENCE;
     }
 
     public void setActivity(Activity activity) {
@@ -67,6 +68,7 @@ public class ControllerComments {
         listeners.add(listener);
         setTitle();
         listener.getAdapter().notifyDataSetChanged();
+        listener.setSort(sort);
         listener.setRefreshing(isLoading());
         listener.setIsCommentThread(isCommentThread);
     }
@@ -140,7 +142,7 @@ public class ControllerComments {
         setRefreshing(true);
 
         reddit.loadGet(
-                Reddit.OAUTH_URL + "/r/" + subreddit + "/comments/" + linkId + "?depth=10&showmore=true&showedits=true&limit=100",
+                Reddit.OAUTH_URL + "/r/" + subreddit + "/comments/" + linkId + "?depth=10&showmore=true&showedits=true&limit=100&sort=" + sort.toString(),
                 new Response.Listener<String>() {
                     @Override
                     public void onResponse(String response) {
@@ -189,7 +191,7 @@ public class ControllerComments {
         setRefreshing(true);
 
         reddit.loadGet(
-                Reddit.OAUTH_URL + "/r/" + subreddit + "/comments/" + linkId + "?depth=10&showmore=true&showedits=true&limit=100&context=3&comment=" + commentId,
+                Reddit.OAUTH_URL + "/r/" + subreddit + "/comments/" + linkId + "?depth=10&showmore=true&showedits=true&limit=100&context=3&comment=" + commentId + "&sort=" + sort.toString(),
                 new Response.Listener<String>() {
                     @Override
                     public void onResponse(String response) {
@@ -264,6 +266,8 @@ public class ControllerComments {
     }
 
     public void loadNestedComments(final Comment moreComment) {
+
+        setRefreshing(true);
 
         Log.d(TAG, "loadNestedComments");
 
@@ -656,6 +660,12 @@ public class ControllerComments {
     }
 
     public void loadMoreComments() {
+        Comment comment = (Comment) link.getComments().getChildren().get(link.getComments().getChildren().size() - 1);
+
+        if (comment.isMore()) {
+            loadNestedComments(comment);
+        }
+
     }
 
     public boolean hasChildren(Comment comment) {
@@ -743,7 +753,19 @@ public class ControllerComments {
         return commentIndex;
     }
 
+    public void setSort(Sort sort) {
+        if (this.sort != sort) {
+            this.sort = sort;
+            reloadAllComments();
+        }
+    }
+
+    public Sort getSort() {
+        return sort;
+    }
+
     public interface Listener extends ControllerListener{
+        void setSort(Sort sort);
         void setIsCommentThread(boolean isCommentThread);
     }
 

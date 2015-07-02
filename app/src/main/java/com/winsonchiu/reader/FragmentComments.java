@@ -38,7 +38,7 @@ import com.google.android.youtube.player.YouTubePlayer;
 import com.google.android.youtube.player.YouTubePlayerView;
 import com.winsonchiu.reader.data.Link;
 
-public class FragmentComments extends FragmentBase {
+public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItemClickListener {
 
     public static final String TAG = FragmentComments.class.getCanonicalName();
 
@@ -126,17 +126,9 @@ public class FragmentComments extends FragmentBase {
         // No menu items needed
         toolbar.inflateMenu(R.menu.menu_comments);
         itemLoadFullComments = toolbar.getMenu().findItem(R.id.item_load_full_comments);
-        toolbar.setOnMenuItemClickListener(new Toolbar.OnMenuItemClickListener() {
-            @Override
-            public boolean onMenuItemClick(MenuItem item) {
-                switch (item.getItemId()) {
-                    case R.id.item_load_full_comments:
-                        mListener.getControllerComments().loadLinkComments();
-                        break;
-                }
-                return true;
-            }
-        });
+        toolbar.setOnMenuItemClickListener(this);
+
+        toolbar.getMenu().findItem(mListener.getControllerComments().getSort().getMenuId()).setChecked(true);
     }
 
     @Override
@@ -160,6 +152,11 @@ public class FragmentComments extends FragmentBase {
         }
 
         listener = new ControllerComments.Listener() {
+            @Override
+            public void setSort(Sort sort) {
+                toolbar.getMenu().findItem(sort.getMenuId()).setChecked(true);
+            }
+
             @Override
             public void setIsCommentThread(boolean isCommentThread) {
                 itemLoadFullComments.setEnabled(isCommentThread);
@@ -976,6 +973,26 @@ public class FragmentComments extends FragmentBase {
             return false;
         }
 
+    }
+
+    @Override
+    public boolean onMenuItemClick(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.item_load_full_comments:
+                mListener.getControllerComments().loadLinkComments();
+                break;
+        }
+
+        for (Sort sort : Sort.values()) {
+            if (sort.getMenuId() == item.getItemId()) {
+                mListener.getControllerComments()
+                        .setSort(sort);
+                linearLayoutManager.scrollToPositionWithOffset(1, 0);
+                return true;
+            }
+        }
+
+        return true;
     }
 
     public interface YouTubeListener {

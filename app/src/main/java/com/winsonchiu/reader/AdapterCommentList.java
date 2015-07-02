@@ -227,7 +227,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
     @Override
     public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
 
-        if (!controllerComments.isLoading() && position > controllerComments.sizeLinks() - 10) {
+        if (!controllerComments.isLoading() && position > controllerComments.getItemCount() - 5) {
             controllerComments.loadMoreComments();
         }
 
@@ -365,7 +365,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                     R.drawable.ic_keyboard_arrow_down_white_24dp);
 
             indentWidth = (int) TypedValue
-                    .applyDimension(TypedValue.COMPLEX_UNIT_DIP, 8, resources.getDisplayMetrics());
+                    .applyDimension(TypedValue.COMPLEX_UNIT_DIP, 6, resources.getDisplayMetrics());
             toolbarItemWidth = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 48,
                     itemView.getResources().getDisplayMetrics());
 
@@ -596,11 +596,19 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                 int colorPositive = resources.getColor(R.color.positiveScore);
                 int colorNegative = resources.getColor(R.color.negativeScore);
 
-                Spannable spannableScore = new SpannableString(String.valueOf(comment.getScore()));
-                spannableScore.setSpan(new ForegroundColorSpan(
-                                comment.getScore() > 0 ? colorPositive : colorNegative), 0,
-                        spannableScore.length(),
-                        Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
+                Spannable spannableScore;
+
+                if (comment.isScoreHidden()) {
+                    spannableScore = new SpannableString(resources.getString(R.string.hidden));
+                }
+                else {
+                    spannableScore = new SpannableString(
+                            String.valueOf(comment.getScore()));
+                    spannableScore.setSpan(new ForegroundColorSpan(
+                                    comment.getScore() > 0 ? colorPositive : colorNegative), 0,
+                            spannableScore.length(),
+                            Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
+                }
 
 
                 Spannable spannableAuthor = new SpannableString(comment.getAuthor());

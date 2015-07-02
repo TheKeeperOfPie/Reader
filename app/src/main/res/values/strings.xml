@@ -150,4 +150,12 @@
     <string name="confirm_logout">Logout?</string>
     <string name="url_copied">URL copied to clipboard</string>
     <string name="sidebar_note_mobile">Note that not all sidebar links work on mobile</string>
+    <string name="prefs_category_mail_summary">Messages and notifications</string>
+    <string name="prefs_category_behavior_summary">How Reader handles certain actions</string>
+    <string name="prefs_category_display_summary">Visuals and appearance</string>
+    <string name="item_sort_confidence">Best</string>
+    <string name="item_sort_old">Old</string>
+    <string name="item_sort_random">Random</string>
+    <string name="item_sort_qa">Q&amp;A</string>
+    <string name="hidden">Hidden</string>
 </resources>

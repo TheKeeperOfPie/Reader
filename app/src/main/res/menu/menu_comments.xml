@@ -14,4 +14,73 @@
         app:showAsAction="ifRoom"
         />
 
+    <item
+        android:id="@+id/item_sort"
+        android:title="@string/item_sort"
+        android:icon="@drawable/ic_sort_white_24dp"
+        android:orderInCategory="200"
+        app:showAsAction="always"
+        >
+
+        <menu
+            >
+
+            <group
+                android:checkableBehavior="single"
+                >
+
+                <item
+                    android:id="@+id/item_sort_confidence"
+                    android:title="@string/item_sort_confidence"
+                    android:orderInCategory="100"
+                    />
+
+                <item
+                    android:id="@+id/item_sort_top"
+                    android:title="@string/item_sort_top"
+                    android:orderInCategory="200"
+                    />
+
+                <item
+                    android:id="@+id/item_sort_hot"
+                    android:title="@string/item_sort_hot"
+                    android:orderInCategory="300"
+                    />
+
+                <item
+                    android:id="@+id/item_sort_new"
+                    android:title="@string/item_sort_new"
+                    android:orderInCategory="400"
+                    />
+
+                <item
+                    android:id="@+id/item_sort_controversial"
+                    android:title="@string/item_sort_controversial"
+                    android:orderInCategory="500"
+                    />
+
+                <item
+                    android:id="@+id/item_sort_old"
+                    android:title="@string/item_sort_old"
+                    android:orderInCategory="600"
+                    />
+
+                <item
+                    android:id="@+id/item_sort_random"
+                    android:title="@string/item_sort_random"
+                    android:orderInCategory="700"
+                    />
+
+                <item
+                    android:id="@+id/item_sort_qa"
+                    android:title="@string/item_sort_qa"
+                    android:orderInCategory="800"
+                    />
+
+            </group>
+
+        </menu>
+
+    </item>
+
 </menu>
