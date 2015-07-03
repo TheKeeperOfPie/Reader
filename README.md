@@ -1,4 +1,4 @@
-# Reader
+# [Reader](https://play.google.com/store/apps/details?id=com.winsonchiu.reader)
 
 A Reddit client created to practice good UI/UX design
 
@@ -10,7 +10,7 @@ This repository has no specific license. You are free to use and modify this cod
 
 ### Libraries
 
-Picasso: http://square.github.io/picasso/
+#### [Picasso](http://square.github.io/picasso/)
 
 Copyright 2013 Square, Inc.
 
@@ -26,7 +26,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-Volley: https://developer.android.com/training/volley/index.html
+#### [Volley](https://developer.android.com/training/volley/index.html)
 
 Copyright (C) 2012 The Android Open Source Project
 
