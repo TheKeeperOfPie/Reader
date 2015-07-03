@@ -1,3 +1,7 @@
+/*
+ * Copyright 2015 Winson Chiu
+ */
+
 package com.winsonchiu.reader;
 
 import android.app.Activity;
@@ -128,48 +132,15 @@ public class AdapterLinkList extends AdapterLink {
         }
 
         @Override
-        public void setTextInfo(Link link) {
-            super.setTextInfo(link);
+        public void setTextValues(Link link) {
+            super.setTextValues(link);
 
-            if (!TextUtils.isEmpty(link.getLinkFlairText())) {
-                textThreadFlair.setVisibility(View.VISIBLE);
-                textThreadFlair.setText(Reddit.getTrimmedHtml(link.getLinkFlairText()));
-            }
-            else {
-                textThreadFlair.setVisibility(View.GONE);
-            }
-
-            textThreadTitle.setText(Html.fromHtml(link.getTitle())
-                    .toString());
-            textThreadTitle.setTextColor(
-                    link.isOver18() ? itemView.getResources()
-                            .getColor(R.color.darkThemeTextColorAlert) : itemView.getResources()
-                            .getColor(
-                                    R.color.darkThemeTextColor));
-
-            Resources resources = itemView.getResources();
-
-            int colorPositive = resources.getColor(R.color.positiveScore);
-            int colorNegative = resources.getColor(R.color.negativeScore);
-
-            String subreddit = showSubreddit ? "/r/" + link.getSubreddit() : "";
-
-            Spannable spannableScore = new SpannableString(" " + link.getScore() + " ");
-            spannableScore.setSpan(new ForegroundColorSpan(
-                            link.getScore() > 0 ? colorPositive : colorNegative), 0,
-                    spannableScore.length(),
-                    Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
-
-            String flair = TextUtils.isEmpty(link.getAuthorFlairText()) || "null".equals(link.getAuthorFlairText()) ? "" : " (" + Html
-                    .fromHtml(link.getAuthorFlairText()) + ") ";
-
-            textThreadInfo.setText(TextUtils.concat(subreddit, spannableScore, "by " + link.getAuthor(), flair));
+            textThreadInfo.setText(TextUtils.concat(getSubredditString(), getSpannableScore(), "by " + link.getAuthor(), getFlairString()));
 
             // TODO: Add link edited indicator
 
-            CharSequence timestamp = preferences.getBoolean(AppSettings.PREF_FULL_TIMESTAMPS, false) ? DateUtils.formatDateTime(itemView.getContext(), link.getCreatedUtc(), DateUtils.FORMAT_SHOW_TIME | DateUtils.FORMAT_SHOW_DATE | DateUtils.FORMAT_SHOW_YEAR) : DateUtils.getRelativeTimeSpanString(link.getCreatedUtc());
+            textHidden.setText(getTimestamp() + ", " + link.getNumComments() + " comments");
 
-            textHidden.setText(timestamp + ", " + link.getNumComments() + " comments");
         }
     }
 

@@ -1,3 +1,7 @@
+/*
+ * Copyright 2015 Winson Chiu
+ */
+
 package com.winsonchiu.reader;
 
 import android.app.Activity;
@@ -237,6 +241,8 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
             viewHolderBase
                     .onBind(controllerComments.getMainLink(), controllerComments.showSubreddit(),
                             controllerUser.getUser().getName());
+
+            viewHolderBase.itemView.invalidate();
         }
         else {
             ViewHolderComment viewHolderComment = (ViewHolderComment) holder;
@@ -596,20 +602,14 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                 int colorPositive = resources.getColor(R.color.positiveScore);
                 int colorNegative = resources.getColor(R.color.negativeScore);
 
-                Spannable spannableScore;
+                Spannable spannableScore = new SpannableString(String.valueOf(comment.getScore()));
 
-                if (comment.isScoreHidden()) {
-                    spannableScore = new SpannableString(resources.getString(R.string.hidden));
-                }
-                else {
-                    spannableScore = new SpannableString(
-                            String.valueOf(comment.getScore()));
+                if (!comment.isScoreHidden()) {
                     spannableScore.setSpan(new ForegroundColorSpan(
                                     comment.getScore() > 0 ? colorPositive : colorNegative), 0,
                             spannableScore.length(),
                             Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
                 }
-
 
                 Spannable spannableAuthor = new SpannableString(comment.getAuthor());
                 if (comment.getLinkAuthor().equals(comment.getAuthor())) {

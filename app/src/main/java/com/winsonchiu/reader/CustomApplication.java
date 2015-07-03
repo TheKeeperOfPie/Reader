@@ -1,3 +1,7 @@
+/*
+ * Copyright 2015 Winson Chiu
+ */
+
 package com.winsonchiu.reader;
 
 import android.app.Application;

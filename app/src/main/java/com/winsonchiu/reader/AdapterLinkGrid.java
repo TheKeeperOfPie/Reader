@@ -1,3 +1,7 @@
+/*
+ * Copyright 2015 Winson Chiu
+ */
+
 package com.winsonchiu.reader;
 
 import android.app.Activity;
@@ -344,46 +348,13 @@ public class AdapterLinkGrid extends AdapterLink {
         }
 
         @Override
-        public void setTextInfo(Link link) {
-            super.setTextInfo(link);
+        public void setTextValues(Link link) {
+            super.setTextValues(link);
 
-            if (!TextUtils.isEmpty(link.getLinkFlairText())) {
-                textThreadFlair.setVisibility(View.VISIBLE);
-                textThreadFlair.setText(Reddit.getTrimmedHtml(link.getLinkFlairText()));
-            }
-            else {
-                textThreadFlair.setVisibility(View.GONE);
-            }
+            textThreadInfo.setText(TextUtils.concat(getSubredditString(), showSubreddit ? "\n" : "", getSpannableScore(), "by " + link.getAuthor(), getFlairString()));
 
-            textThreadTitle.setText(Html.fromHtml(link.getTitle())
-                    .toString());
-            textThreadTitle.setTextColor(
-                    link.isOver18() ? itemView.getResources()
-                            .getColor(R.color.darkThemeTextColorAlert) : itemView.getResources()
-                            .getColor(
-                                    R.color.darkThemeTextColor));
+            textHidden.setText(getTimestamp() + "\n" + link.getNumComments() + " comments");
 
-            Resources resources = itemView.getResources();
-
-            int colorPositive = resources.getColor(R.color.positiveScore);
-            int colorNegative = resources.getColor(R.color.negativeScore);
-
-            String subreddit = showSubreddit ? "/r/" + link.getSubreddit() + "\n" : "";
-
-            Spannable spannableScore = new SpannableString(" " + link.getScore() + " ");
-            spannableScore.setSpan(new ForegroundColorSpan(
-                            link.getScore() > 0 ? colorPositive : colorNegative), 0,
-                    spannableScore.length(),
-                    Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
-
-            String flair = TextUtils.isEmpty(link.getAuthorFlairText()) || "null".equals(link.getAuthorFlairText()) ? "" : " (" + Html
-                    .fromHtml(link.getAuthorFlairText()) + ") ";
-
-            textThreadInfo.setText(TextUtils.concat(subreddit, spannableScore, "by " + link.getAuthor(), flair));
-
-            CharSequence timestamp = preferences.getBoolean(AppSettings.PREF_FULL_TIMESTAMPS, false) ? DateUtils.formatDateTime(itemView.getContext(), link.getCreatedUtc(), DateUtils.FORMAT_SHOW_TIME | DateUtils.FORMAT_SHOW_DATE | DateUtils.FORMAT_SHOW_YEAR) : DateUtils.getRelativeTimeSpanString(link.getCreatedUtc());
-
-            textHidden.setText(timestamp + "\n" + link.getNumComments() + " comments");
         }
 
         @Override

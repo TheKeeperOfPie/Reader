@@ -1,3 +1,7 @@
+/*
+ * Copyright 2015 Winson Chiu
+ */
+
 package com.winsonchiu.reader;
 
 import android.app.Activity;
@@ -82,7 +86,7 @@ public class ActivityNewPost extends AppCompatActivity {
 
         setSupportActionBar(toolbar);
 
-        textInfo.setText(getString(R.string.submitting_to) + " /r/" + getIntent()
+        textInfo.setText(getString(R.string.submitting_to) + " " + getIntent()
                 .getStringExtra(SUBREDDIT) + " " + getString(R.string.as) + " /u/" + getIntent()
                 .getStringExtra(USER));
 

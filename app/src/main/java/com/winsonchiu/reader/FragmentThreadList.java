@@ -1,3 +1,7 @@
+/*
+ * Copyright 2015 Winson Chiu
+ */
+
 package com.winsonchiu.reader;
 
 import android.app.Activity;
@@ -96,11 +100,7 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
                 intent.putExtra(ActivityNewPost.USER,
                         mListener.getControllerUser().getUser().getName());
                 intent.putExtra(ActivityNewPost.SUBREDDIT,
-                        mListener.getControllerLinks().getSubreddit().getUrl().substring(
-                                3, mListener.getControllerLinks()
-                                        .getSubreddit()
-                                        .getUrl()
-                                        .length() - 1));
+                        mListener.getControllerLinks().getSubreddit().getUrl());
                 intent.putExtra(ActivityNewPost.POST_TYPE, postType);
                 intent.putExtra(ActivityNewPost.SUBMIT_TEXT_HTML,
                         mListener.getControllerLinks().getSubreddit().getSubmitTextHtml());

@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ~ Copyright 2015 Winson Chiu
+  -->
+
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <PreferenceCategory
+        android:key="prefs_category_about"
+        android:title="@string/prefs_category_about"
+        >
+
+        <Preference
+            android:key="pref_author"
+            android:title="@string/pref_author"
+            android:summary="@string/pref_author_summary"
+            >
+
+            <intent
+                android:action="android.intent.action.VIEW"
+                android:data="https://www.reddit.com/user/TheKeeperOfPie"
+                android:targetPackage="com.winsonchiu.reader"
+                android:targetClass="com.winsonchiu.reader.MainActivity"
+                />
+
+        </Preference>
+
+        <Preference
+            android:key="pref_source_code"
+            android:title="@string/pref_source_code"
+            android:summary="@string/pref_source_code_summary"
+            >
+
+            <intent
+                android:action="android.intent.action.VIEW"
+                android:data="https://www.github.com/TheKeeperOfPie/Reader"
+                />
+
+        </Preference>
+
+    </PreferenceCategory>
+
+    <PreferenceCategory
+        android:key="prefs_category_licenses"
+        android:title="@string/prefs_category_licenses"
+        >
+
+        <Preference
+            android:key="pref_license_picasso"
+            android:title="@string/pref_license_picasso"
+            android:summary="@string/pref_license_picasso_summary"
+            >
+
+            <intent
+                android:action="android.intent.action.VIEW"
+                android:data="http://square.github.io/picasso/"
+                />
+
+        </Preference>
+
+        <Preference
+            android:key="pref_license_volley"
+            android:title="@string/pref_license_volley"
+            android:summary="@string/pref_license_volley_summary"
+            >
+
+            <intent
+                android:action="android.intent.action.VIEW"
+                android:data="https://developer.android.com/training/volley/index.html"
+                />
+
+        </Preference>
+
+        <Preference
+            android:key="pref_license_apache"
+            android:title="@string/pref_license_apache"
+            android:summary="@string/pref_license_apache_summary"
+            >
+
+            <intent
+                android:action="android.intent.action.VIEW"
+                android:data="http://www.apache.org/licenses/LICENSE-2.0"
+                />
+
+        </Preference>
+
+    </PreferenceCategory>
+
+</PreferenceScreen>

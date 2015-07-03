@@ -1,3 +1,7 @@
+/*
+ * Copyright 2015 Winson Chiu
+ */
+
 package com.winsonchiu.reader.settings;
 
 import android.content.SharedPreferences;
@@ -30,7 +34,4 @@ public class FragmentBehavior extends FragmentPreferences
                 });
     }
 
-    @Override
-    public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
-    }
 }

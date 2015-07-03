@@ -1,3 +1,7 @@
+/*
+ * Copyright 2015 Winson Chiu
+ */
+
 package com.winsonchiu.reader.settings;
 
 import android.app.Activity;
@@ -109,6 +113,11 @@ public abstract class FragmentPreferences extends PreferenceFragment
         preference.setOnPreferenceChangeListener(preferenceListenerSummary);
         preferenceListenerSummary.onPreferenceChange(preference,
                 getPreferenceScreen().getSharedPreferences().getString(preference.getKey(), ""));
+
+    }
+
+    @Override
+    public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
 
     }
 

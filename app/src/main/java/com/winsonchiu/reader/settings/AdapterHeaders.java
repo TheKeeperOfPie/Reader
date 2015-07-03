@@ -1,3 +1,7 @@
+/*
+ * Copyright 2015 Winson Chiu
+ */
+
 package com.winsonchiu.reader.settings;
 
 import android.support.v7.widget.RecyclerView;
@@ -17,18 +21,17 @@ import java.util.List;
  */
 public class AdapterHeaders extends RecyclerView.Adapter<AdapterHeaders.ViewHolder> {
 
-    private static int ITEM_COUNT = 3;
     private EventListener eventListener;
     private List<Header> headers;
 
     public AdapterHeaders(EventListener eventListener) {
         super();
         this.eventListener = eventListener;
-        headers = new ArrayList<>(4);
+        headers = new ArrayList<>();
         headers.add(new Header(R.drawable.ic_palette_white_24dp, R.string.prefs_category_display, R.string.prefs_category_display_summary));
         headers.add(new Header(R.drawable.ic_build_white_24dp, R.string.prefs_category_behavior, R.string.prefs_category_behavior_summary));
         headers.add(new Header(R.drawable.ic_mail_white_24dp, R.string.prefs_category_mail, R.string.prefs_category_mail_summary));
-
+        headers.add(new Header(R.drawable.ic_help_outline_white_24dp, R.string.prefs_category_about, R.string.prefs_category_about_summary));
     }
 
     @Override
@@ -43,7 +46,7 @@ public class AdapterHeaders extends RecyclerView.Adapter<AdapterHeaders.ViewHold
 
     @Override
     public int getItemCount() {
-        return ITEM_COUNT;
+        return headers.size();
     }
 
     public static class ViewHolder extends RecyclerView.ViewHolder {

@@ -1,3 +1,7 @@
+/*
+ * Copyright 2015 Winson Chiu
+ */
+
 package com.winsonchiu.reader;
 
 import android.app.Activity;
@@ -85,20 +89,8 @@ public class ControllerComments {
 
     public void setLink(Link link) {
         setLinkId(link.getSubreddit(), link.getId());
-//        Listing listing = new Listing();
-//        // TODO: Make this logic cleaner
-//        if (link.getComments() != null) {
-//            listing.setChildren(new ArrayList<>(link.getComments()
-//                    .getChildren()));
-//        }
-//        else {
-//            listing.setChildren(new ArrayList<Thing>());
-//        }
         this.listingComments = new Listing();
         this.link = link;
-//        for (Listener listener : listeners) {
-//            listener.getAdapter().notifyDataSetChanged();
-//        }
     }
 
     public void setLinkId(String subreddit, String linkId) {
@@ -148,6 +140,7 @@ public class ControllerComments {
                     public void onResponse(String response) {
 
                         try {
+
                             Listing listing = new Listing();
                             link = Link.fromJson(new JSONArray(response));
 
@@ -660,6 +653,10 @@ public class ControllerComments {
     }
 
     public void loadMoreComments() {
+        if (link.getComments().getChildren().isEmpty()) {
+            return;
+        }
+
         Comment comment = (Comment) link.getComments().getChildren().get(link.getComments().getChildren().size() - 1);
 
         if (comment.isMore()) {

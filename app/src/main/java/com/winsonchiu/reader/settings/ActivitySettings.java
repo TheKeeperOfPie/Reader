@@ -1,3 +1,7 @@
+/*
+ * Copyright 2015 Winson Chiu
+ */
+
 package com.winsonchiu.reader.settings;
 
 import android.app.Fragment;
@@ -32,7 +36,7 @@ public class ActivitySettings extends AppCompatActivity {
         });
 
         getFragmentManager().beginTransaction()
-                .replace(R.id.frame_fragment, FragmentHeaders.newInstance("", ""))
+                .replace(R.id.frame_fragment, FragmentHeaders.newInstance())
                 .commit();
 
     }

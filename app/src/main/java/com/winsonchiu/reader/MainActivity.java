@@ -1,3 +1,7 @@
+/*
+ * Copyright 2015 Winson Chiu
+ */
+
 package com.winsonchiu.reader;
 
 import android.app.Fragment;
@@ -424,6 +428,7 @@ public class MainActivity extends YouTubeBaseActivity
                     }
                 }, params, 0);
             }
+
         };
 
         eventListenerComment = new AdapterCommentList.ViewHolderComment.EventListener() {
@@ -813,7 +818,7 @@ public class MainActivity extends YouTubeBaseActivity
 //                getApplicationContext().getPackageName(), intent.getStringExtra(
 //                        Browser.EXTRA_APPLICATION_ID))));
 
-        if (!sharedPreferences.getBoolean(AppSettings.PREF_EXTERNAL_BROWSER, false) && Intent.ACTION_VIEW.equals(intent.getAction())) {
+        if (!intent.hasExtra(REDDIT_PAGE) && !sharedPreferences.getBoolean(AppSettings.PREF_EXTERNAL_BROWSER, false) && Intent.ACTION_VIEW.equals(intent.getAction())) {
             String urlString = intent.getDataString();
 
             Log.d(TAG, "index: " + urlString.indexOf("reddit.com"));

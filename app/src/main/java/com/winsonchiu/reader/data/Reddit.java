@@ -1,3 +1,7 @@
+/*
+ * Copyright 2015 Winson Chiu
+ */
+
 package com.winsonchiu.reader.data;
 
 import android.content.Context;
@@ -17,7 +21,6 @@ import com.android.volley.RequestQueue;
 import com.android.volley.Response.ErrorListener;
 import com.android.volley.Response.Listener;
 import com.android.volley.VolleyError;
-import com.android.volley.toolbox.ImageRequest;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 import com.winsonchiu.reader.AdapterCommentList;
@@ -377,7 +380,7 @@ public class Reddit {
         if (position == viewHolder.getAdapterPosition()) {
             if (viewHolder instanceof AdapterLinkList.ViewHolder) {
                 ((AdapterLinkList.ViewHolder) viewHolder).setVoteColors();
-                ((AdapterLinkList.ViewHolder) viewHolder).setTextInfo(link);
+                ((AdapterLinkList.ViewHolder) viewHolder).setTextValues(link);
             }
             else if (viewHolder instanceof AdapterLinkGrid.ViewHolder) {
                 ((AdapterLinkGrid.ViewHolder) viewHolder).setVoteColors();
@@ -395,7 +398,7 @@ public class Reddit {
                 if (position == viewHolder.getAdapterPosition()) {
                     if (viewHolder instanceof AdapterLinkList.ViewHolder) {
                         ((AdapterLinkList.ViewHolder) viewHolder).setVoteColors();
-                        ((AdapterLinkList.ViewHolder) viewHolder).setTextInfo(link);
+                        ((AdapterLinkList.ViewHolder) viewHolder).setTextValues(link);
                     }
                     else if (viewHolder instanceof AdapterLinkGrid.ViewHolder) {
                         ((AdapterLinkGrid.ViewHolder) viewHolder).setVoteColors();

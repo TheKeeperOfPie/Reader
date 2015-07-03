@@ -1,4 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+  ~ Copyright 2015 Winson Chiu
+  -->
+
 <RelativeLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
@@ -65,7 +69,7 @@
 
         <View
             android:id="@+id/view_indicator_container"
-            android:layout_width="8dp"
+            android:layout_width="6dp"
             android:layout_height="wrap_content"
             android:layout_margin="0dp"
             android:layout_alignTop="@+id/text_hidden"
