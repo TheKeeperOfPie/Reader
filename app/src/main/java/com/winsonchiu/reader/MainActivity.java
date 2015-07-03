@@ -664,7 +664,7 @@ public class MainActivity extends YouTubeBaseActivity
 
             // TODO: Implement a history stack inside the Controllers
 
-            if (!url.getHost().contains("reddit")) {
+            if (!url.getHost().contains("reddit.com")) {
                 getFragmentManager().beginTransaction()
                         .replace(R.id.frame_fragment, FragmentWeb
                                 .newInstance(urlString), FragmentWeb.TAG)

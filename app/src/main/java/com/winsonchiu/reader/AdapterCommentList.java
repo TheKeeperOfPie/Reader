@@ -595,7 +595,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                 textInfo.setText("");
             }
             else {
-                textComment.setText(Reddit.getTrimmedHtml(comment.getBodyHtml()));
+                textComment.setText(comment.getBodyHtml());
 
                 Resources resources = itemView.getResources();
 
@@ -719,9 +719,11 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                     toggleReply();
                     break;
                 case R.id.item_delete:
+                    // TODO: Test if truncate needed
+
                     new AlertDialog.Builder(itemView.getContext())
                             .setTitle("Delete comment?")
-                            .setMessage(Reddit.getTrimmedHtml(comment.getBodyHtml()))
+                            .setMessage(comment.getBodyHtml())
                             .setPositiveButton("Yes",
                                     new DialogInterface.OnClickListener() {
                                         @Override

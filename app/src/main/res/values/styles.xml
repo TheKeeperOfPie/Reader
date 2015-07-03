@@ -13,6 +13,7 @@
         <item name="colorAccent">@color/colorAccent</item>
 
         <item name="android:textColor">@color/darkThemeTextColor</item>
+        <item name="android:textColorSecondary">@color/darkThemeTextColorMuted</item>
         <item name="android:windowBackground">@color/darkThemeBackground</item>
 
     </style>

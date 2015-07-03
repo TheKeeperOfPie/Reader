@@ -37,7 +37,7 @@ public class Link extends Thing {
     private boolean saved;
     private int score;
     private String selfText = "";
-    private String selfTextHtml = "";
+    private CharSequence selfTextHtml = "";
     private String subreddit = "";
     private String subredditId = "";
     private String thumbnail = "";
@@ -102,7 +102,7 @@ public class Link extends Thing {
         link.setSaved(jsonObject.optBoolean("saved"));
         link.setScore(jsonObject.optInt("score"));
         link.setSelfText(jsonObject.optString("selftext"));
-        link.setSelfTextHtml(jsonObject.optString("selftext_html"));
+        link.setSelfTextHtml(Reddit.getTrimmedHtml(jsonObject.optString("selftext_html")));
         link.setSubreddit(jsonObject.optString("subreddit"));
         link.setSubredditId(jsonObject.optString("subreddit_id"));
         link.setThumbnail(jsonObject.optString("thumbnail"));
@@ -305,11 +305,11 @@ public class Link extends Thing {
         this.selfText = selfText;
     }
 
-    public String getSelfTextHtml() {
+    public CharSequence getSelfTextHtml() {
         return selfTextHtml;
     }
 
-    public void setSelfTextHtml(String selfTextHtml) {
+    public void setSelfTextHtml(CharSequence selfTextHtml) {
         this.selfTextHtml = selfTextHtml;
     }
 

@@ -9,8 +9,13 @@ import android.content.SharedPreferences;
 import android.graphics.drawable.Drawable;
 import android.preference.PreferenceManager;
 import android.support.v7.widget.RecyclerView;
+import android.text.Editable;
 import android.text.Html;
+import android.text.SpannableStringBuilder;
+import android.text.Spanned;
+import android.text.SpannedString;
 import android.text.TextUtils;
+import android.text.style.StrikethroughSpan;
 import android.util.Base64;
 import android.util.Log;
 import android.widget.Toast;
@@ -33,6 +38,7 @@ import com.winsonchiu.reader.R;
 
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.xml.sax.XMLReader;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -675,13 +681,12 @@ public class Reddit {
 
     public static CharSequence getTrimmedHtml(String html) {
         if (TextUtils.isEmpty(html)) {
-            return html;
+            return new SpannedString("");
         }
 
-        html = Html.fromHtml(html.trim())
-                .toString();
+        html = html.replaceAll("\n", "<br>");
 
-        CharSequence sequence = Html.fromHtml(html);
+        CharSequence sequence = Html.fromHtml(Html.fromHtml(html).toString(), null, new TagHandlerReddit());
 
         // Trims leading and trailing whitespace
         int start = 0;

@@ -18,7 +18,7 @@ import java.util.List;
  */
 public class Comment extends Thing {
 
-    public static final String HTML_DELETED = "<div class=\\\"md\\\"><p>[deleted]</p></div>";
+    public static final String DELETED = "[deleted]";
 
     private static final String TAG = Comment.class.getCanonicalName();
 
@@ -30,7 +30,7 @@ public class Comment extends Thing {
     private String authorFlairText = "";
     private String bannedBy = "";
     private String body = "";
-    private String bodyHtml = "";
+    private CharSequence bodyHtml = "";
     private Reddit.Distinguished distinguished;
     private long edited;
     private int gilded;
@@ -132,7 +132,7 @@ public class Comment extends Thing {
         comment.setAuthorFlairText(jsonObject.optString("author_flair_text"));
         comment.setBannedBy(jsonObject.optString("banned_by"));
         comment.setBody(jsonObject.optString("body"));
-        comment.setBodyHtml(jsonObject.optString("body_html"));
+        comment.setBodyHtml(Reddit.getTrimmedHtml(jsonObject.optString("body_html")));
 
 
         switch (jsonObject.optString("distinguished")) {
@@ -260,11 +260,11 @@ public class Comment extends Thing {
         this.body = body;
     }
 
-    public String getBodyHtml() {
+    public CharSequence getBodyHtml() {
         return bodyHtml;
     }
 
-    public void setBodyHtml(String bodyHtml) {
+    public void setBodyHtml(CharSequence bodyHtml) {
         this.bodyHtml = bodyHtml;
     }
 

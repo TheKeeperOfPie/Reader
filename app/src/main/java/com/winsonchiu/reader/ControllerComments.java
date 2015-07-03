@@ -472,8 +472,8 @@ public class ControllerComments {
             Comment newComment = (Comment) link.getComments()
                     .getChildren()
                     .get(commentIndex);
-            newComment.setBodyHtml(Comment.HTML_DELETED);
-            newComment.setAuthor("[deleted]");
+            newComment.setBodyHtml(Comment.DELETED);
+            newComment.setAuthor(Comment.DELETED);
         }
 
         commentIndex = listingComments.getChildren()
@@ -482,8 +482,8 @@ public class ControllerComments {
             Comment newComment = (Comment) listingComments
                     .getChildren()
                     .get(commentIndex);
-            newComment.setBodyHtml(Comment.HTML_DELETED);
-            newComment.setAuthor("[deleted]");
+            newComment.setBodyHtml(Comment.DELETED);
+            newComment.setAuthor(Comment.DELETED);
 
             for (Listener listener : listeners) {
                 listener.getAdapter()

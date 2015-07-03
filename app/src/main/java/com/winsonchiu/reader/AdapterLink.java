@@ -978,7 +978,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                             resources.getColor(
                                     R.color.darkThemeTextColor));
 
-            textThreadSelf.setText(Reddit.getTrimmedHtml(link.getSelfTextHtml()));
+            textThreadSelf.setText(link.getSelfTextHtml());
         }
 
         public String getFlairString() {
