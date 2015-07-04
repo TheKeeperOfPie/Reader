@@ -33,8 +33,6 @@ import android.widget.Toast;
 import com.android.volley.Response;
 import com.android.volley.Response.Listener;
 import com.android.volley.VolleyError;
-import com.winsonchiu.reader.data.Comment;
-import com.winsonchiu.reader.data.Link;
 import com.winsonchiu.reader.data.Reddit;
 import com.winsonchiu.reader.data.Subreddit;
 
@@ -154,6 +152,7 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
             public RecyclerView.LayoutManager getLayoutManager() {
                 return layoutManager;
             }
+
         };
 
         listener = new ControllerLinks.Listener() {

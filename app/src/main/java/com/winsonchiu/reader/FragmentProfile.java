@@ -107,7 +107,7 @@ public class FragmentProfile extends FragmentBase implements Toolbar.OnMenuItemC
         menu.findItem(R.id.item_sort_time).setTitle(
                 getString(R.string.time) + Reddit.TIME_SEPARATOR + getString(R.string.item_sort_all));
 
-        if (TextUtils.isEmpty(mListener.getControllerUser().getUser().getName())) {
+        if (TextUtils.isEmpty(mListener.getControllerUser().getUser().getName()) && !mListener.getControllerProfile().isLoading()) {
             itemSearch.expandActionView();
         }
 
@@ -316,6 +316,7 @@ public class FragmentProfile extends FragmentBase implements Toolbar.OnMenuItemC
                 public RecyclerView.LayoutManager getLayoutManager() {
                     return linearLayoutManager;
                 }
+
             }, listener);
         }
 

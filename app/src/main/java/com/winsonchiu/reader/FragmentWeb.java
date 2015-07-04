@@ -170,6 +170,7 @@ public class FragmentWeb extends FragmentBase {
             public void onPageStarted(WebView view, String url, Bitmap favicon) {
                 super.onPageStarted(view, url, favicon);
                 toolbar.setTitle(url);
+                progressBar.setIndeterminate(true);
                 progressBar.setVisibility(View.VISIBLE);
             }
 
@@ -193,6 +194,7 @@ public class FragmentWeb extends FragmentBase {
             @Override
             public void onProgressChanged(WebView view, int newProgress) {
                 super.onProgressChanged(view, newProgress);
+                progressBar.setIndeterminate(false);
                 progressBar.setProgress(newProgress);
             }
         });
@@ -251,12 +253,16 @@ public class FragmentWeb extends FragmentBase {
     @Override
     public void onResume() {
         super.onResume();
-        webView.onResume();
+        if (webView != null) {
+            webView.onResume();
+        }
     }
 
     @Override
     public void onPause() {
-        webView.onPause();
+        if (webView != null) {
+            webView.onPause();
+        }
         super.onPause();
     }
 
@@ -268,6 +274,8 @@ public class FragmentWeb extends FragmentBase {
             itemSearch.collapseActionView();
         }
         else {
+            webView.destroy();
+            webView = null;
             return true;
         }
         return false;
@@ -275,6 +283,9 @@ public class FragmentWeb extends FragmentBase {
 
     @Override
     public void onDestroy() {
+        if (webView != null) {
+            webView.destroy();
+        }
         super.onDestroy();
 //        CustomApplication.getRefWatcher(getActivity()).watch(this);
     }

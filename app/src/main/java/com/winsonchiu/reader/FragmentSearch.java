@@ -296,6 +296,7 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
                     public RecyclerView.LayoutManager getLayoutManager() {
                         return layoutManagerLinks;
                     }
+
                 });
 
         adapterLinksSubreddit = new AdapterSearchLinkList(activity, new ControllerLinksBase() {
@@ -360,6 +361,7 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
                     public RecyclerView.LayoutManager getLayoutManager() {
                         return layoutManagerLinksSubreddit;
                     }
+
                 });
 
         layoutManagerLinks = new LinearLayoutManager(activity, LinearLayoutManager.VERTICAL, false);

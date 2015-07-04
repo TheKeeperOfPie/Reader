@@ -1019,17 +1019,21 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             if (Reddit.placeImageUrl(link)) {
                 expandFull(true);
                 recyclerCallback.scrollTo(getAdapterPosition());
+                recyclerCallback.getLayoutManager().requestLayout();
+                itemView.invalidate();
+                itemView.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (webFull == null) {
+                            webFull = eventListener.getNewWebView();
+                            webFull.setOnTouchListener(new OnTouchListenerDisallow(disallowListener));
+                            frameFull.addView(webFull);
 
-                if (webFull == null) {
-                    webFull = eventListener.getNewWebView();
-                    webFull.setOnTouchListener(new OnTouchListenerDisallow(disallowListener));
-                    frameFull.addView(webFull);
-
-                }
-                webFull.onResume();
-                webFull.loadData(Reddit.getImageHtml(link.getUrl()), "text/html", "UTF-8");
-                webFull.requestLayout();
-                frameFull.requestLayout();
+                        }
+                        webFull.onResume();
+                        webFull.loadData(Reddit.getImageHtml(link.getUrl()), "text/html", "UTF-8");
+                    }
+                }, 50);
             }
             else {
                 eventListener.loadUrl(link.getUrl());
@@ -1363,6 +1367,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                 webFull.destroy();
                 Reddit.incrementDestroy();
                 webFull = null;
+                eventListener.toast("WebView destroyed");
             }
             if (viewPagerFull.getChildCount() > 0) {
                 for (int index = 0; index < viewPagerFull.getChildCount(); index++) {

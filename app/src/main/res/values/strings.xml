@@ -178,4 +178,5 @@
         express or implied. See the License for the specific language governing permissions and
         limitations under the License.
     </string>
+    <string name="error_submitting_post">Error submitting post</string>
 </resources>

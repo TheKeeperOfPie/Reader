@@ -7,6 +7,8 @@ package com.winsonchiu.reader;
 import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.Rect;
 import android.os.Build;
 import android.util.AttributeSet;
 import android.util.Log;
@@ -51,7 +53,6 @@ public class WebViewFixed extends WebView {
     protected void onLayout(boolean changed, int l, int t, int r, int b) {
         super.onLayout(changed, l, t, r, b);
         if (getHeight() > 0 && getHeight() < getMinimumHeight()) {
-            Toast.makeText(getContext(), "onLayout incorrect", Toast.LENGTH_SHORT).show();
             setVisibility(GONE);
 
             ViewGroup.LayoutParams layoutParams = null;
@@ -68,10 +69,12 @@ public class WebViewFixed extends WebView {
 
             if (layoutParams != null) {
                 setLayoutParams(layoutParams);
+                reload();
                 Toast.makeText(getContext(), "onLayout height reset", Toast.LENGTH_SHORT).show();
             }
-
-            getParent().requestLayout();
+            Rect rect = new Rect();
+            getParent().getChildVisibleRect(this, rect, null);
+            getParent().invalidateChild(this, rect);
             setVisibility(VISIBLE);
         }
     }
@@ -85,7 +88,7 @@ public class WebViewFixed extends WebView {
     }
 
     public static WebViewFixed newInstance(Context context) {
-        WebViewFixed webViewFixed = new WebViewFixed(context.getApplicationContext());
+        final WebViewFixed webViewFixed = new WebViewFixed(context.getApplicationContext());
         Reddit.incrementCreate();
         webViewFixed.setMinimumHeight(
                 (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 48,

@@ -17,26 +17,18 @@
         android:layout_alignParentTop="true"
         />
 
-    <com.winsonchiu.reader.CustomSwipeRefreshLayout
-        android:id="@+id/swipe_refresh_web"
+    <WebView
+        android:id="@+id/web"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_below="@id/toolbar"
-        >
-
-        <WebView
-            android:id="@+id/web"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            />
-
-    </com.winsonchiu.reader.CustomSwipeRefreshLayout>
+        />
 
     <ProgressBar
         style="?android:attr/progressBarStyleHorizontal"
         android:id="@+id/progress_web"
         android:layout_width="match_parent"
-        android:layout_height="4dp"
+        android:layout_height="6dp"
         android:layout_below="@id/toolbar"
         android:progressDrawable="@drawable/progress_horizontal"
         />

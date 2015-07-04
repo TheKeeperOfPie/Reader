@@ -25,10 +25,12 @@ import org.json.JSONObject;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -331,6 +333,30 @@ public class ControllerSearch {
             requestSubreddits.cancel();
         }
 
+        // TODO: Move this to asynchronous with Thread cancelling
+
+        String queryTrimmed = query.toLowerCase().replaceAll("\\s", "");
+
+        Listing subscribedResults = new Listing();
+        List<Thing> resultsThatContainQuery = new ArrayList<>();
+
+        for (Thing thing : subredditsSubscribed.getChildren()) {
+            Subreddit subreddit = (Subreddit) thing;
+            if (subreddit.getDisplayName().toLowerCase().startsWith(queryTrimmed)) {
+                subscribedResults.getChildren().add(subreddit);
+            }
+            else if (subreddit.getDisplayName().toLowerCase().contains(queryTrimmed) || subreddit.getPublicDescription().toLowerCase().contains(queryTrimmed)) {
+                resultsThatContainQuery.add(subreddit);
+            }
+        }
+
+        subscribedResults.addChildren(resultsThatContainQuery);
+
+        subreddits = subscribedResults;
+        for (Listener listener : listeners) {
+            listener.getAdapterSearchSubreddits().notifyDataSetChanged();
+        }
+
         try {
             requestSubreddits = reddit.loadGet(Reddit.OAUTH_URL + "/subreddits/search?show=all&q=" + URLEncoder.encode(query, Reddit.UTF_8).replaceAll("\\s", "") + "&sort=" + sort.toString(),
                     new Response.Listener<String>() {
@@ -347,7 +373,7 @@ public class ControllerSearch {
                                     }
                                 }
 
-                                subreddits = listing;
+                                subreddits.addChildren(listing.getChildren());
                                 for (Listener listener : listeners) {
                                     listener.getAdapterSearchSubreddits().notifyDataSetChanged();
                                 }

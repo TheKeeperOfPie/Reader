@@ -211,21 +211,26 @@ public class MainActivity extends YouTubeBaseActivity
 
                 int color = viewHolderBase.getBackgroundColor();
 
+                Fragment fragment = getFragmentManager().findFragmentById(R.id.frame_fragment);
+                if (fragment instanceof FragmentThreadList) {
+
+                }
+
                 FragmentComments fragmentComments = FragmentComments
                         .newInstance(viewHolderBase, color);
-                fragmentComments.setFragmentToHide(getFragmentManager().findFragmentById(R.id.frame_fragment));
+                fragmentComments.setFragmentToHide(fragment, viewHolderBase.itemView);
 
                 getFragmentManager().beginTransaction()
                         .add(R.id.frame_fragment, fragmentComments,
                                 FragmentComments.TAG)
                         .addToBackStack(null)
                         .commit();
-                viewHolderBase.itemView.postDelayed(new Runnable() {
-                    @Override
-                    public void run() {
-                        viewHolderBase.itemView.setVisibility(View.INVISIBLE);
-                    }
-                }, 20);
+//                viewHolderBase.itemView.postDelayed(new Runnable() {
+//                    @Override
+//                    public void run() {
+//                        viewHolderBase.itemView.setVisibility(View.INVISIBLE);
+//                    }
+//                }, 50);
             }
 
             @Override
@@ -261,10 +266,26 @@ public class MainActivity extends YouTubeBaseActivity
             }
 
             @Override
-            public void loadUrl(String url) {
+            public void loadUrl(String urlString) {
                 if (sharedPreferences.getBoolean(AppSettings.PREF_EXTERNAL_BROWSER, false)) {
                     Intent intent = new Intent(Intent.ACTION_VIEW);
-                    intent.setData(Uri.parse(url));
+                    intent.setData(Uri.parse(urlString));
+                    startActivity(intent);
+                    return;
+                }
+                Log.d(TAG, "loadUrl: " + loadId);
+
+                URL url = null;
+                try {
+                    url = new URL(urlString);
+                }
+                catch (MalformedURLException e) {
+                    e.printStackTrace();
+                }
+                if (url != null && url.getHost().contains("reddit.com")) {
+                    Intent intent = new Intent(MainActivity.this, MainActivity.class);
+                    intent.setAction(Intent.ACTION_VIEW);
+                    intent.putExtra(REDDIT_PAGE, urlString);
                     startActivity(intent);
                     return;
                 }
@@ -272,7 +293,7 @@ public class MainActivity extends YouTubeBaseActivity
                 getFragmentManager().beginTransaction()
                         .hide(getFragmentManager().findFragmentById(R.id.frame_fragment))
                         .add(R.id.frame_fragment, FragmentWeb
-                                .newInstance(url), FragmentWeb.TAG)
+                                .newInstance(urlString), FragmentWeb.TAG)
                         .addToBackStack(null)
                         .commit();
             }
@@ -721,20 +742,15 @@ public class MainActivity extends YouTubeBaseActivity
             }
             else if (path.contains("/u/")) {
                 int indexUser = path.indexOf("u/") + 2;
+                getControllerProfile().loadUser(
+                        path.substring(indexUser, path.indexOf("/", indexUser)));
                 getFragmentManager().beginTransaction()
                         .replace(R.id.frame_fragment, FragmentProfile.newInstance(),
                                 FragmentProfile.TAG)
                         .commit();
-                getControllerProfile().loadUser(
-                        path.substring(indexUser, path.indexOf("/", indexUser)));
             }
             else if (path.contains("/user/")) {
                 int indexUser = path.indexOf("user/") + 5;
-                getFragmentManager().beginTransaction()
-                        .replace(R.id.frame_fragment, FragmentProfile.newInstance(),
-                                FragmentProfile.TAG)
-                        .commit();
-
                 int endIndex = path.indexOf("/", indexUser);
                 if (endIndex > -1) {
                     getControllerProfile()
@@ -746,6 +762,11 @@ public class MainActivity extends YouTubeBaseActivity
                             .loadUser(
                                     path.substring(indexUser));
                 }
+                getFragmentManager().beginTransaction()
+                        .replace(R.id.frame_fragment, FragmentProfile.newInstance(),
+                                FragmentProfile.TAG)
+                        .commit();
+
             }
             else {
                 getFragmentManager().beginTransaction()

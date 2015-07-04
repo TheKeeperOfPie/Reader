@@ -5,54 +5,73 @@
 <com.winsonchiu.reader.CustomDrawerLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/drawer_layout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context="com.winsonchiu.reader.FragmentThreadList"
     >
 
-    <RelativeLayout
+    <android.support.design.widget.CoordinatorLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         >
 
-        <include
-            layout="@layout/toolbar"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_alignParentTop="true"
-            />
-
-        <com.winsonchiu.reader.CustomSwipeRefreshLayout
-            android:id="@+id/swipe_refresh_thread_list"
+        <RelativeLayout
+            android:id="@+id/layout_relative"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:layout_below="@id/toolbar"
+            app:layout_behavior="@string/appbar_scrolling_view_behavior"
             >
 
-                <android.support.v7.widget.RecyclerView
-                    android:id="@+id/recycler_thread_list"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:scrollbars="vertical"
-                    android:scrollbarFadeDuration="200"
-                    android:clipToPadding="false"
-                    />
+            <com.winsonchiu.reader.CustomSwipeRefreshLayout
+                android:id="@+id/swipe_refresh_thread_list"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                app:layout_behavior="@string/appbar_scrolling_view_behavior"
+                >
 
-        </com.winsonchiu.reader.CustomSwipeRefreshLayout>
+                    <android.support.v7.widget.RecyclerView
+                        android:id="@+id/recycler_thread_list"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:scrollbars="vertical"
+                        android:scrollbarFadeDuration="200"
+                        android:clipToPadding="false"
+                        />
 
-        <TextView
-            android:id="@+id/text_empty"
-            android:layout_width="wrap_content"
-            android:layout_height="match_parent"
-            android:layout_below="@id/toolbar"
-            android:layout_centerHorizontal="true"
-            android:text="@string/empty_thread_list"
-            android:visibility="gone"
-            android:layout_margin="@dimen/activity_horizontal_margin"
-            />
+            </com.winsonchiu.reader.CustomSwipeRefreshLayout>
 
-    </RelativeLayout>
+            <TextView
+                android:id="@+id/text_empty"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerHorizontal="true"
+                android:layout_alignParentTop="true"
+                android:text="@string/empty_thread_list"
+                android:visibility="gone"
+                android:layout_margin="@dimen/activity_horizontal_margin"
+                />
+
+        </RelativeLayout>
+
+        <android.support.design.widget.AppBarLayout
+            android:id="@+id/layout_app_bar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            >
+
+            <include
+                layout="@layout/toolbar"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_alignParentTop="true"
+                app:layout_scrollFlags="scroll|enterAlways"
+                />
+
+        </android.support.design.widget.AppBarLayout>
+
+    </android.support.design.widget.CoordinatorLayout>
 
     <ScrollView
         android:layout_width="@dimen/navigation_drawer_width"

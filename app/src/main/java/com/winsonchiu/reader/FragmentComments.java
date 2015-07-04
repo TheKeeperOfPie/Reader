@@ -7,10 +7,10 @@ package com.winsonchiu.reader;
 import android.animation.Animator;
 import android.app.Activity;
 import android.app.Fragment;
+import android.content.res.TypedArray;
 import android.graphics.Rect;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.SystemClock;
 import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.view.ViewCompat;
@@ -26,7 +26,6 @@ import android.util.Log;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewPropertyAnimator;
@@ -42,14 +41,15 @@ import com.google.android.youtube.player.YouTubePlayer;
 import com.google.android.youtube.player.YouTubePlayerView;
 import com.winsonchiu.reader.data.Link;
 
+import java.util.Arrays;
+
 public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItemClickListener {
 
     public static final String TAG = FragmentComments.class.getCanonicalName();
 
     private static final String ARG_IS_GRID = "isGrid";
     private static final String ARG_COLOR_LINK = "colorLink";
-    private static final String ARG_START_X = "startX";
-    private static final String ARG_START_Y = "startY";
+    private static final String ARG_LOCATION = "location";
     private static final String ARG_ITEM_HEIGHT = "itemHeight";
     private static final String ARG_ITEM_WIDTH = "itemWidth";
     private static final long DURATION_ENTER = 250;
@@ -85,14 +85,14 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
     private int startMarginEnd;
     private View viewBackground;
     private MenuItem itemLoadFullComments;
+    private View viewHolderView;
 
     public static FragmentComments newInstance() {
         FragmentComments fragment = new FragmentComments();
         Bundle args = new Bundle();
         args.putBoolean(ARG_IS_GRID, false);
         args.putInt(ARG_COLOR_LINK, 0);
-        args.putFloat(ARG_START_X, 0);
-        args.putFloat(ARG_START_Y, 0);
+        args.putIntArray(ARG_LOCATION, new int[2]);
         args.putInt(ARG_ITEM_HEIGHT, 0);
         fragment.setArguments(args);
         return fragment;
@@ -106,9 +106,11 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
                 .getLayoutParams() instanceof StaggeredGridLayoutManager.LayoutParams) {
             args.putBoolean(ARG_IS_GRID, true);
         }
+        int[] location = new int[2];
+        viewHolder.itemView.getLocationOnScreen(location);
+
+        args.putIntArray(ARG_LOCATION, location);
         args.putInt(ARG_COLOR_LINK, colorLink);
-        args.putFloat(ARG_START_X, viewHolder.itemView.getX());
-        args.putFloat(ARG_START_Y, viewHolder.itemView.getY());
         args.putInt(ARG_ITEM_HEIGHT, viewHolder.itemView.getHeight());
         args.putInt(ARG_ITEM_WIDTH, viewHolder.itemView.getWidth());
         fragment.setArguments(args);
@@ -140,20 +142,6 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
             Bundle savedInstanceState) {
 
         final View view = inflater.inflate(R.layout.fragment_comments, container, false);
-
-        if (getArguments() != null) {
-            screenWidth = getResources().getDisplayMetrics().widthPixels;
-            viewHolderWidth = getArguments().getInt(ARG_ITEM_WIDTH, screenWidth);
-            startX = getArguments().getFloat(ARG_START_X, 0);
-            startY = getArguments().getFloat(ARG_START_Y, 0);
-            if (getArguments().getBoolean(ARG_IS_GRID)) {
-                float margin = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 1, getResources().getDisplayMetrics());
-                startX -= margin;
-                startY -= margin;
-                viewHolderWidth += 2 * margin;
-            }
-            startMarginEnd = (int) (screenWidth - startX - viewHolderWidth);
-        }
 
         listener = new ControllerComments.Listener() {
             @Override
@@ -362,6 +350,7 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
                 public RecyclerView.LayoutManager getLayoutManager() {
                     return linearLayoutManager;
                 }
+
             }, new YouTubeListener() {
                 @Override
                 public void loadYouTube(Link link,
@@ -580,17 +569,64 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
         };
 
         adapterCommentList.registerAdapterDataObserver(observer);
-
         recyclerCommentList.setAdapter(adapterCommentList);
-
-        Log.d(TAG, "startX: " + startX);
-        Log.d(TAG, "startY: " + startY);
-
         viewBackground = view.findViewById(R.id.view_background);
+
+        viewBackground.setVisibility(View.GONE);
+        recyclerCommentList.setVisibility(View.GONE);
+        swipeRefreshCommentList.setVisibility(View.GONE);
+
+        view.post(new Runnable() {
+            @Override
+            public void run() {
+                animateEnter(view);
+            }
+        });
+
+        return view;
+    }
+
+    private void animateEnter(final View view) {
+
+        if (getArguments() != null) {
+            screenWidth = getResources().getDisplayMetrics().widthPixels;
+            viewHolderWidth = getArguments().getInt(ARG_ITEM_WIDTH, screenWidth);
+
+
+            int[] location = getArguments().getIntArray(ARG_LOCATION);
+            if (location == null) {
+                location = new int[2];
+            }
+
+            final TypedArray styledAttributes = activity.getTheme().obtainStyledAttributes(
+                    new int[] {android.R.attr.actionBarSize});
+            float toolbarHeight = styledAttributes.getDimension(0, 0);
+            styledAttributes.recycle();
+
+            int[] locationRootView = new int[2];
+            view.getLocationOnScreen(locationRootView);
+
+//            float toolbarHeight = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 56, getResources().getDisplayMetrics());
+
+            startX = location[0];
+            startY = location[1] - locationRootView[1] - toolbarHeight;
+
+            Log.d(TAG, "location: " + Arrays.toString(location));
+            Log.d(TAG, "toolbarHeight: " + toolbarHeight);
+            Log.d(TAG, "startX: " + startX);
+            Log.d(TAG, "startY: " + startY);
+
+            if (getArguments().getBoolean(ARG_IS_GRID)) {
+                float margin = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 1, getResources().getDisplayMetrics());
+                startX -= margin;
+                startY -= margin;
+                viewHolderWidth += 2 * margin;
+            }
+            startMarginEnd = (int) (screenWidth - startX - viewHolderWidth);
+        }
 
         viewBackground.setScaleY(0f);
         viewBackground.setPivotY(startY);
-//        viewBackground.setPivotY(startY + getArguments().getInt(ARG_ITEM_HEIGHT, 0)));
 
         final ViewPropertyAnimator viewPropertyAnimator = viewBackground.animate()
                 .scaleY(2f)
@@ -647,6 +683,13 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
             @Override
             public void onAnimationStart(Animation animation) {
 
+                viewBackground.setVisibility(View.VISIBLE);
+                swipeRefreshCommentList.setVisibility(View.VISIBLE);
+                recyclerCommentList.setVisibility(View.VISIBLE);
+                if (viewHolderView != null) {
+                    viewHolderView.setVisibility(View.INVISIBLE);
+                    viewHolderView = null;
+                }
             }
 
             @Override
@@ -684,8 +727,6 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
             }
         });
 
-        swipeRefreshCommentList.setVisibility(View.GONE);
-
         CoordinatorLayout.LayoutParams layoutParams = (CoordinatorLayout.LayoutParams) swipeRefreshCommentList
                 .getLayoutParams();
         layoutParams.topMargin = (int) startY;
@@ -693,20 +734,9 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
         layoutParams.setMarginEnd(startMarginEnd);
         swipeRefreshCommentList.setLayoutParams(layoutParams);
 
-        view.getViewTreeObserver().addOnPreDrawListener(new ViewTreeObserver.OnPreDrawListener() {
-            @Override
-            public boolean onPreDraw() {
-                view.getViewTreeObserver().removeOnPreDrawListener(this);
+        view.startAnimation(animation);
 
-                swipeRefreshCommentList.setVisibility(View.VISIBLE);
-                view.startAnimation(animation);
-
-                viewPropertyAnimator.start();
-                return true;
-            }
-        });
-
-        return view;
+        viewPropertyAnimator.start();
     }
 
     private int getIndexAtCenter() {
@@ -872,8 +902,9 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
 //                .watch(this);
     }
 
-    public void setFragmentToHide(Fragment fragmentToHide) {
+    public void setFragmentToHide(Fragment fragmentToHide, View viewHolderView) {
         this.fragmentToHide = fragmentToHide;
+        this.viewHolderView = viewHolderView;
         fragmentParentTag = fragmentToHide.getTag();
     }
 
