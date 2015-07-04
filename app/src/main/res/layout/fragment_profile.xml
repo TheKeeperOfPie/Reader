@@ -2,7 +2,7 @@
   ~ Copyright 2015 Winson Chiu
   -->
 
-<RelativeLayout
+<com.winsonchiu.reader.CustomRelativeLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -45,4 +45,4 @@
 
     </com.winsonchiu.reader.CustomSwipeRefreshLayout>
 
-</RelativeLayout>
+</com.winsonchiu.reader.CustomRelativeLayout>

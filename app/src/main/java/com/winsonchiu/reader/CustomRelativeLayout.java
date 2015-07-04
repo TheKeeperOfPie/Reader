@@ -5,38 +5,29 @@
 package com.winsonchiu.reader;
 
 import android.content.Context;
-import android.support.v4.widget.DrawerLayout;
 import android.util.AttributeSet;
 import android.view.ViewTreeObserver;
+import android.widget.RelativeLayout;
 
 /**
- * Created by TheKeeperOfPie on 5/31/2015.
+ * Created by TheKeeperOfPie on 7/3/2015.
  */
-public class CustomDrawerLayout extends DrawerLayout {
+public class CustomRelativeLayout extends RelativeLayout {
 
     private float xFraction = 0;
     private float yFraction = 0;
     private ViewTreeObserver.OnPreDrawListener preDrawListener = null;
 
-    public CustomDrawerLayout(Context context) {
-        super(context);
+    public CustomRelativeLayout(Context context, AttributeSet attrs, int defStyleAttr) {
+        super(context, attrs, defStyleAttr);
     }
 
-    public CustomDrawerLayout(Context context, AttributeSet attrs) {
+    public CustomRelativeLayout(Context context, AttributeSet attrs) {
         super(context, attrs);
     }
 
-    public CustomDrawerLayout(Context context, AttributeSet attrs, int defStyle) {
-        super(context, attrs, defStyle);
-    }
-
-    @Override
-    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-        widthMeasureSpec = MeasureSpec.makeMeasureSpec(
-                MeasureSpec.getSize(widthMeasureSpec), MeasureSpec.EXACTLY);
-        heightMeasureSpec = MeasureSpec.makeMeasureSpec(
-                MeasureSpec.getSize(heightMeasureSpec), MeasureSpec.EXACTLY);
-        super.onMeasure(widthMeasureSpec, heightMeasureSpec);
+    public CustomRelativeLayout(Context context) {
+        super(context);
     }
 
     public float getYFraction() {

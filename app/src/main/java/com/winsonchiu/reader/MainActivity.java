@@ -40,7 +40,6 @@ import com.winsonchiu.reader.data.Reddit;
 import com.winsonchiu.reader.data.Thing;
 import com.winsonchiu.reader.data.User;
 import com.winsonchiu.reader.settings.ActivitySettings;
-import com.winsonchiu.reader.settings.FragmentPreferences;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -124,7 +123,7 @@ public class MainActivity extends YouTubeBaseActivity
             public void onDrawerClosed(View drawerView) {
                 invalidateOptionsMenu();
                 if (loadId >= 0) {
-                    selectNavigationItem(loadId);
+                    selectNavigationItem(loadId, true);
                 }
             }
 
@@ -148,12 +147,12 @@ public class MainActivity extends YouTubeBaseActivity
                 else {
                     Log.d(TAG, "Not valid URL: " + urlString);
                     getControllerLinks().loadFrontPage(Sort.HOT, true);
-                    selectNavigationItem(getIntent().getIntExtra(NAV_PAGE, R.id.item_home));
+                    selectNavigationItem(getIntent().getIntExtra(NAV_PAGE, R.id.item_home), false);
                 }
             }
             else {
                 getControllerLinks().loadFrontPage(Sort.HOT, true);
-                selectNavigationItem(getIntent().getIntExtra(NAV_PAGE, R.id.item_home));
+                selectNavigationItem(getIntent().getIntExtra(NAV_PAGE, R.id.item_home), false);
             }
         }
 
@@ -225,12 +224,6 @@ public class MainActivity extends YouTubeBaseActivity
                                 FragmentComments.TAG)
                         .addToBackStack(null)
                         .commit();
-//                viewHolderBase.itemView.postDelayed(new Runnable() {
-//                    @Override
-//                    public void run() {
-//                        viewHolderBase.itemView.setVisibility(View.INVISIBLE);
-//                    }
-//                }, 50);
             }
 
             @Override
@@ -567,19 +560,31 @@ public class MainActivity extends YouTubeBaseActivity
 
     }
 
-    private void selectNavigationItem(final int id) {
+    private void selectNavigationItem(final int id, boolean animate) {
+
+        if (id == R.id.item_settings) {
+            Intent intentSettings = new Intent(this, ActivitySettings.class);
+            startActivityForResult(intentSettings, REQUEST_SETTINGS);
+            return;
+        }
+
         getFragmentManager().popBackStackImmediate();
+
+        FragmentTransaction fragmentTransaction = getFragmentManager().beginTransaction();
+
+        if (animate) {
+            fragmentTransaction.setCustomAnimations(R.animator.slide_from_left, R.animator.none);
+        }
+
         switch (id) {
             case R.id.item_home:
                 if (getFragmentManager().findFragmentByTag(FragmentThreadList.TAG) != null) {
                     getControllerLinks().loadFrontPage(Sort.HOT, false);
                 }
                 else {
-                    getFragmentManager().beginTransaction()
-                            .replace(R.id.frame_fragment,
-                                    FragmentThreadList.newInstance(),
-                                    FragmentThreadList.TAG)
-                            .commit();
+                    fragmentTransaction.replace(R.id.frame_fragment,
+                            FragmentThreadList.newInstance(),
+                            FragmentThreadList.TAG);
                 }
                 break;
             case R.id.item_profile:
@@ -596,27 +601,20 @@ public class MainActivity extends YouTubeBaseActivity
                     }
                 }
 
-                getFragmentManager().beginTransaction()
-                        .replace(R.id.frame_fragment,
-                                FragmentProfile.newInstance(),
-                                FragmentProfile.TAG)
-                        .commit();
+                fragmentTransaction.replace(R.id.frame_fragment,
+                        FragmentProfile.newInstance(),
+                        FragmentProfile.TAG);
 
                 break;
             case R.id.item_inbox:
                 getControllerInbox().reload();
-                getFragmentManager().beginTransaction()
-                        .replace(R.id.frame_fragment,
+                fragmentTransaction.replace(R.id.frame_fragment,
                                 FragmentInbox.newInstance(),
-                                FragmentInbox.TAG)
-                        .commit();
-                break;
-            case R.id.item_settings:
-
-                Intent intentSettings = new Intent(this, ActivitySettings.class);
-                startActivityForResult(intentSettings, REQUEST_SETTINGS);
+                                FragmentInbox.TAG);
                 break;
         }
+
+        fragmentTransaction.commit();
 
         loadId = -1;
     }
@@ -898,7 +896,7 @@ public class MainActivity extends YouTubeBaseActivity
 
     @Override
     public void onAuthFinished(boolean success) {
-        selectNavigationItem(R.id.item_home);
+        selectNavigationItem(R.id.item_home, false);
         if (success) {
             Toast.makeText(this, "Login successful", Toast.LENGTH_SHORT)
                     .show();

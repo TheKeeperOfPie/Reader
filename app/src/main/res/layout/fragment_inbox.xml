@@ -2,7 +2,7 @@
   ~ Copyright 2015 Winson Chiu
   -->
 
-<RelativeLayout
+<com.winsonchiu.reader.CustomRelativeLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
@@ -61,4 +61,4 @@
         app:borderWidth="0dp"
         />
 
-</RelativeLayout>
+</com.winsonchiu.reader.CustomRelativeLayout>

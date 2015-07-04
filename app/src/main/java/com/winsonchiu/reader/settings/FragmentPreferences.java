@@ -41,46 +41,6 @@ public abstract class FragmentPreferences extends PreferenceFragment
 
         preferences = getPreferenceManager().getSharedPreferences();
 
-//        findPreference("pref_logout").setOnPreferenceClickListener(
-//                new Preference.OnPreferenceClickListener() {
-//                    @Override
-//                    public boolean onPreferenceClick(Preference preference) {
-//
-//                        new AlertDialog.Builder(activity)
-//                                .setTitle(R.string.confirm_logout)
-//                                .setPositiveButton(R.string.ok,
-//                                        new DialogInterface.OnClickListener() {
-//                                            @Override
-//                                            public void onClick(DialogInterface dialog, int which) {
-//                                                // TODO: Manually invalidate access token
-//                                                preferences.edit()
-//                                                        .putString(AppSettings.ACCESS_TOKEN, "")
-//                                                        .apply();
-//                                                preferences.edit()
-//                                                        .putString(AppSettings.REFRESH_TOKEN, "")
-//                                                        .apply();
-//                                                preferences.edit()
-//                                                        .putString(AppSettings.ACCOUNT_JSON, "")
-//                                                        .apply();
-//                                                preferences.edit()
-//                                                        .putString(AppSettings.SUBSCRIBED_SUBREDDITS, "")
-//                                                        .apply();
-//                                                Toast.makeText(activity, "Logged out", Toast.LENGTH_SHORT).show();
-//                                                activity.recreate();
-//                                            }
-//                                        })
-//                                .setNegativeButton(R.string.cancel,
-//                                        new DialogInterface.OnClickListener() {
-//                                            @Override
-//                                            public void onClick(DialogInterface dialog, int which) {
-//
-//                                            }
-//                                        })
-//                                .show();
-//                        return true;
-//                    }
-//                });
-
     }
 
     @Override

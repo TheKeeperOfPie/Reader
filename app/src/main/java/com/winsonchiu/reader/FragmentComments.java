@@ -86,6 +86,7 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
     private View viewBackground;
     private MenuItem itemLoadFullComments;
     private View viewHolderView;
+    private float toolbarHeight;
 
     public static FragmentComments newInstance() {
         FragmentComments fragment = new FragmentComments();
@@ -575,6 +576,9 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
         viewBackground.setVisibility(View.GONE);
         recyclerCommentList.setVisibility(View.GONE);
         swipeRefreshCommentList.setVisibility(View.GONE);
+        toolbar.setVisibility(View.GONE);
+
+        toolbar.setTranslationY(-100);
 
         view.post(new Runnable() {
             @Override
@@ -600,7 +604,7 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
 
             final TypedArray styledAttributes = activity.getTheme().obtainStyledAttributes(
                     new int[] {android.R.attr.actionBarSize});
-            float toolbarHeight = styledAttributes.getDimension(0, 0);
+            toolbarHeight = styledAttributes.getDimension(0, 0);
             styledAttributes.recycle();
 
             int[] locationRootView = new int[2];
@@ -675,6 +679,7 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
                 layoutParams.setMarginStart((int) (startX * reverseInterpolation));
                 layoutParams.setMarginEnd((int) (startMarginEnd * reverseInterpolation));
                 swipeRefreshCommentList.setLayoutParams(layoutParams);
+                toolbar.setTranslationY(-toolbarHeight * reverseInterpolation);
             }
         };
         animation.setDuration(DURATION_ENTER);
@@ -686,6 +691,7 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
                 viewBackground.setVisibility(View.VISIBLE);
                 swipeRefreshCommentList.setVisibility(View.VISIBLE);
                 recyclerCommentList.setVisibility(View.VISIBLE);
+                toolbar.setVisibility(View.VISIBLE);
                 if (viewHolderView != null) {
                     viewHolderView.setVisibility(View.INVISIBLE);
                     viewHolderView = null;
@@ -957,6 +963,7 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
                                     layoutParams.setMarginEnd(
                                             (int) (startMarginEnd * interpolatedTime));
                                     swipeRefreshCommentList.setLayoutParams(layoutParams);
+                                    toolbar.setTranslationY(-toolbarHeight * interpolatedTime);
                                 }
                             };
                             animation.setDuration(DURATION_EXIT);
