@@ -386,12 +386,12 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
                 new ScrollAwareFloatingActionButtonBehavior.OnVisibilityChangeListener() {
                     @Override
                     public void onStartHideFromScroll() {
-                        //hideLayoutActions(0);
+                        hideLayoutActions(0);
                     }
 
                     @Override
                     public void onEndHideFromScroll() {
-                        //buttonExpandActions.setImageResource(R.drawable.ic_unfold_more_white_24dp);
+                        buttonExpandActions.setImageResource(R.drawable.ic_unfold_more_white_24dp);
                     }
 
                 });

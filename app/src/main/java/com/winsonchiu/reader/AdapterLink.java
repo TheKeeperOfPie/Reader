@@ -437,21 +437,25 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             initializeListeners();
         }
 
+        public Intent getShareIntent() {
+            Intent shareIntent = new Intent(Intent.ACTION_SEND);
+            shareIntent.setType("text/plain");
+            shareIntent.putExtra(Intent.EXTRA_SUBJECT, link.getTitle());
+            shareIntent.putExtra(Intent.EXTRA_TEXT, Reddit.BASE_URL + link.getUrl());
+            return shareIntent;
+        }
+
         private void expandToolbarActions() {
 
             if (!toolbarActions.isShown()) {
                 AppSettings.getHistorySet(preferences).add(link.getName());
                 setVoteColors();
-                Intent shareIntent = new Intent(Intent.ACTION_SEND);
-                shareIntent.setType("text/plain");
-                shareIntent.putExtra(Intent.EXTRA_SUBJECT, link.getTitle());
-                shareIntent.putExtra(Intent.EXTRA_TEXT, Reddit.BASE_URL + link.getPermalink());
 
                 ShareActionProvider shareActionProvider = (ShareActionProvider) MenuItemCompat
                         .getActionProvider(
                                 itemShare);
                 if (shareActionProvider != null) {
-                    shareActionProvider.setShareIntent(shareIntent);
+                    shareActionProvider.setShareIntent(getShareIntent());
                 }
 
                 itemDownloadImage.setVisible(
@@ -1023,11 +1027,17 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         public CharSequence getTimestamp() {
 
             if (preferences.getBoolean(AppSettings.PREF_FULL_TIMESTAMPS, false)) {
-                return DateUtils.formatDateTime(itemView.getContext(), link.getCreatedUtc(),
+                String editTimestamp = link.getEdited() > 1 ? "Edited " + DateUtils.formatDateTime(
+                        itemView.getContext(), link.getEdited(),
+                        TIMESTAMP_BITMASK) + "\n" : "";
+
+                return editTimestamp + DateUtils.formatDateTime(itemView.getContext(), link.getCreatedUtc(),
                         TIMESTAMP_BITMASK);
             }
 
-            return DateUtils.getRelativeTimeSpanString(link.getCreatedUtc());
+            String editTimestamp = link.getEdited() > 1 ? "Edited " + DateUtils.getRelativeTimeSpanString(link.getEdited()) + "\n" : "";
+
+            return editTimestamp + DateUtils.getRelativeTimeSpanString(link.getCreatedUtc());
         }
 
         public boolean isInHistory() {

@@ -117,6 +117,15 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                         thumbnailSize) {
 
                     @Override
+                    public Intent getShareIntent() {
+                        Intent shareIntent = new Intent(Intent.ACTION_SEND);
+                        shareIntent.setType("text/plain");
+                        shareIntent.putExtra(Intent.EXTRA_SUBJECT, link.getTitle());
+                        shareIntent.putExtra(Intent.EXTRA_TEXT, Reddit.BASE_URL + link.getPermalink());
+                        return shareIntent;
+                    }
+
+                    @Override
                     public boolean isInHistory() {
                         return false;
                     }
@@ -177,6 +186,15 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                                 .inflate(R.layout.row_link, parent, false), eventListenerBase,
                         disallowListener,
                         recyclerCallback) {
+
+                    @Override
+                    public Intent getShareIntent() {
+                        Intent shareIntent = new Intent(Intent.ACTION_SEND);
+                        shareIntent.setType("text/plain");
+                        shareIntent.putExtra(Intent.EXTRA_SUBJECT, link.getTitle());
+                        shareIntent.putExtra(Intent.EXTRA_TEXT, Reddit.BASE_URL + link.getPermalink());
+                        return shareIntent;
+                    }
 
                     @Override
                     public boolean isInHistory() {

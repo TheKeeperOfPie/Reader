@@ -354,7 +354,7 @@ public class AdapterLinkGrid extends AdapterLink {
 
             textThreadInfo.setText(TextUtils.concat(getSubredditString(), showSubreddit ? "\n" : "", getSpannableScore(), "by " + link.getAuthor(), getFlairString()));
 
-            textHidden.setText(getTimestamp() + "\n" + link.getNumComments() + " comments");
+            textHidden.setText(getTimestamp() + ", " + link.getNumComments() + " comments");
 
         }
 
