@@ -92,7 +92,7 @@ public class FragmentHeaders extends Fragment {
                                                 preferences.edit()
                                                         .putString(AppSettings.SUBSCRIBED_SUBREDDITS, "")
                                                         .apply();
-                                                Toast.makeText(activity, "Logged out",
+                                                Toast.makeText(activity, getString(R.string.logged_out),
                                                         Toast.LENGTH_SHORT).show();
                                                 activity.recreate();
                                             }

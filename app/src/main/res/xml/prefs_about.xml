@@ -38,6 +38,19 @@
 
         </Preference>
 
+        <Preference
+            android:key="pref_privacy_policy"
+            android:title="@string/pref_privacy_policy"
+            android:summary="@string/pref_privacy_policy_summary"
+            >
+
+            <intent
+                android:action="android.intent.action.VIEW"
+                android:data="http://winsonchiu.com/reader.html"
+                />
+
+        </Preference>
+
     </PreferenceCategory>
 
     <PreferenceCategory

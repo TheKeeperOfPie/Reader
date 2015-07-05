@@ -345,7 +345,7 @@ public class ActivityNewPost extends AppCompatActivity {
                                     imageCaptcha);
                         }
 
-                        Toast.makeText(ActivityNewPost.this, "Error: " + error, Toast.LENGTH_LONG)
+                        Toast.makeText(ActivityNewPost.this, getString(R.string.error) + ": " + error, Toast.LENGTH_LONG)
                                 .show();
                         progressSubmit.setVisibility(View.GONE);
                         return;

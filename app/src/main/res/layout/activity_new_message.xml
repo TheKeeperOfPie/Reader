@@ -163,20 +163,45 @@
 
     </android.support.design.widget.AppBarLayout>
 
-    <android.support.design.widget.FloatingActionButton
-        android:id="@+id/fab_submit_post"
+    <RelativeLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentEnd="true"
         android:layout_alignParentBottom="true"
         android:layout_margin="16dp"
-        android:src="@drawable/ic_check_white_24dp"
         app:layout_anchor="@id/layout_relative"
         app:layout_anchorGravity="bottom|end"
-        app:fabSize="normal"
-        app:elevation="6dp"
-        app:pressedTranslationZ="12dp"
-        app:borderWidth="0dp"
-        />
+        >
+
+        <android.support.design.widget.FloatingActionButton
+            android:id="@+id/fab_submit_post"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@drawable/ic_check_white_24dp"
+            android:layout_alignParentEnd="true"
+            android:layout_alignParentBottom="true"
+            app:layout_behavior="com.winsonchiu.reader.ScrollAwareFloatingActionButtonBehavior"
+            app:backgroundTint="@color/colorPrimary"
+            app:fabSize="normal"
+            app:elevation="0dp"
+            app:pressedTranslationZ="12dp"
+            app:borderWidth="0dp"
+            />
+
+        <ProgressBar
+            style="?android:attr/progressBarStyleHorizontal"
+            android:id="@+id/progress_submit"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignTop="@id/fab_submit_post"
+            android:layout_alignBottom="@id/fab_submit_post"
+            android:layout_alignStart="@id/fab_submit_post"
+            android:layout_alignEnd="@id/fab_submit_post"
+            android:progressDrawable="@drawable/progress_circular"
+            android:indeterminateDrawable="@drawable/progress_indeterminate_circular"
+            android:visibility="gone"
+            />
+
+    </RelativeLayout>
 
 </android.support.design.widget.CoordinatorLayout>

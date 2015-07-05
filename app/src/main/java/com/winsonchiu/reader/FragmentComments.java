@@ -35,6 +35,7 @@ import android.view.animation.Animation;
 import android.view.animation.Transformation;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
+import android.widget.Toast;
 
 import com.google.android.youtube.player.YouTubeInitializationResult;
 import com.google.android.youtube.player.YouTubePlayer;
@@ -224,6 +225,14 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
                 linearLayoutManager.scrollToPositionWithOffset(0, 0);
             }
         });
+        buttonJumpTop.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View v) {
+                Toast.makeText(activity, getString(R.string.content_description_button_jump_top),
+                        Toast.LENGTH_SHORT).show();
+                return false;
+            }
+        });
 
         buttonCommentPrevious = (FloatingActionButton) view
                 .findViewById(R.id.button_comment_previous);
@@ -254,6 +263,13 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
                         }
                     }
                 }, 200);
+            }
+        });
+        buttonCommentPrevious.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View v) {
+                Toast.makeText(activity, getString(R.string.content_description_button_comment_previous), Toast.LENGTH_SHORT).show();
+                return false;
             }
         });
 
@@ -287,6 +303,13 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
                     }
                 }, 200);
 
+            }
+        });
+        buttonCommentNext.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View v) {
+                Toast.makeText(activity, getString(R.string.content_description_button_comment_next), Toast.LENGTH_SHORT).show();
+                return false;
             }
         });
 
@@ -905,6 +928,8 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
             return true;
         }
         else {
+
+            linearLayoutManager.scrollToPositionWithOffset(0, 0);
 
             adapterCommentList.setAnimationFinished(false);
             adapterCommentList.collapseViewHolderLink();

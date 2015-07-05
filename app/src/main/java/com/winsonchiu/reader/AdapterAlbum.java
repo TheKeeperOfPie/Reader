@@ -15,6 +15,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
+import android.webkit.WebViewClient;
 import android.widget.HorizontalScrollView;
 import android.widget.ImageButton;
 import android.widget.RelativeLayout;
@@ -78,12 +79,28 @@ public class AdapterAlbum extends PagerAdapter {
         webView.setId(R.id.web);
         webView.setScrollbarFadingEnabled(false);
         webView.setScrollY(0);
+        webView.setWebViewClient(new WebViewClient() {
+            @Override
+            public void onScaleChanged(WebView view, float oldScale, float newScale) {
+                ((WebViewFixed) view).lockHeight();
+                super.onScaleChanged(view, oldScale, newScale);
+            }
+
+            @Override
+            public void onReceivedError(WebView view,
+                    int errorCode,
+                    String description,
+                    String failingUrl) {
+                super.onReceivedError(view, errorCode, description, failingUrl);
+                Log.e(TAG, "WebView error: " + description);
+            }
+        });
 
         RelativeLayout.LayoutParams layoutParams = new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
         layoutParams.addRule(RelativeLayout.ALIGN_PARENT_START, RelativeLayout.TRUE);
         layoutParams.addRule(RelativeLayout.ALIGN_PARENT_END, RelativeLayout.TRUE);
         layoutParams.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM, RelativeLayout.TRUE);
-        layoutParams.addRule(RelativeLayout.BELOW, R.id.scroll_title);
+        layoutParams.addRule(RelativeLayout.BELOW, R.id.text_image_title);
 
         ((RelativeLayout) view).addView(webView, 0, layoutParams);
 
@@ -150,13 +167,14 @@ public class AdapterAlbum extends PagerAdapter {
 
         protected RelativeLayout layoutRelative;
         protected TextView textTitle;
+        protected ScrollView scrollDescription;
+        protected TextView textTitleHidden;
         protected TextView textDescription;
         protected RelativeLayout layoutInfo;
         protected RelativeLayout layoutDownloadImage;
         protected ImageButton buttonInfo;
         protected ImageButton buttonDownload;
         protected TextView textAlbumIndicator;
-        protected HorizontalScrollView scrollTitle;
         protected WebViewFixed webView;
 
         public ViewHolder(View view, EventListener listener, DisallowListener disallowListener) {
@@ -164,25 +182,22 @@ public class AdapterAlbum extends PagerAdapter {
             this.disallowListener = disallowListener;
             layoutRelative = (RelativeLayout) view;
             textAlbumIndicator = (TextView) view.findViewById(R.id.text_album_indicator);
-            scrollTitle = (HorizontalScrollView) view.findViewById(R.id.scroll_title);
             textTitle = (TextView) view.findViewById(R.id.text_image_title);
+            scrollDescription = (ScrollView) view.findViewById(R.id.scroll_description);
+            textTitleHidden = (TextView) view.findViewById(R.id.text_title_hidden);
             textDescription = (TextView) view.findViewById(R.id.text_image_description);
             layoutInfo = (RelativeLayout) view.findViewById(R.id.layout_info);
             layoutDownloadImage = (RelativeLayout) view.findViewById(R.id.layout_download_image);
             buttonInfo = (ImageButton) view.findViewById(R.id.button_info);
             buttonDownload = (ImageButton) view.findViewById(R.id.button_download_image);
 
-            buttonInfo.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    textDescription.setVisibility(textDescription.isShown() ? View.GONE : View.VISIBLE);
-                }
-            });
+            scrollDescription.setOnTouchListener(new OnTouchListenerDisallow(disallowListener));
 
             buttonInfo.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    textDescription.setVisibility(textDescription.isShown() ? View.GONE : View.VISIBLE);
+                    scrollDescription.setVisibility(scrollDescription.isShown() ? View.GONE : View.VISIBLE);
+                    textTitle.setVisibility(scrollDescription.isShown() ? View.INVISIBLE : View.VISIBLE);
                 }
             });
 
@@ -202,6 +217,8 @@ public class AdapterAlbum extends PagerAdapter {
 
             if (!TextUtils.isEmpty(image.getTitle()) && !"null".equals(image.getTitle())) {
                 textTitle.setText(image.getTitle());
+                textTitle.scrollTo(0, 0);
+                textTitleHidden.setText(image.getTitle());
             }
 
             if (!TextUtils.isEmpty(image.getDescription()) && !"null".equals(image.getDescription())) {
@@ -209,7 +226,7 @@ public class AdapterAlbum extends PagerAdapter {
                 layoutInfo.setVisibility(View.VISIBLE);
             }
 
-            scrollTitle.scrollTo(0, 0);
+            scrollDescription.scrollTo(0, 0);
 
         }
 

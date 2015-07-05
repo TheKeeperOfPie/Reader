@@ -333,7 +333,7 @@ public class FragmentProfile extends FragmentBase implements Toolbar.OnMenuItemC
         recyclerProfile.setAdapter(adapterProfile);
 
         CustomItemTouchHelper itemTouchHelper = new CustomItemTouchHelper(
-                new CustomItemTouchHelper.SimpleCallback(ItemTouchHelper.START | ItemTouchHelper.END, ItemTouchHelper.START | ItemTouchHelper.END) {
+                new CustomItemTouchHelper.SimpleCallback(ItemTouchHelper.START | ItemTouchHelper.END, 0) {
 
                     @Override
                     public int getSwipeDirs(RecyclerView recyclerView,
@@ -346,13 +346,8 @@ public class FragmentProfile extends FragmentBase implements Toolbar.OnMenuItemC
                     }
 
                     @Override
-                    public int getDragDirs(RecyclerView recyclerView,
-                            RecyclerView.ViewHolder viewHolder) {
-                        int position = viewHolder.getAdapterPosition();
-                        if (position == 2 || (position >= 6 && mListener.getControllerProfile().getViewType(position - 6) == ControllerProfile.VIEW_TYPE_LINK)) {
-                            return super.getDragDirs(recyclerView, viewHolder);
-                        }
-                        return 0;
+                    public boolean isLongPressDragEnabled() {
+                        return false;
                     }
 
                     @Override

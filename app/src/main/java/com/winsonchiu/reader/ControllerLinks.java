@@ -245,6 +245,11 @@ public class ControllerLinks implements ControllerLinksBase {
         if (isLoading) {
             return;
         }
+
+        if (TextUtils.isEmpty(listingLinks.getAfter())) {
+            return;
+        }
+
         setLoading(true);
         String url = Reddit.OAUTH_URL + subreddit.getUrl() + sort.toString() + "?t=" + time.toString() + "&limit=15&showAll=true&after=" + listingLinks.getAfter();
 

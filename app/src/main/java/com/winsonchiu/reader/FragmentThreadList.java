@@ -411,12 +411,26 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
                 }
             }
         });
+        buttonJumpTop.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View v) {
+                Toast.makeText(activity, getString(R.string.content_description_button_jump_top), Toast.LENGTH_SHORT).show();
+                return false;
+            }
+        });
 
         buttonClearViewed = (FloatingActionButton) view.findViewById(R.id.button_clear_viewed);
         buttonClearViewed.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 mListener.getControllerLinks().clearViewed(AppSettings.getHistorySet(preferences));
+            }
+        });
+        buttonClearViewed.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View v) {
+                Toast.makeText(activity, getString(R.string.content_description_button_clear_viewed), Toast.LENGTH_SHORT).show();
+                return false;
             }
         });
 
@@ -466,7 +480,7 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
         recyclerThreadList.setItemAnimator(null);
 
         itemTouchHelper = new CustomItemTouchHelper(
-                new CustomItemTouchHelper.SimpleCallback(ItemTouchHelper.START | ItemTouchHelper.END, ItemTouchHelper.START | ItemTouchHelper.END) {
+                new CustomItemTouchHelper.SimpleCallback(ItemTouchHelper.START | ItemTouchHelper.END, 0) {
 
                     @Override
                     public float getSwipeThreshold(RecyclerView.ViewHolder viewHolder) {
@@ -481,6 +495,10 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
                     @Override
                     public int getSwipeDirs(RecyclerView recyclerView,
                             RecyclerView.ViewHolder viewHolder) {
+
+                        if (viewHolder.getAdapterPosition() == 0) {
+                             return 0;
+                        }
 
                         ViewGroup.LayoutParams layoutParams = viewHolder.itemView.getLayoutParams();
 
@@ -499,6 +517,11 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
                         }
 
                         return super.getSwipeDirs(recyclerView, viewHolder);
+                    }
+
+                    @Override
+                    public boolean isLongPressDragEnabled() {
+                        return false;
                     }
 
                     @Override

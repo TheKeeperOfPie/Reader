@@ -288,7 +288,6 @@ public class Reddit {
             @Override
             public void onErrorResponse(VolleyError error) {
                 Log.d(TAG, "loadPost error: " + error);
-                Toast.makeText(context, "loadPost error: " + error, Toast.LENGTH_SHORT).show();
                 if (errorListener != null) {
                     errorListener.onErrorResponse(error);
                 }
@@ -346,7 +345,6 @@ public class Reddit {
             @Override
             public void onErrorResponse(VolleyError error) {
                 Log.d(TAG, "loadGet error: " + error);
-                Toast.makeText(context, "loadGet error: " + error, Toast.LENGTH_SHORT).show();
                 if (errorListener != null) {
                     errorListener.onErrorResponse(error);
                 }

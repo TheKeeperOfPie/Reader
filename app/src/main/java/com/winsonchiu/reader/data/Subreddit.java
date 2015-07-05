@@ -30,7 +30,7 @@ public class Subreddit extends Thing {
     private boolean collapseDeletedComments;
     private int commentScoreHideMins;
     private String description;
-    private CharSequence descriptionHtml;
+    private String descriptionHtml;
     private String displayName;
     private String headerImg;
     private int[] headerSize;
@@ -40,7 +40,7 @@ public class Subreddit extends Thing {
     private int[] iconSize;
     private boolean over18;
     private String publicDescription;
-    private CharSequence publicDescriptionHtml;
+    private String publicDescriptionHtml;
     private boolean publicTraffic;
     private long subscribers;
     private String submissionType;
@@ -138,8 +138,7 @@ public class Subreddit extends Thing {
 
         subreddit.setCollapseDeletedComments(jsonObject.optBoolean("collapse_deleted_comments"));
         subreddit.setDescription(jsonObject.optString("description"));
-        subreddit.setDescriptionHtml(Reddit.getFormattedHtml(
-                jsonObject.optString("description_html")));
+        subreddit.setDescriptionHtml(jsonObject.optString("description_html"));
         subreddit.setDisplayName(jsonObject.optString("display_name"));
         subreddit.setHeaderImg(jsonObject.optString("header_img"));
 
@@ -167,8 +166,7 @@ public class Subreddit extends Thing {
 
         subreddit.setOver18(jsonObject.optBoolean("over18"));
         subreddit.setPublicDescription(jsonObject.optString("public_description"));
-        subreddit.setPublicDescriptionHtml(Reddit.getFormattedHtml(
-                jsonObject.optString("public_description_html")));
+        subreddit.setPublicDescriptionHtml(jsonObject.optString("public_description_html"));
         subreddit.setPublicTraffic(jsonObject.optBoolean("public_traffic"));
         subreddit.setSubscribers(jsonObject.optLong("subscribers"));
         subreddit.setSubmissionType(jsonObject.optString("submission_type"));
@@ -237,10 +235,10 @@ public class Subreddit extends Thing {
     }
 
     public CharSequence getDescriptionHtml() {
-        return descriptionHtml;
+        return Reddit.getFormattedHtml(descriptionHtml);
     }
 
-    public void setDescriptionHtml(CharSequence descriptionHtml) {
+    public void setDescriptionHtml(String descriptionHtml) {
         this.descriptionHtml = descriptionHtml;
     }
 
@@ -319,10 +317,10 @@ public class Subreddit extends Thing {
     }
 
     public CharSequence getPublicDescriptionHtml() {
-        return publicDescriptionHtml;
+        return Reddit.getFormattedHtml(publicDescriptionHtml);
     }
 
-    public void setPublicDescriptionHtml(CharSequence publicDescriptionHtml) {
+    public void setPublicDescriptionHtml(String publicDescriptionHtml) {
         this.publicDescriptionHtml = publicDescriptionHtml;
     }
 

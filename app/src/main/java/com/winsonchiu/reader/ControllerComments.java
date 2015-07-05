@@ -598,7 +598,7 @@ public class ControllerComments {
         reddit.voteComment(viewHolder, comment, vote, new Reddit.VoteResponseListener() {
             @Override
             public void onVoteFailed() {
-                Toast.makeText(activity, "Error voting", Toast.LENGTH_SHORT)
+                Toast.makeText(activity, activity.getString(R.string.error_voting), Toast.LENGTH_SHORT)
                         .show();
             }
         });

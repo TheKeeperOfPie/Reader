@@ -70,7 +70,6 @@ public class WebViewFixed extends WebView {
             if (layoutParams != null) {
                 setLayoutParams(layoutParams);
                 reload();
-                Toast.makeText(getContext(), "onLayout height reset", Toast.LENGTH_SHORT).show();
             }
             Rect rect = new Rect();
             getParent().getChildVisibleRect(this, rect, null);
@@ -103,22 +102,6 @@ public class WebViewFixed extends WebView {
                 .setDisplayZoomControls(false);
         webViewFixed.setBackgroundColor(0x000000);
         webViewFixed.setInitialScale(1);
-        webViewFixed.setWebViewClient(new WebViewClient() {
-            @Override
-            public void onScaleChanged(WebView view, float oldScale, float newScale) {
-                ((WebViewFixed) view).lockHeight();
-                super.onScaleChanged(view, oldScale, newScale);
-            }
-
-            @Override
-            public void onReceivedError(WebView view,
-                    int errorCode,
-                    String description,
-                    String failingUrl) {
-                super.onReceivedError(view, errorCode, description, failingUrl);
-                Log.e(TAG, "WebView error: " + description);
-            }
-        });
         return webViewFixed;
     }
 

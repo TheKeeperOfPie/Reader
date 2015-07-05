@@ -6,6 +6,7 @@ package com.winsonchiu.reader;
 
 import android.app.Activity;
 import android.support.design.widget.FloatingActionButton;
+import android.support.v4.view.animation.FastOutSlowInInterpolator;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
@@ -14,9 +15,12 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.animation.Animation;
+import android.view.animation.Transformation;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -42,12 +46,15 @@ public class ActivityNewMessage extends AppCompatActivity {
     private EditText editTextSubject;
     private EditText editTextMessage;
     private FloatingActionButton floatingActionButton;
+    private static final long DURATION_SUBMIT = 400;
+    private static final long DURATION_SUBMIT_DELAY = 125;
 
     private RelativeLayout layoutCaptcha;
     private String captchaId;
     private ImageView imageCaptcha;
     private EditText editCaptcha;
     private ImageButton buttonCaptchaRefresh;
+    private ProgressBar progressSubmit;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -77,6 +84,8 @@ public class ActivityNewMessage extends AppCompatActivity {
                 submitMessage();
             }
         });
+
+        progressSubmit = (ProgressBar) findViewById(R.id.progress_submit);
 
         layoutCaptcha = (RelativeLayout) findViewById(R.id.layout_captcha);
         imageCaptcha = (ImageView) findViewById(R.id.image_captcha);
@@ -111,9 +120,17 @@ public class ActivityNewMessage extends AppCompatActivity {
 
         String recipient = editTextRecipient.getText().toString();
 
+        if (TextUtils.isEmpty(recipient)) {
+            Toast.makeText(this, getString(R.string.empty_recipient), Toast.LENGTH_SHORT).show();
+            return;
+        }
+
         if (recipient.startsWith("/u/")) {
             recipient = recipient.substring(3);
         }
+
+        progressSubmit.setIndeterminate(true);
+        progressSubmit.setVisibility(View.VISIBLE);
 
         Map<String, String> params = new HashMap<>();
         params.put("api_type", "json");
@@ -147,7 +164,7 @@ public class ActivityNewMessage extends AppCompatActivity {
                                     imageCaptcha);
                         }
 
-                        Toast.makeText(ActivityNewMessage.this, "Error: " + error, Toast.LENGTH_LONG)
+                        Toast.makeText(ActivityNewMessage.this, getString(R.string.error) + ": " + error, Toast.LENGTH_LONG)
                                 .show();
                         return;
                     }
@@ -156,13 +173,48 @@ public class ActivityNewMessage extends AppCompatActivity {
                     e.printStackTrace();
                 }
 
-                setResult(Activity.RESULT_OK);
-                finish();
+
+                progressSubmit.setProgress(0);
+                progressSubmit.setIndeterminate(false);
+
+                Animation animation = new Animation() {
+                    @Override
+                    protected void applyTransformation(final float interpolatedTime, Transformation t) {
+                        super.applyTransformation(interpolatedTime, t);
+                        progressSubmit.setProgress((int) (interpolatedTime * 100));
+                        Log.d(TAG, "progress: " + ((int) (interpolatedTime * 100)));
+                    }
+                };
+                animation.setDuration(DURATION_SUBMIT);
+                animation.setInterpolator(new FastOutSlowInInterpolator());
+                animation.setAnimationListener(new Animation.AnimationListener() {
+                    @Override
+                    public void onAnimationStart(Animation animation) {
+                    }
+
+                    @Override
+                    public void onAnimationEnd(Animation animation) {
+                        progressSubmit.postDelayed(new Runnable() {
+                            @Override
+                            public void run() {
+                                setResult(Activity.RESULT_OK);
+                                finish();
+                            }
+                        }, DURATION_SUBMIT_DELAY);
+                    }
+
+                    @Override
+                    public void onAnimationRepeat(Animation animation) {
+
+                    }
+                });
+                progressSubmit.startAnimation(animation);
+
             }
         }, new Response.ErrorListener() {
             @Override
             public void onErrorResponse(VolleyError error) {
-                Toast.makeText(ActivityNewMessage.this, "Error submitting post", Toast.LENGTH_LONG)
+                Toast.makeText(ActivityNewMessage.this, getString(R.string.error_sending_message), Toast.LENGTH_LONG)
                         .show();
             }
         }, params, 0);

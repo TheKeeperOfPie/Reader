@@ -182,4 +182,19 @@
     <string name="logout_summary">Remove account from Reader</string>
     <string name="undo">Undo</string>
     <string name="link_hidden">Post hidden</string>
+    <string name="pref_privacy_policy">Privacy Policy</string>
+    <string name="pref_privacy_policy_summary">View info on collected data</string>
+    <string name="error_sending_message">Error sending message</string>
+    <string name="error">Error</string>
+    <string name="error_voting">Error voting</string>
+    <string name="login_success">Login successful</string>
+    <string name="login_failure">Login failed</string>
+    <string name="image_downloaded">Image downloaded</string>
+    <string name="history_cleared">History cleared</string>
+    <string name="logged_out">Logged out</string>
+    <string name="empty_recipient">Recipient cannot be empty</string>
+    <string name="content_description_button_jump_top">Jump to top</string>
+    <string name="content_description_button_clear_viewed">Clear viewed posts</string>
+    <string name="content_description_button_comment_previous">Previous comment thread</string>
+    <string name="content_description_button_comment_next">Next comment thread</string>
 </resources>

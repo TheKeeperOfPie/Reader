@@ -342,7 +342,7 @@ public class MainActivity extends YouTubeBaseActivity
                                     MediaScannerConnection.scanFile(MainActivity.this,
                                             new String[]{file.toString()}, null, null);
 
-                                    Toast.makeText(MainActivity.this, "Image downloaded",
+                                    Toast.makeText(MainActivity.this, getString(R.string.image_downloaded),
                                             Toast.LENGTH_SHORT)
                                             .show();
                                 }
@@ -385,7 +385,7 @@ public class MainActivity extends YouTubeBaseActivity
                         new Reddit.VoteResponseListener() {
                             @Override
                             public void onVoteFailed() {
-                                Toast.makeText(MainActivity.this, "Error voting", Toast.LENGTH_SHORT)
+                                Toast.makeText(MainActivity.this, getString(R.string.error_voting), Toast.LENGTH_SHORT)
                                         .show();
                             }
                         });
@@ -891,7 +891,7 @@ public class MainActivity extends YouTubeBaseActivity
     public void onAuthFinished(boolean success) {
         selectNavigationItem(R.id.item_home, false);
         if (success) {
-            Toast.makeText(this, "Login successful", Toast.LENGTH_SHORT)
+            Toast.makeText(this, getString(R.string.login_success), Toast.LENGTH_SHORT)
                     .show();
             loadAccountInfo();
             getControllerUser().reloadUser();
@@ -899,7 +899,7 @@ public class MainActivity extends YouTubeBaseActivity
             getControllerLinks().loadFrontPage(Sort.HOT, true);
         }
         else {
-            Toast.makeText(this, "Login failed", Toast.LENGTH_SHORT)
+            Toast.makeText(this, getString(R.string.login_failure), Toast.LENGTH_SHORT)
                     .show();
         }
     }

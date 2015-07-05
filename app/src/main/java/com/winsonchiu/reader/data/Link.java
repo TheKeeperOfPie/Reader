@@ -37,7 +37,7 @@ public class Link extends Thing {
     private boolean saved;
     private int score;
     private String selfText = "";
-    private CharSequence selfTextHtml = "";
+    private String selfTextHtml = "";
     private String subreddit = "";
     private String subredditId = "";
     private String thumbnail = "";
@@ -56,6 +56,8 @@ public class Link extends Thing {
     private int backgroundColor;
 
     public static Link fromJson(JSONObject rootJsonObject) throws JSONException {
+
+        // TODO: Move parsing of HTML to asynchronous thread
 
         Link link = new Link();
         link.setKind(rootJsonObject.optString("kind"));
@@ -102,7 +104,7 @@ public class Link extends Thing {
         link.setSaved(jsonObject.optBoolean("saved"));
         link.setScore(jsonObject.optInt("score"));
         link.setSelfText(jsonObject.optString("selftext"));
-        link.setSelfTextHtml(Reddit.getFormattedHtml(jsonObject.optString("selftext_html")));
+        link.setSelfTextHtml(jsonObject.optString("selftext_html"));
         link.setSubreddit(jsonObject.optString("subreddit"));
         link.setSubredditId(jsonObject.optString("subreddit_id"));
         link.setThumbnail(jsonObject.optString("thumbnail"));
@@ -306,10 +308,10 @@ public class Link extends Thing {
     }
 
     public CharSequence getSelfTextHtml() {
-        return selfTextHtml;
+        return Reddit.getFormattedHtml(selfTextHtml);
     }
 
-    public void setSelfTextHtml(CharSequence selfTextHtml) {
+    public void setSelfTextHtml(String selfTextHtml) {
         this.selfTextHtml = selfTextHtml;
     }
 

@@ -81,7 +81,6 @@
             android:layout_height="40dp"
             android:layout_alignTop="@id/image_thumbnail"
             android:layout_alignStart="@id/image_thumbnail"
-            android:max="1000"
             android:visibility="gone"
             android:indeterminate="false"
             />

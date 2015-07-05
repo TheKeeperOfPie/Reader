@@ -192,7 +192,7 @@ public class FragmentWeb extends FragmentBase {
                     String description,
                     String failingUrl) {
                 super.onReceivedError(view, errorCode, description, failingUrl);
-                Toast.makeText(activity, "WebView error: " + description, Toast.LENGTH_SHORT).show();
+                Log.e(TAG, "WebView error: " + description);
             }
         });
         webView.setWebChromeClient(new WebChromeClient() {

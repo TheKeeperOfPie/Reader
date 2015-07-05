@@ -22,42 +22,61 @@
         android:shadowRadius="3"
         />
 
-    <TextView
-        android:id="@+id/text_image_description"
+    <ScrollView
+        android:id="@+id/scroll_description"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:paddingTop="56dp"
-        android:paddingStart="@dimen/activity_horizontal_margin"
-        android:paddingEnd="@dimen/activity_horizontal_margin"
-        android:visibility="gone"
         android:background="@color/darkThemeBackground"
         android:alpha="0.85"
-        />
-
-    <HorizontalScrollView
-        android:id="@+id/scroll_title"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_alignParentTop="true"
-        android:layout_toStartOf="@+id/layout_info"
-        android:scrollbarSize="4dp"
+        android:visibility="gone"
         >
 
-        <TextView
-            android:id="@+id/text_image_title"
-            android:minHeight="48dp"
-            android:layout_width="wrap_content"
+        <RelativeLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:paddingTop="8dp"
-            android:paddingStart="@dimen/activity_horizontal_margin"
-            android:paddingEnd="@dimen/activity_horizontal_margin"
-            android:textAppearance="?android:textAppearanceMedium"
-            android:singleLine="true"
-            android:shadowColor="@android:color/black"
-            android:shadowRadius="3"
-            />
+            >
 
-    </HorizontalScrollView>
+            <TextView
+                android:id="@+id/text_title_hidden"
+                android:minHeight="48dp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_alignParentTop="true"
+                android:layout_alignParentStart="true"
+                android:paddingTop="8dp"
+                android:paddingStart="@dimen/activity_horizontal_margin"
+                android:paddingEnd="116dp"
+                android:textAppearance="?android:textAppearanceMedium"
+                />
+
+            <TextView
+                android:id="@+id/text_image_description"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/text_title_hidden"
+                android:paddingStart="@dimen/activity_horizontal_margin"
+                android:paddingEnd="@dimen/activity_horizontal_margin"
+                />
+
+        </RelativeLayout>
+
+    </ScrollView>
+
+    <TextView
+        android:id="@+id/text_image_title"
+        android:minHeight="48dp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentStart="true"
+        android:layout_toStartOf="@+id/layout_info"
+        android:paddingTop="8dp"
+        android:paddingStart="@dimen/activity_horizontal_margin"
+        android:paddingEnd="@dimen/activity_horizontal_margin"
+        android:textAppearance="?android:textAppearanceMedium"
+        android:ellipsize="marquee"
+        android:singleLine="true"
+        />
 
     <RelativeLayout
         android:id="@+id/layout_info"
