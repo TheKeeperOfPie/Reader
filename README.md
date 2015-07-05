@@ -1,3 +1,4 @@
+<img src="/Assets/AppIcon/app_icon.png" width="100em"/>
 # [Reader](https://play.google.com/store/apps/details?id=com.winsonchiu.reader)
 
 A Reddit client created to practice good UI/UX design
