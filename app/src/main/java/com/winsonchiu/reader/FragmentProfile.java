@@ -7,12 +7,15 @@ package com.winsonchiu.reader;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.design.widget.Snackbar;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.SearchView;
+import android.support.v7.widget.StaggeredGridLayoutManager;
 import android.support.v7.widget.Toolbar;
+import android.support.v7.widget.helper.ItemTouchHelper;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.KeyEvent;
@@ -25,6 +28,7 @@ import android.widget.AdapterView;
 import android.widget.Spinner;
 
 import com.winsonchiu.reader.data.Comment;
+import com.winsonchiu.reader.data.Link;
 import com.winsonchiu.reader.data.Reddit;
 
 public class FragmentProfile extends FragmentBase implements Toolbar.OnMenuItemClickListener {
@@ -44,6 +48,7 @@ public class FragmentProfile extends FragmentBase implements Toolbar.OnMenuItemC
     private Toolbar toolbar;
     private Spinner spinnerPage;
     private AdapterProfilePage adapterProfilePage;
+    private Snackbar snackbar;
 
     public static FragmentProfile newInstance() {
         FragmentProfile fragment = new FragmentProfile();
@@ -148,7 +153,7 @@ public class FragmentProfile extends FragmentBase implements Toolbar.OnMenuItemC
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
             Bundle savedInstanceState) {
 
-        View view = inflater.inflate(R.layout.fragment_profile, container, false);
+        final View view = inflater.inflate(R.layout.fragment_profile, container, false);
 
         listener = new ControllerProfile.Listener() {
             @Override
@@ -186,6 +191,11 @@ public class FragmentProfile extends FragmentBase implements Toolbar.OnMenuItemC
             @Override
             public void setRefreshing(boolean refreshing) {
                 swipeRefreshProfile.setRefreshing(refreshing);
+            }
+
+            @Override
+            public void post(Runnable runnable) {
+                recyclerProfile.post(runnable);
             }
         };
 
@@ -321,6 +331,64 @@ public class FragmentProfile extends FragmentBase implements Toolbar.OnMenuItemC
         }
 
         recyclerProfile.setAdapter(adapterProfile);
+
+        CustomItemTouchHelper itemTouchHelper = new CustomItemTouchHelper(
+                new CustomItemTouchHelper.SimpleCallback(ItemTouchHelper.START | ItemTouchHelper.END, ItemTouchHelper.START | ItemTouchHelper.END) {
+
+                    @Override
+                    public int getSwipeDirs(RecyclerView recyclerView,
+                            RecyclerView.ViewHolder viewHolder) {
+                        int position = viewHolder.getAdapterPosition();
+                        if (position == 2 || (position >= 6 && mListener.getControllerProfile().getViewType(position - 6) == ControllerProfile.VIEW_TYPE_LINK)) {
+                            return super.getSwipeDirs(recyclerView, viewHolder);
+                        }
+                        return 0;
+                    }
+
+                    @Override
+                    public int getDragDirs(RecyclerView recyclerView,
+                            RecyclerView.ViewHolder viewHolder) {
+                        int position = viewHolder.getAdapterPosition();
+                        if (position == 2 || (position >= 6 && mListener.getControllerProfile().getViewType(position - 6) == ControllerProfile.VIEW_TYPE_LINK)) {
+                            return super.getDragDirs(recyclerView, viewHolder);
+                        }
+                        return 0;
+                    }
+
+                    @Override
+                    public boolean onMove(RecyclerView recyclerView,
+                            RecyclerView.ViewHolder viewHolder,
+                            RecyclerView.ViewHolder target) {
+                        return false;
+                    }
+
+                    @Override
+                    public void onSwiped(final RecyclerView.ViewHolder viewHolder, int direction) {
+                        // Offset by 1 due to subreddit header
+                        final int position = viewHolder.getAdapterPosition() == 2 ? 2 : viewHolder.getAdapterPosition() - 6;
+                        final Link link = mListener.getControllerProfile().remove(position);
+                        mListener.getEventListenerBase().hide(link);
+
+                        if (snackbar != null) {
+                            snackbar.dismiss();
+                        }
+                        snackbar = Snackbar.make(recyclerProfile, R.string.link_hidden,
+                                Snackbar.LENGTH_LONG)
+                                .setActionTextColor(getResources().getColor(R.color.colorAccent))
+                                .setAction(
+                                        R.string.undo, new View.OnClickListener() {
+                                            @Override
+                                            public void onClick(View v) {
+                                                mListener.getEventListenerBase().hide(link);
+                                                mListener.getControllerProfile().add(position, link);
+                                                recyclerProfile.invalidate();
+                                            }
+                                        });
+                        snackbar.getView().setBackgroundColor(getResources().getColor(R.color.colorPrimary));
+                        snackbar.show();
+                    }
+                });
+        itemTouchHelper.attachToRecyclerView(recyclerProfile);
 
         return view;
 

@@ -90,7 +90,7 @@ public class Link extends Thing {
         }
 
         link.setLinkFlairCssClass(jsonObject.optString("link_flair_css_class"));
-        link.setLinkFlairText(jsonObject.optString("link_flair_text"));
+        link.setLinkFlairText(Html.fromHtml(jsonObject.optString("link_flair_text")).toString());
         if (link.getLinkFlairText().equals("null")) {
             link.setLinkFlairText("");
         }
@@ -102,11 +102,11 @@ public class Link extends Thing {
         link.setSaved(jsonObject.optBoolean("saved"));
         link.setScore(jsonObject.optInt("score"));
         link.setSelfText(jsonObject.optString("selftext"));
-        link.setSelfTextHtml(Reddit.getTrimmedHtml(jsonObject.optString("selftext_html")));
+        link.setSelfTextHtml(Reddit.getFormattedHtml(jsonObject.optString("selftext_html")));
         link.setSubreddit(jsonObject.optString("subreddit"));
         link.setSubredditId(jsonObject.optString("subreddit_id"));
         link.setThumbnail(jsonObject.optString("thumbnail"));
-        link.setTitle(jsonObject.optString("title"));
+        link.setTitle(Html.fromHtml(jsonObject.optString("title")).toString());
         link.setUrl(String.valueOf(Html.fromHtml(jsonObject.optString("url"))));
 
         String edited = jsonObject.optString("edited");

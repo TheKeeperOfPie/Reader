@@ -111,13 +111,13 @@ public class AdapterSearchSubreddits extends RecyclerView.Adapter<AdapterSearchS
             layoutContainerExpand.setVisibility(View.GONE);
 
             textName.setText(subreddit.getDisplayName());
-            textTitle.setText(Reddit.getTrimmedHtml(subreddit.getTitle()));
+            textTitle.setText(subreddit.getTitle());
 
             if ("null".equals(subreddit.getPublicDescriptionHtml())) {
                 textDescription.setVisibility(View.GONE);
             }
             else {
-                textDescription.setText(Reddit.getTrimmedHtml(subreddit.getPublicDescriptionHtml()));
+                textDescription.setText(subreddit.getPublicDescriptionHtml());
             }
 
             textInfo.setText(subreddit.getSubscribers() + " subscribers\n" +

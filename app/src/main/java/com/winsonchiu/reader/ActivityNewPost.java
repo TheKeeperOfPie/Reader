@@ -4,8 +4,6 @@
 
 package com.winsonchiu.reader;
 
-import android.animation.Animator;
-import android.animation.ObjectAnimator;
 import android.app.Activity;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
@@ -17,7 +15,6 @@ import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.animation.Animation;
-import android.view.animation.DecelerateInterpolator;
 import android.view.animation.Transformation;
 import android.webkit.URLUtil;
 import android.widget.EditText;
@@ -106,7 +103,7 @@ public class ActivityNewPost extends AppCompatActivity {
             textSubmit.setVisibility(View.GONE);
         }
         else {
-            textSubmit.setText(Reddit.getTrimmedHtml(submitTextHtml));
+            textSubmit.setText(Reddit.getFormattedHtml(submitTextHtml));
         }
 
         if (Reddit.POST_TYPE_LINK.equals(getIntent().getStringExtra(POST_TYPE))) {

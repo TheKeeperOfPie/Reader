@@ -5,6 +5,7 @@
 package com.winsonchiu.reader;
 
 import android.app.Activity;
+import android.content.SharedPreferences;
 import android.text.TextUtils;
 import android.util.Log;
 import android.widget.Toast;
@@ -16,12 +17,16 @@ import com.winsonchiu.reader.data.Link;
 import com.winsonchiu.reader.data.Listing;
 import com.winsonchiu.reader.data.Reddit;
 import com.winsonchiu.reader.data.Subreddit;
+import com.winsonchiu.reader.data.Thing;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -64,6 +69,7 @@ public class ControllerLinks implements ControllerLinksBase {
         listener.setSort(sort);
         listener.getAdapter().notifyDataSetChanged();
         listener.setRefreshing(isLoading());
+        listener.loadSideBar(subreddit);
         if (!isLoading() && listingLinks.getChildren().isEmpty()) {
             reloadSubreddit();
         }
@@ -145,13 +151,21 @@ public class ControllerLinks implements ControllerLinksBase {
     }
 
     public void setTitle() {
-        String subredditName = Reddit.FRONT_PAGE;
+        final String subredditName;
         if (!TextUtils.isEmpty(subreddit.getDisplayName())) {
             subredditName = "/r/" + subreddit.getDisplayName();
         }
+        else {
+            subredditName = Reddit.FRONT_PAGE;
+        }
 
-        for (Listener listener : listeners) {
-            listener.setToolbarTitle(subredditName);
+        for (final Listener listener : listeners) {
+            listener.post(new Runnable() {
+                @Override
+                public void run() {
+                    listener.setToolbarTitle(subredditName);
+                }
+            });
         }
     }
 
@@ -176,34 +190,45 @@ public class ControllerLinks implements ControllerLinksBase {
             public void onResponse(final String response) {
                 // TODO: Catch null errors in parent method call
                 if (response == null) {
+                    setLoading(false);
                     return;
                 }
 
                 Log.d(TAG, "Response: " + response);
 
-                try {
-                    Listing listing = Listing.fromJson(new JSONObject(response));
-                    if (listing.getChildren()
-                            .isEmpty() || !(listing.getChildren()
-                            .get(0) instanceof Link)) {
-                        listingLinks = new Listing();
-                    }
-                    else {
-                        listingLinks = listing;
-                    }
-                }
-                catch (JSONException e) {
-                    e.printStackTrace();
-                }
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        try {
+                            Listing listing = Listing.fromJson(new JSONObject(response));
+                            if (listing.getChildren()
+                                    .isEmpty() || !(listing.getChildren()
+                                    .get(0) instanceof Link)) {
+                                listingLinks = new Listing();
+                            }
+                            else {
+                                listingLinks = listing;
+                            }
+                        }
+                        catch (JSONException e) {
+                            e.printStackTrace();
+                        }
 
-                for (Listener listener : listeners) {
-                    listener.getAdapter().notifyDataSetChanged();
-                    listener.loadSideBar(subreddit);
-                    listener.showEmptyView(listingLinks.getChildren()
-                            .isEmpty());
-                }
-                setTitle();
-                setLoading(false);
+                        for (final Listener listener : listeners) {
+                            listener.post(new Runnable() {
+                                @Override
+                                public void run() {
+                                    listener.getAdapter().notifyDataSetChanged();
+                                    listener.loadSideBar(subreddit);
+                                    listener.showEmptyView(listingLinks.getChildren()
+                                            .isEmpty());
+                                }
+                            });
+                        }
+                        setTitle();
+                        setLoading(false);
+                    }
+                }).start();
             }
         }, new ErrorListener() {
             @Override
@@ -300,8 +325,13 @@ public class ControllerLinks implements ControllerLinksBase {
 
     public void setLoading(boolean loading) {
         isLoading = loading;
-        for (Listener listener : listeners) {
-            listener.setRefreshing(loading);
+        for (final Listener listener : listeners) {
+            listener.post(new Runnable() {
+                @Override
+                public void run() {
+                    listener.setRefreshing(isLoading);
+                }
+            });
         }
     }
 
@@ -336,6 +366,15 @@ public class ControllerLinks implements ControllerLinksBase {
         return "/".equals(subreddit.getUrl()) || "/r/all/".equals(subreddit.getUrl());
     }
 
+    @Override
+    public Link remove(int position) {
+        Link link = (Link) listingLinks.getChildren().remove(position);
+        for (Listener listener : listeners) {
+            listener.getAdapter().notifyItemRemoved(position + 1);
+        }
+        return link;
+    }
+
     public void subscribe() {
         String action = subreddit.isUserIsSubscriber() ? "unsub" : "sub";
         subreddit.setUserIsSubscriber(!subreddit.isUserIsSubscriber());
@@ -356,6 +395,36 @@ public class ControllerLinks implements ControllerLinksBase {
 
                     }
                 }, params, 0);
+    }
+
+    public void add(int position, Link link) {
+        listingLinks.getChildren().add(position, link);
+        for (Listener listener : listeners) {
+//            listener.getAdapter().notifyItemInserted(position);
+
+            listener.getAdapter().notifyDataSetChanged();
+        }
+    }
+
+    public void clearViewed(Set<String> history) {
+
+        List<Integer> indexesToRemove = new ArrayList<>();
+
+        for (int index = 0; index < listingLinks.getChildren().size(); index++) {
+            Link link = (Link) listingLinks.getChildren().get(index);
+            if (history.contains(link.getName())) {
+                indexesToRemove.add(0, index);
+            }
+        }
+
+        for (int index : indexesToRemove) {
+            listingLinks.getChildren().remove(index);
+            for (Listener listener : listeners) {
+                // Offset 1 for subreddit header
+                listener.getAdapter().notifyItemRemoved(index + 1);
+            }
+        }
+
     }
 
     public interface Listener extends ControllerListener {

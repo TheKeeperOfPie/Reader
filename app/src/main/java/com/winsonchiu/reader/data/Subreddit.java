@@ -5,6 +5,7 @@
 package com.winsonchiu.reader.data;
 
 import android.support.annotation.Nullable;
+import android.text.Html;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -29,7 +30,7 @@ public class Subreddit extends Thing {
     private boolean collapseDeletedComments;
     private int commentScoreHideMins;
     private String description;
-    private String descriptionHtml;
+    private CharSequence descriptionHtml;
     private String displayName;
     private String headerImg;
     private int[] headerSize;
@@ -39,7 +40,7 @@ public class Subreddit extends Thing {
     private int[] iconSize;
     private boolean over18;
     private String publicDescription;
-    private String publicDescriptionHtml;
+    private CharSequence publicDescriptionHtml;
     private boolean publicTraffic;
     private long subscribers;
     private String submissionType;
@@ -137,7 +138,8 @@ public class Subreddit extends Thing {
 
         subreddit.setCollapseDeletedComments(jsonObject.optBoolean("collapse_deleted_comments"));
         subreddit.setDescription(jsonObject.optString("description"));
-        subreddit.setDescriptionHtml(jsonObject.optString("description_html"));
+        subreddit.setDescriptionHtml(Reddit.getFormattedHtml(
+                jsonObject.optString("description_html")));
         subreddit.setDisplayName(jsonObject.optString("display_name"));
         subreddit.setHeaderImg(jsonObject.optString("header_img"));
 
@@ -165,7 +167,8 @@ public class Subreddit extends Thing {
 
         subreddit.setOver18(jsonObject.optBoolean("over18"));
         subreddit.setPublicDescription(jsonObject.optString("public_description"));
-        subreddit.setPublicDescriptionHtml(jsonObject.optString("public_description_html"));
+        subreddit.setPublicDescriptionHtml(Reddit.getFormattedHtml(
+                jsonObject.optString("public_description_html")));
         subreddit.setPublicTraffic(jsonObject.optBoolean("public_traffic"));
         subreddit.setSubscribers(jsonObject.optLong("subscribers"));
         subreddit.setSubmissionType(jsonObject.optString("submission_type"));
@@ -174,7 +177,7 @@ public class Subreddit extends Thing {
         subreddit.setSubmitTextLabel(jsonObject.optString("submit_text_label"));
         subreddit.setSubmitTextHtml(jsonObject.optString("submit_text_html"));
         subreddit.setSubredditType(jsonObject.optString("subreddit_type"));
-        subreddit.setTitle(jsonObject.optString("title"));
+        subreddit.setTitle(Html.fromHtml(jsonObject.optString("title")).toString());
         subreddit.setUrl(jsonObject.optString("url"));
         subreddit.setUserIsBanned(jsonObject.optBoolean("user_is_banned"));
         subreddit.setUserIsContributor(jsonObject.optBoolean("user_is_contributor"));
@@ -233,11 +236,11 @@ public class Subreddit extends Thing {
         this.description = description;
     }
 
-    public String getDescriptionHtml() {
+    public CharSequence getDescriptionHtml() {
         return descriptionHtml;
     }
 
-    public void setDescriptionHtml(String descriptionHtml) {
+    public void setDescriptionHtml(CharSequence descriptionHtml) {
         this.descriptionHtml = descriptionHtml;
     }
 
@@ -315,11 +318,11 @@ public class Subreddit extends Thing {
         this.publicDescription = publicDescription;
     }
 
-    public String getPublicDescriptionHtml() {
+    public CharSequence getPublicDescriptionHtml() {
         return publicDescriptionHtml;
     }
 
-    public void setPublicDescriptionHtml(String publicDescriptionHtml) {
+    public void setPublicDescriptionHtml(CharSequence publicDescriptionHtml) {
         this.publicDescriptionHtml = publicDescriptionHtml;
     }
 

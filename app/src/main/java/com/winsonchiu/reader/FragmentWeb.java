@@ -28,6 +28,7 @@ import android.webkit.WebChromeClient;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.ProgressBar;
+import android.widget.RelativeLayout;
 import android.widget.Toast;
 
 public class FragmentWeb extends FragmentBase {
@@ -45,6 +46,8 @@ public class FragmentWeb extends FragmentBase {
     private Toolbar toolbar;
     private Menu menu;
     private ProgressBar progressBar;
+    private View viewWebFullscreen;
+    private RelativeLayout layoutRoot;
 
     public static FragmentWeb newInstance(String url) {
         FragmentWeb fragment = new FragmentWeb();
@@ -138,6 +141,8 @@ public class FragmentWeb extends FragmentBase {
 
         View view = inflater.inflate(R.layout.fragment_web, container, false);
 
+        layoutRoot = (RelativeLayout) view;
+
         toolbar = (Toolbar) view.findViewById(R.id.toolbar);
         toolbar.setTitle(getString(R.string.loading_web_page));
         toolbar.setOnClickListener(new View.OnClickListener() {
@@ -196,6 +201,18 @@ public class FragmentWeb extends FragmentBase {
                 super.onProgressChanged(view, newProgress);
                 progressBar.setIndeterminate(false);
                 progressBar.setProgress(newProgress);
+            }
+
+            @Override
+            public void onShowCustomView(View view, CustomViewCallback callback) {
+                viewWebFullscreen = view;
+                layoutRoot.addView(viewWebFullscreen, layoutRoot.getChildCount());
+            }
+
+            @Override
+            public void onHideCustomView() {
+                super.onHideCustomView();
+                layoutRoot.removeView(viewWebFullscreen);
             }
         });
         webView.getSettings().setUseWideViewPort(true);

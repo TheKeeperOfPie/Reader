@@ -483,10 +483,42 @@ public class Reddit {
     }
 
     public void unsave(Thing thing) {
-        HashMap<String, String> params = new HashMap<>(2);
+        HashMap<String, String> params = new HashMap<>(1);
         params.put(Reddit.QUERY_ID, thing.getName());
 
         reddit.loadPost(Reddit.OAUTH_URL + "/api/unsave", new Listener<String>() {
+            @Override
+            public void onResponse(String response) {
+            }
+        }, new ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+            }
+        }, params, 0);
+    }
+
+    public void hide(Link link) {
+
+        HashMap<String, String> params = new HashMap<>(1);
+        params.put(Reddit.QUERY_ID, link.getName());
+
+        reddit.loadPost(Reddit.OAUTH_URL + "/api/hide", new Listener<String>() {
+            @Override
+            public void onResponse(String response) {
+            }
+        }, new ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+            }
+        }, params, 0);
+    }
+
+    public void unhide(Link link) {
+
+        HashMap<String, String> params = new HashMap<>(1);
+        params.put(Reddit.QUERY_ID, link.getName());
+
+        reddit.loadPost(Reddit.OAUTH_URL + "/api/unhide", new Listener<String>() {
             @Override
             public void onResponse(String response) {
             }
@@ -679,7 +711,7 @@ public class Reddit {
 //            return "<html><head><meta name=\"viewport\" content=\"width=device-width, minimum-scale=0.1\"><style>img {width:100%;}</style></head><body style=\"margin: 0px;\"><img style=\"-webkit-user-select: none; cursor: zoom-in;\" src=\"" + src + "\"/></body></html>";
     }
 
-    public static CharSequence getTrimmedHtml(String html) {
+    public static CharSequence getFormattedHtml(String html) {
         if (TextUtils.isEmpty(html)) {
             return new SpannedString("");
         }

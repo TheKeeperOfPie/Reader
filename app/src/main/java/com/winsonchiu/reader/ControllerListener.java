@@ -13,4 +13,5 @@ public interface ControllerListener {
     RecyclerView.Adapter getAdapter();
     void setToolbarTitle(CharSequence title);
     void setRefreshing(boolean refreshing);
+    void post(Runnable runnable);
 }

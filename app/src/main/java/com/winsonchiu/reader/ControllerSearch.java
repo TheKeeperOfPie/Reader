@@ -361,26 +361,38 @@ public class ControllerSearch {
             requestSubreddits = reddit.loadGet(Reddit.OAUTH_URL + "/subreddits/search?show=all&q=" + URLEncoder.encode(query, Reddit.UTF_8).replaceAll("\\s", "") + "&sort=" + sort.toString(),
                     new Response.Listener<String>() {
                         @Override
-                        public void onResponse(String response) {
-                            try {
-                                Listing listing = Listing.fromJson(new JSONObject(response));
-                                Iterator<Thing> iterator = listing.getChildren().iterator();
-                                while (iterator.hasNext()) {
-                                    Subreddit subreddit = (Subreddit) iterator.next();
-                                    if (subreddit.getSubredditType()
-                                            .equalsIgnoreCase(Subreddit.PRIVATE) && !subreddit.isUserIsContributor()) {
-                                        iterator.remove();
+                        public void onResponse(final String response) {
+                            new Thread(new Runnable() {
+                                @Override
+                                public void run() {
+
+                                    try {
+                                        Listing listing = Listing.fromJson(new JSONObject(response));
+                                        Iterator<Thing> iterator = listing.getChildren().iterator();
+                                        while (iterator.hasNext()) {
+                                            Subreddit subreddit = (Subreddit) iterator.next();
+                                            if (subreddit.getSubredditType()
+                                                    .equalsIgnoreCase(Subreddit.PRIVATE) && !subreddit.isUserIsContributor()) {
+                                                iterator.remove();
+                                            }
+                                        }
+
+                                        subreddits.addChildren(listing.getChildren());
+                                        for (final Listener listener : listeners) {
+                                            listener.post(new Runnable() {
+                                                @Override
+                                                public void run() {
+                                                    listener.getAdapterSearchSubreddits().notifyDataSetChanged();
+                                                }
+                                            });
+                                        }
+                                    }
+                                    catch (JSONException e) {
+                                        e.printStackTrace();
                                     }
                                 }
+                            }).start();
 
-                                subreddits.addChildren(listing.getChildren());
-                                for (Listener listener : listeners) {
-                                    listener.getAdapterSearchSubreddits().notifyDataSetChanged();
-                                }
-                            }
-                            catch (JSONException e) {
-                                e.printStackTrace();
-                            }
                         }
                     }, new Response.ErrorListener() {
                         @Override
@@ -693,7 +705,7 @@ public class ControllerSearch {
         reloadSubscriptionList();
     }
 
-    public interface Listener {
+    public interface Listener extends ControllerListener {
         AdapterSearchSubreddits getAdapterSearchSubreddits();
         AdapterLink getAdapterLinks();
         AdapterLink getAdapterLinksSubreddit();

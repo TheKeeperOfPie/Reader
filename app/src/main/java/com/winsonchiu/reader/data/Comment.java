@@ -132,7 +132,7 @@ public class Comment extends Thing {
         comment.setAuthorFlairText(jsonObject.optString("author_flair_text"));
         comment.setBannedBy(jsonObject.optString("banned_by"));
         comment.setBody(jsonObject.optString("body"));
-        comment.setBodyHtml(Reddit.getTrimmedHtml(jsonObject.optString("body_html")));
+        comment.setBodyHtml(Reddit.getFormattedHtml(jsonObject.optString("body_html")));
 
 
         switch (jsonObject.optString("distinguished")) {

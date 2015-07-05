@@ -38,11 +38,17 @@ public class OnTouchListenerDisallow implements View.OnTouchListener {
                 else {
                     disallowListener.requestDisallowInterceptTouchEventVertical(false);
                 }
+                disallowListener.requestDisallowInterceptTouchEventHorizontal(true);
+                break;
+            case MotionEvent.ACTION_CANCEL:
+                disallowListener.requestDisallowInterceptTouchEventHorizontal(false);
                 break;
             case MotionEvent.ACTION_UP:
                 disallowListener.requestDisallowInterceptTouchEventVertical(false);
+                disallowListener.requestDisallowInterceptTouchEventHorizontal(false);
                 break;
             case MotionEvent.ACTION_MOVE:
+                disallowListener.requestDisallowInterceptTouchEventHorizontal(true);
                 if (event.getY() - startY < 0 && view.canScrollVertically(1)) {
                     disallowListener.requestDisallowInterceptTouchEventVertical(true);
                 }

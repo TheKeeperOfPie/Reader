@@ -5,8 +5,12 @@
 package com.winsonchiu.reader;
 
 import android.support.v4.view.PagerAdapter;
+import android.support.v4.view.ViewPager;
 import android.text.TextUtils;
+import android.util.Log;
+import android.util.TypedValue;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.webkit.WebSettings;
@@ -30,11 +34,13 @@ public class AdapterAlbum extends PagerAdapter {
 
     private static final String TAG = AdapterAlbum.class.getCanonicalName();
     private final EventListener eventListener;
+    private final ViewPager viewPager;
     private DisallowListener disallowListener;
     private Album album;
     private Stack<View> recycledViews;
 
-    public AdapterAlbum(Album album, EventListener eventListener, DisallowListener disallowListener) {
+    public AdapterAlbum(ViewPager viewPager, Album album, EventListener eventListener, DisallowListener disallowListener) {
+        this.viewPager = viewPager;
         this.album = album;
         this.eventListener = eventListener;
         this.disallowListener = disallowListener;
@@ -47,7 +53,7 @@ public class AdapterAlbum extends PagerAdapter {
     }
 
     @Override
-    public Object instantiateItem(ViewGroup container, int position) {
+    public Object instantiateItem(final ViewGroup container, int position) {
 
         final Image image = album.getImages().get(position);
         View view;

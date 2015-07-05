@@ -157,6 +157,11 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
             }
 
             @Override
+            public void scrollTo(int position) {
+                linearLayoutManager.scrollToPositionWithOffset(position, recyclerCommentList.getHeight() / 2 - toolbar.getHeight());
+            }
+
+            @Override
             public RecyclerView.Adapter getAdapter() {
                 return adapterCommentList;
             }
@@ -169,6 +174,11 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
             @Override
             public void setRefreshing(boolean refreshing) {
                 swipeRefreshCommentList.setRefreshing(refreshing);
+            }
+
+            @Override
+            public void post(Runnable runnable) {
+                recyclerCommentList.post(runnable);
             }
         };
 
@@ -610,8 +620,6 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
             int[] locationRootView = new int[2];
             view.getLocationOnScreen(locationRootView);
 
-//            float toolbarHeight = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 56, getResources().getDisplayMetrics());
-
             startX = location[0];
             startY = location[1] - locationRootView[1] - toolbarHeight;
 
@@ -629,39 +637,8 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
             startMarginEnd = (int) (screenWidth - startX - viewHolderWidth);
         }
 
-        viewBackground.setScaleY(0f);
-        viewBackground.setPivotY(startY);
-
-        final ViewPropertyAnimator viewPropertyAnimator = viewBackground.animate()
-                .scaleY(2f)
-                .setDuration(DURATION_ENTER)
-                .setInterpolator(fastOutSlowInInterpolator)
-                .setListener(new Animator.AnimatorListener() {
-                    @Override
-                    public void onAnimationStart(Animator animation) {
-
-                    }
-
-                    @Override
-                    public void onAnimationEnd(Animator animation) {
-                        viewBackground.postDelayed(new Runnable() {
-                            @Override
-                            public void run() {
-                                viewBackground.setVisibility(View.GONE);
-                            }
-                        }, 150);
-                    }
-
-                    @Override
-                    public void onAnimationCancel(Animator animation) {
-
-                    }
-
-                    @Override
-                    public void onAnimationRepeat(Animator animation) {
-
-                    }
-                });
+        viewBackground.setTranslationY(startY);
+        final float screenHeight = getResources().getDisplayMetrics().heightPixels;
 
         final Animation animation = new Animation() {
             @Override
@@ -680,6 +657,12 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
                 layoutParams.setMarginEnd((int) (startMarginEnd * reverseInterpolation));
                 swipeRefreshCommentList.setLayoutParams(layoutParams);
                 toolbar.setTranslationY(-toolbarHeight * reverseInterpolation);
+
+                ViewGroup.LayoutParams layoutParamsBackground = viewBackground.getLayoutParams();
+                layoutParamsBackground.height = (int) (interpolatedTime * screenHeight);
+                viewBackground.setLayoutParams(layoutParamsBackground);
+                viewBackground.setTranslationY(
+                        (startY - toolbarHeight) * reverseInterpolation + toolbarHeight);
             }
         };
         animation.setDuration(DURATION_ENTER);
@@ -741,8 +724,6 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
         swipeRefreshCommentList.setLayoutParams(layoutParams);
 
         view.startAnimation(animation);
-
-        viewPropertyAnimator.start();
     }
 
     private int getIndexAtCenter() {
@@ -919,6 +900,9 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
         if (youTubePlayer != null && isFullscreen) {
             youTubePlayer.setFullscreen(false);
             return false;
+        }
+        else if (getFragmentManager().getBackStackEntryCount() == 0) {
+            return true;
         }
         else {
 

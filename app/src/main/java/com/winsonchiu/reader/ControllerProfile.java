@@ -7,7 +7,6 @@ package com.winsonchiu.reader;
 import android.app.Activity;
 import android.text.TextUtils;
 import android.util.Log;
-import android.util.TypedValue;
 import android.widget.Toast;
 
 import com.android.volley.Response;
@@ -250,7 +249,7 @@ public class ControllerProfile implements ControllerLinksBase {
 //                }, 0);
 
         reddit.loadGet(
-                Reddit.OAUTH_URL + "/user/" + user.getName() + "/submitted?sort=top&limit=1&",
+                Reddit.OAUTH_URL + "/user/" + user.getName() + "/submitted?sort=top&limit=10&",
                 new Response.Listener<String>() {
                     @Override
                     public void onResponse(String response) {
@@ -259,8 +258,15 @@ public class ControllerProfile implements ControllerLinksBase {
                             Listing listingLink = Listing.fromJson(
                                     new JSONObject(response));
                             if (!listingLink.getChildren().isEmpty()) {
-                                topLink = (Link) listingLink.getChildren()
-                                        .get(0);
+                                topLink = null;
+                                for (Thing thing : listingLink.getChildren()) {
+                                    Link link = (Link) thing;
+                                    if (!link.isHidden()) {
+                                        topLink = link;
+                                        break;
+                                    }
+                                }
+
                                 for (Listener listener : listeners) {
                                     listener.setRefreshing(false);
                                     listener.getAdapter().notifyItemRangeChanged(1, 2);
@@ -279,7 +285,7 @@ public class ControllerProfile implements ControllerLinksBase {
                 }, 0);
 
         reddit.loadGet(
-                Reddit.OAUTH_URL + "/user/" + user.getName() + "/comments?sort=top&limit=1&",
+                Reddit.OAUTH_URL + "/user/" + user.getName() + "/comments?sort=top&limit=10&",
                 new Response.Listener<String>() {
                     @Override
                     public void onResponse(String response) {
@@ -343,6 +349,25 @@ public class ControllerProfile implements ControllerLinksBase {
     @Override
     public boolean showSubreddit() {
         return true;
+    }
+
+    @Override
+    public Link remove(int position) {
+        Link link;
+        if (position == 2) {
+            link = topLink;
+            topLink = null;
+            for (Listener listener : listeners) {
+                listener.getAdapter().notifyItemChanged(position);
+            }
+        }
+        else {
+            link = (Link) data.getChildren().remove(position);
+            for (Listener listener : listeners) {
+                listener.getAdapter().notifyItemRemoved(position);
+            }
+        }
+        return link;
     }
 
     public void insertComment(Comment comment) {
@@ -549,6 +574,13 @@ public class ControllerProfile implements ControllerLinksBase {
                 }
             }
         }, null);
+    }
+
+    public void add(int position, Link link) {
+        data.getChildren().add(position, link);
+        for (Listener listener : listeners) {
+            listener.getAdapter().notifyDataSetChanged();
+        }
     }
 
     public interface Listener

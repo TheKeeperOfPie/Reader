@@ -6,6 +6,7 @@ package com.winsonchiu.reader;
 
 import com.winsonchiu.reader.data.Link;
 import com.winsonchiu.reader.data.Subreddit;
+import com.winsonchiu.reader.data.Thing;
 
 /**
  * Created by TheKeeperOfPie on 3/21/2015.
@@ -20,4 +21,5 @@ public interface ControllerLinksBase {
     void loadMoreLinks();
     Subreddit getSubreddit();
     boolean showSubreddit();
+    Link remove(int position);
 }

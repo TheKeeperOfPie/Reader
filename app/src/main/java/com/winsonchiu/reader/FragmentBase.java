@@ -19,4 +19,7 @@ public abstract class FragmentBase extends Fragment {
     public void onShown() {
 
     }
+    void onWindowTransitionStart() {
+
+    }
 }

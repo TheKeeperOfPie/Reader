@@ -192,6 +192,23 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         }
     }
 
+    public boolean navigateBack() {
+        boolean navigateBack = true;
+
+        for (RecyclerView.ViewHolder viewHolder : viewHolders) {
+            ViewHolderBase viewHolderBase = (ViewHolderBase) viewHolder;
+
+            if (viewHolderBase.youTubePlayer != null) {
+                if (viewHolderBase.isYouTubeFullscreen) {
+                    viewHolderBase.youTubePlayer.setFullscreen(false);
+                    navigateBack = false;
+                }
+            }
+        }
+
+        return navigateBack;
+    }
+
     protected static class ViewHolderHeader extends RecyclerView.ViewHolder
             implements View.OnClickListener {
 
@@ -278,15 +295,14 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             setVisibility(View.VISIBLE);
 
             textName.setText(subreddit.getDisplayName());
-            textTitle.setText(Reddit.getTrimmedHtml(subreddit.getTitle()));
+            textTitle.setText(subreddit.getTitle());
 
             if (TextUtils.isEmpty(subreddit.getPublicDescriptionHtml()) || "null".equals(
                     subreddit.getPublicDescriptionHtml())) {
                 textDescription.setText("");
             }
             else {
-                textDescription.setText(
-                        Reddit.getTrimmedHtml(subreddit.getPublicDescriptionHtml()));
+                textDescription.setText(subreddit.getPublicDescriptionHtml());
             }
 
             textHidden.setText(subreddit.getSubscribers() + " subscribers\n" +
@@ -406,6 +422,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
 
         protected SharedPreferences preferences;
         protected Resources resources;
+        protected boolean isYouTubeFullscreen;
 
         public ViewHolderBase(View itemView,
                 EventListener eventListener,
@@ -423,6 +440,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         private void expandToolbarActions() {
 
             if (!toolbarActions.isShown()) {
+                AppSettings.getHistorySet(preferences).add(link.getName());
                 setVoteColors();
                 Intent shareIntent = new Intent(Intent.ACTION_SEND);
                 shareIntent.setType("text/plain");
@@ -478,31 +496,6 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             colorPositive = resources.getColor(R.color.positiveScore);
             colorNegative = resources.getColor(R.color.negativeScore);
 
-            toolbarItemWidth = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 48,
-                    resources.getDisplayMetrics());
-            titleMargin = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 16,
-                    resources.getDisplayMetrics());
-
-            drawableDefault = resources.getDrawable(
-                    R.drawable.ic_web_white_48dp);
-            mediaController = new MediaController(itemView.getContext());
-            adapterAlbum = new AdapterAlbum(new Album(), new AdapterAlbum.EventListener() {
-                @Override
-                public void downloadImage(String fileName, String url) {
-                    eventListener.downloadImage(fileName, url);
-                }
-            }, new DisallowListener() {
-                @Override
-                public void requestDisallowInterceptTouchEventVertical(boolean disallow) {
-                    disallowListener.requestDisallowInterceptTouchEventVertical(disallow);
-                }
-
-                @Override
-                public void requestDisallowInterceptTouchEventHorizontal(boolean disallow) {
-                    viewPagerFull.requestDisallowInterceptTouchEvent(disallow);
-                }
-            });
-
             progressImage = (ProgressBar) itemView.findViewById(R.id.progress_image);
             imagePlay = (ImageView) itemView.findViewById(R.id.image_play);
             videoFull = (VideoView) itemView.findViewById(R.id.video_full);
@@ -523,6 +516,32 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             buttonSendReply = (Button) itemView.findViewById(R.id.button_send_reply);
             viewYouTube = (YouTubePlayerView) itemView.findViewById(R.id.youtube);
             viewOverlay = itemView.findViewById(R.id.view_overlay);
+
+            toolbarItemWidth = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 48,
+                    resources.getDisplayMetrics());
+            titleMargin = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 16,
+                    resources.getDisplayMetrics());
+
+            drawableDefault = resources.getDrawable(
+                    R.drawable.ic_web_white_48dp);
+            mediaController = new MediaController(itemView.getContext());
+            adapterAlbum = new AdapterAlbum(viewPagerFull, new Album(), new AdapterAlbum.EventListener() {
+                @Override
+                public void downloadImage(String fileName, String url) {
+                    eventListener.downloadImage(fileName, url);
+                }
+            }, new DisallowListener() {
+                @Override
+                public void requestDisallowInterceptTouchEventVertical(boolean disallow) {
+                    disallowListener.requestDisallowInterceptTouchEventVertical(disallow);
+                }
+
+                @Override
+                public void requestDisallowInterceptTouchEventHorizontal(boolean disallow) {
+                    disallowListener.requestDisallowInterceptTouchEventHorizontal(disallow);
+//                    viewPagerFull.requestDisallowInterceptTouchEvent(disallow);
+                }
+            });
 
             viewPagerFull.setAdapter(adapterAlbum);
             viewPagerFull.setPageTransformer(false, new ViewPager.PageTransformer() {
@@ -578,6 +597,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                 }
             });
             mediaController.setAnchorView(videoFull);
+
         }
 
         @Override
@@ -679,7 +699,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                 case R.id.item_delete:
                     new AlertDialog.Builder(itemView.getContext())
                             .setTitle("Delete post?")
-                            .setMessage(Html.fromHtml(link.getTitle()))
+                            .setMessage(link.getTitle())
                             .setPositiveButton("Yes",
                                     new DialogInterface.OnClickListener() {
                                         @Override
@@ -965,13 +985,13 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
 
             if (!TextUtils.isEmpty(link.getLinkFlairText())) {
                 textThreadFlair.setVisibility(View.VISIBLE);
-                textThreadFlair.setText(Reddit.getTrimmedHtml(link.getLinkFlairText()));
+                textThreadFlair.setText(link.getLinkFlairText());
             }
             else {
                 textThreadFlair.setVisibility(View.GONE);
             }
 
-            textThreadTitle.setText(Html.fromHtml(link.getTitle())
+            textThreadTitle.setText(link.getTitle()
                     .toString());
             textThreadTitle.setTextColor(
                     link.isOver18() ? resources.getColor(R.color.darkThemeTextColorAlert) :
@@ -1143,16 +1163,11 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
 
         private void loadVideo(String url, float heightRatio) {
             Log.d(TAG, "loadVideo: " + url + " : " + heightRatio);
-            int height = (int) (ViewHolderBase.this.itemView
-                    .getWidth() * heightRatio);
-            if (height > recyclerCallback.getRecyclerHeight()) {
-                height = recyclerCallback.getRecyclerHeight();
-            }
-
             Uri uri = Uri.parse(url);
             videoFull.setVideoURI(uri);
             videoFull.setVisibility(View.VISIBLE);
-            videoFull.getLayoutParams().height = height;
+            videoFull.getLayoutParams().height = (int) (ViewHolderBase.this.itemView
+                    .getWidth() * heightRatio);
             videoFull.invalidate();
             videoFull.setOnCompletionListener(
                     new MediaPlayer.OnCompletionListener() {
@@ -1177,6 +1192,15 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                             youTubePlayer.setFullscreenControlFlags(
                                     YouTubePlayer.FULLSCREEN_FLAG_CONTROL_SYSTEM_UI);
                             youTubePlayer.setManageAudioFocus(false);
+                            youTubePlayer.setOnFullscreenListener(
+                                    new YouTubePlayer.OnFullscreenListener() {
+                                        @Override
+                                        public void onFullscreen(boolean fullscreen) {
+                                            Log.d(TAG, "fullscreen: " + fullscreen);
+                                            isYouTubeFullscreen = fullscreen;
+                                            youTubePlayer.setFullscreen(fullscreen);
+                                        }
+                                    });
                             youTubePlayer.setPlayerStateChangeListener(
                                     new YouTubePlayer.PlayerStateChangeListener() {
                                         @Override
@@ -1313,6 +1337,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
 
             if (youTubePlayer != null) {
                 youTubePlayer.release();
+                isYouTubeFullscreen = false;
                 youTubePlayer = null;
             }
             viewYouTube.setVisibility(View.GONE);
@@ -1331,6 +1356,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             this.link = link;
             this.showSubreddit = showSubreddit;
             this.userName = userName;
+            isYouTubeFullscreen = false;
             layoutContainerExpand.setVisibility(View.GONE);
             layoutContainerReply.setVisibility(link.isReplyExpanded() ? View.VISIBLE : View.GONE);
 
@@ -1431,6 +1457,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             void startActivity(Intent intent);
             void deletePost(Link link);
             void report(Thing thing, String reason, String otherReason);
+            void hide(Link link);
         }
 
     }

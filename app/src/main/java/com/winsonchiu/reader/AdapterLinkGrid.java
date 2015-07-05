@@ -63,8 +63,8 @@ public class AdapterLinkGrid extends AdapterLink {
         int spanCount = isLandscape ? 3 : 2;
         layoutManager = new StaggeredGridLayoutManager(spanCount,
                 StaggeredGridLayoutManager.VERTICAL);
-        ((StaggeredGridLayoutManager) this.layoutManager).setGapStrategy(
-                StaggeredGridLayoutManager.GAP_HANDLING_NONE);
+//        ((StaggeredGridLayoutManager) this.layoutManager).setGapStrategy(
+//                StaggeredGridLayoutManager.GAP_HANDLING_NONE);
 
         DisplayMetrics displayMetrics = resources.getDisplayMetrics();
 
@@ -321,6 +321,7 @@ public class AdapterLinkGrid extends AdapterLink {
                                     @Override
                                     public void onGenerated(Palette palette) {
                                         if (position == getAdapterPosition()) {
+                                            // Fix desync of background colors
                                             AnimationUtils.animateBackgroundColor(
                                                     itemView,
                                                     ((ColorDrawable) itemView.getBackground())

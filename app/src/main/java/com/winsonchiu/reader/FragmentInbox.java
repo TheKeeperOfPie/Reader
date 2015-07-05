@@ -100,6 +100,11 @@ public class FragmentInbox extends FragmentBase {
             public void setRefreshing(boolean refreshing) {
                 swipeRefreshInbox.setRefreshing(refreshing);
             }
+
+            @Override
+            public void post(Runnable runnable) {
+                recyclerInbox.post(runnable);
+            }
         };
 
         eventListener = new AdapterInbox.ViewHolderMessage.EventListener() {
@@ -303,6 +308,11 @@ public class FragmentInbox extends FragmentBase {
                 @Override
                 public void setRefreshing(boolean refreshing) {
 
+                }
+
+                @Override
+                public void post(Runnable runnable) {
+                    recyclerInbox.post(runnable);
                 }
             });
         }

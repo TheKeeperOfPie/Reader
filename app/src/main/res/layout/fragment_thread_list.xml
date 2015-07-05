@@ -12,66 +12,127 @@
     tools:context="com.winsonchiu.reader.FragmentThreadList"
     >
 
-    <android.support.design.widget.CoordinatorLayout
+    <RelativeLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        >
+        android:layout_height="match_parent">
 
-        <RelativeLayout
-            android:id="@+id/layout_relative"
+        <android.support.design.widget.CoordinatorLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            app:layout_behavior="@string/appbar_scrolling_view_behavior"
             >
 
-            <com.winsonchiu.reader.CustomSwipeRefreshLayout
-                android:id="@+id/swipe_refresh_thread_list"
+            <RelativeLayout
+                android:id="@+id/layout_relative"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 app:layout_behavior="@string/appbar_scrolling_view_behavior"
                 >
 
-                    <android.support.v7.widget.RecyclerView
-                        android:id="@+id/recycler_thread_list"
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:scrollbars="vertical"
-                        android:scrollbarFadeDuration="200"
-                        android:clipToPadding="false"
-                        />
+                <com.winsonchiu.reader.CustomSwipeRefreshLayout
+                    android:id="@+id/swipe_refresh_thread_list"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    app:layout_behavior="@string/appbar_scrolling_view_behavior"
+                    >
 
-            </com.winsonchiu.reader.CustomSwipeRefreshLayout>
+                        <android.support.v7.widget.RecyclerView
+                            android:id="@+id/recycler_thread_list"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:scrollbars="vertical"
+                            android:scrollbarFadeDuration="200"
+                            />
 
-            <TextView
-                android:id="@+id/text_empty"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_centerHorizontal="true"
-                android:layout_alignParentTop="true"
-                android:text="@string/empty_thread_list"
-                android:visibility="gone"
-                android:layout_margin="@dimen/activity_horizontal_margin"
-                />
+                </com.winsonchiu.reader.CustomSwipeRefreshLayout>
 
-        </RelativeLayout>
+                <TextView
+                    android:id="@+id/text_empty"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_centerHorizontal="true"
+                    android:layout_alignParentTop="true"
+                    android:text="@string/empty_thread_list"
+                    android:visibility="gone"
+                    android:layout_margin="@dimen/activity_horizontal_margin"
+                    />
 
-        <android.support.design.widget.AppBarLayout
-            android:id="@+id/layout_app_bar"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            >
+            </RelativeLayout>
 
-            <include
-                layout="@layout/toolbar"
+            <android.support.design.widget.AppBarLayout
+                android:id="@+id/layout_app_bar"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_alignParentTop="true"
-                app:layout_scrollFlags="scroll|enterAlways"
+                >
+
+                <include
+                    layout="@layout/toolbar"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentTop="true"
+                    app:layout_scrollFlags="scroll|enterAlways"
+                    />
+
+            </android.support.design.widget.AppBarLayout>
+
+
+            <android.support.design.widget.FloatingActionButton
+                android:id="@+id/button_expand_actions"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_margin="@dimen/activity_horizontal_margin"
+                android:src="@drawable/ic_unfold_more_white_24dp"
+                android:layout_alignParentBottom="true"
+                android:layout_alignParentEnd="true"
+                app:layout_anchor="@id/swipe_refresh_thread_list"
+                app:layout_anchorGravity="bottom|end"
+                app:elevation="4dp"
+                app:borderWidth="0dp"
                 />
 
-        </android.support.design.widget.AppBarLayout>
+        </android.support.design.widget.CoordinatorLayout>
 
-    </android.support.design.widget.CoordinatorLayout>
+
+        <LinearLayout
+            android:orientation="vertical"
+            android:id="@+id/layout_actions"
+            android:layout_width="56dp"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="80dp"
+            android:layout_marginStart="16dp"
+            android:layout_marginEnd="16dp"
+            android:layout_alignParentBottom="true"
+            android:layout_alignParentEnd="true"
+            >
+
+            <android.support.design.widget.FloatingActionButton
+                android:id="@+id/button_jump_top"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:src="@drawable/ic_vertical_align_top_white_24dp"
+                android:layout_margin="8dp"
+                android:visibility="gone"
+                app:fabSize="mini"
+                app:elevation="4dp"
+                app:borderWidth="0dp"
+                />
+
+            <android.support.design.widget.FloatingActionButton
+                android:id="@+id/button_clear_viewed"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:src="@drawable/ic_clear_all_white_24dp"
+                android:layout_margin="8dp"
+                android:visibility="gone"
+                app:fabSize="mini"
+                app:elevation="4dp"
+                app:borderWidth="0dp"
+                />
+
+        </LinearLayout>
+
+    </RelativeLayout>
 
     <ScrollView
         android:layout_width="@dimen/navigation_drawer_width"

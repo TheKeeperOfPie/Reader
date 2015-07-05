@@ -49,6 +49,7 @@ public class ControllerComments {
     private boolean isLoading;
     private boolean isCommentThread;
     private Sort sort;
+    private int context;
 
     public ControllerComments(Activity activity,
             String subreddit,
@@ -83,7 +84,7 @@ public class ControllerComments {
 
     public void setTitle() {
         for (Listener listener : listeners) {
-            listener.setToolbarTitle(link == null ? "" : Reddit.getTrimmedHtml(link.getTitle()));
+            listener.setToolbarTitle(link == null ? "" : link.getTitle());
         }
     }
 
@@ -98,8 +99,9 @@ public class ControllerComments {
         reloadAllComments();
     }
 
-    public void setLinkId(String subreddit, String linkId, String commentId) {
+    public void setLinkId(String subreddit, String linkId, String commentId, int context) {
         setLinkIdValues(subreddit, linkId);
+        this.context = context;
         loadCommentThread(commentId);
     }
 
@@ -181,10 +183,12 @@ public class ControllerComments {
 
     public void loadCommentThread(String commentId) {
 
+        Log.d(TAG, "loadCommentThread: " + commentId);
+
         setRefreshing(true);
 
         reddit.loadGet(
-                Reddit.OAUTH_URL + "/r/" + subreddit + "/comments/" + linkId + "?depth=10&showmore=true&showedits=true&limit=100&context=3&comment=" + commentId + "&sort=" + sort.toString(),
+                Reddit.OAUTH_URL + "/r/" + subreddit + "/comments/" + linkId + "?depth=10&showmore=true&showedits=true&limit=100&context=" + context + "&comment=" + commentId + "&sort=" + sort.toString(),
                 new Response.Listener<String>() {
                     @Override
                     public void onResponse(String response) {
@@ -210,6 +214,7 @@ public class ControllerComments {
                             listingComments = listing;
                             for (Listener listener : listeners) {
                                 listener.getAdapter().notifyDataSetChanged();
+                                listener.scrollTo(1);
                             }
                             setTitle();
                         }
@@ -764,6 +769,7 @@ public class ControllerComments {
     public interface Listener extends ControllerListener{
         void setSort(Sort sort);
         void setIsCommentThread(boolean isCommentThread);
+        void scrollTo(int position);
     }
 
 }

@@ -65,11 +65,11 @@ public class AdapterProfile extends RecyclerView.Adapter<RecyclerView.ViewHolder
             case 1:
                 return ControllerProfile.VIEW_TYPE_HEADER_TEXT;
             case 2:
-                return controllerProfile.getPage().equals("Overview") ? ControllerProfile.VIEW_TYPE_LINK : ControllerProfile.VIEW_TYPE_HEADER_TEXT;
+                return controllerProfile.getPage().equals("Overview") && controllerProfile.getTopLink() != null ? ControllerProfile.VIEW_TYPE_LINK : ControllerProfile.VIEW_TYPE_HEADER_TEXT;
             case 3:
                 return ControllerProfile.VIEW_TYPE_HEADER_TEXT;
             case 4:
-                return controllerProfile.getPage().equals("Overview") ? ControllerProfile.VIEW_TYPE_COMMENT : ControllerProfile.VIEW_TYPE_HEADER_TEXT;
+                return controllerProfile.getPage().equals("Overview") && controllerProfile.getTopComment() != null  ? ControllerProfile.VIEW_TYPE_COMMENT : ControllerProfile.VIEW_TYPE_HEADER_TEXT;
             case 5:
                 return ControllerProfile.VIEW_TYPE_HEADER_TEXT;
             default:
@@ -149,7 +149,7 @@ public class AdapterProfile extends RecyclerView.Adapter<RecyclerView.ViewHolder
                 viewHolderTextLink.setVisibility(controllerProfile.getPage().equalsIgnoreCase("Overview") ? View.VISIBLE : View.GONE);
                 break;
             case 2:
-                if (controllerProfile.getPage().equalsIgnoreCase("Overview")) {
+                if (getItemViewType(position) == ControllerProfile.VIEW_TYPE_LINK) {
                     AdapterLinkList.ViewHolder viewHolderLinkTop = (AdapterLinkList.ViewHolder) holder;
                     viewHolderLinkTop.onRecycle();
                     viewHolderLinkTop.onBind(controllerProfile.getTopLink(), controllerLinks.showSubreddit(), controllerUser.getUser().getName());
@@ -167,7 +167,7 @@ public class AdapterProfile extends RecyclerView.Adapter<RecyclerView.ViewHolder
                 viewHolderTextComment.setVisibility(controllerProfile.getPage().equalsIgnoreCase("Overview") ? View.VISIBLE : View.GONE);
                 break;
             case 4:
-                if (controllerProfile.getPage().equalsIgnoreCase("Overview")) {
+                if (getItemViewType(position) == ControllerProfile.VIEW_TYPE_COMMENT) {
                     AdapterCommentList.ViewHolderComment viewHolderCommentTop = (AdapterCommentList.ViewHolderComment) holder;
                     viewHolderCommentTop.onBind(controllerProfile.getTopComment(), controllerUser.getUser().getName());
                 }

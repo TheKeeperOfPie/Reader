@@ -14,7 +14,7 @@ public class Message extends Thing {
 
     private String author;
     private String body;
-    private String bodyHtml;
+    private CharSequence bodyHtml;
     private String context;
     private String dest;
     private String firstMessageName;
@@ -65,7 +65,7 @@ public class Message extends Thing {
 
         message.setAuthor(jsonObject.optString("author"));
         message.setBody(jsonObject.optString("body"));
-        message.setBodyHtml(jsonObject.optString("body_html"));
+        message.setBodyHtml(Reddit.getFormattedHtml(jsonObject.optString("body_html")));
         message.setContext(jsonObject.optString("context"));
         message.setDest(jsonObject.optString("dest"));
         message.setFirstMessageName(jsonObject.optString("first_message_name"));
@@ -109,11 +109,11 @@ public class Message extends Thing {
         this.body = body;
     }
 
-    public String getBodyHtml() {
+    public CharSequence getBodyHtml() {
         return bodyHtml;
     }
 
-    public void setBodyHtml(String bodyHtml) {
+    public void setBodyHtml(CharSequence bodyHtml) {
         this.bodyHtml = bodyHtml;
     }
 

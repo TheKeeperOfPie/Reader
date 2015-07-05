@@ -180,4 +180,6 @@
     </string>
     <string name="error_submitting_post">Error submitting post</string>
     <string name="logout_summary">Remove account from Reader</string>
+    <string name="undo">Undo</string>
+    <string name="link_hidden">Post hidden</string>
 </resources>

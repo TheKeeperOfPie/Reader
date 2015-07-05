@@ -264,7 +264,7 @@ public class AdapterInbox extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
                 layoutContainerReply.setVisibility(View.GONE);
             }
 
-            textMessage.setText(Reddit.getTrimmedHtml(message.getBodyHtml()));
+            textMessage.setText(message.getBodyHtml());
 
             String prefix;
 

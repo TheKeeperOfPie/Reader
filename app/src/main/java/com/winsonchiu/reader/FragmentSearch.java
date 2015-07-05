@@ -27,6 +27,7 @@ import android.view.inputmethod.InputMethodManager;
 import com.winsonchiu.reader.data.Link;
 import com.winsonchiu.reader.data.Reddit;
 import com.winsonchiu.reader.data.Subreddit;
+import com.winsonchiu.reader.data.Thing;
 
 public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemClickListener {
 
@@ -179,8 +180,23 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
             }
 
             @Override
+            public RecyclerView.Adapter getAdapter() {
+                return null;
+            }
+
+            @Override
             public void setToolbarTitle(CharSequence title) {
                 toolbar.setTitle(title);
+            }
+
+            @Override
+            public void setRefreshing(boolean refreshing) {
+
+            }
+
+            @Override
+            public void post(Runnable runnable) {
+                view.post(runnable);
             }
 
             @Override
@@ -269,6 +285,11 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
                 return true;
             }
 
+            @Override
+            public Link remove(int position) {
+                return null;
+            }
+
         }, mListener.getControllerUser(),
                 new AdapterLink.ViewHolderHeader.EventListener() {
                     @Override
@@ -332,6 +353,11 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
             @Override
             public boolean showSubreddit() {
                 return true;
+            }
+
+            @Override
+            public Link remove(int position) {
+                return null;
             }
 
         }, mListener.getControllerUser(),

@@ -141,20 +141,20 @@
     </item>
 
     <item
-        android:id="@+id/item_view_subreddit"
-        android:title="@string/item_view_subreddit"
-        android:icon="@drawable/ic_open_in_new_white_24dp"
+        android:id="@+id/item_download_image"
+        android:title="@string/item_download_image"
+        android:icon="@drawable/ic_file_download_white_24dp"
         android:orderInCategory="1200"
-        android:visible="false"
-        android:enabled="false"
         app:showAsAction="ifRoom"
         />
 
     <item
-        android:id="@+id/item_download_image"
-        android:title="@string/item_download_image"
-        android:icon="@drawable/ic_file_download_white_24dp"
+        android:id="@+id/item_view_subreddit"
+        android:title="@string/item_view_subreddit"
+        android:icon="@drawable/ic_open_in_new_white_24dp"
         android:orderInCategory="1300"
+        android:visible="false"
+        android:enabled="false"
         app:showAsAction="ifRoom"
         />
 

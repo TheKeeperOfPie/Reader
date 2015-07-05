@@ -12,6 +12,7 @@ import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.media.MediaScannerConnection;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.preference.PreferenceManager;
@@ -24,6 +25,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.Window;
 import android.webkit.URLUtil;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -210,10 +212,8 @@ public class MainActivity extends YouTubeBaseActivity
 
                 int color = viewHolderBase.getBackgroundColor();
 
-                Fragment fragment = getFragmentManager().findFragmentById(R.id.frame_fragment);
-                if (fragment instanceof FragmentThreadList) {
-
-                }
+                FragmentBase fragment = (FragmentBase) getFragmentManager().findFragmentById(R.id.frame_fragment);
+                fragment.onWindowTransitionStart();
 
                 FragmentComments fragmentComments = FragmentComments
                         .newInstance(viewHolderBase, color);
@@ -357,25 +357,6 @@ public class MainActivity extends YouTubeBaseActivity
 
                 reddit.getRequestQueue().add(imageRequest);
 
-//
-//                Picasso.with(MainActivity.this)
-//                        .load(link.getUrl())
-//                        .into(new Target() {
-//                            @Override
-//                            public void onBitmapLoaded(Bitmap bitmap, Picasso.LoadedFrom from) {
-//
-//                            }
-//
-//                            @Override
-//                            public void onBitmapFailed(Drawable errorDrawable) {
-//
-//                            }
-//
-//                            @Override
-//                            public void onPrepareLoad(Drawable placeHolderDrawable) {
-//
-//                            }
-//                        });
             }
 
             @Override
@@ -443,6 +424,18 @@ public class MainActivity extends YouTubeBaseActivity
                 }, params, 0);
             }
 
+            @Override
+            public void hide(Link link) {
+                link.setHidden(!link.isHidden());
+                if (link.isHidden()) {
+                    reddit.hide(link);
+                }
+                else {
+                    reddit.unhide(link);
+                }
+
+            }
+
         };
 
         eventListenerComment = new AdapterCommentList.ViewHolderComment.EventListener() {
@@ -453,7 +446,7 @@ public class MainActivity extends YouTubeBaseActivity
                     Intent intentCommentThread = new Intent(MainActivity.this, MainActivity.class);
                     intentCommentThread.setAction(Intent.ACTION_VIEW);
                     // Double slashes used to trigger parseUrl correctly
-                    intentCommentThread.putExtra(REDDIT_PAGE, Reddit.BASE_URL + "/r/" + getControllerComments().getSubredditName() + "/comments/" + getControllerComments().getMainLink().getId() + "//" + comment.getId() + "/");
+                    intentCommentThread.putExtra(REDDIT_PAGE, Reddit.BASE_URL + "/r/" + getControllerComments().getSubredditName() + "/comments/" + getControllerComments().getMainLink().getId() + "//" + comment.getParentId() + "/");
                     startActivity(intentCommentThread);
                 }
                 else {
@@ -727,7 +720,7 @@ public class MainActivity extends YouTubeBaseActivity
                                     FragmentComments.newInstance(),
                                     FragmentComments.TAG)
                             .commit();
-                    getControllerComments().setLinkId(subreddit, id, commentId);
+                    getControllerComments().setLinkId(subreddit, id, commentId, 1);
                     return;
                 }
 
@@ -817,13 +810,13 @@ public class MainActivity extends YouTubeBaseActivity
 
     @Override
     public void onBackPressed() {
-        if (getFragmentManager().getBackStackEntryCount() > 0) {
+//        if (getFragmentManager().getBackStackEntryCount() > 0) {
             // Fetch top Fragment to see if we should override the back action
             FragmentBase fragmentBase = (FragmentBase) getFragmentManager().findFragmentById(R.id.frame_fragment);
             if (fragmentBase != null && !fragmentBase.navigateBack()) {
                 return;
             }
-        }
+//        }
 
         onNavigationBackClick();
 

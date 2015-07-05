@@ -50,6 +50,7 @@
         android:layout_marginBottom="16dp"
         android:src="@drawable/ic_arrow_drop_down_white_24dp"
         android:background="@android:color/transparent"
+        android:visibility="gone"
         />
 
 </RelativeLayout>
