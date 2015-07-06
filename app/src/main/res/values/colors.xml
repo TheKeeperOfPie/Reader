@@ -26,5 +26,8 @@
     <color name="darkThemeOverlay">#99252525</color>
     <color name="gildedComment">#FFD8C161</color>
     <color name="darkThemeShadowTranslucent">#55303030</color>
+    <color name="moderator">#FF4CAF50</color>
+    <color name="admin">#FFF44336</color>
+    <color name="special">#FFC62828</color>
 
 </resources>

@@ -168,7 +168,7 @@
             android:layout_alignParentEnd="true"
             android:layout_marginStart="@dimen/activity_horizontal_margin"
             android:layout_marginEnd="@dimen/activity_horizontal_margin"
-            android:layout_marginBottom="@dimen/activity_vertical_margin"
+            android:paddingBottom="@dimen/activity_vertical_margin"
             android:gravity="end"
             android:textSize="12sp"
             android:shadowColor="@color/darkThemeDialog"
@@ -184,7 +184,6 @@
             android:layout_height="wrap_content"
             android:layout_below="@id/text_thread_info"
             android:layout_alignParentEnd="true"
-            android:visibility="gone"
             >
 
             <TextView

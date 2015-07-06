@@ -262,6 +262,11 @@ public class FragmentInbox extends FragmentBase {
                         public void sendComment(String name, String text) {
                             mListener.getControllerInbox().sendComment(name, text);
                         }
+
+                        @Override
+                        public void jumpToParent(Comment comment) {
+
+                        }
                     },
                     eventListener,
                     new DisallowListener() {

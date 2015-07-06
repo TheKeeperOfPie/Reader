@@ -12,7 +12,6 @@ import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.media.MediaScannerConnection;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.preference.PreferenceManager;
@@ -25,7 +24,6 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.Window;
 import android.webkit.URLUtil;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -95,10 +93,10 @@ public class MainActivity extends YouTubeBaseActivity
             fragmentData = new FragmentData();
             getFragmentManager().beginTransaction().add(fragmentData, FragmentData.TAG).commit();
             fragmentData.initializeControllers(this);
-            Log.d(TAG, "FragmentData NOT FOUND");
+            Log.d(TAG, "FragmentData not found, initialized");
         }
         else {
-            Log.d(TAG, "FragmentData FOUND");
+            Log.d(TAG, "FragmentData found, resetting Activity");
             fragmentData.resetActivity(this);
         }
 
@@ -124,7 +122,7 @@ public class MainActivity extends YouTubeBaseActivity
             @Override
             public void onDrawerClosed(View drawerView) {
                 invalidateOptionsMenu();
-                if (loadId >= 0) {
+                if (loadId != 0) {
                     selectNavigationItem(loadId, true);
                 }
             }
@@ -205,8 +203,6 @@ public class MainActivity extends YouTubeBaseActivity
                     }
                 }
 
-                // TODO: Implemented pausing ViewHolders on Fragment hide
-//                adapterLink.pauseViewHolders();
                 getControllerComments()
                         .setLink(link);
 
@@ -294,6 +290,8 @@ public class MainActivity extends YouTubeBaseActivity
             @Override
             public void downloadImage(final String fileName, final String url) {
 
+                Toast.makeText(MainActivity.this, getString(R.string.image_downloading), Toast.LENGTH_SHORT).show();
+
                 ImageRequest imageRequest = new ImageRequest(url,
                         new Response.Listener<Bitmap>() {
                             @Override
@@ -341,11 +339,11 @@ public class MainActivity extends YouTubeBaseActivity
                                 if (created) {
                                     MediaScannerConnection.scanFile(MainActivity.this,
                                             new String[]{file.toString()}, null, null);
-
-                                    Toast.makeText(MainActivity.this, getString(R.string.image_downloaded),
-                                            Toast.LENGTH_SHORT)
-                                            .show();
                                 }
+
+                                Toast.makeText(MainActivity.this, getString(R.string.image_downloaded),
+                                        Toast.LENGTH_SHORT)
+                                        .show();
                             }
                         }, 0, 0, ImageView.ScaleType.CENTER, Bitmap.Config.ARGB_8888,
                         new Response.ErrorListener() {
@@ -507,7 +505,37 @@ public class MainActivity extends YouTubeBaseActivity
                 }, null);
             }
 
+            @Override
+            public void jumpToParent(Comment comment) {
+                getControllerComments().jumpToParent(comment);
+            }
+
         };
+
+        if (sharedPreferences.getBoolean(AppSettings.BETA_NOTICE_0, true)) {
+            try {
+
+                View view = LayoutInflater.from(this).inflate(R.layout.dialog_text_alert, null, false);
+                TextView textTitle = (TextView) view.findViewById(R.id.text_title);
+                TextView textMessage = (TextView) view.findViewById(R.id.text_message);
+
+                textTitle.setTextColor(getResources().getColor(R.color.colorPrimary));
+                textTitle.setText("Reader (BETA)");
+
+                textMessage.setText(R.string.beta_notice_0);
+
+                new AlertDialog.Builder(this)
+                        .setView(view)
+                        .setPositiveButton(R.string.ok, null)
+                        .show();
+            }
+            catch (Throwable t) {
+                t.printStackTrace();
+            }
+            finally {
+                sharedPreferences.edit().putBoolean(AppSettings.BETA_NOTICE_0, false).apply();
+            }
+        }
 
     }
 
@@ -535,6 +563,7 @@ public class MainActivity extends YouTubeBaseActivity
                 onClickAccount();
             }
         };
+        viewHeader.setOnClickListener(clickListenerAccount);
         textAccountName.setOnClickListener(clickListenerAccount);
         textAccountInfo.setOnClickListener(clickListenerAccount);
 
@@ -609,7 +638,7 @@ public class MainActivity extends YouTubeBaseActivity
 
         fragmentTransaction.commit();
 
-        loadId = -1;
+        loadId = 0;
     }
 
     @Override
@@ -715,13 +744,15 @@ public class MainActivity extends YouTubeBaseActivity
                     Log.d(TAG, "indexSeventhSlash: " + indexSeventhSlash);
                     String commentId = path.substring(indexSixthSlash + 1, indexSeventhSlash > -1 ? indexSeventhSlash : path.length());
                     Log.d(TAG, "commentId: " + commentId);
-                    getFragmentManager().beginTransaction()
-                            .replace(R.id.frame_fragment,
-                                    FragmentComments.newInstance(),
-                                    FragmentComments.TAG)
-                            .commit();
-                    getControllerComments().setLinkId(subreddit, id, commentId, 1);
-                    return;
+                    if (!TextUtils.isEmpty(commentId)) {
+                        getFragmentManager().beginTransaction()
+                                .replace(R.id.frame_fragment,
+                                        FragmentComments.newInstance(),
+                                        FragmentComments.TAG)
+                                .commit();
+                        getControllerComments().setLinkId(subreddit, id, commentId, 1);
+                        return;
+                    }
                 }
 
                 getFragmentManager().beginTransaction()
@@ -810,14 +841,6 @@ public class MainActivity extends YouTubeBaseActivity
 
     @Override
     public void onBackPressed() {
-//        if (getFragmentManager().getBackStackEntryCount() > 0) {
-            // Fetch top Fragment to see if we should override the back action
-            FragmentBase fragmentBase = (FragmentBase) getFragmentManager().findFragmentById(R.id.frame_fragment);
-            if (fragmentBase != null && !fragmentBase.navigateBack()) {
-                return;
-            }
-//        }
-
         onNavigationBackClick();
 
     }
@@ -932,10 +955,14 @@ public class MainActivity extends YouTubeBaseActivity
     @Override
     public void onNavigationBackClick() {
         if (getFragmentManager().getBackStackEntryCount() > 0) {
+            FragmentBase fragment = (FragmentBase) getFragmentManager().findFragmentById(R.id.frame_fragment);
+            if (fragment != null && !fragment.navigateBack()) {
+                return;
+            }
             getFragmentManager().popBackStackImmediate();
-            Fragment fragment = getFragmentManager().findFragmentById(R.id.frame_fragment);
             if (fragment != null) {
                 getFragmentManager().beginTransaction().show(fragment).commit();
+                fragment.onShown();
                 Log.d(TAG, "Fragment shown");
             }
         }

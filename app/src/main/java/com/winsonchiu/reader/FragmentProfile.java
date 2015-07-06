@@ -13,12 +13,10 @@ import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.SearchView;
-import android.support.v7.widget.StaggeredGridLayoutManager;
 import android.support.v7.widget.Toolbar;
 import android.support.v7.widget.helper.ItemTouchHelper;
 import android.text.TextUtils;
 import android.util.Log;
-import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -83,13 +81,6 @@ public class FragmentProfile extends FragmentBase implements Toolbar.OnMenuItemC
             @Override
             public boolean onClose() {
                 return false;
-            }
-        });
-        searchView.setOnKeyListener(new View.OnKeyListener() {
-            @Override
-            public boolean onKey(View v, int keyCode, KeyEvent event) {
-                Log.d(TAG, "onKey: " + keyCode);
-                return keyCode == 44;
             }
         });
         searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
@@ -298,6 +289,11 @@ public class FragmentProfile extends FragmentBase implements Toolbar.OnMenuItemC
                         @Override
                         public void sendComment(String name, String text) {
                             mListener.getControllerProfile().sendComment(name, text);
+                        }
+
+                        @Override
+                        public void jumpToParent(Comment comment) {
+
                         }
                     },
                     new DisallowListener() {

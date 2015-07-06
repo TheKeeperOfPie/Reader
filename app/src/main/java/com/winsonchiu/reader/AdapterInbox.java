@@ -22,7 +22,6 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.winsonchiu.reader.data.Message;
-import com.winsonchiu.reader.data.Reddit;
 import com.winsonchiu.reader.data.Thing;
 
 import java.util.ArrayList;

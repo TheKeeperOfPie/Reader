@@ -30,7 +30,6 @@ import android.text.format.DateUtils;
 import android.text.method.LinkMovementMethod;
 import android.text.style.ForegroundColorSpan;
 import android.util.DisplayMetrics;
-import android.util.Log;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -121,7 +120,8 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                         Intent shareIntent = new Intent(Intent.ACTION_SEND);
                         shareIntent.setType("text/plain");
                         shareIntent.putExtra(Intent.EXTRA_SUBJECT, link.getTitle());
-                        shareIntent.putExtra(Intent.EXTRA_TEXT, Reddit.BASE_URL + link.getPermalink());
+                        shareIntent
+                                .putExtra(Intent.EXTRA_TEXT, Reddit.BASE_URL + link.getPermalink());
                         return shareIntent;
                     }
 
@@ -192,7 +192,8 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                         Intent shareIntent = new Intent(Intent.ACTION_SEND);
                         shareIntent.setType("text/plain");
                         shareIntent.putExtra(Intent.EXTRA_SUBJECT, link.getTitle());
-                        shareIntent.putExtra(Intent.EXTRA_TEXT, Reddit.BASE_URL + link.getPermalink());
+                        shareIntent
+                                .putExtra(Intent.EXTRA_TEXT, Reddit.BASE_URL + link.getPermalink());
                         return shareIntent;
                     }
 
@@ -243,7 +244,8 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
         }
 
         return new ViewHolderComment(LayoutInflater.from(parent.getContext())
-                .inflate(R.layout.row_comment, parent, false), eventListenerBase, eventListenerComment, disallowListener);
+                .inflate(R.layout.row_comment, parent, false), eventListenerBase,
+                eventListenerComment, disallowListener);
     }
 
     @Override
@@ -261,6 +263,8 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                             controllerUser.getUser().getName());
 
             viewHolderBase.itemView.invalidate();
+
+            viewHolderLink = viewHolderBase;
         }
         else {
             ViewHolderComment viewHolderComment = (ViewHolderComment) holder;
@@ -283,6 +287,10 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
 
     public void collapseViewHolderLink() {
         // TODO: Support collapsing enlarged thumbnail and self text
+        if (viewHolderLink == null) {
+            return;
+        }
+
         if (controllerComments.getMainLink().isSelf()) {
             viewHolderLink.textThreadSelf.setVisibility(View.GONE);
         }
@@ -323,6 +331,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
         protected RelativeLayout layoutContainerExpand;
         protected Toolbar toolbarActions;
         protected MenuItem itemViewLink;
+        protected MenuItem itemJumpParent;
         protected MenuItem itemCollapse;
         protected MenuItem itemUpvote;
         protected MenuItem itemDownvote;
@@ -344,6 +353,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
         protected int indentWidth;
         protected int toolbarItemWidth;
         protected SharedPreferences preferences;
+        protected Resources resources;
 
         public ViewHolderComment(final View itemView,
                 AdapterLink.ViewHolderBase.EventListener eventListenerBase,
@@ -381,9 +391,9 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
 
         private void intiialize() {
 
+            resources = itemView.getResources();
             preferences = PreferenceManager.getDefaultSharedPreferences(itemView.getContext());
 
-            Resources resources = itemView.getResources();
             this.drawableUpvote = resources.getDrawable(R.drawable.ic_keyboard_arrow_up_white_24dp);
             this.drawableDownvote = resources.getDrawable(
                     R.drawable.ic_keyboard_arrow_down_white_24dp);
@@ -391,7 +401,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
             indentWidth = (int) TypedValue
                     .applyDimension(TypedValue.COMPLEX_UNIT_DIP, 6, resources.getDisplayMetrics());
             toolbarItemWidth = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 48,
-                    itemView.getResources().getDisplayMetrics());
+                    resources.getDisplayMetrics());
 
             viewIndent = itemView.findViewById(R.id.view_indent);
             viewIndicator = itemView.findViewById(R.id.view_indicator);
@@ -452,6 +462,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
 
             Menu menu = toolbarActions.getMenu();
             itemViewLink = menu.findItem(R.id.item_view_link);
+            itemJumpParent = menu.findItem(R.id.item_jump_parent);
             itemCollapse = menu.findItem(R.id.item_collapse);
             itemUpvote = menu.findItem(R.id.item_upvote);
             itemDownvote = menu.findItem(R.id.item_downvote);
@@ -461,7 +472,6 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
             itemDelete = menu.findItem(R.id.item_delete);
             itemReport = menu.findItem(R.id.item_report);
 
-            Resources resources = itemView.getResources();
             colorFilterPositive = new PorterDuffColorFilter(resources.getColor(
                     R.color.positiveScore),
                     PorterDuff.Mode.MULTIPLY);
@@ -482,21 +492,6 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
 
             if (!toolbarActions.isShown()) {
 
-                boolean isAuthor = comment.getAuthor()
-                        .equals(userName);
-
-                if (eventListener.isCommentExpanded(getAdapterPosition())) {
-                    itemCollapse.setIcon(R.drawable.ic_arrow_drop_up_white_24dp);
-                }
-                else {
-                    itemCollapse.setIcon(R.drawable.ic_arrow_drop_down_white_24dp);
-                }
-
-                itemEdit.setEnabled(isAuthor);
-                itemEdit.setVisible(isAuthor);
-                itemDelete.setEnabled(isAuthor);
-                itemDelete.setVisible(isAuthor);
-
                 setVoteColors();
 
                 setToolbarMenuVisibility();
@@ -514,6 +509,22 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
             int numShown = 0;
 
             boolean loggedIn = !TextUtils.isEmpty(userName);
+            boolean isAuthor = comment.getAuthor()
+                    .equals(userName);
+
+            if (eventListener.isCommentExpanded(getAdapterPosition())) {
+                itemCollapse.setIcon(R.drawable.ic_arrow_drop_up_white_24dp);
+            }
+            else {
+                itemCollapse.setIcon(R.drawable.ic_arrow_drop_down_white_24dp);
+            }
+
+            itemEdit.setEnabled(isAuthor);
+            itemEdit.setVisible(isAuthor);
+            itemDelete.setEnabled(isAuthor);
+            itemDelete.setVisible(isAuthor);
+            itemJumpParent.setEnabled(comment.getLevel() > 0);
+            itemJumpParent.setVisible(comment.getLevel() > 0);
 
             itemUpvote.setVisible(loggedIn);
             itemDownvote.setVisible(loggedIn);
@@ -581,6 +592,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
 
             this.comment = comment;
             this.userName = userName;
+            itemView.getBackground().setState(new int[0]);
 
             layoutContainerReply
                     .setVisibility(comment.isReplyExpanded() ? View.VISIBLE : View.GONE);
@@ -592,9 +604,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
             int overlayColor = ColorUtils.setAlphaComponent(0xFF000000,
                     alphaLevel <= MAX_ALPHA ? alphaLevel : MAX_ALPHA);
             int indicatorColor = ColorUtils.compositeColors(overlayColor,
-                    itemView.getResources()
-                            .getColor(
-                                    R.color.colorPrimary));
+                    resources.getColor(R.color.colorPrimary));
 
             viewIndicator.setBackgroundColor(indicatorColor);
             viewIndicatorContainer.setBackgroundColor(indicatorColor);
@@ -615,8 +625,6 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
             else {
                 textComment.setText(comment.getBodyHtml());
 
-                Resources resources = itemView.getResources();
-
                 int colorPositive = resources.getColor(R.color.positiveScore);
                 int colorNegative = resources.getColor(R.color.negativeScore);
 
@@ -629,24 +637,49 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                             Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
                 }
 
-                Spannable spannableAuthor = new SpannableString(comment.getAuthor());
+                String suffixAuthor = "";
+                int color = resources.getColor(R.color.darkThemeTextColorMuted);
+
                 if (comment.getLinkAuthor().equals(comment.getAuthor())) {
-                    spannableAuthor.setSpan(
-                            new ForegroundColorSpan(resources.getColor(R.color.colorAccent)), 0,
-                            spannableAuthor.length(), Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
+                    color = resources.getColor(R.color.colorAccent);
+                }
+                else {
+                    switch (comment.getDistinguished()) {
+                        case MODERATOR:
+                            color = resources.getColor(R.color.moderator);
+                            suffixAuthor = resources.getString(R.string.prefix_moderator);
+                            break;
+                        case ADMIN:
+                            color = resources.getColor(R.color.admin);
+                            suffixAuthor = resources.getString(R.string.prefix_admin);
+                            break;
+                        case SPECIAL:
+                            color = resources.getColor(R.color.special);
+                            suffixAuthor = resources.getString(R.string.prefix_special);
+                            break;
+                    }
                 }
 
-                String flair = TextUtils.isEmpty(comment.getAuthorFlairText()) || "null".equals(comment.getAuthorFlairText()) ? " " : " (" + Html
+                Spannable spannableAuthor = new SpannableString(comment.getAuthor() + suffixAuthor);
+                spannableAuthor.setSpan(new ForegroundColorSpan(color), 0, spannableAuthor.length(),
+                        Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
+
+                String flair = TextUtils.isEmpty(comment.getAuthorFlairText()) || "null"
+                        .equals(comment.getAuthorFlairText()) ? " " : " (" + Html
                         .fromHtml(comment.getAuthorFlairText()) + ") ";
 
-                CharSequence timestamp = preferences.getBoolean(AppSettings.PREF_FULL_TIMESTAMPS, false) ? DateUtils.formatDateTime(itemView.getContext(), comment.getCreatedUtc(), DateUtils.FORMAT_SHOW_TIME | DateUtils.FORMAT_SHOW_DATE | DateUtils.FORMAT_SHOW_YEAR) : DateUtils.getRelativeTimeSpanString(comment.getCreatedUtc());
+                CharSequence timestamp =
+                        preferences.getBoolean(AppSettings.PREF_FULL_TIMESTAMPS, false) ? DateUtils
+                                .formatDateTime(itemView.getContext(), comment.getCreatedUtc(),
+                                        DateUtils.FORMAT_SHOW_TIME | DateUtils.FORMAT_SHOW_DATE | DateUtils.FORMAT_SHOW_YEAR) :
+                                DateUtils.getRelativeTimeSpanString(comment.getCreatedUtc());
+
+                textInfo.setTextColor(comment.isNew() ? resources.getColor(
+                        R.color.darkThemeTextColorAlert) : resources.getColor(
+                        R.color.darkThemeTextColorMuted));
 
                 textInfo.setText(TextUtils.concat(spannableScore, " by ", spannableAuthor, flair,
                         timestamp, comment.getEdited() > 0 ? "*" : ""));
-
-                textInfo.setTextColor(comment.isNew() ? itemView.getResources()
-                        .getColor(R.color.darkThemeTextColorAlert) : itemView.getResources()
-                        .getColor(R.color.darkThemeTextColorMuted));
 
                 if (comment.getEdited() > 1) {
                     textHidden.setText(
@@ -660,12 +693,10 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
             }
 
             if (comment.getGilded() > 0) {
-                textComment.setTextColor(itemView.getResources()
-                        .getColor(R.color.gildedComment));
+                textComment.setTextColor(resources.getColor(R.color.gildedComment));
             }
             else {
-                textComment.setTextColor(itemView.getResources()
-                        .getColor(R.color.darkThemeTextColor));
+                textComment.setTextColor(resources.getColor(R.color.darkThemeTextColor));
             }
 
         }
@@ -684,7 +715,9 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
             if (!comment.isReplyExpanded()) {
                 editTextReply.requestFocus();
                 editTextReply.setText(comment.getReplyText());
-                buttonSendReply.setText(comment.isEditMode() ? itemView.getContext().getString(R.string.send_edit) : itemView.getContext().getString(R.string.send_reply));
+                buttonSendReply.setText(
+                        comment.isEditMode() ? itemView.getContext().getString(R.string.send_edit) :
+                                itemView.getContext().getString(R.string.send_reply));
             }
             comment.setReplyExpanded(!comment.isReplyExpanded());
             layoutContainerReply.setVisibility(
@@ -694,6 +727,9 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
         @Override
         public boolean onMenuItemClick(MenuItem item) {
             switch (item.getItemId()) {
+                case R.id.item_jump_parent:
+                    eventListener.jumpToParent(comment);
+                    break;
                 case R.id.item_collapse:
                     item.setIcon(eventListener.toggleComment(getAdapterPosition()) ?
                             R.drawable.ic_arrow_drop_up_white_24dp :
@@ -725,10 +761,10 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                             .getSystemService(
                                     Context.CLIPBOARD_SERVICE);
                     ClipData clip = ClipData.newPlainText(
-                            itemView.getResources().getString(R.string.comment),
+                            resources.getString(R.string.comment),
                             comment.getBody());
                     clipboard.setPrimaryClip(clip);
-                    eventListenerBase.toast(itemView.getResources().getString(
+                    eventListenerBase.toast(resources.getString(
                             R.string.copied));
                     break;
                 case R.id.item_edit:
@@ -773,7 +809,8 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                     eventListenerBase.report(comment, "breaking reddit", null);
                     break;
                 case R.id.item_report_other:
-                    View viewDialog = LayoutInflater.from(itemView.getContext()).inflate(R.layout.dialog_text_input, null, false);
+                    View viewDialog = LayoutInflater.from(itemView.getContext())
+                            .inflate(R.layout.dialog_text_input, null, false);
                     InputFilter[] filterArray = new InputFilter[1];
                     filterArray[0] = new InputFilter.LengthFilter(100);
                     final EditText editText = (EditText) viewDialog.findViewById(R.id.edit_text);
@@ -784,7 +821,8 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                             .setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
                                 @Override
                                 public void onClick(DialogInterface dialog, int which) {
-                                    eventListenerBase.report(comment, "other", editText.getText().toString());
+                                    eventListenerBase.report(comment, "other",
+                                            editText.getText().toString());
                                 }
                             })
                             .setNegativeButton(R.string.cancel,
@@ -829,6 +867,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
             void deleteComment(Comment comment);
             void editComment(Comment comment, String text);
             void sendComment(String name, String text);
+            void jumpToParent(Comment comment);
         }
 
     }

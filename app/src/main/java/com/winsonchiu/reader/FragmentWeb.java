@@ -12,13 +12,10 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
-import android.support.v4.graphics.ColorUtils;
 import android.support.v4.view.MenuItemCompat;
-import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.SearchView;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
-import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -48,6 +45,7 @@ public class FragmentWeb extends FragmentBase {
     private ProgressBar progressBar;
     private View viewWebFullscreen;
     private RelativeLayout layoutRoot;
+    private boolean isFinished;
 
     public static FragmentWeb newInstance(String url) {
         FragmentWeb fragment = new FragmentWeb();
@@ -161,6 +159,7 @@ public class FragmentWeb extends FragmentBase {
         toolbar.setNavigationOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                isFinished = true;
                 mListener.onNavigationBackClick();
             }
         });
@@ -284,6 +283,10 @@ public class FragmentWeb extends FragmentBase {
     }
 
     public boolean navigateBack() {
+        if (isFinished) {
+            return true;
+        }
+
         if (webView.canGoBack()) {
             webView.goBack();
         }

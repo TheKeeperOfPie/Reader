@@ -4,9 +4,7 @@
 
 package com.winsonchiu.reader.settings;
 
-import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.preference.PreferenceCategory;
 
 import com.winsonchiu.reader.AppSettings;
 import com.winsonchiu.reader.R;

@@ -45,7 +45,6 @@ import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
-import android.webkit.WebChromeClient;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.Button;
@@ -94,6 +93,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
 
     private static final String TAG = AdapterLink.class.getCanonicalName();
     private static final int TIMESTAMP_BITMASK = DateUtils.FORMAT_SHOW_TIME | DateUtils.FORMAT_SHOW_DATE | DateUtils.FORMAT_SHOW_YEAR;
+    public static final String TAG_PICASSO = "picassoAdapterLink";
 
     protected Activity activity;
     protected SharedPreferences preferences;
@@ -199,12 +199,16 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         boolean navigateBack = true;
 
         for (RecyclerView.ViewHolder viewHolder : viewHolders) {
-            ViewHolderBase viewHolderBase = (ViewHolderBase) viewHolder;
+            if (viewHolder instanceof ViewHolderBase) {
 
-            if (viewHolderBase.youTubePlayer != null) {
-                if (viewHolderBase.isYouTubeFullscreen) {
-                    viewHolderBase.youTubePlayer.setFullscreen(false);
-                    navigateBack = false;
+                ViewHolderBase viewHolderBase = (ViewHolderBase) viewHolder;
+
+                if (viewHolderBase.youTubePlayer != null) {
+                    if (viewHolderBase.isYouTubeFullscreen) {
+                        viewHolderBase.youTubePlayer.setFullscreen(false);
+                        navigateBack = false;
+                        break;
+                    }
                 }
             }
         }
@@ -440,7 +444,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             Intent shareIntent = new Intent(Intent.ACTION_SEND);
             shareIntent.setType("text/plain");
             shareIntent.putExtra(Intent.EXTRA_SUBJECT, link.getTitle());
-            shareIntent.putExtra(Intent.EXTRA_TEXT, Reddit.BASE_URL + link.getUrl());
+            shareIntent.putExtra(Intent.EXTRA_TEXT, link.getUrl());
             return shareIntent;
         }
 
@@ -464,12 +468,6 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                         Reddit.checkIsImage(link.getUrl()) || Reddit.placeImageUrl(link) && !link
                                 .getUrl().endsWith(Reddit.GIF));
 
-                boolean isAuthor = link.getAuthor().equals(userName);
-
-                itemEdit.setVisible(link.isSelf() && isAuthor);
-                itemEdit.setEnabled(link.isSelf() && isAuthor);
-                itemDelete.setVisible(isAuthor);
-                itemDelete.setEnabled(isAuthor);
                 setToolbarMenuVisibility();
                 viewOverlay.setVisibility(View.GONE);
             }
@@ -542,7 +540,6 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                 @Override
                 public void requestDisallowInterceptTouchEventHorizontal(boolean disallow) {
                     disallowListener.requestDisallowInterceptTouchEventHorizontal(disallow);
-//                    viewPagerFull.requestDisallowInterceptTouchEvent(disallow);
                 }
             });
 
@@ -1329,6 +1326,12 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             Menu menu = toolbarActions.getMenu();
 
             boolean loggedIn = eventListener.isUserLoggedIn();
+            boolean isAuthor = link.getAuthor().equals(userName);
+
+            itemEdit.setVisible(link.isSelf() && isAuthor);
+            itemEdit.setEnabled(link.isSelf() && isAuthor);
+            itemDelete.setVisible(isAuthor);
+            itemDelete.setEnabled(isAuthor);
 
             itemUpvote.setVisible(loggedIn);
             itemDownvote.setVisible(loggedIn);

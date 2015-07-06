@@ -16,7 +16,6 @@ import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.SearchView;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
-import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -27,7 +26,6 @@ import android.view.inputmethod.InputMethodManager;
 import com.winsonchiu.reader.data.Link;
 import com.winsonchiu.reader.data.Reddit;
 import com.winsonchiu.reader.data.Subreddit;
-import com.winsonchiu.reader.data.Thing;
 
 public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemClickListener {
 
@@ -86,13 +84,6 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
 
         final SearchView searchView = (SearchView) itemSearch.getActionView();
 
-        searchView.setOnKeyListener(new View.OnKeyListener() {
-            @Override
-            public boolean onKey(View v, int keyCode, KeyEvent event) {
-                Log.d(TAG, "onKey: " + keyCode);
-                return keyCode == 44;
-            }
-        });
         searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
             @Override
             public boolean onQueryTextSubmit(String query) {
@@ -111,17 +102,20 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
 
             @Override
             public boolean onQueryTextChange(String newText) {
-                // TODO: Remove spaces from query text
                 if (!isAdded() || mListener == null) {
                     return false;
                 }
+                Log.d(TAG, "newText: " + newText);
+
                 mListener.getControllerSearch()
                         .setQuery(newText);
                 return false;
             }
         });
         searchView.setSubmitButtonEnabled(true);
-        searchView.setQuery(mListener.getControllerSearch().getQuery(), false);
+        if (mListener.getControllerLinks().sizeLinks() == 0) {
+            searchView.setQuery(mListener.getControllerSearch().getQuery(), false);
+        }
 
         menu.findItem(R.id.item_sort_relevance)
                 .setChecked(true);

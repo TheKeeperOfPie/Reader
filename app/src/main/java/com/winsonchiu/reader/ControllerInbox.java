@@ -5,7 +5,6 @@
 package com.winsonchiu.reader;
 
 import android.app.Activity;
-import android.text.TextUtils;
 import android.util.Log;
 import android.widget.Toast;
 

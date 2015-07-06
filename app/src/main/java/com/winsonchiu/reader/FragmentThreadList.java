@@ -7,8 +7,8 @@ package com.winsonchiu.reader;
 import android.app.Activity;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.os.Build;
 import android.os.Bundle;
-import android.os.Parcelable;
 import android.preference.PreferenceManager;
 import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.FloatingActionButton;
@@ -19,7 +19,6 @@ import android.support.v4.view.ViewCompat;
 import android.support.v4.view.animation.FastOutSlowInInterpolator;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v4.widget.SwipeRefreshLayout;
-import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.StaggeredGridLayoutManager;
@@ -38,19 +37,14 @@ import android.view.animation.AlphaAnimation;
 import android.view.animation.Animation;
 import android.widget.Button;
 import android.widget.LinearLayout;
-import android.widget.ProgressBar;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.android.volley.Response;
-import com.android.volley.Response.Listener;
-import com.android.volley.VolleyError;
+import com.squareup.picasso.Picasso;
 import com.winsonchiu.reader.data.Link;
 import com.winsonchiu.reader.data.Reddit;
 import com.winsonchiu.reader.data.Subreddit;
-
-import org.json.JSONException;
-import org.json.JSONObject;
 
 public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuItemClickListener {
 
@@ -434,6 +428,26 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
             }
         });
 
+
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
+            ((CoordinatorLayout.LayoutParams) buttonExpandActions.getLayoutParams()).setMargins(0, 0, 0, 0);
+
+            int margin = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 8, getResources().getDisplayMetrics());
+
+            LinearLayout.LayoutParams layoutParamsJumpTop = (LinearLayout.LayoutParams) buttonJumpTop.getLayoutParams();
+            layoutParamsJumpTop.setMargins(0, 0, 0, 0);
+            buttonJumpTop.setLayoutParams(layoutParamsJumpTop);
+
+            LinearLayout.LayoutParams layoutParamsClearViewed = (LinearLayout.LayoutParams) buttonClearViewed.getLayoutParams();
+            layoutParamsClearViewed.setMargins(0, 0, 0, 0);
+            buttonClearViewed.setLayoutParams(layoutParamsClearViewed);
+
+            RelativeLayout.LayoutParams layoutParamsActions = (RelativeLayout.LayoutParams) layoutActions.getLayoutParams();
+            layoutParamsActions.setMarginStart(margin);
+            layoutParamsActions.setMarginEnd(margin);
+            layoutActions.setLayoutParams(layoutParamsActions);
+        }
+
         swipeRefreshThreadList = (SwipeRefreshLayout) view.findViewById(
                 R.id.swipe_refresh_thread_list);
         swipeRefreshThreadList.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
@@ -478,6 +492,19 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
         recyclerThreadList.setHasFixedSize(true);
         recyclerThreadList.setAdapter(adapterLink);
         recyclerThreadList.setItemAnimator(null);
+
+        recyclerThreadList.addOnScrollListener(new RecyclerView.OnScrollListener() {
+            @Override
+            public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
+                super.onScrollStateChanged(recyclerView, newState);
+                if (newState == RecyclerView.SCROLL_STATE_IDLE) {
+                    Picasso.with(activity).resumeTag(AdapterLink.TAG_PICASSO);
+                }
+                else {
+                    Picasso.with(activity).pauseTag(AdapterLink.TAG_PICASSO);
+                }
+            }
+        });
 
         itemTouchHelper = new CustomItemTouchHelper(
                 new CustomItemTouchHelper.SimpleCallback(ItemTouchHelper.START | ItemTouchHelper.END, 0) {

@@ -5,7 +5,6 @@
 package com.winsonchiu.reader;
 
 import android.app.Activity;
-import android.content.SharedPreferences;
 import android.text.TextUtils;
 import android.util.Log;
 import android.widget.Toast;
@@ -17,7 +16,6 @@ import com.winsonchiu.reader.data.Link;
 import com.winsonchiu.reader.data.Listing;
 import com.winsonchiu.reader.data.Reddit;
 import com.winsonchiu.reader.data.Subreddit;
-import com.winsonchiu.reader.data.Thing;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -25,7 +23,6 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -236,6 +233,15 @@ public class ControllerLinks implements ControllerLinksBase {
                 setLoading(false);
                 Toast.makeText(activity, activity.getString(R.string.error_loading_links), Toast.LENGTH_SHORT)
                         .show();
+                for (final Listener listener : listeners) {
+                    listener.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            listener.showEmptyView(listingLinks.getChildren()
+                                    .isEmpty());
+                        }
+                    });
+                }
             }
         }, 0);
         Log.d(TAG, "reloadAllLinks");

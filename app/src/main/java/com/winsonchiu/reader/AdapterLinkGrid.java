@@ -12,13 +12,7 @@ import android.graphics.drawable.Drawable;
 import android.support.v7.graphics.Palette;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.StaggeredGridLayoutManager;
-import android.text.Html;
-import android.text.Spannable;
-import android.text.SpannableString;
-import android.text.Spanned;
 import android.text.TextUtils;
-import android.text.format.DateUtils;
-import android.text.style.ForegroundColorSpan;
 import android.util.DisplayMetrics;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -179,6 +173,7 @@ public class AdapterLinkGrid extends AdapterLink {
                 imageThumbnail.setVisibility(View.VISIBLE);
                 Picasso.with(itemView.getContext())
                         .load(link.getThumbnail())
+                        .tag(AdapterLink.TAG_PICASSO)
                         .into(imageThumbnail);
             }
             else {
@@ -229,7 +224,9 @@ public class AdapterLinkGrid extends AdapterLink {
                     RelativeLayout.START_OF, buttonComments.getId());
             ((RelativeLayout.LayoutParams) textThreadTitle.getLayoutParams()).setMarginEnd(0);
 
-            Picasso.with(itemView.getContext()).load(android.R.color.transparent).into(imageFull);
+            Picasso.with(itemView.getContext())
+                    .load(android.R.color.transparent)
+                    .into(imageFull);
 
             if (TextUtils.isEmpty(link.getThumbnail())) {
                 if (Reddit.placeImageUrl(
@@ -238,6 +235,7 @@ public class AdapterLinkGrid extends AdapterLink {
 
                     Picasso.with(itemView.getContext())
                             .load(link.getUrl())
+                            .tag(AdapterLink.TAG_PICASSO)
                             .resize(size, size)
                             .centerCrop()
                             .into(imageFull, new Callback() {
@@ -269,6 +267,7 @@ public class AdapterLinkGrid extends AdapterLink {
             else {
                 Picasso.with(itemView.getContext())
                         .load(link.getThumbnail())
+                        .tag(AdapterLink.TAG_PICASSO)
                         .into(imageFull,
                                 new Callback() {
                                     @Override
@@ -280,6 +279,7 @@ public class AdapterLinkGrid extends AdapterLink {
                                             int size = getAdjustedThumbnailSize();
                                             Picasso.with(itemView.getContext())
                                                     .load(link.getUrl())
+                                                    .tag(AdapterLink.TAG_PICASSO)
                                                     .resize(size, size)
                                                     .centerCrop()
                                                     .into(imageFull, new Callback() {
@@ -338,11 +338,10 @@ public class AdapterLinkGrid extends AdapterLink {
         @Override
         public float getRatio() {
             if (itemView.getLayoutParams() instanceof StaggeredGridLayoutManager.LayoutParams) {
-                int width = itemView.getResources().getDisplayMetrics().widthPixels;
+                float width = itemView.getResources().getDisplayMetrics().widthPixels;
 
                 return ((StaggeredGridLayoutManager.LayoutParams) itemView.getLayoutParams()).isFullSpan() ?
-                        1f :
-                        width / itemView.getWidth();
+                        1f : itemView.getWidth() / width;
             }
 
             return 1f;
@@ -352,7 +351,7 @@ public class AdapterLinkGrid extends AdapterLink {
         public void setTextValues(Link link) {
             super.setTextValues(link);
 
-            textThreadInfo.setText(TextUtils.concat(getSubredditString(), showSubreddit ? "\n" : "", getSpannableScore(), "by " + link.getAuthor(), getFlairString()));
+            textThreadInfo.setText(TextUtils.concat(getSubredditString(), showSubreddit ? "\n" : "", getSpannableScore(), "by ", link.getAuthor(), getFlairString()));
 
             textHidden.setText(getTimestamp() + ", " + link.getNumComments() + " comments");
 

@@ -43,6 +43,7 @@ public class AppSettings {
     public static final String PREF_CLEAR_HISTORY = "pref_clear_history";
     public static final String PREF_DIM_POSTS = "pref_dim_posts";
     public static final String PREF_EXTERNAL_BROWSER = "pref_external_browser";
+    public static final String BETA_NOTICE_0 = "betaNotice0";
 
     private static Set<String> historySet;
 

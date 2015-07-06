@@ -766,6 +766,25 @@ public class ControllerComments {
         return sort;
     }
 
+    public void jumpToParent(Comment child) {
+
+        int commentIndex = listingComments.getChildren()
+                .indexOf(child);
+
+        if (commentIndex > -1) {
+            for (int index = commentIndex - 1; index > 0; index--) {
+                Comment comment = (Comment) listingComments.getChildren().get(index);
+                if (comment.getLevel() == child.getLevel() - 1) {
+                    for (Listener listener : listeners) {
+                        listener.scrollTo(index + 1);
+                    }
+                    break;
+                }
+            }
+        }
+
+    }
+
     public interface Listener extends ControllerListener{
         void setSort(Sort sort);
         void setIsCommentThread(boolean isCommentThread);

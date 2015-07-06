@@ -5,17 +5,10 @@
 package com.winsonchiu.reader;
 
 import android.app.Activity;
-import android.content.res.Resources;
 import android.graphics.drawable.Drawable;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.text.Html;
-import android.text.Spannable;
-import android.text.SpannableString;
-import android.text.Spanned;
 import android.text.TextUtils;
-import android.text.format.DateUtils;
-import android.text.style.ForegroundColorSpan;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -122,6 +115,7 @@ public class AdapterLinkList extends AdapterLink {
                 else {
                     Picasso.with(itemView.getContext())
                             .load(link.getThumbnail())
+                            .tag(AdapterLink.TAG_PICASSO)
                             .into(imageThumbnail);
                 }
             }
@@ -135,7 +129,7 @@ public class AdapterLinkList extends AdapterLink {
         public void setTextValues(Link link) {
             super.setTextValues(link);
 
-            textThreadInfo.setText(TextUtils.concat(getSubredditString(), getSpannableScore(), "by " + link.getAuthor(), getFlairString()));
+            textThreadInfo.setText(TextUtils.concat(getSubredditString(), getSpannableScore(), "by ", link.getAuthor(), getFlairString()));
 
             // TODO: Add link edited indicator
 

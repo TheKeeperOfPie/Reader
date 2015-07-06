@@ -25,7 +25,7 @@
 
     <string name="action_settings">Settings</string>
 
-<!-- TODO: Remove or change this placeholder text -->
+    <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
     <string name="content_description_thread_preview">Thread preview image</string>
     <string name="content_description_comments_button">Comment button image</string>
@@ -162,22 +162,6 @@
     <string name="item_sort_random">Random</string>
     <string name="item_sort_qa">Q&amp;A</string>
     <string name="hidden">Hidden</string>
-    <string name="pref_author">Author</string>
-    <string name="pref_author_summary">Winson Chiu (/u/TheKeeperOfPie)</string>
-    <string name="pref_source_code">Source code</string>
-    <string name="pref_source_code_summary">View source on GitHub</string>
-    <string name="pref_license_apache">Apache License, Version 2.0</string>
-    <string name="pref_license_apache_summary">
-        Licensed under the Apache License, Version 2.0 (the\"License\"); you may not use this file except in compliance with the License.
-        You may obtain a copy of the License at\n
-        \n
-        \t        http://www.apache.org/licenses/LICENSE-2.0\n
-        \n
-        Unless required by applicable law or agreed to in writing, software distributed under the License is
-        distributed on an \"AS IS\" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
-        express or implied. See the License for the specific language governing permissions and
-        limitations under the License.
-    </string>
     <string name="error_submitting_post">Error submitting post</string>
     <string name="logout_summary">Remove account from Reader</string>
     <string name="undo">Undo</string>
@@ -197,4 +181,13 @@
     <string name="content_description_button_clear_viewed">Clear viewed posts</string>
     <string name="content_description_button_comment_previous">Previous comment thread</string>
     <string name="content_description_button_comment_next">Next comment thread</string>
+    <string name="prefix_admin">[A]</string>
+    <string name="prefix_moderator">[M]</string>
+    <string name="prefix_special">[&#916;]</string>
+    <string name="beta_notice_0">Please remember that Reader is still in beta. Features are missing
+        and there will be bugs. This application was built to be used with an Android 5.0+
+        device.\n\nIf you have any suggestions, questions, or bug reports, please email me at\n\n\t
+        mail@winsonchiu.com\n\nThank you and please enjoy Reader.
+    </string>
+    <string name="image_downloading">Downloading image</string>
 </resources>

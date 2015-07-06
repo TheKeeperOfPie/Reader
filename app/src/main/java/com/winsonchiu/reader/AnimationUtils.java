@@ -8,6 +8,7 @@ import android.animation.ValueAnimator;
 import android.content.Context;
 import android.graphics.Point;
 import android.support.v4.graphics.ColorUtils;
+import android.util.Log;
 import android.util.TypedValue;
 import android.view.Display;
 import android.view.View;
@@ -132,6 +133,7 @@ public class AnimationUtils {
                 interpolatedTime = isShown ? 1.0f - interpolatedTime : interpolatedTime;
                 view.getLayoutParams().height = (int) (interpolatedTime * height);
                 view.requestLayout();
+
             }
 
             @Override
@@ -142,7 +144,7 @@ public class AnimationUtils {
         animation.setAnimationListener(new Animation.AnimationListener() {
             @Override
             public void onAnimationStart(Animation animation) {
-
+                Log.d(TAG, "onAnimationStart");
             }
 
             @Override
@@ -173,8 +175,10 @@ public class AnimationUtils {
                         .getDisplayMetrics());
 
         animation.setDuration((long) (height / speed * 2));
-        view.startAnimation(animation);
+        view.setVisibility(View.VISIBLE);
         view.requestLayout();
+        view.startAnimation(animation);
+        view.invalidate();
     }
 
     /*
@@ -191,6 +195,8 @@ public class AnimationUtils {
         Point size = new Point();
         display.getSize(size);
         int deviceWidth = (int) (size.x * widthRatio);
+
+        Log.d(TAG, "deviceWidth: " + deviceWidth);
 
         int widthMeasureSpec = View.MeasureSpec.makeMeasureSpec(deviceWidth,
                 View.MeasureSpec.AT_MOST);

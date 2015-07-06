@@ -5,24 +5,11 @@
 package com.winsonchiu.reader.settings;
 
 import android.app.Activity;
-import android.app.Fragment;
-import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.preference.ListPreference;
 import android.preference.Preference;
 import android.preference.PreferenceFragment;
-import android.support.v7.app.AlertDialog;
-import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.Toolbar;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.Toast;
-
-import com.winsonchiu.reader.AppSettings;
-import com.winsonchiu.reader.R;
-import com.winsonchiu.reader.Receiver;
 
 /**
  * Created by TheKeeperOfPie on 6/30/2015.
