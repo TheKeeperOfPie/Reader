@@ -185,9 +185,10 @@
     <string name="prefix_moderator">[M]</string>
     <string name="prefix_special">[&#916;]</string>
     <string name="beta_notice_0">Please remember that Reader is still in beta. Features are missing
-        and there will be bugs. This application was built to be used with an Android 5.0+
+        and there will be bugs. This application was built to be used with an Android Lollipop
         device.\n\nIf you have any suggestions, questions, or bug reports, please email me at\n\n\t
         mail@winsonchiu.com\n\nThank you and please enjoy Reader.
     </string>
     <string name="image_downloading">Downloading image</string>
+    <string name="link_shown">Post removed from hidden</string>
 </resources>

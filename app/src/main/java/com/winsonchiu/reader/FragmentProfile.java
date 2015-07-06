@@ -329,7 +329,7 @@ public class FragmentProfile extends FragmentBase implements Toolbar.OnMenuItemC
         recyclerProfile.setAdapter(adapterProfile);
 
         CustomItemTouchHelper itemTouchHelper = new CustomItemTouchHelper(
-                new CustomItemTouchHelper.SimpleCallback(ItemTouchHelper.START | ItemTouchHelper.END, 0) {
+                new CustomItemTouchHelper.SimpleCallback(ItemTouchHelper.START | ItemTouchHelper.END, ItemTouchHelper.START | ItemTouchHelper.END) {
 
                     @Override
                     public int getSwipeDirs(RecyclerView recyclerView,
@@ -363,7 +363,7 @@ public class FragmentProfile extends FragmentBase implements Toolbar.OnMenuItemC
                         if (snackbar != null) {
                             snackbar.dismiss();
                         }
-                        snackbar = Snackbar.make(recyclerProfile, R.string.link_hidden,
+                        snackbar = Snackbar.make(recyclerProfile, link.isHidden() ? R.string.link_hidden : R.string.link_shown,
                                 Snackbar.LENGTH_LONG)
                                 .setActionTextColor(getResources().getColor(R.color.colorAccent))
                                 .setAction(

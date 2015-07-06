@@ -198,6 +198,7 @@ public class MainActivity extends YouTubeBaseActivity
                         Toast.makeText(MainActivity.this, getString(R.string.no_comments),
                                 Toast.LENGTH_SHORT)
                                 .show();
+                        viewHolderBase.loadSelfText();
                         link.setCommentsClicked(true);
                         return;
                     }

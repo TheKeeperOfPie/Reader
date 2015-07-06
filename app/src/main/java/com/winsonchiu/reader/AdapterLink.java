@@ -451,7 +451,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         private void expandToolbarActions() {
 
             if (!toolbarActions.isShown()) {
-                AppSettings.getHistorySet(preferences).add(link.getName());
+                AppSettings.addToHistory(preferences, link.getName());
                 setVoteColors();
 
                 ShareActionProvider shareActionProvider = (ShareActionProvider) MenuItemCompat
@@ -786,7 +786,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
 
         public void loadFull() {
 
-            AppSettings.getHistorySet(preferences).add(link.getName());
+            AppSettings.addToHistory(preferences, link.getName());
             viewOverlay.setVisibility(View.GONE);
 
             // TODO: Toggle visibility of web and video views
@@ -945,14 +945,14 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
 
         public void loadComments() {
 
-            AppSettings.getHistorySet(preferences).add(link.getName());
+            AppSettings.addToHistory(preferences, link.getName());
             viewOverlay.setVisibility(View.GONE);
 
             eventListener.onClickComments(link, this);
         }
 
         public void loadSelfText() {
-            AppSettings.getHistorySet(preferences).add(link.getName());
+            AppSettings.addToHistory(preferences, link.getName());
             viewOverlay.setVisibility(View.GONE);
             expandFull(true);
             textThreadSelf.setVisibility(View.VISIBLE);
@@ -1083,7 +1083,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                                     Log.e(TAG, "WebView error: " + description);
                                 }
                             });
-                            frameFull.addView(webFull);
+                            frameFull.addView(webFull, frameFull.getChildCount() - 1);
 
                         }
                         webFull.onResume();

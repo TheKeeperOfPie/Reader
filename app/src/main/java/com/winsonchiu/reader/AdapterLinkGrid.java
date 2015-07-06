@@ -274,31 +274,32 @@ public class AdapterLinkGrid extends AdapterLink {
                                     public void onSuccess() {
                                         loadBackgroundColor();
 
-                                        if (Reddit.placeImageUrl(
-                                                link) && position == getAdapterPosition()) {
-                                            int size = getAdjustedThumbnailSize();
-                                            Picasso.with(itemView.getContext())
-                                                    .load(link.getUrl())
-                                                    .tag(AdapterLink.TAG_PICASSO)
-                                                    .resize(size, size)
-                                                    .centerCrop()
-                                                    .into(imageFull, new Callback() {
-                                                        @Override
-                                                        public void onSuccess() {
-                                                            progressImage.setVisibility(
-                                                                    View.GONE);
-                                                        }
+                                        if (position == getAdapterPosition()) {
+                                            if (Reddit.placeImageUrl(link)) {
+                                                int size = getAdjustedThumbnailSize();
+                                                Picasso.with(itemView.getContext())
+                                                        .load(link.getUrl())
+                                                        .tag(AdapterLink.TAG_PICASSO)
+                                                        .resize(size, size)
+                                                        .centerCrop()
+                                                        .into(imageFull, new Callback() {
+                                                            @Override
+                                                            public void onSuccess() {
+                                                                progressImage.setVisibility(
+                                                                        View.GONE);
+                                                            }
 
-                                                        @Override
-                                                        public void onError() {
+                                                            @Override
+                                                            public void onError() {
 
-                                                        }
-                                                    });
+                                                            }
+                                                        });
 
-                                        }
-                                        else {
-                                            imagePlay.setVisibility(View.VISIBLE);
-                                            progressImage.setVisibility(View.GONE);
+                                            }
+                                            else {
+                                                imagePlay.setVisibility(View.VISIBLE);
+                                                progressImage.setVisibility(View.GONE);
+                                            }
                                         }
                                     }
 
@@ -312,9 +313,9 @@ public class AdapterLinkGrid extends AdapterLink {
         }
 
         public void loadBackgroundColor() {
-            final int position = getAdapterPosition();
             Drawable drawable = imageFull.getDrawable();
             if (drawable instanceof BitmapDrawable) {
+                final int position = getAdapterPosition();
                 Palette.from(((BitmapDrawable) drawable).getBitmap())
                         .generate(
                                 new Palette.PaletteAsyncListener() {

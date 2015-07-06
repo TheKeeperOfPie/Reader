@@ -268,8 +268,8 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
 
         menu.findItem(mListener.getControllerLinks().getSort().getMenuId()).setChecked(true);
         itemSortTime.setTitle(
-                getString(R.string.time) + Reddit.TIME_SEPARATOR + mListener.getControllerLinks()
-                        .getTime().toString());
+                getString(R.string.time) + Reddit.TIME_SEPARATOR + menu.findItem(mListener.getControllerLinks()
+                        .getTime().getMenuId()).toString());
 
     }
 
@@ -497,17 +497,20 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
             @Override
             public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
                 super.onScrollStateChanged(recyclerView, newState);
-                if (newState == RecyclerView.SCROLL_STATE_IDLE) {
-                    Picasso.with(activity).resumeTag(AdapterLink.TAG_PICASSO);
-                }
-                else {
-                    Picasso.with(activity).pauseTag(AdapterLink.TAG_PICASSO);
+                switch (newState) {
+                    case RecyclerView.SCROLL_STATE_IDLE:
+                    case RecyclerView.SCROLL_STATE_DRAGGING:
+                        Picasso.with(activity).resumeTag(AdapterLink.TAG_PICASSO);
+                        break;
+                    case RecyclerView.SCROLL_STATE_SETTLING:
+                        Picasso.with(activity).pauseTag(AdapterLink.TAG_PICASSO);
+                        break;
                 }
             }
         });
 
         itemTouchHelper = new CustomItemTouchHelper(
-                new CustomItemTouchHelper.SimpleCallback(ItemTouchHelper.START | ItemTouchHelper.END, 0) {
+                new CustomItemTouchHelper.SimpleCallback(ItemTouchHelper.START | ItemTouchHelper.END, ItemTouchHelper.START | ItemTouchHelper.END) {
 
                     @Override
                     public float getSwipeThreshold(RecyclerView.ViewHolder viewHolder) {
@@ -568,7 +571,7 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
                         if (snackbar != null) {
                             snackbar.dismiss();
                         }
-                        snackbar = Snackbar.make(recyclerThreadList, R.string.link_hidden,
+                        snackbar = Snackbar.make(recyclerThreadList, link.isHidden() ? R.string.link_hidden : R.string.link_shown,
                                 Snackbar.LENGTH_LONG)
                                 .setActionTextColor(getResources().getColor(R.color.colorAccent))
                                 .setAction(
