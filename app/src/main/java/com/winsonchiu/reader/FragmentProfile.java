@@ -47,6 +47,7 @@ public class FragmentProfile extends FragmentBase implements Toolbar.OnMenuItemC
     private Spinner spinnerPage;
     private AdapterProfilePage adapterProfilePage;
     private Snackbar snackbar;
+    private CustomItemTouchHelper itemTouchHelper;
 
     public static FragmentProfile newInstance() {
         FragmentProfile fragment = new FragmentProfile();
@@ -123,9 +124,11 @@ public class FragmentProfile extends FragmentBase implements Toolbar.OnMenuItemC
 
     @Override
     public void onDestroyOptionsMenu() {
-        SearchView searchView = (SearchView) itemSearch.getActionView();
-        searchView.setOnQueryTextListener(null);
-        itemSearch = null;
+        if (itemSearch != null) {
+            SearchView searchView = (SearchView) itemSearch.getActionView();
+            searchView.setOnQueryTextListener(null);
+            itemSearch = null;
+        }
         super.onDestroyOptionsMenu();
     }
 
@@ -301,11 +304,12 @@ public class FragmentProfile extends FragmentBase implements Toolbar.OnMenuItemC
                         public void requestDisallowInterceptTouchEventVertical(boolean disallow) {
                             recyclerProfile.requestDisallowInterceptTouchEvent(disallow);
                             swipeRefreshProfile.requestDisallowInterceptTouchEvent(disallow);
+                            itemTouchHelper.select(null, CustomItemTouchHelper.ACTION_STATE_IDLE);
                         }
 
                         @Override
                         public void requestDisallowInterceptTouchEventHorizontal(boolean disallow) {
-
+                            itemTouchHelper.setDisallow(disallow);
                         }
                     }, new RecyclerCallback() {
                 @Override
@@ -328,7 +332,7 @@ public class FragmentProfile extends FragmentBase implements Toolbar.OnMenuItemC
 
         recyclerProfile.setAdapter(adapterProfile);
 
-        CustomItemTouchHelper itemTouchHelper = new CustomItemTouchHelper(
+        itemTouchHelper = new CustomItemTouchHelper(
                 new CustomItemTouchHelper.SimpleCallback(ItemTouchHelper.START | ItemTouchHelper.END, ItemTouchHelper.START | ItemTouchHelper.END) {
 
                     @Override

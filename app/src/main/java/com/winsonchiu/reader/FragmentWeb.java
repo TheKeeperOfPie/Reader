@@ -126,10 +126,12 @@ public class FragmentWeb extends FragmentBase {
 
     @Override
     public void onDestroyOptionsMenu() {
-        SearchView searchView = (SearchView) itemSearch.getActionView();
-        searchView.setOnQueryTextListener(null);
-        MenuItemCompat.setOnActionExpandListener(itemSearch, null);
-        itemSearch = null;
+        if (itemSearch != null) {
+            SearchView searchView = (SearchView) itemSearch.getActionView();
+            searchView.setOnQueryTextListener(null);
+            MenuItemCompat.setOnActionExpandListener(itemSearch, null);
+            itemSearch = null;
+        }
         super.onDestroyOptionsMenu();
     }
 

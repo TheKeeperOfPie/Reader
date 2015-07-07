@@ -63,7 +63,7 @@ public class ControllerLinks implements ControllerLinksBase {
     public void addListener(Listener listener) {
         listeners.add(listener);
         setTitle();
-        listener.setSort(sort);
+        listener.setSortAndTime(sort, time);
         listener.getAdapter().notifyDataSetChanged();
         listener.setRefreshing(isLoading());
         listener.loadSideBar(subreddit);
@@ -87,7 +87,7 @@ public class ControllerLinks implements ControllerLinksBase {
             int size = sizeLinks();
             listingLinks = new Listing();
             for (Listener listener : listeners) {
-                listener.setSort(sort);
+                listener.setSortAndTime(sort, time);
                 listener.getAdapter()
                         .notifyItemRangeRemoved(0, size + 1);
             }
@@ -219,6 +219,7 @@ public class ControllerLinks implements ControllerLinksBase {
                                     listener.loadSideBar(subreddit);
                                     listener.showEmptyView(listingLinks.getChildren()
                                             .isEmpty());
+                                    listener.scrollTo(0);
                                 }
                             });
                         }
@@ -439,9 +440,10 @@ public class ControllerLinks implements ControllerLinksBase {
     }
 
     public interface Listener extends ControllerListener {
-        void setSort(Sort sort);
+        void setSortAndTime(Sort sort, Time time);
         void showEmptyView(boolean isEmpty);
         void loadSideBar(Subreddit subreddit);
+        void scrollTo(int position);
     }
 
 }

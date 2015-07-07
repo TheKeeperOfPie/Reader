@@ -125,7 +125,7 @@
             android:layout_marginEnd="@dimen/activity_horizontal_margin"
             android:layout_alignParentStart="true"
             android:layout_alignParentEnd="true"
-            android:inputType="textMultiLine"
+            android:inputType="textCapSentences|textAutoCorrect|textMultiLine"
             android:maxLength="10000"
             />
 

@@ -210,7 +210,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginStart="@dimen/activity_horizontal_margin"
                 android:layout_marginEnd="@dimen/activity_horizontal_margin"
-                android:inputType="textMultiLine"
+                android:inputType="textCapSentences|textAutoCorrect|textMultiLine"
                 android:maxLength="10000"
                 />
 

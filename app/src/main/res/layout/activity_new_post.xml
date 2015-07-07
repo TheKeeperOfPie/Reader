@@ -81,7 +81,7 @@
                     android:paddingStart="16dp"
                     android:paddingEnd="16dp"
                     android:hint="@string/new_post_title"
-                    android:ellipsize="end"
+                    android:inputType="textCapSentences|textAutoCorrect|textMultiLine"
                     android:maxLength="300"
                     />
 
@@ -109,8 +109,8 @@
                     android:layout_marginBottom="@dimen/activity_vertical_margin"
                     android:paddingStart="16dp"
                     android:paddingEnd="16dp"
+                    android:inputType="textCapSentences|textAutoCorrect|textMultiLine"
                     android:hint="@string/new_post_body"
-                    android:ellipsize="end"
                     android:maxLength="40000"
                     />
 
@@ -171,7 +171,6 @@
                         android:paddingStart="16dp"
                         android:paddingEnd="16dp"
                         android:hint="@string/captcha_response"
-                        android:ellipsize="end"
                         />
 
                 </RelativeLayout>

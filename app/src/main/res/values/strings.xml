@@ -191,4 +191,5 @@
     </string>
     <string name="image_downloading">Downloading image</string>
     <string name="link_shown">Post removed from hidden</string>
+    <string name="item_jump_parent">Jump to parent</string>
 </resources>

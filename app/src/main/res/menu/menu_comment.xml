@@ -20,7 +20,7 @@
 
     <item
         android:id="@+id/item_jump_parent"
-        android:title="@string/item_collapse"
+        android:title="@string/item_jump_parent"
         android:icon="@drawable/ic_vertical_align_top_white_24dp"
         android:orderInCategory="200"
         app:showAsAction="ifRoom"

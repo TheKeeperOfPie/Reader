@@ -4,8 +4,10 @@
 
 package com.winsonchiu.reader;
 
+import android.graphics.Rect;
 import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
+import android.text.TextPaint;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -65,7 +67,7 @@ public class AdapterAlbum extends PagerAdapter {
             view = recycledViews.pop();
         }
 
-        ViewHolder viewHolder = (ViewHolder) view.getTag();
+        final ViewHolder viewHolder = (ViewHolder) view.getTag();
         viewHolder.instantiate(image, position, album.getImagesCount());
 
         WebViewFixed webView = WebViewFixed.newInstance(
@@ -105,6 +107,23 @@ public class AdapterAlbum extends PagerAdapter {
         webView.setVisibility(View.VISIBLE);
 
         container.addView(view);
+
+        container.requestLayout();
+        viewHolder.textTitle.post(new Runnable() {
+            @Override
+            public void run() {
+                if (!viewHolder.layoutInfo.isShown()) {
+                    TextPaint textPaint = viewHolder.textTitle.getPaint();
+                    Rect rect = new Rect();
+                    textPaint.getTextBounds(viewHolder.textTitle.getText().toString(), 0,
+                            viewHolder.textTitle.length(), rect);
+                    if (rect.height() > viewHolder.textTitle.getHeight() || rect
+                            .width() > viewHolder.textTitle.getWidth()) {
+                        viewHolder.layoutInfo.setVisibility(View.VISIBLE);
+                    }
+                }
+            }
+        });
 
         return view;
     }
@@ -208,7 +227,6 @@ public class AdapterAlbum extends PagerAdapter {
 
         public void instantiate(Image image, int position, int maxImages) {
             this.image = image;
-            textDescription.setVisibility(View.GONE);
 
             textAlbumIndicator.setText((position + 1) + " / " + maxImages);
 
@@ -221,6 +239,9 @@ public class AdapterAlbum extends PagerAdapter {
             if (!TextUtils.isEmpty(image.getDescription()) && !"null".equals(image.getDescription())) {
                 textDescription.setText(image.getDescription());
                 layoutInfo.setVisibility(View.VISIBLE);
+            }
+            else {
+                layoutInfo.setVisibility(View.GONE);
             }
 
             scrollDescription.scrollTo(0, 0);

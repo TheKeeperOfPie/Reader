@@ -178,9 +178,13 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
         };
 
         listener = new ControllerLinks.Listener() {
+
             @Override
-            public void setSort(Sort sort) {
+            public void setSortAndTime(Sort sort, Time time) {
                 menu.findItem(sort.getMenuId()).setChecked(true);
+                itemSortTime.setTitle(
+                        getString(R.string.time) + Reddit.TIME_SEPARATOR + menu.findItem(mListener.getControllerLinks()
+                                .getTime().getMenuId()).toString());
             }
 
             @Override
@@ -209,6 +213,16 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
                 buttonSubscribe.setVisibility(TextUtils.isEmpty(
                         preferences.getString(AppSettings.ACCOUNT_JSON,
                                 "")) ? View.GONE : View.VISIBLE);
+            }
+
+            @Override
+            public void scrollTo(int position) {
+                if (layoutManager instanceof LinearLayoutManager) {
+                    ((LinearLayoutManager) layoutManager).scrollToPositionWithOffset(0, 0);
+                }
+                else if (layoutManager instanceof StaggeredGridLayoutManager) {
+                    ((StaggeredGridLayoutManager) layoutManager).scrollToPositionWithOffset(0, 0);
+                }
             }
 
             @Override
@@ -285,8 +299,10 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
 
     @Override
     public void onDestroyOptionsMenu() {
-        MenuItemCompat.setOnActionExpandListener(itemSearch, null);
-        itemSearch = null;
+        if (itemSearch != null) {
+            MenuItemCompat.setOnActionExpandListener(itemSearch, null);
+            itemSearch = null;
+        }
         super.onDestroyOptionsMenu();
     }
 

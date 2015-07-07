@@ -643,6 +643,9 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                 if (comment.getLinkAuthor().equals(comment.getAuthor())) {
                     color = resources.getColor(R.color.colorAccent);
                 }
+                else if (userName.equals(comment.getAuthor())) {
+                    color = resources.getColor(R.color.colorPrimary);
+                }
                 else {
                     switch (comment.getDistinguished()) {
                         case MODERATOR:
