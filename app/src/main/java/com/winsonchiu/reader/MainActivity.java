@@ -34,12 +34,28 @@ import com.android.volley.VolleyError;
 import com.android.volley.toolbox.ImageRequest;
 import com.crashlytics.android.Crashlytics;
 import com.google.android.youtube.player.YouTubeBaseActivity;
-import com.winsonchiu.reader.data.Comment;
-import com.winsonchiu.reader.data.Link;
-import com.winsonchiu.reader.data.Reddit;
-import com.winsonchiu.reader.data.Thing;
-import com.winsonchiu.reader.data.User;
+import com.winsonchiu.reader.comments.AdapterCommentList;
+import com.winsonchiu.reader.comments.ControllerComments;
+import com.winsonchiu.reader.comments.FragmentComments;
+import com.winsonchiu.reader.data.reddit.Comment;
+import com.winsonchiu.reader.data.reddit.Link;
+import com.winsonchiu.reader.data.reddit.Reddit;
+import com.winsonchiu.reader.data.reddit.Sort;
+import com.winsonchiu.reader.data.reddit.Thing;
+import com.winsonchiu.reader.data.reddit.Time;
+import com.winsonchiu.reader.data.reddit.User;
+import com.winsonchiu.reader.inbox.ControllerInbox;
+import com.winsonchiu.reader.inbox.FragmentInbox;
+import com.winsonchiu.reader.inbox.Receiver;
+import com.winsonchiu.reader.links.AdapterLink;
+import com.winsonchiu.reader.links.ControllerLinks;
+import com.winsonchiu.reader.links.FragmentThreadList;
+import com.winsonchiu.reader.profile.ControllerProfile;
+import com.winsonchiu.reader.profile.FragmentProfile;
+import com.winsonchiu.reader.search.ControllerSearch;
+import com.winsonchiu.reader.search.FragmentSearch;
 import com.winsonchiu.reader.settings.ActivitySettings;
+import com.winsonchiu.reader.views.WebViewFixed;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -596,7 +612,7 @@ public class MainActivity extends YouTubeBaseActivity
         FragmentTransaction fragmentTransaction = getFragmentManager().beginTransaction();
 
         if (animate) {
-            fragmentTransaction.setCustomAnimations(R.animator.slide_from_left, R.animator.none);
+            fragmentTransaction.setCustomAnimations(R.animator.slide_from_left, R.animator.slide_to_right);
         }
 
         switch (id) {

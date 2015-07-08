@@ -9,7 +9,7 @@ import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
 import android.text.TextUtils;
 
-import com.winsonchiu.reader.data.User;
+import com.winsonchiu.reader.data.reddit.User;
 
 import org.json.JSONException;
 import org.json.JSONObject;

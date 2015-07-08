@@ -7,6 +7,7 @@ package com.winsonchiu.reader;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
+import android.util.Log;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -44,6 +45,7 @@ public class AppSettings {
     public static final String PREF_DIM_POSTS = "pref_dim_posts";
     public static final String PREF_EXTERNAL_BROWSER = "pref_external_browser";
     public static final String BETA_NOTICE_0 = "betaNotice0";
+    private static final String TAG = AppSettings.class.getCanonicalName();
 
     private static Set<String> historySet;
 
@@ -67,7 +69,12 @@ public class AppSettings {
 
     public static Set<String> getHistorySet(SharedPreferences preferences) {
         if (historySet == null) {
-            historySet = preferences.getStringSet(HISTORY_SET, new HashSet<String>());
+            /*
+                Due to an Android quirk where getStringSet returns the object held by the
+                SharedPreferences instance and not a copy, we have to create a new HashSet instance.
+                Otherwise the editor will detect the objects are ==, and not commit the change.
+             */
+            historySet = new HashSet<>(preferences.getStringSet(HISTORY_SET, new HashSet<String>()));
         }
         return historySet;
     }

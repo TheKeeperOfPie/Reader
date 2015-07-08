@@ -17,7 +17,7 @@
         android:layout_alignParentTop="true"
         />
 
-    <com.winsonchiu.reader.CustomSwipeRefreshLayout
+    <com.winsonchiu.reader.views.CustomSwipeRefreshLayout
         android:id="@+id/swipe_refresh_auth"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -31,6 +31,6 @@
             android:layout_below="@id/toolbar"
             />
 
-    </com.winsonchiu.reader.CustomSwipeRefreshLayout>
+    </com.winsonchiu.reader.views.CustomSwipeRefreshLayout>
 
 </RelativeLayout>

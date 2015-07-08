@@ -8,7 +8,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="com.winsonchiu.reader.FragmentComments"
+    tools:context="com.winsonchiu.reader.comments.FragmentComments"
     android:background="@android:color/transparent"
     >
 
@@ -41,7 +41,7 @@
         android:layout_below="@id/youtube"
         >
 
-        <com.winsonchiu.reader.CustomSwipeRefreshLayout
+        <com.winsonchiu.reader.views.CustomSwipeRefreshLayout
             android:id="@+id/swipe_refresh_comment_list"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
@@ -57,7 +57,7 @@
                 android:clipToPadding="false"
                 />
 
-        </com.winsonchiu.reader.CustomSwipeRefreshLayout>
+        </com.winsonchiu.reader.views.CustomSwipeRefreshLayout>
 
         <android.support.design.widget.FloatingActionButton
             android:id="@+id/button_expand_actions"

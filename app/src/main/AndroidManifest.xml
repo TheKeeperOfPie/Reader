@@ -44,6 +44,7 @@
                 <data android:host="www.reddit.com" android:scheme="http" />
                 <data android:host="www.reddit.com" android:scheme="https" />
             </intent-filter>
+
         </activity>
         <activity
             android:name=".ActivityNewPost"
@@ -56,10 +57,10 @@
         </activity>
 
         <receiver
-            android:name=".Receiver"
+            android:name=".inbox.Receiver"
             android:exported="false" >
             <intent-filter>
-                <action android:name="com.winsonchiu.reader.Receiver.INTENT_INBOX" />
+                <action android:name="com.winsonchiu.reader.inbox.Receiver.INTENT_INBOX" />
             </intent-filter>
         </receiver>
 

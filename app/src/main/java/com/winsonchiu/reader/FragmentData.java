@@ -9,6 +9,13 @@ import android.app.Activity;
 import android.app.Fragment;
 import android.os.Bundle;
 
+import com.winsonchiu.reader.comments.ControllerComments;
+import com.winsonchiu.reader.data.reddit.Sort;
+import com.winsonchiu.reader.inbox.ControllerInbox;
+import com.winsonchiu.reader.links.ControllerLinks;
+import com.winsonchiu.reader.profile.ControllerProfile;
+import com.winsonchiu.reader.search.ControllerSearch;
+
 /**
  * A simple {@link Fragment} subclass.
  */
@@ -113,7 +120,7 @@ public class FragmentData extends FragmentBase {
     }
 
     @Override
-    boolean navigateBack() {
+    public boolean navigateBack() {
         throw new IllegalStateException("FragmentData should never be in the back stack");
     }
 }

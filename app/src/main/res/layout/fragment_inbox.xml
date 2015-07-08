@@ -2,13 +2,13 @@
   ~ Copyright 2015 Winson Chiu
   -->
 
-<com.winsonchiu.reader.CustomRelativeLayout
+<com.winsonchiu.reader.views.CustomRelativeLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    tools:context="com.winsonchiu.reader.FragmentInbox"
+    tools:context="com.winsonchiu.reader.inbox.FragmentInbox"
     >
 
     <android.support.v7.widget.Toolbar
@@ -29,7 +29,7 @@
 
     </android.support.v7.widget.Toolbar>
 
-    <com.winsonchiu.reader.CustomSwipeRefreshLayout
+    <com.winsonchiu.reader.views.CustomSwipeRefreshLayout
         android:id="@+id/swipe_refresh_inbox"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -44,7 +44,7 @@
             android:scrollbarFadeDuration="200"
             />
 
-    </com.winsonchiu.reader.CustomSwipeRefreshLayout>
+    </com.winsonchiu.reader.views.CustomSwipeRefreshLayout>
 
     <android.support.design.widget.FloatingActionButton
         android:id="@+id/fab_new_message"
@@ -62,4 +62,4 @@
         app:borderWidth="0dp"
         />
 
-</com.winsonchiu.reader.CustomRelativeLayout>
+</com.winsonchiu.reader.views.CustomRelativeLayout>

@@ -28,9 +28,9 @@ import android.widget.Toast;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.squareup.picasso.Picasso;
-import com.winsonchiu.reader.data.Link;
-import com.winsonchiu.reader.data.Listing;
-import com.winsonchiu.reader.data.Reddit;
+import com.winsonchiu.reader.data.reddit.Link;
+import com.winsonchiu.reader.data.reddit.Listing;
+import com.winsonchiu.reader.data.reddit.Reddit;
 
 import org.json.JSONException;
 import org.json.JSONObject;

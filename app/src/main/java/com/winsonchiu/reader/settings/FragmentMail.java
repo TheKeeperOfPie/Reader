@@ -9,7 +9,7 @@ import android.os.Bundle;
 
 import com.winsonchiu.reader.AppSettings;
 import com.winsonchiu.reader.R;
-import com.winsonchiu.reader.Receiver;
+import com.winsonchiu.reader.inbox.Receiver;
 
 /**
  * Created by TheKeeperOfPie on 7/1/2015.

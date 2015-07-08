@@ -25,7 +25,8 @@ import android.webkit.WebViewClient;
 
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
-import com.winsonchiu.reader.data.Reddit;
+import com.winsonchiu.reader.data.reddit.Reddit;
+import com.winsonchiu.reader.views.CustomSwipeRefreshLayout;
 
 import org.json.JSONException;
 import org.json.JSONObject;

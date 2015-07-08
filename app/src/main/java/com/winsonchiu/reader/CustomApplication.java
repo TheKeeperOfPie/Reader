@@ -6,7 +6,7 @@ package com.winsonchiu.reader;
 
 import android.app.Application;
 
-import com.winsonchiu.reader.data.Reddit;
+import com.winsonchiu.reader.data.reddit.Reddit;
 
 /**
  * Created by TheKeeperOfPie on 3/7/2015.
