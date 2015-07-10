@@ -11,6 +11,7 @@ import android.os.Bundle;
 
 import com.winsonchiu.reader.comments.ControllerComments;
 import com.winsonchiu.reader.data.reddit.Sort;
+import com.winsonchiu.reader.history.ControllerHistory;
 import com.winsonchiu.reader.inbox.ControllerInbox;
 import com.winsonchiu.reader.links.ControllerLinks;
 import com.winsonchiu.reader.profile.ControllerProfile;
@@ -28,6 +29,7 @@ public class FragmentData extends FragmentBase {
     private ControllerProfile controllerProfile;
     private ControllerInbox controllerInbox;
     private ControllerSearch controllerSearch;
+    private ControllerHistory controllerHistory;
     private ControllerUser controllerUser;
 
     public FragmentData() {
@@ -46,6 +48,7 @@ public class FragmentData extends FragmentBase {
         controllerProfile = new ControllerProfile(activity);
         controllerInbox = new ControllerInbox(activity);
         controllerSearch = new ControllerSearch(activity);
+        controllerHistory = new ControllerHistory(activity);
         controllerUser = new ControllerUser(activity);
         controllerProfile.setControllerUser(controllerUser);
         controllerSearch.setControllers(controllerLinks, controllerUser);
@@ -61,6 +64,7 @@ public class FragmentData extends FragmentBase {
         controllerProfile.setActivity(activity);
         controllerInbox.setActivity(activity);
         controllerSearch.setActivity(activity);
+        controllerHistory.setActivity(activity);
         controllerUser.setActivity(activity);
     }
 
@@ -122,5 +126,13 @@ public class FragmentData extends FragmentBase {
     @Override
     public boolean navigateBack() {
         throw new IllegalStateException("FragmentData should never be in the back stack");
+    }
+
+    public ControllerHistory getControllerHistory() {
+        return controllerHistory;
+    }
+
+    public void setControllerHistory(ControllerHistory controllerHistory) {
+        this.controllerHistory = controllerHistory;
     }
 }

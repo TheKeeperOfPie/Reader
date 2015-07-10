@@ -29,37 +29,46 @@
 
     </android.support.v7.widget.Toolbar>
 
-    <com.winsonchiu.reader.views.CustomSwipeRefreshLayout
-        android:id="@+id/swipe_refresh_inbox"
+
+    <android.support.design.widget.CoordinatorLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_below="@id/toolbar"
         >
 
-        <android.support.v7.widget.RecyclerView
-            android:id="@+id/recycler_inbox"
+        <com.winsonchiu.reader.views.CustomSwipeRefreshLayout
+            android:id="@+id/swipe_refresh_inbox"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:scrollbars="vertical"
-            android:scrollbarFadeDuration="200"
+            app:layout_behavior="@string/appbar_scrolling_view_behavior"
+            >
+
+            <android.support.v7.widget.RecyclerView
+                android:id="@+id/recycler_inbox"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:scrollbars="vertical"
+                />
+
+        </com.winsonchiu.reader.views.CustomSwipeRefreshLayout>
+
+        <android.support.design.widget.FloatingActionButton
+            android:id="@+id/fab_new_message"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentEnd="true"
+            android:layout_alignParentBottom="true"
+            android:layout_margin="16dp"
+            android:src="@drawable/ic_add_white_24dp"
+            app:layout_behavior="com.winsonchiu.reader.utils.ScrollAwareFloatingActionButtonBehavior"
+            app:layout_anchor="@id/swipe_refresh_inbox"
+            app:layout_anchorGravity="bottom|end"
+            app:fabSize="normal"
+            app:elevation="6dp"
+            app:pressedTranslationZ="12dp"
+            app:borderWidth="0dp"
             />
 
-    </com.winsonchiu.reader.views.CustomSwipeRefreshLayout>
-
-    <android.support.design.widget.FloatingActionButton
-        android:id="@+id/fab_new_message"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentEnd="true"
-        android:layout_alignParentBottom="true"
-        android:layout_margin="16dp"
-        android:src="@drawable/ic_add_white_24dp"
-        app:layout_anchor="@id/swipe_refresh_inbox"
-        app:layout_anchorGravity="bottom|end"
-        app:fabSize="normal"
-        app:elevation="6dp"
-        app:pressedTranslationZ="12dp"
-        app:borderWidth="0dp"
-        />
+    </android.support.design.widget.CoordinatorLayout>
 
 </com.winsonchiu.reader.views.CustomRelativeLayout>

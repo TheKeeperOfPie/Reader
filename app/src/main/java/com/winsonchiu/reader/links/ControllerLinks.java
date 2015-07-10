@@ -12,6 +12,7 @@ import android.widget.Toast;
 import com.android.volley.Response;
 import com.android.volley.Response.ErrorListener;
 import com.android.volley.VolleyError;
+import com.winsonchiu.reader.history.Historian;
 import com.winsonchiu.reader.utils.ControllerListener;
 import com.winsonchiu.reader.R;
 import com.winsonchiu.reader.data.reddit.Sort;
@@ -382,7 +383,6 @@ public class ControllerLinks implements ControllerLinksBase {
         return "/".equals(subreddit.getUrl()) || "/r/all/".equals(subreddit.getUrl());
     }
 
-    @Override
     public Link remove(int position) {
         Link link = (Link) listingLinks.getChildren().remove(position);
         for (Listener listener : listeners) {
@@ -422,13 +422,13 @@ public class ControllerLinks implements ControllerLinksBase {
         }
     }
 
-    public void clearViewed(Set<String> history) {
+    public void clearViewed(Historian historian) {
 
         List<Integer> indexesToRemove = new ArrayList<>();
 
         for (int index = 0; index < listingLinks.getChildren().size(); index++) {
             Link link = (Link) listingLinks.getChildren().get(index);
-            if (history.contains(link.getName())) {
+            if (historian.contains(link.getName())) {
                 indexesToRemove.add(0, index);
             }
         }

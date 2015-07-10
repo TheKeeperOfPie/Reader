@@ -44,6 +44,9 @@ import com.winsonchiu.reader.data.reddit.Sort;
 import com.winsonchiu.reader.data.reddit.Thing;
 import com.winsonchiu.reader.data.reddit.Time;
 import com.winsonchiu.reader.data.reddit.User;
+import com.winsonchiu.reader.history.ControllerHistory;
+import com.winsonchiu.reader.history.FragmentHistory;
+import com.winsonchiu.reader.history.Historian;
 import com.winsonchiu.reader.inbox.ControllerInbox;
 import com.winsonchiu.reader.inbox.FragmentInbox;
 import com.winsonchiu.reader.inbox.Receiver;
@@ -626,6 +629,14 @@ public class MainActivity extends YouTubeBaseActivity
                             FragmentThreadList.TAG);
                 }
                 break;
+            case R.id.item_history:
+                getControllerHistory().reload();
+                if (getFragmentManager().findFragmentByTag(FragmentHistory.TAG) == null) {
+                    fragmentTransaction.replace(R.id.frame_fragment,
+                            FragmentHistory.newInstance(),
+                            FragmentHistory.TAG);
+                }
+                break;
             case R.id.item_profile:
 
                 if (!TextUtils.isEmpty(
@@ -662,9 +673,9 @@ public class MainActivity extends YouTubeBaseActivity
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
 
-        if (requestCode == REQUEST_SETTINGS) {
-            recreate();
-        }
+//        if (requestCode == REQUEST_SETTINGS) {
+//            recreate();
+//        }
 
     }
 
@@ -950,6 +961,11 @@ public class MainActivity extends YouTubeBaseActivity
     }
 
     @Override
+    public ControllerHistory getControllerHistory() {
+        return fragmentData.getControllerHistory();
+    }
+
+    @Override
     public ControllerUser getControllerUser() {
         return fragmentData.getControllerUser();
     }
@@ -1013,7 +1029,14 @@ public class MainActivity extends YouTubeBaseActivity
 
     @Override
     protected void onPause() {
-        AppSettings.saveHistory(sharedPreferences);
         super.onPause();
+    }
+
+    @Override
+    protected void onStop() {
+        if (isTaskRoot()) {
+            Historian.saveToFile(this);
+        }
+        super.onStop();
     }
 }

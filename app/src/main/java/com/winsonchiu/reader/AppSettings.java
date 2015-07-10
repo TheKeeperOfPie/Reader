@@ -9,6 +9,8 @@ import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
 import android.util.Log;
 
+import com.winsonchiu.reader.history.Historian;
+
 import java.util.HashSet;
 import java.util.Set;
 
@@ -44,10 +46,9 @@ public class AppSettings {
     public static final String PREF_CLEAR_HISTORY = "pref_clear_history";
     public static final String PREF_DIM_POSTS = "pref_dim_posts";
     public static final String PREF_EXTERNAL_BROWSER = "pref_external_browser";
+    public static final String PREF_HISTORY_SIZE = "pref_history_size";
     public static final String BETA_NOTICE_0 = "betaNotice0";
     private static final String TAG = AppSettings.class.getCanonicalName();
-
-    private static Set<String> historySet;
 
     public static boolean initPrefs(Context context) {
 
@@ -65,35 +66,6 @@ public class AppSettings {
         }
 
         return initialized;
-    }
-
-    public static Set<String> getHistorySet(SharedPreferences preferences) {
-        if (historySet == null) {
-            /*
-                Due to an Android quirk where getStringSet returns the object held by the
-                SharedPreferences instance and not a copy, we have to create a new HashSet instance.
-                Otherwise the editor will detect the objects are ==, and not commit the change.
-             */
-            historySet = new HashSet<>(preferences.getStringSet(HISTORY_SET, new HashSet<String>()));
-        }
-        return historySet;
-    }
-
-    public static void addToHistory(SharedPreferences preferences, String name) {
-        if (preferences.getBoolean(PREF_SAVE_HISTORY, true)) {
-            getHistorySet(preferences).add(name);
-        }
-    }
-
-    public static void saveHistory(SharedPreferences preferences) {
-        if (historySet != null) {
-            preferences.edit().putStringSet(HISTORY_SET, historySet).commit();
-        }
-    }
-
-    public static void clearHistory(SharedPreferences preferences) {
-        historySet = new HashSet<>();
-        saveHistory(preferences);
     }
 
 }

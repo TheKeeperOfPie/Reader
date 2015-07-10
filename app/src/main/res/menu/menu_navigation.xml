@@ -15,9 +15,17 @@
         />
 
     <item
+        android:id="@+id/item_history"
+        android:title="@string/history"
+        android:orderInCategory="200"
+        android:icon="@drawable/ic_history_white_24dp"
+        app:showAsAction="ifRoom"
+        />
+
+    <item
         android:id="@+id/item_profile"
         android:title="@string/profile"
-        android:orderInCategory="200"
+        android:orderInCategory="300"
         android:icon="@drawable/ic_person_white_24dp"
         app:showAsAction="ifRoom"
         />
@@ -25,7 +33,7 @@
     <item
         android:id="@+id/item_inbox"
         android:title="@string/inbox"
-        android:orderInCategory="300"
+        android:orderInCategory="400"
         android:icon="@drawable/ic_inbox_white_24dp"
         app:showAsAction="ifRoom"
         />
@@ -33,7 +41,7 @@
     <item
         android:id="@+id/item_settings"
         android:title="@string/settings"
-        android:orderInCategory="400"
+        android:orderInCategory="500"
         android:icon="@drawable/ic_settings_white_24dp"
         app:showAsAction="ifRoom"
         />

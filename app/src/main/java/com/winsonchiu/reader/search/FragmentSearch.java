@@ -288,11 +288,6 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
                 return true;
             }
 
-            @Override
-            public Link remove(int position) {
-                return null;
-            }
-
         }, mListener.getControllerUser(),
                 new AdapterLink.ViewHolderHeader.EventListener() {
                     @Override
@@ -356,11 +351,6 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
             @Override
             public boolean showSubreddit() {
                 return true;
-            }
-
-            @Override
-            public Link remove(int position) {
-                return null;
             }
 
         }, mListener.getControllerUser(),

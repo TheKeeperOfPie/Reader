@@ -7,6 +7,7 @@ package com.winsonchiu.reader;
 import android.app.Application;
 
 import com.winsonchiu.reader.data.reddit.Reddit;
+import com.winsonchiu.reader.history.Historian;
 
 /**
  * Created by TheKeeperOfPie on 3/7/2015.
@@ -28,5 +29,11 @@ public class CustomApplication extends Application {
 //        Picasso.with(this).setLoggingEnabled(true);
         AppSettings.initPrefs(getApplicationContext());
         Reddit.getInstance(getApplicationContext()).fetchToken(null);
+        Historian.getInstance(getApplicationContext());
+    }
+
+    @Override
+    public void onTerminate() {
+        super.onTerminate();
     }
 }

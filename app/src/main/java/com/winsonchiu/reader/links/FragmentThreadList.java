@@ -44,6 +44,7 @@ import android.widget.Toast;
 import com.squareup.picasso.Picasso;
 import com.winsonchiu.reader.ActivityNewPost;
 import com.winsonchiu.reader.AppSettings;
+import com.winsonchiu.reader.history.Historian;
 import com.winsonchiu.reader.views.CustomItemTouchHelper;
 import com.winsonchiu.reader.utils.DisallowListener;
 import com.winsonchiu.reader.FragmentBase;
@@ -61,10 +62,7 @@ import com.winsonchiu.reader.data.reddit.Subreddit;
 public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuItemClickListener {
 
     public static final String TAG = FragmentThreadList.class.getCanonicalName();
-    private static final String KEY_LAYOUT_MANAGER = "layoutManager";
     private static final long DURATION_TRANSITION = 150;
-    private static final long DURATION_ENTER = 250;
-    private static final long DURATION_EXIT = 150;
     private static final long DURATION_ACTIONS_FADE = 150;
     private static final float OFFSET_MODIFIER = 0.25f;
     private Activity activity;
@@ -165,14 +163,7 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
                 recyclerThreadList.post(new Runnable() {
                     @Override
                     public void run() {
-                        if (layoutManager instanceof LinearLayoutManager) {
-                            ((LinearLayoutManager) layoutManager).scrollToPositionWithOffset(
-                                    position, 0);
-                        }
-                        else if (layoutManager instanceof StaggeredGridLayoutManager) {
-                            ((StaggeredGridLayoutManager) layoutManager).scrollToPositionWithOffset(
-                                    position, 0);
-                        }
+                        scrollToPositionWithOffset(position, 0);
                     }
                 });
             }
@@ -229,12 +220,7 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
 
             @Override
             public void scrollTo(int position) {
-                if (layoutManager instanceof LinearLayoutManager) {
-                    ((LinearLayoutManager) layoutManager).scrollToPositionWithOffset(0, 0);
-                }
-                else if (layoutManager instanceof StaggeredGridLayoutManager) {
-                    ((StaggeredGridLayoutManager) layoutManager).scrollToPositionWithOffset(0, 0);
-                }
+                scrollToPositionWithOffset(position, 0);
             }
 
             @Override
@@ -296,16 +282,6 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
         itemSortTime.setTitle(
                 getString(R.string.time) + Reddit.TIME_SEPARATOR + menu.findItem(mListener.getControllerLinks()
                         .getTime().getMenuId()).toString());
-
-    }
-
-    private void resetSubmenuSelected() {
-        onMenuItemClick(menu.findItem(mListener.getControllerLinks()
-                .getSort()
-                .getMenuId()));
-        onMenuItemClick(menu.findItem(mListener.getControllerLinks()
-                .getTime()
-                .getMenuId()));
 
     }
 
@@ -425,12 +401,7 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
         buttonJumpTop.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (layoutManager instanceof LinearLayoutManager) {
-                    ((LinearLayoutManager) layoutManager).scrollToPositionWithOffset(0, 0);
-                }
-                else if (layoutManager instanceof StaggeredGridLayoutManager) {
-                    ((StaggeredGridLayoutManager) layoutManager).scrollToPositionWithOffset(0, 0);
-                }
+                scrollToPositionWithOffset(0, 0);
             }
         });
         buttonJumpTop.setOnLongClickListener(new View.OnLongClickListener() {
@@ -445,7 +416,7 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
         buttonClearViewed.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                mListener.getControllerLinks().clearViewed(AppSettings.getHistorySet(preferences));
+                mListener.getControllerLinks().clearViewed(Historian.getInstance(activity));
             }
         });
         buttonClearViewed.setOnLongClickListener(new View.OnLongClickListener() {
@@ -457,6 +428,7 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
         });
 
 
+        // Margin is included within shadow margin on pre-Lollipop, so remove all regular margin
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
             ((CoordinatorLayout.LayoutParams) buttonExpandActions.getLayoutParams()).setMargins(0, 0, 0, 0);
 
@@ -547,7 +519,7 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
                             return 1f / ((StaggeredGridLayoutManager) layoutManager).getSpanCount();
                         }
 
-                        return super.getSwipeThreshold(viewHolder);
+                        return 0.4f;
                     }
 
                     @Override
@@ -760,24 +732,29 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
     @Override
     public void onStart() {
         super.onStart();
-        mListener.getControllerLinks()
-                .addListener(listener);
     }
 
     @Override
     public void onStop() {
-        mListener.getControllerLinks()
-                .removeListener(listener);
         super.onStop();
     }
 
     @Override
     public void onResume() {
         super.onResume();
-        swipeRefreshThreadList.setRefreshing(mListener.getControllerLinks()
-                .isLoading());
+//        swipeRefreshThreadList.setRefreshing(mListener.getControllerLinks()
+//                .isLoading());
+//        mListener.getControllerLinks()
+//                .setTitle();
         mListener.getControllerLinks()
-                .setTitle();
+                .addListener(listener);
+    }
+
+    @Override
+    public void onPause() {
+        mListener.getControllerLinks()
+                .removeListener(listener);
+        super.onPause();
     }
 
     @Override
@@ -825,13 +802,7 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
                 mListener.getControllerLinks()
                         .setSort(sort);
                 flashSearchView();
-
-                if (layoutManager instanceof LinearLayoutManager) {
-                    ((LinearLayoutManager) layoutManager).scrollToPositionWithOffset(0, 0);
-                }
-                else if (layoutManager instanceof StaggeredGridLayoutManager) {
-                    ((StaggeredGridLayoutManager) layoutManager).scrollToPositionWithOffset(0, 0);
-                }
+                scrollToPositionWithOffset(0, 0);
                 return true;
             }
         }
@@ -843,18 +814,28 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
                 itemSortTime.setTitle(
                         getString(R.string.time) + Reddit.TIME_SEPARATOR + item.toString());
                 flashSearchView();
-
-                if (layoutManager instanceof LinearLayoutManager) {
-                    ((LinearLayoutManager) layoutManager).scrollToPositionWithOffset(0, 0);
-                }
-                else if (layoutManager instanceof StaggeredGridLayoutManager) {
-                    ((StaggeredGridLayoutManager) layoutManager).scrollToPositionWithOffset(0, 0);
-                }
+                scrollToPositionWithOffset(0, 0);
                 return true;
             }
         }
 
         return false;
+    }
+
+    /**
+     * Helper method to scroll without if statement sprinkled everywhere, as
+     * scrollToPositionWithOffset is not abstracted into the upper LayoutManager
+     * for some reason
+     * @param position to scroll to
+     * @param offset from top of view
+     */
+    private void scrollToPositionWithOffset(int position, int offset) {
+        if (layoutManager instanceof LinearLayoutManager) {
+            ((LinearLayoutManager) layoutManager).scrollToPositionWithOffset(position, offset);
+        }
+        else if (layoutManager instanceof StaggeredGridLayoutManager) {
+            ((StaggeredGridLayoutManager) layoutManager).scrollToPositionWithOffset(position, offset);
+        }
     }
 
     @Override

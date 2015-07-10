@@ -61,7 +61,7 @@
         android:title="@string/item_share"
         android:icon="@drawable/ic_share_white_24dp"
         android:orderInCategory="700"
-        app:actionProviderClass="com.winsonchiu.reader.CustomShareActionProvider"
+        app:actionProviderClass="com.winsonchiu.reader.views.CustomShareActionProvider"
         app:showAsAction="ifRoom"
         />
 

@@ -192,4 +192,13 @@
     <string name="image_downloading">Downloading image</string>
     <string name="link_shown">Post removed from hidden</string>
     <string name="item_jump_parent">Jump to parent</string>
+    <string name="history">History</string>
+    <string name="hint_title">Title</string>
+    <string name="history_entry_deleted">Removed</string>
+    <string name="item_time_range">Time range</string>
+    <string name="time_start">Start time</string>
+    <string name="time_end">End time</string>
+    <string name="start">Start</string>
+    <string name="end">End</string>
+    <string name="reset">Reset</string>
 </resources>

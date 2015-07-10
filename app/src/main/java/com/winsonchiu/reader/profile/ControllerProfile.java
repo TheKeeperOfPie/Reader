@@ -358,7 +358,6 @@ public class ControllerProfile implements ControllerLinksBase {
         return true;
     }
 
-    @Override
     public Link remove(int position) {
         Link link;
         if (position == 2) {

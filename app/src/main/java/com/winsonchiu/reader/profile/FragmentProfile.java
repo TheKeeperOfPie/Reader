@@ -252,9 +252,7 @@ public class FragmentProfile extends FragmentBase implements Toolbar.OnMenuItemC
         linearLayoutManager = new LinearLayoutManager(activity);
         recyclerProfile = (RecyclerView) view.findViewById(R.id.recycler_profile);
         recyclerProfile.setHasFixedSize(true);
-        recyclerProfile.setItemAnimator(new DefaultItemAnimator());
-        recyclerProfile.getItemAnimator()
-                .setRemoveDuration(AnimationUtils.EXPAND_ACTION_DURATION);
+        recyclerProfile.setItemAnimator(null);
         recyclerProfile.setLayoutManager(linearLayoutManager);
 
         if (adapterProfile == null) {
@@ -325,7 +323,7 @@ public class FragmentProfile extends FragmentBase implements Toolbar.OnMenuItemC
                     }, new RecyclerCallback() {
                 @Override
                 public void scrollTo(int position) {
-                    linearLayoutManager.scrollToPositionWithOffset(0, 0);
+                    linearLayoutManager.scrollToPositionWithOffset(position, 0);
                 }
 
                 @Override

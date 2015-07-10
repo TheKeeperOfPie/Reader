@@ -134,7 +134,6 @@ public class Reddit {
     public static final String QUERY_CATEGORY = "category";
 
     private static Reddit reddit;
-    private Context context;
     private RequestQueue requestQueue;
     private SharedPreferences preferences;
 
@@ -142,7 +141,6 @@ public class Reddit {
         requestQueue = Volley.newRequestQueue(context.getApplicationContext());
         preferences = PreferenceManager.getDefaultSharedPreferences(
                 context.getApplicationContext());
-        this.context = context.getApplicationContext();
     }
 
     public static Reddit getInstance(Context context) {

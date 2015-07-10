@@ -7,6 +7,7 @@ package com.winsonchiu.reader;
 import com.winsonchiu.reader.comments.AdapterCommentList;
 import com.winsonchiu.reader.comments.ControllerComments;
 import com.winsonchiu.reader.data.reddit.Reddit;
+import com.winsonchiu.reader.history.ControllerHistory;
 import com.winsonchiu.reader.inbox.ControllerInbox;
 import com.winsonchiu.reader.links.AdapterLink;
 import com.winsonchiu.reader.links.ControllerLinks;
@@ -25,6 +26,7 @@ public interface FragmentListenerBase {
     ControllerComments getControllerComments();
     ControllerProfile getControllerProfile();
     ControllerSearch getControllerSearch();
+    ControllerHistory getControllerHistory();
     ControllerUser getControllerUser();
     Reddit getReddit();
     AdapterLink.ViewHolderBase.EventListener getEventListenerBase();

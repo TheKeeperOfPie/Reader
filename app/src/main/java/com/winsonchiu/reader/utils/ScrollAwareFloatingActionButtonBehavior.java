@@ -21,6 +21,7 @@ import android.view.animation.Interpolator;
 public class ScrollAwareFloatingActionButtonBehavior extends FloatingActionButton.Behavior {
 
     public static final Interpolator INTERPOLATOR = new FastOutSlowInInterpolator();
+    public static final long DURATION = 300;
     private static final String TAG = ScrollAwareFloatingActionButtonBehavior.class.getCanonicalName();
 
     private boolean mIsAnimatingOut = false;
@@ -77,6 +78,7 @@ public class ScrollAwareFloatingActionButtonBehavior extends FloatingActionButto
                 .scaleX(0.0F)
                 .scaleY(0.0F)
                 .alpha(0.0F)
+                .setDuration(DURATION)
                 .setInterpolator(INTERPOLATOR)
                 .withLayer()
                 .setListener(new ViewPropertyAnimatorListener() {
@@ -106,6 +108,7 @@ public class ScrollAwareFloatingActionButtonBehavior extends FloatingActionButto
                 .scaleX(1.0F)
                 .scaleY(1.0F)
                 .alpha(1.0F)
+                .setDuration(DURATION)
                 .setInterpolator(INTERPOLATOR)
                 .setListener(null)
                 .withLayer()

@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ~ Copyright 2015 Winson Chiu
+  -->
+
+<menu
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    >
+
+    <item
+        android:id="@+id/item_search"
+        android:title="@string/item_search"
+        android:icon="@drawable/ic_search_white_24dp"
+        android:orderInCategory="100"
+        app:actionViewClass="android.support.v7.widget.SearchView"
+        app:showAsAction="collapseActionView|ifRoom"
+        />
+
+    <item
+        android:id="@+id/item_time_range"
+        android:title="@string/item_time_range"
+        android:icon="@drawable/ic_access_time_white_24dp"
+        android:orderInCategory="200"
+        app:showAsAction="ifRoom"
+        />
+
+    <item
+        android:id="@+id/item_interface"
+        android:title="@string/item_interface"
+        android:icon="@drawable/ic_view_list_white_24dp"
+        android:orderInCategory="300"
+        app:showAsAction="ifRoom"
+        />
+
+</menu>

@@ -20,16 +20,19 @@ import android.support.v4.graphics.ColorUtils;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
+import android.text.Editable;
 import android.text.Html;
 import android.text.InputFilter;
 import android.text.Spannable;
 import android.text.SpannableString;
 import android.text.Spanned;
 import android.text.TextUtils;
+import android.text.TextWatcher;
 import android.text.format.DateUtils;
 import android.text.method.LinkMovementMethod;
 import android.text.style.ForegroundColorSpan;
 import android.util.DisplayMetrics;
+import android.util.Log;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -452,6 +455,24 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
             textComment.setOnClickListener(clickListenerLink);
             textInfo.setOnClickListener(clickListenerLink);
             this.itemView.setOnClickListener(clickListenerLink);
+
+            editTextReply.addTextChangedListener(new TextWatcher() {
+                @Override
+                public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+
+                }
+
+                @Override
+                public void onTextChanged(CharSequence s, int start, int before, int count) {
+
+                }
+
+                @Override
+                public void afterTextChanged(Editable s) {
+                    comment.setReplyText(s.toString());
+                }
+            });
+
         }
 
         private void sendReply() {
@@ -611,6 +632,10 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
             layoutContainerExpand
                     .setVisibility(comment.isReplyExpanded() ? View.VISIBLE : View.GONE);
 
+            if (comment.isReplyExpanded()) {
+                editTextReply.setText(comment.getReplyText());
+            }
+
             int alphaLevel = comment.getLevel() * MAX_ALPHA / ALPHA_LEVELS;
 
             int overlayColor = ColorUtils.setAlphaComponent(0xFF000000,
@@ -758,7 +783,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                     break;
                 case R.id.item_reply:
                     comment.setEditMode(false);
-                    comment.setReplyText("");
+                    comment.setReplyText(comment.getReplyText());
                     toggleReply();
                     break;
                 case R.id.item_save:

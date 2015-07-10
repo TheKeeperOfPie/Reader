@@ -28,12 +28,14 @@ import android.support.v7.widget.RecyclerView.LayoutManager;
 import android.support.v7.widget.ShareActionProvider;
 import android.support.v7.widget.StaggeredGridLayoutManager;
 import android.support.v7.widget.Toolbar;
+import android.text.Editable;
 import android.text.Html;
 import android.text.InputFilter;
 import android.text.Spannable;
 import android.text.SpannableString;
 import android.text.Spanned;
 import android.text.TextUtils;
+import android.text.TextWatcher;
 import android.text.format.DateUtils;
 import android.text.method.LinkMovementMethod;
 import android.text.style.ForegroundColorSpan;
@@ -67,6 +69,7 @@ import com.google.android.youtube.player.YouTubeInitializationResult;
 import com.google.android.youtube.player.YouTubePlayer;
 import com.google.android.youtube.player.YouTubePlayerView;
 import com.winsonchiu.reader.ActivityNewPost;
+import com.winsonchiu.reader.history.Historian;
 import com.winsonchiu.reader.utils.AnimationUtils;
 import com.winsonchiu.reader.ApiKeys;
 import com.winsonchiu.reader.AppSettings;
@@ -267,16 +270,6 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             buttonSubmitLink.setOnClickListener(this);
             buttomSubmitSelf.setOnClickListener(this);
             itemView.setOnClickListener(this);
-            textDescription.setOnTouchListener(new View.OnTouchListener() {
-                @Override
-                public boolean onTouch(View v, MotionEvent event) {
-                    MotionEvent newEvent = MotionEvent.obtain(event);
-                    newEvent.offsetLocation(v.getLeft(), v.getTop());
-                    ViewHolderHeader.this.itemView.onTouchEvent(newEvent);
-                    newEvent.recycle();
-                    return false;
-                }
-            });
 
             if (itemView.getLayoutParams() instanceof StaggeredGridLayoutManager.LayoutParams) {
                 ((StaggeredGridLayoutManager.LayoutParams) itemView.getLayoutParams()).setFullSpan(
@@ -315,12 +308,13 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             textName.setText(subreddit.getDisplayName());
             textTitle.setText(subreddit.getTitle());
 
-            if (TextUtils.isEmpty(subreddit.getPublicDescriptionHtml()) || "null".equals(
-                    subreddit.getPublicDescriptionHtml())) {
+            if (TextUtils.isEmpty(subreddit.getPublicDescription())) {
                 textDescription.setText("");
+                textDescription.setVisibility(View.GONE);
             }
             else {
                 textDescription.setText(subreddit.getPublicDescriptionHtml());
+                textDescription.setVisibility(View.VISIBLE);
             }
 
             textHidden.setText(subreddit.getSubscribers() + " subscribers\n" +
@@ -462,7 +456,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         private void expandToolbarActions() {
 
             if (!toolbarActions.isShown()) {
-                AppSettings.addToHistory(preferences, link.getName());
+                addToHistory();
                 setVoteColors();
 
                 ShareActionProvider shareActionProvider = (ShareActionProvider) MenuItemCompat
@@ -609,6 +603,22 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             });
             mediaController.setAnchorView(videoFull);
 
+            editTextReply.addTextChangedListener(new TextWatcher() {
+                @Override
+                public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+
+                }
+
+                @Override
+                public void onTextChanged(CharSequence s, int start, int before, int count) {
+
+                }
+
+                @Override
+                public void afterTextChanged(Editable s) {
+                    link.setReplyText(s.toString());
+                }
+            });
         }
 
         @Override
@@ -797,7 +807,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
 
         public void loadFull() {
 
-            AppSettings.addToHistory(preferences, link.getName());
+            addToHistory();
             viewOverlay.setVisibility(View.GONE);
 
             // TODO: Toggle visibility of web and video views
@@ -944,7 +954,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
 
         public void loadComments() {
 
-            AppSettings.addToHistory(preferences, link.getName());
+            addToHistory();
             viewOverlay.setVisibility(View.GONE);
 
             eventListener.onClickComments(link, this);
@@ -955,7 +965,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
          * @return true if link is self text, false otherwise
          */
         public boolean loadSelfText() {
-            AppSettings.addToHistory(preferences, link.getName());
+            addToHistory();
             if (!link.isSelf()) {
                 return false;
             }
@@ -974,6 +984,10 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             }
 
             return true;
+        }
+
+        public void addToHistory() {
+            Historian.getInstance(itemView.getContext()).add(link);
         }
 
         public void expandFull(boolean expand) {
@@ -1054,7 +1068,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         }
 
         public boolean isInHistory() {
-            return AppSettings.getHistorySet(preferences).contains(link.getName());
+            return Historian.getInstance(itemView.getContext()).contains(link.getName());
         }
 
         public void attemptLoadImage() {
@@ -1419,6 +1433,10 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             isYouTubeFullscreen = false;
             layoutContainerExpand.setVisibility(View.GONE);
             layoutContainerReply.setVisibility(link.isReplyExpanded() ? View.VISIBLE : View.GONE);
+
+            if (link.isReplyExpanded()) {
+                editTextReply.setText(link.getReplyText());
+            }
 
             progressImage.setIndeterminate(true);
 

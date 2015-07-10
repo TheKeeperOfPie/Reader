@@ -38,6 +38,8 @@ import com.google.android.youtube.player.YouTubeInitializationResult;
 import com.google.android.youtube.player.YouTubePlayer;
 import com.google.android.youtube.player.YouTubePlayerView;
 import com.winsonchiu.reader.ApiKeys;
+import com.winsonchiu.reader.YouTubePlayerStateListener;
+import com.winsonchiu.reader.links.FragmentThreadList;
 import com.winsonchiu.reader.utils.DisallowListener;
 import com.winsonchiu.reader.FragmentBase;
 import com.winsonchiu.reader.FragmentListenerBase;
@@ -141,7 +143,8 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
         itemLoadFullComments = toolbar.getMenu().findItem(R.id.item_load_full_comments);
         toolbar.setOnMenuItemClickListener(this);
 
-        toolbar.getMenu().findItem(mListener.getControllerComments().getSort().getMenuId()).setChecked(true);
+        toolbar.getMenu().findItem(mListener.getControllerComments().getSort().getMenuId())
+                .setChecked(true);
     }
 
     @Override
@@ -164,13 +167,16 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
 
             @Override
             public void scrollTo(final int position) {
-                linearLayoutManager.scrollToPositionWithOffset(position, recyclerCommentList.getHeight() / 2 - toolbar.getHeight());
+                linearLayoutManager.scrollToPositionWithOffset(position,
+                        recyclerCommentList.getHeight() / 2 - toolbar.getHeight());
                 recyclerCommentList.postDelayed(new Runnable() {
                     @Override
                     public void run() {
-                        final RecyclerView.ViewHolder viewHolder = recyclerCommentList.findViewHolderForAdapterPosition(position);
+                        final RecyclerView.ViewHolder viewHolder = recyclerCommentList
+                                .findViewHolderForAdapterPosition(position);
                         if (viewHolder != null) {
-                            viewHolder.itemView.getBackground().setState(new int[] {android.R.attr.state_pressed, android.R.attr.state_enabled});
+                            viewHolder.itemView.getBackground().setState(
+                                    new int[]{android.R.attr.state_pressed, android.R.attr.state_enabled});
                             recyclerCommentList.postDelayed(new Runnable() {
                                 @Override
                                 public void run() {
@@ -204,13 +210,26 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
         };
 
         toolbar = (Toolbar) view.findViewById(R.id.toolbar);
-        toolbar.setNavigationIcon(R.drawable.ic_arrow_back_white_24dp);
-        toolbar.setNavigationOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                mListener.onNavigationBackClick();
-            }
-        });
+        Log.d(TAG, "backStack: " + getFragmentManager().getBackStackEntryCount());
+
+        if (getFragmentManager().getBackStackEntryCount() == 0 && activity.isTaskRoot() && getFragmentManager().findFragmentByTag(fragmentParentTag) == null) {
+            toolbar.setNavigationIcon(R.drawable.ic_menu_white_24dp);
+            toolbar.setNavigationOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    mListener.openDrawer();
+                }
+            });
+        }
+        else {
+            toolbar.setNavigationIcon(R.drawable.ic_arrow_back_white_24dp);
+            toolbar.setNavigationOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    mListener.onNavigationBackClick();
+                }
+            });
+        }
         setUpOptionsMenu();
 
         layoutActions = (LinearLayout) view.findViewById(R.id.layout_actions);
@@ -272,7 +291,9 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
         buttonCommentPrevious.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(View v) {
-                Toast.makeText(activity, getString(R.string.content_description_button_comment_previous), Toast.LENGTH_SHORT).show();
+                Toast.makeText(activity,
+                        getString(R.string.content_description_button_comment_previous),
+                        Toast.LENGTH_SHORT).show();
                 return false;
             }
         });
@@ -288,7 +309,8 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
                     }
                     return;
                 }
-                final int newPosition = mListener.getControllerComments().getNextCommentPosition(position - 1) + 1;
+                final int newPosition = mListener.getControllerComments()
+                        .getNextCommentPosition(position - 1) + 1;
                 listener.scrollTo(newPosition);
 
             }
@@ -296,29 +318,38 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
         buttonCommentNext.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(View v) {
-                Toast.makeText(activity, getString(R.string.content_description_button_comment_next), Toast.LENGTH_SHORT).show();
+                Toast.makeText(activity,
+                        getString(R.string.content_description_button_comment_next),
+                        Toast.LENGTH_SHORT).show();
                 return false;
             }
         });
 
+        // Margin is included within shadow margin on pre-Lollipop, so remove all regular margin
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
-            ((CoordinatorLayout.LayoutParams) buttonExpandActions.getLayoutParams()).setMargins(0, 0, 0, 0);
+            ((CoordinatorLayout.LayoutParams) buttonExpandActions.getLayoutParams())
+                    .setMargins(0, 0, 0, 0);
 
-            int margin = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 8, getResources().getDisplayMetrics());
+            int margin = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 8,
+                    getResources().getDisplayMetrics());
 
-            LinearLayout.LayoutParams layoutParamsJumpTop = (LinearLayout.LayoutParams) buttonJumpTop.getLayoutParams();
+            LinearLayout.LayoutParams layoutParamsJumpTop = (LinearLayout.LayoutParams) buttonJumpTop
+                    .getLayoutParams();
             layoutParamsJumpTop.setMargins(0, 0, 0, 0);
             buttonJumpTop.setLayoutParams(layoutParamsJumpTop);
 
-            LinearLayout.LayoutParams layoutParamsPrevious = (LinearLayout.LayoutParams) buttonCommentPrevious.getLayoutParams();
+            LinearLayout.LayoutParams layoutParamsPrevious = (LinearLayout.LayoutParams) buttonCommentPrevious
+                    .getLayoutParams();
             layoutParamsPrevious.setMargins(0, 0, 0, 0);
             buttonCommentPrevious.setLayoutParams(layoutParamsPrevious);
 
-            LinearLayout.LayoutParams layoutParamsNext = (LinearLayout.LayoutParams) buttonCommentNext.getLayoutParams();
+            LinearLayout.LayoutParams layoutParamsNext = (LinearLayout.LayoutParams) buttonCommentNext
+                    .getLayoutParams();
             layoutParamsNext.setMargins(0, 0, 0, 0);
             buttonCommentNext.setLayoutParams(layoutParamsNext);
 
-            RelativeLayout.LayoutParams layoutParamsActions = (RelativeLayout.LayoutParams) layoutActions.getLayoutParams();
+            RelativeLayout.LayoutParams layoutParamsActions = (RelativeLayout.LayoutParams) layoutActions
+                    .getLayoutParams();
             layoutParamsActions.setMarginStart(margin);
             layoutParamsActions.setMarginEnd(margin);
             layoutActions.setLayoutParams(layoutParamsActions);
@@ -340,241 +371,125 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
         recyclerCommentList.setLayoutManager(linearLayoutManager);
         recyclerCommentList.setItemAnimator(null);
 
+        DisallowListener disallowListener = new DisallowListener() {
+            @Override
+            public void requestDisallowInterceptTouchEventVertical(boolean disallow) {
+                recyclerCommentList.requestDisallowInterceptTouchEvent(disallow);
+                swipeRefreshCommentList.requestDisallowInterceptTouchEvent(disallow);
+            }
+
+            @Override
+            public void requestDisallowInterceptTouchEventHorizontal(boolean disallow) {
+
+            }
+        };
+
+        RecyclerCallback recyclerCallback = new RecyclerCallback() {
+            @Override
+            public void scrollTo(int position) {
+                linearLayoutManager.scrollToPositionWithOffset(position, 0);
+            }
+
+            @Override
+            public int getRecyclerHeight() {
+                return recyclerCommentList.getHeight();
+            }
+
+            @Override
+            public RecyclerView.LayoutManager getLayoutManager() {
+                return linearLayoutManager;
+            }
+        };
+
+        YouTubeListener youTubeListener = new YouTubeListener() {
+            @Override
+            public void loadYouTube(Link link, final String id, final int timeInMillis) {
+
+                if (youTubePlayer != null) {
+                    viewYouTube.setVisibility(View.VISIBLE);
+                    return;
+                }
+
+                viewYouTube.initialize(ApiKeys.YOUTUBE_API_KEY,
+                        new YouTubePlayer.OnInitializedListener() {
+                            @Override
+                            public void onInitializationSuccess(YouTubePlayer.Provider provider,
+                                    YouTubePlayer player,
+                                    boolean b) {
+                                FragmentComments.this.youTubePlayer = player;
+                                youTubePlayer.setManageAudioFocus(false);
+                                youTubePlayer.setFullscreenControlFlags(
+                                        YouTubePlayer.FULLSCREEN_FLAG_CONTROL_SYSTEM_UI);
+
+                                DisplayMetrics displayMetrics = activity.getResources()
+                                        .getDisplayMetrics();
+
+                                boolean isLandscape = displayMetrics.widthPixels > displayMetrics.heightPixels;
+
+                                if (isLandscape) {
+                                    youTubePlayer.setOnFullscreenListener(
+                                            new YouTubePlayer.OnFullscreenListener() {
+                                                @Override
+                                                public void onFullscreen(boolean fullscreen) {
+                                                    isFullscreen = fullscreen;
+                                                    if (!fullscreen) {
+                                                        if (youTubePlayer != null) {
+                                                            youTubePlayer.pause();
+                                                            youTubePlayer.release();
+                                                            youTubePlayer = null;
+                                                        }
+                                                        viewYouTube.setVisibility(View.GONE);
+                                                    }
+                                                }
+                                            });
+                                }
+                                else {
+                                    youTubePlayer.setOnFullscreenListener(
+                                            new YouTubePlayer.OnFullscreenListener() {
+                                                @Override
+                                                public void onFullscreen(boolean fullscreen) {
+                                                    isFullscreen = fullscreen;
+                                                }
+                                            });
+                                }
+                                youTubePlayer.setPlayerStateChangeListener(
+                                        new YouTubePlayerStateListener(youTubePlayer, timeInMillis,
+                                                isLandscape));
+                                viewYouTube.setVisibility(View.VISIBLE);
+                                youTubePlayer.loadVideo(id);
+                            }
+
+                            @Override
+                            public void onInitializationFailure(YouTubePlayer.Provider provider,
+                                    YouTubeInitializationResult youTubeInitializationResult) {
+                            }
+                        });
+            }
+
+            @Override
+            public boolean hideYouTube() {
+                if (viewYouTube.isShown()) {
+                    if (youTubePlayer != null) {
+                        youTubePlayer.pause();
+                    }
+                    viewYouTube.setVisibility(View.GONE);
+                    return false;
+                }
+
+                return true;
+            }
+        };
+
         if (adapterCommentList == null) {
 
             adapterCommentList = new AdapterCommentList(activity, mListener.getControllerComments(),
                     mListener.getControllerUser(),
                     mListener.getEventListenerBase(),
                     mListener.getEventListenerComment(),
-                    new DisallowListener() {
-                        @Override
-                        public void requestDisallowInterceptTouchEventVertical(boolean disallow) {
-                            recyclerCommentList.requestDisallowInterceptTouchEvent(disallow);
-                            swipeRefreshCommentList.requestDisallowInterceptTouchEvent(disallow);
-                        }
-
-                        @Override
-                        public void requestDisallowInterceptTouchEventHorizontal(boolean disallow) {
-
-                        }
-                    }, new RecyclerCallback() {
-                @Override
-                public void scrollTo(int position) {
-                    linearLayoutManager.scrollToPositionWithOffset(position, 0);
-                }
-
-                @Override
-                public int getRecyclerHeight() {
-                    return recyclerCommentList.getHeight();
-                }
-
-                @Override
-                public RecyclerView.LayoutManager getLayoutManager() {
-                    return linearLayoutManager;
-                }
-
-            }, new YouTubeListener() {
-                @Override
-                public void loadYouTube(Link link,
-                        final String id,
-                        final int timeInMillis) {
-
-                    if (youTubePlayer != null) {
-                        viewYouTube.setVisibility(View.VISIBLE);
-                        return;
-                    }
-
-                    viewYouTube.initialize(ApiKeys.YOUTUBE_API_KEY,
-                            new YouTubePlayer.OnInitializedListener() {
-                                @Override
-                                public void onInitializationSuccess(YouTubePlayer.Provider provider,
-                                        YouTubePlayer player,
-                                        boolean b) {
-                                    FragmentComments.this.youTubePlayer = player;
-                                    youTubePlayer.setManageAudioFocus(false);
-                                    youTubePlayer.setFullscreenControlFlags(
-                                            YouTubePlayer.FULLSCREEN_FLAG_CONTROL_SYSTEM_UI);
-
-                                    DisplayMetrics displayMetrics = activity.getResources()
-                                            .getDisplayMetrics();
-
-                                    if (displayMetrics.widthPixels > displayMetrics.heightPixels) {
-                                        youTubePlayer.setOnFullscreenListener(
-                                                new YouTubePlayer.OnFullscreenListener() {
-                                                    @Override
-                                                    public void onFullscreen(boolean fullscreen) {
-                                                        isFullscreen = fullscreen;
-                                                        Log.d(TAG, "fullscreen: " + fullscreen);
-                                                        if (!fullscreen) {
-                                                            youTubePlayer.pause();
-                                                            youTubePlayer.release();
-                                                            youTubePlayer = null;
-                                                            viewYouTube.setVisibility(View.GONE);
-                                                        }
-                                                    }
-                                                });
-                                        youTubePlayer.setPlayerStateChangeListener(
-                                                new YouTubePlayer.PlayerStateChangeListener() {
-                                                    @Override
-                                                    public void onLoading() {
-
-                                                    }
-
-                                                    @Override
-                                                    public void onLoaded(String s) {
-                                                    }
-
-                                                    @Override
-                                                    public void onAdStarted() {
-
-                                                    }
-
-                                                    @Override
-                                                    public void onVideoStarted() {
-                                                        youTubePlayer.setFullscreen(true);
-                                                        youTubePlayer.seekToMillis(timeInMillis);
-                                                        youTubePlayer.setPlayerStateChangeListener(
-                                                                new YouTubePlayer.PlayerStateChangeListener() {
-                                                                    @Override
-                                                                    public void onLoading() {
-
-                                                                    }
-
-                                                                    @Override
-                                                                    public void onLoaded(String s) {
-
-                                                                    }
-
-                                                                    @Override
-                                                                    public void onAdStarted() {
-
-                                                                    }
-
-                                                                    @Override
-                                                                    public void onVideoStarted() {
-
-                                                                    }
-
-                                                                    @Override
-                                                                    public void onVideoEnded() {
-
-                                                                    }
-
-                                                                    @Override
-                                                                    public void onError(YouTubePlayer.ErrorReason errorReason) {
-
-                                                                    }
-                                                                });
-                                                    }
-
-                                                    @Override
-                                                    public void onVideoEnded() {
-
-                                                    }
-
-                                                    @Override
-                                                    public void onError(YouTubePlayer.ErrorReason errorReason) {
-
-                                                    }
-                                                });
-                                    }
-                                    else {
-                                        youTubePlayer.setOnFullscreenListener(
-                                                new YouTubePlayer.OnFullscreenListener() {
-                                                    @Override
-                                                    public void onFullscreen(boolean fullscreen) {
-                                                        isFullscreen = fullscreen;
-                                                    }
-                                                });
-                                        youTubePlayer.setPlayerStateChangeListener(
-                                                new YouTubePlayer.PlayerStateChangeListener() {
-                                                    @Override
-                                                    public void onLoading() {
-
-                                                    }
-
-                                                    @Override
-                                                    public void onLoaded(String s) {
-
-                                                    }
-
-                                                    @Override
-                                                    public void onAdStarted() {
-
-                                                    }
-
-                                                    @Override
-                                                    public void onVideoStarted() {
-                                                        youTubePlayer.seekToMillis(timeInMillis);
-                                                        youTubePlayer.setPlayerStateChangeListener(
-                                                                new YouTubePlayer.PlayerStateChangeListener() {
-                                                                    @Override
-                                                                    public void onLoading() {
-
-                                                                    }
-
-                                                                    @Override
-                                                                    public void onLoaded(String s) {
-
-                                                                    }
-
-                                                                    @Override
-                                                                    public void onAdStarted() {
-
-                                                                    }
-
-                                                                    @Override
-                                                                    public void onVideoStarted() {
-
-                                                                    }
-
-                                                                    @Override
-                                                                    public void onVideoEnded() {
-
-                                                                    }
-
-                                                                    @Override
-                                                                    public void onError(YouTubePlayer.ErrorReason errorReason) {
-
-                                                                    }
-                                                                });
-                                                    }
-
-                                                    @Override
-                                                    public void onVideoEnded() {
-
-                                                    }
-
-                                                    @Override
-                                                    public void onError(YouTubePlayer.ErrorReason errorReason) {
-
-                                                    }
-                                                });
-                                    }
-                                    viewYouTube.setVisibility(View.VISIBLE);
-                                    youTubePlayer.loadVideo(id);
-                                }
-
-                                @Override
-                                public void onInitializationFailure(YouTubePlayer.Provider provider,
-                                        YouTubeInitializationResult youTubeInitializationResult) {
-                                }
-                            });
-                }
-
-                @Override
-                public boolean hideYouTube() {
-                    if (viewYouTube.isShown()) {
-                        if (youTubePlayer != null) {
-                            youTubePlayer.pause();
-                        }
-                        viewYouTube.setVisibility(View.GONE);
-                        return false;
-                    }
-
-                    return true;
-                }
-            }, getArguments().getBoolean(ARG_IS_GRID, false),
+                    disallowListener,
+                    recyclerCallback,
+                    youTubeListener,
+                    getArguments().getBoolean(ARG_IS_GRID, false),
                     getArguments().getInt(ARG_COLOR_LINK));
 
         }
@@ -627,7 +542,7 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
             }
 
             final TypedArray styledAttributes = activity.getTheme().obtainStyledAttributes(
-                    new int[] {android.R.attr.actionBarSize});
+                    new int[]{android.R.attr.actionBarSize});
             toolbarHeight = styledAttributes.getDimension(0, 0);
             styledAttributes.recycle();
 
@@ -643,7 +558,8 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
             Log.d(TAG, "startY: " + startY);
 
             if (getArguments().getBoolean(ARG_IS_GRID)) {
-                float margin = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 1, getResources().getDisplayMetrics());
+                float margin = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 1,
+                        getResources().getDisplayMetrics());
                 startX -= margin;
                 startY -= margin;
                 viewHolderWidth += 2 * margin;
@@ -672,7 +588,8 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
                 swipeRefreshCommentList.setLayoutParams(layoutParams);
                 toolbar.setTranslationY(-toolbarHeight * reverseInterpolation);
 
-                RelativeLayout.LayoutParams layoutParamsBackground = (RelativeLayout.LayoutParams) viewBackground.getLayoutParams();
+                RelativeLayout.LayoutParams layoutParamsBackground = (RelativeLayout.LayoutParams) viewBackground
+                        .getLayoutParams();
                 layoutParamsBackground.width = (int) (screenWidth - (startX + startMarginEnd) * reverseInterpolation);
                 layoutParamsBackground.height = (int) (interpolatedTime * screenHeight);
                 viewBackground.setLayoutParams(layoutParamsBackground);
@@ -754,15 +671,19 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
         int[] locationRecycler = new int[2];
         recyclerCommentList.getLocationOnScreen(locationRecycler);
 
-        int centerY = locationRecycler[1] + 10 + recyclerCommentList.getHeight() / 2 - toolbar.getHeight();
+        int centerY = locationRecycler[1] + 10 + recyclerCommentList.getHeight() / 2 - toolbar
+                .getHeight();
         int[] location = new int[2];
 
         for (int index = start; index <= end; index++) {
 
-            RecyclerView.ViewHolder viewHolder = recyclerCommentList.findViewHolderForAdapterPosition(index);
+            RecyclerView.ViewHolder viewHolder = recyclerCommentList
+                    .findViewHolderForAdapterPosition(index);
             if (viewHolder != null) {
                 viewHolder.itemView.getLocationOnScreen(location);
-                Rect bounds = new Rect(location[0], location[1], location[0] + viewHolder.itemView.getWidth(), location[1] + viewHolder.itemView.getHeight());
+                Rect bounds = new Rect(location[0], location[1],
+                        location[0] + viewHolder.itemView.getWidth(),
+                        location[1] + viewHolder.itemView.getHeight());
                 if (bounds.contains(bounds.centerX(), centerY)) {
                     return index;
                 }
@@ -933,13 +854,13 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
                 @Override
                 public void run() {
 
-
                     final float screenWidth = getResources().getDisplayMetrics().widthPixels;
                     final float screenHeight = getResources().getDisplayMetrics().heightPixels;
                     ViewCompat.animate(buttonExpandActions)
                             .scaleX(0f)
                             .scaleY(0f)
                             .alpha(0f)
+                            .setDuration(ScrollAwareFloatingActionButtonBehavior.DURATION)
                             .setInterpolator(ScrollAwareFloatingActionButtonBehavior.INTERPOLATOR)
                             .setListener(new ViewPropertyAnimatorListener() {
                                 @Override
@@ -950,69 +871,6 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
                                 @Override
                                 public void onAnimationEnd(View view) {
 
-                                    final Animation animation = new Animation() {
-                                        @Override
-                                        public boolean willChangeBounds() {
-                                            return true;
-                                        }
-
-                                        @Override
-                                        protected void applyTransformation(float interpolatedTime,
-                                                Transformation t) {
-                                            super.applyTransformation(interpolatedTime, t);
-                                            CoordinatorLayout.LayoutParams layoutParams = (CoordinatorLayout.LayoutParams) swipeRefreshCommentList
-                                                    .getLayoutParams();
-                                            layoutParams.topMargin = (int) (startY * interpolatedTime);
-                                            layoutParams.setMarginStart((int) (startX * interpolatedTime));
-                                            layoutParams.setMarginEnd(
-                                                    (int) (startMarginEnd * interpolatedTime));
-                                            swipeRefreshCommentList.setLayoutParams(layoutParams);
-                                            toolbar.setTranslationY(-toolbarHeight * interpolatedTime);
-
-                                            RelativeLayout.LayoutParams layoutParamsBackground = (RelativeLayout.LayoutParams) viewBackground.getLayoutParams();
-                                            layoutParamsBackground.width = (int) (screenWidth - (startX + startMarginEnd) * interpolatedTime);
-                                            layoutParamsBackground.height = (int) ((1f - interpolatedTime) * screenHeight);
-                                            viewBackground.setLayoutParams(layoutParamsBackground);
-                                            viewBackground.setTranslationX(startX * interpolatedTime);
-                                            viewBackground.setTranslationY(startY * interpolatedTime);
-                                        }
-                                    };
-                                    animation.setDuration(DURATION_EXIT);
-                                    animation.setInterpolator(fastOutSlowInInterpolator);
-                                    animation.setAnimationListener(new Animation.AnimationListener() {
-                                        @Override
-                                        public void onAnimationStart(Animation animation) {
-                                            Fragment fragment = getFragmentManager()
-                                                    .findFragmentByTag(fragmentParentTag);
-                                            if (fragment != null) {
-                                                getFragmentManager().beginTransaction().show(fragment)
-                                                        .commit();
-                                            }
-                                        }
-
-                                        @Override
-                                        public void onAnimationEnd(Animation animation) {
-                                            FragmentBase fragment = (FragmentBase) getFragmentManager()
-                                                    .findFragmentByTag(fragmentParentTag);
-                                            if (fragment != null) {
-                                                fragment.onShown();
-                                            }
-                                            getFragmentManager().popBackStackImmediate();
-                                        }
-
-                                        @Override
-                                        public void onAnimationRepeat(Animation animation) {
-
-                                        }
-                                    });
-
-                                    if (getView() != null) {
-                                        getView().startAnimation(animation);
-                                    }
-                                    else {
-                                        getFragmentManager().popBackStackImmediate();
-                                    }
-
                                 }
 
                                 @Override
@@ -1021,6 +879,73 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
                                 }
                             })
                             .start();
+
+
+                    final Animation animation = new Animation() {
+                        @Override
+                        public boolean willChangeBounds() {
+                            return true;
+                        }
+
+                        @Override
+                        protected void applyTransformation(float interpolatedTime,
+                                Transformation t) {
+                            super.applyTransformation(interpolatedTime, t);
+                            CoordinatorLayout.LayoutParams layoutParams = (CoordinatorLayout.LayoutParams) swipeRefreshCommentList
+                                    .getLayoutParams();
+                            layoutParams.topMargin = (int) (startY * interpolatedTime);
+                            layoutParams.setMarginStart((int) (startX * interpolatedTime));
+                            layoutParams.setMarginEnd(
+                                    (int) (startMarginEnd * interpolatedTime));
+                            swipeRefreshCommentList.setLayoutParams(layoutParams);
+                            toolbar.setTranslationY(-toolbarHeight * interpolatedTime);
+
+                            RelativeLayout.LayoutParams layoutParamsBackground = (RelativeLayout.LayoutParams) viewBackground
+                                    .getLayoutParams();
+                            layoutParamsBackground.width = (int) (screenWidth - (startX + startMarginEnd) * interpolatedTime);
+                            layoutParamsBackground.height = (int) ((1f - interpolatedTime) * screenHeight);
+                            viewBackground.setLayoutParams(layoutParamsBackground);
+                            viewBackground.setTranslationX(startX * interpolatedTime);
+                            viewBackground.setTranslationY(startY * interpolatedTime);
+                        }
+                    };
+                    animation.setDuration(DURATION_EXIT);
+                    animation.setStartOffset(ScrollAwareFloatingActionButtonBehavior.DURATION);
+                    animation.setInterpolator(fastOutSlowInInterpolator);
+                    animation.setAnimationListener(new Animation.AnimationListener() {
+                        @Override
+                        public void onAnimationStart(Animation animation) {
+                            Fragment fragment = getFragmentManager()
+                                    .findFragmentByTag(fragmentParentTag);
+                            if (fragment != null) {
+                                getFragmentManager().beginTransaction().show(fragment)
+                                        .commit();
+                            }
+                        }
+
+                        @Override
+                        public void onAnimationEnd(Animation animation) {
+                            FragmentBase fragment = (FragmentBase) getFragmentManager()
+                                    .findFragmentByTag(fragmentParentTag);
+                            if (fragment != null) {
+                                fragment.onShown();
+                            }
+                            getFragmentManager().popBackStackImmediate();
+                        }
+
+                        @Override
+                        public void onAnimationRepeat(Animation animation) {
+
+                        }
+                    });
+
+                    if (getView() != null) {
+                        getView().startAnimation(animation);
+                    }
+                    else {
+                        getFragmentManager().popBackStackImmediate();
+                    }
+
                 }
             });
 

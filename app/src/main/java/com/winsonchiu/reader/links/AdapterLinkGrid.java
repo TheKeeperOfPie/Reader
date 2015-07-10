@@ -39,7 +39,7 @@ public class AdapterLinkGrid extends AdapterLink {
 
     private static final String TAG = AdapterLinkGrid.class.getCanonicalName();
 
-    private int thumbnailSize;
+    protected int thumbnailSize;
 
     public AdapterLinkGrid(Activity activity,
             ControllerLinksBase controllerLinks,
@@ -136,7 +136,7 @@ public class AdapterLinkGrid extends AdapterLink {
                     loadComments();
                 }
             });
-            this.imageFull.setOnClickListener(new View.OnClickListener() {
+            imageFull.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
 

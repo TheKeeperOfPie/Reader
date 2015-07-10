@@ -10,6 +10,7 @@ import android.preference.Preference;
 import android.widget.Toast;
 
 import com.winsonchiu.reader.AppSettings;
+import com.winsonchiu.reader.history.Historian;
 import com.winsonchiu.reader.R;
 
 /**
@@ -27,11 +28,24 @@ public class FragmentBehavior extends FragmentPreferences
                 new Preference.OnPreferenceClickListener() {
                     @Override
                     public boolean onPreferenceClick(Preference preference) {
-                        AppSettings.clearHistory(preferences);
-                        Toast.makeText(activity, activity.getString(R.string.history_cleared), Toast.LENGTH_SHORT).show();
+                        Historian.clear(activity);
+                        Toast.makeText(activity, activity.getString(R.string.history_cleared),
+                                Toast.LENGTH_SHORT).show();
                         return true;
                     }
                 });
+
+        Preference preferenceHistorySize = findPreference(AppSettings.PREF_HISTORY_SIZE);
+
+        preferenceHistorySize.setOnPreferenceChangeListener(
+                new Preference.OnPreferenceChangeListener() {
+                    @Override
+                    public boolean onPreferenceChange(Preference preference, Object newValue) {
+                        preference.setSummary(String.valueOf(newValue) + " entries");
+                        return true;
+                    }
+                });
+        preferenceHistorySize.getOnPreferenceChangeListener().onPreferenceChange(preferenceHistorySize, preferences.getString(AppSettings.PREF_HISTORY_SIZE, "500"));
     }
 
 }

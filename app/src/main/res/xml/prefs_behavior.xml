@@ -17,6 +17,15 @@
             android:defaultValue="true"
             />
 
+        <EditTextPreference
+            android:key="pref_history_size"
+            android:title="@string/pref_history_size"
+            android:summary="@string/pref_history_size_summary"
+            android:defaultValue="500"
+            android:numeric="integer"
+            android:inputType="number"
+            />
+
         <CheckBoxPreference
             android:key="pref_dim_posts"
             android:title="@string/pref_dim_posts"
