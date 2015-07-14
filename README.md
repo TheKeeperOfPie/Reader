@@ -3,6 +3,8 @@
 
 A Reddit client created to practice good UI/UX design
 
+[Direct Download](/app/app-release.apk)
+
 ## Licenses
 
 ### Open Source License
