@@ -124,25 +124,19 @@ public class AdapterInbox extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
                 viewHolderComment.onBind(controllerInbox.getComment(position), controllerUser.getUser().getName());
                 break;
         }
+        viewHolders.add(holder);
 
+    }
+
+    @Override
+    public void onViewRecycled(RecyclerView.ViewHolder holder) {
+        super.onViewRecycled(holder);
+        viewHolders.remove(holder);
     }
 
     @Override
     public int getItemCount() {
         return controllerInbox.getItemCount();
-    }
-
-    @Override
-    public void onViewAttachedToWindow(RecyclerView.ViewHolder holder) {
-        super.onViewAttachedToWindow(holder);
-        viewHolders.add(holder);
-        holder.itemView.setVisibility(View.VISIBLE);
-    }
-
-    @Override
-    public void onViewDetachedFromWindow(RecyclerView.ViewHolder holder) {
-        super.onViewDetachedFromWindow(holder);
-        viewHolders.remove(holder);
     }
 
     public void setVisibility(int visibility) {

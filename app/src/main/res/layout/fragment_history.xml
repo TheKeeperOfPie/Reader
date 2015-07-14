@@ -32,6 +32,8 @@
             android:layout_height="match_parent"
             android:scrollbars="vertical"
             android:scrollbarFadeDuration="200"
+            android:paddingBottom="48dp"
+            android:clipToPadding="false"
             />
 
     </com.winsonchiu.reader.views.CustomSwipeRefreshLayout>

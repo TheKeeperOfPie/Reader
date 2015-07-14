@@ -426,7 +426,8 @@ public class ControllerSearch {
             if (sort == Sort.ACTIVITY) {
                 sortString = Sort.HOT.name();
             }
-            requestLinks = reddit.loadGet(Reddit.OAUTH_URL + "/search?q=" + URLEncoder.encode(query, Reddit.UTF_8) + "&sort=" + sortString + "&t=" + time.toString(),
+            requestLinks = reddit.loadGet(Reddit.OAUTH_URL + "/search?q=" + URLEncoder.encode(query,
+                            Reddit.UTF_8) + "&sort=" + sortString + "&t=" + time.toString(),
                     new Response.Listener<String>() {
                         @Override
                         public void onResponse(String response) {
@@ -710,6 +711,20 @@ public class ControllerSearch {
         this.controllerLinks = controllerLinks;
         this.controllerUser = controllerUser;
         reloadSubscriptionList();
+    }
+
+    public void addSubreddit(Subreddit subreddit) {
+        // TODO: Implement global data store for subscriptions, to be updated dynamically
+        subredditsSubscribed.getChildren().add(subreddit);
+        Collections.sort(subredditsSubscribed.getChildren(),
+                new Comparator<Thing>() {
+                    @Override
+                    public int compare(Thing lhs, Thing rhs) {
+                        return ((Subreddit) lhs).getDisplayName()
+                                .compareToIgnoreCase(
+                                        ((Subreddit) rhs).getDisplayName());
+                    }
+                });
     }
 
     public interface Listener extends ControllerListener {

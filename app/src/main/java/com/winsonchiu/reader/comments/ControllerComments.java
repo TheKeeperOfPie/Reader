@@ -775,7 +775,7 @@ public class ControllerComments {
                 .indexOf(child);
 
         if (commentIndex > -1) {
-            for (int index = commentIndex - 1; index > 0; index--) {
+            for (int index = commentIndex - 1; index >= 0; index--) {
                 Comment comment = (Comment) listingComments.getChildren().get(index);
                 if (comment.getLevel() == child.getLevel() - 1) {
                     for (Listener listener : listeners) {

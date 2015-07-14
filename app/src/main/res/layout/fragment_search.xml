@@ -31,6 +31,7 @@
         android:layout_below="@id/tab_search"
         >
 
+         <!--TODO: Perhaps move RecyclerViews to separate layout and use include, as most are basically the same-->
         <android.support.v7.widget.RecyclerView
             xmlns:android="http://schemas.android.com/apk/res/android"
             android:id="@+id/recycler_search_subreddits"
@@ -38,6 +39,8 @@
             android:layout_height="match_parent"
             android:scrollbars="vertical"
             android:scrollbarFadeDuration="200"
+            android:paddingBottom="48dp"
+            android:clipToPadding="false"
             />
 
         <android.support.v7.widget.RecyclerView
@@ -47,6 +50,8 @@
             android:layout_height="match_parent"
             android:scrollbars="vertical"
             android:scrollbarFadeDuration="200"
+            android:paddingBottom="48dp"
+            android:clipToPadding="false"
             />
 
         <android.support.v7.widget.RecyclerView
@@ -56,6 +61,8 @@
             android:layout_height="match_parent"
             android:scrollbars="vertical"
             android:scrollbarFadeDuration="200"
+            android:paddingBottom="48dp"
+            android:clipToPadding="false"
             />
 
     </android.support.v4.view.ViewPager>

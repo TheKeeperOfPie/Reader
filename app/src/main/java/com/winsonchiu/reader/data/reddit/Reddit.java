@@ -46,16 +46,40 @@ public class Reddit {
 
     private static AtomicInteger created = new AtomicInteger();
     private static AtomicInteger destroyed = new AtomicInteger();
+    private static AtomicInteger bound = new AtomicInteger();
+    private static AtomicInteger recycled = new AtomicInteger();
 
 
+    /**
+     * Used to count and log the creation of WebViews to track memory leaks
+     */
     public static void incrementCreate() {
         Log.d(TAG, "Created: " + created.incrementAndGet());
         Log.d(TAG, "Destroyed: " + destroyed.get());
     }
 
+    /**
+     * Used to count and log the destruction of WebViews to track memory leaks
+     */
     public static void incrementDestroy() {
         Log.d(TAG, "Created: " + created.get());
         Log.d(TAG, "Destroyed: " + destroyed.incrementAndGet());
+    }
+
+    /**
+     * Used to count and log the binding of ViewHolders to track memory leaks
+     */
+    public static void incrementBind() {
+        Log.d(TAG, "onBind: " + bound.incrementAndGet());
+        Log.d(TAG, "onRecycled: " + recycled.get());
+    }
+
+    /**
+     * Used to count and log the recycling of ViewHolders to track memory leaks
+     */
+    public static void incrementRecycled() {
+        Log.d(TAG, "onBind: " + bound.get());
+        Log.d(TAG, "onRecycled: " + recycled.incrementAndGet());
     }
 
     public RequestQueue getRequestQueue() {

@@ -9,6 +9,7 @@ import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.text.TextPaint;
 import android.text.TextUtils;
+import android.text.util.Linkify;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -239,6 +240,8 @@ public class AdapterAlbum extends PagerAdapter {
             }
 
             scrollDescription.scrollTo(0, 0);
+
+            Linkify.addLinks(textDescription, Linkify.ALL);
 
         }
 

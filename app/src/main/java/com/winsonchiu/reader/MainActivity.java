@@ -212,17 +212,6 @@ public class MainActivity extends YouTubeBaseActivity
 
                 Log.d(TAG, "onClickComments: " + link);
 
-                if (link.getNumComments() == 0) {
-                    if (!link.isCommentsClicked()) {
-                        Toast.makeText(MainActivity.this, getString(R.string.no_comments),
-                                Toast.LENGTH_SHORT)
-                                .show();
-                        viewHolderBase.loadSelfText();
-                        link.setCommentsClicked(true);
-                        return;
-                    }
-                }
-
                 getControllerComments()
                         .setLink(link);
 

@@ -21,7 +21,7 @@
             android:key="pref_history_size"
             android:title="@string/pref_history_size"
             android:summary="@string/pref_history_size_summary"
-            android:defaultValue="500"
+            android:defaultValue="5000"
             android:numeric="integer"
             android:inputType="number"
             />

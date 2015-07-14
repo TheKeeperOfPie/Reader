@@ -154,10 +154,12 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
         menu becomes unusable after a drag gesture
      */
     private void flashSearchView() {
-        if (itemSearch != null) {
-            itemSearch.expandActionView();
-            itemSearch.collapseActionView();
-        }
+        // Removed as this clears the search query
+        // TODO: Find f
+//        if (itemSearch != null) {
+//            itemSearch.expandActionView();
+//            itemSearch.collapseActionView();
+//        }
     }
 
     @Override
@@ -535,5 +537,17 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
     @Override
     public boolean navigateBack() {
         return true;
+    }
+
+    @Override
+    public void onShown() {
+        switch (viewPager.getCurrentItem()) {
+            case ControllerSearch.PAGE_LINKS:
+                adapterLinks.setVisibility(View.VISIBLE);
+                break;
+            case ControllerSearch.PAGE_LINKS_SUBREDDIT:
+                adapterLinksSubreddit.setVisibility(View.VISIBLE);
+                break;
+        }
     }
 }

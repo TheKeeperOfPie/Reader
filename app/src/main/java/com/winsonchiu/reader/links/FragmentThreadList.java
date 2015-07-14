@@ -264,45 +264,11 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
         itemSortTime = menu.findItem(R.id.item_sort_time);
         itemSearch = menu.findItem(R.id.item_search);
 
-        MenuItemCompat.setOnActionExpandListener(itemSearch,
-                new MenuItemCompat.OnActionExpandListener() {
-                    @Override
-                    public boolean onMenuItemActionExpand(MenuItem item) {
-                        itemSearch.collapseActionView();
-                        return false;
-                    }
-
-                    @Override
-                    public boolean onMenuItemActionCollapse(MenuItem item) {
-                        return true;
-                    }
-                });
-
         menu.findItem(mListener.getControllerLinks().getSort().getMenuId()).setChecked(true);
         itemSortTime.setTitle(
                 getString(R.string.time) + Reddit.TIME_SEPARATOR + menu.findItem(mListener.getControllerLinks()
                         .getTime().getMenuId()).toString());
 
-    }
-
-    @Override
-    public void onDestroyOptionsMenu() {
-        if (itemSearch != null) {
-            MenuItemCompat.setOnActionExpandListener(itemSearch, null);
-            itemSearch = null;
-        }
-        super.onDestroyOptionsMenu();
-    }
-
-    /*
-        Workaround for Android's drag-to-select menu bug, where the
-        menu becomes unusable after a drag gesture
-     */
-    private void flashSearchView() {
-        if (itemSearch != null) {
-            itemSearch.expandActionView();
-            itemSearch.collapseActionView();
-        }
     }
 
     private void resetAdapter(AdapterLink newAdapter) {
@@ -328,8 +294,12 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
             recyclerThreadList.setPadding(padding, 0, padding, 0);
         }
 
-        recyclerThreadList.setLayoutManager(layoutManager);
+        /*
+            Note that we must call setAdapter before setLayoutManager or the ViewHolders
+            will not be properly recycled, leading to memory leaks.
+         */
         recyclerThreadList.setAdapter(adapterLink);
+        recyclerThreadList.setLayoutManager(layoutManager);
         recyclerThreadList.scrollToPosition(currentPosition[0]);
     }
 
@@ -519,7 +489,7 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
                             return 1f / ((StaggeredGridLayoutManager) layoutManager).getSpanCount();
                         }
 
-                        return 0.4f;
+                        return 0.5f;
                     }
 
                     @Override
@@ -611,6 +581,9 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
                         mListener.getControllerLinks().getSubreddit().isUserIsSubscriber() ?
                                 R.string.subscribe : R.string.unsubscribe);
                 mListener.getControllerLinks().subscribe();
+                if (mListener.getControllerLinks().getSubreddit().isUserIsSubscriber()) {
+                    mListener.getControllerSearch().addSubreddit(mListener.getControllerLinks().getSubreddit());
+                }
             }
         });
 
@@ -801,7 +774,6 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
             if (sort.getMenuId() == item.getItemId()) {
                 mListener.getControllerLinks()
                         .setSort(sort);
-                flashSearchView();
                 scrollToPositionWithOffset(0, 0);
                 return true;
             }
@@ -813,7 +785,6 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
                         .setTime(time);
                 itemSortTime.setTitle(
                         getString(R.string.time) + Reddit.TIME_SEPARATOR + item.toString());
-                flashSearchView();
                 scrollToPositionWithOffset(0, 0);
                 return true;
             }

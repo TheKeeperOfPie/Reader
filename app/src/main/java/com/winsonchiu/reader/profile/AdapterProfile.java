@@ -85,21 +85,6 @@ public class AdapterProfile extends RecyclerView.Adapter<RecyclerView.ViewHolder
     }
 
     @Override
-    public void onViewAttachedToWindow(RecyclerView.ViewHolder holder) {
-        super.onViewAttachedToWindow(holder);
-        viewHolders.add(holder);
-    }
-
-    @Override
-    public void onViewDetachedFromWindow(RecyclerView.ViewHolder holder) {
-        super.onViewDetachedFromWindow(holder);
-        viewHolders.remove(holder);
-        if (holder instanceof AdapterLink.ViewHolderBase) {
-            ((AdapterLink.ViewHolderBase) holder).destroyWebViews();
-        }
-    }
-
-    @Override
     public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
 
         switch (viewType) {
@@ -200,7 +185,19 @@ public class AdapterProfile extends RecyclerView.Adapter<RecyclerView.ViewHolder
                     viewHolderComment.onBind(controllerProfile.getComment(position), controllerUser.getUser().getName());
                 }
         }
+        viewHolders.add(holder);
 
+    }
+
+    @Override
+    public void onViewRecycled(RecyclerView.ViewHolder holder) {
+        super.onViewRecycled(holder);
+
+        if (holder instanceof AdapterLink.ViewHolderBase) {
+            ((AdapterLink.ViewHolderBase) holder).onRecycle();
+        }
+
+        viewHolders.remove(holder);
     }
 
     @Override

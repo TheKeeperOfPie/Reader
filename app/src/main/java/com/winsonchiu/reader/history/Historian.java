@@ -204,7 +204,7 @@ public class Historian {
         SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
         int max;
         try {
-            max = Integer.parseInt(preferences.getString(AppSettings.PREF_HISTORY_SIZE, "500"));
+            max = Integer.parseInt(preferences.getString(AppSettings.PREF_HISTORY_SIZE, "5000"));
         }
         catch (NumberFormatException e) {
             e.printStackTrace();

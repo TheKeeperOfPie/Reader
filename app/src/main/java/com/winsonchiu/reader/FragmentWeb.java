@@ -307,6 +307,7 @@ public class FragmentWeb extends FragmentBase {
     public void onDestroy() {
         if (webView != null) {
             webView.destroy();
+            webView = null;
         }
         super.onDestroy();
 //        CustomApplication.getRefWatcher(getActivity()).watch(this);

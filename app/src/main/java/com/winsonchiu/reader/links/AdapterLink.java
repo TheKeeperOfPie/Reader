@@ -59,6 +59,7 @@ import android.widget.MediaController;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 import android.widget.VideoView;
 
 import com.android.volley.Request;
@@ -162,16 +163,19 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         if (!controllerLinks.isLoading() && position > controllerLinks.sizeLinks() - 5) {
             controllerLinks.loadMoreLinks();
         }
+        Reddit.incrementBind();
+        viewHolders.add(holder);
     }
 
     @Override
     public void onViewRecycled(RecyclerView.ViewHolder holder) {
-
+        super.onViewRecycled(holder);
         if (holder instanceof ViewHolderBase) {
             ((ViewHolderBase) holder).onRecycle();
         }
 
-        super.onViewRecycled(holder);
+        Reddit.incrementRecycled();
+        viewHolders.remove(holder);
     }
 
     public void setVisibility(int visibility) {
@@ -183,18 +187,18 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
     @Override
     public void onViewAttachedToWindow(RecyclerView.ViewHolder holder) {
         super.onViewAttachedToWindow(holder);
-        viewHolders.add(holder);
+//        viewHolders.add(holder);
         holder.itemView.setVisibility(View.VISIBLE);
     }
 
     @Override
     public void onViewDetachedFromWindow(RecyclerView.ViewHolder holder) {
         super.onViewDetachedFromWindow(holder);
-        viewHolders.remove(holder);
-        if (holder instanceof ViewHolderBase) {
-            ((ViewHolderBase) holder).destroyWebViews();
-            ((ViewHolderBase) holder).onDetach();
-        }
+//        viewHolders.remove(holder);
+//        if (holder instanceof ViewHolderBase) {
+//            ((ViewHolderBase) holder).destroyWebViews();
+//            ((ViewHolderBase) holder).onDetach();
+//        }
     }
 
     public void pauseViewHolders() {
@@ -957,6 +961,19 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             addToHistory();
             viewOverlay.setVisibility(View.GONE);
 
+            // TODO: Improve where this logic is handled in click timline
+            if (link.getNumComments() == 0) {
+                if (!link.isCommentsClicked()) {
+                    eventListener.toast(resources.getString(R.string.no_comments));
+                    if (link.isSelf() && !TextUtils.isEmpty(link.getSelfText())) {
+                        expandFull(true);
+                        textThreadSelf.setVisibility(View.VISIBLE);
+                    }
+                    link.setCommentsClicked(true);
+                    return;
+                }
+            }
+
             eventListener.onClickComments(link, this);
         }
 
@@ -987,7 +1004,9 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         }
 
         public void addToHistory() {
-            Historian.getInstance(itemView.getContext()).add(link);
+            if (preferences.getBoolean(AppSettings.PREF_SAVE_HISTORY, true)) {
+                Historian.getInstance(itemView.getContext()).add(link);
+            }
         }
 
         public void expandFull(boolean expand) {
@@ -1405,12 +1424,19 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
 
         public void onRecycle() {
 
+            destroyWebViews();
+
             if (request != null) {
                 request.cancel();
             }
 
             if (youTubePlayer != null) {
-                youTubePlayer.release();
+                try {
+                    youTubePlayer.release();
+                }
+                catch (Throwable t) {
+                    t.printStackTrace();
+                }
                 isYouTubeFullscreen = false;
                 youTubePlayer = null;
             }
@@ -1423,7 +1449,6 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             progressImage.setVisibility(View.GONE);
             textThreadSelf.setVisibility(View.GONE);
             imageThumbnail.setImageBitmap(null);
-
         }
 
         public void onBind(Link link, boolean showSubreddit, String userName) {
@@ -1469,7 +1494,6 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
 
             if (webFull != null) {
                 frameFull.removeView(webFull);
-                webFull.removeAllViews();
                 webFull.destroy();
                 Reddit.incrementDestroy();
                 webFull = null;

@@ -95,12 +95,17 @@ public class AdapterSearchSubreddits extends RecyclerView.Adapter<AdapterSearchS
                     return false;
                 }
             });
+            textName.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    ViewHolder.this.eventListener.onClickSubreddit(subreddit);
+                }
+            });
 
             itemView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
                     AnimationUtils.animateExpand(layoutContainerExpand, 1f, null);
-                    Log.d(TAG, "onClick");
                 }
             });
 
