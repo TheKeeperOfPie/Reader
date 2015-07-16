@@ -4,6 +4,9 @@
 
 package com.winsonchiu.reader.inbox;
 
+import android.content.res.TypedArray;
+import android.graphics.PorterDuff;
+import android.graphics.PorterDuffColorFilter;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.text.Spannable;
@@ -48,6 +51,7 @@ public class AdapterInbox extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
     private AdapterCommentList.ViewHolderComment.EventListener eventListenerComment;
     private ViewHolderMessage.EventListener eventListenerInbox;
     private DisallowListener disallowListener;
+    private AdapterCommentList.ViewHolderComment.ReplyCallback replyCallback;
     private ControllerProfile.Listener listener;
     private List<RecyclerView.ViewHolder> viewHolders;
 
@@ -57,6 +61,7 @@ public class AdapterInbox extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
             AdapterCommentList.ViewHolderComment.EventListener eventListenerComment,
             ViewHolderMessage.EventListener eventListenerInbox,
             DisallowListener disallowListener,
+            AdapterCommentList.ViewHolderComment.ReplyCallback replyCallback,
             ControllerProfile.Listener listener) {
         this.controllerInbox = controllerInbox;
         this.controllerUser = controllerUser;
@@ -64,6 +69,7 @@ public class AdapterInbox extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
         this.eventListenerComment = eventListenerComment;
         this.eventListenerInbox = eventListenerInbox;
         this.disallowListener = disallowListener;
+        this.replyCallback = replyCallback;
         this.listener = listener;
         this.viewHolders = new ArrayList<>();
     }
@@ -86,18 +92,17 @@ public class AdapterInbox extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
                 // TODO: Move to different ViewHolderComment constructor
                 return new AdapterCommentList.ViewHolderComment(
                         LayoutInflater.from(parent.getContext())
-                                .inflate(R.layout.row_comment, parent, false), eventListenerBase, eventListenerComment, disallowListener, listener) {
+                                .inflate(R.layout.row_comment, parent, false), eventListenerBase, eventListenerComment, disallowListener, replyCallback, listener) {
                     @Override
                     public void expandToolbarActions() {
                         super.expandToolbarActions();
 
+
                         if (comment.isNew()) {
                             eventListenerInbox.markRead(comment);
                             comment.setIsNew(false);
-
                             textInfo.setTextColor(comment.isNew() ? itemView.getResources()
-                                    .getColor(R.color.darkThemeTextColorAlert) : itemView.getResources()
-                                    .getColor(R.color.darkThemeTextColorMuted));
+                                    .getColor(R.color.textColorAlert) : colorTextSecondary);
                         }
                     }
                 };
@@ -205,6 +210,19 @@ public class AdapterInbox extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
                     return true;
                 }
             });
+
+            Menu menu = toolbarActions.getMenu();
+            TypedArray typedArray = itemView.getContext().getTheme().obtainStyledAttributes(new int[] {R.attr.colorIconFilter});
+            int colorIconFilter = typedArray.getColor(0, 0xFFFFFFFF);
+            typedArray.recycle();
+
+            PorterDuffColorFilter colorFilter = new PorterDuffColorFilter(colorIconFilter,
+                    PorterDuff.Mode.MULTIPLY);
+
+            for (int index = 0; index < menu.size(); index++) {
+                menu.getItem(index).getIcon().setColorFilter(colorFilter);
+            }
+
             clickListenerLink = new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
@@ -277,9 +295,11 @@ public class AdapterInbox extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
                             message.getCreatedUtc()).toString());
 
             textInfo.setText(spannableInfo);
+
+            TypedArray typedArray = itemView.getContext().getTheme().obtainStyledAttributes(new int[] {android.R.attr.textColorSecondary});
             textInfo.setTextColor(message.isNew() ? itemView.getResources()
-                    .getColor(R.color.darkThemeTextColorAlert) : itemView.getResources()
-                    .getColor(R.color.darkThemeTextColorMuted));
+                    .getColor(R.color.textColorAlert) : typedArray.getColor(0, itemView.getResources().getColor(R.color.darkThemeTextColorMuted)));
+            typedArray.recycle();
         }
 
         public interface EventListener {

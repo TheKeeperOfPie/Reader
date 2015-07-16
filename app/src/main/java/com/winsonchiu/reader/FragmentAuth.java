@@ -200,6 +200,7 @@ public class FragmentAuth extends FragmentBase {
             CookieManager.getInstance().removeAllCookie();
         }
         webAuth.destroy();
+        webAuth = null;
         mListener.onAuthFinished(success);
     }
 
@@ -234,7 +235,9 @@ public class FragmentAuth extends FragmentBase {
 
     @Override
     public void onPause() {
-        webAuth.onPause();
+        if (webAuth != null) {
+            webAuth.onPause();
+        }
         super.onPause();
     }
 

@@ -45,6 +45,13 @@
             android:defaultValue="false"
             />
 
+        <CheckBoxPreference
+            android:key="pref_swipe_exit_comments"
+            android:title="@string/pref_swipe_exit_comments"
+            android:summary="@string/pref_swipe_exit_comments_summary"
+            android:defaultValue="true"
+            />
+
     </PreferenceCategory>
 
 </PreferenceScreen>

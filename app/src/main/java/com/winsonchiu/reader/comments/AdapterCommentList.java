@@ -12,6 +12,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Resources;
+import android.content.res.TypedArray;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
 import android.graphics.drawable.Drawable;
@@ -32,7 +33,6 @@ import android.text.format.DateUtils;
 import android.text.method.LinkMovementMethod;
 import android.text.style.ForegroundColorSpan;
 import android.util.DisplayMetrics;
-import android.util.Log;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -77,6 +77,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
     private AdapterLink.ViewHolderBase.EventListener eventListenerBase;
     private ViewHolderComment.EventListener eventListenerComment;
     private DisallowListener disallowListener;
+    private ViewHolderComment.ReplyCallback replyCallback;
     private RecyclerCallback recyclerCallback;
     private FragmentComments.YouTubeListener youTubeListener;
 
@@ -94,6 +95,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
             ViewHolderComment.EventListener eventListenerComment,
             DisallowListener disallowListener,
             RecyclerCallback recyclerCallback,
+            ViewHolderComment.ReplyCallback replyCallback,
             FragmentComments.YouTubeListener youTubeListener,
             boolean isGrid, int colorLink) {
         this.controllerUser = controllerUser;
@@ -101,6 +103,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
         this.eventListenerComment = eventListenerComment;
         this.disallowListener = disallowListener;
         this.recyclerCallback = recyclerCallback;
+        this.replyCallback = replyCallback;
         this.youTubeListener = youTubeListener;
         this.isGrid = isGrid;
         this.colorLink = colorLink;
@@ -260,7 +263,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
 
         return new ViewHolderComment(LayoutInflater.from(parent.getContext())
                 .inflate(R.layout.row_comment, parent, false), eventListenerBase,
-                eventListenerComment, disallowListener);
+                eventListenerComment, disallowListener, replyCallback);
     }
 
     @Override
@@ -360,22 +363,26 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
         protected PorterDuffColorFilter colorFilterSave;
         protected PorterDuffColorFilter colorFilterPositive;
         protected PorterDuffColorFilter colorFilterNegative;
+        protected PorterDuffColorFilter colorFilterMenuItem;
 
         protected AdapterLink.ViewHolderBase.EventListener eventListenerBase;
         protected EventListener eventListener;
         protected DisallowListener disallowListener;
+        protected ReplyCallback replyCallback;
         protected String userName;
         protected int indentWidth;
         protected int toolbarItemWidth;
         protected SharedPreferences preferences;
         protected Resources resources;
+        protected int colorTextSecondary;
 
         public ViewHolderComment(final View itemView,
                 AdapterLink.ViewHolderBase.EventListener eventListenerBase,
                 EventListener eventListener,
                 DisallowListener disallowListener,
+                ReplyCallback replyCallback,
                 final ControllerProfile.Listener listener) {
-            this(itemView, eventListenerBase, eventListener, disallowListener);
+            this(itemView, eventListenerBase, eventListener, disallowListener, replyCallback);
             itemViewLink.setVisible(true);
             itemViewLink.setEnabled(true);
             itemViewLink.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
@@ -392,12 +399,14 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
         public ViewHolderComment(final View itemView,
                 AdapterLink.ViewHolderBase.EventListener eventListenerBase,
                 EventListener eventListener,
-                DisallowListener disallowListener) {
+                DisallowListener disallowListener,
+                ReplyCallback replyCallback) {
             super(itemView);
 
             this.eventListenerBase = eventListenerBase;
             this.eventListener = eventListener;
             this.disallowListener = disallowListener;
+            this.replyCallback = replyCallback;
 
             intiialize();
             initializeToolbar();
@@ -408,6 +417,9 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
 
             resources = itemView.getResources();
             preferences = PreferenceManager.getDefaultSharedPreferences(itemView.getContext());
+            TypedArray typedArray = itemView.getContext().getTheme().obtainStyledAttributes(new int[] {android.R.attr.textColorSecondary});
+            colorTextSecondary = typedArray.getColor(0, resources.getColor(R.color.darkThemeTextColorMuted));
+            typedArray.recycle();
 
             this.drawableUpvote = resources.getDrawable(R.drawable.ic_keyboard_arrow_up_white_24dp);
             this.drawableDownvote = resources.getDrawable(
@@ -505,6 +517,14 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
             itemDelete = menu.findItem(R.id.item_delete);
             itemReport = menu.findItem(R.id.item_report);
 
+
+            TypedArray typedArray = itemView.getContext().getTheme().obtainStyledAttributes(new int[] {R.attr.colorIconFilter});
+            int colorIconFilter = typedArray.getColor(0, 0xFFFFFFFF);
+            typedArray.recycle();
+
+            colorFilterMenuItem = new PorterDuffColorFilter(colorIconFilter,
+                    PorterDuff.Mode.MULTIPLY);
+
             colorFilterPositive = new PorterDuffColorFilter(resources.getColor(
                     R.color.positiveScore),
                     PorterDuff.Mode.MULTIPLY);
@@ -513,6 +533,10 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                     PorterDuff.Mode.MULTIPLY);
             colorFilterSave = new PorterDuffColorFilter(resources.getColor(R.color.colorAccent),
                     PorterDuff.Mode.MULTIPLY);
+
+            for (int index = 0; index < menu.size(); index++) {
+                menu.getItem(index).getIcon().setColorFilter(colorFilterMenuItem);
+            }
 
         }
 
@@ -551,6 +575,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
             else {
                 itemCollapse.setIcon(R.drawable.ic_arrow_drop_down_white_24dp);
             }
+            itemCollapse.getIcon().setColorFilter(colorFilterMenuItem);
 
             itemEdit.setEnabled(isAuthor);
             itemEdit.setVisible(isAuthor);
@@ -599,19 +624,19 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                 case 1:
                     drawableUpvote.mutate().setColorFilter(colorFilterPositive);
                     itemUpvote.setIcon(drawableUpvote);
-                    drawableDownvote.clearColorFilter();
+                    drawableDownvote.setColorFilter(colorFilterMenuItem);
                     itemDownvote.setIcon(drawableDownvote);
                     break;
                 case -1:
                     drawableDownvote.mutate().setColorFilter(colorFilterNegative);
                     itemDownvote.setIcon(drawableDownvote);
-                    drawableUpvote.clearColorFilter();
+                    drawableUpvote.setColorFilter(colorFilterMenuItem);
                     itemUpvote.setIcon(drawableUpvote);
                     break;
                 case 0:
-                    drawableUpvote.clearColorFilter();
+                    drawableUpvote.setColorFilter(colorFilterMenuItem);
                     itemUpvote.setIcon(drawableUpvote);
-                    drawableDownvote.clearColorFilter();
+                    drawableDownvote.setColorFilter(colorFilterMenuItem);
                     itemDownvote.setIcon(drawableDownvote);
                     break;
             }
@@ -675,7 +700,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                 }
 
                 String suffixAuthor = "";
-                int color = resources.getColor(R.color.darkThemeTextColorMuted);
+                int color = colorTextSecondary;
 
                 if (comment.getLinkAuthor().equals(comment.getAuthor())) {
                     color = resources.getColor(R.color.colorAccent);
@@ -715,8 +740,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                                 DateUtils.getRelativeTimeSpanString(comment.getCreatedUtc());
 
                 textInfo.setTextColor(comment.isNew() ? resources.getColor(
-                        R.color.darkThemeTextColorAlert) : resources.getColor(
-                        R.color.darkThemeTextColorMuted));
+                        R.color.textColorAlert) : colorTextSecondary);
 
                 textInfo.setText(TextUtils.concat(spannableScore, " by ", spannableAuthor, flair,
                         timestamp, comment.getEdited() > 0 ? "*" : ""));
@@ -736,7 +760,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                 textComment.setTextColor(resources.getColor(R.color.gildedComment));
             }
             else {
-                textComment.setTextColor(resources.getColor(R.color.darkThemeTextColor));
+                textComment.setTextColor(textComment.getTextColors().getDefaultColor());
             }
 
         }
@@ -746,7 +770,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                 itemSave.getIcon().mutate().setColorFilter(colorFilterSave);
             }
             else {
-                itemSave.getIcon().clearColorFilter();
+                itemSave.getIcon().setColorFilter(colorFilterMenuItem);
             }
         }
 
@@ -758,6 +782,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                 buttonSendReply.setText(
                         comment.isEditMode() ? itemView.getContext().getString(R.string.send_edit) :
                                 itemView.getContext().getString(R.string.send_reply));
+                replyCallback.onReplyShown();
             }
             comment.setReplyExpanded(!comment.isReplyExpanded());
             layoutContainerReply.setVisibility(
@@ -774,6 +799,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                     item.setIcon(eventListener.toggleComment(getAdapterPosition()) ?
                             R.drawable.ic_arrow_drop_up_white_24dp :
                             R.drawable.ic_arrow_drop_down_white_24dp);
+                    item.getIcon().setColorFilter(colorFilterMenuItem);
                     break;
                 case R.id.item_upvote:
                     eventListener.voteComment(ViewHolderComment.this, comment, 1);
@@ -908,6 +934,10 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
             void editComment(Comment comment, String text);
             void sendComment(String name, String text);
             void jumpToParent(Comment comment);
+        }
+
+        public interface ReplyCallback{
+            void onReplyShown();
         }
 
     }

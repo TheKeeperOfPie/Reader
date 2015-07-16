@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ~ Copyright 2015 Winson Chiu
+  -->
+
+<resources>
+
+    <declare-styleable name="ViewHolderBase">
+        <attr name="colorRowBackground" format="color"/>
+        <attr name="colorCellBackground" format="color"/>
+        <attr name="colorIconFilter" format="color"/>
+    </declare-styleable>
+
+</resources>

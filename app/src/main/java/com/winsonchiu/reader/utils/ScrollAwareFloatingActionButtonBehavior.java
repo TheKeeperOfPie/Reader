@@ -70,7 +70,7 @@ public class ScrollAwareFloatingActionButtonBehavior extends FloatingActionButto
     }
 
     // Same animation that FloatingActionButton.Behavior uses to hide the FAB when the AppBarLayout exits
-    private void animateOut(final FloatingActionButton button) {
+    public void animateOut(final FloatingActionButton button) {
         if (listener != null) {
             listener.onStartHideFromScroll();
         }
@@ -102,7 +102,7 @@ public class ScrollAwareFloatingActionButtonBehavior extends FloatingActionButto
     }
 
     // Same animation that FloatingActionButton.Behavior uses to show the FAB when the AppBarLayout enters
-    private void animateIn(FloatingActionButton button) {
+    public void animateIn(FloatingActionButton button) {
         button.setVisibility(View.VISIBLE);
         ViewCompat.animate(button)
                 .scaleX(1.0F)

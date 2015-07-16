@@ -9,6 +9,7 @@ import android.app.FragmentTransaction;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.media.MediaScannerConnection;
 import android.net.Uri;
@@ -78,6 +79,7 @@ public class MainActivity extends YouTubeBaseActivity
         implements FragmentListenerBase {
 
     public static final String REDDIT_PAGE = "redditPage";
+    public static final String NAV_ID = "navId";
     public static final String NAV_PAGE = "navPage";
 
     private static final String TAG = MainActivity.class.getCanonicalName();
@@ -103,7 +105,20 @@ public class MainActivity extends YouTubeBaseActivity
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         Fabric.with(this, new Crashlytics());
+
         sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+
+        switch (sharedPreferences.getString(AppSettings.PREF_THEME, "Dark")) {
+            case AppSettings.THEME_DARK:
+                setTheme(R.style.AppDarkTheme);
+                break;
+            case AppSettings.THEME_LIGHT:
+                setTheme(R.style.AppLightTheme);
+                break;
+            case AppSettings.THEME_BLACK:
+                setTheme(R.style.AppBlackTheme);
+                break;
+        }
 
         reddit = Reddit.getInstance(this);
 
@@ -142,7 +157,7 @@ public class MainActivity extends YouTubeBaseActivity
             public void onDrawerClosed(View drawerView) {
                 invalidateOptionsMenu();
                 if (loadId != 0) {
-                    selectNavigationItem(loadId, true);
+                    selectNavigationItem(loadId, 0, true);
                 }
             }
 
@@ -166,12 +181,12 @@ public class MainActivity extends YouTubeBaseActivity
                 else {
                     Log.d(TAG, "Not valid URL: " + urlString);
                     getControllerLinks().loadFrontPage(Sort.HOT, true);
-                    selectNavigationItem(getIntent().getIntExtra(NAV_PAGE, R.id.item_home), false);
+                    selectNavigationItem(getIntent().getIntExtra(NAV_ID, R.id.item_home), getIntent().getIntExtra(NAV_PAGE, 0), false);
                 }
             }
             else {
                 getControllerLinks().loadFrontPage(Sort.HOT, true);
-                selectNavigationItem(getIntent().getIntExtra(NAV_PAGE, R.id.item_home), false);
+                selectNavigationItem(getIntent().getIntExtra(NAV_ID, R.id.item_home), getIntent().getIntExtra(NAV_PAGE, 0), false);
             }
         }
 
@@ -591,7 +606,7 @@ public class MainActivity extends YouTubeBaseActivity
 
     }
 
-    private void selectNavigationItem(final int id, boolean animate) {
+    private void selectNavigationItem(final int id, int page, boolean animate) {
 
         if (id == R.id.item_settings) {
             Intent intentSettings = new Intent(this, ActivitySettings.class);
@@ -646,6 +661,18 @@ public class MainActivity extends YouTubeBaseActivity
 
                 break;
             case R.id.item_inbox:
+                switch (page) {
+                    case ControllerInbox.PAGE_INBOX:
+                        getControllerInbox().setPage("Inbox");
+                        break;
+                    case ControllerInbox.PAGE_UNREAD:
+                        getControllerInbox().setPage("Unread");
+                        break;
+                    case ControllerInbox.PAGE_SENT:
+                        getControllerInbox().setPage("Sent");
+                        break;
+                }
+
                 getControllerInbox().reload();
                 fragmentTransaction.replace(R.id.frame_fragment,
                                 FragmentInbox.newInstance(),
@@ -662,9 +689,9 @@ public class MainActivity extends YouTubeBaseActivity
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
 
-//        if (requestCode == REQUEST_SETTINGS) {
-//            recreate();
-//        }
+        if (requestCode == REQUEST_SETTINGS) {
+            recreate();
+        }
 
     }
 
@@ -929,7 +956,7 @@ public class MainActivity extends YouTubeBaseActivity
 
     @Override
     public void onAuthFinished(boolean success) {
-        selectNavigationItem(R.id.item_home, false);
+        selectNavigationItem(R.id.item_home, 0, false);
         if (success) {
             Toast.makeText(this, getString(R.string.login_success), Toast.LENGTH_SHORT)
                     .show();

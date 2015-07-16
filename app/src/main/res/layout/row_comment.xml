@@ -55,7 +55,7 @@
         android:paddingRight="8dp"
         android:textSize="12sp"
         android:gravity="start"
-        android:textColor="@color/darkThemeTextColorMuted"
+        android:textColor="?android:attr/textColorSecondary"
         android:background="?attr/selectableItemBackgroundBorderless"
         />
 

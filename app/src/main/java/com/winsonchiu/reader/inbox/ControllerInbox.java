@@ -36,6 +36,9 @@ public class ControllerInbox {
 
     public static final int VIEW_TYPE_MESSAGE = 0;
     public static final int VIEW_TYPE_COMMENT = 1;
+    public static final int PAGE_INBOX = 0;
+    public static final int PAGE_UNREAD = 1;
+    public static final int PAGE_SENT = 2;
     private static final String TAG = ControllerInbox.class.getCanonicalName();
 
     private Activity activity;
@@ -209,7 +212,7 @@ public class ControllerInbox {
         Message parentMessage = new Message();
         parentMessage.setId(message.getParentId());
 
-        int messageIndex = link.getComments().getChildren().indexOf(parentMessage);
+        int messageIndex = data.getChildren().indexOf(parentMessage);
         if (messageIndex > -1) {
             data.getChildren()
                     .add(messageIndex + 1, message);
@@ -225,9 +228,9 @@ public class ControllerInbox {
         Comment parentComment = new Comment();
         parentComment.setId(comment.getParentId());
 
-        int commentIndex = link.getComments().getChildren().indexOf(parentComment);
+        int commentIndex = data.getChildren().indexOf(parentComment);
         if (commentIndex > -1) {
-            comment.setLevel(((Comment) link.getComments().getChildren().get(commentIndex)).getLevel() + 1);
+            comment.setLevel(((Comment) data.getChildren().get(commentIndex)).getLevel() + 1);
             data.getChildren()
                     .add(commentIndex + 1, comment);
         }

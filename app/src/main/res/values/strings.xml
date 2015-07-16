@@ -201,4 +201,7 @@
     <string name="start">Start</string>
     <string name="end">End</string>
     <string name="reset">Reset</string>
+    <string name="pref_swipe_exit_comments">Swipe exit comments</string>
+    <string name="pref_swipe_exit_comments_summary">Use a left to right gesture to exit comments
+    </string>
 </resources>

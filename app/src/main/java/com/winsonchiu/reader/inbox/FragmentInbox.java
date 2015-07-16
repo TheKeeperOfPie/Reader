@@ -6,7 +6,11 @@ package com.winsonchiu.reader.inbox;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.content.res.TypedArray;
+import android.graphics.PorterDuff;
+import android.graphics.PorterDuffColorFilter;
 import android.os.Bundle;
+import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.DefaultItemAnimator;
@@ -36,6 +40,7 @@ import com.winsonchiu.reader.data.reddit.Message;
 import com.winsonchiu.reader.data.reddit.Reddit;
 import com.winsonchiu.reader.data.reddit.Thing;
 import com.winsonchiu.reader.profile.ControllerProfile;
+import com.winsonchiu.reader.utils.ScrollAwareFloatingActionButtonBehavior;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -59,6 +64,8 @@ public class FragmentInbox extends FragmentBase {
     private FloatingActionButton floatingActionButtonNewMessage;
     private Spinner spinnerPage;
     private AdapterInboxPage adapterInboxPage;
+    private ScrollAwareFloatingActionButtonBehavior behaviorFloatingActionButton;
+    private PorterDuffColorFilter colorFilterIcon;
 
     public static FragmentInbox newInstance() {
         FragmentInbox fragment = new FragmentInbox();
@@ -174,8 +181,17 @@ public class FragmentInbox extends FragmentBase {
             }
         };
 
+        TypedArray typedArray = activity.getTheme().obtainStyledAttributes(
+                new int[]{R.attr.colorIconFilter});
+        int colorIconFilter = typedArray.getColor(0, 0xFFFFFFFF);
+        typedArray.recycle();
+
+        colorFilterIcon = new PorterDuffColorFilter(colorIconFilter,
+                PorterDuff.Mode.MULTIPLY);
+
         toolbar = (Toolbar) view.findViewById(R.id.toolbar);
         toolbar.setNavigationIcon(R.drawable.ic_menu_white_24dp);
+        toolbar.getNavigationIcon().mutate().setColorFilter(colorFilterIcon);
         toolbar.setNavigationOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -191,6 +207,20 @@ public class FragmentInbox extends FragmentBase {
                 startActivity(intent);
             }
         });
+
+        behaviorFloatingActionButton = new ScrollAwareFloatingActionButtonBehavior(activity, null,
+                new ScrollAwareFloatingActionButtonBehavior.OnVisibilityChangeListener() {
+                    @Override
+                    public void onStartHideFromScroll() {
+                    }
+
+                    @Override
+                    public void onEndHideFromScroll() {
+                    }
+
+                });
+        ((CoordinatorLayout.LayoutParams) floatingActionButtonNewMessage.getLayoutParams())
+                .setBehavior(behaviorFloatingActionButton);
 
         adapterInboxPage = new AdapterInboxPage(activity);
         spinnerPage = (Spinner) view.findViewById(R.id.spinner_page);
@@ -289,7 +319,12 @@ public class FragmentInbox extends FragmentBase {
                         public void requestDisallowInterceptTouchEventHorizontal(boolean disallow) {
 
                         }
-                    }, new ControllerProfile.Listener() {
+                    }, new AdapterCommentList.ViewHolderComment.ReplyCallback() {
+                @Override
+                public void onReplyShown() {
+                    behaviorFloatingActionButton.animateOut(floatingActionButtonNewMessage);
+                }
+            }, new ControllerProfile.Listener() {
                 @Override
                 public void setPage(String page) {
 

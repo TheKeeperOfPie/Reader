@@ -144,7 +144,7 @@
             android:layout_gravity="end"
             android:gravity="end"
             android:textSize="12sp"
-            android:textColor="@color/darkThemeTextColorMuted"
+            android:textColor="?android:attr/textColorSecondary"
             />
 
     </RelativeLayout>

@@ -12,6 +12,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Resources;
+import android.content.res.TypedArray;
 import android.graphics.Bitmap;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
@@ -59,7 +60,6 @@ import android.widget.MediaController;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
-import android.widget.Toast;
 import android.widget.VideoView;
 
 import com.android.volley.Request;
@@ -427,6 +427,8 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         public PorterDuffColorFilter colorFilterSave;
         public PorterDuffColorFilter colorFilterPositive;
         public PorterDuffColorFilter colorFilterNegative;
+        public PorterDuffColorFilter colorFilterThumbnail;
+        public PorterDuffColorFilter colorFilterMenuItem;
         private int colorAccent;
         private int colorPositive;
         private int colorNegative;
@@ -570,6 +572,20 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                     }
                 }
             });
+
+            TypedArray typedArray = itemView.getContext().getTheme().obtainStyledAttributes(new int[] {R.attr.colorIconFilter});
+            int colorIconFilter = typedArray.getColor(0, 0xFFFFFFFF);
+            typedArray.recycle();
+
+            colorFilterThumbnail = new PorterDuffColorFilter(colorIconFilter, PorterDuff.Mode.MULTIPLY);
+            colorFilterMenuItem = new PorterDuffColorFilter(colorIconFilter, PorterDuff.Mode.MULTIPLY);
+            colorFilterPositive = new PorterDuffColorFilter(colorPositive,
+                    PorterDuff.Mode.MULTIPLY);
+            colorFilterNegative = new PorterDuffColorFilter(colorNegative,
+                    PorterDuff.Mode.MULTIPLY);
+            colorFilterSave = new PorterDuffColorFilter(colorAccent, PorterDuff.Mode.MULTIPLY);
+
+            buttonComments.setColorFilter(colorFilterThumbnail);
         }
 
         protected void initializeListeners() {
@@ -664,11 +680,10 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             itemViewSubreddit = menu.findItem(R.id.item_view_subreddit);
             itemCopyText = menu.findItem(R.id.item_copy_text);
 
-            colorFilterPositive = new PorterDuffColorFilter(colorPositive,
-                    PorterDuff.Mode.MULTIPLY);
-            colorFilterNegative = new PorterDuffColorFilter(colorNegative,
-                    PorterDuff.Mode.MULTIPLY);
-            colorFilterSave = new PorterDuffColorFilter(colorAccent, PorterDuff.Mode.MULTIPLY);
+            for (int index = 0; index < menu.size(); index++) {
+                menu.getItem(index).getIcon().setColorFilter(colorFilterMenuItem);
+            }
+
         }
 
         @Override
@@ -1018,15 +1033,15 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             switch (link.isLikes()) {
                 case 1:
                     itemUpvote.getIcon().mutate().setColorFilter(colorFilterPositive);
-                    itemDownvote.getIcon().clearColorFilter();
+                    itemDownvote.getIcon().setColorFilter(colorFilterMenuItem);
                     break;
                 case -1:
                     itemDownvote.getIcon().mutate().setColorFilter(colorFilterNegative);
-                    itemUpvote.getIcon().clearColorFilter();
+                    itemUpvote.getIcon().setColorFilter(colorFilterMenuItem);
                     break;
                 case 0:
-                    itemUpvote.getIcon().clearColorFilter();
-                    itemDownvote.getIcon().clearColorFilter();
+                    itemUpvote.getIcon().setColorFilter(colorFilterMenuItem);
+                    itemDownvote.getIcon().setColorFilter(colorFilterMenuItem);
                     break;
             }
         }
@@ -1044,9 +1059,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             textThreadTitle.setText(link.getTitle()
                     .toString());
             textThreadTitle.setTextColor(
-                    link.isOver18() ? resources.getColor(R.color.darkThemeTextColorAlert) :
-                            resources.getColor(
-                                    R.color.darkThemeTextColor));
+                    link.isOver18() ? resources.getColor(R.color.textColorAlert) : textThreadTitle.getTextColors().getDefaultColor());
 
             textThreadSelf.setText(link.getSelfTextHtml());
         }
@@ -1431,12 +1444,6 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             }
 
             if (youTubePlayer != null) {
-                try {
-                    youTubePlayer.release();
-                }
-                catch (Throwable t) {
-                    t.printStackTrace();
-                }
                 isYouTubeFullscreen = false;
                 youTubePlayer = null;
             }
@@ -1485,8 +1492,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             }
             else {
                 itemSave.setTitle(resources.getString(R.string.save));
-                itemSave.getIcon()
-                        .clearColorFilter();
+                itemSave.getIcon().setColorFilter(colorFilterMenuItem);
             }
         }
 

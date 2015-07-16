@@ -8,6 +8,9 @@ import android.app.Activity;
 import android.app.AlarmManager;
 import android.content.DialogInterface;
 import android.content.SharedPreferences;
+import android.content.res.TypedArray;
+import android.graphics.PorterDuff;
+import android.graphics.PorterDuffColorFilter;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.design.widget.Snackbar;
@@ -71,6 +74,7 @@ public class FragmentHistory extends FragmentBase implements Toolbar.OnMenuItemC
     private SharedPreferences preferences;
     private AdapterLinkList adapterLinkList;
     private AdapterLinkGrid adapterLinkGrid;
+    private PorterDuffColorFilter colorFilterIcon;
 
     public static FragmentHistory newInstance() {
         FragmentHistory fragment = new FragmentHistory();
@@ -138,6 +142,10 @@ public class FragmentHistory extends FragmentBase implements Toolbar.OnMenuItemC
             }
         });
         searchView.setSubmitButtonEnabled(true);
+
+        for (int index = 0; index < menu.size(); index++) {
+            menu.getItem(index).getIcon().setColorFilter(colorFilterIcon);
+        }
     }
 
     @Override
@@ -177,6 +185,14 @@ public class FragmentHistory extends FragmentBase implements Toolbar.OnMenuItemC
             }
         };
 
+        TypedArray typedArray = activity.getTheme().obtainStyledAttributes(
+                new int[]{R.attr.colorIconFilter});
+        int colorIconFilter = typedArray.getColor(0, 0xFFFFFFFF);
+        typedArray.recycle();
+
+        colorFilterIcon = new PorterDuffColorFilter(colorIconFilter,
+                PorterDuff.Mode.MULTIPLY);
+
         toolbar = (Toolbar) view.findViewById(R.id.toolbar);
         if (getFragmentManager().getBackStackEntryCount() <= 1) {
             toolbar.setNavigationIcon(R.drawable.ic_menu_white_24dp);
@@ -196,6 +212,7 @@ public class FragmentHistory extends FragmentBase implements Toolbar.OnMenuItemC
                 }
             });
         }
+        toolbar.getNavigationIcon().mutate().setColorFilter(colorFilterIcon);
         setUpOptionsMenu();
 
         swipeRefreshHistory = (SwipeRefreshLayout) view.findViewById(R.id.swipe_refresh_history);
@@ -445,6 +462,7 @@ public class FragmentHistory extends FragmentBase implements Toolbar.OnMenuItemC
                         preferences.getString(AppSettings.INTERFACE_MODE, AppSettings.MODE_GRID))) {
                     resetAdapter(adapterLinkGrid);
                     item.setIcon(getResources().getDrawable(R.drawable.ic_view_list_white_24dp));
+                    item.getIcon().setColorFilter(colorFilterIcon);
                     preferences.edit()
                             .putString(AppSettings.INTERFACE_MODE, AppSettings.MODE_GRID)
                             .commit();
@@ -452,6 +470,7 @@ public class FragmentHistory extends FragmentBase implements Toolbar.OnMenuItemC
                 else {
                     resetAdapter(adapterLinkList);
                     item.setIcon(getResources().getDrawable(R.drawable.ic_view_module_white_24dp));
+                    item.getIcon().setColorFilter(colorFilterIcon);
                     preferences.edit()
                             .putString(AppSettings.INTERFACE_MODE, AppSettings.MODE_LIST)
                             .commit();

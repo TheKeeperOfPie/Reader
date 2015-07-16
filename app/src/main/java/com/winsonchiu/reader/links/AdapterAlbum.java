@@ -4,6 +4,9 @@
 
 package com.winsonchiu.reader.links;
 
+import android.content.res.TypedArray;
+import android.graphics.PorterDuff;
+import android.graphics.PorterDuffColorFilter;
 import android.graphics.Rect;
 import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
@@ -40,6 +43,7 @@ public class AdapterAlbum extends PagerAdapter {
     private static final String TAG = AdapterAlbum.class.getCanonicalName();
     private final EventListener eventListener;
     private final ViewPager viewPager;
+    private PorterDuffColorFilter colorFilterIcon;
     private DisallowListener disallowListener;
     private Album album;
     private Stack<View> recycledViews;
@@ -50,6 +54,15 @@ public class AdapterAlbum extends PagerAdapter {
         this.eventListener = eventListener;
         this.disallowListener = disallowListener;
         recycledViews = new Stack<>();
+
+        TypedArray typedArray = viewPager.getContext().getTheme().obtainStyledAttributes(
+                new int[]{R.attr.colorIconFilter});
+        int colorIconFilter = typedArray.getColor(0, 0xFFFFFFFF);
+        typedArray.recycle();
+
+        colorFilterIcon = new PorterDuffColorFilter(colorIconFilter,
+                PorterDuff.Mode.MULTIPLY);
+
     }
 
     @Override
@@ -66,7 +79,7 @@ public class AdapterAlbum extends PagerAdapter {
         if (recycledViews.isEmpty()) {
             view = LayoutInflater.from(container.getContext())
                     .inflate(R.layout.view_image, container, false);
-            view.setTag(new ViewHolder(view, eventListener, disallowListener));
+            view.setTag(new ViewHolder(view, eventListener, disallowListener, colorFilterIcon));
         }
         else {
             view = recycledViews.pop();
@@ -198,7 +211,7 @@ public class AdapterAlbum extends PagerAdapter {
         protected TextView textAlbumIndicator;
         protected WebViewFixed webView;
 
-        public ViewHolder(View view, EventListener listener, DisallowListener disallowListener) {
+        public ViewHolder(View view, EventListener listener, DisallowListener disallowListener, PorterDuffColorFilter colorFilterIcon) {
             this.eventListener = listener;
             this.disallowListener = disallowListener;
             layoutRelative = (RelativeLayout) view;
@@ -211,6 +224,9 @@ public class AdapterAlbum extends PagerAdapter {
             layoutDownloadImage = (RelativeLayout) view.findViewById(R.id.layout_download_image);
             buttonInfo = (ImageButton) view.findViewById(R.id.button_info);
             buttonDownload = (ImageButton) view.findViewById(R.id.button_download_image);
+
+            buttonInfo.setColorFilter(colorFilterIcon);
+            buttonDownload.setColorFilter(colorFilterIcon);
 
             view.setOnClickListener(this);
             buttonInfo.setOnClickListener(this);

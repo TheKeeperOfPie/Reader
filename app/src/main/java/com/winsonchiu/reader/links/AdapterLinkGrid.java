@@ -59,7 +59,8 @@ public class AdapterLinkGrid extends AdapterLink {
 
         Resources resources = activity.getResources();
 
-        boolean isLandscape = resources.getDisplayMetrics().widthPixels > resources.getDisplayMetrics().heightPixels;
+        boolean isLandscape = resources.getDisplayMetrics().widthPixels > resources
+                .getDisplayMetrics().heightPixels;
         int spanCount = isLandscape ? 3 : 2;
         layoutManager = new StaggeredGridLayoutManager(spanCount,
                 StaggeredGridLayoutManager.VERTICAL);
@@ -75,7 +76,8 @@ public class AdapterLinkGrid extends AdapterLink {
     public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup viewGroup, int viewType) {
 
         if (viewType == VIEW_LINK_HEADER) {
-            return new ViewHolderHeader(LayoutInflater.from(viewGroup.getContext()).inflate(R.layout.header_link, viewGroup, false), eventListenerHeader);
+            return new ViewHolderHeader(LayoutInflater.from(viewGroup.getContext())
+                    .inflate(R.layout.header_link, viewGroup, false), eventListenerHeader);
         }
 
         return new ViewHolder(LayoutInflater.from(viewGroup.getContext())
@@ -95,7 +97,9 @@ public class AdapterLinkGrid extends AdapterLink {
                 break;
             case VIEW_LINK:
                 ViewHolder viewHolder = (ViewHolder) holder;
-                viewHolder.onBind(controllerLinks.getLink(position), controllerLinks.showSubreddit(), controllerUser.getUser().getName());
+                viewHolder
+                        .onBind(controllerLinks.getLink(position), controllerLinks.showSubreddit(),
+                                controllerUser.getUser().getName());
                 break;
         }
     }
@@ -104,6 +108,7 @@ public class AdapterLinkGrid extends AdapterLink {
 
         private final int thumbnailSize;
         protected ImageView imageFull;
+        private int colorBackgroundDefault;
 
         public ViewHolder(View itemView,
                 EventListener eventListener,
@@ -119,6 +124,9 @@ public class AdapterLinkGrid extends AdapterLink {
         protected void initialize() {
             super.initialize();
             imageFull = (ImageView) itemView.findViewById(R.id.image_full);
+            if (itemView.getBackground() instanceof ColorDrawable) {
+                colorBackgroundDefault = ((ColorDrawable) itemView.getBackground()).getColor();
+            }
         }
 
         @Override
@@ -156,19 +164,22 @@ public class AdapterLinkGrid extends AdapterLink {
 
             int position = getAdapterPosition();
 
-            itemView.setBackgroundColor(itemView.getResources().getColor(R.color.darkThemeDialog));
+            itemView.setBackgroundColor(colorBackgroundDefault);
             imagePlay.setVisibility(View.GONE);
             Drawable drawable = Reddit.getDrawableForLink(itemView.getContext(), link);
             if (drawable != null) {
                 imageFull.setVisibility(View.GONE);
-                imageThumbnail.setVisibility(View.VISIBLE);
+                imageThumbnail.setColorFilter(colorFilterThumbnail);
                 imageThumbnail.setImageDrawable(drawable);
+                imageThumbnail.setVisibility(View.VISIBLE);
             }
             else if (!preferences.getBoolean(AppSettings.PREF_SHOW_THUMBNAILS, true) ||
-                    (link.isOver18() && !preferences.getBoolean(AppSettings.PREF_NSFW_THUMBNAILS, true))) {
+                    (link.isOver18() && !preferences
+                            .getBoolean(AppSettings.PREF_NSFW_THUMBNAILS, true))) {
                 imageFull.setVisibility(View.GONE);
-                imageThumbnail.setVisibility(View.VISIBLE);
+                imageThumbnail.setColorFilter(colorFilterThumbnail);
                 imageThumbnail.setImageDrawable(drawableDefault);
+                imageThumbnail.setVisibility(View.VISIBLE);
             }
             else if (Reddit.showThumbnail(link)) {
                 loadThumbnail(link, position);
@@ -176,6 +187,7 @@ public class AdapterLinkGrid extends AdapterLink {
             }
             else if (!TextUtils.isEmpty(link.getThumbnail())) {
                 imageFull.setVisibility(View.GONE);
+                imageThumbnail.clearColorFilter();
                 imageThumbnail.setVisibility(View.VISIBLE);
                 Picasso.with(itemView.getContext())
                         .load(link.getThumbnail())
@@ -184,13 +196,15 @@ public class AdapterLinkGrid extends AdapterLink {
             }
             else {
                 imageFull.setVisibility(View.GONE);
-                imageThumbnail.setVisibility(View.VISIBLE);
+                imageThumbnail.setColorFilter(colorFilterThumbnail);
                 imageThumbnail.setImageDrawable(drawableDefault);
+                imageThumbnail.setVisibility(View.VISIBLE);
             }
 
             ((RelativeLayout.LayoutParams) textThreadTitle.getLayoutParams()).removeRule(
                     RelativeLayout.START_OF);
-            ((RelativeLayout.LayoutParams) textThreadTitle.getLayoutParams()).setMarginEnd(titleMargin);
+            ((RelativeLayout.LayoutParams) textThreadTitle.getLayoutParams()).setMarginEnd(
+                    titleMargin);
         }
 
         @Override
@@ -211,7 +225,8 @@ public class AdapterLinkGrid extends AdapterLink {
         }
 
         private int getAdjustedThumbnailSize() {
-            float modifier = Float.parseFloat(preferences.getString(AppSettings.PREF_GRID_THUMBNAIL_SIZE, "0.75"));
+            float modifier = Float.parseFloat(
+                    preferences.getString(AppSettings.PREF_GRID_THUMBNAIL_SIZE, "0.75"));
             if (modifier > 0) {
                 return (int) (thumbnailSize * modifier);
             }
@@ -262,12 +277,14 @@ public class AdapterLinkGrid extends AdapterLink {
                 else {
                     imageFull.setVisibility(View.GONE);
                     imageThumbnail.setVisibility(View.VISIBLE);
+                    imageThumbnail.setColorFilter(colorFilterThumbnail);
                     imageThumbnail.setImageDrawable(drawableDefault);
                     progressImage.setVisibility(View.GONE);
 
                     ((RelativeLayout.LayoutParams) textThreadTitle.getLayoutParams()).removeRule(
                             RelativeLayout.START_OF);
-                    ((RelativeLayout.LayoutParams) textThreadTitle.getLayoutParams()).setMarginEnd(titleMargin);
+                    ((RelativeLayout.LayoutParams) textThreadTitle.getLayoutParams())
+                            .setMarginEnd(titleMargin);
                 }
             }
             else {
@@ -303,6 +320,20 @@ public class AdapterLinkGrid extends AdapterLink {
 
                                             }
                                             else {
+                                                if (link.getDomain().contains("imgur") && (link
+                                                        .getUrl()
+                                                        .contains(Reddit.IMGUR_PREFIX_ALBUM) || link
+                                                        .getUrl()
+                                                        .contains(Reddit.IMGUR_PREFIX_GALLERY))) {
+                                                    imagePlay.setImageResource(
+                                                            R.drawable.ic_photo_album_white_24dp);
+                                                }
+                                                else {
+                                                    imagePlay.setImageResource(
+                                                            R.drawable.ic_play_circle_outline_white_48dp);
+                                                }
+
+                                                imagePlay.setColorFilter(colorFilterMenuItem);
                                                 imagePlay.setVisibility(View.VISIBLE);
                                                 progressImage.setVisibility(View.GONE);
                                             }
@@ -335,9 +366,7 @@ public class AdapterLinkGrid extends AdapterLink {
                                                             .getColor(),
                                                     palette.getDarkVibrantColor(
                                                             palette.getMutedColor(
-                                                                    itemView.getResources()
-                                                                            .getColor(
-                                                                                    R.color.darkThemeDialog))));
+                                                                    colorBackgroundDefault)));
                                         }
                                     }
                                 });
@@ -349,7 +378,8 @@ public class AdapterLinkGrid extends AdapterLink {
             if (itemView.getLayoutParams() instanceof StaggeredGridLayoutManager.LayoutParams) {
                 float width = itemView.getResources().getDisplayMetrics().widthPixels;
 
-                return ((StaggeredGridLayoutManager.LayoutParams) itemView.getLayoutParams()).isFullSpan() ?
+                return ((StaggeredGridLayoutManager.LayoutParams) itemView.getLayoutParams())
+                        .isFullSpan() ?
                         1f : itemView.getWidth() / width;
             }
 
@@ -360,7 +390,9 @@ public class AdapterLinkGrid extends AdapterLink {
         public void setTextValues(Link link) {
             super.setTextValues(link);
 
-            textThreadInfo.setText(TextUtils.concat(getSubredditString(), showSubreddit ? "\n" : "", getSpannableScore(), "by ", link.getAuthor(), getFlairString()));
+            textThreadInfo.setText(TextUtils
+                    .concat(getSubredditString(), showSubreddit ? "\n" : "", getSpannableScore(),
+                            "by ", link.getAuthor(), getFlairString()));
 
             textHidden.setText(getTimestamp() + ", " + link.getNumComments() + " comments");
 
@@ -383,7 +415,8 @@ public class AdapterLinkGrid extends AdapterLink {
             expandFull(false);
             ((RelativeLayout.LayoutParams) textThreadTitle.getLayoutParams()).removeRule(
                     RelativeLayout.START_OF);
-            ((RelativeLayout.LayoutParams) textThreadTitle.getLayoutParams()).setMarginEnd(titleMargin);
+            ((RelativeLayout.LayoutParams) textThreadTitle.getLayoutParams())
+                    .setMarginEnd(titleMargin);
         }
     }
 

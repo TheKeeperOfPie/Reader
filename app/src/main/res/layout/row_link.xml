@@ -8,7 +8,7 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:minHeight="72dp"
-    android:background="@color/darkThemeBackground"
+    android:background="?attr/colorRowBackground"
     >
 
     <RelativeLayout
@@ -135,7 +135,7 @@
             android:paddingBottom="14dp"
             android:clickable="false"
             android:longClickable="false"
-            android:textColor="@color/darkThemeTextColorMuted"
+            android:textColor="?android:attr/textColorSecondary"
             />
 
         <TextView
@@ -183,7 +183,7 @@
                 android:layout_gravity="end"
                 android:gravity="end"
                 android:textSize="12sp"
-                android:textColor="@color/darkThemeTextColorMuted"
+                android:textColor="?android:attr/textColorSecondary"
                 />
 
             <android.support.v7.widget.Toolbar
@@ -236,7 +236,8 @@
         android:layout_height="match_parent"
         android:layout_alignTop="@id/layout"
         android:layout_alignBottom="@id/layout"
-        android:background="@color/darkThemeOverlay"
+        android:background="?android:attr/windowBackground"
+        android:alpha="0.75"
         android:visibility="gone"
         />
 

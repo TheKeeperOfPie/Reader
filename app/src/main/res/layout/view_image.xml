@@ -17,9 +17,9 @@
         android:layout_alignParentBottom="true"
         android:layout_centerHorizontal="true"
         android:textAppearance="?android:textAppearanceSmall"
-        android:textColor="@color/darkThemeTextColor"
-        android:shadowColor="@color/darkThemeDialog"
-        android:shadowRadius="3"
+        android:textColor="?android:attr/textColorSecondary"
+        android:shadowColor="?android:attr/shadowColor"
+        android:shadowRadius="2"
         />
 
 
@@ -27,7 +27,7 @@
         android:id="@+id/scroll_description"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="@color/darkThemeBackground"
+        android:background="?android:attr/windowBackground"
         android:alpha="0.85"
         android:visibility="gone"
         >
@@ -58,7 +58,7 @@
                 android:paddingTop="16dp"
                 android:paddingStart="@dimen/activity_horizontal_margin"
                 android:paddingEnd="@dimen/activity_horizontal_margin"
-                android:textColor="@color/darkThemeTextColor"
+                android:textColor="?android:attr/textColor"
                 />
 
         </RelativeLayout>

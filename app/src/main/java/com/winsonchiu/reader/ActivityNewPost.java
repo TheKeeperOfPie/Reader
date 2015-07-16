@@ -5,7 +5,12 @@
 package com.winsonchiu.reader;
 
 import android.app.Activity;
+import android.content.SharedPreferences;
+import android.content.res.TypedArray;
+import android.graphics.PorterDuff;
+import android.graphics.PorterDuffColorFilter;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.view.animation.FastOutSlowInInterpolator;
 import android.support.v7.app.AppCompatActivity;
@@ -72,6 +77,21 @@ public class ActivityNewPost extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+
+        switch (sharedPreferences.getString(AppSettings.PREF_THEME, "Dark")) {
+            case AppSettings.THEME_DARK:
+                setTheme(R.style.AppDarkTheme);
+                break;
+            case AppSettings.THEME_LIGHT:
+                setTheme(R.style.AppLightTheme);
+                break;
+            case AppSettings.THEME_BLACK:
+                setTheme(R.style.AppBlackTheme);
+                break;
+        }
+
         setContentView(R.layout.activity_new_post);
 
         reddit = Reddit.getInstance(this);
@@ -90,6 +110,15 @@ public class ActivityNewPost extends AppCompatActivity {
                 finish();
             }
         });
+
+        TypedArray typedArray = getTheme().obtainStyledAttributes(
+                new int[]{R.attr.colorIconFilter});
+        int colorIconFilter = typedArray.getColor(0, 0xFFFFFFFF);
+        typedArray.recycle();
+
+        PorterDuffColorFilter colorFilter = new PorterDuffColorFilter(colorIconFilter,
+                PorterDuff.Mode.MULTIPLY);
+        toolbar.getNavigationIcon().mutate().setColorFilter(colorFilter);
 
         setSupportActionBar(toolbar);
 

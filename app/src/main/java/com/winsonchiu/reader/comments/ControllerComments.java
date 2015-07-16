@@ -434,7 +434,7 @@ public class ControllerComments {
     public void insertComment(Comment comment) {
 
         // Check to see if comment is actually a part of the link's comment thread
-        if (!comment.getLinkId().equals(link.getName())) {
+        if (link == null || !comment.getLinkId().equals(link.getName())) {
             return;
         }
 

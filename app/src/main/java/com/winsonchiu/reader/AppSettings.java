@@ -19,6 +19,10 @@ import java.util.Set;
  */
 public class AppSettings {
 
+    public static final String THEME_DARK = "Dark";
+    public static final String THEME_LIGHT = "Light";
+    public static final String THEME_BLACK = "Black";
+
     // List of all possible tokens
     public static final String INITIALIZED = "initialized";
     public static final String ACCESS_TOKEN = "accessToken";
@@ -48,6 +52,9 @@ public class AppSettings {
     public static final String PREF_EXTERNAL_BROWSER = "pref_external_browser";
     public static final String PREF_HISTORY_SIZE = "pref_history_size";
     public static final String BETA_NOTICE_0 = "betaNotice0";
+    public static final String SWIPE_EXIT_COMMENTS = "swipe_exit_comments";
+    public static final String PREF_THEME = "pref_theme";
+
     private static final String TAG = AppSettings.class.getCanonicalName();
 
     public static boolean initPrefs(Context context) {

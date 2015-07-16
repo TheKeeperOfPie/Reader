@@ -9,7 +9,10 @@ import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
+import android.content.res.TypedArray;
 import android.graphics.Bitmap;
+import android.graphics.PorterDuff;
+import android.graphics.PorterDuffColorFilter;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.view.MenuItemCompat;
@@ -24,6 +27,7 @@ import android.view.ViewGroup;
 import android.webkit.WebChromeClient;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.widget.FrameLayout;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.Toast;
@@ -46,6 +50,8 @@ public class FragmentWeb extends FragmentBase {
     private View viewWebFullscreen;
     private RelativeLayout layoutRoot;
     private boolean isFinished;
+    private WebChromeClient.CustomViewCallback customViewCallback;
+    private PorterDuffColorFilter colorFilterIcon;
 
     public static FragmentWeb newInstance(String url) {
         FragmentWeb fragment = new FragmentWeb();
@@ -122,6 +128,10 @@ public class FragmentWeb extends FragmentBase {
                 return false;
             }
         });
+
+        for (int index = 0; index < menu.size(); index++) {
+            menu.getItem(index).getIcon().setColorFilter(colorFilterIcon);
+        }
     }
 
     @Override
@@ -143,13 +153,21 @@ public class FragmentWeb extends FragmentBase {
 
         layoutRoot = (RelativeLayout) view;
 
+        TypedArray typedArray = activity.getTheme().obtainStyledAttributes(
+                new int[]{R.attr.colorIconFilter});
+        int colorIconFilter = typedArray.getColor(0, 0xFFFFFFFF);
+        typedArray.recycle();
+
+        colorFilterIcon = new PorterDuffColorFilter(colorIconFilter,
+                PorterDuff.Mode.MULTIPLY);
+
         toolbar = (Toolbar) view.findViewById(R.id.toolbar);
         toolbar.setTitle(getString(R.string.loading_web_page));
         toolbar.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 ClipboardManager clipboard = (ClipboardManager) activity.getSystemService(
-                                Context.CLIPBOARD_SERVICE);
+                        Context.CLIPBOARD_SERVICE);
                 ClipData clip = ClipData.newPlainText(
                         getResources().getString(R.string.comment),
                         webView.getUrl());
@@ -158,6 +176,7 @@ public class FragmentWeb extends FragmentBase {
             }
         });
         toolbar.setNavigationIcon(R.drawable.ic_arrow_back_white_24dp);
+        toolbar.getNavigationIcon().mutate().setColorFilter(colorFilterIcon);
         toolbar.setNavigationOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -207,13 +226,17 @@ public class FragmentWeb extends FragmentBase {
             @Override
             public void onShowCustomView(View view, CustomViewCallback callback) {
                 viewWebFullscreen = view;
-                layoutRoot.addView(viewWebFullscreen, layoutRoot.getChildCount());
+                viewWebFullscreen.setBackgroundColor(0xFF000000);
+                customViewCallback = callback;
+                layoutRoot.addView(viewWebFullscreen, ViewGroup.LayoutParams.MATCH_PARENT);
+                viewWebFullscreen.bringToFront();
             }
 
             @Override
             public void onHideCustomView() {
                 super.onHideCustomView();
                 layoutRoot.removeView(viewWebFullscreen);
+                viewWebFullscreen = null;
             }
         });
         webView.getSettings().setUseWideViewPort(true);
@@ -224,6 +247,7 @@ public class FragmentWeb extends FragmentBase {
         webView.getSettings().setDomStorageEnabled(true);
         webView.getSettings().setDatabaseEnabled(true);
         webView.getSettings().setAppCacheEnabled(true);
+        webView.getSettings().setSupportMultipleWindows(false);
         webView.setBackgroundColor(0xFFFFFFFF);
         webView.setScrollBarStyle(View.SCROLLBARS_INSIDE_OVERLAY);
         webView.loadUrl(url);
@@ -294,6 +318,9 @@ public class FragmentWeb extends FragmentBase {
         }
         else if (itemSearch.isActionViewExpanded()) {
             itemSearch.collapseActionView();
+        }
+        else if (viewWebFullscreen != null) {
+            customViewCallback.onCustomViewHidden();
         }
         else {
             webView.destroy();

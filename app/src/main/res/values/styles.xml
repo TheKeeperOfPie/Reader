@@ -4,9 +4,7 @@
 
 <resources>
 
-    <!-- Base application theme. -->
     <style name="AppDarkTheme" parent="@style/Theme.AppCompat.NoActionBar">
-        <!-- Customize your theme here. -->
 
         <item name="colorPrimary">@color/colorPrimary</item>
         <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
@@ -14,8 +12,34 @@
 
         <item name="android:textColor">@color/darkThemeTextColor</item>
         <item name="android:textColorSecondary">@color/darkThemeTextColorMuted</item>
+        <item name="android:shadowColor">@color/darkThemeShadowColor</item>
         <item name="android:windowBackground">@color/darkThemeBackground</item>
+        <item name="colorRowBackground">@color/darkThemeRowBackground</item>
+        <item name="colorCellBackground">@color/darkThemeCellBackground</item>
+        <item name="colorIconFilter">@color/darkThemeIconFilter</item>
 
+    </style>
+
+    <style name="AppLightTheme" parent="@style/Theme.AppCompat.Light.NoActionBar">
+
+        <item name="colorPrimary">@color/colorPrimary</item>
+        <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
+        <item name="colorAccent">@color/colorAccent</item>
+
+        <item name="android:textColor">@color/lightThemeTextColor</item>
+        <item name="android:textColorSecondary">@color/lightThemeTextColorMuted</item>
+        <item name="android:shadowColor">@color/lightThemeShadowColor</item>
+        <item name="android:windowBackground">@color/lightThemeBackground</item>
+        <item name="colorRowBackground">@color/lightThemeRowBackground</item>
+        <item name="colorCellBackground">@color/lightThemeCellBackground</item>
+        <item name="colorIconFilter">@color/lightThemeIconFilter</item>
+
+    </style>
+
+    <style name="AppBlackTheme" parent="AppDarkTheme">
+        <item name="android:windowBackground">@color/blackThemeBackground</item>
+        <item name="colorRowBackground">@color/blackThemeBackground</item>
+        <item name="colorCellBackground">@color/blackThemeBackground</item>
     </style>
 
 </resources>

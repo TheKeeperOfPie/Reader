@@ -5,6 +5,7 @@
 package com.winsonchiu.reader.settings;
 
 import android.os.Bundle;
+import android.preference.Preference;
 
 import com.winsonchiu.reader.AppSettings;
 import com.winsonchiu.reader.R;
@@ -20,6 +21,8 @@ public class FragmentDisplay extends FragmentPreferences {
         addPreferencesFromResource(R.xml.prefs_display);
 
         bindPreferenceListenerSummary(findPreference(AppSettings.PREF_GRID_THUMBNAIL_SIZE));
+        bindPreferenceListenerSummary(findPreference(AppSettings.PREF_THEME));
+
     }
 
 }

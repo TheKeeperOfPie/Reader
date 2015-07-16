@@ -6,6 +6,9 @@ package com.winsonchiu.reader.search;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.res.TypedArray;
+import android.graphics.PorterDuff;
+import android.graphics.PorterDuffColorFilter;
 import android.os.Bundle;
 import android.support.design.widget.TabLayout;
 import android.support.v4.view.MenuItemCompat;
@@ -62,6 +65,7 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
     private MenuItem itemSearch;
     private MenuItem itemSortTime;
     private Toolbar toolbar;
+    private PorterDuffColorFilter colorFilterIcon;
 
     public static FragmentSearch newInstance(boolean hideKeyboard) {
         FragmentSearch fragment = new FragmentSearch();
@@ -134,6 +138,10 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
 
         if (getArguments().getBoolean(ARG_HIDE_KEYBOARD)) {
             searchView.clearFocus();
+        }
+
+        for (int index = 0; index < menu.size(); index++) {
+            menu.getItem(index).getIcon().setColorFilter(colorFilterIcon);
         }
 
     }
@@ -210,8 +218,17 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
             }
         };
 
+        TypedArray typedArray = activity.getTheme().obtainStyledAttributes(
+                new int[]{R.attr.colorIconFilter});
+        int colorIconFilter = typedArray.getColor(0, 0xFFFFFFFF);
+        typedArray.recycle();
+
+        colorFilterIcon = new PorterDuffColorFilter(colorIconFilter,
+                PorterDuff.Mode.MULTIPLY);
+
         toolbar = (Toolbar) view.findViewById(R.id.toolbar);
         toolbar.setNavigationIcon(R.drawable.ic_arrow_back_white_24dp);
+        toolbar.getNavigationIcon().mutate().setColorFilter(colorFilterIcon);
         toolbar.setNavigationOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {

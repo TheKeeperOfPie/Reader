@@ -6,6 +6,9 @@ package com.winsonchiu.reader.profile;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.content.res.TypedArray;
+import android.graphics.PorterDuff;
+import android.graphics.PorterDuffColorFilter;
 import android.os.Bundle;
 import android.support.design.widget.Snackbar;
 import android.support.v4.widget.SwipeRefreshLayout;
@@ -59,6 +62,7 @@ public class FragmentProfile extends FragmentBase implements Toolbar.OnMenuItemC
     private AdapterProfilePage adapterProfilePage;
     private Snackbar snackbar;
     private CustomItemTouchHelper itemTouchHelper;
+    private PorterDuffColorFilter colorFilterIcon;
 
     public static FragmentProfile newInstance() {
         FragmentProfile fragment = new FragmentProfile();
@@ -113,25 +117,18 @@ public class FragmentProfile extends FragmentBase implements Toolbar.OnMenuItemC
 
         menu.findItem(R.id.item_sort_hot).setChecked(true);
         menu.findItem(R.id.item_sort_time).setTitle(
-                getString(R.string.time) + Reddit.TIME_SEPARATOR + getString(R.string.item_sort_all));
+                getString(R.string.time) + Reddit.TIME_SEPARATOR + getString(
+                        R.string.item_sort_all));
 
         if (TextUtils.isEmpty(mListener.getControllerUser().getUser().getName()) && !mListener.getControllerProfile().isLoading()) {
             itemSearch.expandActionView();
         }
 
-//        resetSubmenuSelected();
-    }
-
-    private void resetSubmenuSelected() {
-        onMenuItemClick(menu.findItem(mListener.getControllerProfile()
-                .getSort()
-                .getMenuId()));
-        onMenuItemClick(menu.findItem(mListener.getControllerProfile()
-                .getTime()
-                .getMenuId()));
+        for (int index = 0; index < menu.size(); index++) {
+            menu.getItem(index).getIcon().setColorFilter(colorFilterIcon);
+        }
 
     }
-
 
     @Override
     public void onDestroyOptionsMenu() {
@@ -204,6 +201,16 @@ public class FragmentProfile extends FragmentBase implements Toolbar.OnMenuItemC
             }
         };
 
+
+
+        TypedArray typedArray = activity.getTheme().obtainStyledAttributes(
+                new int[]{R.attr.colorIconFilter});
+        int colorIconFilter = typedArray.getColor(0, 0xFFFFFFFF);
+        typedArray.recycle();
+
+        colorFilterIcon = new PorterDuffColorFilter(colorIconFilter,
+                PorterDuff.Mode.MULTIPLY);
+
         toolbar = (Toolbar) view.findViewById(R.id.toolbar);
         if (getFragmentManager().getBackStackEntryCount() <= 1) {
             toolbar.setNavigationIcon(R.drawable.ic_menu_white_24dp);
@@ -223,6 +230,7 @@ public class FragmentProfile extends FragmentBase implements Toolbar.OnMenuItemC
                 }
             });
         }
+        toolbar.getNavigationIcon().mutate().setColorFilter(colorFilterIcon);
         setUpOptionsMenu();
 
         adapterProfilePage = new AdapterProfilePage(activity);

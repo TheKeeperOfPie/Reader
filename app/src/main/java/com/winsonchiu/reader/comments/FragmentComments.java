@@ -6,12 +6,17 @@ package com.winsonchiu.reader.comments;
 
 import android.app.Activity;
 import android.app.Fragment;
+import android.content.SharedPreferences;
 import android.content.res.TypedArray;
+import android.graphics.PorterDuff;
+import android.graphics.PorterDuffColorFilter;
 import android.graphics.Rect;
 import android.os.Build;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.FloatingActionButton;
+import android.support.v4.view.GestureDetectorCompat;
 import android.support.v4.view.ViewCompat;
 import android.support.v4.view.ViewPropertyAnimatorListener;
 import android.support.v4.view.animation.FastOutSlowInInterpolator;
@@ -23,8 +28,11 @@ import android.support.v7.widget.Toolbar;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.util.TypedValue;
+import android.view.GestureDetector;
 import android.view.LayoutInflater;
+import android.view.Menu;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.AlphaAnimation;
@@ -38,6 +46,7 @@ import com.google.android.youtube.player.YouTubeInitializationResult;
 import com.google.android.youtube.player.YouTubePlayer;
 import com.google.android.youtube.player.YouTubePlayerView;
 import com.winsonchiu.reader.ApiKeys;
+import com.winsonchiu.reader.AppSettings;
 import com.winsonchiu.reader.YouTubePlayerStateListener;
 import com.winsonchiu.reader.links.FragmentThreadList;
 import com.winsonchiu.reader.utils.DisallowListener;
@@ -95,6 +104,9 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
     private MenuItem itemLoadFullComments;
     private View viewHolderView;
     private float toolbarHeight;
+    private GestureDetectorCompat gestureDetector;
+    private SharedPreferences preferences;
+    private PorterDuffColorFilter colorFilterIcon;
 
     public static FragmentComments newInstance() {
         FragmentComments fragment = new FragmentComments();
@@ -145,6 +157,12 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
 
         toolbar.getMenu().findItem(mListener.getControllerComments().getSort().getMenuId())
                 .setChecked(true);
+
+        Menu menu = toolbar.getMenu();
+
+        for (int index = 0; index < menu.size(); index++) {
+            menu.getItem(index).getIcon().setColorFilter(colorFilterIcon);
+        }
     }
 
     @Override
@@ -152,6 +170,8 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
             Bundle savedInstanceState) {
 
         final View view = inflater.inflate(R.layout.fragment_comments, container, false);
+
+
 
         listener = new ControllerComments.Listener() {
             @Override
@@ -212,6 +232,14 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
         toolbar = (Toolbar) view.findViewById(R.id.toolbar);
         Log.d(TAG, "backStack: " + getFragmentManager().getBackStackEntryCount());
 
+        TypedArray typedArray = activity.getTheme().obtainStyledAttributes(
+                new int[]{R.attr.colorIconFilter});
+        int colorIconFilter = typedArray.getColor(0, 0xFFFFFFFF);
+        typedArray.recycle();
+
+        colorFilterIcon = new PorterDuffColorFilter(colorIconFilter,
+                PorterDuff.Mode.MULTIPLY);
+
         if (getFragmentManager().getBackStackEntryCount() == 0 && activity.isTaskRoot() && getFragmentManager().findFragmentByTag(fragmentParentTag) == null) {
             toolbar.setNavigationIcon(R.drawable.ic_menu_white_24dp);
             toolbar.setNavigationOnClickListener(new View.OnClickListener() {
@@ -230,6 +258,7 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
                 }
             });
         }
+        toolbar.getNavigationIcon().mutate().setColorFilter(colorFilterIcon);
         setUpOptionsMenu();
 
         layoutActions = (LinearLayout) view.findViewById(R.id.layout_actions);
@@ -371,6 +400,43 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
         recyclerCommentList.setLayoutManager(linearLayoutManager);
         recyclerCommentList.setItemAnimator(null);
 
+        final float swipeRightDistance = getResources().getDisplayMetrics().widthPixels * 0.65f;
+
+        gestureDetector = new GestureDetectorCompat(activity, new GestureDetector.SimpleOnGestureListener() {
+            @Override
+            public boolean onScroll(MotionEvent e1,
+                    MotionEvent e2,
+                    float distanceX,
+                    float distanceY) {
+
+                if (e2.getX() - e1.getX() > swipeRightDistance) {
+                    mListener.onNavigationBackClick();
+                    return true;
+                }
+
+                return super.onScroll(e1, e2, distanceX, distanceY);
+            }
+        });
+
+        if (preferences.getBoolean(AppSettings.SWIPE_EXIT_COMMENTS, true)) {
+            recyclerCommentList.addOnItemTouchListener(new RecyclerView.OnItemTouchListener() {
+                @Override
+                public boolean onInterceptTouchEvent(RecyclerView rv, MotionEvent e) {
+                    gestureDetector.onTouchEvent(e);
+                    return false;
+                }
+
+                @Override
+                public void onTouchEvent(RecyclerView rv, MotionEvent e) {
+                }
+
+                @Override
+                public void onRequestDisallowInterceptTouchEvent(boolean disallowIntercept) {
+
+                }
+            });
+        }
+
         DisallowListener disallowListener = new DisallowListener() {
             @Override
             public void requestDisallowInterceptTouchEventVertical(boolean disallow) {
@@ -480,6 +546,13 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
             }
         };
 
+        AdapterCommentList.ViewHolderComment.ReplyCallback replyCallback = new AdapterCommentList.ViewHolderComment.ReplyCallback() {
+            @Override
+            public void onReplyShown() {
+                behaviorFloatingActionButton.animateOut(buttonExpandActions);
+            }
+        };
+
         if (adapterCommentList == null) {
 
             adapterCommentList = new AdapterCommentList(activity, mListener.getControllerComments(),
@@ -488,6 +561,7 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
                     mListener.getEventListenerComment(),
                     disallowListener,
                     recyclerCallback,
+                    replyCallback,
                     youTubeListener,
                     getArguments().getBoolean(ARG_IS_GRID, false),
                     getArguments().getInt(ARG_COLOR_LINK));
@@ -793,6 +867,8 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
         super.onAttach(activity);
         Log.d(TAG, "onAttach");
         this.activity = activity;
+        this.preferences = PreferenceManager.getDefaultSharedPreferences(
+                activity.getApplicationContext());
         try {
             mListener = (FragmentListenerBase) activity;
         }
@@ -842,6 +918,9 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
             return true;
         }
         else {
+            if (!isAdded()) {
+                return true;
+            }
 
             linearLayoutManager.scrollToPositionWithOffset(0, 0);
 
@@ -939,12 +1018,7 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
                         }
                     });
 
-                    if (getView() != null) {
-                        getView().startAnimation(animation);
-                    }
-                    else {
-                        getFragmentManager().popBackStackImmediate();
-                    }
+                    recyclerCommentList.startAnimation(animation);
 
                 }
             });

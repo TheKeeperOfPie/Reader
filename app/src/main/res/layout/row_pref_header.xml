@@ -52,7 +52,7 @@
         android:paddingTop="4dp"
         android:clickable="false"
         android:longClickable="false"
-        android:textColor="@color/darkThemeTextColorMuted"
+        android:textColor="?android:attr/textColorSecondary"
         />
 
     <View

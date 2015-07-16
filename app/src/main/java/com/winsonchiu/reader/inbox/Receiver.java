@@ -91,7 +91,8 @@ public class Receiver extends BroadcastReceiver {
                         }
 
                         Intent intentActivity = new Intent(context, MainActivity.class);
-                        intentActivity.putExtra(MainActivity.NAV_PAGE, R.id.item_inbox);
+                        intentActivity.putExtra(MainActivity.NAV_ID, R.id.item_inbox);
+                        intentActivity.putExtra(MainActivity.NAV_PAGE, ControllerInbox.PAGE_UNREAD);
                         PendingIntent pendingIntent = PendingIntent
                                 .getActivity(context, 0, intentActivity, 0);
 
