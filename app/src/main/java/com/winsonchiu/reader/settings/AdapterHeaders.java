@@ -4,6 +4,10 @@
 
 package com.winsonchiu.reader.settings;
 
+import android.app.Activity;
+import android.content.res.TypedArray;
+import android.graphics.PorterDuff;
+import android.graphics.PorterDuffColorFilter;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -21,10 +25,11 @@ import java.util.List;
  */
 public class AdapterHeaders extends RecyclerView.Adapter<AdapterHeaders.ViewHolder> {
 
+    private PorterDuffColorFilter colorFilterIcon;
     private EventListener eventListener;
     private List<Header> headers;
 
-    public AdapterHeaders(EventListener eventListener) {
+    public AdapterHeaders(Activity activity, EventListener eventListener) {
         super();
         this.eventListener = eventListener;
         headers = new ArrayList<>();
@@ -33,11 +38,18 @@ public class AdapterHeaders extends RecyclerView.Adapter<AdapterHeaders.ViewHold
         headers.add(new Header(R.drawable.ic_mail_white_24dp, R.string.prefs_category_mail, R.string.prefs_category_mail_summary));
         headers.add(new Header(R.drawable.ic_help_outline_white_24dp, R.string.prefs_category_about, R.string.prefs_category_about_summary));
         headers.add(new Header(R.drawable.ic_exit_to_app_white_24dp, R.string.logout, R.string.logout_summary));
+
+        TypedArray typedArray = activity.getTheme().obtainStyledAttributes(new int[] {R.attr.colorIconFilter});
+        int colorIconFilter = typedArray.getColor(0, 0xFFFFFFFF);
+        typedArray.recycle();
+
+        colorFilterIcon = new PorterDuffColorFilter(colorIconFilter, PorterDuff.Mode.MULTIPLY);
+
     }
 
     @Override
     public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-        return new ViewHolder(LayoutInflater.from(parent.getContext()).inflate(R.layout.row_pref_header, parent, false), eventListener);
+        return new ViewHolder(LayoutInflater.from(parent.getContext()).inflate(R.layout.row_pref_header, parent, false), eventListener, colorFilterIcon);
     }
 
     @Override
@@ -58,7 +70,7 @@ public class AdapterHeaders extends RecyclerView.Adapter<AdapterHeaders.ViewHold
         protected TextView textSummary;
         private Header header;
 
-        public ViewHolder(View itemView, EventListener listener) {
+        public ViewHolder(View itemView, EventListener listener, PorterDuffColorFilter colorFilterIcon) {
             super(itemView);
             this.eventListener = listener;
 
@@ -72,6 +84,8 @@ public class AdapterHeaders extends RecyclerView.Adapter<AdapterHeaders.ViewHold
                     eventListener.onClickHeader(getAdapterPosition());
                 }
             });
+
+            imageIcon.setColorFilter(colorFilterIcon);
 
         }
 

@@ -12,53 +12,70 @@
     android:background="@android:color/transparent"
     >
 
-    <View
-        android:id="@+id/view_background"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:background="?android:attr/windowBackground"
-        android:layout_below="@+id/toolbar"
-        />
-
-    <include
-        layout="@layout/toolbar"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_alignParentTop="true"
-        />
-
-    <com.google.android.youtube.player.YouTubePlayerView
-        android:id="@+id/youtube"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:visibility="gone"
-        android:layout_below="@id/toolbar"
-        />
-
     <android.support.design.widget.CoordinatorLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_below="@id/youtube"
+        android:layout_alignParentTop="true"
         >
 
-        <com.winsonchiu.reader.views.CustomSwipeRefreshLayout
-            android:id="@+id/swipe_refresh_comment_list"
+        <RelativeLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             app:layout_behavior="@string/appbar_scrolling_view_behavior"
             >
 
-            <android.support.v7.widget.RecyclerView
-                android:id="@+id/recycler_comment_list"
+            <View
+                android:id="@+id/view_background"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:scrollbars="vertical"
-                android:scrollbarFadeDuration="200"
-                android:paddingBottom="48dp"
-                android:clipToPadding="false"
+                android:background="?android:attr/windowBackground"
+                android:layout_below="@+id/toolbar"
                 />
 
-        </com.winsonchiu.reader.views.CustomSwipeRefreshLayout>
+            <com.google.android.youtube.player.YouTubePlayerView
+                android:id="@+id/youtube"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:visibility="gone"
+                android:layout_alignParentTop="true"
+                />
+
+            <com.winsonchiu.reader.views.CustomSwipeRefreshLayout
+                android:id="@+id/swipe_refresh_comment_list"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_below="@id/youtube"
+                >
+
+                <android.support.v7.widget.RecyclerView
+                    android:id="@+id/recycler_comment_list"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:scrollbars="vertical"
+                    android:scrollbarFadeDuration="200"
+                    android:paddingBottom="48dp"
+                    android:clipToPadding="false"
+                    />
+
+            </com.winsonchiu.reader.views.CustomSwipeRefreshLayout>
+
+        </RelativeLayout>
+
+        <android.support.design.widget.AppBarLayout
+            android:id="@+id/layout_app_bar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            >
+
+            <include
+                layout="@layout/toolbar"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_alignParentTop="true"
+                app:layout_scrollFlags="scroll|enterAlways"
+                />
+
+        </android.support.design.widget.AppBarLayout>
 
         <android.support.design.widget.FloatingActionButton
             android:id="@+id/button_expand_actions"

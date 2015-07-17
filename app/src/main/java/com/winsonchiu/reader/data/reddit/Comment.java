@@ -63,6 +63,7 @@ public class Comment extends Thing {
     private String replyText;
     private boolean replyExpanded;
     private boolean editMode;
+    private int collapsed;
 
     public static void addAllFromJson(List<Comment> comments, JSONObject rootJsonObject, int level) throws JSONException {
 
@@ -292,7 +293,7 @@ public class Comment extends Thing {
         this.gilded = gilded;
     }
 
-    public int isLikes() {
+    public int getLikes() {
         return likes;
     }
 
@@ -502,5 +503,13 @@ public class Comment extends Thing {
 
     public void setCount(int count) {
         this.count = count;
+    }
+
+    public int getCollapsed() {
+        return collapsed;
+    }
+
+    public void setCollapsed(int collapsed) {
+        this.collapsed = collapsed;
     }
 }

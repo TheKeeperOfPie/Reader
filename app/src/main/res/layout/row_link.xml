@@ -131,6 +131,7 @@
             android:layout_marginEnd="@dimen/activity_horizontal_margin"
             android:gravity="start"
             android:textAppearance="@style/TextAppearance.AppCompat.Caption"
+            android:textAlignment="viewStart"
             android:paddingTop="4dp"
             android:paddingBottom="14dp"
             android:clickable="false"
@@ -184,6 +185,7 @@
                 android:gravity="end"
                 android:textSize="12sp"
                 android:textColor="?android:attr/textColorSecondary"
+                android:textAlignment="viewEnd"
                 />
 
             <android.support.v7.widget.Toolbar

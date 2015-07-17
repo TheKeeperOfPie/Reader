@@ -2,38 +2,20 @@
   ~ Copyright 2015 Winson Chiu
   -->
 
-<com.winsonchiu.reader.views.CustomRelativeLayout
+<android.support.design.widget.CoordinatorLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     tools:context="com.winsonchiu.reader.inbox.FragmentInbox"
     >
 
-    <android.support.v7.widget.Toolbar
-        android:id="@+id/toolbar"
-        android:minHeight="?android:actionBarSize"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="@color/colorPrimary"
-        app:layout_collapseMode="pin"
-        >
-
-        <Spinner
-            android:id="@+id/spinner_page"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginEnd="16dp"
-            />
-
-    </android.support.v7.widget.Toolbar>
-
-
-    <android.support.design.widget.CoordinatorLayout
+    <RelativeLayout
+        android:id="@+id/layout_relative"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_below="@id/toolbar"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior"
         >
 
         <com.winsonchiu.reader.views.CustomSwipeRefreshLayout
@@ -55,23 +37,60 @@
 
         </com.winsonchiu.reader.views.CustomSwipeRefreshLayout>
 
-        <android.support.design.widget.FloatingActionButton
-            android:id="@+id/fab_new_message"
+        <TextView
+            android:id="@+id/text_empty"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_alignParentEnd="true"
-            android:layout_alignParentBottom="true"
-            android:layout_margin="16dp"
-            android:src="@drawable/ic_add_white_24dp"
-            app:layout_behavior="com.winsonchiu.reader.utils.ScrollAwareFloatingActionButtonBehavior"
-            app:layout_anchor="@id/swipe_refresh_inbox"
-            app:layout_anchorGravity="bottom|end"
-            app:fabSize="normal"
-            app:elevation="6dp"
-            app:pressedTranslationZ="12dp"
-            app:borderWidth="0dp"
+            android:layout_centerHorizontal="true"
+            android:layout_alignParentTop="true"
+            android:text="@string/empty_thread_list"
+            android:visibility="gone"
+            android:layout_margin="@dimen/activity_horizontal_margin"
             />
 
-    </android.support.design.widget.CoordinatorLayout>
+    </RelativeLayout>
 
-</com.winsonchiu.reader.views.CustomRelativeLayout>
+    <android.support.design.widget.AppBarLayout
+        android:id="@+id/layout_app_bar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        >
+
+        <android.support.v7.widget.Toolbar
+            android:id="@+id/toolbar"
+            android:minHeight="?android:actionBarSize"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@color/colorPrimary"
+            app:layout_scrollFlags="scroll|enterAlways"
+            >
+
+            <Spinner
+                android:id="@+id/spinner_page"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="16dp"
+                />
+
+        </android.support.v7.widget.Toolbar>
+
+    </android.support.design.widget.AppBarLayout>
+
+    <android.support.design.widget.FloatingActionButton
+        android:id="@+id/fab_new_message"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentBottom="true"
+        android:layout_margin="16dp"
+        android:src="@drawable/ic_add_white_24dp"
+        app:layout_behavior="com.winsonchiu.reader.utils.ScrollAwareFloatingActionButtonBehavior"
+        app:layout_anchor="@id/swipe_refresh_inbox"
+        app:layout_anchorGravity="bottom|end"
+        app:fabSize="normal"
+        app:elevation="6dp"
+        app:pressedTranslationZ="12dp"
+        app:borderWidth="0dp"
+        />
+
+</android.support.design.widget.CoordinatorLayout>

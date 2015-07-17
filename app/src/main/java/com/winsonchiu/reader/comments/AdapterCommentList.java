@@ -18,6 +18,7 @@ import android.graphics.PorterDuffColorFilter;
 import android.graphics.drawable.Drawable;
 import android.preference.PreferenceManager;
 import android.support.v4.graphics.ColorUtils;
+import android.support.v4.view.GestureDetectorCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
@@ -34,13 +35,17 @@ import android.text.method.LinkMovementMethod;
 import android.text.style.ForegroundColorSpan;
 import android.util.DisplayMetrics;
 import android.util.TypedValue;
+import android.view.GestureDetector;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
@@ -152,6 +157,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                     public void loadBackgroundColor() {
                         if (colorLink != 0) {
                             itemView.setBackgroundColor(colorLink);
+                            setTextColors(colorLink);
                         }
                         else {
                             super.loadBackgroundColor();
@@ -339,7 +345,6 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
 
         protected View viewIndent;
         protected View viewIndicator;
-        protected View viewIndicatorContainer;
         protected TextView textComment;
         protected TextView textInfo;
         protected TextView textHidden;
@@ -364,6 +369,10 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
         protected PorterDuffColorFilter colorFilterPositive;
         protected PorterDuffColorFilter colorFilterNegative;
         protected PorterDuffColorFilter colorFilterMenuItem;
+        protected View viewIndicatorContainer;
+        protected RelativeLayout layoutContainerCollapsed;
+        protected View viewIndicatorCollapsed;
+        protected TextView textCollapsed;
 
         protected AdapterLink.ViewHolderBase.EventListener eventListenerBase;
         protected EventListener eventListener;
@@ -444,6 +453,11 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                     R.id.layout_container_reply);
             editTextReply = (EditText) itemView.findViewById(R.id.edit_text_reply);
             buttonSendReply = (Button) itemView.findViewById(R.id.button_send_reply);
+
+            viewIndicatorCollapsed = itemView.findViewById(R.id.view_indicator_collapsed);
+            layoutContainerCollapsed = (RelativeLayout) itemView.findViewById(R.id.layout_container_collapsed);
+            textCollapsed = (TextView) itemView.findViewById(R.id.text_collapsed);
+
         }
 
         private void initializeListeners() {
@@ -456,33 +470,51 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                 public void onClick(View v) {
                     if (!TextUtils.isEmpty(editTextReply.getText())) {
                         sendReply();
+                        InputMethodManager inputManager = (InputMethodManager) itemView.getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
+                        inputManager.hideSoftInputFromWindow(itemView.getWindowToken(),
+                                InputMethodManager.HIDE_NOT_ALWAYS);
                     }
                 }
             });
 
-            View.OnClickListener clickListenerLink = new View.OnClickListener() {
+            final GestureDetectorCompat gestureDetectorCompat = new GestureDetectorCompat(itemView.getContext(), new GestureDetector.SimpleOnGestureListener() {
                 @Override
-                public void onClick(View v) {
-                    expandToolbarActions();
-                }
-            };
-            textComment.setOnClickListener(clickListenerLink);
-            textInfo.setOnClickListener(clickListenerLink);
-            this.itemView.setOnClickListener(clickListenerLink);
-
-            View.OnLongClickListener longClickListener = new View.OnLongClickListener() {
-                @Override
-                public boolean onLongClick(View v) {
+                public boolean onDoubleTap(MotionEvent e) {
                     itemCollapse.setIcon(eventListener.toggleComment(getAdapterPosition()) ?
                             R.drawable.ic_arrow_drop_up_white_24dp :
                             R.drawable.ic_arrow_drop_down_white_24dp);
                     itemCollapse.getIcon().setColorFilter(colorFilterMenuItem);
                     return true;
                 }
+
+                @Override
+                public boolean onSingleTapConfirmed(MotionEvent e) {
+                    expandToolbarActions();
+                    return true;
+                }
+            });
+
+            View.OnTouchListener onTouchListener = new View.OnTouchListener() {
+                @Override
+                public boolean onTouch(View v, MotionEvent event) {
+                    return gestureDetectorCompat.onTouchEvent(event);
+                }
+            };
+
+            View.OnLongClickListener longClickListener = new View.OnLongClickListener() {
+                @Override
+                public boolean onLongClick(View v) {
+                    eventListener.voteComment(ViewHolderComment.this, comment, 1);
+                    return true;
+                }
             };
             textComment.setOnLongClickListener(longClickListener);
             textInfo.setOnLongClickListener(longClickListener);
             this.itemView.setOnLongClickListener(longClickListener);
+
+            textComment.setOnTouchListener(onTouchListener);
+            textInfo.setOnTouchListener(onTouchListener);
+            itemView.setOnTouchListener(onTouchListener);
 
             editTextReply.addTextChangedListener(new TextWatcher() {
                 @Override
@@ -636,7 +668,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
         }
 
         public void setVoteColors() {
-            switch (comment.isLikes()) {
+            switch (comment.getLikes()) {
                 case 1:
                     drawableUpvote.mutate().setColorFilter(colorFilterPositive);
                     itemUpvote.setIcon(drawableUpvote);
@@ -687,6 +719,17 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
             viewIndicator.setBackgroundColor(indicatorColor);
             viewIndicatorContainer.setBackgroundColor(indicatorColor);
 
+            if (comment.getCollapsed() > 0) {
+                viewIndicatorCollapsed.setBackgroundColor(indicatorColor);
+                textCollapsed.setText(
+                        comment.getCollapsed() + " " + resources
+                                .getString(R.string.comments_collapsed));
+                layoutContainerCollapsed.setVisibility(View.VISIBLE);
+            }
+            else {
+                layoutContainerCollapsed.setVisibility(View.GONE);
+            }
+
             ViewGroup.LayoutParams layoutParams = viewIndent.getLayoutParams();
             layoutParams.width = getIndentWidth();
             viewIndent.setLayoutParams(layoutParams);
@@ -705,6 +748,26 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
 
                 int colorPositive = resources.getColor(R.color.positiveScore);
                 int colorNegative = resources.getColor(R.color.negativeScore);
+
+
+                String voteIndicator = "";
+                int voteColor = 0;
+
+                switch (comment.getLikes()) {
+                    case -1:
+                        voteIndicator = " \u25BC";
+                        voteColor = colorNegative;
+                        break;
+                    case 1:
+                        voteIndicator = " \u25B2";
+                        voteColor = colorPositive;
+                        break;
+                }
+
+                Spannable spannableVote = new SpannableString(voteIndicator);
+                if (!TextUtils.isEmpty(spannableVote)) {
+                    spannableVote.setSpan(new ForegroundColorSpan(voteColor), 0, spannableVote.length(), Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
+                }
 
                 Spannable spannableScore = new SpannableString(String.valueOf(comment.getScore()));
 
@@ -758,7 +821,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                 textInfo.setTextColor(comment.isNew() ? resources.getColor(
                         R.color.textColorAlert) : colorTextSecondary);
 
-                textInfo.setText(TextUtils.concat(spannableScore, " by ", spannableAuthor, flair,
+                textInfo.setText(TextUtils.concat(spannableVote, spannableScore, " by ", spannableAuthor, flair,
                         timestamp, comment.getEdited() > 0 ? "*" : ""));
 
                 if (comment.getEdited() > 1) {
@@ -786,18 +849,20 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
         }
 
         public void toggleReply() {
-            // TODO: Store reply text inside Comment
-            if (!comment.isReplyExpanded()) {
-                editTextReply.requestFocus();
-                editTextReply.setText(comment.getReplyText());
-                buttonSendReply.setText(
-                        comment.isEditMode() ? itemView.getContext().getString(R.string.send_edit) :
-                                itemView.getContext().getString(R.string.send_reply));
-                replyCallback.onReplyShown();
-            }
             comment.setReplyExpanded(!comment.isReplyExpanded());
+            buttonSendReply.setText(
+                    comment.isEditMode() ? itemView.getContext().getString(R.string.send_edit) :
+                            itemView.getContext().getString(R.string.send_reply));
+            editTextReply.setText(comment.getReplyText());
             layoutContainerReply.setVisibility(
                     comment.isReplyExpanded() ? View.VISIBLE : View.GONE);
+            if (comment.isReplyExpanded()) {
+                editTextReply.clearFocus();
+                InputMethodManager inputManager = (InputMethodManager) itemView.getContext()
+                        .getSystemService(Context.INPUT_METHOD_SERVICE);
+                inputManager.toggleSoftInput(InputMethodManager.SHOW_FORCED, 0);
+                editTextReply.requestFocus();
+            }
         }
 
         @Override

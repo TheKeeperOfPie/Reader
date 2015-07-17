@@ -20,7 +20,7 @@
         android:layout_marginTop="8dp"
         android:layout_marginStart="@dimen/activity_horizontal_margin"
         android:layout_marginEnd="@dimen/activity_horizontal_margin"
-        android:textAppearance="?android:textAppearanceLarge"
+        android:textAppearance="@style/TextAppearance.AppCompat.Title"
         android:textColor="@color/colorPrimary"
         android:background="?attr/selectableItemBackgroundBorderless"
         />
@@ -34,7 +34,7 @@
         android:layout_marginStart="@dimen/activity_horizontal_margin"
         android:layout_marginEnd="@dimen/activity_horizontal_margin"
         android:layout_toStartOf="@id/button_open"
-        android:textSize="14sp"
+        android:textAppearance="@style/TextAppearance.AppCompat.Subhead"
         android:clickable="false"
         android:longClickable="false"
         />
@@ -69,7 +69,7 @@
             android:layout_marginBottom="8dp"
             android:layout_marginStart="@dimen/activity_horizontal_margin"
             android:layout_marginEnd="@dimen/activity_horizontal_margin"
-            android:textSize="12sp"
+            android:textAppearance="@style/TextAppearance.AppCompat.Body1"
             android:background="?attr/selectableItemBackgroundBorderless"
             />
 
@@ -81,10 +81,10 @@
             android:layout_marginTop="4dp"
             android:layout_marginStart="@dimen/activity_horizontal_margin"
             android:layout_marginEnd="@dimen/activity_horizontal_margin"
-            android:textSize="12sp"
             android:layout_alignParentEnd="true"
             android:gravity="end"
             android:textColor="?android:attr/textColorSecondary"
+            android:textAppearance="@style/TextAppearance.AppCompat.Body1"
             android:clickable="false"
             android:longClickable="false"
             />

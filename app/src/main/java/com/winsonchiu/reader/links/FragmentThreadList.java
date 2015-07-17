@@ -482,7 +482,6 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
 
         recyclerThreadList = (RecyclerView) view.findViewById(R.id.recycler_thread_list);
         recyclerThreadList.setLayoutManager(layoutManager);
-        recyclerThreadList.setHasFixedSize(true);
         recyclerThreadList.setAdapter(adapterLink);
         recyclerThreadList.setItemAnimator(null);
 

@@ -201,8 +201,6 @@ public class FragmentProfile extends FragmentBase implements Toolbar.OnMenuItemC
             }
         };
 
-
-
         TypedArray typedArray = activity.getTheme().obtainStyledAttributes(
                 new int[]{R.attr.colorIconFilter});
         int colorIconFilter = typedArray.getColor(0, 0xFFFFFFFF);

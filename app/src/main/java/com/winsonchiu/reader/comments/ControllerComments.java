@@ -572,8 +572,10 @@ public class ControllerComments {
                     .add(position + 1, commentsToInsert.get(insertIndex));
             numAdded++;
         }
+        comment.setCollapsed(0);
 
         for (Listener listener : listeners) {
+            listener.getAdapter().notifyItemChanged(position + 1);
             listener.getAdapter()
                     .notifyItemRangeInserted(position + 2, numAdded);
         }
@@ -589,7 +591,11 @@ public class ControllerComments {
             commentList.remove(position);
             numRemoved++;
         }
+        if (numRemoved > 0) {
+            comment.setCollapsed(numRemoved);
+        }
         for (Listener listener : listeners) {
+            listener.getAdapter().notifyItemChanged(position);
             listener.getAdapter()
                     .notifyItemRangeRemoved(position + 1, numRemoved);
         }

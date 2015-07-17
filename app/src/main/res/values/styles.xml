@@ -18,6 +18,7 @@
         <item name="colorCellBackground">@color/darkThemeCellBackground</item>
         <item name="colorIconFilter">@color/darkThemeIconFilter</item>
 
+        <item name="android:actionOverflowButtonStyle">@style/OverflowStyleDark</item>
     </style>
 
     <style name="AppLightTheme" parent="@style/Theme.AppCompat.Light.NoActionBar">
@@ -34,12 +35,22 @@
         <item name="colorCellBackground">@color/lightThemeCellBackground</item>
         <item name="colorIconFilter">@color/lightThemeIconFilter</item>
 
+        <item name="android:actionOverflowButtonStyle">@style/OverflowStyleLight</item>
+
     </style>
 
     <style name="AppBlackTheme" parent="AppDarkTheme">
         <item name="android:windowBackground">@color/blackThemeBackground</item>
         <item name="colorRowBackground">@color/blackThemeBackground</item>
         <item name="colorCellBackground">@color/blackThemeBackground</item>
+    </style>
+
+    <style name="OverflowStyleDark" parent="Widget.AppCompat.ActionButton.Overflow">
+        <item name="android:contentDescription">toolbar_overflow_access</item>
+    </style>
+
+    <style name="OverflowStyleLight" parent="Widget.AppCompat.Light.ActionButton.Overflow">
+        <item name="android:contentDescription">toolbar_overflow_access</item>
     </style>
 
 </resources>

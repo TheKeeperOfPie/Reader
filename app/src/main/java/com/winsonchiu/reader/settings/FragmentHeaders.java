@@ -49,7 +49,7 @@ public class FragmentHeaders extends Fragment {
 
         preferences = PreferenceManager.getDefaultSharedPreferences(activity);
 
-        adapterHeaders = new AdapterHeaders(new AdapterHeaders.EventListener() {
+        adapterHeaders = new AdapterHeaders(activity, new AdapterHeaders.EventListener() {
             @Override
             public void onClickHeader(int position) {
 

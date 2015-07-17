@@ -6,17 +6,22 @@ package com.winsonchiu.reader.links;
 
 import android.app.Activity;
 import android.content.res.Resources;
+import android.graphics.ColorFilter;
+import android.graphics.PorterDuff;
+import android.graphics.PorterDuffColorFilter;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.support.v4.graphics.ColorUtils;
 import android.support.v7.graphics.Palette;
+import android.support.v7.internal.widget.TintImageView;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.StaggeredGridLayoutManager;
 import android.text.TextUtils;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.Menu;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
@@ -33,6 +38,8 @@ import com.winsonchiu.reader.utils.RecyclerCallback;
 import com.winsonchiu.reader.data.reddit.Link;
 import com.winsonchiu.reader.data.reddit.Reddit;
 import com.winsonchiu.reader.data.imgur.Album;
+
+import java.util.ArrayList;
 
 /**
  * Created by TheKeeperOfPie on 3/7/2015.
@@ -111,6 +118,7 @@ public class AdapterLinkGrid extends AdapterLink {
         private final int thumbnailSize;
         protected ImageView imageFull;
         private int colorBackgroundDefault;
+        private int titleTextColor;
 
         public ViewHolder(View itemView,
                 EventListener eventListener,
@@ -163,6 +171,8 @@ public class AdapterLinkGrid extends AdapterLink {
         public void onBind(Link link, boolean showSubbreddit, String userName) {
 
             super.onBind(link, showSubbreddit, userName);
+
+            titleTextColor = colorTextPrimaryDefault;
 
             int position = getAdapterPosition();
 
@@ -231,6 +241,12 @@ public class AdapterLinkGrid extends AdapterLink {
                     recyclerCallback.scrollTo(getAdapterPosition());
                 }
             }
+        }
+
+        @Override
+        protected void expandToolbarActions() {
+            super.expandToolbarActions();
+            setOverflowColorFilter();
         }
 
         private int getAdjustedThumbnailSize() {
@@ -386,24 +402,60 @@ public class AdapterLinkGrid extends AdapterLink {
                     ((ColorDrawable) itemView.getBackground())
                             .getColor(), color);
 
-            Log.d(TAG, link.getTitle() + " luminance: " + ColorUtils.calculateLuminance(color));
+            setTextColors(color);
 
-//            if (ColorUtils.calculateLuminance(color) > 0.5f) {
+        }
+
+        public void setTextColors(int color) {
+
+            Menu menu = toolbarActions.getMenu();
+
+            if (ColorUtils.calculateLuminance(color) < 0.5f) {
                 buttonComments.setColorFilter(colorFilterIconLight);
                 imagePlay.setColorFilter(colorFilterIconLight);
-                textThreadTitle.setTextColor(
-                        resources.getColor(R.color.darkThemeTextColor));
                 textThreadInfo.setTextColor(resources.getColor(R.color.darkThemeTextColorMuted));
                 textHidden.setTextColor(resources.getColor(R.color.darkThemeTextColorMuted));
-//            }
-//            else {
-//                buttonComments.setColorFilter(colorFilterIconDark);
-//                imagePlay.setColorFilter(colorFilterIconDark);
-//                textThreadTitle.setTextColor(
-//                        resources.getColor(R.color.lightThemeTextColor));
-//                textThreadInfo.setTextColor(resources.getColor(R.color.lightThemeTextColorMuted));
-//                textHidden.setTextColor(resources.getColor(R.color.lightThemeTextColorMuted));
-//            }
+                if (link.isOver18()) {
+                    titleTextColor = resources.getColor(R.color.textColorAlert);
+                }
+                else {
+                    titleTextColor = resources.getColor(R.color.darkThemeTextColor);
+                }
+                colorFilterMenuItem = colorFilterIconLight;
+
+            }
+            else {
+                buttonComments.setColorFilter(colorFilterIconDark);
+                imagePlay.setColorFilter(colorFilterIconDark);
+                textThreadInfo.setTextColor(resources.getColor(R.color.lightThemeTextColorMuted));
+                textHidden.setTextColor(resources.getColor(R.color.lightThemeTextColorMuted));
+                if (link.isOver18()) {
+                    titleTextColor = resources.getColor(R.color.textColorAlertMuted);
+                }
+                else {
+                    titleTextColor = resources.getColor(R.color.lightThemeTextColor);
+                }
+                colorFilterMenuItem = colorFilterIconDark;
+            }
+            textThreadTitle.setTextColor(titleTextColor);
+
+            setOverflowColorFilter();
+
+            for (int index = 0; index < menu.size(); index++) {
+                menu.getItem(index).getIcon().mutate().setColorFilter(colorFilterMenuItem);
+            }
+        }
+
+        public void setOverflowColorFilter() {
+
+            ArrayList<View> views = new ArrayList<>();
+            toolbarActions.findViewsWithText(views, "toolbar_overflow_access",
+                    View.FIND_VIEWS_WITH_CONTENT_DESCRIPTION);
+
+            if (!views.isEmpty()) {
+                TintImageView imageOverflow = (TintImageView) views.get(0);
+                imageOverflow.setColorFilter(colorFilterMenuItem);
+            }
         }
 
         @Override
@@ -422,6 +474,9 @@ public class AdapterLinkGrid extends AdapterLink {
         @Override
         public void setTextValues(Link link) {
             super.setTextValues(link);
+
+            textThreadTitle.setTextColor(
+                    link.isOver18() ? resources.getColor(R.color.textColorAlert) : titleTextColor);
 
             textThreadInfo.setText(TextUtils
                     .concat(getSubredditString(), showSubreddit ? "\n" : "", getSpannableScore(),

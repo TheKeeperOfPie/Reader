@@ -24,8 +24,7 @@ import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 import com.winsonchiu.reader.comments.AdapterCommentList;
-import com.winsonchiu.reader.links.AdapterLinkGrid;
-import com.winsonchiu.reader.links.AdapterLinkList;
+import com.winsonchiu.reader.links.AdapterLink;
 import com.winsonchiu.reader.ApiKeys;
 import com.winsonchiu.reader.AppSettings;
 import com.winsonchiu.reader.BuildConfig;
@@ -385,10 +384,10 @@ public class Reddit {
             final VoteResponseListener voteResponseListener) {
         final int position = viewHolder.getAdapterPosition();
 
-        final int oldVote = link.isLikes();
+        final int oldVote = link.getLikes();
         int newVote = 0;
 
-        if (link.isLikes() != vote) {
+        if (link.getLikes() != vote) {
             newVote = vote;
         }
 
@@ -396,16 +395,14 @@ public class Reddit {
         params.put(Reddit.QUERY_ID, link.getName());
         params.put(Reddit.QUERY_VOTE, String.valueOf(newVote));
 
+        link.setScore(link.getScore() + newVote);
         link.setLikes(newVote);
         if (position == viewHolder.getAdapterPosition()) {
-            if (viewHolder instanceof AdapterLinkList.ViewHolder) {
-                ((AdapterLinkList.ViewHolder) viewHolder).setVoteColors();
-                ((AdapterLinkList.ViewHolder) viewHolder).setTextValues(link);
-            }
-            else if (viewHolder instanceof AdapterLinkGrid.ViewHolder) {
-                ((AdapterLinkGrid.ViewHolder) viewHolder).setVoteColors();
+            if (viewHolder instanceof AdapterLink.ViewHolderBase) {
+                ((AdapterLink.ViewHolderBase) viewHolder).setVoteColors();
             }
         }
+        final int finalNewVote = newVote;
         loadPost(Reddit.OAUTH_URL + "/api/vote", new Listener<String>() {
             @Override
             public void onResponse(String response) {
@@ -414,14 +411,11 @@ public class Reddit {
             @Override
             public void onErrorResponse(VolleyError error) {
                 voteResponseListener.onVoteFailed();
+                link.setScore(link.getScore() - finalNewVote);
                 link.setLikes(oldVote);
                 if (position == viewHolder.getAdapterPosition()) {
-                    if (viewHolder instanceof AdapterLinkList.ViewHolder) {
-                        ((AdapterLinkList.ViewHolder) viewHolder).setVoteColors();
-                        ((AdapterLinkList.ViewHolder) viewHolder).setTextValues(link);
-                    }
-                    else if (viewHolder instanceof AdapterLinkGrid.ViewHolder) {
-                        ((AdapterLinkGrid.ViewHolder) viewHolder).setVoteColors();
+                    if (viewHolder instanceof AdapterLink.ViewHolderBase) {
+                        ((AdapterLink.ViewHolderBase) viewHolder).setVoteColors();
                     }
                 }
             }
@@ -448,10 +442,10 @@ public class Reddit {
             final VoteResponseListener voteResponseListener) {
 
         final int position = viewHolder.getAdapterPosition();
-        final int oldVote = comment.isLikes();
+        final int oldVote = comment.getLikes();
         int newVote = 0;
 
-        if (comment.isLikes() != vote) {
+        if (comment.getLikes() != vote) {
             newVote = vote;
         }
 

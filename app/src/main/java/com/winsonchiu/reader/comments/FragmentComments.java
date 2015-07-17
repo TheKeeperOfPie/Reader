@@ -659,7 +659,7 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
             @Override
             protected void applyTransformation(float interpolatedTime, Transformation t) {
                 super.applyTransformation(interpolatedTime, t);
-                CoordinatorLayout.LayoutParams layoutParams = (CoordinatorLayout.LayoutParams) swipeRefreshCommentList
+                RelativeLayout.LayoutParams layoutParams = (RelativeLayout.LayoutParams) swipeRefreshCommentList
                         .getLayoutParams();
                 float reverseInterpolation = 1.0f - interpolatedTime;
                 layoutParams.topMargin = (int) (startY * reverseInterpolation);
@@ -729,7 +729,7 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
             }
         });
 
-        CoordinatorLayout.LayoutParams layoutParams = (CoordinatorLayout.LayoutParams) swipeRefreshCommentList
+        RelativeLayout.LayoutParams layoutParams = (RelativeLayout.LayoutParams) swipeRefreshCommentList
                 .getLayoutParams();
         layoutParams.topMargin = (int) startY;
         layoutParams.setMarginStart((int) startX);
@@ -977,7 +977,7 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
                         protected void applyTransformation(float interpolatedTime,
                                 Transformation t) {
                             super.applyTransformation(interpolatedTime, t);
-                            CoordinatorLayout.LayoutParams layoutParams = (CoordinatorLayout.LayoutParams) swipeRefreshCommentList
+                            RelativeLayout.LayoutParams layoutParams = (RelativeLayout.LayoutParams) swipeRefreshCommentList
                                     .getLayoutParams();
                             layoutParams.topMargin = (int) (startY * interpolatedTime);
                             layoutParams.setMarginStart((int) (startX * interpolatedTime));

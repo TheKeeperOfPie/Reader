@@ -48,6 +48,7 @@ import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.InputMethodManager;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.Button;
@@ -374,7 +375,8 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
     }
 
     public static abstract class ViewHolderBase extends RecyclerView.ViewHolder
-            implements Toolbar.OnMenuItemClickListener, View.OnClickListener {
+            implements Toolbar.OnMenuItemClickListener, View.OnClickListener,
+            View.OnLongClickListener {
 
         public Link link;
         public String userName;
@@ -463,7 +465,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             return shareIntent;
         }
 
-        private void expandToolbarActions() {
+        protected void expandToolbarActions() {
 
             if (!toolbarActions.isShown()) {
                 addToHistory();
@@ -586,7 +588,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             colorFilterIconDefault = new PorterDuffColorFilter(colorIconFilter, PorterDuff.Mode.MULTIPLY);
             colorFilterIconLight = new PorterDuffColorFilter(resources.getColor(R.color.darkThemeIconFilter), PorterDuff.Mode.MULTIPLY);
             colorFilterIconDark = new PorterDuffColorFilter(resources.getColor(R.color.lightThemeIconFilter), PorterDuff.Mode.MULTIPLY);
-            colorFilterMenuItem = new PorterDuffColorFilter(colorIconFilter, PorterDuff.Mode.MULTIPLY);
+            colorFilterMenuItem = colorFilterIconDefault;
             colorFilterPositive = new PorterDuffColorFilter(colorPositive,
                     PorterDuff.Mode.MULTIPLY);
             colorFilterNegative = new PorterDuffColorFilter(colorNegative,
@@ -598,12 +600,14 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
 
         protected void initializeListeners() {
 
-            itemView.setOnClickListener(this);
-            imageThumbnail.setOnClickListener(this);
             buttonComments.setOnClickListener(this);
             buttonSendReply.setOnClickListener(this);
+            imageThumbnail.setOnClickListener(this);
             textThreadSelf.setOnClickListener(this);
             textThreadSelf.setMovementMethod(LinkMovementMethod.getInstance());
+
+            itemView.setOnClickListener(this);
+            itemView.setOnLongClickListener(this);
 
             editTextReply.setOnTouchListener(new OnTouchListenerDisallow(disallowListener));
 
@@ -661,11 +665,24 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                 case R.id.button_send_reply:
                     if (!TextUtils.isEmpty(editTextReply.getText())) {
                         sendComment();
+                        InputMethodManager inputManager = (InputMethodManager) itemView.getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
+                        inputManager.hideSoftInputFromWindow(itemView.getWindowToken(),
+                                InputMethodManager.HIDE_NOT_ALWAYS);
                     }
                     break;
                 default:
                     expandToolbarActions();
                     break;
+            }
+        }
+
+        @Override
+        public boolean onLongClick(View v) {
+            switch (v.getId()) {
+                default:
+                    eventListener.voteLink(ViewHolderBase.this, link, 1);
+                    viewOverlay.setVisibility(View.GONE);
+                    return true;
             }
         }
 
@@ -689,7 +706,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             itemCopyText = menu.findItem(R.id.item_copy_text);
 
             for (int index = 0; index < menu.size(); index++) {
-                menu.getItem(index).getIcon().setColorFilter(colorFilterMenuItem);
+                menu.getItem(index).getIcon().mutate().setColorFilter(colorFilterMenuItem);
             }
 
         }
@@ -822,12 +839,19 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         public void toggleReply() {
             expandFull(true);
             link.setReplyExpanded(!link.isReplyExpanded());
-            if (link.isReplyExpanded()) {
-                editTextReply.requestFocus();
-                editTextReply.setText(null);
-            }
             layoutContainerReply.setVisibility(link.isReplyExpanded() ? View.VISIBLE : View.GONE);
-            recyclerCallback.scrollTo(getAdapterPosition());
+            if (link.isReplyExpanded()) {
+                InputMethodManager inputManager = (InputMethodManager) itemView.getContext()
+                        .getSystemService(Context.INPUT_METHOD_SERVICE);
+                inputManager.toggleSoftInput(InputMethodManager.SHOW_FORCED, 0);
+                editTextReply.clearFocus();
+                editTextReply.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        editTextReply.requestFocus();
+                    }
+                });
+            }
         }
 
         public abstract float getRatio();
@@ -1038,7 +1062,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
 
         public void setVoteColors() {
 
-            switch (link.isLikes()) {
+            switch (link.getLikes()) {
                 case 1:
                     itemUpvote.getIcon().mutate().setColorFilter(colorFilterPositive);
                     itemDownvote.getIcon().setColorFilter(colorFilterMenuItem);
@@ -1052,6 +1076,9 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                     itemDownvote.getIcon().setColorFilter(colorFilterMenuItem);
                     break;
             }
+
+            setTextValues(link);
+
         }
 
         public void setTextValues(Link link) {
@@ -1081,14 +1108,33 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             return showSubreddit ? "/r/" + link.getSubreddit() : "";
         }
 
-        public Spannable getSpannableScore() {
+        public CharSequence getSpannableScore() {
+
+            String voteIndicator = "";
+            int voteColor = 0;
+
+            switch (link.getLikes()) {
+                case -1:
+                    voteIndicator = " \u25BC";
+                    voteColor = colorNegative;
+                    break;
+                case 1:
+                    voteIndicator = " \u25B2";
+                    voteColor = colorPositive;
+                    break;
+            }
+
+            Spannable spannableVote = new SpannableString(voteIndicator);
+            if (!TextUtils.isEmpty(spannableVote)) {
+                spannableVote.setSpan(new ForegroundColorSpan(voteColor), 0, spannableVote.length(), Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
+            }
 
             Spannable spannableScore = new SpannableString(" " + link.getScore() + " ");
             spannableScore.setSpan(new ForegroundColorSpan(
                             link.getScore() > 0 ? colorPositive : colorNegative), 0,
                     spannableScore.length(),
                     Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
-            return spannableScore;
+            return TextUtils.concat(spannableVote, spannableScore);
         }
 
         public CharSequence getTimestamp() {
@@ -1470,12 +1516,20 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             this.link = link;
             this.showSubreddit = showSubreddit;
             this.userName = userName;
+            colorFilterMenuItem = colorFilterIconDefault;
             isYouTubeFullscreen = false;
             layoutContainerExpand.setVisibility(View.GONE);
-            layoutContainerReply.setVisibility(link.isReplyExpanded() ? View.VISIBLE : View.GONE);
 
             if (link.isReplyExpanded()) {
-                editTextReply.setText(link.getReplyText());
+                if (TextUtils.isEmpty(link.getReplyText())) {
+                    link.setReplyExpanded(false);
+                    layoutContainerReply.setVisibility(View.GONE);
+                }
+                else {
+                    expandFull(true);
+                    editTextReply.setText(link.getReplyText());
+                    layoutContainerReply.setVisibility(View.VISIBLE);
+                }
             }
 
             progressImage.setIndeterminate(true);

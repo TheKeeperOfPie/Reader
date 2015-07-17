@@ -76,7 +76,6 @@ public class ActivityNewPost extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
 
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
 
@@ -91,6 +90,8 @@ public class ActivityNewPost extends AppCompatActivity {
                 setTheme(R.style.AppBlackTheme);
                 break;
         }
+
+        super.onCreate(savedInstanceState);
 
         setContentView(R.layout.activity_new_post);
 

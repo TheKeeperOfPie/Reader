@@ -105,7 +105,6 @@ public class MainActivity extends YouTubeBaseActivity
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
         Fabric.with(this, new Crashlytics());
 
         sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
@@ -121,6 +120,8 @@ public class MainActivity extends YouTubeBaseActivity
                 setTheme(R.style.AppBlackTheme);
                 break;
         }
+
+        super.onCreate(savedInstanceState);
 
         reddit = Reddit.getInstance(this);
 

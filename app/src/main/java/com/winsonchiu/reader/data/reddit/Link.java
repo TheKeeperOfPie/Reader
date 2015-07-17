@@ -220,7 +220,7 @@ public class Link extends Thing {
         this.isSelf = isSelf;
     }
 
-    public int isLikes() {
+    public int getLikes() {
         return likes;
     }
 

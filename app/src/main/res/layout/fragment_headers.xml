@@ -2,11 +2,13 @@
   ~ Copyright 2015 Winson Chiu
   -->
 
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-             xmlns:tools="http://schemas.android.com/tools"
-             android:layout_width="match_parent"
-             android:layout_height="match_parent"
-             tools:context="com.winsonchiu.reader.settings.FragmentHeaders">
+<FrameLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="com.winsonchiu.reader.settings.FragmentHeaders"
+    >
 
     <android.support.v7.widget.RecyclerView
         android:id="@+id/recycler_headers"
