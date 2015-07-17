@@ -427,11 +427,15 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         public PorterDuffColorFilter colorFilterSave;
         public PorterDuffColorFilter colorFilterPositive;
         public PorterDuffColorFilter colorFilterNegative;
-        public PorterDuffColorFilter colorFilterThumbnail;
+        public PorterDuffColorFilter colorFilterIconDefault;
+        public PorterDuffColorFilter colorFilterIconLight;
+        public PorterDuffColorFilter colorFilterIconDark;
         public PorterDuffColorFilter colorFilterMenuItem;
-        private int colorAccent;
-        private int colorPositive;
-        private int colorNegative;
+        public int colorAccent;
+        public int colorPositive;
+        public int colorNegative;
+        public int colorTextPrimaryDefault;
+        public int colorTextSecondaryDefault;
         public Drawable drawableDefault;
 
         public SharedPreferences preferences;
@@ -573,11 +577,15 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                 }
             });
 
-            TypedArray typedArray = itemView.getContext().getTheme().obtainStyledAttributes(new int[] {R.attr.colorIconFilter});
+            TypedArray typedArray = itemView.getContext().getTheme().obtainStyledAttributes(new int[] {R.attr.colorIconFilter, android.R.attr.textColorPrimary, android.R.attr.textColorSecondary});
             int colorIconFilter = typedArray.getColor(0, 0xFFFFFFFF);
+            colorTextPrimaryDefault = typedArray.getColor(1, resources.getColor(R.color.darkThemeTextColor));
+            colorTextSecondaryDefault = typedArray.getColor(2, resources.getColor(R.color.darkThemeTextColorMuted));
             typedArray.recycle();
 
-            colorFilterThumbnail = new PorterDuffColorFilter(colorIconFilter, PorterDuff.Mode.MULTIPLY);
+            colorFilterIconDefault = new PorterDuffColorFilter(colorIconFilter, PorterDuff.Mode.MULTIPLY);
+            colorFilterIconLight = new PorterDuffColorFilter(resources.getColor(R.color.darkThemeIconFilter), PorterDuff.Mode.MULTIPLY);
+            colorFilterIconDark = new PorterDuffColorFilter(resources.getColor(R.color.lightThemeIconFilter), PorterDuff.Mode.MULTIPLY);
             colorFilterMenuItem = new PorterDuffColorFilter(colorIconFilter, PorterDuff.Mode.MULTIPLY);
             colorFilterPositive = new PorterDuffColorFilter(colorPositive,
                     PorterDuff.Mode.MULTIPLY);
@@ -585,7 +593,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                     PorterDuff.Mode.MULTIPLY);
             colorFilterSave = new PorterDuffColorFilter(colorAccent, PorterDuff.Mode.MULTIPLY);
 
-            buttonComments.setColorFilter(colorFilterThumbnail);
+            buttonComments.setColorFilter(colorFilterIconDefault);
         }
 
         protected void initializeListeners() {
@@ -1059,7 +1067,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             textThreadTitle.setText(link.getTitle()
                     .toString());
             textThreadTitle.setTextColor(
-                    link.isOver18() ? resources.getColor(R.color.textColorAlert) : textThreadTitle.getTextColors().getDefaultColor());
+                    link.isOver18() ? resources.getColor(R.color.textColorAlert) : colorTextPrimaryDefault);
 
             textThreadSelf.setText(link.getSelfTextHtml());
         }

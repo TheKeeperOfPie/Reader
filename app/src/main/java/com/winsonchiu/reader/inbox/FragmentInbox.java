@@ -207,6 +207,7 @@ public class FragmentInbox extends FragmentBase {
                 startActivity(intent);
             }
         });
+        floatingActionButtonNewMessage.setColorFilter(colorFilterIcon);
 
         behaviorFloatingActionButton = new ScrollAwareFloatingActionButtonBehavior(activity, null,
                 new ScrollAwareFloatingActionButtonBehavior.OnVisibilityChangeListener() {

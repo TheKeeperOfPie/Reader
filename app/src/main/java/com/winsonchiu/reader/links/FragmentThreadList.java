@@ -378,6 +378,7 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
                     @Override
                     public void onEndHideFromScroll() {
                         buttonExpandActions.setImageResource(R.drawable.ic_unfold_more_white_24dp);
+                        buttonExpandActions.setColorFilter(colorFilterIcon);
                     }
 
                 });
@@ -435,6 +436,10 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
             layoutParamsActions.setMarginEnd(margin);
             layoutActions.setLayoutParams(layoutParamsActions);
         }
+
+        buttonExpandActions.setColorFilter(colorFilterIcon);
+        buttonJumpTop.setColorFilter(colorFilterIcon);
+        buttonClearViewed.setColorFilter(colorFilterIcon);
 
         swipeRefreshThreadList = (SwipeRefreshLayout) view.findViewById(
                 R.id.swipe_refresh_thread_list);
@@ -663,6 +668,7 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
                 public void onAnimationEnd(Animation animation) {
                     view.setVisibility(View.GONE);
                     buttonExpandActions.setImageResource(R.drawable.ic_unfold_more_white_24dp);
+                    buttonExpandActions.setColorFilter(colorFilterIcon);
                 }
 
                 @Override

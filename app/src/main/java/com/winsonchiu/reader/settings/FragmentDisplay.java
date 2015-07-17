@@ -21,7 +21,6 @@ public class FragmentDisplay extends FragmentPreferences {
         addPreferencesFromResource(R.xml.prefs_display);
 
         bindPreferenceListenerSummary(findPreference(AppSettings.PREF_GRID_THUMBNAIL_SIZE));
-        bindPreferenceListenerSummary(findPreference(AppSettings.PREF_THEME));
 
     }
 

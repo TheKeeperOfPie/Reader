@@ -22,7 +22,6 @@
     <color name="admin">#FFF44336</color>
     <color name="special">#FFC62828</color>
 
-
     <color name="darkThemeTextColor">#FFFFFFFF</color>
     <color name="darkThemeTextColorMuted">#FFBDBDBD</color>
     <color name="darkThemeShadowColor">#FF353535</color>
@@ -31,6 +30,7 @@
     <color name="darkThemeCellBackground">#FF353535</color>
     <color name="darkThemeIconFilter">#FFFFFFFF</color>
 
+    <color name="lightThemeColorAccent">#FFDDB000</color>
     <color name="lightThemeTextColor">#FF212121</color>
     <color name="lightThemeTextColorMuted">#FF555555</color>
     <color name="lightThemeShadowColor">#FFFAFAFA</color>

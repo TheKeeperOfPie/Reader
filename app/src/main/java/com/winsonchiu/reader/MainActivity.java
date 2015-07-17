@@ -10,6 +10,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Resources;
+import android.content.res.TypedArray;
 import android.graphics.Bitmap;
 import android.media.MediaScannerConnection;
 import android.net.Uri;
@@ -22,6 +23,7 @@ import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.AlertDialog;
 import android.text.TextUtils;
 import android.util.Log;
+import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
@@ -573,6 +575,22 @@ public class MainActivity extends YouTubeBaseActivity
     private void inflateNavigationDrawer() {
         viewNavigation = (NavigationView) findViewById(R.id.navigation);
 
+        // TODO: Adhere to guidelines by making the increment 56dp on mobile and 64dp on tablet
+        float standardIncrement = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 56, getResources().getDisplayMetrics());
+        float screenWidth = getResources().getDisplayMetrics().widthPixels;
+
+        TypedArray typedArray = getTheme().obtainStyledAttributes(
+                new int[]{android.R.attr.actionBarSize});
+        float marginEnd = typedArray.getDimension(0, standardIncrement);
+        typedArray.recycle();
+
+        float navigationWidth = screenWidth - marginEnd;
+        if (navigationWidth > standardIncrement * 6) {
+            navigationWidth = standardIncrement * 6;
+        }
+
+        viewNavigation.getLayoutParams().width = (int) navigationWidth;
+
         View viewHeader = LayoutInflater.from(this)
                 .inflate(R.layout.header_navigation,
                         viewNavigation, false);
@@ -580,6 +598,24 @@ public class MainActivity extends YouTubeBaseActivity
         imageNavHeader = (ImageView) viewHeader.findViewById(R.id.image_nav_header);
         textAccountName = (TextView) viewHeader.findViewById(R.id.text_account_name);
         textAccountInfo = (TextView) viewHeader.findViewById(R.id.text_account_info);
+
+        imageNavHeader.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                switch (sharedPreferences.getString(AppSettings.PREF_THEME, AppSettings.THEME_DARK)) {
+                    case AppSettings.THEME_DARK:
+                        sharedPreferences.edit().putString(AppSettings.PREF_THEME, AppSettings.THEME_LIGHT).commit();
+                        break;
+                    case AppSettings.THEME_LIGHT:
+                        sharedPreferences.edit().putString(AppSettings.PREF_THEME, AppSettings.THEME_BLACK).commit();
+                        break;
+                    case AppSettings.THEME_BLACK:
+                        sharedPreferences.edit().putString(AppSettings.PREF_THEME, AppSettings.THEME_DARK).commit();
+                        break;
+                }
+                recreate();
+            }
+        });
 
         View.OnClickListener clickListenerAccount = new View.OnClickListener() {
             @Override
@@ -683,16 +719,6 @@ public class MainActivity extends YouTubeBaseActivity
         fragmentTransaction.commit();
 
         loadId = 0;
-    }
-
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-
-        if (requestCode == REQUEST_SETTINGS) {
-            recreate();
-        }
-
     }
 
     public void loadAccountInfo() {

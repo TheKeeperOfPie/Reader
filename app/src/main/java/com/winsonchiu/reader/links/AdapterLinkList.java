@@ -115,7 +115,7 @@ public class AdapterLinkList extends AdapterLink {
             Drawable drawable = Reddit.getDrawableForLink(itemView.getContext(), link);
             if (drawable == null) {
                 if (TextUtils.isEmpty(link.getThumbnail()) || !preferences.getBoolean(AppSettings.PREF_SHOW_THUMBNAILS, true) || (link.isOver18() && !preferences.getBoolean(AppSettings.PREF_NSFW_THUMBNAILS, true))) {
-                    imageThumbnail.setColorFilter(colorFilterThumbnail);
+                    imageThumbnail.setColorFilter(colorFilterIconDefault);
                     imageThumbnail.setImageDrawable(drawableDefault);
                 }
                 else {
@@ -127,7 +127,7 @@ public class AdapterLinkList extends AdapterLink {
                 }
             }
             else {
-                imageThumbnail.setColorFilter(colorFilterThumbnail);
+                imageThumbnail.setColorFilter(colorFilterIconDefault);
                 imageThumbnail.setImageDrawable(drawable);
             }
 

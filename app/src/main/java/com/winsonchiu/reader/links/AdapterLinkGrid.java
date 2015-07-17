@@ -9,11 +9,13 @@ import android.content.res.Resources;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
+import android.support.v4.graphics.ColorUtils;
 import android.support.v7.graphics.Palette;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.StaggeredGridLayoutManager;
 import android.text.TextUtils;
 import android.util.DisplayMetrics;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -165,11 +167,18 @@ public class AdapterLinkGrid extends AdapterLink {
             int position = getAdapterPosition();
 
             itemView.setBackgroundColor(colorBackgroundDefault);
+            buttonComments.setColorFilter(colorFilterIconDefault);
+            imagePlay.setColorFilter(colorFilterIconDefault);
+            textThreadTitle.setTextColor(colorTextPrimaryDefault);
+            textThreadInfo.setTextColor(colorTextSecondaryDefault);
+            textHidden.setTextColor(colorTextSecondaryDefault);
+
             imagePlay.setVisibility(View.GONE);
+
             Drawable drawable = Reddit.getDrawableForLink(itemView.getContext(), link);
             if (drawable != null) {
                 imageFull.setVisibility(View.GONE);
-                imageThumbnail.setColorFilter(colorFilterThumbnail);
+                imageThumbnail.setColorFilter(colorFilterIconDefault);
                 imageThumbnail.setImageDrawable(drawable);
                 imageThumbnail.setVisibility(View.VISIBLE);
             }
@@ -177,7 +186,7 @@ public class AdapterLinkGrid extends AdapterLink {
                     (link.isOver18() && !preferences
                             .getBoolean(AppSettings.PREF_NSFW_THUMBNAILS, true))) {
                 imageFull.setVisibility(View.GONE);
-                imageThumbnail.setColorFilter(colorFilterThumbnail);
+                imageThumbnail.setColorFilter(colorFilterIconDefault);
                 imageThumbnail.setImageDrawable(drawableDefault);
                 imageThumbnail.setVisibility(View.VISIBLE);
             }
@@ -196,7 +205,7 @@ public class AdapterLinkGrid extends AdapterLink {
             }
             else {
                 imageFull.setVisibility(View.GONE);
-                imageThumbnail.setColorFilter(colorFilterThumbnail);
+                imageThumbnail.setColorFilter(colorFilterIconDefault);
                 imageThumbnail.setImageDrawable(drawableDefault);
                 imageThumbnail.setVisibility(View.VISIBLE);
             }
@@ -277,7 +286,7 @@ public class AdapterLinkGrid extends AdapterLink {
                 else {
                     imageFull.setVisibility(View.GONE);
                     imageThumbnail.setVisibility(View.VISIBLE);
-                    imageThumbnail.setColorFilter(colorFilterThumbnail);
+                    imageThumbnail.setColorFilter(colorFilterIconDefault);
                     imageThumbnail.setImageDrawable(drawableDefault);
                     progressImage.setVisibility(View.GONE);
 
@@ -360,17 +369,41 @@ public class AdapterLinkGrid extends AdapterLink {
                                     public void onGenerated(Palette palette) {
                                         if (position == getAdapterPosition()) {
                                             // Fix desync of background colors
-                                            AnimationUtils.animateBackgroundColor(
-                                                    itemView,
-                                                    ((ColorDrawable) itemView.getBackground())
-                                                            .getColor(),
-                                                    palette.getDarkVibrantColor(
-                                                            palette.getMutedColor(
-                                                                    colorBackgroundDefault)));
+
+                                            setBackgroundColor(palette.getDarkVibrantColor(
+                                                    palette.getMutedColor(colorBackgroundDefault)));
+
                                         }
                                     }
                                 });
             }
+        }
+
+        public void setBackgroundColor(int color) {
+
+            AnimationUtils.animateBackgroundColor(
+                    itemView,
+                    ((ColorDrawable) itemView.getBackground())
+                            .getColor(), color);
+
+            Log.d(TAG, link.getTitle() + " luminance: " + ColorUtils.calculateLuminance(color));
+
+//            if (ColorUtils.calculateLuminance(color) > 0.5f) {
+                buttonComments.setColorFilter(colorFilterIconLight);
+                imagePlay.setColorFilter(colorFilterIconLight);
+                textThreadTitle.setTextColor(
+                        resources.getColor(R.color.darkThemeTextColor));
+                textThreadInfo.setTextColor(resources.getColor(R.color.darkThemeTextColorMuted));
+                textHidden.setTextColor(resources.getColor(R.color.darkThemeTextColorMuted));
+//            }
+//            else {
+//                buttonComments.setColorFilter(colorFilterIconDark);
+//                imagePlay.setColorFilter(colorFilterIconDark);
+//                textThreadTitle.setTextColor(
+//                        resources.getColor(R.color.lightThemeTextColor));
+//                textThreadInfo.setTextColor(resources.getColor(R.color.lightThemeTextColorMuted));
+//                textHidden.setTextColor(resources.getColor(R.color.lightThemeTextColorMuted));
+//            }
         }
 
         @Override

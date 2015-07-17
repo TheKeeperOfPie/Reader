@@ -116,7 +116,7 @@
             android:layout_toEndOf="@+id/image_thumbnail"
             android:layout_toStartOf="@+id/button_comments"
             android:layout_marginStart="@dimen/activity_horizontal_margin"
-            android:textSize="14sp"
+            android:textAppearance="@style/TextAppearance.AppCompat.Body2"
             android:clickable="false"
             android:longClickable="false"
             />
@@ -130,7 +130,7 @@
             android:layout_marginStart="@dimen/activity_horizontal_margin"
             android:layout_marginEnd="@dimen/activity_horizontal_margin"
             android:gravity="start"
-            android:textSize="12sp"
+            android:textAppearance="@style/TextAppearance.AppCompat.Caption"
             android:paddingTop="4dp"
             android:paddingBottom="14dp"
             android:clickable="false"
@@ -146,7 +146,7 @@
             android:layout_marginStart="@dimen/activity_horizontal_margin"
             android:layout_marginEnd="@dimen/activity_horizontal_margin"
             android:layout_marginBottom="16dp"
-            android:textSize="12sp"
+            android:textAppearance="@style/TextAppearance.AppCompat.Body1"
             android:visibility="gone"
             android:background="?attr/selectableItemBackgroundBorderless"
             />
@@ -237,7 +237,7 @@
         android:layout_alignTop="@id/layout"
         android:layout_alignBottom="@id/layout"
         android:background="?android:attr/windowBackground"
-        android:alpha="0.75"
+        android:alpha="0.6"
         android:visibility="gone"
         />
 

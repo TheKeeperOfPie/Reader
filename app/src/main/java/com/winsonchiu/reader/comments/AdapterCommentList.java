@@ -375,6 +375,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
         protected SharedPreferences preferences;
         protected Resources resources;
         protected int colorTextSecondary;
+        protected int colorTextPrimary;
 
         public ViewHolderComment(final View itemView,
                 AdapterLink.ViewHolderBase.EventListener eventListenerBase,
@@ -417,8 +418,9 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
 
             resources = itemView.getResources();
             preferences = PreferenceManager.getDefaultSharedPreferences(itemView.getContext());
-            TypedArray typedArray = itemView.getContext().getTheme().obtainStyledAttributes(new int[] {android.R.attr.textColorSecondary});
-            colorTextSecondary = typedArray.getColor(0, resources.getColor(R.color.darkThemeTextColorMuted));
+            TypedArray typedArray = itemView.getContext().getTheme().obtainStyledAttributes(new int[] {android.R.attr.textColor, android.R.attr.textColorSecondary});
+            colorTextPrimary = typedArray.getColor(0, resources.getColor(R.color.darkThemeTextColor));
+            colorTextSecondary = typedArray.getColor(1, resources.getColor(R.color.darkThemeTextColorMuted));
             typedArray.recycle();
 
             this.drawableUpvote = resources.getDrawable(R.drawable.ic_keyboard_arrow_up_white_24dp);
@@ -467,6 +469,20 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
             textComment.setOnClickListener(clickListenerLink);
             textInfo.setOnClickListener(clickListenerLink);
             this.itemView.setOnClickListener(clickListenerLink);
+
+            View.OnLongClickListener longClickListener = new View.OnLongClickListener() {
+                @Override
+                public boolean onLongClick(View v) {
+                    itemCollapse.setIcon(eventListener.toggleComment(getAdapterPosition()) ?
+                            R.drawable.ic_arrow_drop_up_white_24dp :
+                            R.drawable.ic_arrow_drop_down_white_24dp);
+                    itemCollapse.getIcon().setColorFilter(colorFilterMenuItem);
+                    return true;
+                }
+            };
+            textComment.setOnLongClickListener(longClickListener);
+            textInfo.setOnLongClickListener(longClickListener);
+            this.itemView.setOnLongClickListener(longClickListener);
 
             editTextReply.addTextChangedListener(new TextWatcher() {
                 @Override
@@ -756,12 +772,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
 
             }
 
-            if (comment.getGilded() > 0) {
-                textComment.setTextColor(resources.getColor(R.color.gildedComment));
-            }
-            else {
-                textComment.setTextColor(textComment.getTextColors().getDefaultColor());
-            }
+            textComment.setTextColor(comment.getGilded() > 0 ? resources.getColor(R.color.gildedComment) : colorTextPrimary);
 
         }
 

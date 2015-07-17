@@ -280,6 +280,7 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
                     @Override
                     public void onEndHideFromScroll() {
                         buttonExpandActions.setImageResource(R.drawable.ic_unfold_more_white_24dp);
+                        buttonExpandActions.setColorFilter(colorFilterIcon);
                     }
 
                 });
@@ -383,6 +384,11 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
             layoutParamsActions.setMarginEnd(margin);
             layoutActions.setLayoutParams(layoutParamsActions);
         }
+
+        buttonExpandActions.setColorFilter(colorFilterIcon);
+        buttonJumpTop.setColorFilter(colorFilterIcon);
+        buttonCommentPrevious.setColorFilter(colorFilterIcon);
+        buttonCommentNext.setColorFilter(colorFilterIcon);
 
         viewYouTube = (YouTubePlayerView) view.findViewById(R.id.youtube);
 
@@ -823,6 +829,7 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
                 public void onAnimationEnd(Animation animation) {
                     view.setVisibility(View.GONE);
                     buttonExpandActions.setImageResource(R.drawable.ic_unfold_more_white_24dp);
+                    buttonExpandActions.setColorFilter(colorFilterIcon);
                 }
 
                 @Override
