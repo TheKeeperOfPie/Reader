@@ -18,6 +18,7 @@ import android.support.v7.internal.widget.TintImageView;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.StaggeredGridLayoutManager;
 import android.text.TextUtils;
+import android.text.util.Linkify;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -481,6 +482,8 @@ public class AdapterLinkGrid extends AdapterLink {
             textThreadInfo.setText(TextUtils
                     .concat(getSubredditString(), showSubreddit ? "\n" : "", getSpannableScore(),
                             "by ", link.getAuthor(), getFlairString()));
+
+            Linkify.addLinks(textThreadInfo, Linkify.ALL);
 
             textHidden.setText(getTimestamp() + ", " + link.getNumComments() + " comments");
 

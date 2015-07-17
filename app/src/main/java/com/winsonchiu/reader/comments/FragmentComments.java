@@ -850,22 +850,26 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
     }
 
     @Override
-    public void onResume() {
-        super.onResume();
-        swipeRefreshCommentList.setRefreshing(mListener.getControllerComments()
-                .isLoading());
-    }
-
-    @Override
     public void onStart() {
         super.onStart();
         mListener.getControllerComments().addListener(listener);
     }
 
     @Override
+    public void onResume() {
+        super.onResume();
+        mListener.getControllerComments().addListener(listener);
+    }
+
+    @Override
+    public void onPause() {
+        mListener.getControllerComments().removeListener(listener);
+        super.onPause();
+    }
+
+    @Override
     public void onStop() {
         adapterCommentList.destroyViewHolderLink();
-        mListener.getControllerComments().removeListener(listener);
         super.onStop();
     }
 

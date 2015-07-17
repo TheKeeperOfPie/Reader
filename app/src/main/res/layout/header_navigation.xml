@@ -9,6 +9,7 @@
     android:layout_height="match_parent"
     >
 
+
     <com.winsonchiu.reader.views.ImageViewHeader
         android:id="@+id/image_nav_header"
         android:layout_width="match_parent"

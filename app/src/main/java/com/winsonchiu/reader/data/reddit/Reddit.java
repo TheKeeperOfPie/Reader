@@ -395,7 +395,7 @@ public class Reddit {
         params.put(Reddit.QUERY_ID, link.getName());
         params.put(Reddit.QUERY_VOTE, String.valueOf(newVote));
 
-        link.setScore(link.getScore() + newVote);
+        link.setScore(link.getScore() + newVote - link.getLikes());
         link.setLikes(newVote);
         if (position == viewHolder.getAdapterPosition()) {
             if (viewHolder instanceof AdapterLink.ViewHolderBase) {
@@ -453,10 +453,12 @@ public class Reddit {
         params.put(Reddit.QUERY_ID, comment.getName());
         params.put(Reddit.QUERY_VOTE, String.valueOf(newVote));
 
+        comment.setScore(comment.getScore() + newVote - comment.getLikes());
         comment.setLikes(newVote);
         if (position == viewHolder.getAdapterPosition()) {
             viewHolder.setVoteColors();
         }
+        final int finalNewVote = newVote;
         reddit.loadPost(Reddit.OAUTH_URL + "/api/vote", new Listener<String>() {
             @Override
             public void onResponse(String response) {
@@ -466,6 +468,7 @@ public class Reddit {
             public void onErrorResponse(VolleyError error) {
                 voteResponseListener.onVoteFailed();
 
+                comment.setScore(comment.getScore() - finalNewVote);
                 comment.setLikes(oldVote);
                 if (position == viewHolder.getAdapterPosition()) {
                     viewHolder.setVoteColors();

@@ -4,6 +4,7 @@
 
 package com.winsonchiu.reader.settings;
 
+import android.app.Activity;
 import android.app.Fragment;
 import android.content.SharedPreferences;
 import android.content.res.TypedArray;
@@ -13,6 +14,7 @@ import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.View;
 
 import com.winsonchiu.reader.AppSettings;
@@ -23,6 +25,7 @@ import com.winsonchiu.reader.R;
  */
 public class ActivitySettings extends AppCompatActivity {
 
+    private static final String TAG = ActivitySettings.class.getCanonicalName();
     private Toolbar toolbar;
 
     @Override
@@ -65,9 +68,18 @@ public class ActivitySettings extends AppCompatActivity {
             }
         });
 
-        getFragmentManager().beginTransaction()
-                .replace(R.id.frame_fragment, FragmentHeaders.newInstance())
-                .commit();
+        if (savedInstanceState == null) {
+            getFragmentManager().beginTransaction()
+                    .replace(R.id.frame_fragment, FragmentHeaders.newInstance(), FragmentHeaders.TAG)
+                    .commit();
+        }
+        else if (getFragmentManager().getBackStackEntryCount() > 0) {
+            Fragment fragment = getFragmentManager().findFragmentByTag(FragmentHeaders.TAG);
+            if (fragment != null) {
+                getFragmentManager().beginTransaction().hide(fragment).commit();
+            }
+            setResult(Activity.RESULT_OK);
+        }
 
     }
 

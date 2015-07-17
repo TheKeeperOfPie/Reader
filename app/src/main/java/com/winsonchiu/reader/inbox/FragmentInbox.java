@@ -381,21 +381,15 @@ public class FragmentInbox extends FragmentBase {
     @Override
     public void onResume() {
         super.onResume();
-        swipeRefreshInbox.setRefreshing(mListener.getControllerInbox().isLoading());
-    }
-
-    @Override
-    public void onStart() {
-        super.onStart();
         mListener.getControllerInbox()
                 .addListener(listener);
     }
 
     @Override
-    public void onStop() {
+    public void onPause() {
         mListener.getControllerInbox()
                 .removeListener(listener);
-        super.onStop();
+        super.onPause();
     }
 
     @Override

@@ -33,6 +33,7 @@ import android.text.TextWatcher;
 import android.text.format.DateUtils;
 import android.text.method.LinkMovementMethod;
 import android.text.style.ForegroundColorSpan;
+import android.text.util.Linkify;
 import android.util.DisplayMetrics;
 import android.util.TypedValue;
 import android.view.GestureDetector;
@@ -598,7 +599,6 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
             if (!toolbarActions.isShown()) {
 
                 setVoteColors();
-
                 setToolbarMenuVisibility();
             }
 
@@ -688,6 +688,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                     itemDownvote.setIcon(drawableDownvote);
                     break;
             }
+            setTextInfo();
         }
 
         private int getIndentWidth() {
@@ -746,83 +747,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
             else {
                 textComment.setText(comment.getBodyHtml());
 
-                int colorPositive = resources.getColor(R.color.positiveScore);
-                int colorNegative = resources.getColor(R.color.negativeScore);
-
-
-                String voteIndicator = "";
-                int voteColor = 0;
-
-                switch (comment.getLikes()) {
-                    case -1:
-                        voteIndicator = " \u25BC";
-                        voteColor = colorNegative;
-                        break;
-                    case 1:
-                        voteIndicator = " \u25B2";
-                        voteColor = colorPositive;
-                        break;
-                }
-
-                Spannable spannableVote = new SpannableString(voteIndicator);
-                if (!TextUtils.isEmpty(spannableVote)) {
-                    spannableVote.setSpan(new ForegroundColorSpan(voteColor), 0, spannableVote.length(), Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
-                }
-
-                Spannable spannableScore = new SpannableString(String.valueOf(comment.getScore()));
-
-                if (!comment.isScoreHidden()) {
-                    spannableScore.setSpan(new ForegroundColorSpan(
-                                    comment.getScore() > 0 ? colorPositive : colorNegative), 0,
-                            spannableScore.length(),
-                            Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
-                }
-
-                String suffixAuthor = "";
-                int color = colorTextSecondary;
-
-                if (comment.getLinkAuthor().equals(comment.getAuthor())) {
-                    color = resources.getColor(R.color.colorAccent);
-                }
-                else if (userName.equals(comment.getAuthor())) {
-                    color = resources.getColor(R.color.colorPrimary);
-                }
-                else {
-                    switch (comment.getDistinguished()) {
-                        case MODERATOR:
-                            color = resources.getColor(R.color.moderator);
-                            suffixAuthor = resources.getString(R.string.prefix_moderator);
-                            break;
-                        case ADMIN:
-                            color = resources.getColor(R.color.admin);
-                            suffixAuthor = resources.getString(R.string.prefix_admin);
-                            break;
-                        case SPECIAL:
-                            color = resources.getColor(R.color.special);
-                            suffixAuthor = resources.getString(R.string.prefix_special);
-                            break;
-                    }
-                }
-
-                Spannable spannableAuthor = new SpannableString(comment.getAuthor() + suffixAuthor);
-                spannableAuthor.setSpan(new ForegroundColorSpan(color), 0, spannableAuthor.length(),
-                        Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
-
-                String flair = TextUtils.isEmpty(comment.getAuthorFlairText()) || "null"
-                        .equals(comment.getAuthorFlairText()) ? " " : " (" + Html
-                        .fromHtml(comment.getAuthorFlairText()) + ") ";
-
-                CharSequence timestamp =
-                        preferences.getBoolean(AppSettings.PREF_FULL_TIMESTAMPS, false) ? DateUtils
-                                .formatDateTime(itemView.getContext(), comment.getCreatedUtc(),
-                                        DateUtils.FORMAT_SHOW_TIME | DateUtils.FORMAT_SHOW_DATE | DateUtils.FORMAT_SHOW_YEAR) :
-                                DateUtils.getRelativeTimeSpanString(comment.getCreatedUtc());
-
-                textInfo.setTextColor(comment.isNew() ? resources.getColor(
-                        R.color.textColorAlert) : colorTextSecondary);
-
-                textInfo.setText(TextUtils.concat(spannableVote, spannableScore, " by ", spannableAuthor, flair,
-                        timestamp, comment.getEdited() > 0 ? "*" : ""));
+                setTextInfo();
 
                 if (comment.getEdited() > 1) {
                     textHidden.setText(
@@ -837,6 +762,90 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
 
             textComment.setTextColor(comment.getGilded() > 0 ? resources.getColor(R.color.gildedComment) : colorTextPrimary);
 
+        }
+
+        public void setTextInfo() {
+
+            int colorPositive = resources.getColor(R.color.positiveScore);
+            int colorNegative = resources.getColor(R.color.negativeScore);
+
+
+            String voteIndicator = "";
+            int voteColor = 0;
+
+            switch (comment.getLikes()) {
+                case -1:
+                    voteIndicator = " \u25BC";
+                    voteColor = colorNegative;
+                    break;
+                case 1:
+                    voteIndicator = " \u25B2";
+                    voteColor = colorPositive;
+                    break;
+            }
+
+            Spannable spannableVote = new SpannableString(voteIndicator);
+            if (!TextUtils.isEmpty(spannableVote)) {
+                spannableVote.setSpan(new ForegroundColorSpan(voteColor), 0, spannableVote.length(), Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
+            }
+
+            Spannable spannableScore = new SpannableString(String.valueOf(comment.getScore()));
+
+            if (!comment.isScoreHidden()) {
+                spannableScore.setSpan(new ForegroundColorSpan(
+                                comment.getScore() > 0 ? colorPositive : colorNegative), 0,
+                        spannableScore.length(),
+                        Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
+            }
+
+            String suffixAuthor = "";
+            int color = colorTextSecondary;
+
+            if (comment.getLinkAuthor().equals(comment.getAuthor())) {
+                color = resources.getColor(R.color.colorAccent);
+            }
+            else if (userName.equals(comment.getAuthor())) {
+                color = resources.getColor(R.color.colorPrimary);
+            }
+            else {
+                switch (comment.getDistinguished()) {
+                    case MODERATOR:
+                        color = resources.getColor(R.color.moderator);
+                        suffixAuthor = resources.getString(R.string.prefix_moderator);
+                        break;
+                    case ADMIN:
+                        color = resources.getColor(R.color.admin);
+                        suffixAuthor = resources.getString(R.string.prefix_admin);
+                        break;
+                    case SPECIAL:
+                        color = resources.getColor(R.color.special);
+                        suffixAuthor = resources.getString(R.string.prefix_special);
+                        break;
+                }
+            }
+
+            Spannable spannableAuthor = new SpannableString(comment.getAuthor() + suffixAuthor);
+            spannableAuthor.setSpan(new ForegroundColorSpan(color), 0, spannableAuthor.length(),
+                    Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
+
+            String flair = TextUtils.isEmpty(comment.getAuthorFlairText()) || "null"
+                    .equals(comment.getAuthorFlairText()) ? " " : " (" + Html
+                    .fromHtml(comment.getAuthorFlairText()) + ") ";
+
+            CharSequence timestamp =
+                    preferences.getBoolean(AppSettings.PREF_FULL_TIMESTAMPS, false) ? DateUtils
+                            .formatDateTime(itemView.getContext(), comment.getCreatedUtc(),
+                                    DateUtils.FORMAT_SHOW_TIME | DateUtils.FORMAT_SHOW_DATE | DateUtils.FORMAT_SHOW_YEAR) :
+                            DateUtils.getRelativeTimeSpanString(comment.getCreatedUtc());
+
+            textInfo.setTextColor(comment.isNew() ? resources.getColor(
+                    R.color.textColorAlert) : colorTextSecondary);
+
+            textInfo.setText(TextUtils
+                    .concat(spannableVote, spannableScore, " by ", spannableAuthor, flair,
+                            timestamp, comment.getEdited() > 0 ? "*" : ""));
+
+            Linkify.addLinks(textInfo, Linkify.ALL);
         }
 
         public void syncSaveIcon() {

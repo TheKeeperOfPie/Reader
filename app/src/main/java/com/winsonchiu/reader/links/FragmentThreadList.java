@@ -726,22 +726,8 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
     }
 
     @Override
-    public void onStart() {
-        super.onStart();
-    }
-
-    @Override
-    public void onStop() {
-        super.onStop();
-    }
-
-    @Override
     public void onResume() {
         super.onResume();
-//        swipeRefreshThreadList.setRefreshing(mListener.getControllerLinks()
-//                .isLoading());
-//        mListener.getControllerLinks()
-//                .setTitle();
         mListener.getControllerLinks()
                 .addListener(listener);
     }

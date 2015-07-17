@@ -24,6 +24,7 @@ import com.winsonchiu.reader.R;
 
 public class FragmentHeaders extends Fragment {
 
+    public static final String TAG = FragmentHeaders.class.getCanonicalName();
     private RecyclerView recyclerHeaders;
     private AdapterHeaders adapterHeaders;
     private Activity activity;
@@ -108,7 +109,7 @@ public class FragmentHeaders extends Fragment {
                         return;
                 }
 
-                fragmentTransaction.commit();
+                fragmentTransaction.addToBackStack(null).commit();
             }
         });
 

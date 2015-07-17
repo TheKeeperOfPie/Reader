@@ -4,6 +4,7 @@
 
 package com.winsonchiu.reader;
 
+import android.app.Activity;
 import android.app.Fragment;
 import android.app.FragmentTransaction;
 import android.content.DialogInterface;
@@ -12,6 +13,7 @@ import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.content.res.TypedArray;
 import android.graphics.Bitmap;
+import android.graphics.PorterDuff;
 import android.media.MediaScannerConnection;
 import android.net.Uri;
 import android.os.Bundle;
@@ -600,24 +602,6 @@ public class MainActivity extends YouTubeBaseActivity
         textAccountName = (TextView) viewHeader.findViewById(R.id.text_account_name);
         textAccountInfo = (TextView) viewHeader.findViewById(R.id.text_account_info);
 
-        imageNavHeader.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                switch (sharedPreferences.getString(AppSettings.PREF_THEME, AppSettings.THEME_DARK)) {
-                    case AppSettings.THEME_DARK:
-                        sharedPreferences.edit().putString(AppSettings.PREF_THEME, AppSettings.THEME_LIGHT).commit();
-                        break;
-                    case AppSettings.THEME_LIGHT:
-                        sharedPreferences.edit().putString(AppSettings.PREF_THEME, AppSettings.THEME_BLACK).commit();
-                        break;
-                    case AppSettings.THEME_BLACK:
-                        sharedPreferences.edit().putString(AppSettings.PREF_THEME, AppSettings.THEME_DARK).commit();
-                        break;
-                }
-                recreate();
-            }
-        });
-
         View.OnClickListener clickListenerAccount = new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -644,6 +628,8 @@ public class MainActivity extends YouTubeBaseActivity
     }
 
     private void selectNavigationItem(final int id, int page, boolean animate) {
+
+        loadId = 0;
 
         if (id == R.id.item_settings) {
             Intent intentSettings = new Intent(this, ActivitySettings.class);
@@ -718,8 +704,6 @@ public class MainActivity extends YouTubeBaseActivity
         }
 
         fragmentTransaction.commit();
-
-        loadId = 0;
     }
 
     public void loadAccountInfo() {
@@ -958,6 +942,15 @@ public class MainActivity extends YouTubeBaseActivity
         }
         else {
             super.startActivity(intent);
+        }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if (requestCode == REQUEST_SETTINGS && resultCode == Activity.RESULT_OK) {
+            recreate();
         }
     }
 

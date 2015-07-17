@@ -9,6 +9,7 @@ import android.graphics.drawable.Drawable;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.text.TextUtils;
+import android.text.util.Linkify;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -137,7 +138,11 @@ public class AdapterLinkList extends AdapterLink {
         public void setTextValues(Link link) {
             super.setTextValues(link);
 
-            textThreadInfo.setText(TextUtils.concat(getSubredditString(), getSpannableScore(), "by ", link.getAuthor(), getFlairString()));
+            textThreadInfo.setText(TextUtils
+                    .concat(getSubredditString(), getSpannableScore(), "by ", link.getAuthor(),
+                            getFlairString()));
+
+            Linkify.addLinks(textThreadInfo, Linkify.ALL);
 
             // TODO: Add link edited indicator
 

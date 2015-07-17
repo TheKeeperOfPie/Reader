@@ -482,17 +482,17 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
     }
 
     @Override
-    public void onStart() {
-        super.onStart();
+    public void onResume() {
+        super.onResume();
         mListener.getControllerSearch()
                 .addListener(listenerSearch);
     }
 
     @Override
-    public void onStop() {
+    public void onPause() {
         mListener.getControllerSearch()
                 .removeListener(listenerSearch);
-        super.onStop();
+        super.onPause();
     }
 
     @Override

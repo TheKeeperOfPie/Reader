@@ -409,18 +409,19 @@ public class FragmentProfile extends FragmentBase implements Toolbar.OnMenuItemC
         super.onActivityCreated(savedInstanceState);
     }
 
+
     @Override
-    public void onStart() {
-        super.onStart();
+    public void onResume() {
+        super.onResume();
         mListener.getControllerProfile()
                 .addListener(listener);
     }
 
     @Override
-    public void onStop() {
+    public void onPause() {
         mListener.getControllerProfile()
                 .removeListener(listener);
-        super.onStop();
+        super.onPause();
     }
 
     @Override
@@ -482,12 +483,6 @@ public class FragmentProfile extends FragmentBase implements Toolbar.OnMenuItemC
         if (hidden) {
             adapterProfile.pauseViewHolders();
         }
-    }
-
-    @Override
-    public void onResume() {
-        super.onResume();
-        swipeRefreshProfile.setRefreshing(mListener.getControllerProfile().isLoading());
     }
 
     @Override

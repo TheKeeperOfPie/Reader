@@ -40,6 +40,15 @@
             android:negativeButtonText="@null"
             android:positiveButtonText="@null" />
 
+        <ListPreference
+            android:key="pref_theme"
+            android:title="@string/pref_theme"
+            android:entries="@array/pref_theme_entries"
+            android:entryValues="@array/pref_theme_values"
+            android:defaultValue="Dark"
+            android:negativeButtonText="@null"
+            android:positiveButtonText="@null" />
+
     </PreferenceCategory>
 
 </PreferenceScreen>

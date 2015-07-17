@@ -73,12 +73,13 @@ public class ControllerComments {
     }
 
     public void addListener(Listener listener) {
-        listeners.add(listener);
-        setTitle();
-        listener.getAdapter().notifyDataSetChanged();
-        listener.setSort(sort);
-        listener.setRefreshing(isLoading());
-        listener.setIsCommentThread(isCommentThread);
+        if (listeners.add(listener)) {
+            setTitle();
+            listener.getAdapter().notifyDataSetChanged();
+            listener.setSort(sort);
+            listener.setRefreshing(isLoading());
+            listener.setIsCommentThread(isCommentThread);
+        }
     }
 
     public void removeListener(Listener listener) {
@@ -538,7 +539,7 @@ public class ControllerComments {
         Comment comment = (Comment) commentList.get(position);
         Comment nextComment = (Comment) commentList.get(position + 1);
 
-        if (comment.getLevel() == nextComment.getLevel()) {
+        if (comment.getLevel() >= nextComment.getLevel()) {
             expandComment(position);
             return true;
         }
@@ -552,6 +553,7 @@ public class ControllerComments {
     }
 
     public void expandComment(int position) {
+
         List<Thing> commentList = link.getComments()
                 .getChildren();
         int index = commentList.indexOf(listingComments.getChildren()
@@ -562,8 +564,7 @@ public class ControllerComments {
         List<Comment> commentsToInsert = new LinkedList<>();
         Comment comment = (Comment) commentList.get(index);
         int numAdded = 0;
-        while (++index < commentList.size() && ((Comment) commentList.get(
-                index)).getLevel() != comment.getLevel()) {
+        while (++index < commentList.size() && ((Comment) commentList.get(index)).getLevel() > comment.getLevel()) {
             commentsToInsert.add((Comment) commentList.get(index));
         }
 
@@ -587,7 +588,7 @@ public class ControllerComments {
         position++;
         int numRemoved = 0;
         while (position < commentList.size() && ((Comment) commentList.get(
-                position)).getLevel() != comment.getLevel()) {
+                position)).getLevel() > comment.getLevel()) {
             commentList.remove(position);
             numRemoved++;
         }
