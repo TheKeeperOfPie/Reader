@@ -374,9 +374,13 @@ public class FragmentProfile extends FragmentBase implements Toolbar.OnMenuItemC
 
                     @Override
                     public void onSwiped(final RecyclerView.ViewHolder viewHolder, int direction) {
-                        // Offset by 1 due to subreddit header
-                        final int position = viewHolder.getAdapterPosition() == 2 ? 2 : viewHolder.getAdapterPosition() - 6;
-                        final Link link = mListener.getControllerProfile().remove(position);
+
+                        Log.d(TAG, "onSwiped: " + viewHolder.getAdapterPosition());
+
+                        final int adapterPosition = viewHolder.getAdapterPosition();
+                        final int position = adapterPosition == 2 ? -1 : adapterPosition - 6;
+                        final Link link = adapterPosition == 2 ? mListener.getControllerProfile().remove(
+                                -1) : mListener.getControllerProfile().remove(position);
                         mListener.getEventListenerBase().hide(link);
 
                         if (snackbar != null) {
@@ -390,7 +394,14 @@ public class FragmentProfile extends FragmentBase implements Toolbar.OnMenuItemC
                                             @Override
                                             public void onClick(View v) {
                                                 mListener.getEventListenerBase().hide(link);
-                                                mListener.getControllerProfile().add(position, link);
+                                                if (adapterPosition == 2) {
+                                                    mListener.getControllerProfile().setTopLink(link);
+                                                    adapterProfile.notifyItemChanged(2);
+                                                }
+                                                else {
+                                                    mListener.getControllerProfile()
+                                                            .add(position, link);
+                                                }
                                                 recyclerProfile.invalidate();
                                             }
                                         });

@@ -183,7 +183,8 @@ public class ControllerProfile implements ControllerLinksBase {
                     @Override
                     public void onErrorResponse(VolleyError error) {
                         setLoading(false);
-                        Toast.makeText(activity, activity.getString(R.string.error_loading), Toast.LENGTH_SHORT)
+                        Toast.makeText(activity, activity.getString(R.string.error_loading),
+                                Toast.LENGTH_SHORT)
                                 .show();
                     }
                 }, 0);
@@ -360,17 +361,17 @@ public class ControllerProfile implements ControllerLinksBase {
 
     public Link remove(int position) {
         Link link;
-        if (position == 2) {
+        if (position == -1) {
             link = topLink;
             topLink = null;
             for (Listener listener : listeners) {
-                listener.getAdapter().notifyItemChanged(position);
+                listener.getAdapter().notifyItemChanged(2);
             }
         }
         else {
             link = (Link) data.getChildren().remove(position);
             for (Listener listener : listeners) {
-                listener.getAdapter().notifyItemRemoved(position);
+                listener.getAdapter().notifyItemRemoved(position + 6);
             }
         }
         return link;
@@ -587,6 +588,10 @@ public class ControllerProfile implements ControllerLinksBase {
         for (Listener listener : listeners) {
             listener.getAdapter().notifyDataSetChanged();
         }
+    }
+
+    public void setTopLink(Link topLink) {
+        this.topLink = topLink;
     }
 
     public interface Listener

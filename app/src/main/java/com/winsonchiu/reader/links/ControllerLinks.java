@@ -416,9 +416,7 @@ public class ControllerLinks implements ControllerLinksBase {
     public void add(int position, Link link) {
         listingLinks.getChildren().add(position, link);
         for (Listener listener : listeners) {
-//            listener.getAdapter().notifyItemInserted(position);
-
-            listener.getAdapter().notifyDataSetChanged();
+            listener.getAdapter().notifyItemInserted(position + 1);
         }
     }
 
