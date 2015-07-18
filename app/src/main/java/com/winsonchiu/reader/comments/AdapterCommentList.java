@@ -386,6 +386,8 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
         protected Resources resources;
         protected int colorTextSecondary;
         protected int colorTextPrimary;
+        protected int colorAccent;
+        protected int colorIconFilter;
 
         public ViewHolderComment(final View itemView,
                 AdapterLink.ViewHolderBase.EventListener eventListenerBase,
@@ -428,9 +430,11 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
 
             resources = itemView.getResources();
             preferences = PreferenceManager.getDefaultSharedPreferences(itemView.getContext());
-            TypedArray typedArray = itemView.getContext().getTheme().obtainStyledAttributes(new int[] {android.R.attr.textColor, android.R.attr.textColorSecondary});
+            TypedArray typedArray = itemView.getContext().getTheme().obtainStyledAttributes(new int[] {android.R.attr.textColor, android.R.attr.textColorSecondary, R.attr.colorAccent, R.attr.colorIconFilter});
             colorTextPrimary = typedArray.getColor(0, resources.getColor(R.color.darkThemeTextColor));
             colorTextSecondary = typedArray.getColor(1, resources.getColor(R.color.darkThemeTextColorMuted));
+            colorAccent = typedArray.getColor(2, resources.getColor(R.color.colorAccent));
+            colorIconFilter = typedArray.getColor(3, 0xFFFFFFFF);
             typedArray.recycle();
 
             this.drawableUpvote = resources.getDrawable(R.drawable.ic_keyboard_arrow_up_white_24dp);
@@ -479,12 +483,20 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
             });
 
             final GestureDetectorCompat gestureDetectorCompat = new GestureDetectorCompat(itemView.getContext(), new GestureDetector.SimpleOnGestureListener() {
+
                 @Override
-                public boolean onDoubleTap(MotionEvent e) {
+                public void onLongPress(MotionEvent e) {
                     itemCollapse.setIcon(eventListener.toggleComment(getAdapterPosition()) ?
                             R.drawable.ic_arrow_drop_up_white_24dp :
                             R.drawable.ic_arrow_drop_down_white_24dp);
                     itemCollapse.getIcon().setColorFilter(colorFilterMenuItem);
+                }
+
+                @Override
+                public boolean onDoubleTap(MotionEvent e) {
+                    if (!TextUtils.isEmpty(userName)) {
+                        eventListener.voteComment(ViewHolderComment.this, comment, 1);
+                    }
                     return true;
                 }
 
@@ -502,16 +514,9 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                 }
             };
 
-            View.OnLongClickListener longClickListener = new View.OnLongClickListener() {
-                @Override
-                public boolean onLongClick(View v) {
-                    eventListener.voteComment(ViewHolderComment.this, comment, 1);
-                    return true;
-                }
-            };
-            textComment.setOnLongClickListener(longClickListener);
-            textInfo.setOnLongClickListener(longClickListener);
-            this.itemView.setOnLongClickListener(longClickListener);
+            textComment.setClickable(true);
+            textInfo.setClickable(true);
+            itemView.setClickable(true);
 
             textComment.setOnTouchListener(onTouchListener);
             textInfo.setOnTouchListener(onTouchListener);
@@ -566,11 +571,6 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
             itemDelete = menu.findItem(R.id.item_delete);
             itemReport = menu.findItem(R.id.item_report);
 
-
-            TypedArray typedArray = itemView.getContext().getTheme().obtainStyledAttributes(new int[] {R.attr.colorIconFilter});
-            int colorIconFilter = typedArray.getColor(0, 0xFFFFFFFF);
-            typedArray.recycle();
-
             colorFilterMenuItem = new PorterDuffColorFilter(colorIconFilter,
                     PorterDuff.Mode.MULTIPLY);
 
@@ -580,8 +580,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
             colorFilterNegative = new PorterDuffColorFilter(resources.getColor(
                     R.color.negativeScore),
                     PorterDuff.Mode.MULTIPLY);
-            colorFilterSave = new PorterDuffColorFilter(resources.getColor(R.color.colorAccent),
-                    PorterDuff.Mode.MULTIPLY);
+            colorFilterSave = new PorterDuffColorFilter(colorAccent, PorterDuff.Mode.MULTIPLY);
 
             for (int index = 0; index < menu.size(); index++) {
                 menu.getItem(index).getIcon().setColorFilter(colorFilterMenuItem);
@@ -692,7 +691,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
         }
 
         private int getIndentWidth() {
-            return comment.getLevel() > 10 ? indentWidth * 10 : indentWidth * comment.getLevel();
+            return indentWidth * comment.getLevel();
         }
 
         public void onBind(Comment comment, String userName) {
@@ -802,7 +801,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
             int color = colorTextSecondary;
 
             if (comment.getLinkAuthor().equals(comment.getAuthor())) {
-                color = resources.getColor(R.color.colorAccent);
+                color = colorAccent;
             }
             else if (userName.equals(comment.getAuthor())) {
                 color = resources.getColor(R.color.colorPrimary);
@@ -866,6 +865,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
             layoutContainerReply.setVisibility(
                     comment.isReplyExpanded() ? View.VISIBLE : View.GONE);
             if (comment.isReplyExpanded()) {
+                replyCallback.onReplyShown();
                 editTextReply.clearFocus();
                 InputMethodManager inputManager = (InputMethodManager) itemView.getContext()
                         .getSystemService(Context.INPUT_METHOD_SERVICE);

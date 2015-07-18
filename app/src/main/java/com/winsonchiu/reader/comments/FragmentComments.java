@@ -187,25 +187,26 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
 
             @Override
             public void scrollTo(final int position) {
-                linearLayoutManager.scrollToPositionWithOffset(position,
-                        recyclerCommentList.getHeight() / 2 - toolbar.getHeight());
-                recyclerCommentList.postDelayed(new Runnable() {
-                    @Override
-                    public void run() {
-                        final RecyclerView.ViewHolder viewHolder = recyclerCommentList
-                                .findViewHolderForAdapterPosition(position);
-                        if (viewHolder != null) {
-                            viewHolder.itemView.getBackground().setState(
-                                    new int[]{android.R.attr.state_pressed, android.R.attr.state_enabled});
-                            recyclerCommentList.postDelayed(new Runnable() {
-                                @Override
-                                public void run() {
-                                    viewHolder.itemView.getBackground().setState(new int[0]);
-                                }
-                            }, 150);
-                        }
-                    }
-                }, 200);
+                linearLayoutManager.scrollToPositionWithOffset(position, 0);
+//                linearLayoutManager.scrollToPositionWithOffset(position,
+//                        recyclerCommentList.getHeight() / 2 - toolbar.getHeight());
+//                recyclerCommentList.postDelayed(new Runnable() {
+//                    @Override
+//                    public void run() {
+//                        final RecyclerView.ViewHolder viewHolder = recyclerCommentList
+//                                .findViewHolderForAdapterPosition(position);
+//                        if (viewHolder != null) {
+//                            viewHolder.itemView.getBackground().setState(
+//                                    new int[]{android.R.attr.state_pressed, android.R.attr.state_enabled});
+//                            recyclerCommentList.postDelayed(new Runnable() {
+//                                @Override
+//                                public void run() {
+//                                    viewHolder.itemView.getBackground().setState(new int[0]);
+//                                }
+//                            }, 150);
+//                        }
+//                    }
+//                }, 200);
             }
 
             @Override
@@ -308,7 +309,8 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
         buttonCommentPrevious.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                int position = getIndexAtCenter();
+                int position = linearLayoutManager.findFirstCompletelyVisibleItemPosition();
+//                int position = getIndexAtCenter();
                 if (position == 1) {
                     linearLayoutManager.scrollToPositionWithOffset(0, 0);
                     return;
@@ -332,7 +334,8 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
         buttonCommentNext.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                int position = getIndexAtCenter();
+                int position = linearLayoutManager.findFirstVisibleItemPosition();
+//                int position = getIndexAtCenter();
                 if (position == 0) {
                     if (adapterCommentList.getItemCount() > 0) {
                         listener.scrollTo(1);

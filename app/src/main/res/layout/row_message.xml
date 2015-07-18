@@ -10,7 +10,7 @@
     >
 
     <TextView
-        android:id="@+id/text_message"
+        android:id="@+id/text_subject"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentTop="true"
@@ -18,7 +18,21 @@
         android:paddingLeft="8dp"
         android:paddingEnd="8dp"
         android:paddingRight="8dp"
-        android:textSize="14sp"
+        android:textAppearance="@style/TextAppearance.AppCompat.Body2"
+        android:textAlignment="viewStart"
+        />
+
+    <TextView
+        android:id="@+id/text_message"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/text_subject"
+        android:paddingTop="4dp"
+        android:paddingLeft="8dp"
+        android:paddingEnd="8dp"
+        android:paddingRight="8dp"
+        android:textAppearance="@style/TextAppearance.AppCompat.Body1"
+        android:textAlignment="viewStart"
         />
 
     <TextView
@@ -31,7 +45,8 @@
         android:paddingLeft="8dp"
         android:paddingEnd="8dp"
         android:paddingRight="8dp"
-        android:textSize="12sp"
+        android:textAppearance="@style/TextAppearance.AppCompat.Caption"
+        android:textAlignment="viewStart"
         android:gravity="start"
         />
 

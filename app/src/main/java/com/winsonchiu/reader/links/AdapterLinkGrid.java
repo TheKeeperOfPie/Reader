@@ -119,7 +119,6 @@ public class AdapterLinkGrid extends AdapterLink {
         private final int thumbnailSize;
         protected ImageView imageFull;
         private int colorBackgroundDefault;
-        private int titleTextColor;
 
         public ViewHolder(View itemView,
                 EventListener eventListener,
@@ -172,8 +171,6 @@ public class AdapterLinkGrid extends AdapterLink {
         public void onBind(Link link, boolean showSubbreddit, String userName) {
 
             super.onBind(link, showSubbreddit, userName);
-
-            titleTextColor = colorTextPrimaryDefault;
 
             int position = getAdapterPosition();
 
@@ -352,7 +349,7 @@ public class AdapterLinkGrid extends AdapterLink {
                                                         .getUrl()
                                                         .contains(Reddit.IMGUR_PREFIX_GALLERY))) {
                                                     imagePlay.setImageResource(
-                                                            R.drawable.ic_photo_album_white_24dp);
+                                                            R.drawable.ic_photo_album_white_48dp);
                                                 }
                                                 else {
                                                     imagePlay.setImageResource(

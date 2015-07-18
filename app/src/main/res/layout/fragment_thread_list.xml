@@ -142,6 +142,7 @@
         android:layout_width="@dimen/navigation_drawer_width"
         android:layout_height="match_parent"
         android:layout_gravity="end"
+        android:background="?android:attr/windowBackground"
         >
 
         <RelativeLayout
@@ -166,10 +167,10 @@
                 android:layout_marginTop="2dp"
                 android:minWidth="64dp"
                 android:paddingBottom="6dp"
-                android:paddingEnd="48dp"
-                android:paddingLeft="8dp"
-                android:paddingRight="8dp"
+                android:paddingStart="8dp"
+                android:paddingEnd="8dp"
                 android:paddingTop="6dp"
+                android:textAlignment="center"
                 android:textAllCaps="true"
                 android:textAppearance="?android:textAppearanceMedium"
                 />
@@ -185,7 +186,7 @@
                 android:layout_marginEnd="@dimen/activity_horizontal_margin"
                 android:gravity="center_horizontal"
                 android:textAlignment="center"
-                android:textColor="@color/colorAccent"
+                android:textColor="?attr/colorAccent"
                 />
 
             <TextView

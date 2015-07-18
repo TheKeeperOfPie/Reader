@@ -463,6 +463,17 @@ public class MainActivity extends YouTubeBaseActivity
 
             }
 
+            @Override
+            public void editLink(Link link) {
+                FragmentNewPost fragmentNewPost = FragmentNewPost.newInstanceEdit(getControllerUser().getUser().getName(), link);
+
+                getFragmentManager().beginTransaction()
+                        .hide(getFragmentManager().findFragmentById(R.id.frame_fragment))
+                        .add(R.id.frame_fragment, fragmentNewPost, FragmentNewPost.TAG)
+                        .addToBackStack(null)
+                        .commit();
+            }
+
         };
 
         eventListenerComment = new AdapterCommentList.ViewHolderComment.EventListener() {

@@ -45,8 +45,8 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.squareup.picasso.Picasso;
-import com.winsonchiu.reader.ActivityNewPost;
 import com.winsonchiu.reader.AppSettings;
+import com.winsonchiu.reader.FragmentNewPost;
 import com.winsonchiu.reader.history.Historian;
 import com.winsonchiu.reader.views.CustomItemTouchHelper;
 import com.winsonchiu.reader.utils.DisallowListener;
@@ -129,15 +129,17 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
                     return;
                 }
 
-                Intent intent = new Intent(activity, ActivityNewPost.class);
-                intent.putExtra(ActivityNewPost.USER,
-                        mListener.getControllerUser().getUser().getName());
-                intent.putExtra(ActivityNewPost.SUBREDDIT,
-                        mListener.getControllerLinks().getSubreddit().getUrl());
-                intent.putExtra(ActivityNewPost.POST_TYPE, postType);
-                intent.putExtra(ActivityNewPost.SUBMIT_TEXT_HTML,
+                FragmentNewPost fragmentNewPost = FragmentNewPost.newInstance(
+                        mListener.getControllerUser().getUser().getName(),
+                        mListener.getControllerLinks().getSubreddit().getUrl(),
+                        postType,
                         mListener.getControllerLinks().getSubreddit().getSubmitTextHtml());
-                startActivityForResult(intent, ActivityNewPost.REQUEST_CODE);
+
+                getFragmentManager().beginTransaction()
+                        .hide(FragmentThreadList.this)
+                        .add(R.id.frame_fragment, fragmentNewPost, FragmentNewPost.TAG)
+                        .addToBackStack(null)
+                        .commit();
             }
 
             @Override
@@ -685,16 +687,6 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
     @Override
     public void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
-    }
-
-    @Override
-    public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-
-        if (resultCode == Activity.RESULT_OK) {
-            mListener.getControllerLinks().reloadAllLinks();
-        }
-
     }
 
     @Override

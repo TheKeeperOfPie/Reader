@@ -5,20 +5,22 @@
 package com.winsonchiu.reader;
 
 import android.app.Activity;
-import android.content.SharedPreferences;
+import android.content.Intent;
 import android.content.res.TypedArray;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
+import android.net.Uri;
 import android.os.Bundle;
-import android.preference.PreferenceManager;
+import android.app.Fragment;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.view.animation.FastOutSlowInInterpolator;
-import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.text.TextUtils;
+import android.text.method.LinkMovementMethod;
 import android.util.Log;
-import android.view.MenuItem;
+import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.animation.Animation;
 import android.view.animation.Transformation;
 import android.webkit.URLUtil;
@@ -43,20 +45,15 @@ import org.json.JSONObject;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * Created by TheKeeperOfPie on 6/7/2015.
- */
-public class ActivityNewPost extends AppCompatActivity {
+public class FragmentNewPost extends FragmentBase {
 
-
-    public static final int REQUEST_CODE = 0;
     public static final String USER = "User";
     public static final String SUBREDDIT = "Subreddit";
     public static final String POST_TYPE = "PostType";
     public static final String SUBMIT_TEXT_HTML = "SubmitTextHtml";
     public static final String IS_EDIT = "isEdit";
     public static final String EDIT_ID = "editId";
-    private static final String TAG = ActivityNewPost.class.getCanonicalName();
+    public static final String TAG = FragmentNewPost.class.getCanonicalName();
     private static final long DURATION_SUBMIT = 400;
     private static final long DURATION_SUBMIT_DELAY = 125;
     private Toolbar toolbar;
@@ -74,45 +71,63 @@ public class ActivityNewPost extends AppCompatActivity {
     private ImageButton buttonCaptchaRefresh;
     private ProgressBar progressSubmit;
 
+    private FragmentListenerBase mListener;
+    private Activity activity;
+
+    public static FragmentNewPost newInstance(String user, String subredditUrl, String postType, String submitTextHtml) {
+        FragmentNewPost fragment = new FragmentNewPost();
+        Bundle args = new Bundle();
+        args.putString(USER, user);
+        args.putString(SUBREDDIT, subredditUrl);
+        args.putString(POST_TYPE, postType);
+        args.putString(SUBMIT_TEXT_HTML, submitTextHtml);
+        fragment.setArguments(args);
+        return fragment;
+    }
+
+    public static FragmentNewPost newInstanceEdit(String user, Link link) {
+        FragmentNewPost fragment = new FragmentNewPost();
+        Bundle args = new Bundle();
+        args.putString(USER, user);
+        args.putString(SUBREDDIT, "/r/" + link.getSubreddit());
+        args.putBoolean(IS_EDIT, true);
+        args.putString(EDIT_ID, link.getName());
+        fragment.setArguments(args);
+        return fragment;
+    }
+
+    public FragmentNewPost() {
+        // Required empty public constructor
+    }
+
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
-
-        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
-
-        switch (sharedPreferences.getString(AppSettings.PREF_THEME, "Dark")) {
-            case AppSettings.THEME_DARK:
-                setTheme(R.style.AppDarkTheme);
-                break;
-            case AppSettings.THEME_LIGHT:
-                setTheme(R.style.AppLightTheme);
-                break;
-            case AppSettings.THEME_BLACK:
-                setTheme(R.style.AppBlackTheme);
-                break;
-        }
-
+    public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+    }
 
-        setContentView(R.layout.activity_new_post);
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+            Bundle savedInstanceState) {
+        View view = inflater.inflate(R.layout.fragment_new_post, container, false);
 
-        reddit = Reddit.getInstance(this);
+        reddit = Reddit.getInstance(activity);
 
-        textInfo = (TextView) findViewById(R.id.text_info);
-        textSubmit = (TextView) findViewById(R.id.text_submit);
-        editTextTitle = (EditText) findViewById(R.id.edit_title);
-        editTextBody = (EditText) findViewById(R.id.edit_body);
+        textInfo = (TextView) view.findViewById(R.id.text_info);
+        textSubmit = (TextView) view.findViewById(R.id.text_submit);
+        editTextTitle = (EditText) view.findViewById(R.id.edit_title);
+        editTextBody = (EditText) view.findViewById(R.id.edit_body);
 
-        toolbar = (Toolbar) findViewById(R.id.toolbar);
+        toolbar = (Toolbar) view.findViewById(R.id.toolbar);
         toolbar.setTitle(getString(R.string.new_post));
         toolbar.setNavigationIcon(R.drawable.ic_arrow_back_white_24dp);
         toolbar.setNavigationOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                finish();
+                mListener.onNavigationBackClick();
             }
         });
 
-        TypedArray typedArray = getTheme().obtainStyledAttributes(
+        TypedArray typedArray = activity.getTheme().obtainStyledAttributes(
                 new int[]{R.attr.colorIconFilter});
         int colorIconFilter = typedArray.getColor(0, 0xFFFFFFFF);
         typedArray.recycle();
@@ -121,13 +136,11 @@ public class ActivityNewPost extends AppCompatActivity {
                 PorterDuff.Mode.MULTIPLY);
         toolbar.getNavigationIcon().mutate().setColorFilter(colorFilter);
 
-        setSupportActionBar(toolbar);
+        textInfo.setText(getString(R.string.submitting_to) + " " + getArguments()
+                .getString(SUBREDDIT) + " " + getString(R.string.as) + " /u/" + getArguments()
+                .getString(USER));
 
-        textInfo.setText(getString(R.string.submitting_to) + " " + getIntent()
-                .getStringExtra(SUBREDDIT) + " " + getString(R.string.as) + " /u/" + getIntent()
-                .getStringExtra(USER));
-
-        String submitTextHtml = getIntent().getStringExtra(SUBMIT_TEXT_HTML);
+        String submitTextHtml = getArguments().getString(SUBMIT_TEXT_HTML);
         Log.d(TAG, "submitTextHtml: " + submitTextHtml);
         if (TextUtils.isEmpty(submitTextHtml) || "null".equals(submitTextHtml)) {
             textSubmit.setVisibility(View.GONE);
@@ -135,19 +148,20 @@ public class ActivityNewPost extends AppCompatActivity {
         else {
             textSubmit.setText(Reddit.getFormattedHtml(submitTextHtml));
         }
+        textSubmit.setMovementMethod(LinkMovementMethod.getInstance());
 
-        if (Reddit.POST_TYPE_LINK.equals(getIntent().getStringExtra(POST_TYPE))) {
+        if (Reddit.POST_TYPE_LINK.equals(getArguments().getString(POST_TYPE))) {
             editTextBody.setHint("URL");
         }
         else {
             editTextBody.setHint("Text");
         }
 
-        floatingActionButton = (FloatingActionButton) findViewById(R.id.fab_submit_post);
+        floatingActionButton = (FloatingActionButton) view.findViewById(R.id.fab_submit_post);
         floatingActionButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (getIntent().getBooleanExtra(IS_EDIT, false)) {
+                if (getArguments().getBoolean(IS_EDIT, false)) {
                     submitEdit();
                 }
                 else {
@@ -156,12 +170,12 @@ public class ActivityNewPost extends AppCompatActivity {
             }
         });
 
-        progressSubmit = (ProgressBar) findViewById(R.id.progress_submit);
+        progressSubmit = (ProgressBar) view.findViewById(R.id.progress_submit);
 
-        layoutCaptcha = (RelativeLayout) findViewById(R.id.layout_captcha);
-        imageCaptcha = (ImageView) findViewById(R.id.image_captcha);
-        editCaptcha = (EditText) findViewById(R.id.edit_captcha);
-        buttonCaptchaRefresh = (ImageButton) findViewById(R.id.button_captcha_refresh);
+        layoutCaptcha = (RelativeLayout) view.findViewById(R.id.layout_captcha);
+        imageCaptcha = (ImageView) view.findViewById(R.id.image_captcha);
+        editCaptcha = (EditText) view.findViewById(R.id.edit_captcha);
+        buttonCaptchaRefresh = (ImageButton) view.findViewById(R.id.button_captcha_refresh);
         buttonCaptchaRefresh.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -169,7 +183,7 @@ public class ActivityNewPost extends AppCompatActivity {
             }
         });
 
-        if (getIntent().getBooleanExtra(IS_EDIT, false)) {
+        if (getArguments().getBoolean(IS_EDIT, false)) {
             loadEditValues();
         }
         else {
@@ -190,8 +204,8 @@ public class ActivityNewPost extends AppCompatActivity {
                     }, 0);
         }
 
+        return view;
     }
-
 
     private void loadCaptcha() {
 
@@ -206,7 +220,7 @@ public class ActivityNewPost extends AppCompatActivity {
                     captchaId = jsonObject.getJSONObject("json").getJSONObject("data").getString(
                             "iden");
                     Log.d(TAG, "captchaId: " + captchaId);
-                    Picasso.with(ActivityNewPost.this)
+                    Picasso.with(activity)
                             .load(Reddit.BASE_URL + "/captcha/" + captchaId + ".png")
                             .resize(getResources().getDisplayMetrics().widthPixels, 0).into(
                             imageCaptcha);
@@ -224,7 +238,7 @@ public class ActivityNewPost extends AppCompatActivity {
     }
 
     private void loadEditValues() {
-        reddit.loadGet(Reddit.OAUTH_URL + "/api/info?id=" + getIntent().getStringExtra(EDIT_ID),
+        reddit.loadGet(Reddit.OAUTH_URL + "/api/info?id=" + getArguments().getString(EDIT_ID),
                 new Response.Listener<String>() {
                     @Override
                     public void onResponse(String response) {
@@ -259,7 +273,7 @@ public class ActivityNewPost extends AppCompatActivity {
         Map<String, String> params = new HashMap<>();
         params.put("api_type", "json");
         params.put("text", editTextBody.getText().toString());
-        params.put("thing_id", getIntent().getStringExtra(EDIT_ID));
+        params.put("thing_id", getArguments().getString(EDIT_ID));
 
         reddit.loadPost(Reddit.OAUTH_URL + "/api/editusertext", new Response.Listener<String>() {
             @Override
@@ -270,7 +284,8 @@ public class ActivityNewPost extends AppCompatActivity {
 
                 Animation animation = new Animation() {
                     @Override
-                    protected void applyTransformation(final float interpolatedTime, Transformation t) {
+                    protected void applyTransformation(final float interpolatedTime,
+                            Transformation t) {
                         super.applyTransformation(interpolatedTime, t);
                         progressSubmit.setProgress((int) (interpolatedTime * 100));
                         Log.d(TAG, "progress: " + ((int) (interpolatedTime * 100)));
@@ -288,8 +303,8 @@ public class ActivityNewPost extends AppCompatActivity {
                         progressSubmit.postDelayed(new Runnable() {
                             @Override
                             public void run() {
-                                setResult(Activity.RESULT_OK);
-                                finish();
+                                mListener.getControllerLinks().reloadAllLinks(false);
+                                mListener.onNavigationBackClick();
                             }
                         }, DURATION_SUBMIT_DELAY);
                     }
@@ -304,7 +319,8 @@ public class ActivityNewPost extends AppCompatActivity {
         }, new Response.ErrorListener() {
             @Override
             public void onErrorResponse(VolleyError error) {
-                Toast.makeText(ActivityNewPost.this, getString(R.string.error_submitting_post), Toast.LENGTH_LONG)
+                Toast.makeText(activity, getString(R.string.error_submitting_post),
+                        Toast.LENGTH_LONG)
                         .show();
                 progressSubmit.setVisibility(View.GONE);
             }
@@ -315,17 +331,17 @@ public class ActivityNewPost extends AppCompatActivity {
         String text = editTextBody.getText().toString();
 
         if (TextUtils.isEmpty(editTextTitle.getText().toString())) {
-            Toast.makeText(ActivityNewPost.this, getString(R.string.empty_title), Toast.LENGTH_LONG)
+            Toast.makeText(activity, getString(R.string.empty_title), Toast.LENGTH_LONG)
                     .show();
             return;
         }
-        else if (Reddit.POST_TYPE_LINK.equals(getIntent().getStringExtra(POST_TYPE)) && !URLUtil
+        else if (Reddit.POST_TYPE_LINK.equals(getArguments().getString(POST_TYPE)) && !URLUtil
                 .isValidUrl(text)) {
 
             text = "http://" + text;
 
             if (!URLUtil.isValidUrl(text)) {
-                Toast.makeText(ActivityNewPost.this, getString(R.string.invalid_url),
+                Toast.makeText(activity, getString(R.string.invalid_url),
                         Toast.LENGTH_LONG).show();
                 return;
             }
@@ -334,15 +350,15 @@ public class ActivityNewPost extends AppCompatActivity {
         progressSubmit.setVisibility(View.VISIBLE);
 
         Map<String, String> params = new HashMap<>();
-        params.put("kind", getIntent().getStringExtra(POST_TYPE).toLowerCase());
+        params.put("kind", getArguments().getString(POST_TYPE).toLowerCase());
         params.put("api_type", "json");
         params.put("resubmit", "true");
         params.put("sendreplies", "true");
         params.put("then", "comments");
         params.put("extension", "json");
-        params.put("sr", getIntent().getStringExtra(SUBREDDIT));
+        params.put("sr", getArguments().getString(SUBREDDIT));
         params.put("title", editTextTitle.getText().toString());
-        if (Reddit.POST_TYPE_LINK.equalsIgnoreCase(getIntent().getStringExtra(POST_TYPE))) {
+        if (Reddit.POST_TYPE_LINK.equalsIgnoreCase(getArguments().getString(POST_TYPE))) {
             params.put("url", text);
         }
         else {
@@ -369,13 +385,13 @@ public class ActivityNewPost extends AppCompatActivity {
                         if (!TextUtils.isEmpty(captcha)) {
                             captchaId = captcha;
                             editCaptcha.setText("");
-                            Picasso.with(ActivityNewPost.this)
+                            Picasso.with(activity)
                                     .load(Reddit.BASE_URL + "/captcha/" + captchaId + ".png")
                                     .resize(getResources().getDisplayMetrics().widthPixels, 0).into(
                                     imageCaptcha);
                         }
 
-                        Toast.makeText(ActivityNewPost.this, getString(R.string.error) + ": " + error, Toast.LENGTH_LONG)
+                        Toast.makeText(activity, getString(R.string.error) + ": " + error, Toast.LENGTH_LONG)
                                 .show();
                         progressSubmit.setVisibility(View.GONE);
                         return;
@@ -408,8 +424,8 @@ public class ActivityNewPost extends AppCompatActivity {
                         progressSubmit.postDelayed(new Runnable() {
                             @Override
                             public void run() {
-                                setResult(Activity.RESULT_OK);
-                                finish();
+                                mListener.getControllerLinks().reloadAllLinks(false);
+                                mListener.onNavigationBackClick();
                             }
                         }, DURATION_SUBMIT_DELAY);
                     }
@@ -425,7 +441,7 @@ public class ActivityNewPost extends AppCompatActivity {
         }, new Response.ErrorListener() {
             @Override
             public void onErrorResponse(VolleyError error) {
-                Toast.makeText(ActivityNewPost.this, getString(R.string.error_submitting_post), Toast.LENGTH_LONG)
+                Toast.makeText(activity, getString(R.string.error_submitting_post), Toast.LENGTH_LONG)
                         .show();
                 progressSubmit.setVisibility(View.GONE);
             }
@@ -433,13 +449,28 @@ public class ActivityNewPost extends AppCompatActivity {
     }
 
     @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-
-        if (item.getItemId() == android.R.id.home) {
-            finish();
-            return true;
+    public void onAttach(Activity activity) {
+        super.onAttach(activity);
+        this.activity = activity;
+        try {
+            mListener = (FragmentListenerBase) activity;
         }
-
-        return super.onOptionsItemSelected(item);
+        catch (ClassCastException e) {
+            throw new ClassCastException(activity.toString()
+                    + " must implement FragmentListenerBase");
+        }
     }
+
+    @Override
+    public void onDetach() {
+        super.onDetach();
+        activity = null;
+        mListener = null;
+    }
+
+    @Override
+    public boolean navigateBack() {
+        return true;
+    }
+
 }

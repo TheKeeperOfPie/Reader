@@ -27,7 +27,7 @@ import android.widget.Spinner;
 
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
-import com.winsonchiu.reader.ActivityNewMessage;
+import com.winsonchiu.reader.FragmentNewMessage;
 import com.winsonchiu.reader.utils.AnimationUtils;
 import com.winsonchiu.reader.utils.DisallowListener;
 import com.winsonchiu.reader.FragmentBase;
@@ -203,8 +203,12 @@ public class FragmentInbox extends FragmentBase {
         floatingActionButtonNewMessage.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent intent = new Intent(activity, ActivityNewMessage.class);
-                startActivity(intent);
+                FragmentNewMessage fragmentNewMessage = FragmentNewMessage.newInstance();
+                getFragmentManager().beginTransaction()
+                        .hide(FragmentInbox.this)
+                        .add(R.id.frame_fragment, fragmentNewMessage, FragmentNewMessage.TAG)
+                        .addToBackStack(null)
+                        .commit();
             }
         });
         floatingActionButtonNewMessage.setColorFilter(colorFilterIcon);

@@ -1,4 +1,3 @@
-<?xml version="1.0" encoding="utf-8"?>
 <!--
   ~ Copyright 2015 Winson Chiu
   -->
@@ -9,7 +8,7 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    tools:context=".ActivityNewMessage"
+    tools:context="com.winsonchiu.reader.FragmentNewPost"
     >
 
     <RelativeLayout
@@ -32,8 +31,8 @@
                 android:layout_height="match_parent"
                 >
 
-                <EditText
-                    android:id="@+id/edit_recipient"
+                <TextView
+                    android:id="@+id/text_info"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_alignParentTop="true"
@@ -43,48 +42,84 @@
                     android:layout_marginBottom="@dimen/activity_vertical_margin"
                     android:paddingStart="16dp"
                     android:paddingEnd="16dp"
-                    android:hint="@string/message_recipient"
-                    android:ellipsize="end"
-                    android:maxLength="25"
+                    android:textAppearance="?android:textAppearanceMedium"
                     />
 
-                <EditText
-                    android:id="@+id/edit_subject"
+                <TextView
+                    android:id="@+id/text_submit"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_below="@id/edit_recipient"
+                    android:layout_below="@id/text_info"
                     android:layout_marginStart="@dimen/activity_horizontal_margin"
                     android:layout_marginEnd="@dimen/activity_horizontal_margin"
                     android:layout_marginTop="@dimen/activity_vertical_margin"
                     android:layout_marginBottom="@dimen/activity_vertical_margin"
                     android:paddingStart="16dp"
                     android:paddingEnd="16dp"
-                    android:hint="@string/subject"
-                    android:inputType="textCapSentences|textAutoCorrect|textMultiLine"
-                    android:maxLength="100"
                     />
 
+                <!--<android.support.design.widget.TextInputLayout-->
+                <!--android:id="@+id/layout_text_input_title"-->
+                <!--android:layout_width="match_parent"-->
+                <!--android:layout_height="wrap_content"-->
+                <!--android:layout_marginStart="@dimen/activity_horizontal_margin"-->
+                <!--android:layout_marginEnd="@dimen/activity_horizontal_margin"-->
+                <!--android:layout_marginTop="@dimen/activity_vertical_margin"-->
+                <!--android:layout_marginBottom="@dimen/activity_vertical_margin"-->
+                <!-->-->
+
                 <EditText
-                    android:id="@+id/edit_message"
+                    android:id="@+id/edit_title"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_below="@id/edit_subject"
+                    android:layout_below="@id/text_submit"
                     android:layout_marginStart="@dimen/activity_horizontal_margin"
                     android:layout_marginEnd="@dimen/activity_horizontal_margin"
                     android:layout_marginTop="@dimen/activity_vertical_margin"
                     android:layout_marginBottom="@dimen/activity_vertical_margin"
                     android:paddingStart="16dp"
                     android:paddingEnd="16dp"
-                    android:hint="@string/messsage"
+                    android:hint="@string/new_post_title"
                     android:inputType="textCapSentences|textAutoCorrect|textMultiLine"
+                    android:maxLength="300"
+                    />
+
+                <!--</android.support.design.widget.TextInputLayout>-->
+
+                <!--<android.support.design.widget.TextInputLayout-->
+                <!--android:id="@+id/layout_text_input_body"-->
+                <!--android:layout_width="match_parent"-->
+                <!--android:layout_height="wrap_content"-->
+                <!--android:layout_below="@id/layout_text_input_title"-->
+                <!--android:layout_marginStart="@dimen/activity_horizontal_margin"-->
+                <!--android:layout_marginEnd="@dimen/activity_horizontal_margin"-->
+                <!--android:layout_marginTop="@dimen/activity_vertical_margin"-->
+                <!--android:layout_marginBottom="@dimen/activity_vertical_margin"-->
+                <!-->-->
+
+                <EditText
+                    android:id="@+id/edit_body"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@id/edit_title"
+                    android:layout_marginStart="@dimen/activity_horizontal_margin"
+                    android:layout_marginEnd="@dimen/activity_horizontal_margin"
+                    android:layout_marginTop="@dimen/activity_vertical_margin"
+                    android:layout_marginBottom="@dimen/activity_vertical_margin"
+                    android:paddingStart="16dp"
+                    android:paddingEnd="16dp"
+                    android:inputType="textCapSentences|textAutoCorrect|textMultiLine"
+                    android:hint="@string/new_post_body"
                     android:maxLength="40000"
                     />
+
+                <!--</android.support.design.widget.TextInputLayout>-->
 
                 <RelativeLayout
                     android:id="@+id/layout_captcha"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_below="@id/edit_message"
+                    android:layout_below="@id/edit_body"
                     android:visibility="gone"
                     >
 
@@ -151,7 +186,6 @@
         android:layout_height="wrap_content"
         >
 
-        <!--TODO: Change to dynamic height-->
         <android.support.v7.widget.Toolbar
             android:id="@+id/toolbar"
             android:layout_width="match_parent"
@@ -179,7 +213,6 @@
             android:src="@drawable/ic_check_white_24dp"
             android:layout_alignParentEnd="true"
             android:layout_alignParentBottom="true"
-            app:layout_behavior="com.winsonchiu.reader.ScrollAwareFloatingActionButtonBehavior"
             app:backgroundTint="@color/colorPrimary"
             app:fabSize="normal"
             app:elevation="0dp"

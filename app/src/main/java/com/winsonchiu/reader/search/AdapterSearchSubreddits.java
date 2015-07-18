@@ -5,6 +5,8 @@
 package com.winsonchiu.reader.search;
 
 import android.app.Activity;
+import android.content.res.TypedArray;
+import android.graphics.PorterDuff;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.text.method.LinkMovementMethod;
@@ -108,6 +110,12 @@ public class AdapterSearchSubreddits extends RecyclerView.Adapter<AdapterSearchS
                     AnimationUtils.animateExpand(layoutContainerExpand, 1f, null);
                 }
             });
+
+            TypedArray typedArray = itemView.getContext().getTheme().obtainStyledAttributes(
+                    new int[] {R.attr.colorIconFilter});
+            buttonOpen.setColorFilter(typedArray.getColor(0, 0xFFFFFFFF),
+                    PorterDuff.Mode.MULTIPLY);
+            typedArray.recycle();
 
         }
 

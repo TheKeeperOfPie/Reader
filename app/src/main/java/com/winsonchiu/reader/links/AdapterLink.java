@@ -21,6 +21,7 @@ import android.graphics.drawable.Drawable;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.preference.PreferenceManager;
+import android.support.v4.view.GestureDetectorCompat;
 import android.support.v4.view.MenuItemCompat;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AlertDialog;
@@ -42,6 +43,7 @@ import android.text.method.LinkMovementMethod;
 import android.text.style.ForegroundColorSpan;
 import android.util.Log;
 import android.util.TypedValue;
+import android.view.GestureDetector;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -70,12 +72,12 @@ import com.android.volley.VolleyError;
 import com.google.android.youtube.player.YouTubeInitializationResult;
 import com.google.android.youtube.player.YouTubePlayer;
 import com.google.android.youtube.player.YouTubePlayerView;
-import com.winsonchiu.reader.ActivityNewPost;
 import com.winsonchiu.reader.history.Historian;
 import com.winsonchiu.reader.utils.AnimationUtils;
 import com.winsonchiu.reader.ApiKeys;
 import com.winsonchiu.reader.AppSettings;
 import com.winsonchiu.reader.ControllerUser;
+import com.winsonchiu.reader.utils.CustomColorFilter;
 import com.winsonchiu.reader.utils.DisallowListener;
 import com.winsonchiu.reader.MainActivity;
 import com.winsonchiu.reader.utils.OnTouchListenerDisallow;
@@ -287,6 +289,13 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             defaultTextSubmitText = itemView.getContext()
                     .getResources()
                     .getString(R.string.submit_text);
+
+            TypedArray typedArray = itemView.getContext().getTheme().obtainStyledAttributes(
+                    new int[] {R.attr.colorIconFilter});
+            buttonShowSidebar.setColorFilter(typedArray.getColor(0, 0xFFFFFFFF),
+                    PorterDuff.Mode.MULTIPLY);
+            typedArray.recycle();
+
         }
 
         private void setVisibility(int visibility) {
@@ -429,15 +438,16 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         public PorterDuffColorFilter colorFilterSave;
         public PorterDuffColorFilter colorFilterPositive;
         public PorterDuffColorFilter colorFilterNegative;
-        public PorterDuffColorFilter colorFilterIconDefault;
-        public PorterDuffColorFilter colorFilterIconLight;
-        public PorterDuffColorFilter colorFilterIconDark;
-        public PorterDuffColorFilter colorFilterMenuItem;
+        public CustomColorFilter colorFilterIconDefault;
+        public CustomColorFilter colorFilterIconLight;
+        public CustomColorFilter colorFilterIconDark;
+        public CustomColorFilter colorFilterMenuItem;
         public int colorAccent;
         public int colorPositive;
         public int colorNegative;
         public int colorTextPrimaryDefault;
         public int colorTextSecondaryDefault;
+        public int titleTextColor;
         public Drawable drawableDefault;
 
         public SharedPreferences preferences;
@@ -510,7 +520,16 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             resources = itemView.getResources();
             preferences = PreferenceManager.getDefaultSharedPreferences(itemView.getContext());
 
-            colorAccent = resources.getColor(R.color.colorAccent);
+            TypedArray typedArray = itemView.getContext().getTheme().obtainStyledAttributes(
+                    new int[] {android.R.attr.textColorPrimary, android.R.attr.textColorSecondary,
+                    R.attr.colorAccent, R.attr.colorIconFilter});
+            colorTextPrimaryDefault = typedArray.getColor(0,
+                    resources.getColor(R.color.darkThemeTextColor));
+            colorTextSecondaryDefault = typedArray.getColor(1,
+                    resources.getColor(R.color.darkThemeTextColorMuted));
+            colorAccent = typedArray.getColor(2, resources.getColor(R.color.colorAccent));
+            int colorIconFilter = typedArray.getColor(3, 0xFFFFFFFF);
+            typedArray.recycle();
             colorPositive = resources.getColor(R.color.positiveScore);
             colorNegative = resources.getColor(R.color.negativeScore);
 
@@ -558,7 +577,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                 public void requestDisallowInterceptTouchEventHorizontal(boolean disallow) {
                     disallowListener.requestDisallowInterceptTouchEventHorizontal(disallow);
                 }
-            });
+            }, colorFilterMenuItem);
 
             viewPagerFull.setAdapter(adapterAlbum);
             viewPagerFull.setPageTransformer(false, new ViewPager.PageTransformer() {
@@ -579,15 +598,9 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                 }
             });
 
-            TypedArray typedArray = itemView.getContext().getTheme().obtainStyledAttributes(new int[] {R.attr.colorIconFilter, android.R.attr.textColorPrimary, android.R.attr.textColorSecondary});
-            int colorIconFilter = typedArray.getColor(0, 0xFFFFFFFF);
-            colorTextPrimaryDefault = typedArray.getColor(1, resources.getColor(R.color.darkThemeTextColor));
-            colorTextSecondaryDefault = typedArray.getColor(2, resources.getColor(R.color.darkThemeTextColorMuted));
-            typedArray.recycle();
-
-            colorFilterIconDefault = new PorterDuffColorFilter(colorIconFilter, PorterDuff.Mode.MULTIPLY);
-            colorFilterIconLight = new PorterDuffColorFilter(resources.getColor(R.color.darkThemeIconFilter), PorterDuff.Mode.MULTIPLY);
-            colorFilterIconDark = new PorterDuffColorFilter(resources.getColor(R.color.lightThemeIconFilter), PorterDuff.Mode.MULTIPLY);
+            colorFilterIconDefault = new CustomColorFilter(colorIconFilter, PorterDuff.Mode.MULTIPLY);
+            colorFilterIconLight = new CustomColorFilter(resources.getColor(R.color.darkThemeIconFilter), PorterDuff.Mode.MULTIPLY);
+            colorFilterIconDark = new CustomColorFilter(resources.getColor(R.color.lightThemeIconFilter), PorterDuff.Mode.MULTIPLY);
             colorFilterMenuItem = colorFilterIconDefault;
             colorFilterPositive = new PorterDuffColorFilter(colorPositive,
                     PorterDuff.Mode.MULTIPLY);
@@ -606,8 +619,35 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             textThreadSelf.setOnClickListener(this);
             textThreadSelf.setMovementMethod(LinkMovementMethod.getInstance());
 
-            itemView.setOnClickListener(this);
-            itemView.setOnLongClickListener(this);
+            final GestureDetectorCompat gestureDetector = new GestureDetectorCompat(itemView.getContext(), new GestureDetector.SimpleOnGestureListener() {
+
+                @Override
+                public boolean onDoubleTap(MotionEvent e) {
+                    if (!TextUtils.isEmpty(userName)) {
+                        eventListener.voteLink(ViewHolderBase.this, link, 1);
+                    }
+                    viewOverlay.setVisibility(View.GONE);
+                    return true;
+                }
+
+                @Override
+                public boolean onSingleTapConfirmed(MotionEvent e) {
+                    Log.d(TAG, "onSingleTapConfirmed");
+                    expandToolbarActions();
+                    return true;
+                }
+            });
+
+            View.OnTouchListener onTouchListener = new View.OnTouchListener() {
+                @Override
+                public boolean onTouch(View v, MotionEvent event) {
+                    return gestureDetector.onTouchEvent(event);
+                }
+            };
+
+            itemView.setClickable(true);
+            itemView.setOnTouchListener(onTouchListener);
+            imageThumbnail.setOnTouchListener(onTouchListener);
 
             editTextReply.setOnTouchListener(new OnTouchListenerDisallow(disallowListener));
 
@@ -754,12 +794,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                             .toast(resources.getString(R.string.copied));
                     break;
                 case R.id.item_edit:
-                    Intent intentEdit = new Intent(itemView.getContext(), ActivityNewPost.class);
-                    intentEdit.putExtra(ActivityNewPost.USER, userName);
-                    intentEdit.putExtra(ActivityNewPost.SUBREDDIT, "/r/" + link.getSubreddit());
-                    intentEdit.putExtra(ActivityNewPost.IS_EDIT, true);
-                    intentEdit.putExtra(ActivityNewPost.EDIT_ID, link.getName());
-                    eventListener.startActivity(intentEdit);
+                    eventListener.editLink(link);
                     break;
                 case R.id.item_delete:
                     new AlertDialog.Builder(itemView.getContext())
@@ -1275,7 +1310,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             viewPagerFull.setLayoutParams(layoutParams);
             viewPagerFull.setVisibility(View.VISIBLE);
             viewPagerFull.requestLayout();
-            adapterAlbum.setAlbum(album);
+            adapterAlbum.setAlbum(album, colorFilterMenuItem);
             viewPagerFull.setCurrentItem(0, false);
             recyclerCallback.scrollTo(getAdapterPosition());
         }
@@ -1516,6 +1551,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             this.link = link;
             this.showSubreddit = showSubreddit;
             this.userName = userName;
+            titleTextColor = colorTextPrimaryDefault;
             colorFilterMenuItem = colorFilterIconDefault;
             isYouTubeFullscreen = false;
             layoutContainerExpand.setVisibility(View.GONE);
@@ -1537,7 +1573,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             frameFull.requestLayout();
 
             textThreadSelf.setVisibility(View.GONE);
-            adapterAlbum.setAlbum(null);
+            adapterAlbum.setAlbum(null, null);
 
             setTextValues(link);
 
@@ -1578,7 +1614,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                     }
                 }
             }
-            adapterAlbum.setAlbum(null);
+            adapterAlbum.setAlbum(null, null);
             viewPagerFull.removeAllViews();
             frameFull.requestLayout();
         }
@@ -1629,6 +1665,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             void deletePost(Link link);
             void report(Thing thing, String reason, String otherReason);
             void hide(Link link);
+            void editLink(Link link);
         }
 
     }

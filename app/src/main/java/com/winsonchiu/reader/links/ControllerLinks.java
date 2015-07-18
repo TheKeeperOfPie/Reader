@@ -183,6 +183,10 @@ public class ControllerLinks implements ControllerLinksBase {
     }
 
     public void reloadAllLinks() {
+        reloadAllLinks(true);
+    }
+
+    public void reloadAllLinks(final boolean scroll) {
         setLoading(true);
 
         String url = Reddit.OAUTH_URL + subreddit.getUrl() + sort.toString() + "?t=" + time.toString() + "&limit=25&showAll=true";
@@ -224,7 +228,9 @@ public class ControllerLinks implements ControllerLinksBase {
                                     listener.loadSideBar(subreddit);
                                     listener.showEmptyView(listingLinks.getChildren()
                                             .isEmpty());
-                                    listener.scrollTo(0);
+                                    if (scroll) {
+                                        listener.scrollTo(0);
+                                    }
                                 }
                             });
                         }

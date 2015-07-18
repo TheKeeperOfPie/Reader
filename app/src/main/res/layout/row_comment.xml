@@ -23,7 +23,7 @@
         android:layout_width="6dp"
         android:layout_height="match_parent"
         android:layout_alignTop="@+id/text_comment"
-        android:layout_alignBottom="@+id/text_info"
+        android:layout_alignBottom="@+id/view_divider"
         android:layout_toEndOf="@id/view_indent"
         android:background="@color/colorPrimary"
         />
@@ -145,28 +145,30 @@
 
     </RelativeLayout>
 
+    <View
+        android:id="@+id/view_divider"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/layout_container_reply"
+        android:layout_toEndOf="@id/view_indicator"
+        android:background="?android:listDivider"
+        />
+
     <RelativeLayout
         android:id="@+id/layout_container_collapsed"
         android:orientation="horizontal"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_toEndOf="@id/view_indicator"
-        android:layout_below="@id/layout_container_reply"
+        android:layout_below="@id/view_divider"
+        android:layout_alignParentBottom="true"
         >
-
-        <View
-            android:id="@+id/view_divider_collapsed"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_alignParentTop="true"
-            android:background="?android:listDivider"
-            />
 
         <View
             android:id="@+id/view_indicator_collapsed"
             android:layout_width="6dp"
             android:layout_height="match_parent"
-            android:layout_below="@id/view_divider_collapsed"
+            android:layout_alignParentTop="true"
             android:layout_alignParentStart="true"
             android:layout_alignTop="@+id/text_collapsed"
             android:layout_alignBottom="@+id/text_collapsed"
@@ -186,15 +188,15 @@
             android:textColor="?android:attr/textColorSecondary"
             />
 
-    </RelativeLayout>
+        <View
+            android:id="@+id/view_divider_collapsed"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/text_collapsed"
+            android:layout_alignParentBottom="true"
+            android:background="?android:listDivider"
+            />
 
-    <View
-        android:id="@+id/view_divider"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_below="@id/layout_container_collapsed"
-        android:layout_alignParentBottom="true"
-        android:background="?android:listDivider"
-        />
+    </RelativeLayout>
 
 </RelativeLayout>

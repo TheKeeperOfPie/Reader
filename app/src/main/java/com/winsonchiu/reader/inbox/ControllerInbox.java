@@ -123,6 +123,8 @@ public class ControllerInbox {
 
     public void reload() {
 
+        setLoading(true);
+
         reddit.loadGet(Reddit.OAUTH_URL + "/message/" + page.toLowerCase(),
                 new Response.Listener<String>() {
                     @Override

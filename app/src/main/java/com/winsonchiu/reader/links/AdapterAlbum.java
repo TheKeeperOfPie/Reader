@@ -4,8 +4,6 @@
 
 package com.winsonchiu.reader.links;
 
-import android.content.res.TypedArray;
-import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
 import android.graphics.Rect;
 import android.support.v4.view.PagerAdapter;
@@ -25,6 +23,7 @@ import android.widget.RelativeLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
 
+import com.winsonchiu.reader.utils.CustomColorFilter;
 import com.winsonchiu.reader.utils.DisallowListener;
 import com.winsonchiu.reader.utils.OnTouchListenerDisallow;
 import com.winsonchiu.reader.R;
@@ -43,25 +42,18 @@ public class AdapterAlbum extends PagerAdapter {
     private static final String TAG = AdapterAlbum.class.getCanonicalName();
     private final EventListener eventListener;
     private final ViewPager viewPager;
-    private PorterDuffColorFilter colorFilterIcon;
+    private CustomColorFilter colorFilterIcon;
     private DisallowListener disallowListener;
     private Album album;
     private Stack<View> recycledViews;
 
-    public AdapterAlbum(ViewPager viewPager, Album album, EventListener eventListener, DisallowListener disallowListener) {
+    public AdapterAlbum(ViewPager viewPager, Album album, EventListener eventListener, DisallowListener disallowListener, CustomColorFilter colorFilterIcon) {
         this.viewPager = viewPager;
         this.album = album;
         this.eventListener = eventListener;
         this.disallowListener = disallowListener;
+        this.colorFilterIcon = colorFilterIcon;
         recycledViews = new Stack<>();
-
-        TypedArray typedArray = viewPager.getContext().getTheme().obtainStyledAttributes(
-                new int[]{R.attr.colorIconFilter});
-        int colorIconFilter = typedArray.getColor(0, 0xFFFFFFFF);
-        typedArray.recycle();
-
-        colorFilterIcon = new PorterDuffColorFilter(colorIconFilter,
-                PorterDuff.Mode.MULTIPLY);
 
     }
 
@@ -171,8 +163,9 @@ public class AdapterAlbum extends PagerAdapter {
         return view == object;
     }
 
-    public void setAlbum(Album album) {
+    public void setAlbum(Album album, CustomColorFilter colorFilterIcon) {
         this.album = album;
+        this.colorFilterIcon = colorFilterIcon;
         destroyViews();
         notifyDataSetChanged();
     }
@@ -211,7 +204,7 @@ public class AdapterAlbum extends PagerAdapter {
         protected TextView textAlbumIndicator;
         protected WebViewFixed webView;
 
-        public ViewHolder(View view, EventListener listener, DisallowListener disallowListener, PorterDuffColorFilter colorFilterIcon) {
+        public ViewHolder(View view, EventListener listener, DisallowListener disallowListener, CustomColorFilter colorFilterIcon) {
             this.eventListener = listener;
             this.disallowListener = disallowListener;
             layoutRelative = (RelativeLayout) view;
@@ -227,6 +220,7 @@ public class AdapterAlbum extends PagerAdapter {
 
             buttonInfo.setColorFilter(colorFilterIcon);
             buttonDownload.setColorFilter(colorFilterIcon);
+            textAlbumIndicator.setTextColor(colorFilterIcon.getColor());
 
             view.setOnClickListener(this);
             buttonInfo.setOnClickListener(this);

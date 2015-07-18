@@ -91,11 +91,11 @@
             android:layout_marginTop="2dp"
             android:minWidth="64dp"
             android:paddingBottom="6dp"
-            android:paddingEnd="48dp"
-            android:paddingLeft="8dp"
-            android:paddingRight="8dp"
+            android:paddingStart="8dp"
+            android:paddingEnd="8dp"
             android:paddingTop="6dp"
             android:textAllCaps="true"
+            android:textAlignment="center"
             android:layout_gravity="end"
             />
 
@@ -113,11 +113,11 @@
             android:layout_marginTop="2dp"
             android:minWidth="64dp"
             android:paddingBottom="6dp"
-            android:paddingEnd="48dp"
-            android:paddingLeft="8dp"
-            android:paddingRight="8dp"
+            android:paddingStart="8dp"
+            android:paddingEnd="8dp"
             android:paddingTop="6dp"
             android:textAllCaps="true"
+            android:textAlignment="center"
             android:layout_gravity="end"
             />
 

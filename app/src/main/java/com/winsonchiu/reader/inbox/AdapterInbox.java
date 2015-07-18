@@ -9,6 +9,7 @@ import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
+import android.text.Html;
 import android.text.Spannable;
 import android.text.SpannableString;
 import android.text.TextUtils;
@@ -154,6 +155,7 @@ public class AdapterInbox extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
 
         protected Message message;
 
+        protected TextView textSubject;
         protected TextView textMessage;
         protected TextView textInfo;
         protected RelativeLayout layoutContainerReply;
@@ -173,6 +175,7 @@ public class AdapterInbox extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
             toolbarItemWidth = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 48,
                     itemView.getResources().getDisplayMetrics());
 
+            textSubject = (TextView) itemView.findViewById(R.id.text_subject);
             textMessage = (TextView) itemView.findViewById(R.id.text_message);
             textMessage.setMovementMethod(LinkMovementMethod.getInstance());
             textInfo = (TextView) itemView.findViewById(R.id.text_info);
@@ -235,6 +238,7 @@ public class AdapterInbox extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
                     AnimationUtils.animateExpand(toolbarActions, 1f, null);
                 }
             };
+            textSubject.setOnClickListener(clickListenerLink);
             textMessage.setOnClickListener(clickListenerLink);
             textInfo.setOnClickListener(clickListenerLink);
             this.itemView.setOnClickListener(clickListenerLink);
@@ -279,6 +283,7 @@ public class AdapterInbox extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
                 layoutContainerReply.setVisibility(View.GONE);
             }
 
+            textSubject.setText(Html.fromHtml(message.getSubject()));
             textMessage.setText(message.getBodyHtml());
 
             String prefix;
