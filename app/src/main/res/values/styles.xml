@@ -17,6 +17,7 @@
         <item name="colorRowBackground">@color/darkThemeRowBackground</item>
         <item name="colorCellBackground">@color/darkThemeCellBackground</item>
         <item name="colorIconFilter">@color/darkThemeIconFilter</item>
+        <item name="colorAlert">@color/textColorAlert</item>
 
         <item name="android:actionOverflowButtonStyle">@style/OverflowStyleDark</item>
     </style>
@@ -34,6 +35,7 @@
         <item name="colorRowBackground">@color/lightThemeRowBackground</item>
         <item name="colorCellBackground">@color/lightThemeCellBackground</item>
         <item name="colorIconFilter">@color/lightThemeIconFilter</item>
+        <item name="colorAlert">@color/textColorAlertMuted</item>
 
         <item name="android:actionOverflowButtonStyle">@style/OverflowStyleLight</item>
 

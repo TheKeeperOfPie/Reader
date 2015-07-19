@@ -209,9 +209,6 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             if (viewHolder instanceof AdapterLink.ViewHolderBase) {
                 AdapterLink.ViewHolderBase viewHolderBase = (AdapterLink.ViewHolderBase) viewHolder;
                 viewHolderBase.videoFull.pause();
-                if (viewHolderBase.youTubePlayer != null) {
-                    viewHolderBase.youTubePlayer.pause();
-                }
             }
         }
     }
@@ -447,6 +444,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         public int colorNegative;
         public int colorTextPrimaryDefault;
         public int colorTextSecondaryDefault;
+        public int colorTextAlertDefault;
         public int titleTextColor;
         public Drawable drawableDefault;
 
@@ -521,14 +519,14 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             preferences = PreferenceManager.getDefaultSharedPreferences(itemView.getContext());
 
             TypedArray typedArray = itemView.getContext().getTheme().obtainStyledAttributes(
-                    new int[] {android.R.attr.textColorPrimary, android.R.attr.textColorSecondary,
-                    R.attr.colorAccent, R.attr.colorIconFilter});
+                    new int[] {android.R.attr.textColorPrimary, android.R.attr.textColorSecondary, R.attr.colorAlert, R.attr.colorAccent, R.attr.colorIconFilter});
             colorTextPrimaryDefault = typedArray.getColor(0,
                     resources.getColor(R.color.darkThemeTextColor));
             colorTextSecondaryDefault = typedArray.getColor(1,
                     resources.getColor(R.color.darkThemeTextColorMuted));
-            colorAccent = typedArray.getColor(2, resources.getColor(R.color.colorAccent));
-            int colorIconFilter = typedArray.getColor(3, 0xFFFFFFFF);
+            colorTextAlertDefault = typedArray.getColor(2, resources.getColor(R.color.textColorAlert));
+            colorAccent = typedArray.getColor(3, resources.getColor(R.color.colorAccent));
+            int colorIconFilter = typedArray.getColor(4, 0xFFFFFFFF);
             typedArray.recycle();
             colorPositive = resources.getColor(R.color.positiveScore);
             colorNegative = resources.getColor(R.color.negativeScore);
@@ -647,7 +645,6 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
 
             itemView.setClickable(true);
             itemView.setOnTouchListener(onTouchListener);
-            imageThumbnail.setOnTouchListener(onTouchListener);
 
             editTextReply.setOnTouchListener(new OnTouchListenerDisallow(disallowListener));
 
@@ -1128,8 +1125,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
 
             textThreadTitle.setText(link.getTitle()
                     .toString());
-            textThreadTitle.setTextColor(
-                    link.isOver18() ? resources.getColor(R.color.textColorAlert) : colorTextPrimaryDefault);
+            textThreadTitle.setTextColor(titleTextColor);
 
             textThreadSelf.setText(link.getSelfTextHtml());
         }
@@ -1469,9 +1465,6 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         }
 
         private void hideYouTube() {
-            if (youTubePlayer != null) {
-                youTubePlayer.pause();
-            }
             viewYouTube.setVisibility(View.GONE);
         }
 
@@ -1551,7 +1544,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             this.link = link;
             this.showSubreddit = showSubreddit;
             this.userName = userName;
-            titleTextColor = colorTextPrimaryDefault;
+            titleTextColor = link.isOver18() ? colorTextAlertDefault : colorTextPrimaryDefault;
             colorFilterMenuItem = colorFilterIconDefault;
             isYouTubeFullscreen = false;
             layoutContainerExpand.setVisibility(View.GONE);

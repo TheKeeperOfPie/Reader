@@ -9,6 +9,7 @@
         <attr name="colorRowBackground" format="color"/>
         <attr name="colorCellBackground" format="color"/>
         <attr name="colorIconFilter" format="color"/>
+        <attr name="colorAlert" format="color"/>
     </declare-styleable>
 
 </resources>

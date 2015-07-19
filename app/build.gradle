@@ -25,8 +25,8 @@ android {
         applicationId "com.winsonchiu.reader"
         minSdkVersion 17
         targetSdkVersion 22
-        versionCode 38
-        versionName "1.0.1"
+        versionCode 40
+        versionName "1.0.3"
     }
     buildTypes {
         release {
@@ -48,10 +48,10 @@ dependencies {
     }
     compile project(':volley')
     compile files('libs/YouTubeAndroidPlayerApi.jar')
-    compile 'com.android.support:appcompat-v7:22.2.0'
-    compile 'com.android.support:support-v4:22.2.0'
-    compile 'com.android.support:recyclerview-v7:22.2.0'
-    compile 'com.android.support:design:22.2.0'
-    compile 'com.android.support:palette-v7:22.2.0'
+    compile 'com.android.support:appcompat-v7:22.2.1'
+    compile 'com.android.support:support-v4:22.2.1'
+    compile 'com.android.support:recyclerview-v7:22.2.1'
+    compile 'com.android.support:design:22.2.1'
+    compile 'com.android.support:palette-v7:22.2.1'
     compile 'com.squareup.picasso:picasso:2.5.2'
 }

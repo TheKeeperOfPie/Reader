@@ -177,7 +177,7 @@ public class AdapterLinkGrid extends AdapterLink {
             itemView.setBackgroundColor(colorBackgroundDefault);
             buttonComments.setColorFilter(colorFilterIconDefault);
             imagePlay.setColorFilter(colorFilterIconDefault);
-            textThreadTitle.setTextColor(colorTextPrimaryDefault);
+            textThreadTitle.setTextColor(titleTextColor);
             textThreadInfo.setTextColor(colorTextSecondaryDefault);
             textHidden.setTextColor(colorTextSecondaryDefault);
 
@@ -473,8 +473,7 @@ public class AdapterLinkGrid extends AdapterLink {
         public void setTextValues(Link link) {
             super.setTextValues(link);
 
-            textThreadTitle.setTextColor(
-                    link.isOver18() ? resources.getColor(R.color.textColorAlert) : titleTextColor);
+            textThreadTitle.setTextColor(titleTextColor);
 
             textThreadInfo.setText(TextUtils
                     .concat(getSubredditString(), showSubreddit ? "\n" : "", getSpannableScore(),

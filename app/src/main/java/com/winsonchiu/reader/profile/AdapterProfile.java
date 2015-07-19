@@ -223,9 +223,6 @@ public class AdapterProfile extends RecyclerView.Adapter<RecyclerView.ViewHolder
             if (viewHolder instanceof AdapterLink.ViewHolderBase) {
                 AdapterLink.ViewHolderBase viewHolderBase = (AdapterLink.ViewHolderBase) viewHolder;
                 viewHolderBase.videoFull.pause();
-                if (viewHolderBase.youTubePlayer != null) {
-                    viewHolderBase.youTubePlayer.pause();
-                }
             }
         }
     }

@@ -31,7 +31,7 @@ public class Comment extends Thing {
     private String bannedBy = "";
     private String body = "";
     private CharSequence bodyHtml = "";
-    private Reddit.Distinguished distinguished;
+    private Reddit.Distinguished distinguished = Reddit.Distinguished.NOT_DISTINGUISHED;
     private long edited;
     private int gilded;
     private int likes;

@@ -4,7 +4,6 @@
 
 package com.winsonchiu.reader.utils;
 
-import android.graphics.Color;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
 
