@@ -2,80 +2,98 @@
   ~ Copyright 2015 Winson Chiu
   -->
 
-<RelativeLayout
+<android.support.design.widget.CoordinatorLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     tools:context="com.winsonchiu.reader.search.FragmentSearch"
+    android:layout_alignParentTop="true"
     >
 
-    <include
-        layout="@layout/toolbar"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_alignParentTop="true"
-        />
-
-    <android.support.design.widget.TabLayout
-        android:id="@+id/tab_search"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_below="@id/toolbar"
-        />
-
-    <android.support.v4.view.ViewPager
-        android:id="@+id/view_pager_search"
+    <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_below="@id/tab_search"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior"
         >
 
-         <!--TODO: Perhaps move RecyclerViews to separate layout and use include, as most are basically the same-->
-        <android.support.v7.widget.RecyclerView
-            xmlns:android="http://schemas.android.com/apk/res/android"
-            android:id="@+id/recycler_search_subreddits"
+        <android.support.design.widget.TabLayout
+            android:id="@+id/tab_search"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:scrollbars="vertical"
-            android:scrollbarFadeDuration="200"
-            android:paddingBottom="48dp"
-            android:clipToPadding="false"
+            android:layout_height="wrap_content"
+            app:layout_scrollFlags="scroll|enterAlways"
             />
 
-        <android.support.v7.widget.RecyclerView
-            xmlns:android="http://schemas.android.com/apk/res/android"
-            android:id="@+id/recycler_search_links_subreddit"
+        <android.support.v4.view.ViewPager
+            android:id="@+id/view_pager_search"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:scrollbars="vertical"
-            android:scrollbarFadeDuration="200"
-            android:paddingBottom="48dp"
-            android:clipToPadding="false"
+            android:layout_below="@id/tab_search"
+            >
+
+            <!--TODO: Perhaps move RecyclerViews to separate layout and use include, as most are basically the same-->
+            <android.support.v7.widget.RecyclerView
+                xmlns:android="http://schemas.android.com/apk/res/android"
+                android:id="@+id/recycler_search_subreddits"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:scrollbars="vertical"
+                android:scrollbarFadeDuration="200"
+                android:paddingBottom="48dp"
+                android:clipToPadding="false"
+                />
+
+            <android.support.v7.widget.RecyclerView
+                xmlns:android="http://schemas.android.com/apk/res/android"
+                android:id="@+id/recycler_search_links_subreddit"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:scrollbars="vertical"
+                android:scrollbarFadeDuration="200"
+                android:paddingBottom="48dp"
+                android:clipToPadding="false"
+                />
+
+            <android.support.v7.widget.RecyclerView
+                xmlns:android="http://schemas.android.com/apk/res/android"
+                android:id="@+id/recycler_search_links"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:scrollbars="vertical"
+                android:scrollbarFadeDuration="200"
+                android:paddingBottom="48dp"
+                android:clipToPadding="false"
+                />
+
+        </android.support.v4.view.ViewPager>
+
+        <TextView
+            android:id="@+id/text_empty"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerHorizontal="true"
+            android:text="@string/empty_thread_list"
+            android:visibility="gone"
+            android:layout_margin="@dimen/activity_horizontal_margin"
             />
 
-        <android.support.v7.widget.RecyclerView
-            xmlns:android="http://schemas.android.com/apk/res/android"
-            android:id="@+id/recycler_search_links"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:scrollbars="vertical"
-            android:scrollbarFadeDuration="200"
-            android:paddingBottom="48dp"
-            android:clipToPadding="false"
-            />
+    </RelativeLayout>
 
-    </android.support.v4.view.ViewPager>
-
-    <TextView
-        android:id="@+id/text_empty"
-        android:layout_width="wrap_content"
+    <android.support.design.widget.AppBarLayout
+        android:id="@+id/layout_app_bar"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_centerHorizontal="true"
-        android:layout_below="@id/tab_search"
-        android:text="@string/empty_thread_list"
-        android:visibility="gone"
-        android:layout_margin="@dimen/activity_horizontal_margin"
-        />
+        >
 
-</RelativeLayout>
+        <include
+            layout="@layout/toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignParentTop="true"
+            app:layout_scrollFlags="scroll|enterAlways"
+            />
+
+    </android.support.design.widget.AppBarLayout>
+
+</android.support.design.widget.CoordinatorLayout>

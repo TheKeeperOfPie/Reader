@@ -28,6 +28,7 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.Spinner;
 
+import com.winsonchiu.reader.comments.FragmentReply;
 import com.winsonchiu.reader.utils.AnimationUtils;
 import com.winsonchiu.reader.views.CustomItemTouchHelper;
 import com.winsonchiu.reader.utils.DisallowListener;
@@ -312,6 +313,16 @@ public class FragmentProfile extends FragmentBase implements Toolbar.OnMenuItemC
                         @Override
                         public void jumpToParent(Comment comment) {
 
+                        }
+
+                        @Override
+                        public void showReplyEditor(Comment comment) {
+                            getFragmentManager().beginTransaction()
+                                    .hide(FragmentProfile.this)
+                                    .add(R.id.frame_fragment, FragmentReply.newInstance(),
+                                            FragmentReply.TAG)
+                                    .addToBackStack(null)
+                                    .commit();
                         }
                     },
                     new DisallowListener() {

@@ -143,6 +143,16 @@
             android:text="@string/button_send"
             />
 
+        <ImageButton
+            android:id="@+id/button_reply_editor"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:padding="12dp"
+            android:src="@drawable/ic_open_in_new_white_24dp"
+            android:layout_alignParentBottom="true"
+            android:layout_toStartOf="@id/button_send_reply"
+            />
+
     </RelativeLayout>
 
     <View

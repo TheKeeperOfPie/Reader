@@ -4,7 +4,10 @@
 
 package com.winsonchiu.reader.data.reddit;
 
+import android.text.Html;
 import android.text.TextUtils;
+
+import com.github.rjeschke.txtmark.Processor;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -22,14 +25,12 @@ public class Comment extends Thing {
 
     private static final String TAG = Comment.class.getCanonicalName();
 
-    private Comment parent;
-
     private String approvedBy = "";
     private String author = "";
     private String authorFlairCssClass = "";
     private String authorFlairText = "";
     private String bannedBy = "";
-    private String body = "";
+    private CharSequence body = "";
     private CharSequence bodyHtml = "";
     private Reddit.Distinguished distinguished = Reddit.Distinguished.NOT_DISTINGUISHED;
     private long edited;
@@ -59,8 +60,7 @@ public class Comment extends Thing {
     private int count;
 
     private int level;
-    private List<Comment> replies;
-    private String replyText;
+    private CharSequence replyText;
     private boolean replyExpanded;
     private boolean editMode;
     private int collapsed;
@@ -132,9 +132,8 @@ public class Comment extends Thing {
         comment.setAuthorFlairCssClass(jsonObject.optString("author_flair_css_class"));
         comment.setAuthorFlairText(jsonObject.optString("author_flair_text"));
         comment.setBannedBy(jsonObject.optString("banned_by"));
-        comment.setBody(jsonObject.optString("body"));
+        comment.setBody(Html.fromHtml(jsonObject.optString("body").replaceAll("\n", "<br>")));
         comment.setBodyHtml(Reddit.getFormattedHtml(jsonObject.optString("body_html")));
-
 
         switch (jsonObject.optString("distinguished")) {
             case "null":
@@ -193,24 +192,11 @@ public class Comment extends Thing {
         comment.setIsNew(jsonObject.optBoolean("new"));
         comment.setContext(jsonObject.optString("context"));
 
-//        JSONArray arrayReplies = jsonObject.getJSONArray("replies");
-//        ArrayList<Comment> listReplies = new ArrayList<>(arrayReplies.length());
-//        for (int index = 0; index < arrayReplies.length(); index++) {
-//            listReplies.add(Comment.fromJson(arrayReplies.getJSONObject(index)));
-//        }
-//
-//        comment.setReplies(listReplies);
-
         return comment;
     }
 
     public Comment() {
         super();
-    }
-
-    public Comment(Comment parent) {
-        super();
-        this.parent = parent;
     }
 
     public String getApprovedBy() {
@@ -253,11 +239,11 @@ public class Comment extends Thing {
         this.bannedBy = bannedBy;
     }
 
-    public String getBody() {
+    public CharSequence getBody() {
         return body;
     }
 
-    public void setBody(String body) {
+    public void setBody(CharSequence body) {
         this.body = body;
     }
 
@@ -389,14 +375,6 @@ public class Comment extends Thing {
         this.linkUrl = linkUrl;
     }
 
-    public List<Comment> getReplies() {
-        return replies;
-    }
-
-    public void setReplies(List<Comment> replies) {
-        this.replies = replies;
-    }
-
     public boolean isMore() {
         return isMore;
     }
@@ -481,11 +459,11 @@ public class Comment extends Thing {
         this.editMode = editMode;
     }
 
-    public String getReplyText() {
+    public CharSequence getReplyText() {
         return replyText;
     }
 
-    public void setReplyText(String replyText) {
+    public void setReplyText(CharSequence replyText) {
         this.replyText = replyText;
     }
 

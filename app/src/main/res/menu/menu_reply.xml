@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ~ Copyright 2015 Winson Chiu
+  -->
+
+<menu
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    >
+
+    <item
+        android:id="@+id/item_hide_actions"
+        android:title="@string/item_hide_actions"
+        android:icon="@drawable/ic_text_format_white_24dp"
+        android:orderInCategory="100"
+        app:showAsAction="ifRoom"
+        />
+
+</menu>

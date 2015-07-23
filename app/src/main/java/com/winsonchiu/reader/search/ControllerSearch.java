@@ -141,6 +141,7 @@ public class ControllerSearch {
                     @Override
                     public void onResponse(String response) {
                         try {
+                            Log.d(TAG, "response: " + response);
                             Listing listing = Listing.fromJson(new JSONObject(response));
                             subredditsSubscribed = listing;
                             Collections.sort(subredditsSubscribed.getChildren(), new Comparator<Thing>() {

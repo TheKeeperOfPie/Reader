@@ -450,12 +450,8 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
             }
         };
 
-        tabLayout = (TabLayout) view.findViewById(R.id.tab_search);
-        tabLayout.setTabMode(TabLayout.MODE_SCROLLABLE);
-
         viewPager = (ViewPager) view.findViewById(R.id.view_pager_search);
         viewPager.setAdapter(pagerAdapter);
-        viewPager.addOnPageChangeListener(new TabLayout.TabLayoutOnPageChangeListener(tabLayout));
         viewPager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
             @Override
             public void onPageScrolled(int position,
@@ -476,7 +472,10 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
             }
         });
 
+        tabLayout = (TabLayout) view.findViewById(R.id.tab_search);
+        tabLayout.setTabMode(TabLayout.MODE_SCROLLABLE);
         tabLayout.setupWithViewPager(viewPager);
+        viewPager.addOnPageChangeListener(new TabLayout.TabLayoutOnPageChangeListener(tabLayout));
 
         return view;
     }

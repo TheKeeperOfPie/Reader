@@ -205,4 +205,16 @@
     <string name="pref_swipe_exit_comments_summary">Use a left to right gesture to exit comments
     </string>
     <string name="comments_collapsed">collapsed</string>
+    <string name="item_reply_italicize">Italicize</string>
+    <string name="item_reply_bold">Bold</string>
+    <string name="item_reply_quote">Quote</string>
+    <string name="item_reply_link">Link</string>
+    <string name="item_reply_list_bulleted">Bulleted list</string>
+    <string name="item_reply_list_numbered">Numbered list</string>
+    <string name="page_reply">Reply</string>
+    <string name="page_preview">Preview</string>
+    <string name="item_reply_strikethrough">Strikethrough</string>
+    <string name="reply_label_text">Text</string>
+    <string name="reply_label_link">URL</string>
+    <string name="item_hide_actions">Hide/show actions</string>
 </resources>

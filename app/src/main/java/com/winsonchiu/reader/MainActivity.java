@@ -42,6 +42,7 @@ import com.google.android.youtube.player.YouTubeBaseActivity;
 import com.winsonchiu.reader.comments.AdapterCommentList;
 import com.winsonchiu.reader.comments.ControllerComments;
 import com.winsonchiu.reader.comments.FragmentComments;
+import com.winsonchiu.reader.comments.FragmentReply;
 import com.winsonchiu.reader.data.reddit.Comment;
 import com.winsonchiu.reader.data.reddit.Link;
 import com.winsonchiu.reader.data.reddit.Reddit;
@@ -550,6 +551,16 @@ public class MainActivity extends YouTubeBaseActivity
                 getControllerComments().jumpToParent(comment);
             }
 
+            @Override
+            public void showReplyEditor(Comment comment) {
+                getFragmentManager().beginTransaction()
+                        .hide(getFragmentManager().findFragmentById(R.id.frame_fragment))
+                        .add(R.id.frame_fragment, FragmentReply.newInstance(),
+                                FragmentReply.TAG)
+                        .addToBackStack(null)
+                        .commit();
+            }
+
         };
 
         if (sharedPreferences.getBoolean(AppSettings.BETA_NOTICE_0, true)) {
@@ -1047,7 +1058,7 @@ public class MainActivity extends YouTubeBaseActivity
             }
         }
         else {
-            if (isTaskRoot() && getFragmentManager().getBackStackEntryCount() <= 1) {
+            if (isTaskRoot()) {
                 new AlertDialog.Builder(this)
                         .setMessage("Exit Reader?")
                         .setPositiveButton("Yes",

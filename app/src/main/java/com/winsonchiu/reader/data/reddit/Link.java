@@ -6,6 +6,7 @@ package com.winsonchiu.reader.data.reddit;
 
 import android.text.Html;
 
+import com.github.rjeschke.txtmark.Processor;
 import com.winsonchiu.reader.data.imgur.Album;
 
 import org.json.JSONArray;
@@ -36,8 +37,8 @@ public class Link extends Thing {
     private String permalink = "";
     private boolean saved;
     private int score;
-    private String selfText = "";
-    private String selfTextHtml = "";
+    private CharSequence selfText = "";
+    private CharSequence selfTextHtml = "";
     private String subreddit = "";
     private String subredditId = "";
     private String thumbnail = "";
@@ -104,8 +105,8 @@ public class Link extends Thing {
         link.setPermalink(jsonObject.optString("permalink"));
         link.setSaved(jsonObject.optBoolean("saved"));
         link.setScore(jsonObject.optInt("score"));
-        link.setSelfText(jsonObject.optString("selftext"));
-        link.setSelfTextHtml(jsonObject.optString("selftext_html"));
+        link.setSelfText(Html.fromHtml(jsonObject.optString("selftext").replaceAll("\n", "<br>")));
+        link.setSelfTextHtml(Reddit.getFormattedHtml(jsonObject.optString("selftext_html")));
         link.setSubreddit(jsonObject.optString("subreddit"));
         link.setSubredditId(jsonObject.optString("subreddit_id"));
         link.setThumbnail(jsonObject.optString("thumbnail"));
@@ -300,19 +301,19 @@ public class Link extends Thing {
         this.score = score;
     }
 
-    public String getSelfText() {
+    public CharSequence getSelfText() {
         return selfText;
     }
 
-    public void setSelfText(String selfText) {
+    public void setSelfText(CharSequence selfText) {
         this.selfText = selfText;
     }
 
     public CharSequence getSelfTextHtml() {
-        return Reddit.getFormattedHtml(selfTextHtml);
+        return selfTextHtml;
     }
 
-    public void setSelfTextHtml(String selfTextHtml) {
+    public void setSelfTextHtml(CharSequence selfTextHtml) {
         this.selfTextHtml = selfTextHtml;
     }
 

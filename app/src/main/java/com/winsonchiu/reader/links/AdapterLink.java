@@ -69,6 +69,7 @@ import com.android.volley.Request;
 import com.android.volley.Response;
 import com.android.volley.Response.Listener;
 import com.android.volley.VolleyError;
+import com.github.rjeschke.txtmark.Processor;
 import com.google.android.youtube.player.YouTubeInitializationResult;
 import com.google.android.youtube.player.YouTubePlayer;
 import com.google.android.youtube.player.YouTubePlayerView;
@@ -903,130 +904,6 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             }
         }
 
-        /**
-         * @return true if Link loading has been handled, false otherwise
-         */
-        public boolean checkLinkUrl() {
-
-            if (link.getDomain()
-                    .contains("imgur")) {
-                expandFull(true);
-                return loadImgur();
-            }
-            else if (link.getDomain()
-                    .contains("gfycat")) {
-                expandFull(true);
-                return loadGfycat();
-            }
-            else if (link.getDomain()
-                    .contains("youtu")) {
-                expandFull(true);
-                return loadYouTube();
-            }
-
-            return false;
-        }
-
-        public boolean loadYouTube() {
-
-            if (viewYouTube.isShown()) {
-                hideYouTube();
-                return true;
-            }
-
-            if (youTubePlayer != null) {
-                viewYouTube.setVisibility(View.VISIBLE);
-                return true;
-            }
-            /*
-                Regex taken from Gubatron at
-                http://stackoverflow.com/questions/24048308/how-to-get-the-video-id-from-a-youtube-url-with-regex-in-java
-            */
-            Pattern pattern = Pattern.compile(
-                    ".*(?:youtu.be/|v/|u/\\w/|embed/|watch\\?v=)([^#&\\?]*).*");
-            final Matcher matcher = pattern.matcher(link.getUrl());
-            if (matcher.matches()) {
-                int time = 0;
-                Uri uri = Uri.parse(link.getUrl());
-                String timeQuery = uri.getQueryParameter("t");
-                if (!TextUtils.isEmpty(timeQuery)) {
-                    try {
-                        // YouTube query provides time in seconds, but we need milliseconds
-                        time = Integer.parseInt(timeQuery) * 1000;
-                    }
-                    catch (NumberFormatException e) {
-                        time = 0;
-                    }
-                }
-                loadYouTubeVideo(link, matcher.group(1), time);
-                return true;
-            }
-
-            return false;
-        }
-
-        private boolean loadGfycat() {
-            String gfycatId = Reddit.parseUrlId(link.getUrl(), Reddit.GFYCAT_PREFIX, ".");
-            progressImage.setVisibility(View.VISIBLE);
-            request = eventListener.getReddit().loadGet(Reddit.GFYCAT_URL + gfycatId,
-                    new Listener<String>() {
-                        @Override
-                        public void onResponse(String response) {
-                            try {
-                                JSONObject jsonObject = new JSONObject(
-                                        response).getJSONObject(Reddit.GFYCAT_ITEM);
-                                loadVideo(jsonObject.getString(Reddit.GFYCAT_MP4),
-                                        (float) jsonObject.getInt(
-                                                "height") / jsonObject.getInt(
-                                                "width"));
-                            }
-                            catch (JSONException e) {
-                                e.printStackTrace();
-                            }
-                        }
-                    }, new Response.ErrorListener() {
-                        @Override
-                        public void onErrorResponse(VolleyError error) {
-                            progressImage.setVisibility(View.GONE);
-                        }
-                    }, 0);
-            return true;
-        }
-
-        /**
-         * @return true if Link loading has been handled, false otherwise
-         */
-        private boolean loadImgur() {
-            // TODO: Use regex or better parsing system
-            if (link.getUrl().contains(Reddit.IMGUR_PREFIX_ALBUM)) {
-                if (link.getAlbum() == null) {
-                    loadAlbum(Reddit.parseUrlId(link.getUrl(), Reddit.IMGUR_PREFIX_ALBUM, "/"),
-                            link);
-                }
-                else {
-                    setAlbum(link, link.getAlbum());
-                }
-            }
-            else if (link.getUrl().contains(Reddit.IMGUR_PREFIX_GALLERY)) {
-                if (link.getAlbum() == null) {
-                    loadGallery(
-                            Reddit.parseUrlId(link.getUrl(), Reddit.IMGUR_PREFIX_GALLERY, "/"),
-                            link);
-                }
-                else {
-                    setAlbum(link, link.getAlbum());
-                }
-            }
-            else if (link.getUrl().contains(Reddit.GIFV)) {
-                loadGifv(Reddit.parseUrlId(link.getUrl(), Reddit.IMGUR_PREFIX, "."));
-            }
-            else {
-                return false;
-            }
-
-            return true;
-        }
-
         public void onClickThumbnail() {
 
             viewOverlay.setVisibility(View.GONE);
@@ -1245,6 +1122,142 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             }
         }
 
+        public void setAlbum(Link link, Album album) {
+            link.setAlbum(album);
+            ViewGroup.LayoutParams layoutParams = viewPagerFull.getLayoutParams();
+            layoutParams.height = recyclerCallback.getRecyclerHeight();
+            viewPagerFull.setLayoutParams(layoutParams);
+            viewPagerFull.setVisibility(View.VISIBLE);
+            viewPagerFull.requestLayout();
+            adapterAlbum.setAlbum(album, colorFilterMenuItem);
+            viewPagerFull.setCurrentItem(0, false);
+            recyclerCallback.scrollTo(getAdapterPosition());
+        }
+
+        /**
+         * @return true if Link loading has been handled, false otherwise
+         */
+        public boolean checkLinkUrl() {
+
+            if (link.getDomain()
+                    .contains("imgur")) {
+                expandFull(true);
+                return loadImgur();
+            }
+            else if (link.getDomain()
+                    .contains("gfycat")) {
+                expandFull(true);
+                return loadGfycat();
+            }
+            else if (link.getDomain()
+                    .contains("youtu")) {
+                expandFull(true);
+                return loadYouTube();
+            }
+
+            return false;
+        }
+
+        public boolean loadYouTube() {
+
+            if (viewYouTube.isShown()) {
+                hideYouTube();
+                return true;
+            }
+
+            if (youTubePlayer != null) {
+                viewYouTube.setVisibility(View.VISIBLE);
+                return true;
+            }
+            /*
+                Regex taken from Gubatron at
+                http://stackoverflow.com/questions/24048308/how-to-get-the-video-id-from-a-youtube-url-with-regex-in-java
+            */
+            Pattern pattern = Pattern.compile(
+                    ".*(?:youtu.be/|v/|u/\\w/|embed/|watch\\?v=)([^#&\\?]*).*");
+            final Matcher matcher = pattern.matcher(link.getUrl());
+            if (matcher.matches()) {
+                int time = 0;
+                Uri uri = Uri.parse(link.getUrl());
+                String timeQuery = uri.getQueryParameter("t");
+                if (!TextUtils.isEmpty(timeQuery)) {
+                    try {
+                        // YouTube query provides time in seconds, but we need milliseconds
+                        time = Integer.parseInt(timeQuery) * 1000;
+                    }
+                    catch (NumberFormatException e) {
+                        time = 0;
+                    }
+                }
+                loadYouTubeVideo(link, matcher.group(1), time);
+                return true;
+            }
+
+            return false;
+        }
+
+        private boolean loadGfycat() {
+            String gfycatId = Reddit.parseUrlId(link.getUrl(), Reddit.GFYCAT_PREFIX, ".");
+            progressImage.setVisibility(View.VISIBLE);
+            request = eventListener.getReddit().loadGet(Reddit.GFYCAT_URL + gfycatId,
+                    new Listener<String>() {
+                        @Override
+                        public void onResponse(String response) {
+                            try {
+                                JSONObject jsonObject = new JSONObject(
+                                        response).getJSONObject(Reddit.GFYCAT_ITEM);
+                                loadVideo(jsonObject.getString(Reddit.GFYCAT_MP4),
+                                        (float) jsonObject.getInt(
+                                                "height") / jsonObject.getInt(
+                                                "width"));
+                            }
+                            catch (JSONException e) {
+                                e.printStackTrace();
+                            }
+                        }
+                    }, new Response.ErrorListener() {
+                        @Override
+                        public void onErrorResponse(VolleyError error) {
+                            progressImage.setVisibility(View.GONE);
+                        }
+                    }, 0);
+            return true;
+        }
+
+        /**
+         * @return true if Link loading has been handled, false otherwise
+         */
+        private boolean loadImgur() {
+            // TODO: Use regex or better parsing system
+            if (link.getUrl().contains(Reddit.IMGUR_PREFIX_ALBUM)) {
+                if (link.getAlbum() == null) {
+                    loadAlbum(Reddit.parseUrlId(link.getUrl(), Reddit.IMGUR_PREFIX_ALBUM, "/"),
+                            link);
+                }
+                else {
+                    setAlbum(link, link.getAlbum());
+                }
+            }
+            else if (link.getUrl().contains(Reddit.IMGUR_PREFIX_GALLERY)) {
+                if (link.getAlbum() == null) {
+                    loadGallery(
+                            Reddit.parseUrlId(link.getUrl(), Reddit.IMGUR_PREFIX_GALLERY, "/"),
+                            link);
+                }
+                else {
+                    setAlbum(link, link.getAlbum());
+                }
+            }
+            else if (link.getUrl().contains(Reddit.GIFV)) {
+                loadGifv(Reddit.parseUrlId(link.getUrl(), Reddit.IMGUR_PREFIX, "."));
+            }
+            else {
+                return false;
+            }
+
+            return true;
+        }
+
         private void loadGallery(String id, final Link link) {
             progressImage.setVisibility(View.VISIBLE);
             request = eventListener.getReddit()
@@ -1299,18 +1312,6 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                             }, 0);
         }
 
-        public void setAlbum(Link link, Album album) {
-            link.setAlbum(album);
-            ViewGroup.LayoutParams layoutParams = viewPagerFull.getLayoutParams();
-            layoutParams.height = recyclerCallback.getRecyclerHeight();
-            viewPagerFull.setLayoutParams(layoutParams);
-            viewPagerFull.setVisibility(View.VISIBLE);
-            viewPagerFull.requestLayout();
-            adapterAlbum.setAlbum(album, colorFilterMenuItem);
-            viewPagerFull.setCurrentItem(0, false);
-            recyclerCallback.scrollTo(getAdapterPosition());
-        }
-
         private void loadGifv(String id) {
             Log.d(TAG, "loadGifv: " + id);
             request = eventListener.getReddit()
@@ -1328,8 +1329,8 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                                             loadVideo(image.getMp4(),
                                                     (float) image.getHeight() / image.getWidth());
                                         }
-                                        else if (!TextUtils.isEmpty(image.getMp4())) {
-                                            loadVideo(image.getMp4(),
+                                        else if (!TextUtils.isEmpty(image.getWebm())) {
+                                            loadVideo(image.getWebm(),
                                                     (float) image.getHeight() / image.getWidth());
                                         }
                                     }

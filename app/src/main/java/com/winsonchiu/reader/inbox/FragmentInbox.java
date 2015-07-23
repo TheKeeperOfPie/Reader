@@ -28,6 +28,7 @@ import android.widget.Spinner;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.winsonchiu.reader.FragmentNewMessage;
+import com.winsonchiu.reader.comments.FragmentReply;
 import com.winsonchiu.reader.utils.AnimationUtils;
 import com.winsonchiu.reader.utils.DisallowListener;
 import com.winsonchiu.reader.FragmentBase;
@@ -199,7 +200,8 @@ public class FragmentInbox extends FragmentBase {
             }
         });
 
-        floatingActionButtonNewMessage = (FloatingActionButton) view.findViewById(R.id.fab_new_message);
+        floatingActionButtonNewMessage = (FloatingActionButton) view
+                .findViewById(R.id.fab_new_message);
         floatingActionButtonNewMessage.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -311,6 +313,16 @@ public class FragmentInbox extends FragmentBase {
                         public void jumpToParent(Comment comment) {
 
                         }
+
+                        @Override
+                        public void showReplyEditor(Comment comment) {
+                            getFragmentManager().beginTransaction()
+                                    .hide(FragmentInbox.this)
+                                    .add(R.id.frame_fragment, FragmentReply.newInstance(),
+                                            FragmentReply.TAG)
+                                    .addToBackStack(null)
+                                    .commit();
+                        }
                     },
                     eventListener,
                     new DisallowListener() {
@@ -345,7 +357,7 @@ public class FragmentInbox extends FragmentBase {
                     Intent intent = new Intent(activity, MainActivity.class);
                     intent.setAction(Intent.ACTION_VIEW);
                     intent.putExtra(MainActivity.REDDIT_PAGE,
-                           Reddit.BASE_URL + comment.getContext());
+                            Reddit.BASE_URL + comment.getContext());
                     startActivity(intent);
                 }
 

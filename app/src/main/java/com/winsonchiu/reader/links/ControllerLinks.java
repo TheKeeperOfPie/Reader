@@ -269,7 +269,7 @@ public class ControllerLinks implements ControllerLinksBase {
         }
 
         setLoading(true);
-        String url = Reddit.OAUTH_URL + subreddit.getUrl() + sort.toString() + "?t=" + time.toString() + "&limit=15&showAll=true&after=" + listingLinks.getAfter();
+        String url = Reddit.OAUTH_URL + subreddit.getUrl() + sort.toString() + "?t=" + time.toString() + "&limit=25&showAll=true&after=" + listingLinks.getAfter();
 
         reddit.loadGet(url,
                 new Response.Listener<String>() {
