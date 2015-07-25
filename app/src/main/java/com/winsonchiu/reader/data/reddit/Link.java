@@ -16,7 +16,7 @@ import org.json.JSONObject;
 /**
  * Created by TheKeeperOfPie on 3/7/2015.
  */
-public class Link extends Thing {
+public class Link extends Replyable {
 
     private static final String TAG = Link.class.getCanonicalName();
 
@@ -52,8 +52,6 @@ public class Link extends Thing {
 
     private Listing comments = new Listing();
     private Album album;
-    private boolean replyExpanded;
-    private String replyText;
     private boolean commentsClicked;
     private int backgroundColor;
 
@@ -405,14 +403,6 @@ public class Link extends Thing {
         this.createdUtc = createdUtc;
     }
 
-    public boolean isReplyExpanded() {
-        return replyExpanded;
-    }
-
-    public void setReplyExpanded(boolean replyExpanded) {
-        this.replyExpanded = replyExpanded;
-    }
-
     public boolean isCommentsClicked() {
         return commentsClicked;
     }
@@ -435,13 +425,5 @@ public class Link extends Thing {
 
     public void setBackgroundColor(int backgroundColor) {
         this.backgroundColor = backgroundColor;
-    }
-
-    public String getReplyText() {
-        return replyText;
-    }
-
-    public void setReplyText(String replyText) {
-        this.replyText = replyText;
     }
 }

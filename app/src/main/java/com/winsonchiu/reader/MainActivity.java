@@ -46,6 +46,7 @@ import com.winsonchiu.reader.comments.FragmentReply;
 import com.winsonchiu.reader.data.reddit.Comment;
 import com.winsonchiu.reader.data.reddit.Link;
 import com.winsonchiu.reader.data.reddit.Reddit;
+import com.winsonchiu.reader.data.reddit.Replyable;
 import com.winsonchiu.reader.data.reddit.Sort;
 import com.winsonchiu.reader.data.reddit.Thing;
 import com.winsonchiu.reader.data.reddit.Time;
@@ -225,7 +226,12 @@ public class MainActivity extends YouTubeBaseActivity
                             e.printStackTrace();
                         }
                     }
-                }, null);
+                }, new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        Toast.makeText(MainActivity.this, "Failed to send reply", Toast.LENGTH_LONG).show();
+                    }
+                });
             }
 
             @Override
@@ -475,6 +481,17 @@ public class MainActivity extends YouTubeBaseActivity
                         .commit();
             }
 
+            @Override
+            public void showReplyEditor(Replyable replyable) {
+
+                getFragmentManager().beginTransaction()
+                        .hide(getFragmentManager().findFragmentById(R.id.frame_fragment))
+                        .add(R.id.frame_fragment, FragmentReply.newInstance(replyable),
+                                FragmentReply.TAG)
+                        .addToBackStack(null)
+                        .commit();
+            }
+
         };
 
         eventListenerComment = new AdapterCommentList.ViewHolderComment.EventListener() {
@@ -526,39 +543,8 @@ public class MainActivity extends YouTubeBaseActivity
             }
 
             @Override
-            public void sendComment(String name, String text) {
-                reddit.sendComment(name, text, new Response.Listener<String>() {
-                    @Override
-                    public void onResponse(String response) {
-                        try {
-                            JSONObject jsonObject = new JSONObject(response);
-                            Comment newComment = Comment.fromJson(
-                                    jsonObject.getJSONObject("json")
-                                            .getJSONObject("data")
-                                            .getJSONArray("things")
-                                            .getJSONObject(0), 0);
-                            getControllerComments().insertComment(newComment);
-                        }
-                        catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                }, null);
-            }
-
-            @Override
             public void jumpToParent(Comment comment) {
                 getControllerComments().jumpToParent(comment);
-            }
-
-            @Override
-            public void showReplyEditor(Comment comment) {
-                getFragmentManager().beginTransaction()
-                        .hide(getFragmentManager().findFragmentById(R.id.frame_fragment))
-                        .add(R.id.frame_fragment, FragmentReply.newInstance(),
-                                FragmentReply.TAG)
-                        .addToBackStack(null)
-                        .commit();
             }
 
         };
@@ -786,6 +772,7 @@ public class MainActivity extends YouTubeBaseActivity
                 getFragmentManager().beginTransaction()
                         .replace(R.id.frame_fragment, FragmentWeb
                                 .newInstance(urlString), FragmentWeb.TAG)
+                        .addToBackStack(null)
                         .commit();
                 return;
             }
@@ -919,7 +906,6 @@ public class MainActivity extends YouTubeBaseActivity
     @Override
     public void onBackPressed() {
         onNavigationBackClick();
-
     }
 
     @Override
@@ -949,17 +935,17 @@ public class MainActivity extends YouTubeBaseActivity
                 super.startActivity(intentActivity);
             }
             else if (URLUtil.isValidUrl(urlString)) {
-                FragmentTransaction fragmentTransaction = getFragmentManager().beginTransaction()
-                        .add(R.id.frame_fragment, FragmentWeb
-                                .newInstance(urlString), FragmentWeb.TAG)
-                        .addToBackStack(null);
+                FragmentTransaction fragmentTransaction = getFragmentManager().beginTransaction();
 
                 Fragment fragment = getFragmentManager().findFragmentById(R.id.frame_fragment);
                 if (fragment != null) {
                     fragmentTransaction.hide(fragment);
                 }
 
-                fragmentTransaction.commit();
+                fragmentTransaction.add(R.id.frame_fragment, FragmentWeb
+                                .newInstance(urlString), FragmentWeb.TAG)
+                        .addToBackStack(null)
+                        .commit();
             }
         }
         else {
@@ -1047,14 +1033,29 @@ public class MainActivity extends YouTubeBaseActivity
     public void onNavigationBackClick() {
         if (getFragmentManager().getBackStackEntryCount() > 0) {
             FragmentBase fragment = (FragmentBase) getFragmentManager().findFragmentById(R.id.frame_fragment);
+
             if (fragment != null && !fragment.navigateBack()) {
                 return;
             }
+
+            /*
+                If this is the only fragment in the stack, close out the Activity,
+                otherwise show the fragment
+             */
+//            if (getFragmentManager().getBackStackEntryCount() == 1) {
+//                finish();
+//                return;
+//            }
             getFragmentManager().popBackStackImmediate();
+
+            fragment = (FragmentBase) getFragmentManager().findFragmentById(R.id.frame_fragment);
             if (fragment != null) {
                 getFragmentManager().beginTransaction().show(fragment).commit();
                 fragment.onShown();
                 Log.d(TAG, "Fragment shown");
+            }
+            else {
+                finish();
             }
         }
         else {

@@ -14,7 +14,9 @@ import com.winsonchiu.reader.R;
 import com.winsonchiu.reader.data.reddit.Link;
 import com.winsonchiu.reader.data.reddit.Listing;
 import com.winsonchiu.reader.data.reddit.Reddit;
+import com.winsonchiu.reader.data.reddit.Replyable;
 import com.winsonchiu.reader.data.reddit.Subreddit;
+import com.winsonchiu.reader.data.reddit.Thing;
 import com.winsonchiu.reader.links.ControllerLinksBase;
 import com.winsonchiu.reader.utils.ControllerListener;
 
@@ -230,6 +232,24 @@ public class ControllerHistory implements ControllerLinksBase {
     @Override
     public boolean showSubreddit() {
         return true;
+    }
+
+    @Override
+    public boolean setReplyText(String name, String text, boolean collapsed) {
+
+        for (int index = 0; index < history.getChildren().size(); index++) {
+            Thing thing = history.getChildren().get(index);
+            if (thing.getName().equals(name)) {
+                ((Replyable) thing).setReplyText(text);
+                ((Replyable) thing).setReplyExpanded(!collapsed);
+                for (Listener listener : listeners) {
+                    listener.getAdapter().notifyItemChanged(index + 1);
+                }
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public void setQuery(String query) {

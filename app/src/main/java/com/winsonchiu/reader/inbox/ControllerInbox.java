@@ -10,6 +10,7 @@ import android.widget.Toast;
 
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
+import com.winsonchiu.reader.data.reddit.Replyable;
 import com.winsonchiu.reader.utils.ControllerListener;
 import com.winsonchiu.reader.R;
 import com.winsonchiu.reader.comments.AdapterCommentList;
@@ -358,6 +359,22 @@ public class ControllerInbox {
         for (Listener listener : listeners) {
             listener.setRefreshing(isLoading());
         }
+    }
+
+    public boolean setReplyText(String name, String text, boolean collapsed) {
+
+        for (int index = 0; index < data.getChildren().size(); index++) {
+            Thing thing = data.getChildren().get(index);
+            if (thing.getName().equals(name)) {
+                ((Replyable) thing).setReplyText(text);
+                ((Replyable) thing).setReplyExpanded(!collapsed);
+                for (Listener listener : listeners) {
+                    listener.getAdapter().notifyItemChanged(index);
+                }
+                return true;
+            }
+        }
+        return false;
     }
 
     public interface Listener extends ControllerListener {

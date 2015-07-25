@@ -13,6 +13,7 @@ import android.widget.Toast;
 import com.android.volley.Response;
 import com.android.volley.Response.ErrorListener;
 import com.android.volley.VolleyError;
+import com.winsonchiu.reader.data.reddit.Replyable;
 import com.winsonchiu.reader.utils.ControllerListener;
 import com.winsonchiu.reader.R;
 import com.winsonchiu.reader.data.reddit.Sort;
@@ -140,7 +141,8 @@ public class ControllerComments {
         setRefreshing(true);
 
         reddit.loadGet(
-                Reddit.OAUTH_URL + "/r/" + subreddit + "/comments/" + linkId + "?depth=10&showmore=true&showedits=true&limit=100&sort=" + sort.toString(),
+                Reddit.OAUTH_URL + "/r/" + subreddit + "/comments/" + linkId + "?depth=10&showmore=true&showedits=true&limit=100&sort=" + sort
+                        .toString(),
                 new Response.Listener<String>() {
                     @Override
                     public void onResponse(String response) {
@@ -793,6 +795,32 @@ public class ControllerComments {
             }
         }
 
+    }
+
+    public boolean setReplyText(String name, String text, boolean collapsed) {
+
+        if (name.equals(link.getName())) {
+            link.setReplyText(text);
+            link.setReplyExpanded(!collapsed);
+            for (Listener listener : listeners) {
+                listener.getAdapter().notifyItemChanged(0);
+            }
+            return true;
+        }
+
+        for (int index = 0; index < listingComments.getChildren().size(); index++) {
+            Thing thing = listingComments.getChildren().get(index);
+            if (thing.getName().equals(name)) {
+                ((Replyable) thing).setReplyText(text);
+                ((Replyable) thing).setReplyExpanded(!collapsed);
+                for (Listener listener : listeners) {
+                    listener.getAdapter().notifyItemChanged(index + 1);
+                }
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public interface Listener extends ControllerListener {

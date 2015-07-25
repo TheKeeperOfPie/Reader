@@ -307,6 +307,11 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
                 return true;
             }
 
+            @Override
+            public boolean setReplyText(String name, String text, boolean collapsed) {
+                return mListener.getControllerSearch().setReplyTextLinks(name, text, collapsed);
+            }
+
         }, mListener.getControllerUser(),
                 new AdapterLink.ViewHolderHeader.EventListener() {
                     @Override
@@ -370,6 +375,11 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
             @Override
             public boolean showSubreddit() {
                 return true;
+            }
+
+            @Override
+            public boolean setReplyText(String name, String text, boolean collapsed) {
+                return mListener.getControllerSearch().setReplyTextLinksSubreddit(name, text, collapsed);
             }
 
         }, mListener.getControllerUser(),

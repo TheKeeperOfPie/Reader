@@ -19,7 +19,7 @@ import java.util.List;
 /**
  * Created by TheKeeperOfPie on 3/7/2015.
  */
-public class Comment extends Thing {
+public class Comment extends Replyable {
 
     public static final String DELETED = "[deleted]";
 
@@ -60,8 +60,6 @@ public class Comment extends Thing {
     private int count;
 
     private int level;
-    private CharSequence replyText;
-    private boolean replyExpanded;
     private boolean editMode;
     private int collapsed;
 
@@ -419,14 +417,6 @@ public class Comment extends Thing {
         return getId().hashCode();
     }
 
-    public boolean isReplyExpanded() {
-        return replyExpanded;
-    }
-
-    public void setReplyExpanded(boolean replyExpanded) {
-        this.replyExpanded = replyExpanded;
-    }
-
     public long getCreated() {
         return created;
     }
@@ -457,14 +447,6 @@ public class Comment extends Thing {
 
     public void setEditMode(boolean editMode) {
         this.editMode = editMode;
-    }
-
-    public CharSequence getReplyText() {
-        return replyText;
-    }
-
-    public void setReplyText(CharSequence replyText) {
-        this.replyText = replyText;
     }
 
     public String getContext() {

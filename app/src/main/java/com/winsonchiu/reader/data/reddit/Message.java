@@ -10,7 +10,7 @@ import org.json.JSONObject;
 /**
  * Created by TheKeeperOfPie on 3/7/2015.
  */
-public class Message extends Thing {
+public class Message extends Replyable {
 
     private String author;
     private String body;
@@ -28,8 +28,6 @@ public class Message extends Thing {
     private boolean wasComment;
     private long created;
     private long createdUtc;
-
-    private boolean replyExpanded;
 
     public static Message fromJson(JSONObject rootJsonObject) throws JSONException {
 
@@ -211,14 +209,6 @@ public class Message extends Thing {
 
     public void setCreatedUtc(long createdUtc) {
         this.createdUtc = createdUtc;
-    }
-
-    public boolean isReplyExpanded() {
-        return replyExpanded;
-    }
-
-    public void setReplyExpanded(boolean replyExpanded) {
-        this.replyExpanded = replyExpanded;
     }
 
     @Override

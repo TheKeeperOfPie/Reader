@@ -12,6 +12,8 @@ import android.widget.Toast;
 import com.android.volley.Response;
 import com.android.volley.Response.ErrorListener;
 import com.android.volley.VolleyError;
+import com.winsonchiu.reader.data.reddit.Replyable;
+import com.winsonchiu.reader.data.reddit.Thing;
 import com.winsonchiu.reader.history.Historian;
 import com.winsonchiu.reader.utils.ControllerListener;
 import com.winsonchiu.reader.R;
@@ -299,7 +301,8 @@ public class ControllerLinks implements ControllerLinksBase {
                     @Override
                     public void onErrorResponse(VolleyError error) {
                         setLoading(false);
-                        Toast.makeText(activity, activity.getString(R.string.error_loading_links), Toast.LENGTH_SHORT)
+                        Toast.makeText(activity, activity.getString(R.string.error_loading_links),
+                                Toast.LENGTH_SHORT)
                                 .show();
                     }
                 }, 0);
@@ -387,6 +390,23 @@ public class ControllerLinks implements ControllerLinksBase {
     @Override
     public boolean showSubreddit() {
         return "/".equals(subreddit.getUrl()) || "/r/all/".equals(subreddit.getUrl());
+    }
+
+    @Override
+    public boolean setReplyText(String name, String text, boolean collapsed) {
+
+        for (int index = 0; index < listingLinks.getChildren().size(); index++) {
+            Thing thing = listingLinks.getChildren().get(index);
+            if (thing.getName().equals(name)) {
+                ((Replyable) thing).setReplyText(text);
+                ((Replyable) thing).setReplyExpanded(!collapsed);
+                for (Listener listener : listeners) {
+                    listener.getAdapter().notifyItemChanged(index + 1);
+                }
+                return true;
+            }
+        }
+        return false;
     }
 
     public Link remove(int position) {

@@ -21,4 +21,5 @@ public interface ControllerLinksBase {
     void loadMoreLinks();
     Subreddit getSubreddit();
     boolean showSubreddit();
+    boolean setReplyText(String name, String text, boolean collapsed);
 }

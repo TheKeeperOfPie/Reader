@@ -14,6 +14,7 @@ import android.widget.Toast;
 import com.android.volley.Request;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
+import com.winsonchiu.reader.data.reddit.Replyable;
 import com.winsonchiu.reader.utils.ControllerListener;
 import com.winsonchiu.reader.ControllerUser;
 import com.winsonchiu.reader.R;
@@ -726,6 +727,40 @@ public class ControllerSearch {
                                         ((Subreddit) rhs).getDisplayName());
                     }
                 });
+    }
+
+    public boolean setReplyTextLinks(String name, String text, boolean collapsed) {
+
+        for (int index = 0; index < links.getChildren().size(); index++) {
+            Thing thing = links.getChildren().get(index);
+            if (thing.getName().equals(name)) {
+                ((Replyable) thing).setReplyText(text);
+                ((Replyable) thing).setReplyExpanded(!collapsed);
+                for (Listener listener : listeners) {
+                    listener.getAdapterLinks().notifyItemChanged(index + 1);
+                }
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public boolean setReplyTextLinksSubreddit(String name, String text, boolean collapsed) {
+
+        for (int index = 0; index < linksSubreddit.getChildren().size(); index++) {
+            Thing thing = linksSubreddit.getChildren().get(index);
+            if (thing.getName().equals(name)) {
+                ((Replyable) thing).setReplyText(text);
+                ((Replyable) thing).setReplyExpanded(!collapsed);
+                for (Listener listener : listeners) {
+                    listener.getAdapterLinks().notifyItemChanged(index + 1);
+                }
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public interface Listener extends ControllerListener {

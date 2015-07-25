@@ -16,4 +16,12 @@
         app:showAsAction="ifRoom"
         />
 
+    <item
+        android:id="@+id/item_send_reply"
+        android:title="@string/item_hide_actions"
+        android:icon="@drawable/ic_send_white_24dp"
+        android:orderInCategory="200"
+        app:showAsAction="always"
+        />
+
 </menu>

@@ -11,6 +11,7 @@ import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
 import android.os.Bundle;
 import android.support.design.widget.TabLayout;
+import android.support.v4.app.FragmentTabHost;
 import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.support.v7.widget.Toolbar;
@@ -30,8 +31,15 @@ import com.github.rjeschke.txtmark.Processor;
 import com.winsonchiu.reader.FragmentBase;
 import com.winsonchiu.reader.FragmentListenerBase;
 import com.winsonchiu.reader.R;
+import com.winsonchiu.reader.data.reddit.Replyable;
+import com.winsonchiu.reader.inbox.FragmentInbox;
+import com.winsonchiu.reader.links.FragmentThreadList;
+import com.winsonchiu.reader.profile.FragmentProfile;
 
 public class FragmentReply extends FragmentBase implements Toolbar.OnMenuItemClickListener {
+
+    public static final String ARG_NAME_PARENT = "nameParent";
+    public static final String ARG_TEXT = "text";
 
     private static final int PAGE_REPLY = 0;
     private static final int PAGE_PREVIEW = 1;
@@ -51,12 +59,17 @@ public class FragmentReply extends FragmentBase implements Toolbar.OnMenuItemCli
     private View viewDivider;
     private Menu menu;
 
+    private String nameParent;
+
     private int editMarginDefault;
     private int editMarginWithActions;
+    private boolean collapsed;
 
-    public static FragmentReply newInstance() {
+    public static FragmentReply newInstance(Replyable replyable) {
         FragmentReply fragment = new FragmentReply();
         Bundle args = new Bundle();
+        args.putString(ARG_NAME_PARENT, replyable.getName());
+        args.putCharSequence(ARG_TEXT, replyable.getReplyText());
         fragment.setArguments(args);
         return fragment;
     }
@@ -68,6 +81,7 @@ public class FragmentReply extends FragmentBase implements Toolbar.OnMenuItemCli
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        nameParent = getArguments().getString(ARG_NAME_PARENT);
     }
 
     @Override
@@ -99,6 +113,8 @@ public class FragmentReply extends FragmentBase implements Toolbar.OnMenuItemCli
         editMarginWithActions = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 72, getResources().getDisplayMetrics());
 
         editReply = (EditText) view.findViewById(R.id.edit_reply);
+        editReply.setText(getArguments().getString(ARG_TEXT));
+
         textPreview = (TextView) view.findViewById(R.id.text_preview);
         viewDivider = view.findViewById(R.id.view_divider);
 
@@ -211,6 +227,12 @@ public class FragmentReply extends FragmentBase implements Toolbar.OnMenuItemCli
         return view;
     }
 
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putString(ARG_TEXT, editReply.getText().toString());
+    }
+
     private void setUpOptionsMenu() {
 
         toolbar.inflateMenu(R.menu.menu_reply);
@@ -248,66 +270,14 @@ public class FragmentReply extends FragmentBase implements Toolbar.OnMenuItemCli
         int selectionStart = editReply.getSelectionStart();
 
         switch (item.getItemId()) {
+            case R.id.item_send_reply:
+                mListener.getEventListenerBase().sendComment(nameParent,
+                        editReply.getText().toString());
+                collapsed = true;
+                mListener.onNavigationBackClick();
+                break;
             case R.id.item_hide_actions:
-                final int margin;
-                float translationY = toolbarActions.getHeight() + viewDivider
-                        .getHeight();
-                if (toolbarActions.isShown()) {
-                    margin = editMarginDefault;
-                    viewDivider.animate().translationY(translationY);
-                    toolbarActions.animate().translationY(translationY).setListener(
-                            new Animator.AnimatorListener() {
-                                @Override
-                                public void onAnimationStart(Animator animation) {
-
-                                }
-
-                                @Override
-                                public void onAnimationEnd(Animator animation) {
-                                    toolbarActions.setVisibility(View.GONE);
-
-                                    ((RelativeLayout.LayoutParams) editReply.getLayoutParams()).bottomMargin = margin;
-                                    editReply.requestLayout();
-                                }
-
-                                @Override
-                                public void onAnimationCancel(Animator animation) {
-
-                                }
-
-                                @Override
-                                public void onAnimationRepeat(Animator animation) {
-
-                                }
-                            });
-                }
-                else {
-                    margin = editMarginWithActions;
-                    viewDivider.animate().translationY(0);
-                    toolbarActions.animate().translationY(0).setListener(
-                            new Animator.AnimatorListener() {
-                                @Override
-                                public void onAnimationStart(Animator animation) {
-                                    toolbarActions.setVisibility(View.VISIBLE);
-                                }
-
-                                @Override
-                                public void onAnimationEnd(Animator animation) {
-                                    ((RelativeLayout.LayoutParams) editReply.getLayoutParams()).bottomMargin = margin;
-                                    editReply.requestLayout();
-                                }
-
-                                @Override
-                                public void onAnimationCancel(Animator animation) {
-
-                                }
-
-                                @Override
-                                public void onAnimationRepeat(Animator animation) {
-
-                                }
-                            });
-                }
+                toggleActions();
                 break;
             case R.id.item_reply_italicize:
                 editReply.getText().insert(selectionStart, "**");
@@ -346,8 +316,85 @@ public class FragmentReply extends FragmentBase implements Toolbar.OnMenuItemCli
         return true;
     }
 
+    private void toggleActions() {
+
+        final int margin;
+        float translationY = toolbarActions.getHeight() + viewDivider
+                .getHeight();
+        if (toolbarActions.isShown()) {
+            margin = editMarginDefault;
+            viewDivider.animate().translationY(translationY);
+            toolbarActions.animate().translationY(translationY).setListener(
+                    new Animator.AnimatorListener() {
+                        @Override
+                        public void onAnimationStart(Animator animation) {
+
+                        }
+
+                        @Override
+                        public void onAnimationEnd(Animator animation) {
+                            toolbarActions.setVisibility(View.GONE);
+
+                            ((RelativeLayout.LayoutParams) editReply.getLayoutParams()).bottomMargin = margin;
+                            editReply.requestLayout();
+                        }
+
+                        @Override
+                        public void onAnimationCancel(Animator animation) {
+
+                        }
+
+                        @Override
+                        public void onAnimationRepeat(Animator animation) {
+
+                        }
+                    });
+        }
+        else {
+            margin = editMarginWithActions;
+            viewDivider.animate().translationY(0);
+            toolbarActions.animate().translationY(0).setListener(
+                    new Animator.AnimatorListener() {
+                        @Override
+                        public void onAnimationStart(Animator animation) {
+                            toolbarActions.setVisibility(View.VISIBLE);
+                        }
+
+                        @Override
+                        public void onAnimationEnd(Animator animation) {
+                            ((RelativeLayout.LayoutParams) editReply.getLayoutParams()).bottomMargin = margin;
+                            editReply.requestLayout();
+                        }
+
+                        @Override
+                        public void onAnimationCancel(Animator animation) {
+
+                        }
+
+                        @Override
+                        public void onAnimationRepeat(Animator animation) {
+
+                        }
+                    });
+        }
+    }
+
     @Override
     public boolean navigateBack() {
+        String text = editReply.getText().toString();
+        if (getFragmentManager().findFragmentByTag(FragmentThreadList.TAG) != null) {
+            mListener.getControllerLinks().setReplyText(nameParent, text, collapsed);
+        }
+        if (getFragmentManager().findFragmentByTag(FragmentComments.TAG) != null) {
+            mListener.getControllerComments().setReplyText(nameParent, text, collapsed);
+        }
+        if (getFragmentManager().findFragmentByTag(FragmentProfile.TAG) != null) {
+            mListener.getControllerProfile().setReplyText(nameParent, text, collapsed);
+        }
+        if (getFragmentManager().findFragmentByTag(FragmentInbox.TAG) != null) {
+            mListener.getControllerInbox().setReplyText(nameParent, text, collapsed);
+        }
+
         return true;
     }
 }

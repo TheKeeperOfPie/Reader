@@ -73,6 +73,7 @@ import com.github.rjeschke.txtmark.Processor;
 import com.google.android.youtube.player.YouTubeInitializationResult;
 import com.google.android.youtube.player.YouTubePlayer;
 import com.google.android.youtube.player.YouTubePlayerView;
+import com.winsonchiu.reader.data.reddit.Replyable;
 import com.winsonchiu.reader.history.Historian;
 import com.winsonchiu.reader.utils.AnimationUtils;
 import com.winsonchiu.reader.ApiKeys;
@@ -407,6 +408,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         public RelativeLayout layoutContainerReply;
         public EditText editTextReply;
         public Button buttonSendReply;
+        public ImageButton buttonReplyEditor;
         public YouTubePlayerView viewYouTube;
         public View viewOverlay;
 
@@ -550,6 +552,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                     R.id.layout_container_reply);
             editTextReply = (EditText) itemView.findViewById(R.id.edit_text_reply);
             buttonSendReply = (Button) itemView.findViewById(R.id.button_send_reply);
+            buttonReplyEditor = (ImageButton) itemView.findViewById(R.id.button_reply_editor);
             viewYouTube = (YouTubePlayerView) itemView.findViewById(R.id.youtube);
             viewOverlay = itemView.findViewById(R.id.view_overlay);
 
@@ -686,7 +689,15 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
 
                 @Override
                 public void afterTextChanged(Editable s) {
-                    link.setReplyText(s.toString());
+                    if (s.length() > 0) {
+                        link.setReplyText(s.toString());
+                    }
+                }
+            });
+            buttonReplyEditor.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    eventListener.showReplyEditor(link);
                 }
             });
         }
@@ -877,6 +888,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                 InputMethodManager inputManager = (InputMethodManager) itemView.getContext()
                         .getSystemService(Context.INPUT_METHOD_SERVICE);
                 inputManager.toggleSoftInput(InputMethodManager.SHOW_FORCED, 0);
+                editTextReply.setText(link.getReplyText());
                 editTextReply.clearFocus();
                 editTextReply.post(new Runnable() {
                     @Override
@@ -1561,6 +1573,9 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                     layoutContainerReply.setVisibility(View.VISIBLE);
                 }
             }
+            else {
+                layoutContainerReply.setVisibility(View.GONE);
+            }
 
             progressImage.setIndeterminate(true);
 
@@ -1572,7 +1587,8 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             setTextValues(link);
 
             if (preferences.getBoolean(AppSettings.PREF_DIM_POSTS, true)) {
-                viewOverlay.setVisibility(isInHistory() ? View.VISIBLE : View.GONE);
+                viewOverlay.setVisibility(
+                        isInHistory() && !link.isReplyExpanded() ? View.VISIBLE : View.GONE);
             }
 
         }
@@ -1660,6 +1676,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             void report(Thing thing, String reason, String otherReason);
             void hide(Link link);
             void editLink(Link link);
+            void showReplyEditor(Replyable replyable);
         }
 
     }

@@ -543,7 +543,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
             buttonReplyEditor.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    eventListener.showReplyEditor(comment);
+                    eventListenerBase.showReplyEditor(comment);
                 }
             });
 
@@ -555,7 +555,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                 comment.setEdited(System.currentTimeMillis());
             }
             else {
-                eventListener.sendComment(comment.getName(), editTextReply.getText().toString());
+                eventListenerBase.sendComment(comment.getName(), editTextReply.getText().toString());
             }
             comment.setReplyExpanded(!comment.isReplyExpanded());
             layoutContainerReply.setVisibility(View.GONE);
@@ -869,11 +869,11 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
             buttonSendReply.setText(
                     comment.isEditMode() ? itemView.getContext().getString(R.string.send_edit) :
                             itemView.getContext().getString(R.string.send_reply));
-            editTextReply.setText(comment.getReplyText());
             layoutContainerReply.setVisibility(
                     comment.isReplyExpanded() ? View.VISIBLE : View.GONE);
             if (comment.isReplyExpanded()) {
                 replyCallback.onReplyShown();
+                editTextReply.setText(comment.getReplyText());
                 editTextReply.clearFocus();
                 InputMethodManager inputManager = (InputMethodManager) itemView.getContext()
                         .getSystemService(Context.INPUT_METHOD_SERVICE);
@@ -1025,9 +1025,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
             boolean toggleComment(int position);
             void deleteComment(Comment comment);
             void editComment(Comment comment, String text);
-            void sendComment(String name, String text);
             void jumpToParent(Comment comment);
-            void showReplyEditor(Comment comment);
         }
 
         public interface ReplyCallback{

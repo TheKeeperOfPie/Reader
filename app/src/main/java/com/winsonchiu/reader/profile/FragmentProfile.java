@@ -306,24 +306,10 @@ public class FragmentProfile extends FragmentBase implements Toolbar.OnMenuItemC
                         }
 
                         @Override
-                        public void sendComment(String name, String text) {
-                            mListener.getControllerProfile().sendComment(name, text);
-                        }
-
-                        @Override
                         public void jumpToParent(Comment comment) {
 
                         }
 
-                        @Override
-                        public void showReplyEditor(Comment comment) {
-                            getFragmentManager().beginTransaction()
-                                    .hide(FragmentProfile.this)
-                                    .add(R.id.frame_fragment, FragmentReply.newInstance(),
-                                            FragmentReply.TAG)
-                                    .addToBackStack(null)
-                                    .commit();
-                        }
                     },
                     new DisallowListener() {
                         @Override

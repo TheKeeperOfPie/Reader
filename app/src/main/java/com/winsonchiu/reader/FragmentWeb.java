@@ -310,6 +310,9 @@ public class FragmentWeb extends FragmentBase {
 
     public boolean navigateBack() {
         if (isFinished) {
+            webView.destroy();
+            webView = null;
+            Log.d(TAG, "navigateBack finished");
             return true;
         }
 
