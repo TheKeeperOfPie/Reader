@@ -7,8 +7,7 @@ package com.winsonchiu.reader.data.reddit;
 /**
  * Created by TheKeeperOfPie on 7/24/2015.
  */
-public class Replyable extends Thing {
-
+public abstract class Replyable extends Thing {
 
     private boolean replyExpanded;
     private CharSequence replyText;
@@ -28,5 +27,7 @@ public class Replyable extends Thing {
     public void setReplyText(CharSequence replyText) {
         this.replyText = replyText;
     }
+
+    public abstract CharSequence getParentHtml();
 
 }

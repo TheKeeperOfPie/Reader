@@ -238,4 +238,9 @@ public class Message extends Replyable {
     public void setDest(String dest) {
         this.dest = dest;
     }
+
+    @Override
+    public CharSequence getParentHtml() {
+        return getBodyHtml();
+    }
 }

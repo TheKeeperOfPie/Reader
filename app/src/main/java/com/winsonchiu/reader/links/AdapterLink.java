@@ -513,6 +513,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             // TODO: Move add to immediate on button click, check if failed afterwards
 
             eventListener.sendComment(link.getName(), editTextReply.getText().toString());
+            link.setReplyExpanded(false);
             layoutContainerReply.setVisibility(View.GONE);
         }
 
@@ -710,13 +711,13 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                     break;
                 case R.id.image_thumbnail:
                     onClickThumbnail();
+                    recyclerCallback.hideToolbar();
                     break;
                 case R.id.button_send_reply:
                     if (!TextUtils.isEmpty(editTextReply.getText())) {
                         sendComment();
                         InputMethodManager inputManager = (InputMethodManager) itemView.getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
-                        inputManager.hideSoftInputFromWindow(itemView.getWindowToken(),
-                                InputMethodManager.HIDE_NOT_ALWAYS);
+                        inputManager.hideSoftInputFromWindow(itemView.getWindowToken(), 0);
                     }
                     break;
                 default:
@@ -757,6 +758,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             for (int index = 0; index < menu.size(); index++) {
                 menu.getItem(index).getIcon().mutate().setColorFilter(colorFilterMenuItem);
             }
+            buttonReplyEditor.setColorFilter(colorFilterMenuItem);
 
         }
 
@@ -1661,6 +1663,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         public interface EventListener {
 
             void sendComment(String name, String text);
+            void sendMessage(String name, String text);
             void onClickComments(Link link, ViewHolderBase viewHolderBase);
             void save(Link link);
             void save(Comment comment);
@@ -1677,6 +1680,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             void hide(Link link);
             void editLink(Link link);
             void showReplyEditor(Replyable replyable);
+            void markRead(Thing thing);
         }
 
     }

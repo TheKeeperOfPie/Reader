@@ -90,6 +90,7 @@ public class Reddit {
         NOT_DISTINGUISHED, MODERATOR, ADMIN, SPECIAL
     }
 
+    public static final CharSequence NULL = "null";
     public static final String BASE_URL = "https://reddit.com";
     public static final String OAUTH_URL = "https://oauth.reddit.com";
     public static final String AUTHORIZATION = "Authorization";

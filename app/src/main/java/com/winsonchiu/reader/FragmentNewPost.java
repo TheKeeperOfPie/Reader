@@ -4,36 +4,41 @@
 
 package com.winsonchiu.reader;
 
+import android.animation.Animator;
 import android.app.Activity;
-import android.content.Intent;
 import android.content.res.TypedArray;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
-import android.net.Uri;
 import android.os.Bundle;
-import android.app.Fragment;
-import android.support.design.widget.FloatingActionButton;
-import android.support.v4.view.animation.FastOutSlowInInterpolator;
+import android.support.design.widget.AppBarLayout;
+import android.support.design.widget.CoordinatorLayout;
+import android.support.design.widget.TabLayout;
+import android.support.v4.view.PagerAdapter;
+import android.support.v4.view.ViewPager;
+import android.support.v4.widget.NestedScrollView;
 import android.support.v7.widget.Toolbar;
+import android.text.Html;
 import android.text.TextUtils;
 import android.text.method.LinkMovementMethod;
 import android.util.Log;
+import android.util.TypedValue;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.animation.Animation;
-import android.view.animation.Transformation;
+import android.view.ViewTreeObserver;
 import android.webkit.URLUtil;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
-import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
+import com.github.rjeschke.txtmark.Processor;
 import com.squareup.picasso.Picasso;
 import com.winsonchiu.reader.data.reddit.Link;
 import com.winsonchiu.reader.data.reddit.Listing;
@@ -45,7 +50,7 @@ import org.json.JSONObject;
 import java.util.HashMap;
 import java.util.Map;
 
-public class FragmentNewPost extends FragmentBase {
+public class FragmentNewPost extends FragmentBase implements Toolbar.OnMenuItemClickListener {
 
     public static final String USER = "User";
     public static final String SUBREDDIT = "Subreddit";
@@ -54,25 +59,40 @@ public class FragmentNewPost extends FragmentBase {
     public static final String IS_EDIT = "isEdit";
     public static final String EDIT_ID = "editId";
     public static final String TAG = FragmentNewPost.class.getCanonicalName();
-    private static final long DURATION_SUBMIT = 400;
-    private static final long DURATION_SUBMIT_DELAY = 125;
+    private static final int PAGE_BODY = 0;
+    private static final int PAGE_PREVIEW = 1;
+
+    private CoordinatorLayout layoutCoordinator;
+    private AppBarLayout layoutAppBar;
     private Toolbar toolbar;
     private TextView textInfo;
     private TextView textSubmit;
+    private NestedScrollView scrollText;
     private EditText editTextTitle;
     private EditText editTextBody;
-    private FloatingActionButton floatingActionButton;
+    private TextView textPreview;
+    private TabLayout tabLayout;
+    private ViewPager viewPager;
+    private Toolbar toolbarActions;
+    private View viewDivider;
     private Reddit reddit;
+
+    private PorterDuffColorFilter colorFilterIcon;
+    private int editMarginDefault;
+    private int editMarginWithActions;
 
     private RelativeLayout layoutCaptcha;
     private String captchaId;
     private ImageView imageCaptcha;
     private EditText editCaptcha;
     private ImageButton buttonCaptchaRefresh;
-    private ProgressBar progressSubmit;
+    private String postType;
+//    private ProgressBar progressSubmit;
 
     private FragmentListenerBase mListener;
     private Activity activity;
+    private Menu menu;
+    private MenuItem itemHideActions;
 
     public static FragmentNewPost newInstance(String user, String subredditUrl, String postType, String submitTextHtml) {
         FragmentNewPost fragment = new FragmentNewPost();
@@ -103,19 +123,32 @@ public class FragmentNewPost extends FragmentBase {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        postType = getArguments().getString(POST_TYPE);
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
             Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.fragment_new_post, container, false);
+        final View view = inflater.inflate(R.layout.fragment_new_post, container, false);
 
         reddit = Reddit.getInstance(activity);
+
+        layoutCoordinator = (CoordinatorLayout) view.findViewById(R.id.layout_coordinator);
+        layoutAppBar = (AppBarLayout) view.findViewById(R.id.layout_app_bar);
+        scrollText = (NestedScrollView) view.findViewById(R.id.scroll_text);
 
         textInfo = (TextView) view.findViewById(R.id.text_info);
         textSubmit = (TextView) view.findViewById(R.id.text_submit);
         editTextTitle = (EditText) view.findViewById(R.id.edit_title);
         editTextBody = (EditText) view.findViewById(R.id.edit_body);
+
+        TypedArray typedArray = activity.getTheme().obtainStyledAttributes(
+                new int[]{R.attr.colorIconFilter});
+        int colorIconFilter = typedArray.getColor(0, 0xFFFFFFFF);
+        typedArray.recycle();
+
+        colorFilterIcon = new PorterDuffColorFilter(colorIconFilter,
+                PorterDuff.Mode.MULTIPLY);
 
         toolbar = (Toolbar) view.findViewById(R.id.toolbar);
         toolbar.setTitle(getString(R.string.new_post));
@@ -126,15 +159,8 @@ public class FragmentNewPost extends FragmentBase {
                 mListener.onNavigationBackClick();
             }
         });
-
-        TypedArray typedArray = activity.getTheme().obtainStyledAttributes(
-                new int[]{R.attr.colorIconFilter});
-        int colorIconFilter = typedArray.getColor(0, 0xFFFFFFFF);
-        typedArray.recycle();
-
-        PorterDuffColorFilter colorFilter = new PorterDuffColorFilter(colorIconFilter,
-                PorterDuff.Mode.MULTIPLY);
-        toolbar.getNavigationIcon().mutate().setColorFilter(colorFilter);
+        toolbar.getNavigationIcon().mutate().setColorFilter(colorFilterIcon);
+        setUpOptionsMenu();
 
         textInfo.setText(getString(R.string.submitting_to) + " " + getArguments()
                 .getString(SUBREDDIT) + " " + getString(R.string.as) + " /u/" + getArguments()
@@ -150,27 +176,119 @@ public class FragmentNewPost extends FragmentBase {
         }
         textSubmit.setMovementMethod(LinkMovementMethod.getInstance());
 
-        if (Reddit.POST_TYPE_LINK.equals(getArguments().getString(POST_TYPE))) {
+        if (Reddit.POST_TYPE_LINK.equals(postType)) {
             editTextBody.setHint("URL");
         }
         else {
             editTextBody.setHint("Text");
         }
-
-        floatingActionButton = (FloatingActionButton) view.findViewById(R.id.fab_submit_post);
-        floatingActionButton.setOnClickListener(new View.OnClickListener() {
+        editTextBody.setOnFocusChangeListener(new View.OnFocusChangeListener() {
             @Override
-            public void onClick(View v) {
-                if (getArguments().getBoolean(IS_EDIT, false)) {
-                    submitEdit();
-                }
-                else {
-                    submitNew();
+            public void onFocusChange(View v, boolean hasFocus) {
+                if (hasFocus) {
+                    AppBarLayout.Behavior behaviorAppBar = (AppBarLayout.Behavior) ((CoordinatorLayout.LayoutParams) layoutAppBar.getLayoutParams()).getBehavior();
+                    behaviorAppBar.onNestedFling(layoutCoordinator, layoutAppBar, null, 0, 1000, true);
                 }
             }
         });
 
-        progressSubmit = (ProgressBar) view.findViewById(R.id.progress_submit);
+        editMarginDefault = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 8, getResources().getDisplayMetrics());
+        editMarginWithActions = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 56,
+                getResources().getDisplayMetrics());
+
+        textPreview = (TextView) view.findViewById(R.id.text_preview);
+        viewDivider = view.findViewById(R.id.view_divider);
+
+        toolbarActions = (Toolbar) view.findViewById(R.id.toolbar_actions);
+        toolbarActions.inflateMenu(R.menu.menu_reply_actions);
+        toolbarActions.setOnMenuItemClickListener(this);
+
+        tabLayout = (TabLayout) view.findViewById(R.id.layout_tab);
+        tabLayout.setTabMode(TabLayout.MODE_FIXED);
+        tabLayout.setTabGravity(TabLayout.GRAVITY_FILL);
+
+        viewPager = (ViewPager) view.findViewById(R.id.view_pager);
+        viewPager.setAdapter(new PagerAdapter() {
+
+            @Override
+            public CharSequence getPageTitle(int position) {
+
+                switch (position) {
+                    case PAGE_BODY:
+                        return getString(R.string.page_reply);
+                    case PAGE_PREVIEW:
+                        return getString(R.string.page_preview);
+                }
+
+                return super.getPageTitle(position);
+            }
+
+            @Override
+            public Object instantiateItem(ViewGroup container, int position) {
+                return viewPager.getChildAt(position);
+            }
+
+            @Override
+            public void destroyItem(ViewGroup container, int position, Object object) {
+
+            }
+
+            @Override
+            public int getCount() {
+                if (Reddit.POST_TYPE_LINK.equals(postType)) {
+                    tabLayout.setVisibility(View.GONE);
+                    toolbarActions.setVisibility(View.GONE);
+                    viewDivider.setVisibility(View.GONE);
+                    itemHideActions.setVisible(false);
+                    return 1;
+                }
+                return viewPager.getChildCount();
+            }
+
+            @Override
+            public boolean isViewFromObject(View view, Object object) {
+                return view == object;
+            }
+        });
+        viewPager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
+            @Override
+            public void onPageScrolled(int position,
+                    float positionOffset,
+                    int positionOffsetPixels) {
+
+                if (position == PAGE_BODY && toolbarActions.getVisibility() == View.VISIBLE) {
+                    float translationY = positionOffset * (toolbarActions.getHeight() + viewDivider
+                            .getHeight());
+                    viewDivider.setTranslationY(translationY);
+                    toolbarActions.setTranslationY(translationY);
+                }
+            }
+
+            @Override
+            public void onPageSelected(int position) {
+                if (position == PAGE_PREVIEW) {
+                    if (editTextBody.length() == 0) {
+                        textPreview.setText(R.string.empty_reply_preview);
+                    }
+                    else {
+                        textPreview.setText(
+                                Html.fromHtml(
+                                        Processor.process(editTextBody.getText().toString())));
+                    }
+                }
+                if (Reddit.POST_TYPE_SELF.equals(postType)) {
+                    itemHideActions.setVisible(position == PAGE_BODY);
+                }
+            }
+
+            @Override
+            public void onPageScrollStateChanged(int state) {
+
+            }
+        });
+
+        tabLayout.setupWithViewPager(viewPager);
+        viewPager.addOnPageChangeListener(new TabLayout.TabLayoutOnPageChangeListener(tabLayout));
 
         layoutCaptcha = (RelativeLayout) view.findViewById(R.id.layout_captcha);
         imageCaptcha = (ImageView) view.findViewById(R.id.image_captcha);
@@ -204,7 +322,51 @@ public class FragmentNewPost extends FragmentBase {
                     }, 0);
         }
 
+
+        view.getViewTreeObserver().addOnGlobalLayoutListener(
+                new ViewTreeObserver.OnGlobalLayoutListener() {
+                    @Override
+                    public void onGlobalLayout() {
+                        Menu menu = toolbarActions.getMenu();
+
+                        int maxNum = (int) (view.getWidth() / TypedValue.applyDimension(
+                                TypedValue.COMPLEX_UNIT_DIP, 48,
+                                getResources().getDisplayMetrics()));
+                        int numShown = 0;
+
+                        for (int index = 0; index < menu.size(); index++) {
+
+                            MenuItem menuItem = menu.getItem(index);
+                            menuItem.getIcon().setColorFilter(colorFilterIcon);
+
+                            if (numShown++ < maxNum - 1) {
+                                menuItem
+                                        .setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+                            }
+                            else {
+                                menuItem
+                                        .setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
+                            }
+                        }
+
+                        tabLayout.setVisibility(View.GONE);
+                        tabLayout.setVisibility(View.VISIBLE);
+                        view.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+                    }
+                });
+
         return view;
+    }
+
+    private void setUpOptionsMenu() {
+        toolbar.inflateMenu(R.menu.menu_reply);
+        toolbar.setOnMenuItemClickListener(this);
+        menu = toolbar.getMenu();
+        itemHideActions = menu.findItem(R.id.item_hide_actions);
+
+        for (int index = 0; index < menu.size(); index++) {
+            menu.getItem(index).getIcon().setColorFilter(colorFilterIcon);
+        }
     }
 
     private void loadCaptcha() {
@@ -267,9 +429,6 @@ public class FragmentNewPost extends FragmentBase {
 
     private void submitEdit() {
 
-        progressSubmit.setIndeterminate(true);
-        progressSubmit.setVisibility(View.VISIBLE);
-
         Map<String, String> params = new HashMap<>();
         params.put("api_type", "json");
         params.put("text", editTextBody.getText().toString());
@@ -279,42 +438,8 @@ public class FragmentNewPost extends FragmentBase {
             @Override
             public void onResponse(String response) {
 
-                progressSubmit.setProgress(0);
-                progressSubmit.setIndeterminate(false);
-
-                Animation animation = new Animation() {
-                    @Override
-                    protected void applyTransformation(final float interpolatedTime,
-                            Transformation t) {
-                        super.applyTransformation(interpolatedTime, t);
-                        progressSubmit.setProgress((int) (interpolatedTime * 100));
-                        Log.d(TAG, "progress: " + ((int) (interpolatedTime * 100)));
-                    }
-                };
-                animation.setDuration(DURATION_SUBMIT);
-                animation.setInterpolator(new FastOutSlowInInterpolator());
-                animation.setAnimationListener(new Animation.AnimationListener() {
-                    @Override
-                    public void onAnimationStart(Animation animation) {
-                    }
-
-                    @Override
-                    public void onAnimationEnd(Animation animation) {
-                        progressSubmit.postDelayed(new Runnable() {
-                            @Override
-                            public void run() {
-                                mListener.getControllerLinks().reloadAllLinks(false);
-                                mListener.onNavigationBackClick();
-                            }
-                        }, DURATION_SUBMIT_DELAY);
-                    }
-
-                    @Override
-                    public void onAnimationRepeat(Animation animation) {
-
-                    }
-                });
-                progressSubmit.startAnimation(animation);
+                mListener.getControllerLinks().reloadAllLinks(false);
+                mListener.onNavigationBackClick();
             }
         }, new Response.ErrorListener() {
             @Override
@@ -322,7 +447,6 @@ public class FragmentNewPost extends FragmentBase {
                 Toast.makeText(activity, getString(R.string.error_submitting_post),
                         Toast.LENGTH_LONG)
                         .show();
-                progressSubmit.setVisibility(View.GONE);
             }
         }, params, 0);
     }
@@ -335,7 +459,7 @@ public class FragmentNewPost extends FragmentBase {
                     .show();
             return;
         }
-        else if (Reddit.POST_TYPE_LINK.equals(getArguments().getString(POST_TYPE)) && !URLUtil
+        else if (Reddit.POST_TYPE_LINK.equals(postType) && !URLUtil
                 .isValidUrl(text)) {
 
             text = "http://" + text;
@@ -346,11 +470,9 @@ public class FragmentNewPost extends FragmentBase {
                 return;
             }
         }
-        progressSubmit.setIndeterminate(true);
-        progressSubmit.setVisibility(View.VISIBLE);
 
         Map<String, String> params = new HashMap<>();
-        params.put("kind", getArguments().getString(POST_TYPE).toLowerCase());
+        params.put("kind", postType.toLowerCase());
         params.put("api_type", "json");
         params.put("resubmit", "true");
         params.put("sendreplies", "true");
@@ -358,7 +480,7 @@ public class FragmentNewPost extends FragmentBase {
         params.put("extension", "json");
         params.put("sr", getArguments().getString(SUBREDDIT));
         params.put("title", editTextTitle.getText().toString());
-        if (Reddit.POST_TYPE_LINK.equalsIgnoreCase(getArguments().getString(POST_TYPE))) {
+        if (Reddit.POST_TYPE_LINK.equalsIgnoreCase(postType)) {
             params.put("url", text);
         }
         else {
@@ -393,7 +515,6 @@ public class FragmentNewPost extends FragmentBase {
 
                         Toast.makeText(activity, getString(R.string.error) + ": " + error, Toast.LENGTH_LONG)
                                 .show();
-                        progressSubmit.setVisibility(View.GONE);
                         return;
                     }
                 }
@@ -401,41 +522,8 @@ public class FragmentNewPost extends FragmentBase {
                     e.printStackTrace();
                 }
 
-                progressSubmit.setProgress(0);
-                progressSubmit.setIndeterminate(false);
-
-                Animation animation = new Animation() {
-                    @Override
-                    protected void applyTransformation(final float interpolatedTime, Transformation t) {
-                        super.applyTransformation(interpolatedTime, t);
-                        progressSubmit.setProgress((int) (interpolatedTime * 100));
-                        Log.d(TAG, "progress: " + ((int) (interpolatedTime * 100)));
-                    }
-                };
-                animation.setDuration(DURATION_SUBMIT);
-                animation.setInterpolator(new FastOutSlowInInterpolator());
-                animation.setAnimationListener(new Animation.AnimationListener() {
-                    @Override
-                    public void onAnimationStart(Animation animation) {
-                    }
-
-                    @Override
-                    public void onAnimationEnd(Animation animation) {
-                        progressSubmit.postDelayed(new Runnable() {
-                            @Override
-                            public void run() {
-                                mListener.getControllerLinks().reloadAllLinks(false);
-                                mListener.onNavigationBackClick();
-                            }
-                        }, DURATION_SUBMIT_DELAY);
-                    }
-
-                    @Override
-                    public void onAnimationRepeat(Animation animation) {
-
-                    }
-                });
-                progressSubmit.startAnimation(animation);
+                mListener.getControllerLinks().reloadAllLinks(false);
+                mListener.onNavigationBackClick();
 
             }
         }, new Response.ErrorListener() {
@@ -443,9 +531,127 @@ public class FragmentNewPost extends FragmentBase {
             public void onErrorResponse(VolleyError error) {
                 Toast.makeText(activity, getString(R.string.error_submitting_post), Toast.LENGTH_LONG)
                         .show();
-                progressSubmit.setVisibility(View.GONE);
             }
         }, params, 0);
+    }
+
+    @Override
+    public boolean onMenuItemClick(MenuItem item) {
+
+        int selectionStart = editTextBody.getSelectionStart();
+
+        switch (item.getItemId()) {
+            case R.id.item_send_reply:
+                if (getArguments().getBoolean(IS_EDIT, false)) {
+                    submitEdit();
+                }
+                else {
+                    submitNew();
+                }
+                break;
+            case R.id.item_hide_actions:
+                toggleActions();
+                break;
+            case R.id.item_reply_italicize:
+                editTextBody.getText().insert(selectionStart, "**");
+                editTextBody.setSelection(selectionStart + 1);
+                break;
+            case R.id.item_reply_bold:
+                editTextBody.getText().insert(selectionStart, "****");
+                editTextBody.setSelection(selectionStart + 2);
+                break;
+            case R.id.item_reply_strikethrough:
+                editTextBody.getText().insert(selectionStart, "~~~~");
+                editTextBody.setSelection(selectionStart + 2);
+                break;
+            case R.id.item_reply_quote:
+                editTextBody.getText().insert(selectionStart, "\n> ");
+                editTextBody.setSelection(selectionStart + 2);
+                break;
+            case R.id.item_reply_link:
+                String labelText = getString(R.string.reply_label_text);
+                String labelLink = getString(R.string.reply_label_link);
+                int indexStart = selectionStart + 1;
+                int indexEnd = indexStart + labelText.length();
+                editTextBody.getText().insert(selectionStart, "[" + labelText + "](" + labelLink + ")");
+                editTextBody.setSelection(indexStart, indexEnd);
+                break;
+            case R.id.item_reply_list_bulleted:
+                editTextBody.getText().insert(selectionStart, "\n\n* \n* \n* ");
+                editTextBody.setSelection(selectionStart + 4);
+                break;
+            case R.id.item_reply_list_numbered:
+                editTextBody.getText().insert(selectionStart, "\n\n1. \n2. \n3. ");
+                editTextBody.setSelection(selectionStart + 5);
+                break;
+        }
+
+        return true;
+    }
+
+    private void toggleActions() {
+
+        final int margin;
+        float translationY = toolbarActions.getHeight() + viewDivider
+                .getHeight();
+        if (toolbarActions.isShown()) {
+            margin = editMarginDefault;
+            viewDivider.animate().translationY(translationY);
+            toolbarActions.animate().translationY(translationY).setListener(
+                    new Animator.AnimatorListener() {
+                        @Override
+                        public void onAnimationStart(Animator animation) {
+
+                        }
+
+                        @Override
+                        public void onAnimationEnd(Animator animation) {
+                            toolbarActions.setVisibility(View.GONE);
+                            viewDivider.setVisibility(View.GONE);
+
+                            ((RelativeLayout.LayoutParams) scrollText.getLayoutParams()).bottomMargin = margin;
+                            scrollText.requestLayout();
+                        }
+
+                        @Override
+                        public void onAnimationCancel(Animator animation) {
+
+                        }
+
+                        @Override
+                        public void onAnimationRepeat(Animator animation) {
+
+                        }
+                    });
+        }
+        else if (Reddit.POST_TYPE_SELF.equals(postType)) {
+            margin = editMarginWithActions;
+            viewDivider.animate().translationY(0);
+            toolbarActions.animate().translationY(0).setListener(
+                    new Animator.AnimatorListener() {
+                        @Override
+                        public void onAnimationStart(Animator animation) {
+                            toolbarActions.setVisibility(View.VISIBLE);
+                            viewDivider.setVisibility(View.VISIBLE);
+                        }
+
+                        @Override
+                        public void onAnimationEnd(Animator animation) {
+                            ((RelativeLayout.LayoutParams) scrollText.getLayoutParams()).bottomMargin = margin;
+                            scrollText.requestLayout();
+                        }
+
+                        @Override
+                        public void onAnimationCancel(Animator animation) {
+
+                        }
+
+                        @Override
+                        public void onAnimationRepeat(Animator animation) {
+
+                        }
+                    });
+        }
     }
 
     @Override

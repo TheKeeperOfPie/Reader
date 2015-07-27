@@ -8,11 +8,13 @@ import android.app.Activity;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.TypedArray;
+import android.graphics.Canvas;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
 import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.support.design.widget.AppBarLayout;
 import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
@@ -88,6 +90,8 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
     private AdapterLinkList adapterLinkList;
     private AdapterLinkGrid adapterLinkGrid;
     private Button buttonSubscribe;
+    private CoordinatorLayout layoutCoordinator;
+    private AppBarLayout layoutAppBar;
     private AdapterLink.ViewHolderHeader.EventListener eventListenerHeader;
     private DisallowListener disallowListener;
     private RecyclerCallback recyclerCallback;
@@ -184,6 +188,12 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
                 return layoutManager;
             }
 
+            @Override
+            public void hideToolbar() {
+                AppBarLayout.Behavior behaviorAppBar = (AppBarLayout.Behavior) ((CoordinatorLayout.LayoutParams) layoutAppBar.getLayoutParams()).getBehavior();
+                behaviorAppBar.onNestedFling(layoutCoordinator, layoutAppBar, null, 0, 1000, true);
+            }
+
         };
 
         listener = new ControllerLinks.Listener() {
@@ -192,8 +202,9 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
             public void setSortAndTime(Sort sort, Time time) {
                 menu.findItem(sort.getMenuId()).setChecked(true);
                 itemSortTime.setTitle(
-                        getString(R.string.time) + Reddit.TIME_SEPARATOR + menu.findItem(mListener.getControllerLinks()
-                                .getTime().getMenuId()).toString());
+                        getString(R.string.time) + Reddit.TIME_SEPARATOR + menu
+                                .findItem(mListener.getControllerLinks()
+                                        .getTime().getMenuId()).toString());
             }
 
             @Override
@@ -205,7 +216,8 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
             public void loadSideBar(Subreddit subreddit) {
                 if (subreddit.getUrl().equals("/") || "/r/all/"
                         .equalsIgnoreCase(subreddit.getUrl())) {
-                    drawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED, GravityCompat.END);
+                    drawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED,
+                            GravityCompat.END);
                     return;
                 }
 
@@ -361,6 +373,9 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
         toolbar.getNavigationIcon().mutate().setColorFilter(colorFilterIcon);
         setUpOptionsMenu();
 
+        layoutCoordinator = (CoordinatorLayout) view.findViewById(R.id.layout_coordinator);
+        layoutAppBar = (AppBarLayout) view.findViewById(R.id.layout_app_bar);
+
         layoutActions = (LinearLayout) view.findViewById(R.id.layout_actions);
         buttonExpandActions = (FloatingActionButton) view.findViewById(R.id.button_expand_actions);
         buttonExpandActions.setOnClickListener(new View.OnClickListener() {
@@ -370,7 +385,8 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
             }
         });
 
-        FloatingActionButton.Behavior behaviorFloatingActionButton = new ScrollAwareFloatingActionButtonBehavior(activity, null,
+        FloatingActionButton.Behavior behaviorFloatingActionButton = new ScrollAwareFloatingActionButtonBehavior(
+                activity, null,
                 new ScrollAwareFloatingActionButtonBehavior.OnVisibilityChangeListener() {
                     @Override
                     public void onStartHideFromScroll() {
@@ -398,7 +414,8 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
         buttonJumpTop.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(View v) {
-                Toast.makeText(activity, getString(R.string.content_description_button_jump_top), Toast.LENGTH_SHORT).show();
+                Toast.makeText(activity, getString(R.string.content_description_button_jump_top),
+                        Toast.LENGTH_SHORT).show();
                 return false;
             }
         });
@@ -413,7 +430,9 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
         buttonClearViewed.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(View v) {
-                Toast.makeText(activity, getString(R.string.content_description_button_clear_viewed), Toast.LENGTH_SHORT).show();
+                Toast.makeText(activity,
+                        getString(R.string.content_description_button_clear_viewed),
+                        Toast.LENGTH_SHORT).show();
                 return false;
             }
         });
@@ -421,19 +440,24 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
 
         // Margin is included within shadow margin on pre-Lollipop, so remove all regular margin
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
-            ((CoordinatorLayout.LayoutParams) buttonExpandActions.getLayoutParams()).setMargins(0, 0, 0, 0);
+            ((CoordinatorLayout.LayoutParams) buttonExpandActions.getLayoutParams())
+                    .setMargins(0, 0, 0, 0);
 
-            int margin = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 8, getResources().getDisplayMetrics());
+            int margin = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 8,
+                    getResources().getDisplayMetrics());
 
-            LinearLayout.LayoutParams layoutParamsJumpTop = (LinearLayout.LayoutParams) buttonJumpTop.getLayoutParams();
+            LinearLayout.LayoutParams layoutParamsJumpTop = (LinearLayout.LayoutParams) buttonJumpTop
+                    .getLayoutParams();
             layoutParamsJumpTop.setMargins(0, 0, 0, 0);
             buttonJumpTop.setLayoutParams(layoutParamsJumpTop);
 
-            LinearLayout.LayoutParams layoutParamsClearViewed = (LinearLayout.LayoutParams) buttonClearViewed.getLayoutParams();
+            LinearLayout.LayoutParams layoutParamsClearViewed = (LinearLayout.LayoutParams) buttonClearViewed
+                    .getLayoutParams();
             layoutParamsClearViewed.setMargins(0, 0, 0, 0);
             buttonClearViewed.setLayoutParams(layoutParamsClearViewed);
 
-            RelativeLayout.LayoutParams layoutParamsActions = (RelativeLayout.LayoutParams) layoutActions.getLayoutParams();
+            RelativeLayout.LayoutParams layoutParamsActions = (RelativeLayout.LayoutParams) layoutActions
+                    .getLayoutParams();
             layoutParamsActions.setMarginStart(margin);
             layoutParamsActions.setMarginEnd(margin);
             layoutActions.setLayoutParams(layoutParamsActions);
@@ -504,7 +528,10 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
         });
 
         itemTouchHelper = new CustomItemTouchHelper(
-                new CustomItemTouchHelper.SimpleCallback(ItemTouchHelper.START | ItemTouchHelper.END, ItemTouchHelper.START | ItemTouchHelper.END) {
+                new CustomItemTouchHelper.SimpleCallback(activity,
+                        R.drawable.ic_visibility_off_white_24dp,
+                        ItemTouchHelper.START | ItemTouchHelper.END,
+                        ItemTouchHelper.START | ItemTouchHelper.END) {
 
                     @Override
                     public float getSwipeThreshold(RecyclerView.ViewHolder viewHolder) {
@@ -521,20 +548,23 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
                             RecyclerView.ViewHolder viewHolder) {
 
                         if (viewHolder.getAdapterPosition() == 0) {
-                             return 0;
+                            return 0;
                         }
 
                         ViewGroup.LayoutParams layoutParams = viewHolder.itemView.getLayoutParams();
 
                         if (layoutParams instanceof StaggeredGridLayoutManager.LayoutParams &&
-                                !((StaggeredGridLayoutManager.LayoutParams) layoutParams).isFullSpan()) {
+                                !((StaggeredGridLayoutManager.LayoutParams) layoutParams)
+                                        .isFullSpan()) {
 
-                            int spanCount = layoutManager instanceof StaggeredGridLayoutManager ? ((StaggeredGridLayoutManager) layoutManager).getSpanCount() : 2;
-                            int spanIndex = ((StaggeredGridLayoutManager.LayoutParams) layoutParams).getSpanIndex() % spanCount;
+                            int spanCount = layoutManager instanceof StaggeredGridLayoutManager ?
+                                    ((StaggeredGridLayoutManager) layoutManager).getSpanCount() : 2;
+                            int spanIndex = ((StaggeredGridLayoutManager.LayoutParams) layoutParams)
+                                    .getSpanIndex() % spanCount;
                             if (spanIndex == 0) {
                                 return ItemTouchHelper.END;
                             }
-                            else if (spanIndex == spanCount - 1){
+                            else if (spanIndex == spanCount - 1) {
                                 return ItemTouchHelper.START;
                             }
 
@@ -565,7 +595,8 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
                         if (snackbar != null) {
                             snackbar.dismiss();
                         }
-                        snackbar = Snackbar.make(recyclerThreadList, link.isHidden() ? R.string.link_hidden : R.string.link_shown,
+                        snackbar = Snackbar.make(recyclerThreadList,
+                                link.isHidden() ? R.string.link_hidden : R.string.link_shown,
                                 Snackbar.LENGTH_LONG)
                                 .setActionTextColor(getResources().getColor(R.color.colorAccent))
                                 .setAction(
@@ -577,7 +608,8 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
                                                 recyclerThreadList.invalidate();
                                             }
                                         });
-                        snackbar.getView().setBackgroundColor(getResources().getColor(R.color.colorPrimary));
+                        snackbar.getView()
+                                .setBackgroundColor(getResources().getColor(R.color.colorPrimary));
                         snackbar.show();
                     }
                 });
@@ -606,7 +638,8 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
                                 R.string.subscribe : R.string.unsubscribe);
                 mListener.getControllerLinks().subscribe();
                 if (mListener.getControllerLinks().getSubreddit().isUserIsSubscriber()) {
-                    mListener.getControllerSearch().addSubreddit(mListener.getControllerLinks().getSubreddit());
+                    mListener.getControllerSearch()
+                            .addSubreddit(mListener.getControllerLinks().getSubreddit());
                 }
             }
         });
@@ -773,24 +806,23 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
 
         }
 
-        for (Sort sort : Sort.values()) {
-            if (sort.getMenuId() == item.getItemId()) {
-                mListener.getControllerLinks()
-                        .setSort(sort);
-                scrollToPositionWithOffset(0, 0);
-                return true;
-            }
+
+        Sort sort = Sort.fromMenuId(item.getItemId());
+        if (sort != null) {
+            mListener.getControllerLinks()
+                    .setSort(sort);
+            scrollToPositionWithOffset(0, 0);
+            return true;
         }
 
-        for (Time time : Time.values()) {
-            if (time.getMenuId() == item.getItemId()) {
-                mListener.getControllerLinks()
-                        .setTime(time);
-                itemSortTime.setTitle(
-                        getString(R.string.time) + Reddit.TIME_SEPARATOR + item.toString());
-                scrollToPositionWithOffset(0, 0);
-                return true;
-            }
+        Time time = Time.fromMenuId(item.getItemId());
+        if (time != null) {
+            mListener.getControllerLinks()
+                    .setTime(time);
+            itemSortTime.setTitle(
+                    getString(R.string.time) + Reddit.TIME_SEPARATOR + item.toString());
+            scrollToPositionWithOffset(0, 0);
+            return true;
         }
 
         return false;
@@ -800,15 +832,17 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
      * Helper method to scroll without if statement sprinkled everywhere, as
      * scrollToPositionWithOffset is not abstracted into the upper LayoutManager
      * for some reason
+     *
      * @param position to scroll to
-     * @param offset from top of view
+     * @param offset   from top of view
      */
     private void scrollToPositionWithOffset(int position, int offset) {
         if (layoutManager instanceof LinearLayoutManager) {
             ((LinearLayoutManager) layoutManager).scrollToPositionWithOffset(position, offset);
         }
         else if (layoutManager instanceof StaggeredGridLayoutManager) {
-            ((StaggeredGridLayoutManager) layoutManager).scrollToPositionWithOffset(position, offset);
+            ((StaggeredGridLayoutManager) layoutManager)
+                    .scrollToPositionWithOffset(position, offset);
         }
     }
 

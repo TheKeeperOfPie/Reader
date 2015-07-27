@@ -29,6 +29,7 @@ import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.winsonchiu.reader.FragmentNewMessage;
 import com.winsonchiu.reader.comments.FragmentReply;
+import com.winsonchiu.reader.profile.Page;
 import com.winsonchiu.reader.utils.AnimationUtils;
 import com.winsonchiu.reader.utils.DisallowListener;
 import com.winsonchiu.reader.FragmentBase;
@@ -59,7 +60,6 @@ public class FragmentInbox extends FragmentBase {
     private RecyclerView recyclerInbox;
     private LinearLayoutManager linearLayoutManager;
     private AdapterInbox adapterInbox;
-    private AdapterInbox.ViewHolderMessage.EventListener eventListener;
     private ControllerInbox.Listener listener;
     private Toolbar toolbar;
     private FloatingActionButton floatingActionButtonNewMessage;
@@ -121,64 +121,6 @@ public class FragmentInbox extends FragmentBase {
             @Override
             public void post(Runnable runnable) {
                 recyclerInbox.post(runnable);
-            }
-        };
-
-        eventListener = new AdapterInbox.ViewHolderMessage.EventListener() {
-            @Override
-            public void sendMessage(String name, String text) {
-                Map<String, String> params = new HashMap<>();
-                params.put("api_type", "json");
-                params.put("thing_id", name);
-                params.put("text", text);
-
-                // TODO: Move add to immediate on button click, check if failed afterwards
-                mListener.getReddit()
-                        .loadPost(Reddit.OAUTH_URL + "/api/comment",
-                                new Response.Listener<String>() {
-                                    @Override
-                                    public void onResponse(String response) {
-                                        try {
-                                            JSONObject jsonObject = new JSONObject(
-                                                    response);
-                                            Message newMessage = Message.fromJson(
-                                                    jsonObject.getJSONObject("json")
-                                                            .getJSONObject("data")
-                                                            .getJSONArray("things")
-                                                            .getJSONObject(0));
-                                            mListener.getControllerInbox()
-                                                    .insertMessage(newMessage);
-                                        }
-                                        catch (JSONException e) {
-                                            e.printStackTrace();
-                                        }
-                                    }
-                                }, new Response.ErrorListener() {
-                                    @Override
-                                    public void onErrorResponse(VolleyError error) {
-
-                                    }
-                                }, params, 0);
-            }
-
-            @Override
-            public void markRead(Thing thing) {
-
-                Map<String, String> params = new HashMap<>();
-                params.put("id", thing.getName());
-
-                mListener.getReddit()
-                        .loadPost(Reddit.OAUTH_URL + "/api/read_message",
-                                new Response.Listener<String>() {
-                                    @Override
-                                    public void onResponse(String response) {
-                                    }
-                                }, new Response.ErrorListener() {
-                                    @Override
-                                    public void onErrorResponse(VolleyError error) {
-
-                                    }
-                                }, params, 0);
             }
         };
 
@@ -309,7 +251,6 @@ public class FragmentInbox extends FragmentBase {
 
                         }
                     },
-                    eventListener,
                     new DisallowListener() {
                         @Override
                         public void requestDisallowInterceptTouchEventVertical(boolean disallow) {
@@ -328,7 +269,7 @@ public class FragmentInbox extends FragmentBase {
                 }
             }, new ControllerProfile.Listener() {
                 @Override
-                public void setPage(String page) {
+                public void setPage(Page page) {
 
                 }
 

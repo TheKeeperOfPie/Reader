@@ -217,4 +217,9 @@
     <string name="reply_label_text">Text</string>
     <string name="reply_label_link">URL</string>
     <string name="item_hide_actions">Hide/show actions</string>
+    <string name="empty_reply_preview">Whoops. Looks like there isn\'t any text to preview.</string>
+    <string name="parent">Parent</string>
+    <string name="page_parent">Parent</string>
+    <string name="failed_reply">Failed to send reply</string>
+    <string name="failed_message">Failed to send message</string>
 </resources>

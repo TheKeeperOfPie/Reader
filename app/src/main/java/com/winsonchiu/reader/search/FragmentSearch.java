@@ -10,6 +10,8 @@ import android.content.res.TypedArray;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
 import android.os.Bundle;
+import android.support.design.widget.AppBarLayout;
+import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.TabLayout;
 import android.support.v4.view.MenuItemCompat;
 import android.support.v4.view.PagerAdapter;
@@ -66,6 +68,8 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
     private MenuItem itemSortTime;
     private Toolbar toolbar;
     private PorterDuffColorFilter colorFilterIcon;
+    private CoordinatorLayout layoutCoordinator;
+    private AppBarLayout layoutAppBar;
 
     public static FragmentSearch newInstance(boolean hideKeyboard) {
         FragmentSearch fragment = new FragmentSearch();
@@ -237,6 +241,9 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
         });
         setUpOptionsMenu();
 
+        layoutCoordinator = (CoordinatorLayout) view.findViewById(R.id.layout_coordinator);
+        layoutAppBar = (AppBarLayout) view.findViewById(R.id.layout_app_bar);
+
         adapterSearchSubreddits = new AdapterSearchSubreddits(activity,
                 mListener.getControllerSearch(),
                 new AdapterSearchSubreddits.ViewHolder.EventListener() {
@@ -340,6 +347,12 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
                         return layoutManagerLinks;
                     }
 
+                    @Override
+                    public void hideToolbar() {
+                        AppBarLayout.Behavior behaviorAppBar = (AppBarLayout.Behavior) ((CoordinatorLayout.LayoutParams) layoutAppBar.getLayoutParams()).getBehavior();
+                        behaviorAppBar.onNestedFling(layoutCoordinator, layoutAppBar, null, 0, 1000, true);
+                    }
+
                 });
 
         adapterLinksSubreddit = new AdapterSearchLinkList(activity, new ControllerLinksBase() {
@@ -408,6 +421,12 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
                     @Override
                     public RecyclerView.LayoutManager getLayoutManager() {
                         return layoutManagerLinksSubreddit;
+                    }
+
+                    @Override
+                    public void hideToolbar() {
+                        AppBarLayout.Behavior behaviorAppBar = (AppBarLayout.Behavior) ((CoordinatorLayout.LayoutParams) layoutAppBar.getLayoutParams()).getBehavior();
+                        behaviorAppBar.onNestedFling(layoutCoordinator, layoutAppBar, null, 0, 1000, true);
                     }
 
                 });
@@ -531,25 +550,25 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
 
         item.setChecked(true);
 
-        for (Sort sort : Sort.values()) {
-            if (sort.getMenuId() == item.getItemId()) {
-                mListener.getControllerSearch()
-                        .setSort(sort);
-                flashSearchView();
-                return true;
-            }
+
+        Sort sort = Sort.fromMenuId(item.getItemId());
+        if (sort != null) {
+            mListener.getControllerSearch()
+                    .setSort(sort);
+            flashSearchView();
+            return true;
         }
 
-        for (Time time : Time.values()) {
-            if (time.getMenuId() == item.getItemId()) {
-                mListener.getControllerSearch()
-                        .setTime(time);
-                itemSortTime.setTitle(
-                        getString(R.string.time) + Reddit.TIME_SEPARATOR + item.toString());
-                flashSearchView();
-                return true;
-            }
+        Time time = Time.fromMenuId(item.getItemId());
+        if (time != null) {
+            mListener.getControllerSearch()
+                    .setTime(time);
+            itemSortTime.setTitle(
+                    getString(R.string.time) + Reddit.TIME_SEPARATOR + item.toString());
+            flashSearchView();
+            return true;
         }
+
         return false;
     }
 

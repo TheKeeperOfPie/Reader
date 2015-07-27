@@ -472,4 +472,9 @@ public class Comment extends Replyable {
     public void setCollapsed(int collapsed) {
         this.collapsed = collapsed;
     }
+
+    @Override
+    public CharSequence getParentHtml() {
+        return getBodyHtml();
+    }
 }

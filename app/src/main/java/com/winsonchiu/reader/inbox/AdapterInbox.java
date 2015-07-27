@@ -50,7 +50,6 @@ public class AdapterInbox extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
     private ControllerUser controllerUser;
     private AdapterLink.ViewHolderBase.EventListener eventListenerBase;
     private AdapterCommentList.ViewHolderComment.EventListener eventListenerComment;
-    private ViewHolderMessage.EventListener eventListenerInbox;
     private DisallowListener disallowListener;
     private AdapterCommentList.ViewHolderComment.ReplyCallback replyCallback;
     private ControllerProfile.Listener listener;
@@ -60,7 +59,6 @@ public class AdapterInbox extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
             ControllerUser controllerUser,
             AdapterLink.ViewHolderBase.EventListener eventListenerBase,
             AdapterCommentList.ViewHolderComment.EventListener eventListenerComment,
-            ViewHolderMessage.EventListener eventListenerInbox,
             DisallowListener disallowListener,
             AdapterCommentList.ViewHolderComment.ReplyCallback replyCallback,
             ControllerProfile.Listener listener) {
@@ -68,7 +66,6 @@ public class AdapterInbox extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
         this.controllerUser = controllerUser;
         this.eventListenerBase = eventListenerBase;
         this.eventListenerComment = eventListenerComment;
-        this.eventListenerInbox = eventListenerInbox;
         this.disallowListener = disallowListener;
         this.replyCallback = replyCallback;
         this.listener = listener;
@@ -88,25 +85,11 @@ public class AdapterInbox extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
             case ControllerInbox.VIEW_TYPE_MESSAGE:
                 return new ViewHolderMessage(
                         LayoutInflater.from(parent.getContext())
-                                .inflate(R.layout.row_message, parent, false), eventListenerInbox);
+                                .inflate(R.layout.row_message, parent, false), eventListenerBase);
             case ControllerInbox.VIEW_TYPE_COMMENT:
                 // TODO: Move to different ViewHolderComment constructor
-                return new AdapterCommentList.ViewHolderComment(
-                        LayoutInflater.from(parent.getContext())
-                                .inflate(R.layout.row_comment, parent, false), eventListenerBase, eventListenerComment, disallowListener, replyCallback, listener) {
-                    @Override
-                    public void expandToolbarActions() {
-                        super.expandToolbarActions();
-
-
-                        if (comment.isNew()) {
-                            eventListenerInbox.markRead(comment);
-                            comment.setIsNew(false);
-                            textInfo.setTextColor(comment.isNew() ? itemView.getResources()
-                                    .getColor(R.color.textColorAlert) : colorTextSecondary);
-                        }
-                    }
-                };
+                return new AdapterCommentList.ViewHolderComment(LayoutInflater.from(parent.getContext()).inflate(
+                        R.layout.row_comment, parent, false), eventListenerBase, eventListenerComment, disallowListener, replyCallback, listener);
 
         }
 
@@ -162,13 +145,13 @@ public class AdapterInbox extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
         protected EditText editTextReply;
         protected Button buttonSendReply;
         protected Toolbar toolbarActions;
-        protected EventListener eventListener;
+        protected AdapterLink.ViewHolderBase.EventListener eventListener;
         private View.OnClickListener clickListenerLink;
 
         protected int toolbarItemWidth;
         protected String userName;
 
-        public ViewHolderMessage(View itemView, final EventListener listener) {
+        public ViewHolderMessage(View itemView, final AdapterLink.ViewHolderBase.EventListener listener) {
             super(itemView);
             this.eventListener = listener;
 
@@ -305,11 +288,6 @@ public class AdapterInbox extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
             textInfo.setTextColor(message.isNew() ? itemView.getResources()
                     .getColor(R.color.textColorAlert) : typedArray.getColor(0, itemView.getResources().getColor(R.color.darkThemeTextColorMuted)));
             typedArray.recycle();
-        }
-
-        public interface EventListener {
-            void sendMessage(String name, String text);
-            void markRead(Thing thing);
         }
     }
 

@@ -28,6 +28,7 @@ import android.util.Log;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
 import android.webkit.URLUtil;
 import android.widget.ImageView;
@@ -45,6 +46,7 @@ import com.winsonchiu.reader.comments.FragmentComments;
 import com.winsonchiu.reader.comments.FragmentReply;
 import com.winsonchiu.reader.data.reddit.Comment;
 import com.winsonchiu.reader.data.reddit.Link;
+import com.winsonchiu.reader.data.reddit.Message;
 import com.winsonchiu.reader.data.reddit.Reddit;
 import com.winsonchiu.reader.data.reddit.Replyable;
 import com.winsonchiu.reader.data.reddit.Sort;
@@ -229,7 +231,36 @@ public class MainActivity extends YouTubeBaseActivity
                 }, new Response.ErrorListener() {
                     @Override
                     public void onErrorResponse(VolleyError error) {
-                        Toast.makeText(MainActivity.this, "Failed to send reply", Toast.LENGTH_LONG).show();
+                        Toast.makeText(MainActivity.this, R.string.failed_reply, Toast.LENGTH_LONG).show();
+                    }
+                });
+            }
+
+            @Override
+            public void sendMessage(String name, String text) {
+
+                getReddit().sendComment(name, text, new Response.Listener<String>() {
+                    @Override
+                    public void onResponse(String response) {
+                        try {
+                        JSONObject jsonObject = new JSONObject(
+                                response);
+                        Message newMessage = Message.fromJson(
+                                jsonObject.getJSONObject("json")
+                                        .getJSONObject("data")
+                                        .getJSONArray("things")
+                                        .getJSONObject(0));
+                        getControllerInbox()
+                                .insertMessage(newMessage);
+                        }
+                        catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }, new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        Toast.makeText(MainActivity.this, R.string.failed_message, Toast.LENGTH_LONG).show();
                     }
                 });
             }
@@ -490,6 +521,26 @@ public class MainActivity extends YouTubeBaseActivity
                                 FragmentReply.TAG)
                         .addToBackStack(null)
                         .commit();
+            }
+
+            @Override
+            public void markRead(Thing thing) {
+
+                Map<String, String> params = new HashMap<>();
+                params.put("id", thing.getName());
+
+                getReddit()
+                        .loadPost(Reddit.OAUTH_URL + "/api/read_message",
+                                new Response.Listener<String>() {
+                                    @Override
+                                    public void onResponse(String response) {
+                                    }
+                                }, new Response.ErrorListener() {
+                                    @Override
+                                    public void onErrorResponse(VolleyError error) {
+
+                                    }
+                                }, params, 0);
             }
 
         };
@@ -984,14 +1035,12 @@ public class MainActivity extends YouTubeBaseActivity
 
     @Override
     public void onAuthFinished(boolean success) {
-        selectNavigationItem(R.id.item_home, 0, false);
         if (success) {
             Toast.makeText(this, getString(R.string.login_success), Toast.LENGTH_SHORT)
                     .show();
             loadAccountInfo();
             getControllerUser().reloadUser();
             getControllerSearch().reloadSubscriptionList();
-            getControllerLinks().loadFrontPage(Sort.HOT, true);
         }
         else {
             Toast.makeText(this, getString(R.string.login_failure), Toast.LENGTH_SHORT)

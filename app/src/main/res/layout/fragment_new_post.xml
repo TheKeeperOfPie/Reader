@@ -2,7 +2,7 @@
   ~ Copyright 2015 Winson Chiu
   -->
 
-<android.support.design.widget.CoordinatorLayout
+<RelativeLayout
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     xmlns:android="http://schemas.android.com/apk/res/android"
@@ -11,19 +11,17 @@
     tools:context="com.winsonchiu.reader.FragmentNewPost"
     >
 
-    <RelativeLayout
-        android:id="@+id/layout_relative"
+    <android.support.design.widget.CoordinatorLayout
+        android:id="@+id/layout_coordinator"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        app:layout_behavior="@string/appbar_scrolling_view_behavior"
         >
 
-        <android.support.v4.widget.NestedScrollView
-            android:id="@+id/nested_scroll_view"
+        <android.support.v4.view.ViewPager
+            android:id="@+id/view_pager"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:paddingBottom="72dp"
-            android:clipToPadding="false"
+            app:layout_behavior="@string/appbar_scrolling_view_behavior"
             >
 
             <RelativeLayout
@@ -31,209 +29,200 @@
                 android:layout_height="match_parent"
                 >
 
-                <TextView
-                    android:id="@+id/text_info"
+                <android.support.v4.widget.NestedScrollView
+                    android:id="@+id/scroll_text"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_alignParentTop="true"
-                    android:layout_marginStart="@dimen/activity_horizontal_margin"
-                    android:layout_marginEnd="@dimen/activity_horizontal_margin"
-                    android:layout_marginTop="@dimen/activity_vertical_margin"
-                    android:layout_marginBottom="@dimen/activity_vertical_margin"
-                    android:paddingStart="16dp"
-                    android:paddingEnd="16dp"
-                    android:textAppearance="?android:textAppearanceMedium"
-                    />
-
-                <TextView
-                    android:id="@+id/text_submit"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_below="@id/text_info"
-                    android:layout_marginStart="@dimen/activity_horizontal_margin"
-                    android:layout_marginEnd="@dimen/activity_horizontal_margin"
-                    android:layout_marginTop="@dimen/activity_vertical_margin"
-                    android:layout_marginBottom="@dimen/activity_vertical_margin"
-                    android:paddingStart="16dp"
-                    android:paddingEnd="16dp"
-                    />
-
-                <!--<android.support.design.widget.TextInputLayout-->
-                <!--android:id="@+id/layout_text_input_title"-->
-                <!--android:layout_width="match_parent"-->
-                <!--android:layout_height="wrap_content"-->
-                <!--android:layout_marginStart="@dimen/activity_horizontal_margin"-->
-                <!--android:layout_marginEnd="@dimen/activity_horizontal_margin"-->
-                <!--android:layout_marginTop="@dimen/activity_vertical_margin"-->
-                <!--android:layout_marginBottom="@dimen/activity_vertical_margin"-->
-                <!-->-->
-
-                <EditText
-                    android:id="@+id/edit_title"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_below="@id/text_submit"
-                    android:layout_marginStart="@dimen/activity_horizontal_margin"
-                    android:layout_marginEnd="@dimen/activity_horizontal_margin"
-                    android:layout_marginTop="@dimen/activity_vertical_margin"
-                    android:layout_marginBottom="@dimen/activity_vertical_margin"
-                    android:paddingStart="16dp"
-                    android:paddingEnd="16dp"
-                    android:hint="@string/new_post_title"
-                    android:inputType="textCapSentences|textAutoCorrect|textMultiLine"
-                    android:maxLength="300"
-                    />
-
-                <!--</android.support.design.widget.TextInputLayout>-->
-
-                <!--<android.support.design.widget.TextInputLayout-->
-                <!--android:id="@+id/layout_text_input_body"-->
-                <!--android:layout_width="match_parent"-->
-                <!--android:layout_height="wrap_content"-->
-                <!--android:layout_below="@id/layout_text_input_title"-->
-                <!--android:layout_marginStart="@dimen/activity_horizontal_margin"-->
-                <!--android:layout_marginEnd="@dimen/activity_horizontal_margin"-->
-                <!--android:layout_marginTop="@dimen/activity_vertical_margin"-->
-                <!--android:layout_marginBottom="@dimen/activity_vertical_margin"-->
-                <!-->-->
-
-                <EditText
-                    android:id="@+id/edit_body"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_below="@id/edit_title"
-                    android:layout_marginStart="@dimen/activity_horizontal_margin"
-                    android:layout_marginEnd="@dimen/activity_horizontal_margin"
-                    android:layout_marginTop="@dimen/activity_vertical_margin"
-                    android:layout_marginBottom="@dimen/activity_vertical_margin"
-                    android:paddingStart="16dp"
-                    android:paddingEnd="16dp"
-                    android:inputType="textCapSentences|textAutoCorrect|textMultiLine"
-                    android:hint="@string/new_post_body"
-                    android:maxLength="40000"
-                    />
-
-                <!--</android.support.design.widget.TextInputLayout>-->
-
-                <RelativeLayout
-                    android:id="@+id/layout_captcha"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_below="@id/edit_body"
-                    android:visibility="gone"
+                    android:layout_height="match_parent"
+                    android:layout_marginBottom="56dp"
                     >
 
-                    <TextView
-                        android:id="@+id/text_captcha"
-                        android:minHeight="48dp"
+                    <RelativeLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_alignParentTop="true"
-                        android:layout_toStartOf="@+id/button_captcha_refresh"
-                        android:layout_marginStart="@dimen/activity_horizontal_margin"
-                        android:layout_marginEnd="@dimen/activity_horizontal_margin"
-                        android:layout_marginTop="@dimen/activity_vertical_margin"
-                        android:layout_marginBottom="@dimen/activity_vertical_margin"
-                        android:hint="@string/captcha"
-                        />
+                        >
 
-                    <ImageButton
-                        android:id="@+id/button_captcha_refresh"
-                        android:layout_width="wrap_content"
-                        android:layout_height="48dp"
-                        android:layout_alignParentTop="true"
-                        android:layout_alignParentEnd="true"
-                        android:src="@drawable/ic_refresh_white_24dp"
-                        android:padding="12dp"
-                        />
+                        <TextView
+                            android:id="@+id/text_info"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_alignParentTop="true"
+                            android:layout_marginStart="@dimen/activity_horizontal_margin"
+                            android:layout_marginEnd="@dimen/activity_horizontal_margin"
+                            android:layout_marginTop="@dimen/activity_vertical_margin"
+                            android:layout_marginBottom="@dimen/activity_vertical_margin"
+                            android:paddingStart="16dp"
+                            android:paddingEnd="16dp"
+                            android:textAppearance="?android:textAppearanceMedium"
+                            />
 
-                    <ImageView
-                        android:id="@+id/image_captcha"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_below="@id/text_captcha"
-                        android:layout_marginStart="@dimen/activity_horizontal_margin"
-                        android:layout_marginEnd="@dimen/activity_horizontal_margin"
-                        android:layout_marginTop="8dp"
-                        android:layout_marginBottom="8dp"
-                        />
+                        <TextView
+                            android:id="@+id/text_submit"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_below="@id/text_info"
+                            android:layout_marginStart="@dimen/activity_horizontal_margin"
+                            android:layout_marginEnd="@dimen/activity_horizontal_margin"
+                            android:layout_marginTop="@dimen/activity_vertical_margin"
+                            android:layout_marginBottom="@dimen/activity_vertical_margin"
+                            android:paddingStart="16dp"
+                            android:paddingEnd="16dp"
+                            />
 
-                    <EditText
-                        android:id="@+id/edit_captcha"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_below="@id/image_captcha"
-                        android:layout_marginStart="@dimen/activity_horizontal_margin"
-                        android:layout_marginEnd="@dimen/activity_horizontal_margin"
-                        android:layout_marginTop="@dimen/activity_vertical_margin"
-                        android:layout_marginBottom="@dimen/activity_vertical_margin"
-                        android:paddingStart="16dp"
-                        android:paddingEnd="16dp"
-                        android:hint="@string/captcha_response"
-                        />
+                        <EditText
+                            android:id="@+id/edit_title"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_below="@id/text_submit"
+                            android:layout_marginStart="@dimen/activity_horizontal_margin"
+                            android:layout_marginEnd="@dimen/activity_horizontal_margin"
+                            android:layout_marginTop="@dimen/activity_vertical_margin"
+                            android:layout_marginBottom="@dimen/activity_vertical_margin"
+                            android:paddingStart="16dp"
+                            android:paddingEnd="16dp"
+                            android:hint="@string/new_post_title"
+                            android:inputType="textCapSentences|textAutoCorrect|textMultiLine"
+                            android:maxLength="300"
+                            />
 
-                </RelativeLayout>
+                        <EditText
+                            android:id="@+id/edit_body"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_below="@id/edit_title"
+                            android:layout_marginTop="8dp"
+                            android:layout_marginBottom="8dp"
+                            android:layout_marginStart="@dimen/activity_horizontal_margin"
+                            android:layout_marginEnd="@dimen/activity_horizontal_margin"
+                            android:paddingStart="16dp"
+                            android:paddingEnd="16dp"
+                            android:inputType="textCapSentences|textAutoCorrect|textMultiLine"
+                            android:hint="@string/new_post_body"
+                            android:maxLength="40000"
+                            />
+
+                        <RelativeLayout
+                            android:id="@+id/layout_captcha"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_below="@id/edit_body"
+                            android:visibility="gone"
+                            >
+
+                            <TextView
+                                android:id="@+id/text_captcha"
+                                android:minHeight="48dp"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_alignParentTop="true"
+                                android:layout_toStartOf="@+id/button_captcha_refresh"
+                                android:layout_marginStart="@dimen/activity_horizontal_margin"
+                                android:layout_marginEnd="@dimen/activity_horizontal_margin"
+                                android:layout_marginTop="@dimen/activity_vertical_margin"
+                                android:layout_marginBottom="@dimen/activity_vertical_margin"
+                                android:hint="@string/captcha"
+                                />
+
+                            <ImageButton
+                                android:id="@+id/button_captcha_refresh"
+                                android:layout_width="wrap_content"
+                                android:layout_height="48dp"
+                                android:layout_alignParentTop="true"
+                                android:layout_alignParentEnd="true"
+                                android:src="@drawable/ic_refresh_white_24dp"
+                                android:padding="12dp"
+                                />
+
+                            <ImageView
+                                android:id="@+id/image_captcha"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_below="@id/text_captcha"
+                                android:layout_marginStart="@dimen/activity_horizontal_margin"
+                                android:layout_marginEnd="@dimen/activity_horizontal_margin"
+                                android:layout_marginTop="8dp"
+                                android:layout_marginBottom="8dp"
+                                />
+
+                            <EditText
+                                android:id="@+id/edit_captcha"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_below="@id/image_captcha"
+                                android:layout_marginStart="@dimen/activity_horizontal_margin"
+                                android:layout_marginEnd="@dimen/activity_horizontal_margin"
+                                android:layout_marginTop="@dimen/activity_vertical_margin"
+                                android:layout_marginBottom="@dimen/activity_vertical_margin"
+                                android:paddingStart="16dp"
+                                android:paddingEnd="16dp"
+                                android:hint="@string/captcha_response"
+                                />
+
+                        </RelativeLayout>
+
+                    </RelativeLayout>
+
+                </android.support.v4.widget.NestedScrollView>
 
             </RelativeLayout>
 
-        </android.support.v4.widget.NestedScrollView>
+            <android.support.v4.widget.NestedScrollView
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                >
 
-    </RelativeLayout>
+                <TextView
+                    android:id="@+id/text_preview"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/activity_vertical_margin"
+                    android:layout_marginBottom="@dimen/activity_vertical_margin"
+                    android:layout_marginStart="@dimen/activity_horizontal_margin"
+                    android:layout_marginEnd="@dimen/activity_horizontal_margin"
+                    />
 
-    <android.support.design.widget.AppBarLayout
-        android:id="@+id/layout_app_bar"
+            </android.support.v4.widget.NestedScrollView>
+
+        </android.support.v4.view.ViewPager>
+
+        <android.support.design.widget.AppBarLayout
+            android:id="@+id/layout_app_bar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            >
+
+            <android.support.v7.widget.Toolbar
+                android:id="@+id/toolbar"
+                android:layout_width="match_parent"
+                android:layout_height="?android:actionBarSize"
+                android:background="@color/colorPrimary"
+                app:layout_scrollFlags="scroll|enterAlways"
+                />
+
+            <android.support.design.widget.TabLayout
+                android:id="@+id/layout_tab"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:layout_scrollFlags="scroll|enterAlways"
+                />
+
+        </android.support.design.widget.AppBarLayout>
+
+    </android.support.design.widget.CoordinatorLayout>
+
+    <View
+        android:id="@+id/view_divider"
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_above="@id/toolbar_actions"
+        android:background="?android:listDivider"
+        />
+
+    <android.support.v7.widget.Toolbar
+        android:id="@+id/toolbar_actions"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        >
-
-        <android.support.v7.widget.Toolbar
-            android:id="@+id/toolbar"
-            android:layout_width="match_parent"
-            android:layout_height="?android:actionBarSize"
-            android:background="@color/colorPrimary"
-            app:layout_scrollFlags="scroll|enterAlways"
-            />
-
-    </android.support.design.widget.AppBarLayout>
-
-    <RelativeLayout
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentEnd="true"
         android:layout_alignParentBottom="true"
-        android:layout_margin="16dp"
-        app:layout_anchor="@id/layout_relative"
-        app:layout_anchorGravity="bottom|end"
-        >
+        android:background="?android:attr/windowBackground"
+        />
 
-        <android.support.design.widget.FloatingActionButton
-            android:id="@+id/fab_submit_post"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:src="@drawable/ic_check_white_24dp"
-            android:layout_alignParentEnd="true"
-            android:layout_alignParentBottom="true"
-            app:backgroundTint="@color/colorPrimary"
-            app:fabSize="normal"
-            app:elevation="0dp"
-            app:pressedTranslationZ="12dp"
-            app:borderWidth="0dp"
-            />
-
-        <ProgressBar
-            style="?android:attr/progressBarStyleHorizontal"
-            android:id="@+id/progress_submit"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_alignTop="@id/fab_submit_post"
-            android:layout_alignBottom="@id/fab_submit_post"
-            android:layout_alignStart="@id/fab_submit_post"
-            android:layout_alignEnd="@id/fab_submit_post"
-            android:progressDrawable="@drawable/progress_circular"
-            android:indeterminateDrawable="@drawable/progress_indeterminate_circular"
-            android:visibility="gone"
-            />
-
-    </RelativeLayout>
-
-</android.support.design.widget.CoordinatorLayout>
+</RelativeLayout>

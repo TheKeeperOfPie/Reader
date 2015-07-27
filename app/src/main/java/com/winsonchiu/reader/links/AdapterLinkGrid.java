@@ -479,7 +479,7 @@ public class AdapterLinkGrid extends AdapterLink {
                     .concat(getSubredditString(), showSubreddit ? "\n" : "", getSpannableScore(),
                             "by ", link.getAuthor(), getFlairString()));
 
-            Linkify.addLinks(textThreadInfo, Linkify.ALL);
+            Linkify.addLinks(textThreadInfo, Linkify.WEB_URLS);
 
             textHidden.setText(getTimestamp() + ", " + link.getNumComments() + " comments");
 

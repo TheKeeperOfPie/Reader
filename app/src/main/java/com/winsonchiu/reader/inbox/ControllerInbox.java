@@ -40,6 +40,7 @@ public class ControllerInbox {
     public static final int PAGE_INBOX = 0;
     public static final int PAGE_UNREAD = 1;
     public static final int PAGE_SENT = 2;
+
     private static final String TAG = ControllerInbox.class.getCanonicalName();
 
     private Activity activity;

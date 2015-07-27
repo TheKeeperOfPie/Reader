@@ -250,6 +250,8 @@ public class AdapterAlbum extends PagerAdapter {
             }
 
             scrollDescription.scrollTo(0, 0);
+            scrollDescription.setVisibility(View.GONE);
+            textTitle.setVisibility(View.VISIBLE);
 
             Linkify.addLinks(textDescription, Linkify.ALL);
 

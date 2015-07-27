@@ -32,6 +32,16 @@ public enum Sort {
         return menuId;
     }
 
+    public static Sort fromMenuId(int id) {
+        for (Sort sort : values()) {
+            if (sort.getMenuId() == id) {
+                return sort;
+            }
+        }
+
+        return null;
+    }
+
     // String returned is lowercase for use in URL and formatting
     @Override
     public String toString() {

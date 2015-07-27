@@ -46,6 +46,15 @@ public class ControllerProfile implements ControllerLinksBase {
     public static final int VIEW_TYPE_LINK = 2;
     public static final int VIEW_TYPE_COMMENT = 3;
 
+    public static final String PAGE_OVERVIEW = "Overview";
+    public static final String PAGE_SUBMITTED = "Submitted";
+    public static final String PAGE_COMMENTS = "Comments";
+    public static final String PAGE_GILDED = "Gilded";
+    public static final String PAGE_UPVOTED = "Upvoted";
+    public static final String PAGE_DOWNVOTED = "Downvoted";
+    public static final String PAGE_HIDDEN = "Hidden";
+    public static final String PAGE_SAVED = "Saved";
+
     private static final String TAG = ControllerProfile.class.getCanonicalName();
 
     private Activity activity;
@@ -56,7 +65,7 @@ public class ControllerProfile implements ControllerLinksBase {
     private Link topLink;
     private Comment topComment;
     private User user;
-    private String page;
+    private Page page;
     private Sort sort;
     private Time time;
     private boolean isLoading;
@@ -68,7 +77,7 @@ public class ControllerProfile implements ControllerLinksBase {
         topLink = new Link();
         topComment = new Comment();
         user = new User();
-        page = "Overview";
+        page = new Page(PAGE_OVERVIEW, activity.getString(R.string.profile_page_overview));
         sort = Sort.HOT;
         time = Time.ALL;
     }
@@ -120,7 +129,7 @@ public class ControllerProfile implements ControllerLinksBase {
     }
 
     public Link getTopLink() {
-        return page.equalsIgnoreCase("overview") ? topLink : null;
+        return page.getPage().equalsIgnoreCase(PAGE_OVERVIEW) ? topLink : null;
     }
 
     public Comment getComment(int position) {
@@ -131,21 +140,21 @@ public class ControllerProfile implements ControllerLinksBase {
         return (Comment) data.getChildren().get(position - 6);
     }
 
-    public void setPage(String page) {
+    public void setPage(Page page) {
         if (!this.page.equals(page)) {
             this.page = page;
             reload();
         }
     }
 
-    public String getPage() {
+    public Page getPage() {
         return page;
     }
 
     public void setUser(User user) {
         this.user = user;
         sort = Sort.HOT;
-        page = "Overview";
+        page = new Page(PAGE_OVERVIEW, activity.getString(R.string.profile_page_overview));
         for (Listener listener : listeners) {
             listener.setIsUser(user.getName()
                     .equals(controllerUser.getUser().getName()));
@@ -157,7 +166,7 @@ public class ControllerProfile implements ControllerLinksBase {
 
         setLoading(true);
 
-        String url = Reddit.OAUTH_URL + "/user/" + user.getName() + "/" + page.toLowerCase() + "?limit=15&sort=" + sort.toString() + "&t=" + time.toString();
+        String url = Reddit.OAUTH_URL + "/user/" + user.getName() + "/" + page.getPage().toLowerCase() + "?limit=15&sort=" + sort.toString() + "&t=" + time.toString();
 
         reddit.loadGet(url,
                 new Response.Listener<String>() {
@@ -171,8 +180,8 @@ public class ControllerProfile implements ControllerLinksBase {
                                 listener.getAdapter().notifyDataSetChanged();
                             }
                             setLoading(false);
-                            if (!TextUtils.isEmpty(user.getName()) && page.equalsIgnoreCase(
-                                    "Overview")) {
+                            if (!TextUtils.isEmpty(user.getName()) && page.getPage().equalsIgnoreCase(
+                                    PAGE_OVERVIEW)) {
                                 loadTopEntries();
                             }
                         }
@@ -199,7 +208,7 @@ public class ControllerProfile implements ControllerLinksBase {
 
         setLoading(true);
 
-        String url = Reddit.OAUTH_URL + "/user/" + user.getName() + "/" + page.toLowerCase() + "?limit=15&sort=" + sort.toString() + "&t=" + time.toString() + "&after=" + data.getAfter();
+        String url = Reddit.OAUTH_URL + "/user/" + user.getName() + "/" + page.getPage().toLowerCase() + "?limit=15&sort=" + sort.toString() + "&t=" + time.toString() + "&after=" + data.getAfter();
 
         reddit.loadGet(url,
                 new Response.Listener<String>() {
@@ -594,7 +603,7 @@ public class ControllerProfile implements ControllerLinksBase {
     }
 
     public Comment getTopComment() {
-        return page.equalsIgnoreCase("overview") ? topComment : null;
+        return page.getPage().equalsIgnoreCase(PAGE_OVERVIEW) ? topComment : null;
     }
 
     public void setControllerUser(ControllerUser controllerUser) {
@@ -634,7 +643,7 @@ public class ControllerProfile implements ControllerLinksBase {
 
     public interface Listener
             extends ControllerListener {
-        void setPage(String page);
+        void setPage(Page page);
         void setIsUser(boolean isUser);
         void loadLink(Comment comment);
     }

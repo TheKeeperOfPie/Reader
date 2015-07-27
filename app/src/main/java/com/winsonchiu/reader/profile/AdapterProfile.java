@@ -79,11 +79,11 @@ public class AdapterProfile extends RecyclerView.Adapter<RecyclerView.ViewHolder
             case 1:
                 return ControllerProfile.VIEW_TYPE_HEADER_TEXT;
             case 2:
-                return controllerProfile.getPage().equals("Overview") && controllerProfile.getTopLink() != null ? ControllerProfile.VIEW_TYPE_LINK : ControllerProfile.VIEW_TYPE_HEADER_TEXT;
+                return controllerProfile.getPage().getPage().equals(ControllerProfile.PAGE_OVERVIEW) && controllerProfile.getTopLink() != null ? ControllerProfile.VIEW_TYPE_LINK : ControllerProfile.VIEW_TYPE_HEADER_TEXT;
             case 3:
                 return ControllerProfile.VIEW_TYPE_HEADER_TEXT;
             case 4:
-                return controllerProfile.getPage().equals("Overview") && controllerProfile.getTopComment() != null  ? ControllerProfile.VIEW_TYPE_COMMENT : ControllerProfile.VIEW_TYPE_HEADER_TEXT;
+                return controllerProfile.getPage().getPage().equals(ControllerProfile.PAGE_OVERVIEW) && controllerProfile.getTopComment() != null  ? ControllerProfile.VIEW_TYPE_COMMENT : ControllerProfile.VIEW_TYPE_HEADER_TEXT;
             case 5:
                 return ControllerProfile.VIEW_TYPE_HEADER_TEXT;
             default:
@@ -145,7 +145,8 @@ public class AdapterProfile extends RecyclerView.Adapter<RecyclerView.ViewHolder
                 viewHolderTextLink.itemView.setVisibility(
                         controllerProfile.getTopLink() == null ? View.GONE : View.VISIBLE);
                 viewHolderTextLink.onBind("Top Post");
-                viewHolderTextLink.setVisibility(controllerProfile.getPage().equalsIgnoreCase("Overview") ? View.VISIBLE : View.GONE);
+                viewHolderTextLink.setVisibility(controllerProfile.getPage().getPage().equalsIgnoreCase(
+                        ControllerProfile.PAGE_OVERVIEW) ? View.VISIBLE : View.GONE);
                 break;
             case 2:
                 if (getItemViewType(position) == ControllerProfile.VIEW_TYPE_LINK) {
@@ -163,7 +164,8 @@ public class AdapterProfile extends RecyclerView.Adapter<RecyclerView.ViewHolder
                 viewHolderTextComment.itemView.setVisibility(
                         controllerProfile.getTopComment() == null ? View.GONE : View.VISIBLE);
                 viewHolderTextComment.onBind("Top Comment");
-                viewHolderTextComment.setVisibility(controllerProfile.getPage().equalsIgnoreCase("Overview") ? View.VISIBLE : View.GONE);
+                viewHolderTextComment.setVisibility(controllerProfile.getPage().getPage().equalsIgnoreCase(
+                        ControllerProfile.PAGE_OVERVIEW) ? View.VISIBLE : View.GONE);
                 break;
             case 4:
                 if (getItemViewType(position) == ControllerProfile.VIEW_TYPE_COMMENT) {
@@ -177,7 +179,7 @@ public class AdapterProfile extends RecyclerView.Adapter<RecyclerView.ViewHolder
                 break;
             case 5:
                 ViewHolderText viewHolderTextOverview = (ViewHolderText) holder;
-                viewHolderTextOverview.onBind(controllerProfile.getPage());
+                viewHolderTextOverview.onBind(controllerProfile.getPage().getText());
                 break;
             default:
                 if (holder instanceof AdapterLinkList.ViewHolder) {

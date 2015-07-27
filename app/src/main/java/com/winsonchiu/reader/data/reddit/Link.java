@@ -304,6 +304,9 @@ public class Link extends Replyable {
     }
 
     public void setSelfText(CharSequence selfText) {
+        if (Reddit.NULL.equals(selfText)) {
+            selfText = "";
+        }
         this.selfText = selfText;
     }
 
@@ -426,4 +429,10 @@ public class Link extends Replyable {
     public void setBackgroundColor(int backgroundColor) {
         this.backgroundColor = backgroundColor;
     }
+
+    @Override
+    public CharSequence getParentHtml() {
+        return getSelfTextHtml();
+    }
+
 }

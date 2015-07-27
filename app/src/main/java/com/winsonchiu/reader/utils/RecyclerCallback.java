@@ -13,4 +13,5 @@ public interface RecyclerCallback {
     void scrollTo(int position);
     int getRecyclerHeight();
     RecyclerView.LayoutManager getLayoutManager();
+    void hideToolbar();
 }

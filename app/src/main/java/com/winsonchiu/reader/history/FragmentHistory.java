@@ -13,6 +13,8 @@ import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.support.design.widget.AppBarLayout;
+import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.Snackbar;
 import android.support.design.widget.TabLayout;
 import android.support.v4.view.MenuItemCompat;
@@ -75,6 +77,8 @@ public class FragmentHistory extends FragmentBase implements Toolbar.OnMenuItemC
     private AdapterLinkList adapterLinkList;
     private AdapterLinkGrid adapterLinkGrid;
     private PorterDuffColorFilter colorFilterIcon;
+    private CoordinatorLayout layoutCoordinator;
+    private AppBarLayout layoutAppBar;
 
     public static FragmentHistory newInstance() {
         FragmentHistory fragment = new FragmentHistory();
@@ -215,6 +219,9 @@ public class FragmentHistory extends FragmentBase implements Toolbar.OnMenuItemC
         toolbar.getNavigationIcon().mutate().setColorFilter(colorFilterIcon);
         setUpOptionsMenu();
 
+        layoutCoordinator = (CoordinatorLayout) view.findViewById(R.id.layout_coordinator);
+        layoutAppBar = (AppBarLayout) view.findViewById(R.id.layout_app_bar);
+
         swipeRefreshHistory = (SwipeRefreshLayout) view.findViewById(R.id.swipe_refresh_history);
         swipeRefreshHistory.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
@@ -270,6 +277,12 @@ public class FragmentHistory extends FragmentBase implements Toolbar.OnMenuItemC
             public LayoutManager getLayoutManager() {
                 return layoutManager;
             }
+
+            @Override
+            public void hideToolbar() {
+                AppBarLayout.Behavior behaviorAppBar = (AppBarLayout.Behavior) ((CoordinatorLayout.LayoutParams) layoutAppBar.getLayoutParams()).getBehavior();
+                behaviorAppBar.onNestedFling(layoutCoordinator, layoutAppBar, null, 0, 1000, true);
+            }
         };
 
 
@@ -307,7 +320,8 @@ public class FragmentHistory extends FragmentBase implements Toolbar.OnMenuItemC
         recyclerHistory.setAdapter(adapterLink);
 
         itemTouchHelper = new CustomItemTouchHelper(
-                new CustomItemTouchHelper.SimpleCallback(
+                new CustomItemTouchHelper.SimpleCallback(activity,
+                        R.drawable.ic_visibility_off_white_24dp,
                         ItemTouchHelper.START | ItemTouchHelper.END,
                         ItemTouchHelper.START | ItemTouchHelper.END) {
 

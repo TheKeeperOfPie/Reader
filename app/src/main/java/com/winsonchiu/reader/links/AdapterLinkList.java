@@ -142,7 +142,7 @@ public class AdapterLinkList extends AdapterLink {
                     .concat(getSubredditString(), getSpannableScore(), "by ", link.getAuthor(),
                             getFlairString()));
 
-            Linkify.addLinks(textThreadInfo, Linkify.ALL);
+            Linkify.addLinks(textThreadInfo, Linkify.WEB_URLS);
 
             // TODO: Add link edited indicator
 

@@ -14,6 +14,7 @@ import android.graphics.Rect;
 import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.support.design.widget.AppBarLayout;
 import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.view.GestureDetectorCompat;
@@ -107,6 +108,8 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
     private GestureDetectorCompat gestureDetector;
     private SharedPreferences preferences;
     private PorterDuffColorFilter colorFilterIcon;
+    private CoordinatorLayout layoutCoordinator;
+    private AppBarLayout layoutAppBar;
 
     public static FragmentComments newInstance() {
         FragmentComments fragment = new FragmentComments();
@@ -404,6 +407,9 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
             }
         });
 
+        layoutCoordinator = (CoordinatorLayout) view.findViewById(R.id.layout_coordinator);
+        layoutAppBar = (AppBarLayout) view.findViewById(R.id.layout_app_bar);
+
         linearLayoutManager = new LinearLayoutManager(activity);
         recyclerCommentList = (RecyclerView) view.findViewById(R.id.recycler_comment_list);
         recyclerCommentList.setLayoutManager(linearLayoutManager);
@@ -473,6 +479,12 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
             @Override
             public RecyclerView.LayoutManager getLayoutManager() {
                 return linearLayoutManager;
+            }
+
+            @Override
+            public void hideToolbar() {
+                AppBarLayout.Behavior behaviorAppBar = (AppBarLayout.Behavior) ((CoordinatorLayout.LayoutParams) layoutAppBar.getLayoutParams()).getBehavior();
+                behaviorAppBar.onNestedFling(layoutCoordinator, layoutAppBar, null, 0, 1000, true);
             }
         };
 
@@ -1050,13 +1062,12 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
                 break;
         }
 
-        for (Sort sort : Sort.values()) {
-            if (sort.getMenuId() == item.getItemId()) {
-                mListener.getControllerComments()
-                        .setSort(sort);
-                linearLayoutManager.scrollToPositionWithOffset(1, 0);
-                return true;
-            }
+        Sort sort = Sort.fromMenuId(item.getItemId());
+        if (sort != null) {
+            mListener.getControllerComments()
+                    .setSort(sort);
+            linearLayoutManager.scrollToPositionWithOffset(1, 0);
+            return true;
         }
 
         return true;

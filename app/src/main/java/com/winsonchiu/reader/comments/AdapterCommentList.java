@@ -50,6 +50,7 @@ import android.widget.ImageButton;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
+import com.winsonchiu.reader.data.reddit.Thing;
 import com.winsonchiu.reader.utils.AnimationUtils;
 import com.winsonchiu.reader.AppSettings;
 import com.winsonchiu.reader.profile.ControllerProfile;
@@ -478,8 +479,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                     if (!TextUtils.isEmpty(editTextReply.getText())) {
                         sendReply();
                         InputMethodManager inputManager = (InputMethodManager) itemView.getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
-                        inputManager.hideSoftInputFromWindow(itemView.getWindowToken(),
-                                InputMethodManager.HIDE_NOT_ALWAYS);
+                        inputManager.hideSoftInputFromWindow(itemView.getWindowToken(), 0);
                     }
                 }
             });
@@ -557,7 +557,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
             else {
                 eventListenerBase.sendComment(comment.getName(), editTextReply.getText().toString());
             }
-            comment.setReplyExpanded(!comment.isReplyExpanded());
+            comment.setReplyExpanded(false);
             layoutContainerReply.setVisibility(View.GONE);
         }
 
@@ -594,9 +594,18 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                 menu.getItem(index).getIcon().setColorFilter(colorFilterMenuItem);
             }
 
+            buttonReplyEditor.setColorFilter(colorFilterMenuItem);
         }
 
         public void expandToolbarActions() {
+
+            if (comment.isNew()) {
+                eventListenerBase.markRead(comment);
+                comment.setIsNew(false);
+                textInfo.setTextColor(comment.isNew() ? itemView.getResources()
+                        .getColor(R.color.textColorAlert) : colorTextSecondary);
+                return;
+            }
 
             if (comment.isMore()) {
                 eventListener.loadNestedComments(comment);
@@ -767,7 +776,9 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
 
             }
 
-            textComment.setTextColor(comment.getGilded() > 0 ? resources.getColor(R.color.gildedComment) : colorTextPrimary);
+            textComment.setTextColor(
+                    comment.getGilded() > 0 ? resources.getColor(R.color.gildedComment) :
+                            colorTextPrimary);
 
         }
 
@@ -796,9 +807,13 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                 spannableVote.setSpan(new ForegroundColorSpan(voteColor), 0, spannableVote.length(), Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
             }
 
-            Spannable spannableScore = new SpannableString(String.valueOf(comment.getScore()));
+            Spannable spannableScore;
 
-            if (!comment.isScoreHidden()) {
+            if (comment.isScoreHidden()) {
+                spannableScore = new SpannableString(String.valueOf(0));
+            }
+            else {
+                spannableScore = new SpannableString(String.valueOf(comment.getScore()));
                 spannableScore.setSpan(new ForegroundColorSpan(
                                 comment.getScore() > 0 ? colorPositive : colorNegative), 0,
                         spannableScore.length(),
@@ -852,7 +867,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                     .concat(spannableVote, spannableScore, " by ", spannableAuthor, flair,
                             timestamp, comment.getEdited() > 0 ? "*" : ""));
 
-            Linkify.addLinks(textInfo, Linkify.ALL);
+            Linkify.addLinks(textInfo, Linkify.WEB_URLS);
         }
 
         public void syncSaveIcon() {

@@ -143,6 +143,8 @@
             android:longClickable="false"
             />
 
+        <!-- TODO: Make self text selectable, fix ripple animation state-->
+
         <TextView
             android:id="@+id/text_thread_self"
             android:layout_width="wrap_content"

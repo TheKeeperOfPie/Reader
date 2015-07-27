@@ -231,6 +231,9 @@ public class Subreddit extends Thing {
     }
 
     public void setDescription(String description) {
+        if (Reddit.NULL.equals(description)) {
+            description = "";
+        }
         this.description = description;
     }
 
@@ -239,6 +242,9 @@ public class Subreddit extends Thing {
     }
 
     public void setDescriptionHtml(String descriptionHtml) {
+        if (Reddit.NULL.equals(descriptionHtml)) {
+            descriptionHtml = "";
+        }
         this.descriptionHtml = descriptionHtml;
     }
 
@@ -313,6 +319,9 @@ public class Subreddit extends Thing {
     }
 
     public void setPublicDescription(String publicDescription) {
+        if (Reddit.NULL.equals(publicDescription)) {
+            publicDescription = "";
+        }
         this.publicDescription = publicDescription;
     }
 
@@ -321,6 +330,9 @@ public class Subreddit extends Thing {
     }
 
     public void setPublicDescriptionHtml(String publicDescriptionHtml) {
+        if (Reddit.NULL.equals(publicDescriptionHtml)) {
+            publicDescriptionHtml = "";
+        }
         this.publicDescriptionHtml = publicDescriptionHtml;
     }
 
@@ -361,6 +373,9 @@ public class Subreddit extends Thing {
     }
 
     public void setSubmitText(String submitText) {
+        if (Reddit.NULL.equals(submitText)) {
+            submitText = "";
+        }
         this.submitText = submitText;
     }
 
@@ -377,6 +392,9 @@ public class Subreddit extends Thing {
     }
 
     public void setSubmitTextHtml(String submitTextHtml) {
+        if (Reddit.NULL.equals(submitTextHtml)) {
+            submitTextHtml = "";
+        }
         this.submitTextHtml = submitTextHtml;
     }
 

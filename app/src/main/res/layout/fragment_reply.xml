@@ -1,166 +1,126 @@
 <!--
   ~ Copyright 2015 Winson Chiu
   -->
-
 <RelativeLayout
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent" xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     tools:context="com.winsonchiu.reader.comments.FragmentReply"
     >
 
-    <include
-        layout="@layout/toolbar"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_alignParentTop="true"
-        app:layout_scrollFlags="scroll|enterAlways"
-        />
-
-    <android.support.design.widget.TabLayout
-        android:id="@+id/layout_tab"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_below="@id/toolbar"
-        app:layout_scrollFlags="scroll|enterAlways"
-        />
-
-    <android.support.v4.view.ViewPager
-        android:id="@+id/view_pager"
+    <android.support.design.widget.CoordinatorLayout
+        android:id="@+id/layout_coordinator"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_below="@id/layout_tab"
         >
 
-        <RelativeLayout
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:scrollbars="vertical"
-            app:layout_behavior="@string/appbar_scrolling_view_behavior"
-            >
-
-            <EditText
-                android:id="@+id/edit_reply"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_alignParentTop="true"
-                android:layout_marginTop="8dp"
-                android:layout_marginBottom="72dp"
-                android:layout_marginStart="@dimen/activity_horizontal_margin"
-                android:layout_marginEnd="@dimen/activity_horizontal_margin"
-                android:inputType="textMultiLine"
-                android:scrollbars="vertical"
-                android:scrollbarAlwaysDrawVerticalTrack="true"
-                app:layout_behavior="@string/appbar_scrolling_view_behavior"
-                />
-
-        </RelativeLayout>
-
-        <android.support.v4.widget.NestedScrollView
+        <android.support.v4.view.ViewPager
+            android:id="@+id/view_pager"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             app:layout_behavior="@string/appbar_scrolling_view_behavior"
             >
 
-            <TextView
-                android:id="@+id/text_preview"
+            <android.support.v4.widget.NestedScrollView
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:layout_marginTop="8dp"
-                android:layout_marginBottom="8dp"
-                android:layout_marginStart="@dimen/activity_horizontal_margin"
-                android:layout_marginEnd="@dimen/activity_horizontal_margin"
-                android:scrollbars="vertical"
-                app:layout_behavior="@string/appbar_scrolling_view_behavior"
+                >
+
+                <TextView
+                    android:id="@+id/text_parent"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/activity_vertical_margin"
+                    android:layout_marginBottom="@dimen/activity_vertical_margin"
+                    android:layout_marginStart="@dimen/activity_horizontal_margin"
+                    android:layout_marginEnd="@dimen/activity_horizontal_margin"
+                    android:textIsSelectable="true"
+                    />
+
+            </android.support.v4.widget.NestedScrollView>
+
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                >
+
+                <android.support.v4.widget.NestedScrollView
+                    android:id="@+id/scroll_text"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_marginBottom="56dp"
+                    >
+
+                    <RelativeLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        >
+
+                        <EditText
+                            android:id="@+id/edit_reply"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_below="@id/text_parent"
+                            android:layout_marginTop="8dp"
+                            android:layout_marginBottom="8dp"
+                            android:layout_marginStart="@dimen/activity_horizontal_margin"
+                            android:layout_marginEnd="@dimen/activity_horizontal_margin"
+                            android:maxLength="10000"
+                            android:inputType="textCapSentences|textAutoCorrect|textMultiLine"
+                            app:layout_behavior="@string/appbar_scrolling_view_behavior"
+                            />
+
+                    </RelativeLayout>
+
+                </android.support.v4.widget.NestedScrollView>
+
+            </RelativeLayout>
+
+            <android.support.v4.widget.NestedScrollView
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                >
+
+                <TextView
+                    android:id="@+id/text_preview"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/activity_vertical_margin"
+                    android:layout_marginBottom="@dimen/activity_vertical_margin"
+                    android:layout_marginStart="@dimen/activity_horizontal_margin"
+                    android:layout_marginEnd="@dimen/activity_horizontal_margin"
+                    />
+
+            </android.support.v4.widget.NestedScrollView>
+
+        </android.support.v4.view.ViewPager>
+
+        <android.support.design.widget.AppBarLayout
+            android:id="@+id/layout_app_bar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            >
+
+            <android.support.v7.widget.Toolbar
+                android:id="@+id/toolbar"
+                android:layout_width="match_parent"
+                android:layout_height="?android:actionBarSize"
+                android:background="@color/colorPrimary"
+                app:layout_scrollFlags="scroll|enterAlways"
                 />
 
-        </android.support.v4.widget.NestedScrollView>
+            <android.support.design.widget.TabLayout
+                android:id="@+id/layout_tab"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:layout_scrollFlags="scroll|enterAlways"
+                />
 
-    </android.support.v4.view.ViewPager>
+        </android.support.design.widget.AppBarLayout>
 
-    <!--<android.support.design.widget.CoordinatorLayout-->
-        <!--android:id="@+id/layout_coordinator"-->
-        <!--android:layout_width="match_parent"-->
-        <!--android:layout_height="match_parent"-->
-        <!--android:layout_alignParentTop="true"-->
-        <!-->-->
-
-        <!--<android.support.v4.view.ViewPager-->
-            <!--android:id="@+id/view_pager"-->
-            <!--android:layout_width="match_parent"-->
-            <!--android:layout_height="match_parent"-->
-            <!--app:layout_behavior="@string/appbar_scrolling_view_behavior"-->
-            <!-->-->
-
-            <!--<android.support.v4.widget.NestedScrollView-->
-                <!--android:layout_width="match_parent"-->
-                <!--android:layout_height="match_parent"-->
-                <!--app:layout_behavior="@string/appbar_scrolling_view_behavior"-->
-                <!-->-->
-
-                <!--<EditText-->
-                    <!--android:id="@+id/edit_reply"-->
-                    <!--android:layout_width="match_parent"-->
-                    <!--android:layout_height="wrap_content"-->
-                    <!--android:layout_alignParentTop="true"-->
-                    <!--android:layout_marginTop="8dp"-->
-                    <!--android:layout_marginBottom="8dp"-->
-                    <!--android:layout_marginStart="@dimen/activity_horizontal_margin"-->
-                    <!--android:layout_marginEnd="@dimen/activity_horizontal_margin"-->
-                    <!--android:inputType="textMultiLine"-->
-                    <!--android:scrollbars="vertical"-->
-                    <!--android:scrollbarAlwaysDrawVerticalTrack="true"-->
-                    <!--/>-->
-
-            <!--</android.support.v4.widget.NestedScrollView>-->
-
-            <!--<android.support.v4.widget.NestedScrollView-->
-                <!--android:layout_width="match_parent"-->
-                <!--android:layout_height="match_parent"-->
-                <!--app:layout_behavior="@string/appbar_scrolling_view_behavior"-->
-                <!-->-->
-
-                <!--<TextView-->
-                    <!--android:id="@+id/text_preview"-->
-                    <!--android:layout_width="match_parent"-->
-                    <!--android:layout_height="match_parent"-->
-                    <!--android:layout_marginTop="8dp"-->
-                    <!--android:layout_marginBottom="8dp"-->
-                    <!--android:layout_marginStart="@dimen/activity_horizontal_margin"-->
-                    <!--android:layout_marginEnd="@dimen/activity_horizontal_margin"-->
-                    <!--android:scrollbars="vertical"-->
-                    <!--app:layout_behavior="@string/appbar_scrolling_view_behavior"-->
-                    <!--/>-->
-
-            <!--</android.support.v4.widget.NestedScrollView>-->
-
-        <!--</android.support.v4.view.ViewPager>-->
-
-        <!--<android.support.design.widget.AppBarLayout-->
-            <!--android:id="@+id/layout_app_bar"-->
-            <!--android:layout_width="match_parent"-->
-            <!--android:layout_height="wrap_content"-->
-            <!-->-->
-
-            <!--<include-->
-                <!--layout="@layout/toolbar"-->
-                <!--android:layout_width="match_parent"-->
-                <!--android:layout_height="wrap_content"-->
-                <!--android:layout_alignParentTop="true"-->
-                <!--app:layout_scrollFlags="scroll|enterAlways"-->
-                <!--/>-->
-
-            <!--<android.support.design.widget.TabLayout-->
-                <!--android:id="@+id/layout_tab"-->
-                <!--android:layout_width="match_parent"-->
-                <!--android:layout_height="wrap_content"-->
-                <!--app:layout_scrollFlags="scroll|enterAlways"-->
-                <!--/>-->
-
-        <!--</android.support.design.widget.AppBarLayout>-->
-
-    <!--</android.support.design.widget.CoordinatorLayout>-->
+    </android.support.design.widget.CoordinatorLayout>
 
     <View
         android:id="@+id/view_divider"

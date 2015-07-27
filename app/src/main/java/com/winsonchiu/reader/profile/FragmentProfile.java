@@ -10,9 +10,10 @@ import android.content.res.TypedArray;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
 import android.os.Bundle;
+import android.support.design.widget.AppBarLayout;
+import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.Snackbar;
 import android.support.v4.widget.SwipeRefreshLayout;
-import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.SearchView;
@@ -28,8 +29,6 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.Spinner;
 
-import com.winsonchiu.reader.comments.FragmentReply;
-import com.winsonchiu.reader.utils.AnimationUtils;
 import com.winsonchiu.reader.views.CustomItemTouchHelper;
 import com.winsonchiu.reader.utils.DisallowListener;
 import com.winsonchiu.reader.FragmentBase;
@@ -59,11 +58,14 @@ public class FragmentProfile extends FragmentBase implements Toolbar.OnMenuItemC
     private Menu menu;
     private MenuItem itemSortTime;
     private Toolbar toolbar;
+    private CoordinatorLayout layoutCoordinator;
+    private AppBarLayout layoutAppBar;
     private Spinner spinnerPage;
     private AdapterProfilePage adapterProfilePage;
     private Snackbar snackbar;
     private CustomItemTouchHelper itemTouchHelper;
     private PorterDuffColorFilter colorFilterIcon;
+    private CustomItemTouchHelper.SimpleCallback callback;
 
     public static FragmentProfile newInstance() {
         FragmentProfile fragment = new FragmentProfile();
@@ -121,7 +123,8 @@ public class FragmentProfile extends FragmentBase implements Toolbar.OnMenuItemC
                 getString(R.string.time) + Reddit.TIME_SEPARATOR + getString(
                         R.string.item_sort_all));
 
-        if (TextUtils.isEmpty(mListener.getControllerUser().getUser().getName()) && !mListener.getControllerProfile().isLoading()) {
+        if (TextUtils.isEmpty(mListener.getControllerUser().getUser().getName()) && !mListener
+                .getControllerProfile().isLoading()) {
             itemSearch.expandActionView();
         }
 
@@ -160,8 +163,16 @@ public class FragmentProfile extends FragmentBase implements Toolbar.OnMenuItemC
 
         listener = new ControllerProfile.Listener() {
             @Override
-            public void setPage(String page) {
+            public void setPage(Page page) {
                 spinnerPage.setSelection(adapterProfilePage.getPages().indexOf(page));
+                if (page.getPage().equals(ControllerProfile.PAGE_HIDDEN)) {
+                    callback.setDrawable(
+                            getResources().getDrawable(R.drawable.ic_visibility_white_24dp));
+                }
+                else {
+                    callback.setDrawable(
+                            getResources().getDrawable(R.drawable.ic_visibility_off_white_24dp));
+                }
             }
 
             @Override
@@ -232,6 +243,9 @@ public class FragmentProfile extends FragmentBase implements Toolbar.OnMenuItemC
         toolbar.getNavigationIcon().mutate().setColorFilter(colorFilterIcon);
         setUpOptionsMenu();
 
+        layoutCoordinator = (CoordinatorLayout) view.findViewById(R.id.layout_coordinator);
+        layoutAppBar = (AppBarLayout) view.findViewById(R.id.layout_app_bar);
+
         adapterProfilePage = new AdapterProfilePage(activity);
         spinnerPage = (Spinner) view.findViewById(R.id.spinner_page);
         spinnerPage.setAdapter(adapterProfilePage);
@@ -287,7 +301,8 @@ public class FragmentProfile extends FragmentBase implements Toolbar.OnMenuItemC
                         public void voteComment(AdapterCommentList.ViewHolderComment viewHolderComment,
                                 Comment comment,
                                 int vote) {
-                            mListener.getControllerProfile().voteComment(viewHolderComment, comment, vote);
+                            mListener.getControllerProfile()
+                                    .voteComment(viewHolderComment, comment, vote);
                         }
 
                         @Override
@@ -339,73 +354,88 @@ public class FragmentProfile extends FragmentBase implements Toolbar.OnMenuItemC
                     return linearLayoutManager;
                 }
 
+                @Override
+                public void hideToolbar() {
+                    AppBarLayout.Behavior behaviorAppBar = (AppBarLayout.Behavior) ((CoordinatorLayout.LayoutParams) layoutAppBar.getLayoutParams()).getBehavior();
+                    behaviorAppBar.onNestedFling(layoutCoordinator, layoutAppBar, null, 0, 1000, true);
+                }
+
             }, listener);
         }
 
         recyclerProfile.setAdapter(adapterProfile);
 
-        itemTouchHelper = new CustomItemTouchHelper(
-                new CustomItemTouchHelper.SimpleCallback(ItemTouchHelper.START | ItemTouchHelper.END, ItemTouchHelper.START | ItemTouchHelper.END) {
+        callback = new CustomItemTouchHelper.SimpleCallback(activity,
+                R.drawable.ic_delete_white_24dp,
+                ItemTouchHelper.START | ItemTouchHelper.END,
+                ItemTouchHelper.START | ItemTouchHelper.END) {
 
-                    @Override
-                    public int getSwipeDirs(RecyclerView recyclerView,
-                            RecyclerView.ViewHolder viewHolder) {
-                        int position = viewHolder.getAdapterPosition();
-                        if (position == 2 || (position >= 6 && mListener.getControllerProfile().getViewType(position - 6) == ControllerProfile.VIEW_TYPE_LINK)) {
-                            return super.getSwipeDirs(recyclerView, viewHolder);
-                        }
-                        return 0;
-                    }
+            @Override
+            public int getSwipeDirs(RecyclerView recyclerView,
+                    RecyclerView.ViewHolder viewHolder) {
+                int position = viewHolder.getAdapterPosition();
+                if (position == 2 || (position >= 6 && mListener.getControllerProfile()
+                        .getViewType(position - 6) == ControllerProfile.VIEW_TYPE_LINK)) {
+                    return super.getSwipeDirs(recyclerView, viewHolder);
+                }
+                return 0;
+            }
 
-                    @Override
-                    public boolean isLongPressDragEnabled() {
-                        return false;
-                    }
+            @Override
+            public boolean isLongPressDragEnabled() {
+                return false;
+            }
 
-                    @Override
-                    public boolean onMove(RecyclerView recyclerView,
-                            RecyclerView.ViewHolder viewHolder,
-                            RecyclerView.ViewHolder target) {
-                        return false;
-                    }
+            @Override
+            public boolean onMove(RecyclerView recyclerView,
+                    RecyclerView.ViewHolder viewHolder,
+                    RecyclerView.ViewHolder target) {
+                return false;
+            }
 
-                    @Override
-                    public void onSwiped(final RecyclerView.ViewHolder viewHolder, int direction) {
+            @Override
+            public void onSwiped(final RecyclerView.ViewHolder viewHolder, int direction) {
 
-                        Log.d(TAG, "onSwiped: " + viewHolder.getAdapterPosition());
+                Log.d(TAG, "onSwiped: " + viewHolder.getAdapterPosition());
 
-                        final int adapterPosition = viewHolder.getAdapterPosition();
-                        final int position = adapterPosition == 2 ? -1 : adapterPosition - 6;
-                        final Link link = adapterPosition == 2 ? mListener.getControllerProfile().remove(
+                final int adapterPosition = viewHolder.getAdapterPosition();
+                final int position = adapterPosition == 2 ? -1 : adapterPosition - 6;
+                final Link link =
+                        adapterPosition == 2 ? mListener.getControllerProfile().remove(
                                 -1) : mListener.getControllerProfile().remove(position);
-                        mListener.getEventListenerBase().hide(link);
+                mListener.getEventListenerBase().hide(link);
 
-                        if (snackbar != null) {
-                            snackbar.dismiss();
-                        }
-                        snackbar = Snackbar.make(recyclerProfile, link.isHidden() ? R.string.link_hidden : R.string.link_shown,
-                                Snackbar.LENGTH_LONG)
-                                .setActionTextColor(getResources().getColor(R.color.colorAccent))
-                                .setAction(
-                                        R.string.undo, new View.OnClickListener() {
-                                            @Override
-                                            public void onClick(View v) {
-                                                mListener.getEventListenerBase().hide(link);
-                                                if (adapterPosition == 2) {
-                                                    mListener.getControllerProfile().setTopLink(link);
-                                                    adapterProfile.notifyItemChanged(2);
-                                                }
-                                                else {
-                                                    mListener.getControllerProfile()
-                                                            .add(position, link);
-                                                }
-                                                recyclerProfile.invalidate();
-                                            }
-                                        });
-                        snackbar.getView().setBackgroundColor(getResources().getColor(R.color.colorPrimary));
-                        snackbar.show();
-                    }
-                });
+                if (snackbar != null) {
+                    snackbar.dismiss();
+                }
+                snackbar = Snackbar.make(recyclerProfile,
+                        link.isHidden() ? R.string.link_hidden : R.string.link_shown,
+                        Snackbar.LENGTH_LONG)
+                        .setActionTextColor(getResources().getColor(R.color.colorAccent))
+                        .setAction(
+                                R.string.undo, new View.OnClickListener() {
+                                    @Override
+                                    public void onClick(View v) {
+                                        mListener.getEventListenerBase().hide(link);
+                                        if (adapterPosition == 2) {
+                                            mListener.getControllerProfile()
+                                                    .setTopLink(link);
+                                            adapterProfile.notifyItemChanged(2);
+                                        }
+                                        else {
+                                            mListener.getControllerProfile()
+                                                    .add(position, link);
+                                        }
+                                        recyclerProfile.invalidate();
+                                    }
+                                });
+                snackbar.getView()
+                        .setBackgroundColor(getResources().getColor(R.color.colorPrimary));
+                snackbar.show();
+            }
+        };
+
+        itemTouchHelper = new CustomItemTouchHelper(callback);
         itemTouchHelper.attachToRecyclerView(recyclerProfile);
 
         return view;
@@ -463,25 +493,25 @@ public class FragmentProfile extends FragmentBase implements Toolbar.OnMenuItemC
     public boolean onMenuItemClick(MenuItem item) {
         item.setChecked(true);
 
-        for (Sort sort : Sort.values()) {
-            if (sort.getMenuId() == item.getItemId()) {
-                mListener.getControllerProfile()
-                        .setSort(sort);
-                flashSearchView();
-                return true;
-            }
+
+        Sort sort = Sort.fromMenuId(item.getItemId());
+        if (sort != null) {
+            mListener.getControllerProfile()
+                    .setSort(sort);
+            flashSearchView();
+            return true;
         }
 
-        for (Time time : Time.values()) {
-            if (time.getMenuId() == item.getItemId()) {
-                mListener.getControllerProfile()
-                        .setTime(time);
-                itemSortTime.setTitle(
-                        getString(R.string.time) + Reddit.TIME_SEPARATOR + item.toString());
-                flashSearchView();
-                return true;
-            }
+        Time time = Time.fromMenuId(item.getItemId());
+        if (time != null) {
+            mListener.getControllerProfile()
+                    .setTime(time);
+            itemSortTime.setTitle(
+                    getString(R.string.time) + Reddit.TIME_SEPARATOR + item.toString());
+            flashSearchView();
+            return true;
         }
+
         return false;
     }
 

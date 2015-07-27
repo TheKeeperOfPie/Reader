@@ -21,7 +21,7 @@ import java.util.List;
  */
 public class AdapterProfilePage extends BaseAdapter {
 
-    private List<String> pages;
+    private List<Page> pages;
     private boolean isUser;
 
     public AdapterProfilePage(Activity activity) {
@@ -29,14 +29,14 @@ public class AdapterProfilePage extends BaseAdapter {
 
         // TODO: IMPORTANT FOR TRANSLATIONS, decouple UI title of page from actual page value
         pages = new ArrayList<>();
-        pages.add(activity.getString(R.string.profile_page_overview));
-        pages.add(activity.getString(R.string.profile_page_submitted));
-        pages.add(activity.getString(R.string.profile_page_comments));
-        pages.add(activity.getString(R.string.profile_page_gilded));
-        pages.add(activity.getString(R.string.profile_page_upvoted));
-        pages.add(activity.getString(R.string.profile_page_downvoted));
-        pages.add(activity.getString(R.string.profile_page_hidden));
-        pages.add(activity.getString(R.string.profile_page_saved));
+        pages.add(new Page(ControllerProfile.PAGE_OVERVIEW, activity.getString(R.string.profile_page_overview)));
+        pages.add(new Page(ControllerProfile.PAGE_SUBMITTED, activity.getString(R.string.profile_page_submitted)));
+        pages.add(new Page(ControllerProfile.PAGE_COMMENTS, activity.getString(R.string.profile_page_comments)));
+        pages.add(new Page(ControllerProfile.PAGE_GILDED, activity.getString(R.string.profile_page_gilded)));
+        pages.add(new Page(ControllerProfile.PAGE_UPVOTED, activity.getString(R.string.profile_page_upvoted)));
+        pages.add(new Page(ControllerProfile.PAGE_DOWNVOTED, activity.getString(R.string.profile_page_downvoted)));
+        pages.add(new Page(ControllerProfile.PAGE_HIDDEN, activity.getString(R.string.profile_page_hidden)));
+        pages.add(new Page(ControllerProfile.PAGE_SAVED, activity.getString(R.string.profile_page_saved)));
     }
 
     @Override
@@ -45,7 +45,7 @@ public class AdapterProfilePage extends BaseAdapter {
     }
 
     @Override
-    public String getItem(int position) {
+    public Page getItem(int position) {
         return pages.get(position);
     }
 
@@ -61,7 +61,7 @@ public class AdapterProfilePage extends BaseAdapter {
         }
 
         TextView textPage = (TextView) convertView.findViewById(R.id.text_page);
-        textPage.setText(pages.get(position));
+        textPage.setText(pages.get(position).getText());
 
         return convertView;
     }
@@ -75,7 +75,7 @@ public class AdapterProfilePage extends BaseAdapter {
         notifyDataSetChanged();
     }
 
-    public List<String> getPages() {
+    public List<Page> getPages() {
         return pages;
     }
 }
