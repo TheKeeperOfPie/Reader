@@ -4,32 +4,44 @@
 
 package com.winsonchiu.reader;
 
+import android.animation.Animator;
 import android.app.Activity;
+import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
-import android.net.Uri;
 import android.os.Bundle;
-import android.app.Fragment;
-import android.support.design.widget.FloatingActionButton;
+import android.support.design.widget.AppBarLayout;
+import android.support.design.widget.CoordinatorLayout;
+import android.support.design.widget.TabLayout;
+import android.support.v4.view.PagerAdapter;
+import android.support.v4.view.ViewPager;
 import android.support.v4.view.animation.FastOutSlowInInterpolator;
+import android.support.v4.widget.NestedScrollView;
 import android.support.v7.widget.Toolbar;
+import android.text.Html;
 import android.text.TextUtils;
 import android.util.Log;
+import android.util.TypedValue;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewTreeObserver;
 import android.view.animation.Animation;
 import android.view.animation.Transformation;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
-import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
+import com.github.rjeschke.txtmark.Processor;
 import com.squareup.picasso.Picasso;
 import com.winsonchiu.reader.data.reddit.Reddit;
 
@@ -39,7 +51,7 @@ import org.json.JSONObject;
 import java.util.HashMap;
 import java.util.Map;
 
-public class FragmentNewMessage extends FragmentBase {
+public class FragmentNewMessage extends FragmentBase implements Toolbar.OnMenuItemClickListener {
 
     public static final String TAG = FragmentNewMessage.class.getCanonicalName();
     private Reddit reddit;
@@ -48,19 +60,31 @@ public class FragmentNewMessage extends FragmentBase {
     private EditText editTextRecipient;
     private EditText editTextSubject;
     private EditText editTextMessage;
-    private FloatingActionButton floatingActionButton;
-    private static final long DURATION_SUBMIT = 400;
-    private static final long DURATION_SUBMIT_DELAY = 125;
+    private CoordinatorLayout layoutCoordinator;
+    private AppBarLayout layoutAppBar;
+    private NestedScrollView scrollText;
+    private TextView textPreview;
+    private TabLayout tabLayout;
+    private ViewPager viewPager;
+    private Toolbar toolbarActions;
+    private View viewDivider;
+    private static final int PAGE_BODY = 0;
+    private static final int PAGE_PREVIEW = 1;
+
+    private PorterDuffColorFilter colorFilterIcon;
+    private int editMarginDefault;
+    private int editMarginWithActions;
 
     private RelativeLayout layoutCaptcha;
     private String captchaId;
     private ImageView imageCaptcha;
     private EditText editCaptcha;
     private ImageButton buttonCaptchaRefresh;
-    private ProgressBar progressSubmit;
 
     private FragmentListenerBase mListener;
     private Activity activity;
+    private MenuItem itemHideActions;
+    private Menu menu;
 
     public static FragmentNewMessage newInstance() {
         FragmentNewMessage fragment = new FragmentNewMessage();
@@ -81,13 +105,25 @@ public class FragmentNewMessage extends FragmentBase {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
             Bundle savedInstanceState) {
-        View view =  inflater.inflate(R.layout.fragment_new_message, container, false);
+        final View view =  inflater.inflate(R.layout.fragment_new_message, container, false);
 
         reddit = Reddit.getInstance(activity);
+
+        layoutCoordinator = (CoordinatorLayout) view.findViewById(R.id.layout_coordinator);
+        layoutAppBar = (AppBarLayout) view.findViewById(R.id.layout_app_bar);
+        scrollText = (NestedScrollView) view.findViewById(R.id.scroll_text);
 
         editTextRecipient = (EditText) view.findViewById(R.id.edit_recipient);
         editTextSubject = (EditText) view.findViewById(R.id.edit_subject);
         editTextMessage = (EditText) view.findViewById(R.id.edit_message);
+
+        TypedArray typedArray = activity.getTheme().obtainStyledAttributes(
+                new int[]{R.attr.colorIconFilter});
+        int colorIconFilter = typedArray.getColor(0, 0xFFFFFFFF);
+        typedArray.recycle();
+
+        colorFilterIcon = new PorterDuffColorFilter(colorIconFilter,
+                PorterDuff.Mode.MULTIPLY);
 
         toolbar = (Toolbar) view.findViewById(R.id.toolbar);
         toolbar.setTitle(getString(R.string.new_post));
@@ -95,28 +131,120 @@ public class FragmentNewMessage extends FragmentBase {
         toolbar.setNavigationOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                InputMethodManager inputManager = (InputMethodManager) activity.getSystemService(
+                        Context.INPUT_METHOD_SERVICE);
+                inputManager.hideSoftInputFromWindow(editTextMessage.getWindowToken(), 0);
                 mListener.onNavigationBackClick();
             }
         });
+        toolbar.getNavigationIcon().mutate().setColorFilter(colorFilterIcon);
+        setUpOptionsMenu();
 
-        TypedArray typedArray = activity.getTheme().obtainStyledAttributes(
-                new int[]{R.attr.colorIconFilter});
-        int colorIconFilter = typedArray.getColor(0, 0xFFFFFFFF);
-        typedArray.recycle();
-
-        PorterDuffColorFilter colorFilter = new PorterDuffColorFilter(colorIconFilter,
-                PorterDuff.Mode.MULTIPLY);
-        toolbar.getNavigationIcon().mutate().setColorFilter(colorFilter);
-
-        floatingActionButton = (FloatingActionButton) view.findViewById(R.id.fab_submit_post);
-        floatingActionButton.setOnClickListener(new View.OnClickListener() {
+        View.OnFocusChangeListener onFocusChangeListener = new View.OnFocusChangeListener() {
             @Override
-            public void onClick(View v) {
-                submitMessage();
+            public void onFocusChange(View v, boolean hasFocus) {
+                if (hasFocus) {
+                    AppBarLayout.Behavior behaviorAppBar = (AppBarLayout.Behavior) ((CoordinatorLayout.LayoutParams) layoutAppBar
+                            .getLayoutParams()).getBehavior();
+                    behaviorAppBar
+                            .onNestedFling(layoutCoordinator, layoutAppBar, null, 0, 1000, true);
+                }
+            }
+        };
+
+        editTextRecipient.setOnFocusChangeListener(onFocusChangeListener);
+        editTextSubject.setOnFocusChangeListener(onFocusChangeListener);
+        editTextMessage.setOnFocusChangeListener(onFocusChangeListener);
+
+        editMarginDefault = (int) TypedValue
+                .applyDimension(TypedValue.COMPLEX_UNIT_DIP, 8, getResources().getDisplayMetrics());
+        editMarginWithActions = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 56,
+                getResources().getDisplayMetrics());
+
+        textPreview = (TextView) view.findViewById(R.id.text_preview);
+        viewDivider = view.findViewById(R.id.view_divider);
+
+        toolbarActions = (Toolbar) view.findViewById(R.id.toolbar_actions);
+        toolbarActions.inflateMenu(R.menu.menu_editor_actions);
+        toolbarActions.setOnMenuItemClickListener(this);
+
+        tabLayout = (TabLayout) view.findViewById(R.id.layout_tab);
+        tabLayout.setTabMode(TabLayout.MODE_FIXED);
+        tabLayout.setTabGravity(TabLayout.GRAVITY_FILL);
+
+        viewPager = (ViewPager) view.findViewById(R.id.view_pager);
+        viewPager.setAdapter(new PagerAdapter() {
+
+            @Override
+            public CharSequence getPageTitle(int position) {
+
+                switch (position) {
+                    case PAGE_BODY:
+                        return getString(R.string.page_message);
+                    case PAGE_PREVIEW:
+                        return getString(R.string.page_preview);
+                }
+
+                return super.getPageTitle(position);
+            }
+
+            @Override
+            public Object instantiateItem(ViewGroup container, int position) {
+                return viewPager.getChildAt(position);
+            }
+
+            @Override
+            public void destroyItem(ViewGroup container, int position, Object object) {
+
+            }
+
+            @Override
+            public int getCount() {
+                return viewPager.getChildCount();
+            }
+
+            @Override
+            public boolean isViewFromObject(View view, Object object) {
+                return view == object;
+            }
+        });
+        viewPager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
+            @Override
+            public void onPageScrolled(int position,
+                    float positionOffset,
+                    int positionOffsetPixels) {
+
+                if (position == PAGE_BODY && toolbarActions.getVisibility() == View.VISIBLE) {
+                    float translationY = positionOffset * (toolbarActions.getHeight() + viewDivider
+                            .getHeight());
+                    viewDivider.setTranslationY(translationY);
+                    toolbarActions.setTranslationY(translationY);
+                }
+            }
+
+            @Override
+            public void onPageSelected(int position) {
+                if (position == PAGE_PREVIEW) {
+                    if (editTextMessage.length() == 0) {
+                        textPreview.setText(R.string.empty_reply_preview);
+                    }
+                    else {
+                        textPreview.setText(
+                                Html.fromHtml(
+                                        Processor.process(editTextMessage.getText().toString())));
+                    }
+                }
+                itemHideActions.setVisible(position == PAGE_BODY);
+            }
+
+            @Override
+            public void onPageScrollStateChanged(int state) {
+
             }
         });
 
-        progressSubmit = (ProgressBar) view.findViewById(R.id.progress_submit);
+        tabLayout.setupWithViewPager(viewPager);
+        viewPager.addOnPageChangeListener(new TabLayout.TabLayoutOnPageChangeListener(tabLayout));
 
         layoutCaptcha = (RelativeLayout) view.findViewById(R.id.layout_captcha);
         imageCaptcha = (ImageView) view.findViewById(R.id.image_captcha);
@@ -145,7 +273,53 @@ public class FragmentNewMessage extends FragmentBase {
                     }
                 }, 0);
 
+
+
+        view.getViewTreeObserver().addOnGlobalLayoutListener(
+                new ViewTreeObserver.OnGlobalLayoutListener() {
+                    @Override
+                    public void onGlobalLayout() {
+                        Menu menu = toolbarActions.getMenu();
+
+                        int maxNum = (int) (view.getWidth() / TypedValue.applyDimension(
+                                TypedValue.COMPLEX_UNIT_DIP, 48,
+                                getResources().getDisplayMetrics()));
+                        int numShown = 0;
+
+                        for (int index = 0; index < menu.size(); index++) {
+
+                            MenuItem menuItem = menu.getItem(index);
+                            menuItem.getIcon().setColorFilter(colorFilterIcon);
+
+                            if (numShown++ < maxNum - 1) {
+                                menuItem
+                                        .setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+                            }
+                            else {
+                                menuItem
+                                        .setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
+                            }
+                        }
+
+                        // Toggle visibility to fix weird bug causing tabs to not be added
+                        tabLayout.setVisibility(View.GONE);
+                        tabLayout.setVisibility(View.VISIBLE);
+                        view.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+                    }
+                });
+
         return view;
+    }
+
+    private void setUpOptionsMenu() {
+        toolbar.inflateMenu(R.menu.menu_new_message);
+        toolbar.setOnMenuItemClickListener(this);
+        menu = toolbar.getMenu();
+        itemHideActions = menu.findItem(R.id.item_hide_actions);
+
+        for (int index = 0; index < menu.size(); index++) {
+            menu.getItem(index).getIcon().setColorFilter(colorFilterIcon);
+        }
     }
 
 
@@ -161,9 +335,6 @@ public class FragmentNewMessage extends FragmentBase {
         if (recipient.startsWith("/u/")) {
             recipient = recipient.substring(3);
         }
-
-        progressSubmit.setIndeterminate(true);
-        progressSubmit.setVisibility(View.VISIBLE);
 
         Map<String, String> params = new HashMap<>();
         params.put("api_type", "json");
@@ -205,42 +376,10 @@ public class FragmentNewMessage extends FragmentBase {
                 catch (JSONException e) {
                     e.printStackTrace();
                 }
-
-
-                progressSubmit.setProgress(0);
-                progressSubmit.setIndeterminate(false);
-
-                Animation animation = new Animation() {
-                    @Override
-                    protected void applyTransformation(final float interpolatedTime, Transformation t) {
-                        super.applyTransformation(interpolatedTime, t);
-                        progressSubmit.setProgress((int) (interpolatedTime * 100));
-                        Log.d(TAG, "progress: " + ((int) (interpolatedTime * 100)));
-                    }
-                };
-                animation.setDuration(DURATION_SUBMIT);
-                animation.setInterpolator(new FastOutSlowInInterpolator());
-                animation.setAnimationListener(new Animation.AnimationListener() {
-                    @Override
-                    public void onAnimationStart(Animation animation) {
-                    }
-
-                    @Override
-                    public void onAnimationEnd(Animation animation) {
-                        progressSubmit.postDelayed(new Runnable() {
-                            @Override
-                            public void run() {
-                                mListener.onNavigationBackClick();
-                            }
-                        }, DURATION_SUBMIT_DELAY);
-                    }
-
-                    @Override
-                    public void onAnimationRepeat(Animation animation) {
-
-                    }
-                });
-                progressSubmit.startAnimation(animation);
+                InputMethodManager inputManager = (InputMethodManager) activity.getSystemService(
+                        Context.INPUT_METHOD_SERVICE);
+                inputManager.hideSoftInputFromWindow(editTextMessage.getWindowToken(), 0);
+                mListener.onNavigationBackClick();
 
             }
         }, new Response.ErrorListener() {
@@ -265,7 +404,8 @@ public class FragmentNewMessage extends FragmentBase {
                     captchaId = jsonObject.getJSONObject("json").getJSONObject("data").getString(
                             "iden");
                     Log.d(TAG, "captchaId: " + captchaId);
-                    Picasso.with(activity).load(Reddit.BASE_URL + "/captcha/" + captchaId + ".png").resize(getResources().getDisplayMetrics().widthPixels, 0).into(
+                    Picasso.with(activity).load(Reddit.BASE_URL + "/captcha/" + captchaId + ".png")
+                            .resize(getResources().getDisplayMetrics().widthPixels, 0).into(
                             imageCaptcha);
                 }
                 catch (JSONException e) {
@@ -303,5 +443,142 @@ public class FragmentNewMessage extends FragmentBase {
     @Override
     public boolean navigateBack() {
         return true;
+    }
+
+
+    @Override
+    public boolean onMenuItemClick(MenuItem item) {
+
+        // TODO: Move duplicated code to shared Class
+
+
+        int selectionStart = editTextMessage.getSelectionStart();
+        boolean isNewLine = editTextMessage.getText().length() == 0 || editTextMessage.getText().charAt(editTextMessage.length() - 1) == '\n';
+
+        switch (item.getItemId()) {
+            case R.id.item_send_message:
+                submitMessage();
+                break;
+            case R.id.item_hide_actions:
+                toggleActions();
+                break;
+            case R.id.item_editor_italicize:
+                editTextMessage.getText().insert(selectionStart, "**");
+                editTextMessage.setSelection(selectionStart + 1);
+                break;
+            case R.id.item_editor_bold:
+                editTextMessage.getText().insert(selectionStart, "****");
+                editTextMessage.setSelection(selectionStart + 2);
+                break;
+            case R.id.item_editor_strikethrough:
+                editTextMessage.getText().insert(selectionStart, "~~~~");
+                editTextMessage.setSelection(selectionStart + 2);
+                break;
+            case R.id.item_editor_quote:
+                if (isNewLine) {
+                    editTextMessage.getText().insert(selectionStart, "> ");
+                    editTextMessage.setSelection(selectionStart + 2);
+                }
+                else {
+                    editTextMessage.getText().insert(selectionStart, "\n> ");
+                    editTextMessage.setSelection(selectionStart + 3);
+                }
+                break;
+            case R.id.item_editor_link:
+                String labelText = getString(R.string.editor_label_text);
+                String labelLink = getString(R.string.editor_label_link);
+                int indexStart = selectionStart + 1;
+                int indexEnd = indexStart + labelText.length();
+                editTextMessage.getText().insert(selectionStart, "[" + labelText + "](" + labelLink + ")");
+                editTextMessage.setSelection(indexStart, indexEnd);
+                break;
+            case R.id.item_editor_list_bulleted:
+                if (isNewLine) {
+                    editTextMessage.getText().insert(selectionStart, "* \n* \n* ");
+                    editTextMessage.setSelection(selectionStart + 2);
+                }
+                else {
+                    editTextMessage.getText().insert(selectionStart, "\n\n* \n* \n* ");
+                    editTextMessage.setSelection(selectionStart + 4);
+                }
+                break;
+            case R.id.item_editor_list_numbered:
+                if (isNewLine) {
+                    editTextMessage.getText().insert(selectionStart, "1. \n2. \n3. ");
+                    editTextMessage.setSelection(selectionStart + 3);
+                }
+                else {
+                    editTextMessage.getText().insert(selectionStart, "\n\n1. \n2. \n3. ");
+                    editTextMessage.setSelection(selectionStart + 5);
+                }
+                break;
+        }
+
+        return true;
+    }
+
+    private void toggleActions() {
+
+        final int margin;
+        float translationY = toolbarActions.getHeight() + viewDivider
+                .getHeight();
+        if (toolbarActions.isShown()) {
+            margin = editMarginDefault;
+            viewDivider.animate().translationY(translationY);
+            toolbarActions.animate().translationY(translationY).setListener(
+                    new Animator.AnimatorListener() {
+                        @Override
+                        public void onAnimationStart(Animator animation) {
+
+                        }
+
+                        @Override
+                        public void onAnimationEnd(Animator animation) {
+                            toolbarActions.setVisibility(View.GONE);
+                            viewDivider.setVisibility(View.GONE);
+
+                            ((RelativeLayout.LayoutParams) scrollText.getLayoutParams()).bottomMargin = margin;
+                            scrollText.requestLayout();
+                        }
+
+                        @Override
+                        public void onAnimationCancel(Animator animation) {
+
+                        }
+
+                        @Override
+                        public void onAnimationRepeat(Animator animation) {
+
+                        }
+                    });
+        }
+        else {
+            margin = editMarginWithActions;
+            viewDivider.animate().translationY(0);
+            toolbarActions.animate().translationY(0).setListener(
+                    new Animator.AnimatorListener() {
+                        @Override
+                        public void onAnimationStart(Animator animation) {
+                            toolbarActions.setVisibility(View.VISIBLE);
+                            viewDivider.setVisibility(View.VISIBLE);
+                        }
+
+                        @Override
+                        public void onAnimationEnd(Animator animation) {
+                            ((RelativeLayout.LayoutParams) scrollText.getLayoutParams()).bottomMargin = margin;
+                            scrollText.requestLayout();
+                        }
+
+                        @Override
+                        public void onAnimationCancel(Animator animation) {
+
+                        }
+
+                        @Override
+                        public void onAnimationRepeat(Animator animation) {
+
+                        }
+                    });
+        }
     }
 }

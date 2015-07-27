@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ~ Copyright 2015 Winson Chiu
+  -->
+
+<menu
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    >
+
+    <item
+        android:id="@+id/item_mark_all_read"
+        android:title="@string/item_mark_all_read"
+        android:icon="@drawable/ic_check_white_24dp"
+        android:orderInCategory="100"
+        android:visible="false"
+        app:showAsAction="ifRoom"
+        />
+
+</menu>

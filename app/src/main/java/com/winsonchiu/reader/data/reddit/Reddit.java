@@ -557,7 +557,7 @@ public class Reddit {
             return context.getResources().getDrawable(R.drawable.ic_chat_white_48dp);
         }
 
-        if (Reddit.DEFAULT.equals(thumbnail) || Reddit.NSFW.equals(thumbnail)) {
+        if (Reddit.DEFAULT.equals(thumbnail)) {
             return context.getResources().getDrawable(R.drawable.ic_web_white_48dp);
         }
 
@@ -652,7 +652,7 @@ public class Reddit {
     }
 
     public static boolean showThumbnail(Link link) {
-        if (TextUtils.isEmpty(link.getUrl()) || link.getThumbnail().equals("nsfw")) {
+        if (TextUtils.isEmpty(link.getUrl())) {
             return false;
         }
         String domain = link.getDomain();

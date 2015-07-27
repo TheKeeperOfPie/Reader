@@ -315,6 +315,9 @@ public class Link extends Replyable {
     }
 
     public void setSelfTextHtml(CharSequence selfTextHtml) {
+        if (Reddit.NULL.equals(selfText)) {
+            selfText = "";
+        }
         this.selfTextHtml = selfTextHtml;
     }
 

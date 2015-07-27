@@ -44,6 +44,7 @@ import com.winsonchiu.reader.comments.AdapterCommentList;
 import com.winsonchiu.reader.comments.ControllerComments;
 import com.winsonchiu.reader.comments.FragmentComments;
 import com.winsonchiu.reader.comments.FragmentReply;
+import com.winsonchiu.reader.data.Page;
 import com.winsonchiu.reader.data.reddit.Comment;
 import com.winsonchiu.reader.data.reddit.Link;
 import com.winsonchiu.reader.data.reddit.Message;
@@ -166,7 +167,7 @@ public class MainActivity extends YouTubeBaseActivity
             public void onDrawerClosed(View drawerView) {
                 invalidateOptionsMenu();
                 if (loadId != 0) {
-                    selectNavigationItem(loadId, 0, true);
+                    selectNavigationItem(loadId, null, true);
                 }
             }
 
@@ -190,12 +191,14 @@ public class MainActivity extends YouTubeBaseActivity
                 else {
                     Log.d(TAG, "Not valid URL: " + urlString);
                     getControllerLinks().loadFrontPage(Sort.HOT, true);
-                    selectNavigationItem(getIntent().getIntExtra(NAV_ID, R.id.item_home), getIntent().getIntExtra(NAV_PAGE, 0), false);
+                    selectNavigationItem(getIntent().getIntExtra(NAV_ID, R.id.item_home), getIntent().getStringExtra(
+                            NAV_PAGE), false);
                 }
             }
             else {
                 getControllerLinks().loadFrontPage(Sort.HOT, true);
-                selectNavigationItem(getIntent().getIntExtra(NAV_ID, R.id.item_home), getIntent().getIntExtra(NAV_PAGE, 0), false);
+                selectNavigationItem(getIntent().getIntExtra(NAV_ID, R.id.item_home), getIntent().getStringExtra(
+                        NAV_PAGE), false);
             }
         }
 
@@ -222,7 +225,15 @@ public class MainActivity extends YouTubeBaseActivity
                                             .getJSONObject("data")
                                             .getJSONArray("things")
                                             .getJSONObject(0), 0);
-                            getControllerComments().insertComment(newComment);
+                            if (getFragmentManager().findFragmentByTag(FragmentComments.TAG) != null) {
+                                getControllerComments().insertComment(newComment);
+                            }
+                            if (getFragmentManager().findFragmentByTag(FragmentProfile.TAG) != null) {
+                                getControllerProfile().insertComment(newComment);
+                            }
+                            if (getFragmentManager().findFragmentByTag(FragmentInbox.TAG) != null) {
+                                getControllerInbox().insertComment(newComment);
+                            }
                         }
                         catch (JSONException e) {
                             e.printStackTrace();
@@ -686,7 +697,7 @@ public class MainActivity extends YouTubeBaseActivity
 
     }
 
-    private void selectNavigationItem(final int id, int page, boolean animate) {
+    private void selectNavigationItem(final int id, String page, boolean animate) {
 
         loadId = 0;
 
@@ -743,22 +754,29 @@ public class MainActivity extends YouTubeBaseActivity
 
                 break;
             case R.id.item_inbox:
-                switch (page) {
-                    case ControllerInbox.PAGE_INBOX:
-                        getControllerInbox().setPage("Inbox");
-                        break;
-                    case ControllerInbox.PAGE_UNREAD:
-                        getControllerInbox().setPage("Unread");
-                        break;
-                    case ControllerInbox.PAGE_SENT:
-                        getControllerInbox().setPage("Sent");
-                        break;
+                Log.d(TAG, "Page: " + page);
+
+                if (!TextUtils.isEmpty(page)) {
+                    switch (page) {
+                        case ControllerInbox.INBOX:
+                            getControllerInbox()
+                                    .setPage(new Page(page, getString(R.string.inbox_page_inbox)));
+                            break;
+                        case ControllerInbox.UNREAD:
+                            getControllerInbox()
+                                    .setPage(new Page(page, getString(R.string.inbox_page_unread)));
+                            break;
+                        case ControllerInbox.SENT:
+                            getControllerInbox()
+                                    .setPage(new Page(page, getString(R.string.inbox_page_sent)));
+                            break;
+                    }
                 }
 
                 getControllerInbox().reload();
                 fragmentTransaction.replace(R.id.frame_fragment,
-                                FragmentInbox.newInstance(),
-                                FragmentInbox.TAG);
+                        FragmentInbox.newInstance(),
+                        FragmentInbox.TAG);
                 break;
         }
 

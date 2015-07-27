@@ -272,7 +272,7 @@ public class AdapterLinkGrid extends AdapterLink {
                     .load(android.R.color.transparent)
                     .into(imageFull);
 
-            if (TextUtils.isEmpty(link.getThumbnail())) {
+            if (TextUtils.isEmpty(link.getThumbnail()) || Reddit.NSFW.equals(link.getThumbnail())) {
                 if (Reddit.placeImageUrl(
                         link) && position == getAdapterPosition()) {
                     int size = getAdjustedThumbnailSize();

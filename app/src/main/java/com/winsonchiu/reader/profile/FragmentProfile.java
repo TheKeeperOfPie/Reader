@@ -29,6 +29,7 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.Spinner;
 
+import com.winsonchiu.reader.data.Page;
 import com.winsonchiu.reader.views.CustomItemTouchHelper;
 import com.winsonchiu.reader.utils.DisallowListener;
 import com.winsonchiu.reader.FragmentBase;
@@ -163,6 +164,15 @@ public class FragmentProfile extends FragmentBase implements Toolbar.OnMenuItemC
 
         listener = new ControllerProfile.Listener() {
             @Override
+            public void setSortAndTime(Sort sort, Time time) {
+                menu.findItem(sort.getMenuId()).setChecked(true);
+                itemSortTime.setTitle(
+                        getString(R.string.time) + Reddit.TIME_SEPARATOR + menu
+                                .findItem(mListener.getControllerLinks()
+                                        .getTime().getMenuId()).toString());
+            }
+
+            @Override
             public void setPage(Page page) {
                 spinnerPage.setSelection(adapterProfilePage.getPages().indexOf(page));
                 if (page.getPage().equals(ControllerProfile.PAGE_HIDDEN)) {
@@ -187,7 +197,7 @@ public class FragmentProfile extends FragmentBase implements Toolbar.OnMenuItemC
                 Intent intent = new Intent(activity, MainActivity.class);
                 intent.setAction(Intent.ACTION_VIEW);
                 intent.putExtra(MainActivity.REDDIT_PAGE,
-                        "https://reddit.com/r/" + comment.getSubreddit() + "/comments/" + comment
+                        Reddit.BASE_URL + "/r/" + comment.getSubreddit() + "/comments/" + comment
                                 .getLinkId().replace("t3_", ""));
                 startActivity(intent);
             }

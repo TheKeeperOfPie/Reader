@@ -10,6 +10,7 @@ import android.widget.Toast;
 
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
+import com.winsonchiu.reader.data.Page;
 import com.winsonchiu.reader.data.reddit.Replyable;
 import com.winsonchiu.reader.utils.ControllerListener;
 import com.winsonchiu.reader.R;
@@ -37,9 +38,9 @@ public class ControllerInbox {
 
     public static final int VIEW_TYPE_MESSAGE = 0;
     public static final int VIEW_TYPE_COMMENT = 1;
-    public static final int PAGE_INBOX = 0;
-    public static final int PAGE_UNREAD = 1;
-    public static final int PAGE_SENT = 2;
+    public static final String INBOX = "Inbox";
+    public static final String UNREAD = "Unread";
+    public static final String SENT = "Sent";
 
     private static final String TAG = ControllerInbox.class.getCanonicalName();
 
@@ -48,7 +49,7 @@ public class ControllerInbox {
     private Listing data;
     private Reddit reddit;
     private Link link;
-    private String page;
+    private Page page;
     private boolean isLoading;
 
     public ControllerInbox(Activity activity) {
@@ -56,7 +57,7 @@ public class ControllerInbox {
         data = new Listing();
         listeners = new HashSet<>();
         link = new Link();
-        page = "Inbox";
+        page = new Page(INBOX, activity.getString(R.string.inbox_page_inbox));
     }
 
     public void setActivity(Activity activity) {
@@ -112,22 +113,24 @@ public class ControllerInbox {
         return (Comment) data.getChildren().get(position);
     }
 
-    public void setPage(String page) {
+    public void setPage(Page page) {
         if (!this.page.equals(page)) {
             this.page = page;
             reload();
         }
     }
 
-    public String getPage() {
+    public Page getPage() {
         return page;
     }
 
     public void reload() {
 
+        Log.d(TAG, "Page: " + page.getPage());
+
         setLoading(true);
 
-        reddit.loadGet(Reddit.OAUTH_URL + "/message/" + page.toLowerCase(),
+        reddit.loadGet(Reddit.OAUTH_URL + "/message/" + page.getPage().toLowerCase(),
                 new Response.Listener<String>() {
                     @Override
                     public void onResponse(String response) {
@@ -237,10 +240,10 @@ public class ControllerInbox {
             comment.setLevel(((Comment) data.getChildren().get(commentIndex)).getLevel() + 1);
             data.getChildren()
                     .add(commentIndex + 1, comment);
-        }
 
-        for (Listener listener : listeners) {
-            listener.getAdapter().notifyItemInserted(commentIndex + 1);
+            for (Listener listener : listeners) {
+                listener.getAdapter().notifyItemInserted(commentIndex + 1);
+            }
         }
     }
 
@@ -327,7 +330,8 @@ public class ControllerInbox {
         setLoading(true);
 
         reddit.loadGet(
-                Reddit.OAUTH_URL + "/message/" + page.toLowerCase() + "?after=" + data.getAfter(),
+                Reddit.OAUTH_URL + "/message/" + page.getPage().toLowerCase() + "?after=" + data
+                        .getAfter(),
                 new Response.Listener<String>() {
                     @Override
                     public void onResponse(String response) {
@@ -378,8 +382,23 @@ public class ControllerInbox {
         return false;
     }
 
+    public void markAllRead() {
+        reddit.loadPost(Reddit.OAUTH_URL + "/api/read_all_messages",
+                new Response.Listener<String>() {
+                    @Override
+                    public void onResponse(String response) {
+
+                    }
+                }, new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+
+                    }
+                }, null, 0);
+    }
+
     public interface Listener extends ControllerListener {
-        void setPage(String page);
+        void setPage(Page page);
     }
 
 }

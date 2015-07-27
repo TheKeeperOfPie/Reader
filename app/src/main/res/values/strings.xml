@@ -39,7 +39,6 @@
     <string name="content_description_image_navigation">Navigation entry icon</string>
     <string name="content_description_image_navigation_header">Navigation header image</string>
     <string name="content_description_button_collapse">Collapse/expand comment</string>
-    <string name="item_collapse">Collapse/expand comment</string>
     <string name="item_upvote">Upvote</string>
     <string name="item_downvote">Downvote</string>
     <string name="item_share">Share</string>
@@ -205,21 +204,26 @@
     <string name="pref_swipe_exit_comments_summary">Use a left to right gesture to exit comments
     </string>
     <string name="comments_collapsed">collapsed</string>
-    <string name="item_reply_italicize">Italicize</string>
-    <string name="item_reply_bold">Bold</string>
-    <string name="item_reply_quote">Quote</string>
-    <string name="item_reply_link">Link</string>
-    <string name="item_reply_list_bulleted">Bulleted list</string>
-    <string name="item_reply_list_numbered">Numbered list</string>
+    <string name="item_editor_italicize">Italicize</string>
+    <string name="item_editor_strikethrough">Strikethrough</string>
+    <string name="item_editor_bold">Bold</string>
+    <string name="item_editor_quote">Quote</string>
+    <string name="item_editor_link">Link</string>
+    <string name="item_editor_list_bulleted">Bulleted list</string>
+    <string name="item_editor_list_numbered">Numbered list</string>
+    <string name="page_post">Post</string>
     <string name="page_reply">Reply</string>
+    <string name="page_message">Reply</string>
     <string name="page_preview">Preview</string>
-    <string name="item_reply_strikethrough">Strikethrough</string>
-    <string name="reply_label_text">Text</string>
-    <string name="reply_label_link">URL</string>
+    <string name="editor_label_text">Text</string>
+    <string name="editor_label_link">URL</string>
     <string name="item_hide_actions">Hide/show actions</string>
     <string name="empty_reply_preview">Whoops. Looks like there isn\'t any text to preview.</string>
     <string name="parent">Parent</string>
     <string name="page_parent">Parent</string>
     <string name="failed_reply">Failed to send reply</string>
     <string name="failed_message">Failed to send message</string>
+    <string name="item_mark_all_read">Mark all messages as read</string>
+    <string name="item_send_message">Send message</string>
+    <string name="item_submit_post">Submit post</string>
 </resources>

@@ -6,10 +6,10 @@ package com.winsonchiu.reader.comments;
 
 import android.animation.Animator;
 import android.app.Activity;
+import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
-import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.support.design.widget.AppBarLayout;
 import android.support.design.widget.CoordinatorLayout;
@@ -28,8 +28,8 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
-import android.widget.ImageButton;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
@@ -119,6 +119,9 @@ public class FragmentReply extends FragmentBase implements Toolbar.OnMenuItemCli
         toolbar.setNavigationOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                InputMethodManager inputManager = (InputMethodManager) activity.getSystemService(
+                        Context.INPUT_METHOD_SERVICE);
+                inputManager.hideSoftInputFromWindow(editReply.getWindowToken(), 0);
                 mListener.onNavigationBackClick();
             }
         });
@@ -141,21 +144,26 @@ public class FragmentReply extends FragmentBase implements Toolbar.OnMenuItemCli
 
         editReply = (EditText) view.findViewById(R.id.edit_reply);
         editReply.setText(getArguments().getString(ARG_TEXT));
-        editReply.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+
+        View.OnFocusChangeListener onFocusChangeListener = new View.OnFocusChangeListener() {
             @Override
             public void onFocusChange(View v, boolean hasFocus) {
                 if (hasFocus) {
-                    AppBarLayout.Behavior behaviorAppBar = (AppBarLayout.Behavior) ((CoordinatorLayout.LayoutParams) layoutAppBar.getLayoutParams()).getBehavior();
-                    behaviorAppBar.onNestedFling(layoutCoordinator, layoutAppBar, null, 0, 1000, true);
+                    AppBarLayout.Behavior behaviorAppBar = (AppBarLayout.Behavior) ((CoordinatorLayout.LayoutParams) layoutAppBar
+                            .getLayoutParams()).getBehavior();
+                    behaviorAppBar
+                            .onNestedFling(layoutCoordinator, layoutAppBar, null, 0, 1000, true);
                 }
             }
-        });
+        };
+
+        editReply.setOnFocusChangeListener(onFocusChangeListener);
 
         textPreview = (TextView) view.findViewById(R.id.text_preview);
         viewDivider = view.findViewById(R.id.view_divider);
 
         toolbarActions = (Toolbar) view.findViewById(R.id.toolbar_actions);
-        toolbarActions.inflateMenu(R.menu.menu_reply_actions);
+        toolbarActions.inflateMenu(R.menu.menu_editor_actions);
         toolbarActions.setOnMenuItemClickListener(this);
 
         viewPager = (ViewPager) view.findViewById(R.id.view_pager);
@@ -271,6 +279,7 @@ public class FragmentReply extends FragmentBase implements Toolbar.OnMenuItemCli
                             }
                         }
 
+                        // Toggle visibility to fix weird bug causing tabs to not be added
                         tabLayout.setVisibility(View.GONE);
                         tabLayout.setVisibility(View.VISIBLE);
 
@@ -323,9 +332,13 @@ public class FragmentReply extends FragmentBase implements Toolbar.OnMenuItemCli
     public boolean onMenuItemClick(MenuItem item) {
 
         int selectionStart = editReply.getSelectionStart();
+        boolean isNewLine = editReply.getText().length() == 0 || editReply.getText().charAt(editReply.length() - 1) == '\n';
 
         switch (item.getItemId()) {
             case R.id.item_send_reply:
+                InputMethodManager inputManager = (InputMethodManager) activity.getSystemService(
+                        Context.INPUT_METHOD_SERVICE);
+                inputManager.hideSoftInputFromWindow(editReply.getWindowToken(), 0);
                 mListener.getEventListenerBase().sendComment(nameParent,
                         editReply.getText().toString());
                 collapsed = true;
@@ -334,37 +347,55 @@ public class FragmentReply extends FragmentBase implements Toolbar.OnMenuItemCli
             case R.id.item_hide_actions:
                 toggleActions();
                 break;
-            case R.id.item_reply_italicize:
+            case R.id.item_editor_italicize:
                 editReply.getText().insert(selectionStart, "**");
                 editReply.setSelection(selectionStart + 1);
                 break;
-            case R.id.item_reply_bold:
+            case R.id.item_editor_bold:
                 editReply.getText().insert(selectionStart, "****");
                 editReply.setSelection(selectionStart + 2);
                 break;
-            case R.id.item_reply_strikethrough:
+            case R.id.item_editor_strikethrough:
                 editReply.getText().insert(selectionStart, "~~~~");
                 editReply.setSelection(selectionStart + 2);
                 break;
-            case R.id.item_reply_quote:
-                editReply.getText().insert(selectionStart, "\n> ");
-                editReply.setSelection(selectionStart + 2);
+            case R.id.item_editor_quote:
+                if (isNewLine) {
+                    editReply.getText().insert(selectionStart, "> ");
+                    editReply.setSelection(selectionStart + 2);
+                }
+                else {
+                    editReply.getText().insert(selectionStart, "\n> ");
+                    editReply.setSelection(selectionStart + 3);
+                }
                 break;
-            case R.id.item_reply_link:
-                String labelText = getString(R.string.reply_label_text);
-                String labelLink = getString(R.string.reply_label_link);
+            case R.id.item_editor_link:
+                String labelText = getString(R.string.editor_label_text);
+                String labelLink = getString(R.string.editor_label_link);
                 int indexStart = selectionStart + 1;
                 int indexEnd = indexStart + labelText.length();
                 editReply.getText().insert(selectionStart, "[" + labelText + "](" + labelLink + ")");
                 editReply.setSelection(indexStart, indexEnd);
                 break;
-            case R.id.item_reply_list_bulleted:
-                editReply.getText().insert(selectionStart, "\n\n* \n* \n* ");
-                editReply.setSelection(selectionStart + 4);
+            case R.id.item_editor_list_bulleted:
+                if (isNewLine) {
+                    editReply.getText().insert(selectionStart, "* \n* \n* ");
+                    editReply.setSelection(selectionStart + 2);
+                }
+                else {
+                    editReply.getText().insert(selectionStart, "\n\n* \n* \n* ");
+                    editReply.setSelection(selectionStart + 4);
+                }
                 break;
-            case R.id.item_reply_list_numbered:
-                editReply.getText().insert(selectionStart, "\n\n1. \n2. \n3. ");
-                editReply.setSelection(selectionStart + 5);
+            case R.id.item_editor_list_numbered:
+                if (isNewLine) {
+                    editReply.getText().insert(selectionStart, "1. \n2. \n3. ");
+                    editReply.setSelection(selectionStart + 3);
+                }
+                else {
+                    editReply.getText().insert(selectionStart, "\n\n1. \n2. \n3. ");
+                    editReply.setSelection(selectionStart + 5);
+                }
                 break;
         }
 

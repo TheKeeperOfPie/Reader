@@ -609,7 +609,7 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
             recyclerCommentList.setVisibility(View.GONE);
             swipeRefreshCommentList.setVisibility(View.GONE);
             toolbar.setVisibility(View.GONE);
-            toolbar.setTranslationY(-100);
+            layoutAppBar.setTranslationY(-100);
 
             view.post(new Runnable() {
                 @Override
@@ -681,7 +681,7 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
                 layoutParams.setMarginStart((int) (startX * reverseInterpolation));
                 layoutParams.setMarginEnd((int) (startMarginEnd * reverseInterpolation));
                 swipeRefreshCommentList.setLayoutParams(layoutParams);
-                toolbar.setTranslationY(-toolbarHeight * reverseInterpolation);
+                layoutAppBar.setTranslationY(-toolbarHeight * reverseInterpolation);
 
                 RelativeLayout.LayoutParams layoutParamsBackground = (RelativeLayout.LayoutParams) viewBackground
                         .getLayoutParams();
@@ -1003,7 +1003,7 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
                             layoutParams.setMarginEnd(
                                     (int) (startMarginEnd * interpolatedTime));
                             swipeRefreshCommentList.setLayoutParams(layoutParams);
-                            toolbar.setTranslationY(-toolbarHeight * interpolatedTime);
+                            layoutAppBar.setTranslationY(-toolbarHeight * interpolatedTime);
 
                             RelativeLayout.LayoutParams layoutParamsBackground = (RelativeLayout.LayoutParams) viewBackground
                                     .getLayoutParams();

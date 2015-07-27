@@ -6,6 +6,7 @@ package com.winsonchiu.reader;
 
 import android.animation.Animator;
 import android.app.Activity;
+import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
@@ -28,6 +29,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
+import android.view.inputmethod.InputMethodManager;
 import android.webkit.URLUtil;
 import android.widget.EditText;
 import android.widget.ImageButton;
@@ -59,14 +61,14 @@ public class FragmentNewPost extends FragmentBase implements Toolbar.OnMenuItemC
     public static final String IS_EDIT = "isEdit";
     public static final String EDIT_ID = "editId";
     public static final String TAG = FragmentNewPost.class.getCanonicalName();
-    private static final int PAGE_BODY = 0;
+    private static final int PAGE_POST = 0;
     private static final int PAGE_PREVIEW = 1;
 
-    private CoordinatorLayout layoutCoordinator;
-    private AppBarLayout layoutAppBar;
     private Toolbar toolbar;
     private TextView textInfo;
     private TextView textSubmit;
+    private CoordinatorLayout layoutCoordinator;
+    private AppBarLayout layoutAppBar;
     private NestedScrollView scrollText;
     private EditText editTextTitle;
     private EditText editTextBody;
@@ -156,6 +158,9 @@ public class FragmentNewPost extends FragmentBase implements Toolbar.OnMenuItemC
         toolbar.setNavigationOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                InputMethodManager inputManager = (InputMethodManager) activity.getSystemService(
+                        Context.INPUT_METHOD_SERVICE);
+                inputManager.hideSoftInputFromWindow(editTextBody.getWindowToken(), 0);
                 mListener.onNavigationBackClick();
             }
         });
@@ -182,15 +187,21 @@ public class FragmentNewPost extends FragmentBase implements Toolbar.OnMenuItemC
         else {
             editTextBody.setHint("Text");
         }
-        editTextBody.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+
+        View.OnFocusChangeListener onFocusChangeListener = new View.OnFocusChangeListener() {
             @Override
             public void onFocusChange(View v, boolean hasFocus) {
                 if (hasFocus) {
-                    AppBarLayout.Behavior behaviorAppBar = (AppBarLayout.Behavior) ((CoordinatorLayout.LayoutParams) layoutAppBar.getLayoutParams()).getBehavior();
-                    behaviorAppBar.onNestedFling(layoutCoordinator, layoutAppBar, null, 0, 1000, true);
+                    AppBarLayout.Behavior behaviorAppBar = (AppBarLayout.Behavior) ((CoordinatorLayout.LayoutParams) layoutAppBar
+                            .getLayoutParams()).getBehavior();
+                    behaviorAppBar
+                            .onNestedFling(layoutCoordinator, layoutAppBar, null, 0, 1000, true);
                 }
             }
-        });
+        };
+
+        editTextTitle.setOnFocusChangeListener(onFocusChangeListener);
+        editTextBody.setOnFocusChangeListener(onFocusChangeListener);
 
         editMarginDefault = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 8, getResources().getDisplayMetrics());
         editMarginWithActions = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 56,
@@ -200,7 +211,7 @@ public class FragmentNewPost extends FragmentBase implements Toolbar.OnMenuItemC
         viewDivider = view.findViewById(R.id.view_divider);
 
         toolbarActions = (Toolbar) view.findViewById(R.id.toolbar_actions);
-        toolbarActions.inflateMenu(R.menu.menu_reply_actions);
+        toolbarActions.inflateMenu(R.menu.menu_editor_actions);
         toolbarActions.setOnMenuItemClickListener(this);
 
         tabLayout = (TabLayout) view.findViewById(R.id.layout_tab);
@@ -214,8 +225,8 @@ public class FragmentNewPost extends FragmentBase implements Toolbar.OnMenuItemC
             public CharSequence getPageTitle(int position) {
 
                 switch (position) {
-                    case PAGE_BODY:
-                        return getString(R.string.page_reply);
+                    case PAGE_POST:
+                        return getString(R.string.page_post);
                     case PAGE_PREVIEW:
                         return getString(R.string.page_preview);
                 }
@@ -256,7 +267,7 @@ public class FragmentNewPost extends FragmentBase implements Toolbar.OnMenuItemC
                     float positionOffset,
                     int positionOffsetPixels) {
 
-                if (position == PAGE_BODY && toolbarActions.getVisibility() == View.VISIBLE) {
+                if (position == PAGE_POST && toolbarActions.getVisibility() == View.VISIBLE) {
                     float translationY = positionOffset * (toolbarActions.getHeight() + viewDivider
                             .getHeight());
                     viewDivider.setTranslationY(translationY);
@@ -277,7 +288,7 @@ public class FragmentNewPost extends FragmentBase implements Toolbar.OnMenuItemC
                     }
                 }
                 if (Reddit.POST_TYPE_SELF.equals(postType)) {
-                    itemHideActions.setVisible(position == PAGE_BODY);
+                    itemHideActions.setVisible(position == PAGE_POST);
                 }
             }
 
@@ -322,7 +333,6 @@ public class FragmentNewPost extends FragmentBase implements Toolbar.OnMenuItemC
                     }, 0);
         }
 
-
         view.getViewTreeObserver().addOnGlobalLayoutListener(
                 new ViewTreeObserver.OnGlobalLayoutListener() {
                     @Override
@@ -349,6 +359,7 @@ public class FragmentNewPost extends FragmentBase implements Toolbar.OnMenuItemC
                             }
                         }
 
+                        // Toggle visibility to fix weird bug causing tabs to not be added
                         tabLayout.setVisibility(View.GONE);
                         tabLayout.setVisibility(View.VISIBLE);
                         view.getViewTreeObserver().removeOnGlobalLayoutListener(this);
@@ -359,7 +370,7 @@ public class FragmentNewPost extends FragmentBase implements Toolbar.OnMenuItemC
     }
 
     private void setUpOptionsMenu() {
-        toolbar.inflateMenu(R.menu.menu_reply);
+        toolbar.inflateMenu(R.menu.menu_new_post);
         toolbar.setOnMenuItemClickListener(this);
         menu = toolbar.getMenu();
         itemHideActions = menu.findItem(R.id.item_hide_actions);
@@ -438,6 +449,9 @@ public class FragmentNewPost extends FragmentBase implements Toolbar.OnMenuItemC
             @Override
             public void onResponse(String response) {
 
+                InputMethodManager inputManager = (InputMethodManager) activity.getSystemService(
+                        Context.INPUT_METHOD_SERVICE);
+                inputManager.hideSoftInputFromWindow(editTextBody.getWindowToken(), 0);
                 mListener.getControllerLinks().reloadAllLinks(false);
                 mListener.onNavigationBackClick();
             }
@@ -522,6 +536,9 @@ public class FragmentNewPost extends FragmentBase implements Toolbar.OnMenuItemC
                     e.printStackTrace();
                 }
 
+                InputMethodManager inputManager = (InputMethodManager) activity.getSystemService(
+                        Context.INPUT_METHOD_SERVICE);
+                inputManager.hideSoftInputFromWindow(editTextBody.getWindowToken(), 0);
                 mListener.getControllerLinks().reloadAllLinks(false);
                 mListener.onNavigationBackClick();
 
@@ -539,9 +556,10 @@ public class FragmentNewPost extends FragmentBase implements Toolbar.OnMenuItemC
     public boolean onMenuItemClick(MenuItem item) {
 
         int selectionStart = editTextBody.getSelectionStart();
+        boolean isNewLine = editTextBody.getText().length() == 0 || editTextBody.getText().charAt(editTextBody.length() - 1) == '\n';
 
         switch (item.getItemId()) {
-            case R.id.item_send_reply:
+            case R.id.item_submit_post:
                 if (getArguments().getBoolean(IS_EDIT, false)) {
                     submitEdit();
                 }
@@ -552,37 +570,55 @@ public class FragmentNewPost extends FragmentBase implements Toolbar.OnMenuItemC
             case R.id.item_hide_actions:
                 toggleActions();
                 break;
-            case R.id.item_reply_italicize:
+            case R.id.item_editor_italicize:
                 editTextBody.getText().insert(selectionStart, "**");
                 editTextBody.setSelection(selectionStart + 1);
                 break;
-            case R.id.item_reply_bold:
+            case R.id.item_editor_bold:
                 editTextBody.getText().insert(selectionStart, "****");
                 editTextBody.setSelection(selectionStart + 2);
                 break;
-            case R.id.item_reply_strikethrough:
+            case R.id.item_editor_strikethrough:
                 editTextBody.getText().insert(selectionStart, "~~~~");
                 editTextBody.setSelection(selectionStart + 2);
                 break;
-            case R.id.item_reply_quote:
-                editTextBody.getText().insert(selectionStart, "\n> ");
-                editTextBody.setSelection(selectionStart + 2);
+            case R.id.item_editor_quote:
+                if (isNewLine) {
+                    editTextBody.getText().insert(selectionStart, "> ");
+                    editTextBody.setSelection(selectionStart + 2);
+                }
+                else {
+                    editTextBody.getText().insert(selectionStart, "\n> ");
+                    editTextBody.setSelection(selectionStart + 3);
+                }
                 break;
-            case R.id.item_reply_link:
-                String labelText = getString(R.string.reply_label_text);
-                String labelLink = getString(R.string.reply_label_link);
+            case R.id.item_editor_link:
+                String labelText = getString(R.string.editor_label_text);
+                String labelLink = getString(R.string.editor_label_link);
                 int indexStart = selectionStart + 1;
                 int indexEnd = indexStart + labelText.length();
                 editTextBody.getText().insert(selectionStart, "[" + labelText + "](" + labelLink + ")");
                 editTextBody.setSelection(indexStart, indexEnd);
                 break;
-            case R.id.item_reply_list_bulleted:
-                editTextBody.getText().insert(selectionStart, "\n\n* \n* \n* ");
-                editTextBody.setSelection(selectionStart + 4);
+            case R.id.item_editor_list_bulleted:
+                if (isNewLine) {
+                    editTextBody.getText().insert(selectionStart, "* \n* \n* ");
+                    editTextBody.setSelection(selectionStart + 2);
+                }
+                else {
+                    editTextBody.getText().insert(selectionStart, "\n\n* \n* \n* ");
+                    editTextBody.setSelection(selectionStart + 4);
+                }
                 break;
-            case R.id.item_reply_list_numbered:
-                editTextBody.getText().insert(selectionStart, "\n\n1. \n2. \n3. ");
-                editTextBody.setSelection(selectionStart + 5);
+            case R.id.item_editor_list_numbered:
+                if (isNewLine) {
+                    editTextBody.getText().insert(selectionStart, "1. \n2. \n3. ");
+                    editTextBody.setSelection(selectionStart + 3);
+                }
+                else {
+                    editTextBody.getText().insert(selectionStart, "\n\n1. \n2. \n3. ");
+                    editTextBody.setSelection(selectionStart + 5);
+                }
                 break;
         }
 

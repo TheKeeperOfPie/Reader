@@ -358,7 +358,6 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
         protected Toolbar toolbarActions;
         protected MenuItem itemViewLink;
         protected MenuItem itemJumpParent;
-        protected MenuItem itemCollapse;
         protected MenuItem itemUpvote;
         protected MenuItem itemDownvote;
         protected MenuItem itemReply;
@@ -487,14 +486,6 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
             final GestureDetectorCompat gestureDetectorCompat = new GestureDetectorCompat(itemView.getContext(), new GestureDetector.SimpleOnGestureListener() {
 
                 @Override
-                public void onLongPress(MotionEvent e) {
-                    itemCollapse.setIcon(eventListener.toggleComment(getAdapterPosition()) ?
-                            R.drawable.ic_arrow_drop_up_white_24dp :
-                            R.drawable.ic_arrow_drop_down_white_24dp);
-                    itemCollapse.getIcon().setColorFilter(colorFilterMenuItem);
-                }
-
-                @Override
                 public boolean onDoubleTap(MotionEvent e) {
                     if (!TextUtils.isEmpty(userName)) {
                         eventListener.voteComment(ViewHolderComment.this, comment, 1);
@@ -570,7 +561,6 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
             Menu menu = toolbarActions.getMenu();
             itemViewLink = menu.findItem(R.id.item_view_link);
             itemJumpParent = menu.findItem(R.id.item_jump_parent);
-            itemCollapse = menu.findItem(R.id.item_collapse);
             itemUpvote = menu.findItem(R.id.item_upvote);
             itemDownvote = menu.findItem(R.id.item_downvote);
             itemReply = menu.findItem(R.id.item_reply);
@@ -633,14 +623,6 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
             boolean isAuthor = comment.getAuthor()
                     .equals(userName);
 
-            if (eventListener.isCommentExpanded(getAdapterPosition())) {
-                itemCollapse.setIcon(R.drawable.ic_arrow_drop_up_white_24dp);
-            }
-            else {
-                itemCollapse.setIcon(R.drawable.ic_arrow_drop_down_white_24dp);
-            }
-            itemCollapse.getIcon().setColorFilter(colorFilterMenuItem);
-
             itemEdit.setEnabled(isAuthor);
             itemEdit.setVisible(isAuthor);
             itemDelete.setEnabled(isAuthor);
@@ -653,7 +635,6 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
             itemReply.setVisible(loggedIn);
             itemSave.setVisible(loggedIn);
             itemReport.setVisible(loggedIn);
-            itemCollapse.setVisible(eventListener.hasChildren(comment));
 
             for (int index = 0; index < menu.size(); index++) {
                 if (!loggedIn) {
@@ -902,12 +883,6 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
             switch (item.getItemId()) {
                 case R.id.item_jump_parent:
                     eventListener.jumpToParent(comment);
-                    break;
-                case R.id.item_collapse:
-                    item.setIcon(eventListener.toggleComment(getAdapterPosition()) ?
-                            R.drawable.ic_arrow_drop_up_white_24dp :
-                            R.drawable.ic_arrow_drop_down_white_24dp);
-                    item.getIcon().setColorFilter(colorFilterMenuItem);
                     break;
                 case R.id.item_upvote:
                     eventListener.voteComment(ViewHolderComment.this, comment, 1);

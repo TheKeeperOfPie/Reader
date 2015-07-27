@@ -9,56 +9,56 @@
     >
 
     <item
-        android:id="@+id/item_reply_italicize"
-        android:title="@string/item_reply_italicize"
+        android:id="@+id/item_editor_italicize"
+        android:title="@string/item_editor_italicize"
         android:icon="@drawable/ic_format_italic_white_24dp"
         android:orderInCategory="100"
         app:showAsAction="ifRoom"
         />
 
     <item
-        android:id="@+id/item_reply_bold"
-        android:title="@string/item_reply_bold"
+        android:id="@+id/item_editor_bold"
+        android:title="@string/item_editor_bold"
         android:icon="@drawable/ic_format_bold_white_24dp"
         android:orderInCategory="200"
         app:showAsAction="ifRoom"
         />
 
     <item
-        android:id="@+id/item_reply_strikethrough"
-        android:title="@string/item_reply_strikethrough"
+        android:id="@+id/item_editor_strikethrough"
+        android:title="@string/item_editor_strikethrough"
         android:icon="@drawable/ic_format_strikethrough_white_24dp"
         android:orderInCategory="300"
         app:showAsAction="ifRoom"
         />
 
     <item
-        android:id="@+id/item_reply_quote"
-        android:title="@string/item_reply_quote"
+        android:id="@+id/item_editor_quote"
+        android:title="@string/item_editor_quote"
         android:icon="@drawable/ic_format_quote_white_24dp"
         android:orderInCategory="400"
         app:showAsAction="ifRoom"
         />
 
     <item
-        android:id="@+id/item_reply_link"
-        android:title="@string/item_reply_link"
+        android:id="@+id/item_editor_link"
+        android:title="@string/item_editor_link"
         android:icon="@drawable/ic_insert_link_white_24dp"
         android:orderInCategory="500"
         app:showAsAction="ifRoom"
         />
 
     <item
-        android:id="@+id/item_reply_list_bulleted"
-        android:title="@string/item_reply_list_bulleted"
+        android:id="@+id/item_editor_list_bulleted"
+        android:title="@string/item_editor_list_bulleted"
         android:icon="@drawable/ic_format_list_bulleted_white_24dp"
         android:orderInCategory="600"
         app:showAsAction="ifRoom"
         />
 
     <item
-        android:id="@+id/item_reply_list_numbered"
-        android:title="@string/item_reply_list_numbered"
+        android:id="@+id/item_editor_list_numbered"
+        android:title="@string/item_editor_list_numbered"
         android:icon="@drawable/ic_format_list_numbered_white_24dp"
         android:orderInCategory="700"
         app:showAsAction="ifRoom"

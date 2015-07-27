@@ -4,15 +4,18 @@
 
 package com.winsonchiu.reader.inbox;
 
+import android.content.SharedPreferences;
 import android.content.res.TypedArray;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
+import android.preference.PreferenceManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.text.Html;
 import android.text.Spannable;
 import android.text.SpannableString;
 import android.text.TextUtils;
+import android.text.format.DateUtils;
 import android.text.method.LinkMovementMethod;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
@@ -25,6 +28,7 @@ import android.widget.EditText;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
+import com.winsonchiu.reader.AppSettings;
 import com.winsonchiu.reader.utils.AnimationUtils;
 import com.winsonchiu.reader.ControllerUser;
 import com.winsonchiu.reader.utils.DisallowListener;
@@ -148,6 +152,7 @@ public class AdapterInbox extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
         protected AdapterLink.ViewHolderBase.EventListener eventListener;
         private View.OnClickListener clickListenerLink;
 
+        protected SharedPreferences preferences;
         protected int toolbarItemWidth;
         protected String userName;
 
@@ -208,6 +213,7 @@ public class AdapterInbox extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
             for (int index = 0; index < menu.size(); index++) {
                 menu.getItem(index).getIcon().setColorFilter(colorFilter);
             }
+            preferences = PreferenceManager.getDefaultSharedPreferences(itemView.getContext());
 
             clickListenerLink = new View.OnClickListener() {
                 @Override
@@ -278,9 +284,15 @@ public class AdapterInbox extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
                 prefix = "by " + message.getAuthor();
             }
 
+
+            CharSequence timestamp =
+                    preferences.getBoolean(AppSettings.PREF_FULL_TIMESTAMPS, false) ? DateUtils
+                            .formatDateTime(itemView.getContext(), message.getCreatedUtc(),
+                                    DateUtils.FORMAT_SHOW_TIME | DateUtils.FORMAT_SHOW_DATE | DateUtils.FORMAT_SHOW_YEAR) :
+                            DateUtils.getRelativeTimeSpanString(message.getCreatedUtc());
+
             Spannable spannableInfo = new SpannableString(
-                    prefix + " on " + new Date(
-                            message.getCreatedUtc()).toString());
+                    prefix + " " + timestamp);
 
             textInfo.setText(spannableInfo);
 

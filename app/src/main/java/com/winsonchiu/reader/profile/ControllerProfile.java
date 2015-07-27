@@ -11,6 +11,7 @@ import android.widget.Toast;
 
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
+import com.winsonchiu.reader.data.Page;
 import com.winsonchiu.reader.data.reddit.Replyable;
 import com.winsonchiu.reader.utils.ControllerListener;
 import com.winsonchiu.reader.ControllerUser;
@@ -78,7 +79,7 @@ public class ControllerProfile implements ControllerLinksBase {
         topComment = new Comment();
         user = new User();
         page = new Page(PAGE_OVERVIEW, activity.getString(R.string.profile_page_overview));
-        sort = Sort.HOT;
+        sort = Sort.NEW;
         time = Time.ALL;
     }
 
@@ -89,6 +90,7 @@ public class ControllerProfile implements ControllerLinksBase {
 
     public void addListener(Listener listener) {
         listeners.add(listener);
+        listener.setSortAndTime(sort, time);
         listener.setRefreshing(isLoading());
         listener.getAdapter().notifyDataSetChanged();
         listener.setIsUser(user.getName().equals(controllerUser.getUser().getName()));
@@ -153,9 +155,10 @@ public class ControllerProfile implements ControllerLinksBase {
 
     public void setUser(User user) {
         this.user = user;
-        sort = Sort.HOT;
+        sort = Sort.NEW;
         page = new Page(PAGE_OVERVIEW, activity.getString(R.string.profile_page_overview));
         for (Listener listener : listeners) {
+            listener.setSortAndTime(sort, time);
             listener.setIsUser(user.getName()
                     .equals(controllerUser.getUser().getName()));
         }
@@ -643,6 +646,7 @@ public class ControllerProfile implements ControllerLinksBase {
 
     public interface Listener
             extends ControllerListener {
+        void setSortAndTime(Sort sort, Time time);
         void setPage(Page page);
         void setIsUser(boolean isUser);
         void loadLink(Comment comment);

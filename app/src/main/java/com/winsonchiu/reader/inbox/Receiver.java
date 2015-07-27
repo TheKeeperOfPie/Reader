@@ -25,6 +25,7 @@ import com.winsonchiu.reader.R;
 import com.winsonchiu.reader.data.reddit.Listing;
 import com.winsonchiu.reader.data.reddit.Reddit;
 import com.winsonchiu.reader.data.reddit.User;
+import com.winsonchiu.reader.history.ControllerHistory;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -51,10 +52,8 @@ public class Receiver extends BroadcastReceiver {
         long interval = Long.parseLong(
                 preferences.getString(AppSettings.PREF_INBOX_CHECK_INTERVAL, "1800000"));
 
-        if (interval == 0) {
-            alarmManager.cancel(pendingIntent);
-        }
-        else {
+        alarmManager.cancel(pendingIntent);
+        if (interval > 0) {
             alarmManager
                     .setInexactRepeating(AlarmManager.RTC_WAKEUP, System.currentTimeMillis() + 1000,
                             interval, pendingIntent);
@@ -64,9 +63,14 @@ public class Receiver extends BroadcastReceiver {
     }
 
     @Override
-    public void onReceive(final Context context, Intent intent) {
+    public void onReceive(final Context context, final Intent intent) {
 
         Log.d(TAG, "onReceive");
+
+        if (Intent.ACTION_BOOT_COMPLETED.equals(intent.getAction())) {
+            setAlarm(context);
+            return;
+        }
 
         Reddit reddit = Reddit.getInstance(context);
 
@@ -76,50 +80,48 @@ public class Receiver extends BroadcastReceiver {
                 try {
                     Listing listing = Listing.fromJson(new JSONObject(response));
 
-                    if (!listing.getChildren().isEmpty()) {
-
-                        User user;
-
-                        try {
-                            SharedPreferences preferences = PreferenceManager
-                                    .getDefaultSharedPreferences(context);
-                            user = User.fromJson(new JSONObject(
-                                    preferences.getString(AppSettings.ACCOUNT_JSON, "")));
-                        }
-                        catch (JSONException e) {
-                            user = new User();
-                        }
-
-                        Intent intentActivity = new Intent(context, MainActivity.class);
-                        intentActivity.putExtra(MainActivity.NAV_ID, R.id.item_inbox);
-                        intentActivity.putExtra(MainActivity.NAV_PAGE, ControllerInbox.PAGE_UNREAD);
-                        PendingIntent pendingIntent = PendingIntent
-                                .getActivity(context, 0, intentActivity, 0);
-
-
-                        Notification.Builder builder = new Notification.Builder(context)
-                                .setSmallIcon(R.mipmap.app_icon_notification)
-                                .setContentTitle(
-                                        listing.getChildren().size() + " " + context
-                                                .getResources()
-                                                .getString(R.string.new_messages))
-                                .setContentText("/u/" + user.getName() + "\n" + DateUtils
-                                        .formatDateTime(context, System.currentTimeMillis(),
-                                                DateUtils.FORMAT_SHOW_TIME))
-                                .setContentIntent(pendingIntent)
-                                .setAutoCancel(true);
-
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                            builder.setColor(context.getResources().getColor(R.color.colorPrimary));
-                        }
-
-                        NotificationManager notificationManager =
-                                (NotificationManager) context.getSystemService(
-                                        Context.NOTIFICATION_SERVICE);
-
-                        notificationManager.notify(NOTIFICATION_INBOX, builder.build());
-
+                    if (listing.getChildren().isEmpty()) {
+                        return;
                     }
+
+                    User user;
+
+                    try {
+                        SharedPreferences preferences = PreferenceManager
+                                .getDefaultSharedPreferences(context);
+                        user = User.fromJson(new JSONObject(
+                                preferences.getString(AppSettings.ACCOUNT_JSON, "")));
+                    }
+                    catch (JSONException e) {
+                        user = new User();
+                    }
+
+                    Intent intentActivity = new Intent(context, MainActivity.class);
+                    intentActivity.putExtra(MainActivity.NAV_ID, R.id.item_inbox);
+                    intentActivity.putExtra(MainActivity.NAV_PAGE, ControllerInbox.UNREAD);
+                    PendingIntent pendingIntent = PendingIntent
+                            .getActivity(context, 0, intentActivity, 0);
+
+                    Notification.Builder builder = new Notification.Builder(context)
+                            .setSmallIcon(R.mipmap.app_icon_notification)
+                            .setContentTitle(
+                                    listing.getChildren().size() + " " + context
+                                            .getResources()
+                                            .getString(R.string.new_messages))
+                            .setContentText("/u/" + user.getName())
+                            .setContentIntent(pendingIntent)
+                            .setAutoCancel(true);
+
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                        builder.setColor(context.getResources().getColor(R.color.colorPrimary));
+                    }
+
+                    NotificationManager notificationManager =
+                            (NotificationManager) context.getSystemService(
+                                    Context.NOTIFICATION_SERVICE);
+
+                    notificationManager.notify(NOTIFICATION_INBOX, builder.build());
+
                 }
                 catch (JSONException e) {
                     e.printStackTrace();

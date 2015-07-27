@@ -12,6 +12,7 @@ import android.widget.BaseAdapter;
 import android.widget.TextView;
 
 import com.winsonchiu.reader.R;
+import com.winsonchiu.reader.data.Page;
 
 import java.util.ArrayList;
 import java.util.List;

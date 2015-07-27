@@ -17,8 +17,8 @@
         />
 
     <item
-        android:id="@+id/item_submit_post"
-        android:title="@string/item_submit_post"
+        android:id="@+id/item_send_message"
+        android:title="@string/item_send_message"
         android:icon="@drawable/ic_send_white_24dp"
         android:orderInCategory="200"
         app:showAsAction="always"

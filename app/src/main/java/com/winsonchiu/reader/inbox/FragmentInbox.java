@@ -17,19 +17,20 @@ import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.Spinner;
 
-import com.android.volley.Response;
-import com.android.volley.VolleyError;
 import com.winsonchiu.reader.FragmentNewMessage;
-import com.winsonchiu.reader.comments.FragmentReply;
-import com.winsonchiu.reader.profile.Page;
+import com.winsonchiu.reader.data.Page;
+import com.winsonchiu.reader.data.reddit.Sort;
+import com.winsonchiu.reader.data.reddit.Time;
 import com.winsonchiu.reader.utils.AnimationUtils;
 import com.winsonchiu.reader.utils.DisallowListener;
 import com.winsonchiu.reader.FragmentBase;
@@ -38,19 +39,11 @@ import com.winsonchiu.reader.MainActivity;
 import com.winsonchiu.reader.R;
 import com.winsonchiu.reader.comments.AdapterCommentList;
 import com.winsonchiu.reader.data.reddit.Comment;
-import com.winsonchiu.reader.data.reddit.Message;
 import com.winsonchiu.reader.data.reddit.Reddit;
-import com.winsonchiu.reader.data.reddit.Thing;
 import com.winsonchiu.reader.profile.ControllerProfile;
 import com.winsonchiu.reader.utils.ScrollAwareFloatingActionButtonBehavior;
 
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import java.util.HashMap;
-import java.util.Map;
-
-public class FragmentInbox extends FragmentBase {
+public class FragmentInbox extends FragmentBase implements Toolbar.OnMenuItemClickListener {
 
     public static final String TAG = FragmentInbox.class.getCanonicalName();
 
@@ -67,6 +60,8 @@ public class FragmentInbox extends FragmentBase {
     private AdapterInboxPage adapterInboxPage;
     private ScrollAwareFloatingActionButtonBehavior behaviorFloatingActionButton;
     private PorterDuffColorFilter colorFilterIcon;
+    private Menu menu;
+    private MenuItem itemMarkAllRead;
 
     public static FragmentInbox newInstance() {
         FragmentInbox fragment = new FragmentInbox();
@@ -99,8 +94,9 @@ public class FragmentInbox extends FragmentBase {
 
         listener = new ControllerInbox.Listener() {
             @Override
-            public void setPage(String page) {
+            public void setPage(Page page) {
                 spinnerPage.setSelection(adapterInboxPage.getPages().indexOf(page));
+                itemMarkAllRead.setVisible(ControllerInbox.UNREAD.equals(page.getPage()));
             }
 
             @Override
@@ -141,6 +137,7 @@ public class FragmentInbox extends FragmentBase {
                 mListener.openDrawer();
             }
         });
+        setUpOptionsMenu();
 
         floatingActionButtonNewMessage = (FloatingActionButton) view
                 .findViewById(R.id.fab_new_message);
@@ -174,6 +171,7 @@ public class FragmentInbox extends FragmentBase {
         adapterInboxPage = new AdapterInboxPage(activity);
         spinnerPage = (Spinner) view.findViewById(R.id.spinner_page);
         spinnerPage.setAdapter(adapterInboxPage);
+        spinnerPage.setSelection(adapterInboxPage.getPages().indexOf(mListener.getControllerInbox().getPage()));
         spinnerPage.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
@@ -269,6 +267,11 @@ public class FragmentInbox extends FragmentBase {
                 }
             }, new ControllerProfile.Listener() {
                 @Override
+                public void setSortAndTime(Sort sort, Time time) {
+
+                }
+
+                @Override
                 public void setPage(Page page) {
 
                 }
@@ -313,6 +316,17 @@ public class FragmentInbox extends FragmentBase {
 
         return view;
 
+    }
+
+    private void setUpOptionsMenu() {
+        toolbar.inflateMenu(R.menu.menu_inbox);
+        toolbar.setOnMenuItemClickListener(this);
+        menu = toolbar.getMenu();
+        itemMarkAllRead = menu.findItem(R.id.item_mark_all_read);
+
+        for (int index = 0; index < menu.size(); index++) {
+            menu.getItem(index).getIcon().setColorFilter(colorFilterIcon);
+        }
     }
 
     @Override
@@ -369,5 +383,17 @@ public class FragmentInbox extends FragmentBase {
     @Override
     public void onShown() {
         adapterInbox.setVisibility(View.VISIBLE);
+    }
+
+    @Override
+    public boolean onMenuItemClick(MenuItem item) {
+
+        switch (item.getItemId()) {
+            case R.id.item_mark_all_read:
+                mListener.getControllerInbox().markAllRead();
+                return true;
+        }
+
+        return false;
     }
 }
