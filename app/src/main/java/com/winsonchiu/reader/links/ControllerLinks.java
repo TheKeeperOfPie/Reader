@@ -467,6 +467,11 @@ public class ControllerLinks implements ControllerLinksBase {
 
     }
 
+    public boolean isOnSpecificSubreddit() {
+        return !TextUtils.isEmpty(subreddit.getDisplayName()) && !"/r/all/".equalsIgnoreCase(
+                subreddit.getUrl()) && !subreddit.getUrl().contains("+");
+    }
+
     public interface Listener extends ControllerListener {
         void setSortAndTime(Sort sort, Time time);
         void showEmptyView(boolean isEmpty);

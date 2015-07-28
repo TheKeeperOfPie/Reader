@@ -10,7 +10,6 @@ buildscript {
     }
 }
 apply plugin: 'com.android.application'
-apply plugin: 'com.zeroturnaround.jrebel.android'
 apply plugin: 'io.fabric'
 
 repositories {
@@ -25,8 +24,8 @@ android {
         applicationId "com.winsonchiu.reader"
         minSdkVersion 17
         targetSdkVersion 22
-        versionCode 43
-        versionName "1.1.1"
+        versionCode 47
+        versionName "1.1.2"
     }
     buildTypes {
         release {
@@ -54,5 +53,5 @@ dependencies {
     compile 'com.android.support:design:22.2.1'
     compile 'com.android.support:palette-v7:22.2.1'
     compile 'com.squareup.picasso:picasso:2.5.2'
-    compile 'com.github.rjeschke:txtmark:0.13+'
+    compile 'com.github.rjeschke:txtmark:0.13'
 }

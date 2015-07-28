@@ -4,6 +4,7 @@
 
 package com.winsonchiu.reader.links;
 
+import android.animation.Animator;
 import android.app.Activity;
 import android.content.res.Resources;
 import android.graphics.ColorFilter;
@@ -174,6 +175,7 @@ public class AdapterLinkGrid extends AdapterLink {
 
             int position = getAdapterPosition();
 
+            link.setBackgroundColor(colorBackgroundDefault);
             itemView.setBackgroundColor(colorBackgroundDefault);
             buttonComments.setColorFilter(colorFilterIconDefault);
             imagePlay.setColorFilter(colorFilterIconDefault);
@@ -202,7 +204,7 @@ public class AdapterLinkGrid extends AdapterLink {
                 loadThumbnail(link, position);
                 return;
             }
-            else if (!TextUtils.isEmpty(link.getThumbnail())) {
+            else if (!TextUtils.isEmpty(link.getThumbnail()) && !Reddit.NSFW.equals(link.getThumbnail())) {
                 imageFull.setVisibility(View.GONE);
                 imageThumbnail.clearColorFilter();
                 imageThumbnail.setVisibility(View.VISIBLE);
@@ -373,6 +375,11 @@ public class AdapterLinkGrid extends AdapterLink {
         }
 
         public void loadBackgroundColor() {
+            if (link.getBackgroundColor() != colorBackgroundDefault) {
+                setBackgroundColor(link.getBackgroundColor());
+                return;
+            }
+
             Drawable drawable = imageFull.getDrawable();
             if (drawable instanceof BitmapDrawable) {
                 final int position = getAdapterPosition();
@@ -395,10 +402,32 @@ public class AdapterLinkGrid extends AdapterLink {
 
         public void setBackgroundColor(int color) {
 
+            link.setBackgroundColor(color);
+
             AnimationUtils.animateBackgroundColor(
                     itemView,
                     ((ColorDrawable) itemView.getBackground())
-                            .getColor(), color);
+                            .getColor(), color, new Animator.AnimatorListener() {
+                        @Override
+                        public void onAnimationStart(Animator animation) {
+
+                        }
+
+                        @Override
+                        public void onAnimationEnd(Animator animation) {
+                            itemView.setBackgroundColor(link.getBackgroundColor());
+                        }
+
+                        @Override
+                        public void onAnimationCancel(Animator animation) {
+
+                        }
+
+                        @Override
+                        public void onAnimationRepeat(Animator animation) {
+
+                        }
+                    });
 
             setTextColors(color);
 

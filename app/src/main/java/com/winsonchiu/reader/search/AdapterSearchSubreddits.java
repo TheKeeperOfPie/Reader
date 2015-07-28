@@ -32,13 +32,13 @@ public class AdapterSearchSubreddits extends RecyclerView.Adapter<AdapterSearchS
 
     private static final String TAG = AdapterSearchSubreddits.class.getCanonicalName();
     private RecyclerView.LayoutManager layoutManager;
-    private ControllerSearch controllerSubreddits;
+    private ControllerSearchBase controllerSearchBase;
     private ViewHolder.EventListener eventListener;
 
     public AdapterSearchSubreddits(Activity activity,
-            ControllerSearch controllerSubreddits,
+            ControllerSearchBase controllerSearchBase,
             ViewHolder.EventListener eventListener) {
-        this.controllerSubreddits = controllerSubreddits;
+        this.controllerSearchBase = controllerSearchBase;
         this.eventListener = eventListener;
         this.layoutManager = new LinearLayoutManager(activity, LinearLayoutManager.VERTICAL, false);
     }
@@ -50,12 +50,12 @@ public class AdapterSearchSubreddits extends RecyclerView.Adapter<AdapterSearchS
 
     @Override
     public void onBindViewHolder(ViewHolder holder, int position) {
-        holder.onBind(controllerSubreddits.getSubreddit(position));
+        holder.onBind(controllerSearchBase.getSubreddit(position));
     }
 
     @Override
     public int getItemCount() {
-        return controllerSubreddits.getSubredditCount();
+        return controllerSearchBase.getSubredditCount();
     }
 
     public static class ViewHolder extends RecyclerView.ViewHolder {

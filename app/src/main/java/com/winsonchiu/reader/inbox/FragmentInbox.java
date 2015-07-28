@@ -61,7 +61,6 @@ public class FragmentInbox extends FragmentBase implements Toolbar.OnMenuItemCli
     private ScrollAwareFloatingActionButtonBehavior behaviorFloatingActionButton;
     private PorterDuffColorFilter colorFilterIcon;
     private Menu menu;
-    private MenuItem itemMarkAllRead;
 
     public static FragmentInbox newInstance() {
         FragmentInbox fragment = new FragmentInbox();
@@ -96,7 +95,6 @@ public class FragmentInbox extends FragmentBase implements Toolbar.OnMenuItemCli
             @Override
             public void setPage(Page page) {
                 spinnerPage.setSelection(adapterInboxPage.getPages().indexOf(page));
-                itemMarkAllRead.setVisible(ControllerInbox.UNREAD.equals(page.getPage()));
             }
 
             @Override
@@ -212,16 +210,6 @@ public class FragmentInbox extends FragmentBase implements Toolbar.OnMenuItemCli
                         }
 
                         @Override
-                        public boolean isCommentExpanded(int position) {
-                            return mListener.getControllerInbox().isCommentExpanded(position);
-                        }
-
-                        @Override
-                        public boolean hasChildren(Comment comment) {
-                            return mListener.getControllerInbox().hasChildren(comment);
-                        }
-
-                        @Override
                         public void voteComment(AdapterCommentList.ViewHolderComment viewHolderComment,
                                 Comment comment,
                                 int vote) {
@@ -322,7 +310,6 @@ public class FragmentInbox extends FragmentBase implements Toolbar.OnMenuItemCli
         toolbar.inflateMenu(R.menu.menu_inbox);
         toolbar.setOnMenuItemClickListener(this);
         menu = toolbar.getMenu();
-        itemMarkAllRead = menu.findItem(R.id.item_mark_all_read);
 
         for (int index = 0; index < menu.size(); index++) {
             menu.getItem(index).getIcon().setColorFilter(colorFilterIcon);

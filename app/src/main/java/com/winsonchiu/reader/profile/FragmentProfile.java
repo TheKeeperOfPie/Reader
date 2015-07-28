@@ -298,16 +298,6 @@ public class FragmentProfile extends FragmentBase implements Toolbar.OnMenuItemC
                         }
 
                         @Override
-                        public boolean isCommentExpanded(int position) {
-                            return mListener.getControllerProfile().isCommentExpanded(position);
-                        }
-
-                        @Override
-                        public boolean hasChildren(Comment comment) {
-                            return mListener.getControllerProfile().hasChildren(comment);
-                        }
-
-                        @Override
                         public void voteComment(AdapterCommentList.ViewHolderComment viewHolderComment,
                                 Comment comment,
                                 int vote) {

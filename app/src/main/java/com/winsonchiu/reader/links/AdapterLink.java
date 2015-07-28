@@ -711,7 +711,6 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                     break;
                 case R.id.image_thumbnail:
                     onClickThumbnail();
-                    recyclerCallback.hideToolbar();
                     break;
                 case R.id.button_send_reply:
                     if (!TextUtils.isEmpty(editTextReply.getText())) {
@@ -904,6 +903,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         public abstract float getRatio();
 
         public void loadFull() {
+            recyclerCallback.hideToolbar();
 
             addToHistory();
             viewOverlay.setVisibility(View.GONE);
@@ -919,7 +919,6 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         }
 
         public void onClickThumbnail() {
-
             viewOverlay.setVisibility(View.GONE);
             if (!loadSelfText()) {
                 loadFull();

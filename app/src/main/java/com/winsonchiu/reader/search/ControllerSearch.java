@@ -28,6 +28,7 @@ import com.winsonchiu.reader.data.reddit.Thing;
 import com.winsonchiu.reader.links.AdapterLink;
 import com.winsonchiu.reader.links.ControllerLinks;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -49,6 +50,7 @@ public class ControllerSearch {
     public static final int PAGE_SUBREDDITS = 0;
     public static final int PAGE_LINKS_SUBREDDIT = 1;
     public static final int PAGE_LINKS = 2;
+    public static final int PAGE_SUBREDDITS_RECOMMENDED = 3;
 
     private static final String TAG = ControllerSearch.class.getCanonicalName();
 
@@ -60,6 +62,7 @@ public class ControllerSearch {
     private Reddit reddit;
     private Listing subredditsSubscribed;
     private Listing subreddits;
+    private Listing subredditsRecommended;
     private Listing links;
     private Listing linksSubreddit;
     private String query;
@@ -72,6 +75,9 @@ public class ControllerSearch {
     private boolean isLoadingLinks;
     private boolean isLoadingLinksSubreddit;
 
+    private List<Request> requestsSubredditsRecommended;
+    private String currentSubreddit;
+
     public ControllerSearch(Activity activity) {
         setActivity(activity);
         sort = Sort.RELEVANCE;
@@ -80,8 +86,10 @@ public class ControllerSearch {
         query = "";
         subredditsSubscribed = new Listing();
         subreddits = new Listing();
+        subredditsRecommended = new Listing();
         links = new Listing();
         linksSubreddit = new Listing();
+        requestsSubredditsRecommended = new ArrayList<>();
     }
 
     public void setActivity(Activity activity) {
@@ -96,7 +104,6 @@ public class ControllerSearch {
         setTitle();
         listener.getAdapterSearchSubreddits().notifyDataSetChanged();
         listener.setSort(sort);
-        reloadCurrentPage();
     }
 
     public void removeListener(Listener listener) {
@@ -244,7 +251,8 @@ public class ControllerSearch {
                             Collections.sort(subredditsSubscribed.getChildren(), new Comparator<Thing>() {
                                 @Override
                                 public int compare(Thing lhs, Thing rhs) {
-                                    return ((Subreddit) lhs).getDisplayName().compareToIgnoreCase(((Subreddit) rhs).getDisplayName());
+                                    return ((Subreddit) lhs).getDisplayName().compareToIgnoreCase(
+                                            ((Subreddit) rhs).getDisplayName());
                                 }
                             });
                             if (TextUtils.isEmpty(query)) {
@@ -280,12 +288,15 @@ public class ControllerSearch {
                         try {
                             Listing listing = Listing.fromJson(new JSONObject(response));
                             subredditsSubscribed.addChildren(listing.getChildren());
-                            Collections.sort(subredditsSubscribed.getChildren(), new Comparator<Thing>() {
-                                @Override
-                                public int compare(Thing lhs, Thing rhs) {
-                                    return ((Subreddit) lhs).getDisplayName().compareToIgnoreCase(((Subreddit) rhs).getDisplayName());
-                                }
-                            });
+                            Collections.sort(subredditsSubscribed.getChildren(),
+                                    new Comparator<Thing>() {
+                                        @Override
+                                        public int compare(Thing lhs, Thing rhs) {
+                                            return ((Subreddit) lhs).getDisplayName()
+                                                    .compareToIgnoreCase(
+                                                            ((Subreddit) rhs).getDisplayName());
+                                        }
+                                    });
                             if (TextUtils.isEmpty(query)) {
                                 subreddits = subredditsSubscribed;
                                 for (Listener listener : listeners) {
@@ -328,10 +339,19 @@ public class ControllerSearch {
                 }
                 break;
             case PAGE_LINKS:
-                reloadLinks();
+                if (!TextUtils.isEmpty(query)) {
+                    reloadLinks();
+                }
                 break;
             case PAGE_LINKS_SUBREDDIT:
-                reloadLinksSubreddit();
+                if (!TextUtils.isEmpty(query)) {
+                    reloadLinksSubreddit();
+                }
+                break;
+            case PAGE_SUBREDDITS_RECOMMENDED:
+                if (!controllerLinks.getSubreddit().getDisplayName().equals(currentSubreddit)) {
+                    reloadSubredditsRecommended();
+                }
                 break;
         }
     }
@@ -399,6 +419,7 @@ public class ControllerSearch {
                                     catch (JSONException e) {
                                         e.printStackTrace();
                                     }
+
                                 }
                             }).start();
 
@@ -414,6 +435,102 @@ public class ControllerSearch {
             e.printStackTrace();
         }
 
+    }
+
+    public void reloadSubredditsRecommended() {
+        Log.d(TAG, "reloadSubredditsRecommended");
+
+        for (Request request : requestsSubredditsRecommended) {
+            request.cancel();
+        }
+        requestsSubredditsRecommended.clear();
+
+        subredditsRecommended.getChildren().clear();
+        for (Listener listener : listeners) {
+            listener.getAdapterSearchSubredditsRecommended().notifyDataSetChanged();
+        }
+
+        StringBuilder builderOmit = new StringBuilder();
+        for (Thing thing : subredditsSubscribed.getChildren()) {
+            Subreddit subreddit = (Subreddit) thing;
+            builderOmit.append(subreddit.getDisplayName());
+            builderOmit.append(",");
+        }
+
+        currentSubreddit = controllerLinks.getSubreddit().getDisplayName();
+
+        reddit.loadGet(Reddit.OAUTH_URL + "/api/recommend/sr/" + currentSubreddit + "?omit=" + builderOmit, new Response.Listener<String>() {
+            @Override
+            public void onResponse(String response) {
+
+                try {
+                    final JSONArray jsonArray = new JSONArray(response);
+
+                    for (int index = 0; index < jsonArray.length(); index++) {
+
+                        /*
+                            No idea why the API returns a {"sr_name": "subreddit"} rather than an
+                            array of Strings, but we'll convert it.
+                         */
+                        JSONObject dataSubreddit = jsonArray.getJSONObject(index);
+                        String name = dataSubreddit.optString("sr_name");
+
+                        requestsSubredditsRecommended.add(reddit.loadGet(
+                                Reddit.OAUTH_URL + "/r/" + name + "/about",
+                                new Response.Listener<String>() {
+                                    @Override
+                                    public void onResponse(String response) {
+                                        try {
+                                            Subreddit subreddit = Subreddit
+                                                    .fromJson(new JSONObject(response));
+                                            subredditsRecommended.getChildren().add(subreddit);
+
+                                            if (subredditsRecommended.getChildren()
+                                                    .size() == jsonArray.length()) {
+                                                Collections
+                                                        .sort(subredditsRecommended.getChildren(),
+                                                                new Comparator<Thing>() {
+                                                                    @Override
+                                                                    public int compare(Thing lhs,
+                                                                            Thing rhs) {
+                                                                        return ((Subreddit) lhs)
+                                                                                .getDisplayName()
+                                                                                .compareToIgnoreCase(
+                                                                                        ((Subreddit) rhs)
+                                                                                                .getDisplayName());
+                                                                    }
+                                                                });
+
+                                                for (Listener listener : listeners) {
+                                                    listener.getAdapterSearchSubredditsRecommended()
+                                                            .notifyDataSetChanged();
+                                                }
+
+                                            }
+                                        }
+                                        catch (JSONException e) {
+                                            e.printStackTrace();
+                                        }
+                                    }
+                                }, new Response.ErrorListener() {
+                                    @Override
+                                    public void onErrorResponse(VolleyError error) {
+
+                                    }
+                                }, 0));
+                    }
+                }
+                catch (JSONException e) {
+                    e.printStackTrace();
+                }
+
+            }
+        }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+
+            }
+        }, 0);
     }
 
     public void reloadLinks() {
@@ -514,8 +631,18 @@ public class ControllerSearch {
                 .get(position);
     }
 
-    public int getSubredditCount() {
+    public int getCountSubreddit() {
         return subreddits.getChildren()
+                .size();
+    }
+
+    public Subreddit getSubredditRecommended(int position) {
+        return (Subreddit) subredditsRecommended.getChildren()
+                .get(position);
+    }
+
+    public int getCountSubredditRecommended() {
+        return subredditsRecommended.getChildren()
                 .size();
     }
 
@@ -765,6 +892,7 @@ public class ControllerSearch {
 
     public interface Listener extends ControllerListener {
         AdapterSearchSubreddits getAdapterSearchSubreddits();
+        AdapterSearchSubreddits getAdapterSearchSubredditsRecommended();
         AdapterLink getAdapterLinks();
         AdapterLink getAdapterLinksSubreddit();
         void setToolbarTitle(CharSequence title);

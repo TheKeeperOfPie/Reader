@@ -202,15 +202,6 @@ public class MainActivity extends YouTubeBaseActivity
             }
         }
 
-        if (getFragmentManager().findFragmentByTag(FragmentComments.TAG) != null) {
-
-            hideFragment(FragmentThreadList.TAG);
-            hideFragment(FragmentProfile.TAG);
-            hideFragment(FragmentInbox.TAG);
-            hideFragment(FragmentSearch.TAG);
-
-        }
-
         eventListenerBase = new AdapterLink.ViewHolderBase.EventListener() {
 
             @Override
@@ -573,16 +564,6 @@ public class MainActivity extends YouTubeBaseActivity
             }
 
             @Override
-            public boolean isCommentExpanded(int position) {
-                return getControllerComments().isCommentExpanded(position);
-            }
-
-            @Override
-            public boolean hasChildren(Comment comment) {
-                return getControllerComments().hasChildren(comment);
-            }
-
-            @Override
             public void voteComment(AdapterCommentList.ViewHolderComment viewHolderComment,
                     Comment comment,
                     int vote) {
@@ -636,13 +617,6 @@ public class MainActivity extends YouTubeBaseActivity
             }
         }
 
-    }
-
-    private void hideFragment(String tag) {
-        Fragment fragment = getFragmentManager().findFragmentByTag(tag);
-        if (fragment != null) {
-            getFragmentManager().beginTransaction().hide(fragment).commit();
-        }
     }
 
     private void inflateNavigationDrawer() {
@@ -1059,6 +1033,7 @@ public class MainActivity extends YouTubeBaseActivity
             loadAccountInfo();
             getControllerUser().reloadUser();
             getControllerSearch().reloadSubscriptionList();
+            onNavigationBackClick();
         }
         else {
             Toast.makeText(this, getString(R.string.login_failure), Toast.LENGTH_SHORT)

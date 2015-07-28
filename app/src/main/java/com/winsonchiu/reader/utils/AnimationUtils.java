@@ -4,6 +4,7 @@
 
 package com.winsonchiu.reader.utils;
 
+import android.animation.Animator;
 import android.animation.ValueAnimator;
 import android.content.Context;
 import android.graphics.Point;
@@ -30,11 +31,10 @@ public class AnimationUtils {
     public static final long BACKGROUND_DURATION = 500;
     private static final String TAG = AnimationUtils.class.getCanonicalName();
 
-    public static void animateBackgroundColor(final View view, final int start, final int end) {
+    public static void animateBackgroundColor(final View view, final int start, final int end, Animator.AnimatorListener listener) {
 
         ValueAnimator valueAnimator = ValueAnimator.ofInt(0, 255);
         valueAnimator.setDuration(BACKGROUND_DURATION);
-
         valueAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
             @Override
             public void onAnimationUpdate(ValueAnimator animation) {
@@ -47,6 +47,7 @@ public class AnimationUtils {
             }
         });
 
+        valueAnimator.addListener(listener);
         valueAnimator.start();
     }
 

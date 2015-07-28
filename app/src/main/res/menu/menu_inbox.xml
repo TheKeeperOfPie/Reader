@@ -13,7 +13,6 @@
         android:title="@string/item_mark_all_read"
         android:icon="@drawable/ic_check_white_24dp"
         android:orderInCategory="100"
-        android:visible="false"
         app:showAsAction="ifRoom"
         />
 

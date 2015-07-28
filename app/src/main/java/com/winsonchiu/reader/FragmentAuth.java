@@ -249,11 +249,13 @@ public class FragmentAuth extends FragmentBase {
     }
 
     public boolean navigateBack() {
-        if (webAuth.canGoBack()) {
-            webAuth.goBack();
-            return false;
+        if (webAuth != null) {
+            if (webAuth.canGoBack()) {
+                webAuth.goBack();
+                return false;
+            }
+            destroy(false);
         }
-        destroy(false);
         return true;
     }
 

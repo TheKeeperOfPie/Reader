@@ -43,7 +43,6 @@ import com.winsonchiu.reader.links.ControllerLinksBase;
 
 public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemClickListener {
 
-    private static final int PAGE_COUNT = 3;
     public static final String TAG = FragmentSearch.class.getCanonicalName();
     private static final String ARG_HIDE_KEYBOARD = "hideKeyboard";
 
@@ -55,12 +54,15 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
     private RecyclerView recyclerSearchSubreddits;
     private RecyclerView recyclerSearchLinks;
     private RecyclerView recyclerSearchLinksSubreddit;
+    private RecyclerView recyclerSearchSubredditsRecommended;
     private LinearLayoutManager layoutManagerSubreddits;
     private LinearLayoutManager layoutManagerLinks;
     private LinearLayoutManager layoutManagerLinksSubreddit;
+    private LinearLayoutManager layoutManagerSubredditsRecommended;
     private AdapterSearchSubreddits adapterSearchSubreddits;
     private AdapterLink adapterLinks;
     private AdapterLink adapterLinksSubreddit;
+    private AdapterSearchSubreddits adapterSearchSubredditsRecommended;
     private ControllerSearch.Listener listenerSearch;
     private PagerAdapter pagerAdapter;
     private Menu menu;
@@ -167,7 +169,7 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
      */
     private void flashSearchView() {
         // Removed as this clears the search query
-        // TODO: Find f
+        // TODO: Find fix
 //        if (itemSearch != null) {
 //            itemSearch.expandActionView();
 //            itemSearch.collapseActionView();
@@ -184,6 +186,11 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
             @Override
             public AdapterSearchSubreddits getAdapterSearchSubreddits() {
                 return adapterSearchSubreddits;
+            }
+
+            @Override
+            public AdapterSearchSubreddits getAdapterSearchSubredditsRecommended() {
+                return adapterSearchSubredditsRecommended;
             }
 
             @Override
@@ -222,6 +229,20 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
             }
         };
 
+        DisallowListener disallowListener = new DisallowListener() {
+            @Override
+            public void requestDisallowInterceptTouchEventVertical(boolean disallow) {
+                recyclerSearchLinks.requestDisallowInterceptTouchEvent(disallow);
+                recyclerSearchLinksSubreddit.requestDisallowInterceptTouchEvent(disallow);
+                viewPager.requestDisallowInterceptTouchEvent(disallow);
+            }
+
+            @Override
+            public void requestDisallowInterceptTouchEventHorizontal(boolean disallow) {
+
+            }
+        };
+
         TypedArray typedArray = activity.getTheme().obtainStyledAttributes(
                 new int[]{R.attr.colorIconFilter});
         int colorIconFilter = typedArray.getColor(0, 0xFFFFFFFF);
@@ -245,7 +266,17 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
         layoutAppBar = (AppBarLayout) view.findViewById(R.id.layout_app_bar);
 
         adapterSearchSubreddits = new AdapterSearchSubreddits(activity,
-                mListener.getControllerSearch(),
+                new ControllerSearchBase() {
+                    @Override
+                    public Subreddit getSubreddit(int position) {
+                        return mListener.getControllerSearch().getSubreddit(position);
+                    }
+
+                    @Override
+                    public int getSubredditCount() {
+                        return mListener.getControllerSearch().getCountSubreddit();
+                    }
+                },
                 new AdapterSearchSubreddits.ViewHolder.EventListener() {
                     @Override
                     public void onClickSubreddit(Subreddit subreddit) {
@@ -264,20 +295,6 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
                 R.id.recycler_search_subreddits);
         recyclerSearchSubreddits.setLayoutManager(layoutManagerSubreddits);
         recyclerSearchSubreddits.setAdapter(adapterSearchSubreddits);
-
-        DisallowListener disallowListener = new DisallowListener() {
-            @Override
-            public void requestDisallowInterceptTouchEventVertical(boolean disallow) {
-                recyclerSearchLinks.requestDisallowInterceptTouchEvent(disallow);
-                recyclerSearchLinksSubreddit.requestDisallowInterceptTouchEvent(disallow);
-                viewPager.requestDisallowInterceptTouchEvent(disallow);
-            }
-
-            @Override
-            public void requestDisallowInterceptTouchEventHorizontal(boolean disallow) {
-
-            }
-        };
 
         adapterLinks = new AdapterSearchLinkList(activity, new ControllerLinksBase() {
             @Override
@@ -350,7 +367,8 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
                     @Override
                     public void hideToolbar() {
                         AppBarLayout.Behavior behaviorAppBar = (AppBarLayout.Behavior) ((CoordinatorLayout.LayoutParams) layoutAppBar.getLayoutParams()).getBehavior();
-                        behaviorAppBar.onNestedFling(layoutCoordinator, layoutAppBar, null, 0, 1000, true);
+                        behaviorAppBar.onNestedFling(layoutCoordinator, layoutAppBar, null, 0, 1000,
+                                true);
                     }
 
                 });
@@ -442,6 +460,37 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
         recyclerSearchLinksSubreddit.setLayoutManager(layoutManagerLinksSubreddit);
         recyclerSearchLinksSubreddit.setAdapter(adapterLinksSubreddit);
 
+        adapterSearchSubredditsRecommended = new AdapterSearchSubreddits(activity,
+                new ControllerSearchBase() {
+                    @Override
+                    public Subreddit getSubreddit(int position) {
+                        return mListener.getControllerSearch().getSubredditRecommended(position);
+                    }
+
+                    @Override
+                    public int getSubredditCount() {
+                        return mListener.getControllerSearch().getCountSubredditRecommended();
+                    }
+                },
+                new AdapterSearchSubreddits.ViewHolder.EventListener() {
+                    @Override
+                    public void onClickSubreddit(Subreddit subreddit) {
+                        mListener.getControllerLinks()
+                                .setParameters(subreddit.getDisplayName(), Sort.HOT, Time.ALL);
+                        InputMethodManager inputManager = (InputMethodManager) activity
+                                .getSystemService(Context.INPUT_METHOD_SERVICE);
+                        inputManager.hideSoftInputFromWindow(view.getWindowToken(),
+                                InputMethodManager.HIDE_NOT_ALWAYS);
+                        getFragmentManager().popBackStack();
+                    }
+                });
+
+        layoutManagerSubredditsRecommended = new LinearLayoutManager(activity, LinearLayoutManager.VERTICAL, false);
+        recyclerSearchSubredditsRecommended = (RecyclerView) view.findViewById(
+                R.id.recycler_search_subreddits_recommended);
+        recyclerSearchSubredditsRecommended.setLayoutManager(layoutManagerSubredditsRecommended);
+        recyclerSearchSubredditsRecommended.setAdapter(adapterSearchSubredditsRecommended);
+
         pagerAdapter = new PagerAdapter() {
             @Override
             public Object instantiateItem(ViewGroup container, int position) {
@@ -463,6 +512,8 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
                     case ControllerSearch.PAGE_LINKS_SUBREDDIT:
                         return mListener.getControllerLinks()
                                 .getSubredditName();
+                    case ControllerSearch.PAGE_SUBREDDITS_RECOMMENDED:
+                        return getString(R.string.recommended);
                 }
 
                 return super.getPageTitle(position);
@@ -470,7 +521,7 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
 
             @Override
             public int getCount() {
-                return PAGE_COUNT;
+                return mListener.getControllerLinks().isOnSpecificSubreddit() ? viewPager.getChildCount() : viewPager.getChildCount() - 1;
             }
 
             @Override

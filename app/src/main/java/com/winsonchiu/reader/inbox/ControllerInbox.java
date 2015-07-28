@@ -232,12 +232,16 @@ public class ControllerInbox {
 
     public void insertComment(Comment comment) {
 
+        // Placeholder to use ArrayList.indexOf() properly
         Comment parentComment = new Comment();
         parentComment.setId(comment.getParentId());
 
         int commentIndex = data.getChildren().indexOf(parentComment);
         if (commentIndex > -1) {
-            comment.setLevel(((Comment) data.getChildren().get(commentIndex)).getLevel() + 1);
+            // Level and context are set as they are not provided by the send API
+            parentComment = (Comment) data.getChildren().get(commentIndex);
+            comment.setLevel(parentComment.getLevel() + 1);
+            comment.setContext(parentComment.getContext());
             data.getChildren()
                     .add(commentIndex + 1, comment);
 
@@ -387,7 +391,8 @@ public class ControllerInbox {
                 new Response.Listener<String>() {
                     @Override
                     public void onResponse(String response) {
-
+                        Log.d(TAG, "markAllRead response: " + response);
+                        Toast.makeText(activity, R.string.marked_read, Toast.LENGTH_LONG).show();
                     }
                 }, new Response.ErrorListener() {
                     @Override

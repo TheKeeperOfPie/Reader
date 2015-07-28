@@ -226,4 +226,6 @@
     <string name="item_mark_all_read">Mark all messages as read</string>
     <string name="item_send_message">Send message</string>
     <string name="item_submit_post">Submit post</string>
+    <string name="marked_read">All marked as read, may take time to update</string>
+    <string name="recommended">Recommended</string>
 </resources>

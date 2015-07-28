@@ -301,6 +301,14 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
     }
 
     @Override
+    public void onViewRecycled(RecyclerView.ViewHolder holder) {
+        super.onViewRecycled(holder);
+        if (getItemViewType(holder.getAdapterPosition()) == VIEW_LINK) {
+            ((AdapterLink.ViewHolderBase) holder).onRecycle();
+        }
+    }
+
+    @Override
     public int getItemCount() {
         int count = controllerComments.getItemCount();
         if (count > 0) {
@@ -484,6 +492,11 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
             });
 
             final GestureDetectorCompat gestureDetectorCompat = new GestureDetectorCompat(itemView.getContext(), new GestureDetector.SimpleOnGestureListener() {
+
+                @Override
+                public void onLongPress(MotionEvent e) {
+                    eventListener.toggleComment(getAdapterPosition());
+                }
 
                 @Override
                 public boolean onDoubleTap(MotionEvent e) {
@@ -1009,8 +1022,6 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
 
         public interface EventListener {
             void loadNestedComments(Comment comment);
-            boolean isCommentExpanded(int position);
-            boolean hasChildren(Comment comment);
             void voteComment(ViewHolderComment viewHolderComment, Comment comment, int vote);
             boolean toggleComment(int position);
             void deleteComment(Comment comment);
