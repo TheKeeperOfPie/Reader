@@ -91,7 +91,15 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
         setHasOptionsMenu(true);
     }
 
-    private void setUpOptionsMenu() {
+    private void setUpToolbar() {
+        toolbar.setNavigationIcon(R.drawable.ic_arrow_back_white_24dp);
+        toolbar.getNavigationIcon().mutate().setColorFilter(colorFilterIcon);
+        toolbar.setNavigationOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mListener.onNavigationBackClick();
+            }
+        });
         toolbar.inflateMenu(R.menu.menu_search);
         toolbar.setOnMenuItemClickListener(this);
         menu = toolbar.getMenu();
@@ -252,15 +260,7 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
                 PorterDuff.Mode.MULTIPLY);
 
         toolbar = (Toolbar) view.findViewById(R.id.toolbar);
-        toolbar.setNavigationIcon(R.drawable.ic_arrow_back_white_24dp);
-        toolbar.getNavigationIcon().mutate().setColorFilter(colorFilterIcon);
-        toolbar.setNavigationOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                mListener.onNavigationBackClick();
-            }
-        });
-        setUpOptionsMenu();
+        setUpToolbar();
 
         layoutCoordinator = (CoordinatorLayout) view.findViewById(R.id.layout_coordinator);
         layoutAppBar = (AppBarLayout) view.findViewById(R.id.layout_app_bar);
@@ -410,7 +410,8 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
 
             @Override
             public boolean setReplyText(String name, String text, boolean collapsed) {
-                return mListener.getControllerSearch().setReplyTextLinksSubreddit(name, text, collapsed);
+                return mListener.getControllerSearch().setReplyTextLinksSubreddit(name, text,
+                        collapsed);
             }
 
         }, mListener.getControllerUser(),
@@ -491,6 +492,30 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
         recyclerSearchSubredditsRecommended.setLayoutManager(layoutManagerSubredditsRecommended);
         recyclerSearchSubredditsRecommended.setAdapter(adapterSearchSubredditsRecommended);
 
+        viewPager = (ViewPager) view.findViewById(R.id.view_pager_search);
+        viewPager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
+            @Override
+            public void onPageScrolled(int position,
+                    float positionOffset,
+                    int positionOffsetPixels) {
+
+            }
+
+            @Override
+            public void onPageSelected(int position) {
+                mListener.getControllerSearch()
+                        .setCurrentPage(position);
+            }
+
+            @Override
+            public void onPageScrollStateChanged(int state) {
+
+            }
+        });
+
+
+        final int count = mListener.getControllerLinks().isOnSpecificSubreddit() ? viewPager.getChildCount() : viewPager.getChildCount() - 1;
+
         pagerAdapter = new PagerAdapter() {
             @Override
             public Object instantiateItem(ViewGroup container, int position) {
@@ -521,7 +546,7 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
 
             @Override
             public int getCount() {
-                return mListener.getControllerLinks().isOnSpecificSubreddit() ? viewPager.getChildCount() : viewPager.getChildCount() - 1;
+                return count;
             }
 
             @Override
@@ -530,27 +555,7 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
             }
         };
 
-        viewPager = (ViewPager) view.findViewById(R.id.view_pager_search);
         viewPager.setAdapter(pagerAdapter);
-        viewPager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
-            @Override
-            public void onPageScrolled(int position,
-                    float positionOffset,
-                    int positionOffsetPixels) {
-
-            }
-
-            @Override
-            public void onPageSelected(int position) {
-                mListener.getControllerSearch()
-                        .setCurrentPage(position);
-            }
-
-            @Override
-            public void onPageScrollStateChanged(int state) {
-
-            }
-        });
 
         tabLayout = (TabLayout) view.findViewById(R.id.tab_search);
         tabLayout.setTabMode(TabLayout.MODE_SCROLLABLE);

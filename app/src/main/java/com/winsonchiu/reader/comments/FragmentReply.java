@@ -20,7 +20,6 @@ import android.support.v4.widget.NestedScrollView;
 import android.support.v7.widget.Toolbar;
 import android.text.Html;
 import android.text.TextUtils;
-import android.util.Log;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -82,7 +81,6 @@ public class FragmentReply extends FragmentBase implements Toolbar.OnMenuItemCli
         args.putString(ARG_NAME_PARENT, replyable.getName());
         args.putCharSequence(ARG_TEXT, replyable.getReplyText());
         args.putCharSequence(ARG_TEXT_PARENT, replyable.getParentHtml());
-        Log.d(TAG, "parent HTML: " + replyable.getParentHtml());
         fragment.setArguments(args);
         return fragment;
     }
@@ -114,28 +112,12 @@ public class FragmentReply extends FragmentBase implements Toolbar.OnMenuItemCli
                 PorterDuff.Mode.MULTIPLY);
 
         toolbar = (Toolbar) view.findViewById(R.id.toolbar);
-        toolbar.setTitle(getString(R.string.item_reply));
-        toolbar.setNavigationIcon(R.drawable.ic_arrow_back_white_24dp);
-        toolbar.setNavigationOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                InputMethodManager inputManager = (InputMethodManager) activity.getSystemService(
-                        Context.INPUT_METHOD_SERVICE);
-                inputManager.hideSoftInputFromWindow(editReply.getWindowToken(), 0);
-                mListener.onNavigationBackClick();
-            }
-        });
-        toolbar.getNavigationIcon().mutate().setColorFilter(colorFilterIcon);
-        setUpOptionsMenu();
+        setUpToolbar();
 
         scrollText = (NestedScrollView) view.findViewById(R.id.scroll_text);
 
-        CharSequence parent = getArguments().getCharSequence(ARG_TEXT_PARENT);
-
         textParent = (TextView) view.findViewById(R.id.text_parent);
-        if (!TextUtils.isEmpty(parent)) {
-            textParent.setText(parent);
-        }
+        textParent.setText(getArguments().getCharSequence(ARG_TEXT_PARENT));
 
         editMarginDefault = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 8,
                 getResources().getDisplayMetrics());
@@ -297,7 +279,20 @@ public class FragmentReply extends FragmentBase implements Toolbar.OnMenuItemCli
         outState.putString(ARG_TEXT, editReply.getText().toString());
     }
 
-    private void setUpOptionsMenu() {
+    private void setUpToolbar() {
+
+        toolbar.setTitle(getString(R.string.item_reply));
+        toolbar.setNavigationIcon(R.drawable.ic_arrow_back_white_24dp);
+        toolbar.setNavigationOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                InputMethodManager inputManager = (InputMethodManager) activity.getSystemService(
+                        Context.INPUT_METHOD_SERVICE);
+                inputManager.hideSoftInputFromWindow(editReply.getWindowToken(), 0);
+                mListener.onNavigationBackClick();
+            }
+        });
+        toolbar.getNavigationIcon().mutate().setColorFilter(colorFilterIcon);
 
         toolbar.inflateMenu(R.menu.menu_reply);
         toolbar.setOnMenuItemClickListener(this);
@@ -468,6 +463,8 @@ public class FragmentReply extends FragmentBase implements Toolbar.OnMenuItemCli
     @Override
     public boolean navigateBack() {
         String text = editReply.getText().toString();
+
+        // TODO: This is far too expensive to set the reply text
         if (getFragmentManager().findFragmentByTag(FragmentThreadList.TAG) != null) {
             mListener.getControllerLinks().setReplyText(nameParent, text, collapsed);
         }

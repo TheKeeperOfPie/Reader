@@ -44,7 +44,7 @@ public class FragmentData extends FragmentBase {
 
     public void initializeControllers(Activity activity) {
         controllerLinks = new ControllerLinks(activity, "", Sort.HOT);
-        controllerComments = new ControllerComments(activity, "", "");
+        controllerComments = new ControllerComments(activity);
         controllerProfile = new ControllerProfile(activity);
         controllerInbox = new ControllerInbox(activity);
         controllerSearch = new ControllerSearch(activity);

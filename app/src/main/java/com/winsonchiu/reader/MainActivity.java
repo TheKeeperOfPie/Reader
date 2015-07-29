@@ -10,10 +10,8 @@ import android.app.FragmentTransaction;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.content.res.Resources;
 import android.content.res.TypedArray;
 import android.graphics.Bitmap;
-import android.graphics.PorterDuff;
 import android.media.MediaScannerConnection;
 import android.net.Uri;
 import android.os.Bundle;
@@ -28,7 +26,6 @@ import android.util.Log;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
-import android.view.MotionEvent;
 import android.view.View;
 import android.webkit.URLUtil;
 import android.widget.ImageView;
@@ -66,7 +63,6 @@ import com.winsonchiu.reader.links.FragmentThreadList;
 import com.winsonchiu.reader.profile.ControllerProfile;
 import com.winsonchiu.reader.profile.FragmentProfile;
 import com.winsonchiu.reader.search.ControllerSearch;
-import com.winsonchiu.reader.search.FragmentSearch;
 import com.winsonchiu.reader.settings.ActivitySettings;
 import com.winsonchiu.reader.views.WebViewFixed;
 
@@ -555,7 +551,7 @@ public class MainActivity extends YouTubeBaseActivity
                     Intent intentCommentThread = new Intent(MainActivity.this, MainActivity.class);
                     intentCommentThread.setAction(Intent.ACTION_VIEW);
                     // Double slashes used to trigger parseUrl correctly
-                    intentCommentThread.putExtra(REDDIT_PAGE, Reddit.BASE_URL + "/r/" + getControllerComments().getSubredditName() + "/comments/" + getControllerComments().getMainLink().getId() + "//" + comment.getParentId() + "/");
+                    intentCommentThread.putExtra(REDDIT_PAGE, Reddit.BASE_URL + "/r/" + getControllerComments().getSubredditName() + "/comments/" + getControllerComments().getLink().getId() + "//" + comment.getParentId() + "/");
                     startActivity(intentCommentThread);
                 }
                 else {

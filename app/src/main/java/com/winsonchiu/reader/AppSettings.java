@@ -68,7 +68,7 @@ public class AppSettings {
             SharedPreferences.Editor editor = preferences.edit();
 
             editor.putBoolean(INITIALIZED, true);
-            editor.commit();
+            editor.apply();
 
         }
 

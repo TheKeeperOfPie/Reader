@@ -50,7 +50,6 @@ import android.widget.ImageButton;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
-import com.winsonchiu.reader.data.reddit.Thing;
 import com.winsonchiu.reader.utils.AnimationUtils;
 import com.winsonchiu.reader.AppSettings;
 import com.winsonchiu.reader.profile.ControllerProfile;
@@ -77,8 +76,10 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
 
     private static final int VIEW_LINK = 0;
     private static final int VIEW_COMMENT = 1;
-    private static final int MAX_ALPHA = 180;
+
     private static final int ALPHA_LEVELS = 8;
+    private static final int MAX_ALPHA = 180;
+
     private final int colorLink;
     private ControllerUser controllerUser;
     private AdapterLink.ViewHolderBase.EventListener eventListenerBase;
@@ -105,6 +106,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
             ViewHolderComment.ReplyCallback replyCallback,
             FragmentComments.YouTubeListener youTubeListener,
             boolean isGrid, int colorLink) {
+        this.controllerComments = controllerComments;
         this.controllerUser = controllerUser;
         this.eventListenerBase = eventListenerBase;
         this.eventListenerComment = eventListenerComment;
@@ -114,18 +116,13 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
         this.youTubeListener = youTubeListener;
         this.isGrid = isGrid;
         this.colorLink = colorLink;
-        this.controllerComments = controllerComments;
         DisplayMetrics displayMetrics = activity.getResources().getDisplayMetrics();
         this.thumbnailSize = displayMetrics.widthPixels / 2;
     }
 
     @Override
     public int getItemViewType(int position) {
-        if (position == 0) {
-            return VIEW_LINK;
-        }
-
-        return VIEW_COMMENT;
+        return position == 0 ? VIEW_LINK : VIEW_COMMENT;
     }
 
     @Override
@@ -172,22 +169,15 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                             String userName) {
                         super.onBind(link, showSubbreddit, userName);
                         if (animationFinished) {
-                            if (!isSelfTextLoaded) {
-                                if (!TextUtils.isEmpty(link.getSelfText())) {
-                                    loadSelfText();
-                                }
-                                isSelfTextLoaded = true;
-                            }
-                            else if (link.isSelf() && !TextUtils
-                                    .isEmpty(link.getSelfText())) {
-                                textThreadSelf.setVisibility(View.VISIBLE);
+                            if (!TextUtils.isEmpty(link.getSelfText())) {
+                                loadSelfText();
                             }
                         }
                     }
 
                     @Override
                     public void loadComments() {
-                        // Override to prevent action
+                        controllerComments.loadLinkComments();
                     }
 
                     @Override
@@ -234,22 +224,15 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                             String userName) {
                         super.onBind(link, showSubreddit, userName);
                         if (animationFinished) {
-                            if (!isSelfTextLoaded) {
-                                if (!TextUtils.isEmpty(link.getSelfText())) {
-                                    loadSelfText();
-                                }
-                                isSelfTextLoaded = true;
-                            }
-                            else if (link.isSelf() && !TextUtils
-                                    .isEmpty(link.getSelfText())) {
-                                textThreadSelf.setVisibility(View.VISIBLE);
+                            if (!TextUtils.isEmpty(link.getSelfText())) {
+                                loadSelfText();
                             }
                         }
                     }
 
                     @Override
                     public void loadComments() {
-                        // Override to prevent action
+                        controllerComments.loadLinkComments();
                     }
 
                     @Override
@@ -277,7 +260,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
     @Override
     public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
 
-        if (!controllerComments.isLoading() && position > controllerComments.getItemCount() - 5) {
+        if (!controllerComments.isRefreshing() && position > controllerComments.getItemCount() - 5) {
             controllerComments.loadMoreComments();
         }
 
@@ -285,7 +268,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
             AdapterLink.ViewHolderBase viewHolderBase = (AdapterLink.ViewHolderBase) holder;
 
             viewHolderBase
-                    .onBind(controllerComments.getMainLink(), controllerComments.showSubreddit(),
+                    .onBind(controllerComments.getLink(), controllerComments.showSubreddit(),
                             controllerUser.getUser().getName());
 
             viewHolderBase.itemView.invalidate();
@@ -311,10 +294,8 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
     @Override
     public int getItemCount() {
         int count = controllerComments.getItemCount();
-        if (count > 0) {
-            if (!animationFinished) {
-                return 1;
-            }
+        if (count > 0 && !animationFinished) {
+            return 1;
         }
         return count;
     }
@@ -325,13 +306,13 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
             return;
         }
 
-        if (controllerComments.getMainLink().isSelf()) {
+        if (controllerComments.getLink().isSelf()) {
             viewHolderLink.textThreadSelf.setVisibility(View.GONE);
         }
         else {
             viewHolderLink.destroyWebViews();
             viewHolderLink.onRecycle();
-            viewHolderLink.onBind(controllerComments.getMainLink(),
+            viewHolderLink.onBind(controllerComments.getLink(),
                     controllerComments.showSubreddit(),
                     controllerUser.getUser().getName());
         }

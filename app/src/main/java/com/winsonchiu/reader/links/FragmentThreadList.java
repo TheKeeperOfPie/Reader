@@ -792,7 +792,7 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
                     item.getIcon().setColorFilter(colorFilterIcon);
                     preferences.edit()
                             .putString(AppSettings.INTERFACE_MODE, AppSettings.MODE_GRID)
-                            .commit();
+                            .apply();
                 }
                 else {
                     resetAdapter(adapterLinkList);
@@ -800,7 +800,7 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
                     item.getIcon().setColorFilter(colorFilterIcon);
                     preferences.edit()
                             .putString(AppSettings.INTERFACE_MODE, AppSettings.MODE_LIST)
-                            .commit();
+                            .apply();
                 }
                 return true;
 
@@ -831,7 +831,6 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
     /**
      * Helper method to scroll without if statement sprinkled everywhere, as
      * scrollToPositionWithOffset is not abstracted into the upper LayoutManager
-     * for some reason
      *
      * @param position to scroll to
      * @param offset   from top of view

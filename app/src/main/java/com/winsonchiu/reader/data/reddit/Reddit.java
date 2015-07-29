@@ -8,6 +8,8 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.graphics.drawable.Drawable;
 import android.preference.PreferenceManager;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.v7.widget.RecyclerView;
 import android.text.Html;
 import android.text.SpannedString;
@@ -195,7 +197,7 @@ public class Reddit {
                 preferences.edit()
                         .putString(AppSettings.DEVICE_ID, UUID.randomUUID()
                                 .toString())
-                        .commit();
+                        .apply();
             }
 
             params.put(QUERY_GRANT_TYPE, INSTALLED_CLIENT_GRANT);
@@ -216,12 +218,12 @@ public class Reddit {
                     preferences.edit()
                             .putString(AppSettings.ACCESS_TOKEN,
                                     jsonObject.getString(QUERY_ACCESS_TOKEN))
-                            .commit();
+                            .apply();
                     preferences.edit()
                             .putLong(AppSettings.EXPIRE_TIME,
                                     System.currentTimeMillis() + jsonObject.getLong(
                                             QUERY_EXPIRES_IN) * SEC_TO_MS)
-                            .commit();
+                            .apply();
                 }
                 catch (JSONException e1) {
                     e1.printStackTrace();
@@ -242,9 +244,19 @@ public class Reddit {
     }
 
     public Request<String> loadPostDefault(final String url,
-            final Listener<String> listener,
-            final ErrorListener errorListener,
+            @Nullable Listener<String> listener,
+            @Nullable final ErrorListener errorListener,
             final Map<String, String> params) {
+
+        if (listener == null) {
+            // Volley can't handle a null Response.Listener, so for convenience, we check if it's null
+            listener = new Listener<String>() {
+                @Override
+                public void onResponse(String response) {
+
+                }
+            };
+        }
 
         StringRequest postRequest = new StringRequest(Request.Method.POST, url,
                 listener, errorListener) {
@@ -279,12 +291,23 @@ public class Reddit {
      * @param iteration
      */
     public Request<String> loadPost(final String url,
-            final Listener<String> listener,
-            final ErrorListener errorListener,
+            @Nullable Listener<String> listener,
+            @Nullable final ErrorListener errorListener,
             final Map<String, String> params,
             final int iteration) {
 
-        if (iteration > 2) {
+        if (listener == null) {
+            // Volley can't handle a null Response.Listener, so for convenience, we check if it's null
+            listener = new Listener<String>() {
+                @Override
+                public void onResponse(String response) {
+
+                }
+            };
+        }
+        final Listener<String> listenerFinal = listener;
+
+        if (iteration > 2 && errorListener != null) {
             errorListener.onErrorResponse(null);
             return null;
         }
@@ -293,7 +316,7 @@ public class Reddit {
             fetchToken(new RedditErrorListener() {
                 @Override
                 public void onErrorHandled() {
-                    loadPost(url, listener, errorListener, params, iteration + 1);
+                    loadPost(url, listenerFinal, errorListener, params, iteration + 1);
                 }
             });
             return null;
@@ -337,11 +360,22 @@ public class Reddit {
      * @param iteration
      */
     public Request<String> loadGet(final String url,
-            final Listener<String> listener,
-            final ErrorListener errorListener,
+            @Nullable Listener<String> listener,
+            @Nullable final ErrorListener errorListener,
             final int iteration) {
 
-        if (iteration > 2) {
+        if (listener == null) {
+            // Volley can't handle a null Response.Listener, so for convenience, we check if it's null
+            listener = new Listener<String>() {
+                @Override
+                public void onResponse(String response) {
+
+                }
+            };
+        }
+        final Listener<String> listenerFinal = listener;
+
+        if (iteration > 2 && errorListener != null) {
             errorListener.onErrorResponse(null);
             return null;
         }
@@ -350,7 +384,7 @@ public class Reddit {
             fetchToken(new RedditErrorListener() {
                 @Override
                 public void onErrorHandled() {
-                    loadGet(url, listener, errorListener, iteration + 1);
+                    loadGet(url, listenerFinal, errorListener, iteration + 1);
                 }
             });
             return null;
@@ -565,11 +599,11 @@ public class Reddit {
     }
     
     public Request<String> loadImgurImage(String id,
-            Listener<String> listener,
-            final ErrorListener errorListener,
+            @NonNull Listener<String> listener,
+            @Nullable final ErrorListener errorListener,
             final int iteration) {
 
-        if (iteration > 2) {
+        if (iteration > 2 && errorListener != null) {
             errorListener.onErrorResponse(null);
             return null;
         }
@@ -591,11 +625,11 @@ public class Reddit {
     }
 
     public Request<String> loadImgurAlbum(String id,
-            Listener<String> listener,
-            final ErrorListener errorListener,
+            @NonNull Listener<String> listener,
+            @Nullable final ErrorListener errorListener,
             final int iteration) {
 
-        if (iteration > 2) {
+        if (iteration > 2 && errorListener != null) {
             errorListener.onErrorResponse(null);
             return null;
         }
@@ -617,11 +651,11 @@ public class Reddit {
     }
 
     public Request<String> loadImgurGallery(String id,
-            Listener<String> listener,
-            final ErrorListener errorListener,
+            @NonNull Listener<String> listener,
+            @Nullable final ErrorListener errorListener,
             final int iteration) {
 
-        if (iteration > 2) {
+        if (iteration > 2 && errorListener != null) {
             errorListener.onErrorResponse(null);
             return null;
         }

@@ -228,4 +228,5 @@
     <string name="item_submit_post">Submit post</string>
     <string name="marked_read">All marked as read, may take time to update</string>
     <string name="recommended">Recommended</string>
+    <string name="error_deleting_comment">Error deleting comment</string>
 </resources>

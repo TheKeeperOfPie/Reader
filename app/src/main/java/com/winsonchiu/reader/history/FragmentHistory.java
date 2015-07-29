@@ -479,7 +479,7 @@ public class FragmentHistory extends FragmentBase implements Toolbar.OnMenuItemC
                     item.getIcon().setColorFilter(colorFilterIcon);
                     preferences.edit()
                             .putString(AppSettings.INTERFACE_MODE, AppSettings.MODE_GRID)
-                            .commit();
+                            .apply();
                 }
                 else {
                     resetAdapter(adapterLinkList);
@@ -487,7 +487,7 @@ public class FragmentHistory extends FragmentBase implements Toolbar.OnMenuItemC
                     item.getIcon().setColorFilter(colorFilterIcon);
                     preferences.edit()
                             .putString(AppSettings.INTERFACE_MODE, AppSettings.MODE_LIST)
-                            .commit();
+                            .apply();
                 }
                 return true;
             case R.id.item_time_range:

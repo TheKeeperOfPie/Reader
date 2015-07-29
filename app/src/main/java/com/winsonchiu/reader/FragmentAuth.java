@@ -122,16 +122,16 @@ public class FragmentAuth extends FragmentBase {
                                 preferences.edit()
                                         .putString(AppSettings.ACCESS_TOKEN,
                                                 jsonObject.getString(Reddit.QUERY_ACCESS_TOKEN))
-                                        .commit();
+                                        .apply();
                                 preferences.edit()
                                         .putString(AppSettings.REFRESH_TOKEN,
                                                 jsonObject.getString(Reddit.QUERY_REFRESH_TOKEN))
-                                        .commit();
+                                        .apply();
                                 preferences.edit()
                                         .putLong(AppSettings.EXPIRE_TIME,
                                                 System.currentTimeMillis() + jsonObject.getLong(
                                                         Reddit.QUERY_EXPIRES_IN) * Reddit.SEC_TO_MS)
-                                        .commit();
+                                        .apply();
                                 loadSubredditList();
                             }
                             catch (JSONException e1) {
@@ -180,7 +180,7 @@ public class FragmentAuth extends FragmentBase {
                         preferences.edit()
                                 .putString(AppSettings.ACCOUNT_JSON,
                                         response)
-                                .commit();
+                                .apply();
                         destroy(true);
                     }
                 }, new Response.ErrorListener() {
