@@ -409,6 +409,29 @@ public class ControllerProfile implements ControllerLinksBase {
         return false;
     }
 
+    @Override
+    public void setNsfw(String name, boolean over18) {
+
+        if (topLink != null && name.equals(topLink.getName())) {
+            topLink.setOver18(over18);
+            for (Listener listener : listeners) {
+                listener.getAdapter().notifyItemChanged(2);
+            }
+            return;
+        }
+
+        for (int index = 0; index < data.getChildren().size(); index++) {
+            Thing thing = data.getChildren().get(index);
+            if (thing.getName().equals(name)) {
+                ((Link) thing).setOver18(over18);
+                for (Listener listener : listeners) {
+                    listener.getAdapter().notifyItemChanged(index + 6);
+                }
+                return;
+            }
+        }
+    }
+
     public Link remove(int position) {
         Link link;
         if (position == -1) {

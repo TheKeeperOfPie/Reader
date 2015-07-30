@@ -284,6 +284,11 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
                 AppBarLayout.Behavior behaviorAppBar = (AppBarLayout.Behavior) ((CoordinatorLayout.LayoutParams) layoutAppBar.getLayoutParams()).getBehavior();
                 behaviorAppBar.onNestedFling(layoutCoordinator, layoutAppBar, null, 0, 1000, true);
             }
+
+            @Override
+            public void onReplyShown() {
+                behaviorFloatingActionButton.animateOut(buttonExpandActions);
+            }
         };
 
         YouTubeListener youTubeListener = new YouTubeListener() {
@@ -362,13 +367,6 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
                 }
 
                 return true;
-            }
-        };
-
-        AdapterCommentList.ViewHolderComment.ReplyCallback replyCallback = new AdapterCommentList.ViewHolderComment.ReplyCallback() {
-            @Override
-            public void onReplyShown() {
-                behaviorFloatingActionButton.animateOut(buttonExpandActions);
             }
         };
 
@@ -574,7 +572,6 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
                 mListener.getEventListenerComment(),
                 disallowListener,
                 recyclerCallback,
-                replyCallback,
                 youTubeListener,
                 getArguments().getBoolean(ARG_IS_GRID, false),
                 getArguments().getInt(ARG_COLOR_LINK));

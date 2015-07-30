@@ -769,6 +769,15 @@ public class ControllerComments {
         return false;
     }
 
+    public void setNsfw(String name, boolean over18) {
+        if (name.equals(link.getName())) {
+            link.setOver18(over18);
+            for (Listener listener : listeners) {
+                listener.getAdapter().notifyItemChanged(0);
+            }
+        }
+    }
+
     public interface Listener extends ControllerListener {
         void setSort(Sort sort);
         void setIsCommentThread(boolean isCommentThread);

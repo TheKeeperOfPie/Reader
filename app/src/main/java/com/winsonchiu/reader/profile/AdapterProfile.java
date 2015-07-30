@@ -44,7 +44,6 @@ public class AdapterProfile extends RecyclerView.Adapter<RecyclerView.ViewHolder
     private RecyclerCallback recyclerCallback;
     private ControllerProfile.Listener listener;
     private List<RecyclerView.ViewHolder> viewHolders;
-    private AdapterCommentList.ViewHolderComment.ReplyCallback replyCallback;
 
     public AdapterProfile(ControllerProfile controllerProfile,
             ControllerLinksBase controllerLinks,
@@ -57,12 +56,6 @@ public class AdapterProfile extends RecyclerView.Adapter<RecyclerView.ViewHolder
         this.eventListenerBase = eventListenerBase;
         this.eventListenerComment = eventListenerComment;
         this.disallowListener = disallowListener;
-        this.replyCallback = new AdapterCommentList.ViewHolderComment.ReplyCallback() {
-            @Override
-            public void onReplyShown() {
-
-            }
-        };
         this.recyclerCallback = recyclerCallback;
         this.listener = listener;
         this.controllerProfile = controllerProfile;
@@ -119,7 +112,7 @@ public class AdapterProfile extends RecyclerView.Adapter<RecyclerView.ViewHolder
             case ControllerProfile.VIEW_TYPE_COMMENT:
                 return new AdapterCommentList.ViewHolderComment(
                         LayoutInflater.from(parent.getContext())
-                                .inflate(R.layout.row_comment, parent, false), eventListenerBase, eventListenerComment, disallowListener, replyCallback, listener);
+                                .inflate(R.layout.row_comment, parent, false), eventListenerBase, eventListenerComment, disallowListener, recyclerCallback, listener);
 
         }
 

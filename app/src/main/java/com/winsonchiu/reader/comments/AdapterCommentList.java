@@ -85,7 +85,6 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
     private AdapterLink.ViewHolderBase.EventListener eventListenerBase;
     private ViewHolderComment.EventListener eventListenerComment;
     private DisallowListener disallowListener;
-    private ViewHolderComment.ReplyCallback replyCallback;
     private RecyclerCallback recyclerCallback;
     private FragmentComments.YouTubeListener youTubeListener;
 
@@ -94,7 +93,6 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
     private int thumbnailSize;
     private boolean isGrid;
     private boolean animationFinished;
-    private boolean isSelfTextLoaded;
 
     public AdapterCommentList(Activity activity,
             ControllerComments controllerComments,
@@ -103,7 +101,6 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
             ViewHolderComment.EventListener eventListenerComment,
             DisallowListener disallowListener,
             RecyclerCallback recyclerCallback,
-            ViewHolderComment.ReplyCallback replyCallback,
             FragmentComments.YouTubeListener youTubeListener,
             boolean isGrid, int colorLink) {
         this.controllerComments = controllerComments;
@@ -112,7 +109,6 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
         this.eventListenerComment = eventListenerComment;
         this.disallowListener = disallowListener;
         this.recyclerCallback = recyclerCallback;
-        this.replyCallback = replyCallback;
         this.youTubeListener = youTubeListener;
         this.isGrid = isGrid;
         this.colorLink = colorLink;
@@ -254,7 +250,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
 
         return new ViewHolderComment(LayoutInflater.from(parent.getContext())
                 .inflate(R.layout.row_comment, parent, false), eventListenerBase,
-                eventListenerComment, disallowListener, replyCallback);
+                eventListenerComment, disallowListener, recyclerCallback);
     }
 
     @Override
@@ -368,7 +364,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
         protected AdapterLink.ViewHolderBase.EventListener eventListenerBase;
         protected EventListener eventListener;
         protected DisallowListener disallowListener;
-        protected ReplyCallback replyCallback;
+        protected RecyclerCallback recyclerCallback;
         protected String userName;
         protected int indentWidth;
         protected int toolbarItemWidth;
@@ -383,9 +379,9 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                 AdapterLink.ViewHolderBase.EventListener eventListenerBase,
                 EventListener eventListener,
                 DisallowListener disallowListener,
-                ReplyCallback replyCallback,
+                RecyclerCallback recyclerCallback,
                 final ControllerProfile.Listener listener) {
-            this(itemView, eventListenerBase, eventListener, disallowListener, replyCallback);
+            this(itemView, eventListenerBase, eventListener, disallowListener, recyclerCallback);
             itemViewLink.setVisible(true);
             itemViewLink.setEnabled(true);
             itemViewLink.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
@@ -403,13 +399,13 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                 AdapterLink.ViewHolderBase.EventListener eventListenerBase,
                 EventListener eventListener,
                 DisallowListener disallowListener,
-                ReplyCallback replyCallback) {
+                RecyclerCallback recyclerCallback) {
             super(itemView);
 
             this.eventListenerBase = eventListenerBase;
             this.eventListener = eventListener;
             this.disallowListener = disallowListener;
-            this.replyCallback = replyCallback;
+            this.recyclerCallback = recyclerCallback;
 
             intiialize();
             initializeToolbar();
@@ -862,7 +858,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
             layoutContainerReply.setVisibility(
                     comment.isReplyExpanded() ? View.VISIBLE : View.GONE);
             if (comment.isReplyExpanded()) {
-                replyCallback.onReplyShown();
+                recyclerCallback.onReplyShown();
                 editTextReply.setText(comment.getReplyText());
                 editTextReply.clearFocus();
                 InputMethodManager inputManager = (InputMethodManager) itemView.getContext()
@@ -1008,10 +1004,6 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
             void deleteComment(Comment comment);
             void editComment(Comment comment, String text);
             void jumpToParent(Comment comment);
-        }
-
-        public interface ReplyCallback{
-            void onReplyShown();
         }
 
     }

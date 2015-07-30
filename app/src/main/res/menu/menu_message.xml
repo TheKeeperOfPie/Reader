@@ -16,4 +16,20 @@
         app:showAsAction="always"
         />
 
+    <item
+        android:id="@+id/item_view_profile"
+        android:title="@string/item_view_profile"
+        android:orderInCategory="200"
+        android:icon="@drawable/ic_person_white_24dp"
+        app:showAsAction="ifRoom"
+        />
+
+    <item
+        android:id="@+id/item_copy_text"
+        android:title="@string/item_copy_text"
+        android:orderInCategory="300"
+        android:icon="@drawable/ic_content_copy_white_24dp"
+        app:showAsAction="ifRoom"
+        />
+
 </menu>

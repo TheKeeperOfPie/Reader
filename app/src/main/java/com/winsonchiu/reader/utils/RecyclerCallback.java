@@ -14,4 +14,5 @@ public interface RecyclerCallback {
     int getRecyclerHeight();
     RecyclerView.LayoutManager getLayoutManager();
     void hideToolbar();
+    void onReplyShown();
 }

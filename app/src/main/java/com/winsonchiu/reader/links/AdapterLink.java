@@ -431,6 +431,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         public MenuItem itemShare;
         public MenuItem itemDownloadImage;
         public MenuItem itemEdit;
+        public MenuItem itemMarkNsfw;
         public MenuItem itemDelete;
         public MenuItem itemReport;
         public MenuItem itemViewSubreddit;
@@ -449,6 +450,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         public int colorTextSecondaryDefault;
         public int colorTextAlertDefault;
         public int titleTextColor;
+        public int titleTextColorAlert;
         public Drawable drawableDefault;
 
         public SharedPreferences preferences;
@@ -749,6 +751,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             itemShare = menu.findItem(R.id.item_share);
             itemDownloadImage = menu.findItem(R.id.item_download_image);
             itemEdit = menu.findItem(R.id.item_edit);
+            itemMarkNsfw = menu.findItem(R.id.item_mark_nsfw);
             itemDelete = menu.findItem(R.id.item_delete);
             itemReport = menu.findItem(R.id.item_report);
             itemViewSubreddit = menu.findItem(R.id.item_view_subreddit);
@@ -782,7 +785,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                     toggleReply();
                     break;
                 case R.id.item_save:
-                    saveLink(link);
+                    saveLink();
                     break;
                 case R.id.item_view_profile:
                     Intent intentViewProfile = new Intent(itemView.getContext(),
@@ -805,6 +808,9 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                     break;
                 case R.id.item_edit:
                     eventListener.editLink(link);
+                    break;
+                case R.id.item_mark_nsfw:
+                    markNsfw();
                     break;
                 case R.id.item_delete:
                     new AlertDialog.Builder(itemView.getContext())
@@ -876,7 +882,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             return true;
         }
 
-        private void saveLink(final Link link) {
+        private void saveLink() {
             eventListener.save(link);
             syncSaveIcon();
         }
@@ -886,6 +892,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             link.setReplyExpanded(!link.isReplyExpanded());
             layoutContainerReply.setVisibility(link.isReplyExpanded() ? View.VISIBLE : View.GONE);
             if (link.isReplyExpanded()) {
+                recyclerCallback.onReplyShown();
                 InputMethodManager inputManager = (InputMethodManager) itemView.getContext()
                         .getSystemService(Context.INPUT_METHOD_SERVICE);
                 inputManager.toggleSoftInput(InputMethodManager.SHOW_FORCED, 0);
@@ -1015,7 +1022,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
 
             textThreadTitle.setText(link.getTitle()
                     .toString());
-            textThreadTitle.setTextColor(titleTextColor);
+            syncTitleColor();
 
             textThreadSelf.setText(link.getSelfTextHtml());
         }
@@ -1490,6 +1497,8 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
 
             itemEdit.setVisible(link.isSelf() && isAuthor);
             itemEdit.setEnabled(link.isSelf() && isAuthor);
+            itemMarkNsfw.setVisible(isAuthor);
+            itemMarkNsfw.setEnabled(isAuthor);
             itemDelete.setVisible(isAuthor);
             itemDelete.setEnabled(isAuthor);
 
@@ -1558,7 +1567,8 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             this.link = link;
             this.showSubreddit = showSubreddit;
             this.userName = userName;
-            titleTextColor = link.isOver18() ? colorTextAlertDefault : colorTextPrimaryDefault;
+            titleTextColor = colorTextPrimaryDefault;
+            titleTextColorAlert = colorTextAlertDefault;
             colorFilterMenuItem = colorFilterIconDefault;
             isYouTubeFullscreen = false;
             layoutContainerExpand.setVisibility(View.GONE);
@@ -1603,6 +1613,16 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                 itemSave.setTitle(resources.getString(R.string.save));
                 itemSave.getIcon().setColorFilter(colorFilterMenuItem);
             }
+        }
+
+        public void markNsfw() {
+            eventListener.markNsfw(link);
+            syncTitleColor();
+        }
+
+        public void syncTitleColor() {
+            textThreadTitle.setTextColor(link.isOver18() ? titleTextColorAlert : titleTextColor);
+            itemMarkNsfw.setTitle(link.isOver18() ? R.string.unmark_nsfw : R.string.mark_nsfw);
         }
 
         public void destroyWebViews() {
@@ -1680,6 +1700,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             void editLink(Link link);
             void showReplyEditor(Replyable replyable);
             void markRead(Thing thing);
+            void markNsfw(Link link);
         }
 
     }

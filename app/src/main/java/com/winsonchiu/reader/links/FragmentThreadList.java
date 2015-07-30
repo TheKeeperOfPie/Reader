@@ -104,6 +104,7 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
     private FloatingActionButton buttonClearViewed;
     private FloatingActionButton buttonJumpTop;
     private PorterDuffColorFilter colorFilterIcon;
+    private ScrollAwareFloatingActionButtonBehavior behaviorButtonExpandActions;
 
     public static FragmentThreadList newInstance() {
         FragmentThreadList fragment = new FragmentThreadList();
@@ -192,6 +193,11 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
             public void hideToolbar() {
                 AppBarLayout.Behavior behaviorAppBar = (AppBarLayout.Behavior) ((CoordinatorLayout.LayoutParams) layoutAppBar.getLayoutParams()).getBehavior();
                 behaviorAppBar.onNestedFling(layoutCoordinator, layoutAppBar, null, 0, 1000, true);
+            }
+
+            @Override
+            public void onReplyShown() {
+                behaviorButtonExpandActions.animateOut(buttonExpandActions);
             }
 
         };
@@ -385,7 +391,7 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
             }
         });
 
-        FloatingActionButton.Behavior behaviorFloatingActionButton = new ScrollAwareFloatingActionButtonBehavior(
+        behaviorButtonExpandActions = new ScrollAwareFloatingActionButtonBehavior(
                 activity, null,
                 new ScrollAwareFloatingActionButtonBehavior.OnVisibilityChangeListener() {
                     @Override
@@ -401,7 +407,7 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
 
                 });
         ((CoordinatorLayout.LayoutParams) buttonExpandActions.getLayoutParams())
-                .setBehavior(behaviorFloatingActionButton);
+                .setBehavior(behaviorButtonExpandActions);
 
 
         buttonJumpTop = (FloatingActionButton) view.findViewById(R.id.button_jump_top);

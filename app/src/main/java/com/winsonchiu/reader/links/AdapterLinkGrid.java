@@ -179,7 +179,6 @@ public class AdapterLinkGrid extends AdapterLink {
             itemView.setBackgroundColor(colorBackgroundDefault);
             buttonComments.setColorFilter(colorFilterIconDefault);
             imagePlay.setColorFilter(colorFilterIconDefault);
-            textThreadTitle.setTextColor(titleTextColor);
             textThreadInfo.setTextColor(colorTextSecondaryDefault);
             textHidden.setTextColor(colorTextSecondaryDefault);
 
@@ -442,12 +441,8 @@ public class AdapterLinkGrid extends AdapterLink {
                 imagePlay.setColorFilter(colorFilterIconLight);
                 textThreadInfo.setTextColor(resources.getColor(R.color.darkThemeTextColorMuted));
                 textHidden.setTextColor(resources.getColor(R.color.darkThemeTextColorMuted));
-                if (link.isOver18()) {
-                    titleTextColor = resources.getColor(R.color.textColorAlert);
-                }
-                else {
-                    titleTextColor = resources.getColor(R.color.darkThemeTextColor);
-                }
+                titleTextColorAlert = resources.getColor(R.color.textColorAlert);
+                titleTextColor = resources.getColor(R.color.darkThemeTextColor);
                 colorFilterMenuItem = colorFilterIconLight;
 
             }
@@ -456,15 +451,11 @@ public class AdapterLinkGrid extends AdapterLink {
                 imagePlay.setColorFilter(colorFilterIconDark);
                 textThreadInfo.setTextColor(resources.getColor(R.color.lightThemeTextColorMuted));
                 textHidden.setTextColor(resources.getColor(R.color.lightThemeTextColorMuted));
-                if (link.isOver18()) {
-                    titleTextColor = resources.getColor(R.color.textColorAlertMuted);
-                }
-                else {
-                    titleTextColor = resources.getColor(R.color.lightThemeTextColor);
-                }
+                titleTextColorAlert = resources.getColor(R.color.textColorAlertMuted);
+                titleTextColor = resources.getColor(R.color.lightThemeTextColor);
                 colorFilterMenuItem = colorFilterIconDark;
             }
-            textThreadTitle.setTextColor(titleTextColor);
+            syncTitleColor();
 
             setOverflowColorFilter();
 
@@ -501,8 +492,6 @@ public class AdapterLinkGrid extends AdapterLink {
         @Override
         public void setTextValues(Link link) {
             super.setTextValues(link);
-
-            textThreadTitle.setTextColor(titleTextColor);
 
             textThreadInfo.setText(TextUtils
                     .concat(getSubredditString(), showSubreddit ? "\n" : "", getSpannableScore(),

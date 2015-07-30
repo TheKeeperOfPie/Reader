@@ -252,6 +252,21 @@ public class ControllerHistory implements ControllerLinksBase {
         return false;
     }
 
+    @Override
+    public void setNsfw(String name, boolean over18) {
+
+        for (int index = 0; index < history.getChildren().size(); index++) {
+            Thing thing = history.getChildren().get(index);
+            if (thing.getName().equals(name)) {
+                ((Link) thing).setOver18(over18);
+                for (Listener listener : listeners) {
+                    listener.getAdapter().notifyItemChanged(index + 1);
+                }
+                return;
+            }
+        }
+    }
+
     public void setQuery(String query) {
         query = query.toLowerCase();
         if (!this.query.equals(query)) {

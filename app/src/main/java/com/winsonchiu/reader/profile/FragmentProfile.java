@@ -360,6 +360,11 @@ public class FragmentProfile extends FragmentBase implements Toolbar.OnMenuItemC
                     behaviorAppBar.onNestedFling(layoutCoordinator, layoutAppBar, null, 0, 1000, true);
                 }
 
+                @Override
+                public void onReplyShown() {
+
+                }
+
             }, listener);
         }
 

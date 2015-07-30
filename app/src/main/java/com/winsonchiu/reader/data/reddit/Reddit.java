@@ -575,6 +575,23 @@ public class Reddit {
         }, params, 0);
     }
 
+
+    public void markNsfw(Link link, ErrorListener errorListener) {
+
+        HashMap<String, String> params = new HashMap<>(1);
+        params.put(Reddit.QUERY_ID, link.getName());
+
+        reddit.loadPost(Reddit.OAUTH_URL + "/api/marknsfw", null, errorListener, params, 0);
+    }
+
+    public void unmarkNsfw(Link link, ErrorListener errorListener) {
+
+        HashMap<String, String> params = new HashMap<>(1);
+        params.put(Reddit.QUERY_ID, link.getName());
+
+        reddit.loadPost(Reddit.OAUTH_URL + "/api/unmarknsfw", null, errorListener, params, 0);
+    }
+
     public static String parseUrlId(String url, String prefix, String suffix) {
         int startIndex = url.indexOf(prefix) + prefix.length();
         int slashIndex = url.substring(startIndex)

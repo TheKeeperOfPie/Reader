@@ -283,6 +283,11 @@ public class FragmentHistory extends FragmentBase implements Toolbar.OnMenuItemC
                 AppBarLayout.Behavior behaviorAppBar = (AppBarLayout.Behavior) ((CoordinatorLayout.LayoutParams) layoutAppBar.getLayoutParams()).getBehavior();
                 behaviorAppBar.onNestedFling(layoutCoordinator, layoutAppBar, null, 0, 1000, true);
             }
+
+            @Override
+            public void onReplyShown() {
+
+            }
         };
 
 

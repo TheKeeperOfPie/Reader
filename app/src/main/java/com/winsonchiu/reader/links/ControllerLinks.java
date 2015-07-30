@@ -409,6 +409,21 @@ public class ControllerLinks implements ControllerLinksBase {
         return false;
     }
 
+    @Override
+    public void setNsfw(String name, boolean over18) {
+
+        for (int index = 0; index < listingLinks.getChildren().size(); index++) {
+            Thing thing = listingLinks.getChildren().get(index);
+            if (thing.getName().equals(name)) {
+                ((Link) thing).setOver18(over18);
+                for (Listener listener : listeners) {
+                    listener.getAdapter().notifyItemChanged(index + 1);
+                }
+                return;
+            }
+        }
+    }
+
     public Link remove(int position) {
         Link link = (Link) listingLinks.getChildren().remove(position);
         for (Listener listener : listeners) {

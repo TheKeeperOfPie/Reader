@@ -10,6 +10,7 @@ import android.content.res.TypedArray;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
 import android.os.Bundle;
+import android.support.design.widget.AppBarLayout;
 import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.widget.SwipeRefreshLayout;
@@ -41,6 +42,7 @@ import com.winsonchiu.reader.comments.AdapterCommentList;
 import com.winsonchiu.reader.data.reddit.Comment;
 import com.winsonchiu.reader.data.reddit.Reddit;
 import com.winsonchiu.reader.profile.ControllerProfile;
+import com.winsonchiu.reader.utils.RecyclerCallback;
 import com.winsonchiu.reader.utils.ScrollAwareFloatingActionButtonBehavior;
 
 public class FragmentInbox extends FragmentBase implements Toolbar.OnMenuItemClickListener {
@@ -61,6 +63,8 @@ public class FragmentInbox extends FragmentBase implements Toolbar.OnMenuItemCli
     private ScrollAwareFloatingActionButtonBehavior behaviorFloatingActionButton;
     private PorterDuffColorFilter colorFilterIcon;
     private Menu menu;
+    private CoordinatorLayout layoutCoordinator;
+    private AppBarLayout layoutAppBar;
 
     public static FragmentInbox newInstance() {
         FragmentInbox fragment = new FragmentInbox();
@@ -118,6 +122,9 @@ public class FragmentInbox extends FragmentBase implements Toolbar.OnMenuItemCli
             }
         };
 
+        layoutCoordinator = (CoordinatorLayout) view.findViewById(R.id.layout_coordinator);
+        layoutAppBar = (AppBarLayout) view.findViewById(R.id.layout_app_bar);
+
         TypedArray typedArray = activity.getTheme().obtainStyledAttributes(
                 new int[]{R.attr.colorIconFilter});
         int colorIconFilter = typedArray.getColor(0, 0xFFFFFFFF);
@@ -169,7 +176,8 @@ public class FragmentInbox extends FragmentBase implements Toolbar.OnMenuItemCli
         adapterInboxPage = new AdapterInboxPage(activity);
         spinnerPage = (Spinner) view.findViewById(R.id.spinner_page);
         spinnerPage.setAdapter(adapterInboxPage);
-        spinnerPage.setSelection(adapterInboxPage.getPages().indexOf(mListener.getControllerInbox().getPage()));
+        spinnerPage.setSelection(
+                adapterInboxPage.getPages().indexOf(mListener.getControllerInbox().getPage()));
         spinnerPage.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
@@ -248,7 +256,28 @@ public class FragmentInbox extends FragmentBase implements Toolbar.OnMenuItemCli
                         public void requestDisallowInterceptTouchEventHorizontal(boolean disallow) {
 
                         }
-                    }, new AdapterCommentList.ViewHolderComment.ReplyCallback() {
+                    }, new RecyclerCallback() {
+                @Override
+                public void scrollTo(int position) {
+                    linearLayoutManager.scrollToPositionWithOffset(position, 0);
+                }
+
+                @Override
+                public int getRecyclerHeight() {
+                    return recyclerInbox.getHeight();
+                }
+
+                @Override
+                public RecyclerView.LayoutManager getLayoutManager() {
+                    return linearLayoutManager;
+                }
+
+                @Override
+                public void hideToolbar() {
+                    AppBarLayout.Behavior behaviorAppBar = (AppBarLayout.Behavior) ((CoordinatorLayout.LayoutParams) layoutAppBar.getLayoutParams()).getBehavior();
+                    behaviorAppBar.onNestedFling(layoutCoordinator, layoutAppBar, null, 0, 1000, true);
+                }
+
                 @Override
                 public void onReplyShown() {
                     behaviorFloatingActionButton.animateOut(floatingActionButtonNewMessage);

@@ -22,4 +22,5 @@ public interface ControllerLinksBase {
     Subreddit getSubreddit();
     boolean showSubreddit();
     boolean setReplyText(String name, String text, boolean collapsed);
+    void setNsfw(String name, boolean over18);
 }

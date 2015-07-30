@@ -24,8 +24,8 @@ android {
         applicationId "com.winsonchiu.reader"
         minSdkVersion 17
         targetSdkVersion 22
-        versionCode 47
-        versionName "1.1.2"
+        versionCode 48
+        versionName "1.1.3"
     }
     buildTypes {
         release {

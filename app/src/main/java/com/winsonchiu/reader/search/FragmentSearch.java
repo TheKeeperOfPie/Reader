@@ -336,6 +336,11 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
                 return mListener.getControllerSearch().setReplyTextLinks(name, text, collapsed);
             }
 
+            @Override
+            public void setNsfw(String name, boolean over18) {
+                mListener.getControllerSearch().setNsfwLinks(name, over18);
+            }
+
         }, mListener.getControllerUser(),
                 new AdapterLink.ViewHolderHeader.EventListener() {
                     @Override
@@ -369,6 +374,11 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
                         AppBarLayout.Behavior behaviorAppBar = (AppBarLayout.Behavior) ((CoordinatorLayout.LayoutParams) layoutAppBar.getLayoutParams()).getBehavior();
                         behaviorAppBar.onNestedFling(layoutCoordinator, layoutAppBar, null, 0, 1000,
                                 true);
+                    }
+
+                    @Override
+                    public void onReplyShown() {
+
                     }
 
                 });
@@ -414,6 +424,11 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
                         collapsed);
             }
 
+            @Override
+            public void setNsfw(String name, boolean over18) {
+                mListener.getControllerSearch().setNsfwLinksSubreddit(name, over18);
+            }
+
         }, mListener.getControllerUser(),
                 new AdapterLink.ViewHolderHeader.EventListener() {
                     @Override
@@ -446,6 +461,11 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
                     public void hideToolbar() {
                         AppBarLayout.Behavior behaviorAppBar = (AppBarLayout.Behavior) ((CoordinatorLayout.LayoutParams) layoutAppBar.getLayoutParams()).getBehavior();
                         behaviorAppBar.onNestedFling(layoutCoordinator, layoutAppBar, null, 0, 1000, true);
+                    }
+
+                    @Override
+                    public void onReplyShown() {
+
                     }
 
                 });

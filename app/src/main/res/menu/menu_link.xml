@@ -82,10 +82,18 @@
         />
 
     <item
+        android:id="@+id/item_mark_nsfw"
+        android:title="@string/item_mark_nsfw"
+        android:icon="@drawable/ic_warning_white_24dp"
+        android:orderInCategory="1000"
+        app:showAsAction="ifRoom"
+        />
+
+    <item
         android:id="@+id/item_delete"
         android:title="@string/item_delete"
         android:icon="@drawable/ic_delete_white_24dp"
-        android:orderInCategory="1000"
+        android:orderInCategory="1100"
         app:showAsAction="ifRoom"
         />
 
@@ -93,7 +101,7 @@
         android:id="@+id/item_report"
         android:title="@string/item_report"
         android:icon="@drawable/ic_report_white_24dp"
-        android:orderInCategory="1100"
+        android:orderInCategory="1200"
         app:showAsAction="ifRoom"
         >
 

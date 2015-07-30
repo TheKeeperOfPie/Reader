@@ -63,6 +63,7 @@ import com.winsonchiu.reader.links.FragmentThreadList;
 import com.winsonchiu.reader.profile.ControllerProfile;
 import com.winsonchiu.reader.profile.FragmentProfile;
 import com.winsonchiu.reader.search.ControllerSearch;
+import com.winsonchiu.reader.search.FragmentSearch;
 import com.winsonchiu.reader.settings.ActivitySettings;
 import com.winsonchiu.reader.views.WebViewFixed;
 
@@ -539,6 +540,48 @@ public class MainActivity extends YouTubeBaseActivity
 
                                     }
                                 }, params, 0);
+            }
+
+            @Override
+            public void markNsfw(final Link link) {
+                link.setOver18(!link.isOver18());
+                if (link.isOver18()) {
+                    getReddit().markNsfw(link, new Response.ErrorListener() {
+                        @Override
+                        public void onErrorResponse(VolleyError error) {
+                            link.setOver18(false);
+                            Toast.makeText(MainActivity.this, R.string.error_marking_nsfw,
+                                    Toast.LENGTH_LONG).show();
+                        }
+                    });
+                }
+                else {
+                    getReddit().unmarkNsfw(link, new Response.ErrorListener() {
+                        @Override
+                        public void onErrorResponse(VolleyError error) {
+                            link.setOver18(true);
+                            Toast.makeText(MainActivity.this, R.string.error_unmarking_nsfw, Toast.LENGTH_LONG).show();
+                        }
+                    });
+                }
+
+                if (getFragmentManager().findFragmentByTag(FragmentThreadList.TAG) != null) {
+                    getControllerLinks().setNsfw(link.getName(), link.isOver18());
+                }
+                if (getFragmentManager().findFragmentByTag(FragmentComments.TAG) != null) {
+                    getControllerComments().setNsfw(link.getName(), link.isOver18());
+                }
+                if (getFragmentManager().findFragmentByTag(FragmentProfile.TAG) != null) {
+                    getControllerProfile().setNsfw(link.getName(), link.isOver18());
+                }
+                if (getFragmentManager().findFragmentByTag(FragmentHistory.TAG) != null) {
+                    getControllerHistory().setNsfw(link.getName(), link.isOver18());
+                }
+                if (getFragmentManager().findFragmentByTag(FragmentSearch.TAG) != null) {
+                    getControllerSearch().setNsfwLinks(link.getName(), link.isOver18());
+                    getControllerSearch().setNsfwLinksSubreddit(link.getName(), link.isOver18());
+                }
+
             }
 
         };

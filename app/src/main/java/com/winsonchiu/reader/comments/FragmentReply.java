@@ -37,9 +37,11 @@ import com.winsonchiu.reader.FragmentBase;
 import com.winsonchiu.reader.FragmentListenerBase;
 import com.winsonchiu.reader.R;
 import com.winsonchiu.reader.data.reddit.Replyable;
+import com.winsonchiu.reader.history.FragmentHistory;
 import com.winsonchiu.reader.inbox.FragmentInbox;
 import com.winsonchiu.reader.links.FragmentThreadList;
 import com.winsonchiu.reader.profile.FragmentProfile;
+import com.winsonchiu.reader.search.FragmentSearch;
 
 public class FragmentReply extends FragmentBase implements Toolbar.OnMenuItemClickListener {
 
@@ -126,6 +128,7 @@ public class FragmentReply extends FragmentBase implements Toolbar.OnMenuItemCli
 
         editReply = (EditText) view.findViewById(R.id.edit_reply);
         editReply.setText(getArguments().getString(ARG_TEXT));
+        editReply.setSelection(editReply.length());
 
         View.OnFocusChangeListener onFocusChangeListener = new View.OnFocusChangeListener() {
             @Override
@@ -476,6 +479,13 @@ public class FragmentReply extends FragmentBase implements Toolbar.OnMenuItemCli
         }
         if (getFragmentManager().findFragmentByTag(FragmentInbox.TAG) != null) {
             mListener.getControllerInbox().setReplyText(nameParent, text, collapsed);
+        }
+        if (getFragmentManager().findFragmentByTag(FragmentHistory.TAG) != null) {
+            mListener.getControllerHistory().setReplyText(nameParent, text, collapsed);
+        }
+        if (getFragmentManager().findFragmentByTag(FragmentSearch.TAG) != null) {
+            mListener.getControllerSearch().setReplyTextLinks(nameParent, text, collapsed);
+            mListener.getControllerSearch().setReplyTextLinksSubreddit(nameParent, text, collapsed);
         }
 
         return true;

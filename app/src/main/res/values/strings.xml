@@ -229,4 +229,9 @@
     <string name="marked_read">All marked as read, may take time to update</string>
     <string name="recommended">Recommended</string>
     <string name="error_deleting_comment">Error deleting comment</string>
+    <string name="item_mark_nsfw">Mark NSFW</string>
+    <string name="error_marking_nsfw">Error marking NSFW</string>
+    <string name="error_unmarking_nsfw">Error unmarking NSFW</string>
+    <string name="unmark_nsfw">Unmark NSFW</string>
+    <string name="mark_nsfw">Mark NSFW</string>
 </resources>

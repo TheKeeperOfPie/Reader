@@ -890,6 +890,35 @@ public class ControllerSearch {
         return false;
     }
 
+    public void setNsfwLinks(String name, boolean over18) {
+
+        for (int index = 0; index < links.getChildren().size(); index++) {
+            Thing thing = links.getChildren().get(index);
+            if (thing.getName().equals(name)) {
+                ((Link) thing).setOver18(over18);
+                for (Listener listener : listeners) {
+                    listener.getAdapterLinks().notifyItemChanged(index + 1);
+                }
+                return;
+            }
+        }
+    }
+
+
+    public void setNsfwLinksSubreddit(String name, boolean over18) {
+
+        for (int index = 0; index < linksSubreddit.getChildren().size(); index++) {
+            Thing thing = linksSubreddit.getChildren().get(index);
+            if (thing.getName().equals(name)) {
+                ((Link) thing).setOver18(over18);
+                for (Listener listener : listeners) {
+                    listener.getAdapterLinks().notifyItemChanged(index + 1);
+                }
+                return;
+            }
+        }
+    }
+
     public interface Listener extends ControllerListener {
         AdapterSearchSubreddits getAdapterSearchSubreddits();
         AdapterSearchSubreddits getAdapterSearchSubredditsRecommended();
