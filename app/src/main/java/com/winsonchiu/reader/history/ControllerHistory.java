@@ -10,6 +10,7 @@ import android.util.Log;
 
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.winsonchiu.reader.R;
 import com.winsonchiu.reader.data.reddit.Link;
 import com.winsonchiu.reader.data.reddit.Listing;
@@ -23,6 +24,7 @@ import com.winsonchiu.reader.utils.ControllerListener;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -129,12 +131,13 @@ public class ControllerHistory implements ControllerLinksBase {
                     public void onResponse(String response) {
 
                         try {
-                            history = Listing.fromJson(new JSONObject(response));
+                            history = Listing.fromJson(Reddit.getObjectMapper().readValue(
+                                    response, JsonNode.class));
                             for (Listener listener : listeners) {
                                 listener.getAdapter().notifyDataSetChanged();
                             }
                         }
-                        catch (JSONException e) {
+                        catch (IOException e) {
                             e.printStackTrace();
                         }
                         setIsLoading(false);
@@ -201,7 +204,8 @@ public class ControllerHistory implements ControllerLinksBase {
                         try {
                             int startPosition = history.getChildren().size();
 
-                            Listing listing = Listing.fromJson(new JSONObject(response));
+                            Listing listing = Listing.fromJson(Reddit.getObjectMapper().readValue(
+                                    response, JsonNode.class));
                             history.addChildren(listing.getChildren());
                             for (Listener listener : listeners) {
                                 listener.getAdapter()
@@ -209,7 +213,7 @@ public class ControllerHistory implements ControllerLinksBase {
                                                 .getChildren().size() - startPosition);
                             }
                         }
-                        catch (JSONException e) {
+                        catch (IOException e) {
                             e.printStackTrace();
                         }
                         setIsLoading(false);

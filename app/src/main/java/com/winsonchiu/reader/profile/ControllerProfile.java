@@ -11,6 +11,7 @@ import android.widget.Toast;
 
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.winsonchiu.reader.data.Page;
 import com.winsonchiu.reader.data.reddit.Replyable;
 import com.winsonchiu.reader.utils.ControllerListener;
@@ -31,6 +32,7 @@ import com.winsonchiu.reader.links.ControllerLinksBase;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -177,7 +179,8 @@ public class ControllerProfile implements ControllerLinksBase {
                     public void onResponse(String response) {
                         Log.d(TAG, "onResponse: " + response);
                         try {
-                            setData(Listing.fromJson(new JSONObject(response)));
+                            setData(Listing.fromJson(Reddit.getObjectMapper().readValue(
+                                    response, JsonNode.class)));
                             for (Listener listener : listeners) {
                                 listener.setPage(page);
                                 listener.getAdapter().notifyDataSetChanged();
@@ -188,7 +191,7 @@ public class ControllerProfile implements ControllerLinksBase {
                                 loadTopEntries();
                             }
                         }
-                        catch (JSONException e1) {
+                        catch (IOException e1) {
                             e1.printStackTrace();
                         }
                     }
@@ -222,7 +225,8 @@ public class ControllerProfile implements ControllerLinksBase {
                             int startSize = data.getChildren().size();
                             int positionStart = startSize + 5;
 
-                            Listing listing = Listing.fromJson(new JSONObject(response));
+                            Listing listing = Listing.fromJson(Reddit.getObjectMapper().readValue(
+                                    response, JsonNode.class));
 
                             data.addChildren(listing.getChildren());
                             data.setAfter(listing.getAfter());
@@ -236,7 +240,7 @@ public class ControllerProfile implements ControllerLinksBase {
                             }
                             setLoading(false);
                         }
-                        catch (JSONException e1) {
+                        catch (IOException e1) {
                             e1.printStackTrace();
                         }
                     }
@@ -277,7 +281,8 @@ public class ControllerProfile implements ControllerLinksBase {
                         Log.d(TAG, "Submitted onResponse: " + response);
                         try {
                             Listing listingLink = Listing.fromJson(
-                                    new JSONObject(response));
+                                    Reddit.getObjectMapper().readValue(
+                                            response, JsonNode.class));
                             if (!listingLink.getChildren().isEmpty()) {
                                 topLink = null;
                                 for (Thing thing : listingLink.getChildren()) {
@@ -294,7 +299,7 @@ public class ControllerProfile implements ControllerLinksBase {
                                 }
                             }
                         }
-                        catch (JSONException e1) {
+                        catch (IOException e1) {
                             e1.printStackTrace();
                         }
                     }
@@ -313,9 +318,8 @@ public class ControllerProfile implements ControllerLinksBase {
                         Log.d(TAG,
                                 "onResponse: " + response);
                         try {
-                            Listing listingComment = Listing.fromJson(
-                                    new JSONObject(
-                                            response));
+                            Listing listingComment = Listing.fromJson(Reddit.getObjectMapper().readValue(
+                                    response, JsonNode.class));
                             if (!listingComment.getChildren().isEmpty()) {
                                 topComment = (Comment) listingComment.getChildren()
                                         .get(0);
@@ -328,7 +332,7 @@ public class ControllerProfile implements ControllerLinksBase {
                                 }
                             }
                         }
-                        catch (JSONException e1) {
+                        catch (IOException e1) {
                             e1.printStackTrace();
                         }
                     }
@@ -544,7 +548,8 @@ public class ControllerProfile implements ControllerLinksBase {
             @Override
             public void onResponse(String response) {
                 try {
-                    Comment newComment = Comment.fromJson(new JSONObject(response).getJSONObject("json").getJSONObject("data").getJSONArray("things").getJSONObject(0), comment.getLevel());
+                    Comment newComment = Comment.fromJson(Reddit.getObjectMapper().readValue(
+                            response, JsonNode.class).get("json").get("data").get("things").get(0), comment.getLevel());
                     comment.setBodyHtml(newComment.getBodyHtml());
                     if (comment.getName().equals(topComment.getName())) {
                         for (Listener listener : listeners) {
@@ -563,7 +568,7 @@ public class ControllerProfile implements ControllerLinksBase {
                     }
 
                 }
-                catch (JSONException e) {
+                catch (IOException e) {
                     e.printStackTrace();
                 }
             }
@@ -591,10 +596,10 @@ public class ControllerProfile implements ControllerLinksBase {
                             @Override
                             public void onResponse(String response) {
                                 try {
-                                    Log.d(TAG, "User FragmentProfile onResponse: " + new JSONObject(response).getJSONObject("data").toString());
-                                    user = User.fromJson(new JSONObject(response).getJSONObject("data"));
+                                    user = User.fromJson(Reddit.getObjectMapper().readValue(
+                                            response, JsonNode.class).get("data"));
                                 }
-                                catch (JSONException e) {
+                                catch (IOException e) {
                                     e.printStackTrace();
                                 }
                                 setUser(user);
@@ -645,15 +650,15 @@ public class ControllerProfile implements ControllerLinksBase {
             @Override
             public void onResponse(String response) {
                 try {
-                    JSONObject jsonObject = new JSONObject(response);
                     Comment newComment = Comment.fromJson(
-                            jsonObject.getJSONObject("json")
-                                    .getJSONObject("data")
-                                    .getJSONArray("things")
-                                    .getJSONObject(0), 0);
+                            Reddit.getObjectMapper().readValue(
+                                    response, JsonNode.class).get("json")
+                                    .get("data")
+                                    .get("things")
+                                    .get(0), 0);
                     insertComment(newComment);
                 }
-                catch (JSONException e) {
+                catch (IOException e) {
                     e.printStackTrace();
                 }
             }

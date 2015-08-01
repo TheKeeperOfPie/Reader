@@ -579,10 +579,10 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
 
         public void expandToolbarActions() {
 
-            if (comment.isNew()) {
+            if (comment.getIsNew()) {
                 eventListenerBase.markRead(comment);
                 comment.setIsNew(false);
-                textInfo.setTextColor(comment.isNew() ? itemView.getResources()
+                textInfo.setTextColor(comment.getIsNew() ? itemView.getResources()
                         .getColor(R.color.textColorAlert) : colorTextSecondary);
                 return;
             }
@@ -831,7 +831,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                                     DateUtils.FORMAT_SHOW_TIME | DateUtils.FORMAT_SHOW_DATE | DateUtils.FORMAT_SHOW_YEAR) :
                             DateUtils.getRelativeTimeSpanString(comment.getCreatedUtc());
 
-            textInfo.setTextColor(comment.isNew() ? resources.getColor(
+            textInfo.setTextColor(comment.getIsNew() ? resources.getColor(
                     R.color.textColorAlert) : colorTextSecondary);
 
             textInfo.setText(TextUtils

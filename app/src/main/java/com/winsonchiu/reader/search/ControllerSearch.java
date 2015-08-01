@@ -14,6 +14,7 @@ import android.widget.Toast;
 import com.android.volley.Request;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.winsonchiu.reader.data.reddit.Replyable;
 import com.winsonchiu.reader.utils.ControllerListener;
 import com.winsonchiu.reader.ControllerUser;
@@ -32,6 +33,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.ArrayList;
@@ -150,7 +152,8 @@ public class ControllerSearch {
                     public void onResponse(String response) {
                         try {
                             Log.d(TAG, "response: " + response);
-                            Listing listing = Listing.fromJson(new JSONObject(response));
+                            Listing listing = Listing.fromJson(Reddit.getObjectMapper().readValue(
+                                    response, JsonNode.class));
                             subredditsSubscribed = listing;
                             Collections.sort(subredditsSubscribed.getChildren(), new Comparator<Thing>() {
                                 @Override
@@ -173,7 +176,7 @@ public class ControllerSearch {
                             }
 
                         }
-                        catch (JSONException e) {
+                        catch (IOException e) {
                             e.printStackTrace();
                         }
                     }
@@ -200,7 +203,8 @@ public class ControllerSearch {
                     @Override
                     public void onResponse(String response) {
                         try {
-                            Listing listing = Listing.fromJson(new JSONObject(response));
+                            Listing listing = Listing.fromJson(Reddit.getObjectMapper().readValue(
+                                    response, JsonNode.class));
                             subredditsSubscribed.addChildren(listing.getChildren());
                             Collections.sort(subredditsSubscribed.getChildren(), new Comparator<Thing>() {
                                 @Override
@@ -223,7 +227,7 @@ public class ControllerSearch {
                             }
 
                         }
-                        catch (JSONException e) {
+                        catch (IOException e) {
                             e.printStackTrace();
                         }
                     }
@@ -246,7 +250,8 @@ public class ControllerSearch {
                     @Override
                     public void onResponse(String response) {
                         try {
-                            Listing listing = Listing.fromJson(new JSONObject(response));
+                            Listing listing = Listing.fromJson(Reddit.getObjectMapper().readValue(
+                                    response, JsonNode.class));
                             subredditsSubscribed.addChildren(listing.getChildren());
                             Collections.sort(subredditsSubscribed.getChildren(), new Comparator<Thing>() {
                                 @Override
@@ -267,7 +272,7 @@ public class ControllerSearch {
                             }
 
                         }
-                        catch (JSONException e) {
+                        catch (IOException e) {
                             e.printStackTrace();
                         }
                     }
@@ -286,7 +291,8 @@ public class ControllerSearch {
                     @Override
                     public void onResponse(String response) {
                         try {
-                            Listing listing = Listing.fromJson(new JSONObject(response));
+                            Listing listing = Listing.fromJson(Reddit.getObjectMapper().readValue(
+                                    response, JsonNode.class));
                             subredditsSubscribed.addChildren(listing.getChildren());
                             Collections.sort(subredditsSubscribed.getChildren(),
                                     new Comparator<Thing>() {
@@ -312,7 +318,7 @@ public class ControllerSearch {
                             }
 
                         }
-                        catch (JSONException e) {
+                        catch (IOException e) {
                             e.printStackTrace();
                         }
                     }
@@ -367,19 +373,24 @@ public class ControllerSearch {
         String queryTrimmed = query.toLowerCase().replaceAll("\\s", "");
 
         Listing subscribedResults = new Listing();
-        List<Thing> resultsThatContainQuery = new ArrayList<>();
+        List<Thing> resultsThatContainQueryInTitle = new ArrayList<>();
+        List<Thing> resultsThatContainQueryInDescription = new ArrayList<>();
 
         for (Thing thing : subredditsSubscribed.getChildren()) {
             Subreddit subreddit = (Subreddit) thing;
             if (subreddit.getDisplayName().toLowerCase().startsWith(queryTrimmed)) {
                 subscribedResults.getChildren().add(subreddit);
             }
-            else if (subreddit.getDisplayName().toLowerCase().contains(queryTrimmed) || subreddit.getPublicDescription().toLowerCase().contains(queryTrimmed)) {
-                resultsThatContainQuery.add(subreddit);
+            else if (subreddit.getDisplayName().toLowerCase().contains(queryTrimmed)) {
+                resultsThatContainQueryInTitle.add(subreddit);
+            }
+            else if (subreddit.getPublicDescription().toLowerCase().contains(queryTrimmed)) {
+                resultsThatContainQueryInDescription.add(subreddit);
             }
         }
 
-        subscribedResults.addChildren(resultsThatContainQuery);
+        subscribedResults.addChildren(resultsThatContainQueryInTitle);
+        subscribedResults.addChildren(resultsThatContainQueryInDescription);
 
         subreddits = subscribedResults;
         for (Listener listener : listeners) {
@@ -396,7 +407,8 @@ public class ControllerSearch {
                                 public void run() {
 
                                     try {
-                                        Listing listing = Listing.fromJson(new JSONObject(response));
+                                        Listing listing = Listing.fromJson(Reddit.getObjectMapper().readValue(
+                                    response, JsonNode.class));
                                         Iterator<Thing> iterator = listing.getChildren().iterator();
                                         while (iterator.hasNext()) {
                                             Subreddit subreddit = (Subreddit) iterator.next();
@@ -416,7 +428,7 @@ public class ControllerSearch {
                                             });
                                         }
                                     }
-                                    catch (JSONException e) {
+                                    catch (IOException e) {
                                         e.printStackTrace();
                                     }
 
@@ -482,7 +494,8 @@ public class ControllerSearch {
                                     public void onResponse(String response) {
                                         try {
                                             Subreddit subreddit = Subreddit
-                                                    .fromJson(new JSONObject(response));
+                                                    .fromJson(Reddit.getObjectMapper().readValue(
+                                    response, JsonNode.class));
                                             subredditsRecommended.getChildren().add(subreddit);
 
                                             if (subredditsRecommended.getChildren()
@@ -508,7 +521,7 @@ public class ControllerSearch {
 
                                             }
                                         }
-                                        catch (JSONException e) {
+                                        catch (IOException e) {
                                             e.printStackTrace();
                                         }
                                     }
@@ -552,13 +565,14 @@ public class ControllerSearch {
                         public void onResponse(String response) {
                             Log.d(TAG, "Response: " + response);
                             try {
-                                links = Listing.fromJson(new JSONObject(response));
+                                links = Listing.fromJson(Reddit.getObjectMapper().readValue(
+                                    response, JsonNode.class));
                                 for (Listener listener : listeners) {
                                     listener.getAdapterLinks().notifyDataSetChanged();
                                 }
                                 setLoadingLinks(false);
                             }
-                            catch (JSONException e) {
+                            catch (IOException e) {
                                 e.printStackTrace();
                                 setLoadingLinks(false);
                             }
@@ -600,13 +614,14 @@ public class ControllerSearch {
                         @Override
                         public void onResponse(String response) {
                             try {
-                                linksSubreddit = Listing.fromJson(new JSONObject(response));
+                                linksSubreddit = Listing.fromJson(Reddit.getObjectMapper().readValue(
+                                    response, JsonNode.class));
                                 for (Listener listener : listeners) {
                                     listener.getAdapterLinksSubreddit().notifyDataSetChanged();
                                 }
                                 setLoadingLinksSubreddit(false);
                             }
-                            catch (JSONException e) {
+                            catch (IOException e) {
                                 e.printStackTrace();
                                 setLoadingLinksSubreddit(false);
                             }
@@ -682,7 +697,8 @@ public class ControllerSearch {
                                 int positionStart = links.getChildren()
                                         .size() + 1;
                                 int startSize = links.getChildren().size();
-                                Listing listing = Listing.fromJson(new JSONObject(response));
+                                Listing listing = Listing.fromJson(Reddit.getObjectMapper().readValue(
+                                    response, JsonNode.class));
                                 links.addChildren(listing.getChildren());
                                 links.setAfter(listing.getAfter());
                                 for (Listener listener : listeners) {
@@ -690,7 +706,7 @@ public class ControllerSearch {
                                 }
                                 setLoadingLinks(false);
                             }
-                            catch (JSONException e) {
+                            catch (IOException e) {
                                 e.printStackTrace();
                                 setLoadingLinks(false);
                             }
@@ -752,7 +768,8 @@ public class ControllerSearch {
                         @Override
                         public void onResponse(String response) {
                             try {
-                                Listing listing = Listing.fromJson(new JSONObject(response));
+                                Listing listing = Listing.fromJson(Reddit.getObjectMapper().readValue(
+                                    response, JsonNode.class));
                                 if (listing.getChildren().isEmpty() || listing.getChildren().get(0) instanceof Subreddit) {
                                     setLoadingLinksSubreddit(false);
                                     return;
@@ -767,7 +784,7 @@ public class ControllerSearch {
                                 }
                                 setLoadingLinksSubreddit(false);
                             }
-                            catch (JSONException e) {
+                            catch (IOException e) {
                                 e.printStackTrace();
                                 setLoadingLinksSubreddit(false);
                             }

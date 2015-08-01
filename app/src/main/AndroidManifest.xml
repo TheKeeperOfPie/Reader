@@ -9,7 +9,7 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
-    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
     <application
         android:name=".CustomApplication"
@@ -53,8 +53,9 @@
             android:name=".inbox.Receiver"
             android:exported="false" >
             <intent-filter>
-                <action android:name="com.winsonchiu.reader.inbox.Receiver.INTENT_INBOX" />
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="com.winsonchiu.reader.inbox.Receiver.INTENT_INBOX" />
+                <action android:name="com.winsonchiu.reader.inbox.Receiver.ACTION_MARK_READ" />
             </intent-filter>
         </receiver>
 

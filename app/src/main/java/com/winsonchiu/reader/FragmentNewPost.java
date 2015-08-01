@@ -40,6 +40,7 @@ import android.widget.Toast;
 
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.github.rjeschke.txtmark.Processor;
 import com.squareup.picasso.Picasso;
 import com.winsonchiu.reader.data.reddit.Link;
@@ -49,6 +50,7 @@ import com.winsonchiu.reader.data.reddit.Reddit;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -416,7 +418,8 @@ public class FragmentNewPost extends FragmentBase implements Toolbar.OnMenuItemC
                     @Override
                     public void onResponse(String response) {
                         try {
-                            Listing listing = Listing.fromJson(new JSONObject(response));
+                            Listing listing = Listing.fromJson(Reddit.getObjectMapper().readValue(
+                                    response, JsonNode.class));
                             Link link = (Link) listing.getChildren().get(0);
                             editTextTitle.setText(link.getTitle());
                             editTextTitle.setClickable(false);
@@ -426,7 +429,7 @@ public class FragmentNewPost extends FragmentBase implements Toolbar.OnMenuItemC
 
                             editTextBody.setText(link.getSelfText());
                         }
-                        catch (JSONException e) {
+                        catch (IOException e) {
                             e.printStackTrace();
                         }
                     }

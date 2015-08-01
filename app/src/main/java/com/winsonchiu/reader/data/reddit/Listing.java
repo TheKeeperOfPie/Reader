@@ -4,11 +4,19 @@
 
 package com.winsonchiu.reader.data.reddit;
 
+import android.util.Log;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.winsonchiu.reader.utils.UtilsJson;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.List;
 
@@ -71,50 +79,49 @@ public class Listing {
         this.children.addAll(linkedHashSet);
     }
 
-    public static Listing fromJson(JSONObject rootJsonObject) throws JSONException {
+    public static Listing fromJson(JsonNode nodeRoot) {
+
+        long start = System.currentTimeMillis();
 
         Listing listing = new Listing();
-        JSONObject jsonObject = rootJsonObject.getJSONObject("data");
+        JsonNode nodeData = nodeRoot.get("data");
 
-        listing.setBefore(jsonObject.optString("before"));
-        listing.setAfter(jsonObject.optString("after"));
-        listing.setModHash(jsonObject.optString("modhash"));
+        listing.setBefore(UtilsJson.getString(nodeData.get("before")));
+        listing.setAfter(UtilsJson.getString(nodeData.get("after")));
+        listing.setModHash(UtilsJson.getString(nodeData.get("modhash")));
 
-        JSONArray jsonArray = jsonObject.getJSONArray("children");
+        ArrayList<Thing> things = new ArrayList<>();
 
-        ArrayList<Thing> things = new ArrayList<>(jsonArray.length());
+        for (JsonNode node : nodeData.get("children")) {
 
-        for (int index = 0; index < jsonArray.length(); index++) {
 
-            JSONObject thing = jsonArray.getJSONObject(index);
-
-            switch (thing.optString("kind")) {
+            switch (UtilsJson.getString(node.get("kind"))) {
 
                 // TODO: Add cases for all ID36s and fix adding Comments
 
                 case "more":
-                    things.add(Comment.fromJson(thing, 0));
+                    things.add(Comment.fromJson(node, 0));
                     break;
                 case "t1":
-                    List<Comment> comments = new ArrayList<>();
-                    Comment.addAllFromJson(comments, thing, 0);
-                    things.addAll(comments);
+                    Comment.addAllFromJson(things, node, 0);
                     break;
                 case "t3":
-                    things.add(Link.fromJson(thing));
+                    things.add(Link.fromJson(node));
                     break;
                 case "t4":
-                    things.add(Message.fromJson(thing));
+                    things.add(Message.fromJson(node));
                     break;
                 case "t5":
-                    things.add(Subreddit.fromJson(thing));
+                    things.add(Subreddit.fromJson(node));
                     break;
 
             }
-
         }
 
         listing.setChildren(things);
+
+        Log.d(TAG, Arrays.toString(Thread.currentThread().getStackTrace()));
+        Log.d(TAG, "fromJson end: " + (System.currentTimeMillis() - start));
 
         return listing;
     }

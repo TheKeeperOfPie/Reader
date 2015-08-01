@@ -9,10 +9,14 @@ import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
 import android.text.TextUtils;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.winsonchiu.reader.data.reddit.Reddit;
 import com.winsonchiu.reader.data.reddit.User;
 
 import org.json.JSONException;
 import org.json.JSONObject;
+
+import java.io.IOException;
 
 /**
  * Created by TheKeeperOfPie on 6/24/2015.
@@ -40,10 +44,10 @@ public class ControllerUser {
     public void reloadUser() {
         if (!TextUtils.isEmpty(preferences.getString(AppSettings.ACCOUNT_JSON, ""))) {
             try {
-                this.user = User.fromJson(
-                        new JSONObject(preferences.getString(AppSettings.ACCOUNT_JSON, "")));
+                this.user = User.fromJson(Reddit.getObjectMapper().readValue(
+                        preferences.getString(AppSettings.ACCOUNT_JSON, ""), JsonNode.class));
             }
-            catch (JSONException e) {
+            catch (IOException e) {
                 e.printStackTrace();
             }
         }

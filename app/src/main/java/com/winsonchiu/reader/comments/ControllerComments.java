@@ -12,6 +12,9 @@ import android.widget.Toast;
 import com.android.volley.Response;
 import com.android.volley.Response.ErrorListener;
 import com.android.volley.VolleyError;
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.winsonchiu.reader.data.reddit.Replyable;
 import com.winsonchiu.reader.utils.ControllerListener;
 import com.winsonchiu.reader.R;
@@ -26,6 +29,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -160,10 +164,12 @@ public class ControllerComments {
                     public void onResponse(String response) {
 
                         try {
-                            setLinkWithComments(Link.fromJson(new JSONArray(response)));
+                            setLinkWithComments(Link.fromJsonWithComments(
+                                    Reddit.getObjectMapper().readValue(response,
+                                            JsonNode.class)));
                         }
-                        catch (JSONException e1) {
-                            e1.printStackTrace();
+                        catch (IOException e) {
+                            e.printStackTrace();
                         }
                         setIsCommentThread(false);
                         setRefreshing(false);
@@ -192,10 +198,12 @@ public class ControllerComments {
                     public void onResponse(String response) {
 
                         try {
-                            setLinkWithComments(Link.fromJson(new JSONArray(response)));
+                            setLinkWithComments(Link.fromJsonWithComments(
+                                    Reddit.getObjectMapper().readValue(response,
+                                            JsonNode.class)));
                         }
-                        catch (JSONException e1) {
-                            e1.printStackTrace();
+                        catch (IOException e) {
+                            e.printStackTrace();
                         }
                         setIsCommentThread(true);
                         setRefreshing(false);
@@ -271,17 +279,16 @@ public class ControllerComments {
                     public void onResponse(String response) {
                         try {
 
-                            JSONArray jsonArray = new JSONObject(response).getJSONObject("json")
-                                    .getJSONObject("data")
-                                    .getJSONArray("things");
+                            JsonNode nodeThings = Reddit.getObjectMapper().readValue(
+                                    response, JsonNode.class).get("json").get("data").get("things");
 
                             Listing listing = new Listing();
                             List<Thing> things = new ArrayList<>();
-                            List<Thing> comments = new ArrayList<>(jsonArray.length());
+                            List<Thing> comments = new ArrayList<>();
 
-                            for (int index = 0; index < jsonArray.length(); index++) {
-                                Comment comment = Comment.fromJson(jsonArray.getJSONObject(index),
-                                        moreComment.getLevel());
+                            for (JsonNode node : nodeThings) {
+
+                                Comment comment = Comment.fromJson(node, moreComment.getLevel());
 
                                 // For some reason Reddit doesn't report the link author, so we'll do it manually
                                 comment.setLinkAuthor(link.getAuthor());
@@ -335,7 +342,7 @@ public class ControllerComments {
                                 insertComments(moreComment, listing);
                             }
                         }
-                        catch (JSONException e1) {
+                        catch (IOException e1) {
                             e1.printStackTrace();
                         }
 
@@ -377,7 +384,8 @@ public class ControllerComments {
             insertComments(commentIndex, listComments, listingComments);
 
             for (Listener listener : listeners) {
-                listener.getAdapter().notifyItemRangeInserted(commentIndex + 1, listComments.size());
+                listener.getAdapter()
+                        .notifyItemRangeInserted(commentIndex + 1, listComments.size());
             }
         }
 
@@ -458,6 +466,7 @@ public class ControllerComments {
 
     /**
      * Helper method to prevent code duplication when deleting a comment
+     *
      * @param comment
      * @param listing
      * @return index the comment was located at in the listing
@@ -648,6 +657,7 @@ public class ControllerComments {
         }
 
     }
+
     public void editComment(final Comment comment, String text) {
         Map<String, String> params = new HashMap<>();
         params.put("api_type", "json");
@@ -660,8 +670,8 @@ public class ControllerComments {
                 try {
                     Log.d(TAG, "response: " + response);
                     Comment newComment = Comment.fromJson(
-                            new JSONObject(response).getJSONObject("json").getJSONObject("data")
-                                    .getJSONArray("things").getJSONObject(0), comment.getLevel());
+                            Reddit.getObjectMapper().readValue(response, JsonNode.class).get("json")
+                                    .get("data").get("things").get(0), comment.getLevel());
                     comment.setBodyHtml(newComment.getBodyHtml());
                     int commentIndex = listingComments.getChildren()
                             .indexOf(comment);
@@ -675,7 +685,7 @@ public class ControllerComments {
                     }
 
                 }
-                catch (JSONException e) {
+                catch (IOException e) {
                     e.printStackTrace();
                 }
             }

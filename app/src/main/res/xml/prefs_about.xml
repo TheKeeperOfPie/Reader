@@ -85,6 +85,33 @@
         </Preference>
 
         <Preference
+            android:key="pref_license_txtmark"
+            android:title="@string/pref_license_txtmark"
+            android:summary="@string/pref_license_txtmark_summary"
+            >
+
+            <intent
+                android:action="android.intent.action.VIEW"
+                android:data="https://github.com/rjeschke/txtmark"
+                />
+
+        </Preference>
+
+
+        <Preference
+            android:key="pref_license_jackson"
+            android:title="@string/pref_license_jackson"
+            android:summary="@string/pref_license_jackson_summary"
+            >
+
+            <intent
+                android:action="android.intent.action.VIEW"
+                android:data="https://github.com/FasterXML/jackson"
+                />
+
+        </Preference>
+
+        <Preference
             android:key="pref_license_apache"
             android:title="@string/pref_license_apache"
             android:summary="@string/pref_license_apache_summary"

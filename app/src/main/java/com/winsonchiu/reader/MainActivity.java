@@ -16,6 +16,8 @@ import android.media.MediaScannerConnection;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.Handler;
+import android.os.Looper;
 import android.preference.PreferenceManager;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
@@ -36,6 +38,7 @@ import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.ImageRequest;
 import com.crashlytics.android.Crashlytics;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.google.android.youtube.player.YouTubeBaseActivity;
 import com.winsonchiu.reader.comments.AdapterCommentList;
 import com.winsonchiu.reader.comments.ControllerComments;
@@ -73,6 +76,7 @@ import org.json.JSONObject;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.HashMap;
@@ -104,8 +108,16 @@ public class MainActivity extends YouTubeBaseActivity
     private TextView textAccountInfo;
 
     private Reddit reddit;
+    private Handler handler;
     private AdapterLink.ViewHolderBase.EventListener eventListenerBase;
     private AdapterCommentList.ViewHolderComment.EventListener eventListenerComment;
+    private final Runnable runnableInbox = new Runnable() {
+        @Override
+        public void run() {
+            Receiver.checkInbox(MainActivity.this, null);
+            handler.postDelayed(this, 60000);
+        }
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -128,6 +140,7 @@ public class MainActivity extends YouTubeBaseActivity
         super.onCreate(savedInstanceState);
 
         reddit = Reddit.getInstance(this);
+        handler = new Handler();
 
         fragmentData = (FragmentData) getFragmentManager().findFragmentByTag(FragmentData.TAG);
         if (fragmentData == null) {
@@ -207,12 +220,11 @@ public class MainActivity extends YouTubeBaseActivity
                     @Override
                     public void onResponse(String response) {
                         try {
-                            JSONObject jsonObject = new JSONObject(response);
-                            Comment newComment = Comment.fromJson(
-                                    jsonObject.getJSONObject("json")
-                                            .getJSONObject("data")
-                                            .getJSONArray("things")
-                                            .getJSONObject(0), 0);
+                            Comment newComment = Comment.fromJson(Reddit.getObjectMapper().readValue(
+                                    response, JsonNode.class).get("json")
+                                            .get("data")
+                                            .get("things")
+                                            .get(0), 0);
                             if (getFragmentManager().findFragmentByTag(FragmentComments.TAG) != null) {
                                 getControllerComments().insertComment(newComment);
                             }
@@ -223,7 +235,7 @@ public class MainActivity extends YouTubeBaseActivity
                                 getControllerInbox().insertComment(newComment);
                             }
                         }
-                        catch (JSONException e) {
+                        catch (IOException e) {
                             e.printStackTrace();
                         }
                     }
@@ -242,17 +254,15 @@ public class MainActivity extends YouTubeBaseActivity
                     @Override
                     public void onResponse(String response) {
                         try {
-                        JSONObject jsonObject = new JSONObject(
-                                response);
-                        Message newMessage = Message.fromJson(
-                                jsonObject.getJSONObject("json")
-                                        .getJSONObject("data")
-                                        .getJSONArray("things")
-                                        .getJSONObject(0));
+                        Message newMessage = Message.fromJson(Reddit.getObjectMapper().readValue(
+                                        response, JsonNode.class).get("json")
+                                        .get("data")
+                                        .get("things")
+                                        .get(0));
                         getControllerInbox()
                                 .insertMessage(newMessage);
                         }
-                        catch (JSONException e) {
+                        catch (IOException e) {
                             e.printStackTrace();
                         }
                     }
@@ -524,22 +534,7 @@ public class MainActivity extends YouTubeBaseActivity
 
             @Override
             public void markRead(Thing thing) {
-
-                Map<String, String> params = new HashMap<>();
-                params.put("id", thing.getName());
-
-                getReddit()
-                        .loadPost(Reddit.OAUTH_URL + "/api/read_message",
-                                new Response.Listener<String>() {
-                                    @Override
-                                    public void onResponse(String response) {
-                                    }
-                                }, new Response.ErrorListener() {
-                                    @Override
-                                    public void onErrorResponse(VolleyError error) {
-
-                                    }
-                                }, params, 0);
+                reddit.markRead(thing.getName());
             }
 
             @Override
@@ -753,10 +748,11 @@ public class MainActivity extends YouTubeBaseActivity
                         sharedPreferences.getString(AppSettings.ACCOUNT_JSON, ""))) {
                     try {
                         getControllerProfile().setUser(User.fromJson(
-                                new JSONObject(sharedPreferences
-                                        .getString(AppSettings.ACCOUNT_JSON, ""))));
+                                Reddit.getObjectMapper().readValue(sharedPreferences.getString(
+                                        AppSettings.ACCOUNT_JSON, ""),
+                                        JsonNode.class)));
                     }
-                    catch (JSONException e) {
+                    catch (IOException e) {
                         e.printStackTrace();
                     }
                 }
@@ -770,6 +766,7 @@ public class MainActivity extends YouTubeBaseActivity
                 Log.d(TAG, "Page: " + page);
 
                 if (!TextUtils.isEmpty(page)) {
+                    // TODO: Add other cases
                     switch (page) {
                         case ControllerInbox.INBOX:
                             getControllerInbox()
@@ -1168,7 +1165,14 @@ public class MainActivity extends YouTubeBaseActivity
     }
 
     @Override
+    protected void onResume() {
+        super.onResume();
+        handler.postDelayed(runnableInbox, 1000);
+    }
+
+    @Override
     protected void onPause() {
+        handler.removeCallbacks(runnableInbox);
         super.onPause();
     }
 

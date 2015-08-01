@@ -4,6 +4,9 @@
 
 package com.winsonchiu.reader.data.reddit;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.winsonchiu.reader.utils.UtilsJson;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -29,15 +32,15 @@ public class Message extends Replyable {
     private long created;
     private long createdUtc;
 
-    public static Message fromJson(JSONObject rootJsonObject) throws JSONException {
+    public static Message fromJson(JsonNode nodeRoot) {
 
         Message message = new Message();
 
-        message.setKind(rootJsonObject.optString("kind"));
+        message.setKind(UtilsJson.getString(nodeRoot.get("kind")));
 
-        JSONObject jsonObject = rootJsonObject.getJSONObject("data");
+        JsonNode nodeData = nodeRoot.get("data");
 
-        String id = jsonObject.optString("id");
+        String id = UtilsJson.getString(nodeData.get("id"));
         int indexStart = id.indexOf("_");
         if (indexStart >= 0) {
             message.setId(id.substring(indexStart + 1));
@@ -45,9 +48,9 @@ public class Message extends Replyable {
         else {
             message.setId(id);
         }
-        message.setName(jsonObject.optString("name"));
+        message.setName(UtilsJson.getString(nodeData.get("name")));
 
-        String parentId = jsonObject.optString("parent_id");
+        String parentId = UtilsJson.getString(nodeData.get("parent_id"));
         indexStart = parentId.indexOf("_");
         if (indexStart >= 0) {
             message.setParentId(parentId.substring(indexStart + 1));
@@ -57,18 +60,19 @@ public class Message extends Replyable {
         }
 
         // Timestamps multiplied by 1000 as Java uses milliseconds and Reddit uses seconds
-        message.setCreated(jsonObject.optLong("created") * 1000);
-        message.setCreatedUtc(jsonObject.optLong("created_utc") * 1000);
+        message.setCreated(UtilsJson.getLong(nodeData.get("created")) * 1000);
+        message.setCreatedUtc(UtilsJson.getLong(nodeData.get("created_utc")) * 1000);
 
 
-        message.setAuthor(jsonObject.optString("author"));
-        message.setBody(jsonObject.optString("body"));
-        message.setBodyHtml(Reddit.getFormattedHtml(jsonObject.optString("body_html")));
-        message.setContext(jsonObject.optString("context"));
-        message.setDest(jsonObject.optString("dest"));
-        message.setFirstMessageName(jsonObject.optString("first_message_name"));
+        message.setAuthor(UtilsJson.getString(nodeData.get("author")));
+        message.setBody(UtilsJson.getString(nodeData.get("body")));
+        message.setBodyHtml(Reddit.getFormattedHtml(UtilsJson.getString(
+                nodeData.get("body_html"))));
+        message.setContext(UtilsJson.getString(nodeData.get("context")));
+        message.setDest(UtilsJson.getString(nodeData.get("dest")));
+        message.setFirstMessageName(UtilsJson.getString(nodeData.get("first_message_name")));
 
-        switch (jsonObject.optString("likes")) {
+        switch (UtilsJson.getString(nodeData.get("likes"))) {
             case "null":
                 message.setLikes(0);
                 break;
@@ -80,17 +84,16 @@ public class Message extends Replyable {
                 break;
         }
 
-        message.setLinkTitle(jsonObject.optString("link_title"));
-        message.setIsNew(jsonObject.optBoolean("new"));
-        message.setReplies(jsonObject.optString("replies"));
-        message.setSubject(jsonObject.optString("subject"));
-        message.setSubreddit(jsonObject.optString("subreddit"));
-        message.setWasComment(jsonObject.optBoolean("was_comment"));
+        message.setLinkTitle(UtilsJson.getString(nodeData.get("link_title")));
+        message.setIsNew(UtilsJson.getBoolean(nodeData.get("new")));
+        message.setReplies(UtilsJson.getString(nodeData.get("replies")));
+        message.setSubject(UtilsJson.getString(nodeData.get("subject")));
+        message.setSubreddit(UtilsJson.getString(nodeData.get("subreddit")));
+        message.setWasComment(UtilsJson.getBoolean(nodeData.get("was_comment")));
 
         return message;
 
     }
-
     public String getAuthor() {
         return author;
     }

@@ -4,17 +4,17 @@
 
 package com.winsonchiu.reader.data.reddit;
 
+
 /**
  * Created by TheKeeperOfPie on 3/8/2015.
  */
 public class Thing {
 
     private static final String TAG = Thing.class.getCanonicalName();
+
     private String id;
     private String name;
     private String kind;
-    private Sort sort;
-    private Time time;
 
     public Thing() {
 

@@ -4,6 +4,9 @@
 
 package com.winsonchiu.reader.data.reddit;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.winsonchiu.reader.utils.UtilsJson;
+
 import org.json.JSONObject;
 
 /**
@@ -30,30 +33,30 @@ public class User {
     private String id = "";
     private int inboxCount;
 
-
-    public static User fromJson(JSONObject rootJsonObject) {
+    public static User fromJson(JsonNode nodeRoot) {
 
         User user = new User();
 
-        user.setName(rootJsonObject.optString("name"));
-        user.setHideFromRobots(rootJsonObject.optBoolean("hide_from_robots"));
+        user.setName(UtilsJson.getString(nodeRoot.get("name")));
+        user.setHideFromRobots(UtilsJson.getBoolean(nodeRoot.get("hide_from_robots")));
 
         // Timestamps multiplied by 1000 as Java uses milliseconds and Reddit uses seconds
-        user.setCreated(rootJsonObject.optLong("created") * 1000);
-        user.setCreatedUtc(rootJsonObject.optLong("created_utc") * 1000);
-        user.setGoldExpiration(rootJsonObject.optLong("gold_expiration") * 1000);
+        user.setCreated(UtilsJson.getLong(nodeRoot.get("created")) * 1000);
+        user.setCreatedUtc(UtilsJson.getLong(nodeRoot.get("created_utc")) * 1000);
+        user.setGoldExpiration(UtilsJson.getLong(nodeRoot.get("gold_expiration")) * 1000);
 
-        user.setLinkKarma(rootJsonObject.optInt("link_karma"));
-        user.setCommentKarma(rootJsonObject.optInt("comment_karma"));
-        user.setIsGold(rootJsonObject.optBoolean("is_gold"));
-        user.setIsMod(rootJsonObject.optBoolean("is_mod"));
-        user.setHasVerifiedEmail(rootJsonObject.optBoolean("has_verified_email"));
-        user.setId(rootJsonObject.optString("id"));
-        user.setHasMail(rootJsonObject.optBoolean("has_mail"));
-        user.setInboxCount(rootJsonObject.optInt("inbox_count"));
-        user.setGoldCreddits(rootJsonObject.optInt("gold_creddits"));
-        user.setHasModMail(rootJsonObject.optBoolean("has_mod_mail"));
-        user.setOver18(rootJsonObject.optBoolean("over_18"));
+        user.setLinkKarma(UtilsJson.getInt(nodeRoot.get("link_karma")));
+        user.setCommentKarma(UtilsJson.getInt(nodeRoot.get("comment_karma")));
+        user.setIsGold(UtilsJson.getBoolean(nodeRoot.get("is_gold")));
+        user.setIsMod(UtilsJson.getBoolean(nodeRoot.get("is_mod")));
+        user.setHasVerifiedEmail(
+                UtilsJson.getBoolean(nodeRoot.get("has_verified_email")));
+        user.setId(UtilsJson.getString(nodeRoot.get("id")));
+        user.setHasMail(UtilsJson.getBoolean(nodeRoot.get("has_mail")));
+        user.setInboxCount(UtilsJson.getInt(nodeRoot.get("inbox_count")));
+        user.setGoldCreddits(UtilsJson.getInt(nodeRoot.get("gold_creddits")));
+        user.setHasModMail(UtilsJson.getBoolean(nodeRoot.get("has_mod_mail")));
+        user.setOver18(UtilsJson.getBoolean(nodeRoot.get("over_18")));
 
         return user;
     }

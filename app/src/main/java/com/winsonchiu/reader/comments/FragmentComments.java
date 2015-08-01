@@ -193,6 +193,8 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
 
         final View view = inflater.inflate(R.layout.fragment_comments, container, false);
 
+        view.setLayerType(View.LAYER_TYPE_HARDWARE, null);
+
         listener = new ControllerComments.Listener() {
             @Override
             public void setSort(Sort sort) {
@@ -920,11 +922,16 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
 
     @Override
     public boolean navigateBack() {
+        Log.d(TAG, "navigateBack");
+
         if (youTubePlayer != null && isFullscreen) {
             youTubePlayer.setFullscreen(false);
             return false;
         }
         else if (getFragmentManager().getBackStackEntryCount() == 0) {
+            return true;
+        }
+        else if (!recyclerCommentList.isShown()) {
             return true;
         }
         else {
@@ -1045,6 +1052,8 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
                 mListener.getControllerComments().loadLinkComments();
                 break;
         }
+
+        item.setChecked(true);
 
         Sort sort = Sort.fromMenuId(item.getItemId());
         if (sort != null) {

@@ -20,17 +20,23 @@ import android.util.Log;
 import com.android.volley.AuthFailureError;
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
+import com.android.volley.Response;
 import com.android.volley.Response.ErrorListener;
 import com.android.volley.Response.Listener;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectReader;
+import com.squareup.okhttp.OkHttpClient;
 import com.winsonchiu.reader.comments.AdapterCommentList;
 import com.winsonchiu.reader.links.AdapterLink;
 import com.winsonchiu.reader.ApiKeys;
 import com.winsonchiu.reader.AppSettings;
 import com.winsonchiu.reader.BuildConfig;
 import com.winsonchiu.reader.R;
+import com.winsonchiu.reader.utils.OkHttpStack;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -49,7 +55,6 @@ public class Reddit {
     private static AtomicInteger destroyed = new AtomicInteger();
     private static AtomicInteger bound = new AtomicInteger();
     private static AtomicInteger recycled = new AtomicInteger();
-
 
     /**
      * Used to count and log the creation of WebViews to track memory leaks
@@ -83,8 +88,12 @@ public class Reddit {
         Log.d(TAG, "onRecycled: " + recycled.incrementAndGet());
     }
 
-    public RequestQueue getRequestQueue() {
-        return requestQueue;
+    public void markRead(String name) {
+
+        Map<String, String> params = new HashMap<>();
+        params.put("id", name);
+
+        loadPost(Reddit.OAUTH_URL + "/api/read_message", null, null, params, 0);
     }
 
     // Constant values to represent Thing states
@@ -163,8 +172,19 @@ public class Reddit {
     private RequestQueue requestQueue;
     private SharedPreferences preferences;
 
+
+    private static ObjectMapper objectMapper;
+
+    public static ObjectMapper getObjectMapper() {
+        if (objectMapper == null) {
+            objectMapper = new ObjectMapper();
+            objectMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
+        }
+        return objectMapper;
+    }
+
     private Reddit(Context context) {
-        requestQueue = Volley.newRequestQueue(context.getApplicationContext());
+        requestQueue = Volley.newRequestQueue(context.getApplicationContext(), new OkHttpStack());
         preferences = PreferenceManager.getDefaultSharedPreferences(
                 context.getApplicationContext());
     }
@@ -174,6 +194,10 @@ public class Reddit {
             reddit = new Reddit(context);
         }
         return reddit;
+    }
+
+    public RequestQueue getRequestQueue() {
+        return requestQueue;
     }
 
     public boolean needsToken() {
@@ -614,7 +638,7 @@ public class Reddit {
 
         return null;
     }
-    
+
     public Request<String> loadImgurImage(String id,
             @NonNull Listener<String> listener,
             @Nullable final ErrorListener errorListener,
@@ -780,7 +804,8 @@ public class Reddit {
 
         html = html.replaceAll("\n", "<br>");
 
-        CharSequence sequence = Html.fromHtml(Html.fromHtml(html).toString(), null, new TagHandlerReddit());
+        CharSequence sequence = Html
+                .fromHtml(Html.fromHtml(html).toString(), null, new TagHandlerReddit());
 
         // Trims leading and trailing whitespace
         int start = 0;

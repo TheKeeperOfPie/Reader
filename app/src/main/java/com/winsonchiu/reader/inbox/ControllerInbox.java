@@ -10,6 +10,7 @@ import android.widget.Toast;
 
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.winsonchiu.reader.data.Page;
 import com.winsonchiu.reader.data.reddit.Replyable;
 import com.winsonchiu.reader.utils.ControllerListener;
@@ -26,6 +27,7 @@ import com.winsonchiu.reader.data.reddit.Thing;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -38,9 +40,14 @@ public class ControllerInbox {
 
     public static final int VIEW_TYPE_MESSAGE = 0;
     public static final int VIEW_TYPE_COMMENT = 1;
-    public static final String INBOX = "Inbox";
-    public static final String UNREAD = "Unread";
-    public static final String SENT = "Sent";
+    public static final String INBOX = "inbox";
+    public static final String UNREAD = "unread";
+    public static final String SENT = "sent";
+    public static final String COMMENTS = "comments";
+    public static final String SELF_REPLY = "selfreply";
+    public static final String MENTIONS = "mentions";
+    public static final String MODERATOR = "moderator";
+    public static final String MODERATOR_UNREAD = "moderator/unread";
 
     private static final String TAG = ControllerInbox.class.getCanonicalName();
 
@@ -130,20 +137,21 @@ public class ControllerInbox {
 
         setLoading(true);
 
-        reddit.loadGet(Reddit.OAUTH_URL + "/message/" + page.getPage().toLowerCase(),
+        reddit.loadGet(Reddit.OAUTH_URL + "/message/" + page.getPage(),
                 new Response.Listener<String>() {
                     @Override
                     public void onResponse(String response) {
                         Log.d(TAG, "onResponse: " + response);
                         try {
-                            setData(Listing.fromJson(new JSONObject(response)));
+                            setData(Listing.fromJson(Reddit.getObjectMapper().readValue(
+                                    response, JsonNode.class)));
                             for (Listener listener : listeners) {
                                 listener.setPage(page);
                                 listener.getAdapter().notifyDataSetChanged();
                             }
                             setLoading(false);
                         }
-                        catch (JSONException e1) {
+                        catch (IOException e1) {
                             e1.printStackTrace();
                         }
                     }
@@ -174,7 +182,8 @@ public class ControllerInbox {
             @Override
             public void onResponse(String response) {
                 try {
-                    Comment newComment = Comment.fromJson(new JSONObject(response).getJSONObject("json").getJSONObject("data").getJSONArray("things").getJSONObject(0), comment.getLevel());
+                    Comment newComment = Comment.fromJson(Reddit.getObjectMapper().readValue(
+                            response, JsonNode.class).get("json").get("data").get("things").get(0), comment.getLevel());
                     comment.setBodyHtml(newComment.getBodyHtml());
                     int commentIndex = data.getChildren()
                             .indexOf(comment);
@@ -187,7 +196,7 @@ public class ControllerInbox {
                     }
 
                 }
-                catch (JSONException e) {
+                catch (IOException e) {
                     e.printStackTrace();
                 }
             }
@@ -314,15 +323,15 @@ public class ControllerInbox {
             @Override
             public void onResponse(String response) {
                 try {
-                    JSONObject jsonObject = new JSONObject(response);
                     Comment newComment = Comment.fromJson(
-                            jsonObject.getJSONObject("json")
-                                    .getJSONObject("data")
-                                    .getJSONArray("things")
-                                    .getJSONObject(0), 0);
+                            Reddit.getObjectMapper().readValue(
+                                    response, JsonNode.class).get("json")
+                                    .get("data")
+                                    .get("things")
+                                    .get(0), 0);
                     insertComment(newComment);
                 }
-                catch (JSONException e) {
+                catch (IOException e) {
                     e.printStackTrace();
                 }
             }
@@ -334,7 +343,7 @@ public class ControllerInbox {
         setLoading(true);
 
         reddit.loadGet(
-                Reddit.OAUTH_URL + "/message/" + page.getPage().toLowerCase() + "?after=" + data
+                Reddit.OAUTH_URL + "/message/" + page.getPage() + "?after=" + data
                         .getAfter(),
                 new Response.Listener<String>() {
                     @Override
@@ -342,7 +351,8 @@ public class ControllerInbox {
                         Log.d(TAG, "onResponse: " + response);
                         try {
                             int startSize = data.getChildren().size();
-                            Listing listing = Listing.fromJson(new JSONObject(response));
+                            Listing listing = Listing.fromJson(Reddit.getObjectMapper().readValue(
+                                    response, JsonNode.class));
                             data.addChildren(listing.getChildren());
                             data.setAfter(listing.getAfter());
                             for (Listener listener : listeners) {
@@ -351,7 +361,7 @@ public class ControllerInbox {
                             }
                             setLoading(false);
                         }
-                        catch (JSONException e1) {
+                        catch (IOException e1) {
                             e1.printStackTrace();
                         }
                     }

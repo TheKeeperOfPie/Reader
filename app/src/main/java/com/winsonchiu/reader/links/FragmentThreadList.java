@@ -174,7 +174,18 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
                 recyclerThreadList.post(new Runnable() {
                     @Override
                     public void run() {
-                        scrollToPositionWithOffset(position, 0);
+                        RecyclerView.ViewHolder viewHolder = recyclerThreadList.findViewHolderForAdapterPosition(position);
+                        int offset = 0;
+                        if (viewHolder != null) {
+                            int difference = recyclerThreadList.getHeight() - viewHolder.itemView.getHeight();
+                            if (difference > 0) {
+                                offset = difference / 2;
+                            }
+                            Log.d(TAG, "view height: " + viewHolder.itemView.getHeight());
+                        }
+                        Log.d(TAG, "recyclerThreadList height: " + recyclerThreadList.getHeight());
+                        Log.d(TAG, "offset: " + offset);
+                        scrollToPositionWithOffset(position, offset);
                     }
                 });
             }

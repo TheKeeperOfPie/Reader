@@ -237,7 +237,6 @@ public class AdapterLinkGrid extends AdapterLink {
                         ((StaggeredGridLayoutManager) recyclerCallback.getLayoutManager())
                                 .invalidateSpanAssignments();
                     }
-                    recyclerCallback.scrollTo(getAdapterPosition());
                 }
             }
         }

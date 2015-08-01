@@ -12,6 +12,7 @@ import android.widget.Toast;
 import com.android.volley.Response;
 import com.android.volley.Response.ErrorListener;
 import com.android.volley.VolleyError;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.winsonchiu.reader.data.reddit.Replyable;
 import com.winsonchiu.reader.data.reddit.Thing;
 import com.winsonchiu.reader.history.Historian;
@@ -27,6 +28,7 @@ import com.winsonchiu.reader.data.reddit.Subreddit;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -111,10 +113,11 @@ public class ControllerLinks implements ControllerLinksBase {
                     @Override
                     public void onResponse(String response) {
                         try {
-                            subreddit = Subreddit.fromJson(new JSONObject(response));
+                            subreddit = Subreddit.fromJson(Reddit.getObjectMapper().readValue(
+                                    response, JsonNode.class));
                             Log.d(TAG, "subreddit: " + response);
                         }
-                        catch (JSONException e) {
+                        catch (IOException e) {
                             e.printStackTrace();
                         }
                         reloadAllLinks();
@@ -208,7 +211,8 @@ public class ControllerLinks implements ControllerLinksBase {
                     @Override
                     public void run() {
                         try {
-                            Listing listing = Listing.fromJson(new JSONObject(response));
+                            Listing listing = Listing.fromJson(Reddit.getObjectMapper().readValue(
+                                    response, JsonNode.class));
                             if (listing.getChildren()
                                     .isEmpty() || !(listing.getChildren()
                                     .get(0) instanceof Link)) {
@@ -218,7 +222,7 @@ public class ControllerLinks implements ControllerLinksBase {
                                 listingLinks = listing;
                             }
                         }
-                        catch (JSONException e) {
+                        catch (IOException e) {
                             e.printStackTrace();
                         }
 
@@ -280,7 +284,8 @@ public class ControllerLinks implements ControllerLinksBase {
                         try {
                             int positionStart = listingLinks.getChildren()
                                     .size();
-                            Listing listing = Listing.fromJson(new JSONObject(response));
+                            Listing listing = Listing.fromJson(Reddit.getObjectMapper().readValue(
+                                    response, JsonNode.class));
                             listingLinks.addChildren(listing.getChildren());
                             listingLinks.setAfter(listing.getAfter());
                             for (Listener listener : listeners) {
@@ -290,8 +295,8 @@ public class ControllerLinks implements ControllerLinksBase {
                                                         .size() - positionStart);
                             }
                         }
-                        catch (JSONException exception) {
-                            exception.printStackTrace();
+                        catch (IOException e) {
+                            e.printStackTrace();
                         }
                         finally {
                             setLoading(false);

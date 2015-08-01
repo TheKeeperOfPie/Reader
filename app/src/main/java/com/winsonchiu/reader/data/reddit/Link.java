@@ -6,12 +6,16 @@ package com.winsonchiu.reader.data.reddit;
 
 import android.text.Html;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.github.rjeschke.txtmark.Processor;
 import com.winsonchiu.reader.data.imgur.Album;
+import com.winsonchiu.reader.utils.UtilsJson;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+
+import java.io.IOException;
 
 /**
  * Created by TheKeeperOfPie on 3/7/2015.
@@ -55,31 +59,33 @@ public class Link extends Replyable {
     private boolean commentsClicked;
     private int backgroundColor;
 
-    public static Link fromJson(JSONObject rootJsonObject) throws JSONException {
+
+    public static Link fromJson(JsonNode nodeRoot) {
 
         // TODO: Move parsing of HTML to asynchronous thread
 
         Link link = new Link();
-        link.setKind(rootJsonObject.optString("kind"));
+        link.setKind(UtilsJson.getString(nodeRoot.get("kind")));
 
-        JSONObject jsonObject = rootJsonObject.getJSONObject("data");
+        JsonNode nodeData = nodeRoot.get("data");
 
-        link.setId(jsonObject.optString("id"));
-        link.setName(jsonObject.optString("name"));
+        link.setId(UtilsJson.getString(nodeData.get("id")));
+        link.setName(UtilsJson.getString(nodeData.get("name")));
 
         // Timestamps multiplied by 1000 as Java uses milliseconds and Reddit uses seconds
-        link.setCreated(jsonObject.optLong("created") * 1000);
-        link.setCreatedUtc(jsonObject.optLong("created_utc") * 1000);
+        link.setCreated(UtilsJson.getLong(nodeData.get("created")) * 1000);
+        link.setCreatedUtc(UtilsJson.getLong(nodeData.get("created_utc")) * 1000);
 
-        link.setAuthor(jsonObject.optString("author"));
-        link.setAuthorFlairCssClass(jsonObject.optString("author_flair_css_class"));
-        link.setAuthorFlairText(jsonObject.optString("author_flair_text"));
-        link.setClicked(jsonObject.optBoolean("clicked"));
-        link.setDomain(jsonObject.optString("domain"));
-        link.setHidden(jsonObject.optBoolean("hidden"));
-        link.setSelf(jsonObject.optBoolean("is_self"));
+        link.setAuthor(UtilsJson.getString(nodeData.get("author")));
+        link.setAuthorFlairCssClass(UtilsJson.getString(
+                nodeData.get("author_flair_css_class")));
+        link.setAuthorFlairText(UtilsJson.getString(nodeData.get("author_flair_text")));
+        link.setClicked(UtilsJson.getBoolean(nodeData.get("clicked")));
+        link.setDomain(UtilsJson.getString(nodeData.get("domain")));
+        link.setHidden(UtilsJson.getBoolean(nodeData.get("hidden")));
+        link.setSelf(UtilsJson.getBoolean(nodeData.get("is_self")));
 
-        switch (jsonObject.optString("likes")) {
+        switch (UtilsJson.getString(nodeData.get("likes"))) {
             case "null":
                 link.setLikes(0);
                 break;
@@ -91,27 +97,30 @@ public class Link extends Replyable {
                 break;
         }
 
-        link.setLinkFlairCssClass(jsonObject.optString("link_flair_css_class"));
-        link.setLinkFlairText(Html.fromHtml(jsonObject.optString("link_flair_text")).toString());
+        link.setLinkFlairCssClass(UtilsJson.getString(nodeData.get("link_flair_css_class")));
+        link.setLinkFlairText(Html.fromHtml(
+                UtilsJson.getString(nodeData.get("link_flair_text"))).toString());
         if (link.getLinkFlairText().equals("null")) {
             link.setLinkFlairText("");
         }
-        link.setMedia(jsonObject.optString("media"));
-        link.setMediaEmbed(jsonObject.optString("media_embed"));
-        link.setNumComments(jsonObject.optInt("num_comments"));
-        link.setOver18(jsonObject.optBoolean("over_18"));
-        link.setPermalink(jsonObject.optString("permalink"));
-        link.setSaved(jsonObject.optBoolean("saved"));
-        link.setScore(jsonObject.optInt("score"));
-        link.setSelfText(Html.fromHtml(jsonObject.optString("selftext").replaceAll("\n", "<br>")));
-        link.setSelfTextHtml(Reddit.getFormattedHtml(jsonObject.optString("selftext_html")));
-        link.setSubreddit(jsonObject.optString("subreddit"));
-        link.setSubredditId(jsonObject.optString("subreddit_id"));
-        link.setThumbnail(jsonObject.optString("thumbnail"));
-        link.setTitle(Html.fromHtml(jsonObject.optString("title")).toString());
-        link.setUrl(String.valueOf(Html.fromHtml(jsonObject.optString("url"))));
+        link.setMedia(UtilsJson.getString(nodeData.get("media")));
+        link.setMediaEmbed(UtilsJson.getString(nodeData.get("media_embed")));
+        link.setNumComments(UtilsJson.getInt(nodeData.get("num_comments")));
+        link.setOver18(UtilsJson.getBoolean(nodeData.get("over_18")));
+        link.setPermalink(UtilsJson.getString(nodeData.get("permalink")));
+        link.setSaved(UtilsJson.getBoolean(nodeData.get("saved")));
+        link.setScore(UtilsJson.getInt(nodeData.get("score")));
+        link.setSelfText(Html.fromHtml(UtilsJson.getString(
+                nodeData.get("selftext")).replaceAll("\n", "<br>")));
+        link.setSelfTextHtml(Reddit.getFormattedHtml(UtilsJson.getString(
+                nodeData.get("selftext_html"))));
+        link.setSubreddit(UtilsJson.getString(nodeData.get("subreddit")));
+        link.setSubredditId(UtilsJson.getString(nodeData.get("subreddit_id")));
+        link.setThumbnail(UtilsJson.getString(nodeData.get("thumbnail")));
+        link.setTitle(Html.fromHtml(UtilsJson.getString(nodeData.get("title"))).toString());
+        link.setUrl(String.valueOf(Html.fromHtml(UtilsJson.getString(nodeData.get("url")))));
 
-        String edited = jsonObject.optString("edited");
+        String edited = UtilsJson.getString(nodeData.get("edited"));
         switch (edited) {
             case "true":
                 link.setEdited(1);
@@ -120,11 +129,11 @@ public class Link extends Replyable {
                 link.setEdited(0);
                 break;
             default:
-                link.setEdited(jsonObject.optLong("edited") * 1000);
+                link.setEdited(UtilsJson.getLong(nodeData.get("edited")) * 1000);
                 break;
         }
 
-        switch (jsonObject.optString("distinguished")) {
+        switch (UtilsJson.getString(nodeData.get("distinguished"))) {
             case "null":
                 link.setDistinguished(Reddit.Distinguished.NOT_DISTINGUISHED);
                 break;
@@ -139,22 +148,19 @@ public class Link extends Replyable {
                 break;
         }
 
-        link.setStickied(jsonObject.optBoolean("stickied"));
+        link.setStickied(UtilsJson.getBoolean(nodeData.get("stickied")));
 
         return link;
     }
 
-    public static Link fromJson(JSONArray jsonArray) throws JSONException {
+    public static Link fromJsonWithComments(JsonNode nodeRoot) throws IOException {
 
-        Link link = fromJson(jsonArray.getJSONObject(0)
-                .getJSONObject("data")
-                .getJSONArray("children")
-                .getJSONObject(0));
+        Link link = fromJson(nodeRoot.get(0)
+                .get("data")
+                .get("children")
+                .get(0));
 
-        JSONObject jsonObject = jsonArray.getJSONObject(1);
-
-        Listing listing = Listing.fromJson(jsonObject);
-        link.setComments(listing);
+        link.setComments(Listing.fromJson(nodeRoot.get(1)));
 
         return link;
     }

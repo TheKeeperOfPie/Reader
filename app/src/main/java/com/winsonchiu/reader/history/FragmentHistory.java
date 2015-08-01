@@ -593,7 +593,6 @@ public class FragmentHistory extends FragmentBase implements Toolbar.OnMenuItemC
                     calendarEnd.get(Calendar.MONTH), calendarEnd.get(Calendar.DAY_OF_MONTH));
         }
 
-
         AlertDialog dialog = new AlertDialog.Builder(activity)
                 .setView(view)
                 .setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {

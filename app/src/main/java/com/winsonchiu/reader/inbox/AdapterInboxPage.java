@@ -32,6 +32,11 @@ public class AdapterInboxPage extends BaseAdapter {
         pages.add(new Page(ControllerInbox.INBOX, activity.getString(R.string.inbox_page_inbox)));
         pages.add(new Page(ControllerInbox.UNREAD, activity.getString(R.string.inbox_page_unread)));
         pages.add(new Page(ControllerInbox.SENT, activity.getString(R.string.inbox_page_sent)));
+        pages.add(new Page(ControllerInbox.COMMENTS, activity.getString(R.string.inbox_page_comments)));
+        pages.add(new Page(ControllerInbox.SELF_REPLY, activity.getString(R.string.inbox_page_self_reply)));
+        pages.add(new Page(ControllerInbox.MENTIONS, activity.getString(R.string.inbox_page_mentions)));
+        pages.add(new Page(ControllerInbox.MODERATOR, activity.getString(R.string.inbox_page_moderator)));
+        pages.add(new Page(ControllerInbox.MODERATOR_UNREAD, activity.getString(R.string.inbox_page_moderator_unread)));
     }
 
     @Override

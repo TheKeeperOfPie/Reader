@@ -51,6 +51,7 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
+import android.webkit.WebChromeClient;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.Button;
@@ -974,6 +975,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             else {
                 expandFull(true);
                 textThreadSelf.setVisibility(View.VISIBLE);
+                recyclerCallback.scrollTo(getAdapterPosition());
             }
 
             return true;
@@ -1089,7 +1091,6 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
 
             if (Reddit.placeImageUrl(link)) {
                 expandFull(true);
-                recyclerCallback.scrollTo(getAdapterPosition());
                 recyclerCallback.getLayoutManager().requestLayout();
                 itemView.invalidate();
                 itemView.postDelayed(new Runnable() {
@@ -1132,6 +1133,15 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                             frameFull.addView(webFull, frameFull.getChildCount() - 1);
 
                         }
+                        webFull.setWebChromeClient(new WebChromeClient() {
+                            @Override
+                            public void onProgressChanged(WebView view, int newProgress) {
+                                super.onProgressChanged(view, newProgress);
+                                if (newProgress >= 100) {
+                                    recyclerCallback.scrollTo(getAdapterPosition());
+                                }
+                            }
+                        });
                         webFull.onResume();
                         webFull.loadData(Reddit.getImageHtml(link.getUrl()), "text/html", "UTF-8");
                     }

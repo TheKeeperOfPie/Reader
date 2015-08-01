@@ -7,9 +7,16 @@ package com.winsonchiu.reader.data.reddit;
 import android.support.annotation.Nullable;
 import android.text.Html;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.winsonchiu.reader.utils.UtilsJson;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
 
 /**
  * Created by TheKeeperOfPie on 3/7/2015.
@@ -26,18 +33,18 @@ public class Subreddit extends Thing {
 
     private int accountsActive;
     private String bannerImg;
-    private int[] bannerSize;
+    private List<Integer> bannerSize;
     private boolean collapseDeletedComments;
     private int commentScoreHideMins;
     private String description;
     private String descriptionHtml;
     private String displayName;
     private String headerImg;
-    private int[] headerSize;
+    private List<Integer> headerSize;
     private String headerTitle;
     private boolean hideAds;
     private String iconImg;
-    private int[] iconSize;
+    private List<Integer> iconSize;
     private boolean over18;
     private String publicDescription;
     private String publicDescriptionHtml;
@@ -62,125 +69,85 @@ public class Subreddit extends Thing {
         super();
     }
 
-    public String toJsonString() throws JSONException {
 
-        JSONObject jsonObject = new JSONObject();
-        jsonObject.put("id", getId());
-        jsonObject.put("name", getName());
-        jsonObject.put("accountsActive", accountsActive);
-        jsonObject.put("bannerImg", bannerImg);
-        jsonObject.put("bannerSize", bannerSize);
-        jsonObject.put("collapseDeletedComments", collapseDeletedComments);
-        jsonObject.put("commentScoreHideMins", commentScoreHideMins);
-        jsonObject.put("description", description);
-        jsonObject.put("descriptionHtml", descriptionHtml);
-        jsonObject.put("displayName", displayName);
-        jsonObject.put("headerImg", headerImg);
-        jsonObject.put("headerSize", headerSize);
-        jsonObject.put("headerTitle", headerTitle);
-        jsonObject.put("hideAds", hideAds);
-        jsonObject.put("iconImg", iconImg);
-        jsonObject.put("iconSize", iconSize);
-        jsonObject.put("over18", over18);
-        jsonObject.put("publicDescription", publicDescription);
-        jsonObject.put("publicDescriptionHtml", publicDescriptionHtml);
-        jsonObject.put("publicTraffic", publicTraffic);
-        jsonObject.put("subscribers", subscribers);
-        jsonObject.put("submissionType", submissionType);
-        jsonObject.put("submitLinkLabel", submitLinkLabel);
-        jsonObject.put("submitText", submitText);
-        jsonObject.put("submitTextLabel", submitTextLabel);
-        jsonObject.put("submitTextHtml", submitTextHtml);
-        jsonObject.put("subredditType", subredditType);
-        jsonObject.put("title", title);
-        jsonObject.put("url", url);
-        jsonObject.put("userIsBanned", userIsBanned);
-        jsonObject.put("userIsContributor", userIsContributor);
-        jsonObject.put("userIsModerator", userIsModerator);
-        jsonObject.put("userIsSubscriber", userIsSubscriber);
-
-        // Timestamps divided by 1000 so fromJson can recreate the object correctly
-        jsonObject.put("created", created / 1000);
-        jsonObject.put("createdUtc", createdUtc / 1000);
-
-        JSONObject rootJsonObject = new JSONObject();
-        rootJsonObject.put("kind", getKind());
-        rootJsonObject.put("data", jsonObject);
-
-        return jsonObject.toString();
-    }
-
-    public static Subreddit fromJson(JSONObject rootJsonObject) throws JSONException {
+    public static Subreddit fromJson(JsonNode nodeRoot) {
 
         Subreddit subreddit = new Subreddit();
-        subreddit.setKind(rootJsonObject.optString("kind"));
+        subreddit.setKind(UtilsJson.getString(nodeRoot.get("kind")));
 
-        JSONObject jsonObject = rootJsonObject.getJSONObject("data");
+        JsonNode nodeData = nodeRoot.get("data");
 
-        subreddit.setId(jsonObject.optString("id"));
-        subreddit.setName(jsonObject.optString("name"));
+        subreddit.setId(UtilsJson.getString(nodeData.get("id")));
+        subreddit.setName(UtilsJson.getString(nodeData.get("name")));
 
         // Timestamps multiplied by 1000 as Java uses milliseconds and Reddit uses seconds
-        subreddit.setCreated(jsonObject.optLong("created") * 1000);
-        subreddit.setCreatedUtc(jsonObject.optLong("created_utc") * 1000);
+        subreddit.setCreated(UtilsJson.getLong(nodeData.get("created")) * 1000);
+        subreddit.setCreatedUtc(UtilsJson.getLong(nodeData.get("created_utc")) * 1000);
 
-        subreddit.setAccountsActive(jsonObject.optInt("accounts_active"));
-        subreddit.setBannerImg(jsonObject.optString("banner_img"));
+        subreddit.setAccountsActive(UtilsJson.getInt(nodeData.get("accounts_active")));
+        subreddit.setBannerImg(UtilsJson.getString(nodeData.get("banner_img")));
 
-        if (!"null".equalsIgnoreCase(jsonObject.optString("banner_size"))) {
-            JSONArray jsonArray = jsonObject.getJSONArray("banner_size");
-            int[] array = new int[jsonArray.length()];
-            for (int index = 0; index < jsonArray.length(); index++) {
-                array[index] = jsonArray.optInt(index);
+        if (nodeData.hasNonNull("banner_size")) {
+            List<Integer> list = new ArrayList<>();
+            for (JsonNode jsonNode : nodeData.get("banner_size")) {
+                list.add(UtilsJson.getInt(jsonNode));
+
             }
-            subreddit.setBannerSize(array);
+            subreddit.setBannerSize(list);
         }
 
-        subreddit.setCollapseDeletedComments(jsonObject.optBoolean("collapse_deleted_comments"));
-        subreddit.setDescription(jsonObject.optString("description"));
-        subreddit.setDescriptionHtml(jsonObject.optString("description_html"));
-        subreddit.setDisplayName(jsonObject.optString("display_name"));
-        subreddit.setHeaderImg(jsonObject.optString("header_img"));
+        subreddit.setCollapseDeletedComments(UtilsJson.getBoolean(
+                nodeData.get("collapse_deleted_comments")));
+        subreddit.setDescription(UtilsJson.getString(nodeData.get("description")));
+        subreddit.setDescriptionHtml(UtilsJson.getString(nodeData.get("description_html")));
+        subreddit.setDisplayName(UtilsJson.getString(nodeData.get("display_name")));
+        subreddit.setHeaderImg(UtilsJson.getString(nodeData.get("header_img")));
 
-        if (!"null".equalsIgnoreCase(jsonObject.optString("header_size"))) {
-            JSONArray jsonArray = jsonObject.getJSONArray("header_size");
-            int[] array = new int[jsonArray.length()];
-            for (int index = 0; index < jsonArray.length(); index++) {
-                array[index] = jsonArray.optInt(index);
+        if (nodeData.hasNonNull("header_size")) {
+            List<Integer> list = new ArrayList<>();
+            for (JsonNode jsonNode : nodeData.get("header_size")) {
+                list.add(UtilsJson.getInt(jsonNode));
+
             }
-            subreddit.setHeaderSize(array);
+            subreddit.setHeaderSize(list);
         }
 
-        subreddit.setHeaderTitle(jsonObject.optString("header_title"));
-        subreddit.setHideAds(jsonObject.optBoolean("hide_ads"));
-        subreddit.setIconImg(jsonObject.optString("icon_img"));
+        subreddit.setHeaderTitle(UtilsJson.getString(nodeData.get("header_title")));
+        subreddit.setHideAds(UtilsJson.getBoolean(nodeData.get("hide_ads")));
+        subreddit.setIconImg(UtilsJson.getString(nodeData.get("icon_img")));
 
-        if (!"null".equalsIgnoreCase(jsonObject.optString("icon_size"))) {
-            JSONArray jsonArray = jsonObject.getJSONArray("icon_size");
-            int[] array = new int[jsonArray.length()];
-            for (int index = 0; index < jsonArray.length(); index++) {
-                array[index] = jsonArray.optInt(index);
+        if (nodeData.hasNonNull("icon_size")) {
+            List<Integer> list = new ArrayList<>();
+            for (JsonNode jsonNode : nodeData.get("icon_size")) {
+                list.add(UtilsJson.getInt(jsonNode));
+
             }
-            subreddit.setIconSize(array);
+            subreddit.setIconSize(list);
         }
 
-        subreddit.setOver18(jsonObject.optBoolean("over18"));
-        subreddit.setPublicDescription(jsonObject.optString("public_description"));
-        subreddit.setPublicDescriptionHtml(jsonObject.optString("public_description_html"));
-        subreddit.setPublicTraffic(jsonObject.optBoolean("public_traffic"));
-        subreddit.setSubscribers(jsonObject.optLong("subscribers"));
-        subreddit.setSubmissionType(jsonObject.optString("submission_type"));
-        subreddit.setSubmitLinkLabel(jsonObject.optString("submit_link_label"));
-        subreddit.setSubmitText(jsonObject.optString("submit_text"));
-        subreddit.setSubmitTextLabel(jsonObject.optString("submit_text_label"));
-        subreddit.setSubmitTextHtml(jsonObject.optString("submit_text_html"));
-        subreddit.setSubredditType(jsonObject.optString("subreddit_type"));
-        subreddit.setTitle(Html.fromHtml(jsonObject.optString("title")).toString());
-        subreddit.setUrl(jsonObject.optString("url"));
-        subreddit.setUserIsBanned(jsonObject.optBoolean("user_is_banned"));
-        subreddit.setUserIsContributor(jsonObject.optBoolean("user_is_contributor"));
-        subreddit.setUserIsModerator(jsonObject.optBoolean("user_is_moderator"));
-        subreddit.setUserIsSubscriber(jsonObject.optBoolean("user_is_subscriber"));
+        subreddit.setOver18(UtilsJson.getBoolean(nodeData.get("over18")));
+        subreddit.setPublicDescription(UtilsJson.getString(
+                nodeData.get("public_description")));
+        subreddit.setPublicDescriptionHtml(UtilsJson.getString(
+                nodeData.get("public_description_html")));
+        subreddit.setPublicTraffic(UtilsJson.getBoolean(nodeData.get("public_traffic")));
+        subreddit.setSubscribers(UtilsJson.getLong(nodeData.get("subscribers")));
+        subreddit.setSubmissionType(UtilsJson.getString(nodeData.get("submission_type")));
+        subreddit.setSubmitLinkLabel(UtilsJson.getString(nodeData.get("submit_link_label")));
+        subreddit.setSubmitText(UtilsJson.getString(nodeData.get("submit_text")));
+        subreddit.setSubmitTextLabel(UtilsJson.getString(nodeData.get("submit_text_label")));
+        subreddit.setSubmitTextHtml(UtilsJson.getString(nodeData.get("submit_text_html")));
+        subreddit.setSubredditType(UtilsJson.getString(nodeData.get("subreddit_type")));
+        subreddit.setTitle(Html.fromHtml(
+                UtilsJson.getString(nodeData.get("title"))).toString());
+        subreddit.setUrl(UtilsJson.getString(nodeData.get("url")));
+        subreddit.setUserIsBanned(UtilsJson.getBoolean(nodeData.get("user_is_banned")));
+        subreddit.setUserIsContributor(UtilsJson.getBoolean(
+                nodeData.get("user_is_contributor")));
+        subreddit.setUserIsModerator(
+                UtilsJson.getBoolean(nodeData.get("user_is_moderator")));
+        subreddit.setUserIsSubscriber(UtilsJson.getBoolean(
+                nodeData.get("user_is_subscriber")));
 
         return subreddit;
     }
@@ -202,11 +169,11 @@ public class Subreddit extends Thing {
     }
 
     @Nullable
-    public int[] getBannerSize() {
+    public List<Integer> getBannerSize() {
         return bannerSize;
     }
 
-    public void setBannerSize(int[] bannerSize) {
+    public void setBannerSize(List<Integer> bannerSize) {
         this.bannerSize = bannerSize;
     }
 
@@ -265,11 +232,11 @@ public class Subreddit extends Thing {
     }
 
     @Nullable
-    public int[] getHeaderSize() {
+    public List<Integer> getHeaderSize() {
         return headerSize;
     }
 
-    public void setHeaderSize(int[] headerSize) {
+    public void setHeaderSize(List<Integer> headerSize) {
         this.headerSize = headerSize;
     }
 
@@ -298,11 +265,11 @@ public class Subreddit extends Thing {
     }
 
     @Nullable
-    public int[] getIconSize() {
+    public List<Integer> getIconSize() {
         return iconSize;
     }
 
-    public void setIconSize(int[] iconSize) {
+    public void setIconSize(List<Integer> iconSize) {
         this.iconSize = iconSize;
     }
 

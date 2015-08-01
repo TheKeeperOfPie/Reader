@@ -6,13 +6,16 @@ package com.winsonchiu.reader.data.reddit;
 
 import android.text.Html;
 import android.text.TextUtils;
+import android.util.Log;
 
-import com.github.rjeschke.txtmark.Processor;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.winsonchiu.reader.utils.UtilsJson;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -24,7 +27,6 @@ public class Comment extends Replyable {
     public static final String DELETED = "[deleted]";
 
     private static final String TAG = Comment.class.getCanonicalName();
-
     private String approvedBy = "";
     private String author = "";
     private String authorFlairCssClass = "";
@@ -51,7 +53,8 @@ public class Comment extends Replyable {
     private String linkAuthor = "";
     private String linkTitle = "";
     private String linkUrl = "";
-    private List<String> children;
+    private List<String> children = new ArrayList<>();
+    private List<String> replies = new ArrayList<>();
     private boolean isNew;
     private String context;
 
@@ -63,34 +66,33 @@ public class Comment extends Replyable {
     private boolean editMode;
     private int collapsed;
 
-    public static void addAllFromJson(List<Comment> comments, JSONObject rootJsonObject, int level) throws JSONException {
+    public static void addAllFromJson(List<Thing> comments, JsonNode jsonNode, int level) {
 
-        comments.add(Comment.fromJson(rootJsonObject, level));
+        comments.add(Comment.fromJson(jsonNode, level));
 
-        if (rootJsonObject.getJSONObject("data").has("replies") && !TextUtils.isEmpty(rootJsonObject.getJSONObject("data").optString("replies")) && !rootJsonObject.getJSONObject("data").optString("replies").equals("null")) {
-            JSONObject data = rootJsonObject.getJSONObject("data")
-                    .getJSONObject("replies")
-                    .getJSONObject("data");
+        if (jsonNode.get("data").hasNonNull("replies")) {
+            JsonNode data = jsonNode.get("data")
+                    .get("replies")
+                    .get("data");
 
-            if (data.has("children")) {
-                JSONArray arrayComments = data.getJSONArray("children");
-                for (int index = 0; index < arrayComments.length(); index++) {
-                    Comment.addAllFromJson(comments, arrayComments.getJSONObject(index), level + 1);
+            if (data != null && data.hasNonNull("children")) {
+                for (JsonNode node : data.get("children")) {
+                    Comment.addAllFromJson(comments, node, level + 1);
                 }
             }
         }
 
     }
 
-    public static Comment fromJson(JSONObject rootJsonObject, int level) throws JSONException {
+    public static Comment fromJson(JsonNode rootNode, int level) {
 
         Comment comment = new Comment();
         comment.setLevel(level);
-        comment.setKind(rootJsonObject.optString("kind"));
+        comment.setKind(UtilsJson.getString(rootNode.get("kind")));
 
-        JSONObject jsonObject = rootJsonObject.getJSONObject("data");
+        JsonNode jsonNode = rootNode.get("data");
 
-        String id = jsonObject.optString("id");
+        String id = UtilsJson.getString(jsonNode.get("id"));
         int indexStart = id.indexOf("_");
         if (indexStart >= 0) {
             comment.setId(id.substring(indexStart + 1));
@@ -98,9 +100,9 @@ public class Comment extends Replyable {
         else {
             comment.setId(id);
         }
-        comment.setName(jsonObject.optString("name"));
+        comment.setName(UtilsJson.getString(jsonNode.get("name")));
 
-        String parentId = jsonObject.optString("parent_id");
+        String parentId = UtilsJson.getString(jsonNode.get("parent_id"));
         indexStart = parentId.indexOf("_");
         if (indexStart >= 0) {
             comment.setParentId(parentId.substring(indexStart + 1));
@@ -111,32 +113,30 @@ public class Comment extends Replyable {
 
         if (comment.getKind().equals("more")) {
             comment.setIsMore(true);
-            comment.setCount(jsonObject.optInt("count"));
+            comment.setCount(UtilsJson.getInt(jsonNode.get("count")));
             List<String> children = new LinkedList<>();
-            JSONArray childrenArray = jsonObject.getJSONArray("children");
-            for (int index = 0; index < childrenArray.length(); index++) {
-                children.add(childrenArray.optString(index));
+            for (JsonNode node : jsonNode.get("children")) {
+                children.add(UtilsJson.getString(node));
             }
             comment.setChildren(children);
             return comment;
         }
 
         // Timestamps multiplied by 1000 as Java uses milliseconds and Reddit uses seconds
-        comment.setCreated(jsonObject.optLong("created") * 1000);
-        comment.setCreatedUtc(jsonObject.optLong("created_utc") * 1000);
+        comment.setCreated(UtilsJson.getLong(jsonNode.get("created")) * 1000);
+        comment.setCreatedUtc(UtilsJson.getLong(jsonNode.get("created_utc")) * 1000);
 
-        comment.setApprovedBy(jsonObject.optString("approved_by"));
-        comment.setAuthor(jsonObject.optString("author"));
-        comment.setAuthorFlairCssClass(jsonObject.optString("author_flair_css_class"));
-        comment.setAuthorFlairText(jsonObject.optString("author_flair_text"));
-        comment.setBannedBy(jsonObject.optString("banned_by"));
-        comment.setBody(Html.fromHtml(jsonObject.optString("body").replaceAll("\n", "<br>")));
-        comment.setBodyHtml(Reddit.getFormattedHtml(jsonObject.optString("body_html")));
+        comment.setApprovedBy(UtilsJson.getString(jsonNode.get("approved_by")));
+        comment.setAuthor(UtilsJson.getString(jsonNode.get("author")));
+        comment.setAuthorFlairCssClass(UtilsJson.getString(jsonNode.get("author_flair_css_class")));
+        comment.setAuthorFlairText(UtilsJson.getString(jsonNode.get("author_flair_text")));
+        comment.setBannedBy(UtilsJson.getString(jsonNode.get("banned_by")));
+        comment.setBody(Html.fromHtml(UtilsJson.getString(jsonNode.get("body")).replaceAll("\n",
+                "<br>")));
+        comment.setBodyHtml(Reddit.getFormattedHtml(UtilsJson.getString(
+                jsonNode.get("body_html"))));
 
-        switch (jsonObject.optString("distinguished")) {
-            case "null":
-                comment.setDistinguished(Reddit.Distinguished.NOT_DISTINGUISHED);
-                break;
+        switch (UtilsJson.getString(jsonNode.get("distinguished"))) {
             case "moderator":
                 comment.setDistinguished(Reddit.Distinguished.MODERATOR);
                 break;
@@ -146,9 +146,12 @@ public class Comment extends Replyable {
             case "special":
                 comment.setDistinguished(Reddit.Distinguished.SPECIAL);
                 break;
+            default:
+                comment.setDistinguished(Reddit.Distinguished.NOT_DISTINGUISHED);
+                break;
         }
 
-        String edited = jsonObject.optString("edited");
+        String edited = UtilsJson.getString(jsonNode.get("edited"));
         switch (edited) {
             case "true":
                 comment.setEdited(1);
@@ -157,13 +160,13 @@ public class Comment extends Replyable {
                 comment.setEdited(0);
                 break;
             default:
-                comment.setEdited(jsonObject.optLong("edited") * 1000);
+                comment.setEdited(UtilsJson.getLong(jsonNode.get("edited")) * 1000);
                 break;
         }
 
-        comment.setGilded(jsonObject.optInt("gilded"));
+        comment.setGilded(UtilsJson.getInt(jsonNode.get("gilded")));
 
-        switch (jsonObject.optString("likes")) {
+        switch (UtilsJson.getString(jsonNode.get("likes"))) {
             case "null":
                 comment.setLikes(0);
                 break;
@@ -175,20 +178,20 @@ public class Comment extends Replyable {
                 break;
         }
 
-        comment.setLinkId(jsonObject.optString("link_id"));
-        comment.setNumReports(jsonObject.optInt("num_reports"));
-        comment.setSaved(jsonObject.optBoolean("saved"));
-        comment.setScore(jsonObject.optInt("score"));
-        comment.setScoreHidden(jsonObject.optBoolean("score_hidden"));
-        comment.setSubreddit(jsonObject.optString("subreddit"));
-        comment.setSubredditId(jsonObject.optString("subreddit_id"));
+        comment.setLinkId(UtilsJson.getString(jsonNode.get("link_id")));
+        comment.setNumReports(UtilsJson.getInt(jsonNode.get("num_reports")));
+        comment.setSaved(UtilsJson.getBoolean(jsonNode.get("saved")));
+        comment.setScore(UtilsJson.getInt(jsonNode.get("score")));
+        comment.setScoreHidden(UtilsJson.getBoolean(jsonNode.get("score_hidden")));
+        comment.setSubreddit(UtilsJson.getString(jsonNode.get("subreddit")));
+        comment.setSubredditId(UtilsJson.getString(jsonNode.get("subreddit_id")));
 
-        comment.setLinkAuthor(jsonObject.optString("link_author"));
-        comment.setLinkTitle(jsonObject.optString("link_title"));
-        comment.setLinkUrl(jsonObject.optString("link_url"));
+        comment.setLinkAuthor(UtilsJson.getString(jsonNode.get("link_author")));
+        comment.setLinkTitle(UtilsJson.getString(jsonNode.get("link_title")));
+        comment.setLinkUrl(UtilsJson.getString(jsonNode.get("link_url")));
 
-        comment.setIsNew(jsonObject.optBoolean("new"));
-        comment.setContext(jsonObject.optString("context"));
+        comment.setIsNew(UtilsJson.getBoolean(jsonNode.get("new")));
+        comment.setContext(UtilsJson.getString(jsonNode.get("context")));
 
         return comment;
     }
@@ -374,7 +377,8 @@ public class Comment extends Replyable {
     }
 
     public boolean isMore() {
-        return isMore;
+        return getKind().equals("more");
+//        return isMore;
     }
 
     public void setIsMore(boolean isMore) {
@@ -433,7 +437,7 @@ public class Comment extends Replyable {
         this.createdUtc = createdUtc;
     }
 
-    public boolean isNew() {
+    public boolean getIsNew() {
         return isNew;
     }
 
@@ -476,5 +480,13 @@ public class Comment extends Replyable {
     @Override
     public CharSequence getParentHtml() {
         return getBodyHtml();
+    }
+
+    public List<String> getReplies() {
+        return replies;
+    }
+
+    public void setReplies(List<String> replies) {
+        this.replies = replies;
     }
 }
