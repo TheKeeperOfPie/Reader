@@ -15,7 +15,9 @@
         <item name="android:shadowColor">@color/darkThemeShadowColor</item>
         <item name="android:windowBackground">@color/darkThemeBackground</item>
         <item name="colorRowBackground">@color/darkThemeRowBackground</item>
+        <item name="colorRowOverlay">@color/darkThemeRowOverlay</item>
         <item name="colorCellBackground">@color/darkThemeCellBackground</item>
+        <item name="colorCellOverlay">@color/darkThemeCellOverlay</item>
         <item name="colorIconFilter">@color/darkThemeIconFilter</item>
         <item name="colorAlert">@color/textColorAlert</item>
 
@@ -33,7 +35,9 @@
         <item name="android:shadowColor">@color/lightThemeShadowColor</item>
         <item name="android:windowBackground">@color/lightThemeBackground</item>
         <item name="colorRowBackground">@color/lightThemeRowBackground</item>
+        <item name="colorRowOverlay">@color/lightThemeRowOverlay</item>
         <item name="colorCellBackground">@color/lightThemeCellBackground</item>
+        <item name="colorCellOverlay">@color/lightThemeCellOverlay</item>
         <item name="colorIconFilter">@color/lightThemeIconFilter</item>
         <item name="colorAlert">@color/textColorAlertMuted</item>
 

@@ -81,7 +81,13 @@ public class AdapterAlbum extends PagerAdapter {
         viewHolder.instantiate(image, position, album.getImagesCount());
 
         WebViewFixed webView = WebViewFixed.newInstance(
-                container.getContext().getApplicationContext());
+                container.getContext().getApplicationContext(),
+                new WebViewFixed.OnFinishedListener() {
+                    @Override
+                    public void onFinished() {
+
+                    }
+                });
         webView.setVisibility(View.GONE);
         webView.setOnTouchListener(new OnTouchListenerDisallow(disallowListener));
         webView.getSettings().setCacheMode(WebSettings.LOAD_CACHE_ELSE_NETWORK);

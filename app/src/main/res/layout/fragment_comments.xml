@@ -9,7 +9,6 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context="com.winsonchiu.reader.comments.FragmentComments"
-    android:background="@android:color/transparent"
     >
 
     <android.support.design.widget.CoordinatorLayout
@@ -30,7 +29,6 @@
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:background="?android:attr/windowBackground"
-                android:layout_below="@+id/toolbar"
                 />
 
             <com.google.android.youtube.player.YouTubePlayerView

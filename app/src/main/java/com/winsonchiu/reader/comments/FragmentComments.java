@@ -710,6 +710,7 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
                 swipeRefreshCommentList.postDelayed(new Runnable() {
                     @Override
                     public void run() {
+                        viewBackground.setVisibility(View.GONE);
                         adapterCommentList.setAnimationFinished(true);
                     }
                 }, 150);

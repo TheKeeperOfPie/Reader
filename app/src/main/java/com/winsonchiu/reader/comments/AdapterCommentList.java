@@ -532,7 +532,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
 
         private void sendReply() {
             if (comment.isEditMode()) {
-                eventListener.editComment(comment, editTextReply.getText().toString());
+                eventListener.editComment(comment.getName(), comment.getLevel(), editTextReply.getText().toString());
                 comment.setEdited(System.currentTimeMillis());
             }
             else {
@@ -686,7 +686,10 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
 
             this.comment = comment;
             this.userName = userName;
-            itemView.getBackground().setState(new int[0]);
+
+            if (itemView.getBackground() != null) {
+                itemView.getBackground().setState(new int[0]);
+            }
 
             layoutContainerReply
                     .setVisibility(comment.isReplyExpanded() ? View.VISIBLE : View.GONE);
@@ -1002,7 +1005,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
             void voteComment(ViewHolderComment viewHolderComment, Comment comment, int vote);
             boolean toggleComment(int position);
             void deleteComment(Comment comment);
-            void editComment(Comment comment, String text);
+            void editComment(String name, int level, String text);
             void jumpToParent(Comment comment);
         }
 

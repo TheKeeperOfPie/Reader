@@ -537,30 +537,35 @@ public class ControllerProfile implements ControllerLinksBase {
         return false;
     }
 
-    public void editComment(final Comment comment, String text) {
+    public void editComment(String name, final int level, String text) {
 
         Map<String, String> params = new HashMap<>();
         params.put("api_type", "json");
         params.put("text", text);
-        params.put("thing_id", comment.getName());
+        params.put("thing_id", name);
 
         reddit.loadPost(Reddit.OAUTH_URL + "/api/editusertext", new Response.Listener<String>() {
             @Override
             public void onResponse(String response) {
                 try {
                     Comment newComment = Comment.fromJson(Reddit.getObjectMapper().readValue(
-                            response, JsonNode.class).get("json").get("data").get("things").get(0), comment.getLevel());
-                    comment.setBodyHtml(newComment.getBodyHtml());
-                    if (comment.getName().equals(topComment.getName())) {
+                            response, JsonNode.class).get("json").get("data").get("things").get(0), level);
+
+                    if (newComment.getName().equals(topComment.getName())) {
+                        topComment.setBodyHtml(newComment.getBodyHtml());
+                        topComment.setEdited(newComment.getEdited());
                         for (Listener listener : listeners) {
                             listener.getAdapter().notifyItemChanged(2);
                         }
                     }
                     else {
                         int commentIndex = data.getChildren()
-                                .indexOf(comment);
+                                .indexOf(newComment);
 
                         if (commentIndex > -1) {
+                            Comment comment = (Comment) data.getChildren().get(commentIndex);
+                            comment.setBodyHtml(newComment.getBodyHtml());
+                            comment.setEdited(newComment.getEdited());
                             for (Listener listener : listeners) {
                                 listener.getAdapter().notifyItemChanged(commentIndex + 6);
                             }

@@ -236,8 +236,8 @@ public class FragmentInbox extends FragmentBase implements Toolbar.OnMenuItemCli
                         }
 
                         @Override
-                        public void editComment(Comment comment, String text) {
-                            mListener.getControllerInbox().editComment(comment, text);
+                        public void editComment(String name, int level, String text) {
+                            mListener.getControllerInbox().editComment(name, level, text);
                         }
 
                         @Override

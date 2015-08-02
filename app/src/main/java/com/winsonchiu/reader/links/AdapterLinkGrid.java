@@ -7,6 +7,7 @@ package com.winsonchiu.reader.links;
 import android.animation.Animator;
 import android.app.Activity;
 import android.content.res.Resources;
+import android.graphics.Color;
 import android.graphics.ColorFilter;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
@@ -237,6 +238,7 @@ public class AdapterLinkGrid extends AdapterLink {
                         ((StaggeredGridLayoutManager) recyclerCallback.getLayoutManager())
                                 .invalidateSpanAssignments();
                     }
+                    recyclerCallback.scrollTo(getAdapterPosition());
                 }
             }
         }
@@ -431,11 +433,17 @@ public class AdapterLinkGrid extends AdapterLink {
 
         }
 
+        public double calculateLuminance(int color) {
+            return Math.sqrt(0.299f * Math.pow(Color.red(color) / 255f, 2) + 0.587f * Math.pow(Color.green(color) / 255f, 2) + 0.114f * Math.pow(Color.blue(color) / 255f, 2));
+        }
+
         public void setTextColors(int color) {
 
             Menu menu = toolbarActions.getMenu();
 
-            if (ColorUtils.calculateLuminance(color) < 0.5f) {
+            double luminance = calculateLuminance(color);
+
+            if (luminance < 0.5) {
                 buttonComments.setColorFilter(colorFilterIconLight);
                 imagePlay.setColorFilter(colorFilterIconLight);
                 textThreadInfo.setTextColor(resources.getColor(R.color.darkThemeTextColorMuted));

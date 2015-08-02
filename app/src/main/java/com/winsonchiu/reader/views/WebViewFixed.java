@@ -9,7 +9,9 @@ import android.annotation.TargetApi;
 import android.content.Context;
 import android.graphics.Rect;
 import android.os.Build;
+import android.text.TextUtils;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.util.TypedValue;
 import android.view.ViewGroup;
 import android.webkit.WebView;
@@ -25,24 +27,53 @@ import com.winsonchiu.reader.data.reddit.Reddit;
 public class WebViewFixed extends WebView {
 
     private static final String TAG = WebViewFixed.class.getCanonicalName();
-    ;
+    private OnFinishedListener onFinishedListener;
+    private String data;
     private int maxHeight = Integer.MAX_VALUE;
 
-    public WebViewFixed(Context context) {
+    private WebViewFixed(Context context, OnFinishedListener onFinishedListener) {
         super(context);
+        this.onFinishedListener = onFinishedListener;
     }
 
-    public WebViewFixed(Context context, AttributeSet attrs) {
+    private WebViewFixed(Context context, AttributeSet attrs) {
         super(context, attrs);
     }
 
-    public WebViewFixed(Context context, AttributeSet attrs, int defStyleAttr) {
+    private WebViewFixed(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
     }
 
     @TargetApi(Build.VERSION_CODES.LOLLIPOP)
-    public WebViewFixed(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {
+    private WebViewFixed(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {
         super(context, attrs, defStyleAttr, defStyleRes);
+    }
+
+    @Override
+    public void invalidate() {
+        super.invalidate();
+
+        Log.d(TAG, "contentHeight: " + getContentHeight());
+        Log.d(TAG, "height: " + getHeight());
+
+        if (getContentHeight() > 0) {
+            if (getHeight() == 0) {
+                 reload();
+            }
+            else if (onFinishedListener != null) {
+                onFinishedListener.onFinished();
+                onFinishedListener = null;
+            }
+        }
+        else if (!TextUtils.isEmpty(data) && getProgress() == 100) {
+            setVisibility(GONE);
+            reload();
+            Rect rect = new Rect();
+            getParent().getChildVisibleRect(this, rect, null);
+            getParent().invalidateChild(this, rect);
+            setVisibility(VISIBLE);
+            data = null;
+        }
     }
 
     @SuppressLint("DrawAllocation")
@@ -75,6 +106,12 @@ public class WebViewFixed extends WebView {
         }
     }
 
+    @Override
+    public void loadData(String data, String mimeType, String encoding) {
+        super.loadData(data, mimeType, encoding);
+        this.data = data;
+    }
+
     public void lockHeight() {
         if (maxHeight == Integer.MAX_VALUE) {
             maxHeight = AnimationUtils.getMeasuredHeight(this, 1.0f);
@@ -83,8 +120,8 @@ public class WebViewFixed extends WebView {
         requestLayout();
     }
 
-    public static WebViewFixed newInstance(Context context) {
-        final WebViewFixed webViewFixed = new WebViewFixed(context.getApplicationContext());
+    public static WebViewFixed newInstance(Context context, OnFinishedListener onFinishedListener) {
+        final WebViewFixed webViewFixed = new WebViewFixed(context.getApplicationContext(), onFinishedListener);
         Reddit.incrementCreate();
         webViewFixed.setMinimumHeight(
                 (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 48,
@@ -100,6 +137,11 @@ public class WebViewFixed extends WebView {
         webViewFixed.setBackgroundColor(0x000000);
         webViewFixed.setInitialScale(1);
         return webViewFixed;
+    }
+
+
+    public interface OnFinishedListener {
+        void onFinished();
     }
 
 }

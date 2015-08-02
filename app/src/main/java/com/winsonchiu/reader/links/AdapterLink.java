@@ -938,13 +938,14 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             addToHistory();
             viewOverlay.setVisibility(View.GONE);
 
-            // TODO: Improve where this logic is handled in click timline
+            // TODO: Improve where this logic is handled in click timeline
             if (link.getNumComments() == 0) {
                 if (!link.isCommentsClicked()) {
                     eventListener.toast(resources.getString(R.string.no_comments));
                     if (link.isSelf() && !TextUtils.isEmpty(link.getSelfText())) {
                         expandFull(true);
                         textThreadSelf.setVisibility(View.VISIBLE);
+                        recyclerCallback.scrollTo(getAdapterPosition());
                     }
                     link.setCommentsClicked(true);
                     return;
@@ -1097,7 +1098,13 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                     @Override
                     public void run() {
                         if (webFull == null) {
-                            webFull = eventListener.getNewWebView();
+                            webFull = eventListener.getNewWebView(
+                                    new WebViewFixed.OnFinishedListener() {
+                                        @Override
+                                        public void onFinished() {
+                                            recyclerCallback.scrollTo(getAdapterPosition());
+                                        }
+                                    });
                             webFull.setOnTouchListener(new OnTouchListenerDisallow(disallowListener));
                             webFull.setWebViewClient(new WebViewClient() {
 
@@ -1106,13 +1113,14 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                                         String url,
                                         Bitmap favicon) {
                                     super.onPageStarted(view, url, favicon);
-                                    progressImage.setVisibility(View.VISIBLE);
+//                                    progressImage.setVisibility(View.VISIBLE);
+//                                    recyclerCallback.scrollTo(getAdapterPosition());
                                 }
 
                                 @Override
                                 public void onPageFinished(WebView view, String url) {
                                     super.onPageFinished(view, url);
-                                    progressImage.setVisibility(View.GONE);
+//                                    progressImage.setVisibility(View.GONE);
                                 }
 
                                 @Override
@@ -1134,12 +1142,10 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
 
                         }
                         webFull.setWebChromeClient(new WebChromeClient() {
+
                             @Override
                             public void onProgressChanged(WebView view, int newProgress) {
                                 super.onProgressChanged(view, newProgress);
-                                if (newProgress >= 100) {
-                                    recyclerCallback.scrollTo(getAdapterPosition());
-                                }
                             }
                         });
                         webFull.onResume();
@@ -1699,7 +1705,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             void loadUrl(String url);
             void downloadImage(String fileName, String url);
             Reddit getReddit();
-            WebViewFixed getNewWebView();
+            WebViewFixed getNewWebView(WebViewFixed.OnFinishedListener onFinishedListener);
             void toast(String text);
             boolean isUserLoggedIn();
             void voteLink(ViewHolderBase viewHolderBase, Link link, int vote);

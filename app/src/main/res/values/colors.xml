@@ -27,7 +27,9 @@
     <color name="darkThemeShadowColor">#FF353535</color>
     <color name="darkThemeBackground">#FF252525</color>
     <color name="darkThemeRowBackground">#FF252525</color>
+    <color name="darkThemeRowOverlay">#BB252525</color>
     <color name="darkThemeCellBackground">#FF353535</color>
+    <color name="darkThemeCellOverlay">#BB353535</color>
     <color name="darkThemeIconFilter">#FFFFFFFF</color>
 
     <color name="lightThemeColorAccent">#FFDDB000</color>
@@ -36,7 +38,9 @@
     <color name="lightThemeShadowColor">#FFFAFAFA</color>
     <color name="lightThemeBackground">#FFE0E0E0</color>
     <color name="lightThemeRowBackground">#FFE0E0E0</color>
+    <color name="lightThemeRowOverlay">#BBE0E0E0</color>
     <color name="lightThemeCellBackground">#FFFAFAFA</color>
+    <color name="lightThemeCellOverlay">#BBFAFAFA</color>
     <color name="lightThemeIconFilter">#FF212121</color>
 
     <color name="blackThemeBackground">#FF000000</color>

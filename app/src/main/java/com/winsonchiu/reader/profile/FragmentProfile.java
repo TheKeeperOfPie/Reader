@@ -316,8 +316,8 @@ public class FragmentProfile extends FragmentBase implements Toolbar.OnMenuItemC
                         }
 
                         @Override
-                        public void editComment(Comment comment, String text) {
-                            mListener.getControllerProfile().editComment(comment, text);
+                        public void editComment(String name, int level, String text) {
+                            mListener.getControllerProfile().editComment(name, level, text);
                         }
 
                         @Override

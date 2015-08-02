@@ -439,8 +439,8 @@ public class MainActivity extends YouTubeBaseActivity
             }
 
             @Override
-            public WebViewFixed getNewWebView() {
-                return WebViewFixed.newInstance(getApplicationContext());
+            public WebViewFixed getNewWebView(WebViewFixed.OnFinishedListener onFinishedListener) {
+                return WebViewFixed.newInstance(getApplicationContext(), onFinishedListener);
             }
 
             @Override
@@ -615,8 +615,8 @@ public class MainActivity extends YouTubeBaseActivity
             }
 
             @Override
-            public void editComment(Comment comment, String text) {
-                getControllerComments().editComment(comment, text);
+            public void editComment(String name, int level, String text) {
+                getControllerComments().editComment(name, level, text);
             }
 
             @Override
@@ -650,6 +650,8 @@ public class MainActivity extends YouTubeBaseActivity
                 sharedPreferences.edit().putBoolean(AppSettings.BETA_NOTICE_0, false).apply();
             }
         }
+
+        ViewServer.get(this).addWindow(this);
 
     }
 
@@ -1168,6 +1170,7 @@ public class MainActivity extends YouTubeBaseActivity
     protected void onResume() {
         super.onResume();
         handler.postDelayed(runnableInbox, 1000);
+        ViewServer.get(this).setFocusedWindow(this);
     }
 
     @Override
@@ -1182,5 +1185,11 @@ public class MainActivity extends YouTubeBaseActivity
             Historian.saveToFile(this);
         }
         super.onStop();
+    }
+
+    @Override
+    protected void onDestroy() {
+        ViewServer.get(this).removeWindow(this);
+        super.onDestroy();
     }
 }

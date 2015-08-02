@@ -91,7 +91,6 @@ public class FragmentNewPost extends FragmentBase implements Toolbar.OnMenuItemC
     private EditText editCaptcha;
     private ImageButton buttonCaptchaRefresh;
     private String postType;
-//    private ProgressBar progressSubmit;
 
     private FragmentListenerBase mListener;
     private Activity activity;

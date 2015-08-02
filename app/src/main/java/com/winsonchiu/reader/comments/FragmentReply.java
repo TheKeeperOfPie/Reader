@@ -36,6 +36,7 @@ import com.github.rjeschke.txtmark.Processor;
 import com.winsonchiu.reader.FragmentBase;
 import com.winsonchiu.reader.FragmentListenerBase;
 import com.winsonchiu.reader.R;
+import com.winsonchiu.reader.data.reddit.Comment;
 import com.winsonchiu.reader.data.reddit.Replyable;
 import com.winsonchiu.reader.history.FragmentHistory;
 import com.winsonchiu.reader.inbox.FragmentInbox;
@@ -48,6 +49,8 @@ public class FragmentReply extends FragmentBase implements Toolbar.OnMenuItemCli
     public static final String ARG_NAME_PARENT = "nameParent";
     public static final String ARG_TEXT = "text";
     public static final String ARG_TEXT_PARENT = "textParent";
+    public static final String ARG_IS_EDIT = "isEdit";
+    public static final String ARG_COMMENT_LEVEL = "commentLevel";
 
     private static final int PAGE_PARENT = 0;
     private static final int PAGE_REPLY = 1;
@@ -83,6 +86,12 @@ public class FragmentReply extends FragmentBase implements Toolbar.OnMenuItemCli
         args.putString(ARG_NAME_PARENT, replyable.getName());
         args.putCharSequence(ARG_TEXT, replyable.getReplyText());
         args.putCharSequence(ARG_TEXT_PARENT, replyable.getParentHtml());
+
+        if (replyable instanceof Comment) {
+            args.putBoolean(ARG_IS_EDIT, ((Comment) replyable).isEditMode());
+            args.putInt(ARG_COMMENT_LEVEL, ((Comment) replyable).getLevel());
+        }
+
         fragment.setArguments(args);
         return fragment;
     }
@@ -337,8 +346,15 @@ public class FragmentReply extends FragmentBase implements Toolbar.OnMenuItemCli
                 InputMethodManager inputManager = (InputMethodManager) activity.getSystemService(
                         Context.INPUT_METHOD_SERVICE);
                 inputManager.hideSoftInputFromWindow(editReply.getWindowToken(), 0);
-                mListener.getEventListenerBase().sendComment(nameParent,
-                        editReply.getText().toString());
+
+                if (getArguments().getBoolean(ARG_IS_EDIT)) {
+                    mListener.getEventListenerComment().editComment(nameParent, getArguments().getInt(ARG_COMMENT_LEVEL), editReply.getText().toString());
+                }
+                else {
+                    mListener.getEventListenerBase().sendComment(nameParent,
+                            editReply.getText().toString());
+                }
+
                 collapsed = true;
                 mListener.onNavigationBackClick();
                 break;

@@ -377,8 +377,7 @@ public class Comment extends Replyable {
     }
 
     public boolean isMore() {
-        return getKind().equals("more");
-//        return isMore;
+        return isMore;
     }
 
     public void setIsMore(boolean isMore) {

@@ -14,6 +14,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Build;
 import android.preference.PreferenceManager;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.text.TextUtils;
 import android.util.Log;
@@ -32,6 +33,8 @@ import com.winsonchiu.reader.data.reddit.Thing;
 import com.winsonchiu.reader.data.reddit.User;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by TheKeeperOfPie on 6/30/2015.
@@ -39,7 +42,7 @@ import java.io.IOException;
 public class Receiver extends BroadcastReceiver {
 
     public static final String INTENT_INBOX = "com.winsonchiu.reader.inbox.Receiver.INTENT_INBOX";
-    public static final String NAME_MESSAGE = "nameMessage";
+    public static final String READ_NAMES = "readNames";
 
     private static final int NOTIFICATION_INBOX = 0;
     private static final String TAG = Receiver.class.getCanonicalName();
@@ -76,15 +79,18 @@ public class Receiver extends BroadcastReceiver {
                 setAlarm(context);
                 break;
             case INTENT_INBOX:
-                String name = intent.getStringExtra(NAME_MESSAGE);
-                checkInbox(context, name);
+                ArrayList<String> readNames = intent.getStringArrayListExtra(READ_NAMES);
+                if (readNames == null) {
+                    readNames = new ArrayList<>();
+                }
+                checkInbox(context, readNames);
                 break;
         }
 
 
     }
 
-    public static void checkInbox(final Context context, @Nullable final String readName) {
+    public static void checkInbox(final Context context, @NonNull final ArrayList<String> readNames) {
 
         Reddit.getInstance(context).loadGet(Reddit.OAUTH_URL + "/message/unread",
                 new Response.Listener<String>() {
@@ -94,18 +100,25 @@ public class Receiver extends BroadcastReceiver {
                             Listing listing = Listing.fromJson(Reddit.getObjectMapper().readValue(
                                     response, JsonNode.class));
 
-                            if (listing.getChildren().isEmpty()) {
-                                return;
-                            }
-
                             NotificationManager notificationManager =
                                     (NotificationManager) context.getSystemService(
                                             Context.NOTIFICATION_SERVICE);
 
-                            Thing thing = listing.getChildren().get(0);
 
-                            if (listing.getChildren().size() == 1 && thing.getName().equals(readName)) {
-                                Reddit.getInstance(context).markRead(readName);
+                            Thing thing = null;
+
+                            for (int index = 0; index < listing.getChildren().size(); index++) {
+                                thing = listing.getChildren().get(index);
+                                if (readNames.contains(thing.getName())) {
+                                    Reddit.getInstance(context).markRead(thing.getName());
+                                }
+                                else {
+                                    readNames.add(thing.getName());
+                                    break;
+                                }
+                            }
+
+                            if (thing == null) {
                                 notificationManager.cancel(NOTIFICATION_INBOX);
                                 return;
                             }
@@ -117,7 +130,7 @@ public class Receiver extends BroadcastReceiver {
                                     .getActivity(context, 0, intentActivity, PendingIntent.FLAG_CANCEL_CURRENT);
 
                             Intent intentMarkRead = new Intent(INTENT_INBOX);
-                            intentMarkRead.putExtra(NAME_MESSAGE, thing.getName());
+                            intentMarkRead.putExtra(READ_NAMES, readNames);
                             PendingIntent pendingIntentMarkRead = PendingIntent
                                     .getBroadcast(context, 0, intentMarkRead, PendingIntent.FLAG_CANCEL_CURRENT);
 

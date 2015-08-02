@@ -265,8 +265,7 @@
         android:layout_height="match_parent"
         android:layout_alignTop="@id/layout"
         android:layout_alignBottom="@id/layout"
-        android:background="?attr/colorCellBackground"
-        android:alpha="0.6"
+        android:background="?attr/colorCellOverlay"
         android:visibility="gone"
         />
 
