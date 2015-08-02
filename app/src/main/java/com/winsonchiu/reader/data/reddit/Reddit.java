@@ -30,6 +30,9 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
 import com.squareup.okhttp.OkHttpClient;
+import com.squareup.picasso.OkHttpDownloader;
+import com.squareup.picasso.Picasso;
+import com.squareup.picasso.RequestCreator;
 import com.winsonchiu.reader.comments.AdapterCommentList;
 import com.winsonchiu.reader.links.AdapterLink;
 import com.winsonchiu.reader.ApiKeys;
@@ -172,8 +175,17 @@ public class Reddit {
     private RequestQueue requestQueue;
     private SharedPreferences preferences;
 
-
+    private static Picasso picasso;
     private static ObjectMapper objectMapper;
+
+    public static Picasso loadPicasso(Context context) {
+        if (picasso == null) {
+            picasso = new Picasso.Builder(context)
+                    .downloader(new OkHttpDownloader(new OkHttpClient()))
+                    .build();
+        }
+        return picasso;
+    }
 
     public static ObjectMapper getObjectMapper() {
         if (objectMapper == null) {
@@ -804,8 +816,7 @@ public class Reddit {
 
         html = html.replaceAll("\n", "<br>");
 
-        CharSequence sequence = Html
-                .fromHtml(Html.fromHtml(html).toString(), null, new TagHandlerReddit());
+        CharSequence sequence = Html.fromHtml(Html.fromHtml(html).toString(), null, new TagHandlerReddit());
 
         // Trims leading and trailing whitespace
         int start = 0;

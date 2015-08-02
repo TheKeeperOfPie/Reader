@@ -28,6 +28,7 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.Spinner;
 
+import com.winsonchiu.reader.CustomApplication;
 import com.winsonchiu.reader.FragmentNewMessage;
 import com.winsonchiu.reader.data.Page;
 import com.winsonchiu.reader.data.reddit.Sort;
@@ -387,8 +388,7 @@ public class FragmentInbox extends FragmentBase implements Toolbar.OnMenuItemCli
     @Override
     public void onDestroy() {
         super.onDestroy();
-//        CustomApplication.getRefWatcher(getActivity())
-//                .watch(this);
+        CustomApplication.getRefWatcher(getActivity()).watch(this);
     }
 
     @Override

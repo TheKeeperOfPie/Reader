@@ -70,7 +70,6 @@ import com.android.volley.Request;
 import com.android.volley.Response;
 import com.android.volley.Response.Listener;
 import com.android.volley.VolleyError;
-import com.github.rjeschke.txtmark.Processor;
 import com.google.android.youtube.player.YouTubeInitializationResult;
 import com.google.android.youtube.player.YouTubePlayer;
 import com.google.android.youtube.player.YouTubePlayerView;
@@ -500,7 +499,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                                 .getUrl().endsWith(Reddit.GIF));
 
                 setToolbarMenuVisibility();
-                viewOverlay.setVisibility(View.GONE);
+                clearOverlay();
             }
 
             toolbarActions.post(new Runnable() {
@@ -632,7 +631,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                     if (!TextUtils.isEmpty(userName)) {
                         eventListener.voteLink(ViewHolderBase.this, link, 1);
                     }
-                    viewOverlay.setVisibility(View.GONE);
+                    clearOverlay();
                     return true;
                 }
 
@@ -733,7 +732,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             switch (v.getId()) {
                 default:
                     eventListener.voteLink(ViewHolderBase.this, link, 1);
-                    viewOverlay.setVisibility(View.GONE);
+                    clearOverlay();
                     return true;
             }
         }
@@ -914,7 +913,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             recyclerCallback.hideToolbar();
 
             addToHistory();
-            viewOverlay.setVisibility(View.GONE);
+            clearOverlay();
 
             // TODO: Toggle visibility of web and video views
 
@@ -927,7 +926,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         }
 
         public void onClickThumbnail() {
-            viewOverlay.setVisibility(View.GONE);
+            clearOverlay();
             if (!loadSelfText()) {
                 loadFull();
             }
@@ -936,7 +935,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         public void loadComments() {
 
             addToHistory();
-            viewOverlay.setVisibility(View.GONE);
+            clearOverlay();
 
             // TODO: Improve where this logic is handled in click timeline
             if (link.getNumComments() == 0) {
@@ -1645,6 +1644,8 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
 
             if (webFull != null) {
                 frameFull.removeView(webFull);
+                webFull.setWebChromeClient(null);
+                webFull.setWebViewClient(null);
                 webFull.destroy();
                 Reddit.incrementDestroy();
                 webFull = null;
@@ -1671,6 +1672,10 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                 return ((ColorDrawable) itemView.getBackground()).getColor();
             }
             return 0x00000000;
+        }
+
+        public void clearOverlay() {
+            viewOverlay.setVisibility(View.GONE);
         }
 
         public void setVisibility(int visibility) {

@@ -25,7 +25,7 @@
         android:id="@+id/view_divider"
         android:layout_width="match_parent"
         android:layout_height="4dp"
-        android:background="@color/colorPrimaryDark"
+        android:background="?attr/colorPrimaryDark"
         />
 
     <TextView

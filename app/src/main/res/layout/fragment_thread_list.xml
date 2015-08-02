@@ -77,7 +77,6 @@
 
             </android.support.design.widget.AppBarLayout>
 
-
             <android.support.design.widget.FloatingActionButton
                 android:id="@+id/button_expand_actions"
                 android:layout_width="wrap_content"

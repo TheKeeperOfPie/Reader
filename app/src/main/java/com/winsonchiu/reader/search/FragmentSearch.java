@@ -28,6 +28,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
 
+import com.winsonchiu.reader.CustomApplication;
 import com.winsonchiu.reader.utils.DisallowListener;
 import com.winsonchiu.reader.FragmentBase;
 import com.winsonchiu.reader.FragmentListenerBase;
@@ -651,8 +652,7 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
     @Override
     public void onDestroy() {
         super.onDestroy();
-//        CustomApplication.getRefWatcher(getActivity())
-//                .watch(this);
+        CustomApplication.getRefWatcher(getActivity()).watch(this);
     }
 
     @Override

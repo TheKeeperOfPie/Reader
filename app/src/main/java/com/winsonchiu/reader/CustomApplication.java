@@ -5,7 +5,10 @@
 package com.winsonchiu.reader;
 
 import android.app.Application;
+import android.content.Context;
 
+import com.squareup.leakcanary.LeakCanary;
+import com.squareup.leakcanary.RefWatcher;
 import com.winsonchiu.reader.data.reddit.Reddit;
 import com.winsonchiu.reader.history.Historian;
 
@@ -14,26 +17,21 @@ import com.winsonchiu.reader.history.Historian;
  */
 public class CustomApplication extends Application {
 
-//    public static RefWatcher getRefWatcher(Context context) {
-//        CustomApplication application = (CustomApplication) context.getApplicationContext();
-//        return application.refWatcher;
-//    }
-//
-//    private RefWatcher refWatcher;
+    public static RefWatcher getRefWatcher(Context context) {
+        CustomApplication application = (CustomApplication) context.getApplicationContext();
+        return application.refWatcher;
+    }
+
+    private RefWatcher refWatcher;
 
     @Override
     public void onCreate() {
         super.onCreate();
-//        refWatcher = LeakCanary.install(this);
+        refWatcher = LeakCanary.install(this);
 //        Picasso.with(this).setIndicatorsEnabled(true);
 //        Picasso.with(this).setLoggingEnabled(true);
         AppSettings.initPrefs(getApplicationContext());
-        Reddit.getInstance(getApplicationContext()).fetchToken(null);
+        Reddit.getInstance(getApplicationContext());
         Historian.getInstance(getApplicationContext());
-    }
-
-    @Override
-    public void onTerminate() {
-        super.onTerminate();
     }
 }

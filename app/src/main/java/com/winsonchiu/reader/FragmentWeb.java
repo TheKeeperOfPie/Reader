@@ -32,7 +32,8 @@ import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.Toast;
 
-public class FragmentWeb extends FragmentBase {
+public class FragmentWeb extends FragmentBase implements Toolbar.OnMenuItemClickListener,
+        View.OnClickListener {
 
     private static final String ARG_URL = "url";
     public static final String TAG = FragmentWeb.class.getCanonicalName();
@@ -112,22 +113,7 @@ public class FragmentWeb extends FragmentBase {
             }
         });
 
-        toolbar.setOnMenuItemClickListener(new Toolbar.OnMenuItemClickListener() {
-            @Override
-            public boolean onMenuItemClick(MenuItem item) {
-                switch (item.getItemId()) {
-                    case R.id.item_refresh:
-                        webView.reload();
-                        break;
-                    case R.id.item_open_in_browser:
-                        Intent intent = new Intent(Intent.ACTION_VIEW);
-                        intent.setData(Uri.parse(webView.getUrl()));
-                        startActivity(intent);
-                        break;
-                }
-                return false;
-            }
-        });
+        toolbar.setOnMenuItemClickListener(this);
 
         for (int index = 0; index < menu.size(); index++) {
             menu.getItem(index).getIcon().setColorFilter(colorFilterIcon);
@@ -142,6 +128,8 @@ public class FragmentWeb extends FragmentBase {
             MenuItemCompat.setOnActionExpandListener(itemSearch, null);
             itemSearch = null;
         }
+        toolbar.setOnMenuItemClickListener(null);
+        toolbarActions.setOnMenuItemClickListener(null);
         super.onDestroyOptionsMenu();
     }
 
@@ -163,18 +151,7 @@ public class FragmentWeb extends FragmentBase {
 
         toolbar = (Toolbar) view.findViewById(R.id.toolbar);
         toolbar.setTitle(getString(R.string.loading_web_page));
-        toolbar.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                ClipboardManager clipboard = (ClipboardManager) activity.getSystemService(
-                        Context.CLIPBOARD_SERVICE);
-                ClipData clip = ClipData.newPlainText(
-                        getResources().getString(R.string.comment),
-                        webView.getUrl());
-                clipboard.setPrimaryClip(clip);
-                Toast.makeText(activity, R.string.url_copied, Toast.LENGTH_SHORT).show();
-            }
-        });
+        toolbar.setOnClickListener(this);
         toolbar.setNavigationIcon(R.drawable.ic_arrow_back_white_24dp);
         toolbar.getNavigationIcon().mutate().setColorFilter(colorFilterIcon);
         toolbar.setNavigationOnClickListener(new View.OnClickListener() {
@@ -254,20 +231,7 @@ public class FragmentWeb extends FragmentBase {
 
         toolbarActions = (Toolbar) view.findViewById(R.id.toolbar_actions);
         toolbarActions.inflateMenu(R.menu.menu_web_search);
-        toolbarActions.setOnMenuItemClickListener(new Toolbar.OnMenuItemClickListener() {
-            @Override
-            public boolean onMenuItemClick(MenuItem item) {
-                switch (item.getItemId()) {
-                    case R.id.item_search_previous:
-                        webView.findNext(false);
-                        break;
-                    case R.id.item_search_next:
-                        webView.findNext(true);
-                        break;
-                }
-                return true;
-            }
-        });
+        toolbarActions.setOnMenuItemClickListener(this);
 
         return view;
     }
@@ -310,7 +274,7 @@ public class FragmentWeb extends FragmentBase {
 
     public boolean navigateBack() {
         if (isFinished) {
-            webView.destroy();
+            destroyWebView();
             webView = null;
             Log.d(TAG, "navigateBack finished");
             return true;
@@ -326,21 +290,67 @@ public class FragmentWeb extends FragmentBase {
             customViewCallback.onCustomViewHidden();
         }
         else {
-            webView.destroy();
+            destroyWebView();
             webView = null;
             return true;
         }
         return false;
     }
 
-    @Override
-    public void onDestroy() {
+    public void destroyWebView() {
         if (webView != null) {
+            webView.setWebChromeClient(null);
+            webView.setWebViewClient(null);
             webView.destroy();
             webView = null;
         }
-        super.onDestroy();
-//        CustomApplication.getRefWatcher(getActivity()).watch(this);
     }
 
+    @Override
+    public void onDestroy() {
+        destroyWebView();
+        toolbar.setOnClickListener(null);
+        toolbar.setOnMenuItemClickListener(null);
+        toolbarActions.setOnMenuItemClickListener(null);
+        super.onDestroy();
+        CustomApplication.getRefWatcher(getActivity()).watch(this);
+    }
+
+    @Override
+    public boolean onMenuItemClick(MenuItem item) {
+
+        switch (item.getItemId()) {
+            case R.id.item_refresh:
+                webView.reload();
+                break;
+            case R.id.item_open_in_browser:
+                Intent intent = new Intent(Intent.ACTION_VIEW);
+                intent.setData(Uri.parse(webView.getUrl()));
+                startActivity(intent);
+                break;
+            case R.id.item_search_previous:
+                webView.findNext(false);
+                break;
+            case R.id.item_search_next:
+                webView.findNext(true);
+                break;
+        }
+
+        return true;
+    }
+
+    @Override
+    public void onClick(View v) {
+        switch (v.getId()) {
+            case R.id.toolbar:
+                ClipboardManager clipboard = (ClipboardManager) activity.getSystemService(
+                        Context.CLIPBOARD_SERVICE);
+                ClipData clip = ClipData.newPlainText(
+                        getResources().getString(R.string.comment),
+                        webView.getUrl());
+                clipboard.setPrimaryClip(clip);
+                Toast.makeText(activity, R.string.url_copied, Toast.LENGTH_SHORT).show();
+                break;
+        }
+    }
 }

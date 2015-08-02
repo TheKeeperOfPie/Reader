@@ -12,6 +12,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.res.TypedArray;
 import android.os.Build;
 import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
@@ -168,8 +169,12 @@ public class Receiver extends BroadcastReceiver {
                                     .setAutoCancel(true);
 
                             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                                builder.setColor(
-                                        context.getResources().getColor(R.color.colorPrimary));
+
+                                TypedArray typedArray = context.obtainStyledAttributes(new int[] {R.attr.colorPrimary});
+                                int colorPrimary = typedArray.getColor(0, context.getResources().getColor(R.color.colorPrimary));
+                                typedArray.recycle();
+
+                                builder.setColor(colorPrimary);
                             }
 
                             notificationManager.notify(NOTIFICATION_INBOX, builder.build());

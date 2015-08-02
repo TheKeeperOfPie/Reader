@@ -19,6 +19,7 @@
         android:largeHeap="true"
         android:theme="@style/AppDarkTheme"
         android:supportsRtl="true"
+        android:hardwareAccelerated="true"
         >
         <activity
             android:name=".MainActivity"

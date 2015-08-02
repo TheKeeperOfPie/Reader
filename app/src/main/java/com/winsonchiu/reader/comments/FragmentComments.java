@@ -48,6 +48,7 @@ import com.google.android.youtube.player.YouTubePlayer;
 import com.google.android.youtube.player.YouTubePlayerView;
 import com.winsonchiu.reader.ApiKeys;
 import com.winsonchiu.reader.AppSettings;
+import com.winsonchiu.reader.CustomApplication;
 import com.winsonchiu.reader.YouTubePlayerStateListener;
 import com.winsonchiu.reader.utils.DisallowListener;
 import com.winsonchiu.reader.FragmentBase;
@@ -795,11 +796,11 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
 
         for (int index = layoutActions.getChildCount() - 1; index >= 0; index--) {
             final View view = layoutActions.getChildAt(index);
+            view.setVisibility(View.VISIBLE);
             AlphaAnimation alphaAnimation = new AlphaAnimation(0f, 1f);
             alphaAnimation.setAnimationListener(new Animation.AnimationListener() {
                 @Override
                 public void onAnimationStart(Animation animation) {
-                    view.setVisibility(View.VISIBLE);
                     buttonExpandActions.setImageResource(android.R.color.transparent);
                 }
 
@@ -911,8 +912,7 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
             youTubePlayer = null;
         }
         super.onDestroy();
-//        CustomApplication.getRefWatcher(getActivity())
-//                .watch(this);
+        CustomApplication.getRefWatcher(getActivity()).watch(this);
     }
 
     public void setFragmentToHide(Fragment fragmentToHide, View viewHolderView) {

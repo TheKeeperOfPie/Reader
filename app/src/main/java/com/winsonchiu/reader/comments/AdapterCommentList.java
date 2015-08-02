@@ -370,6 +370,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
         protected int toolbarItemWidth;
         protected SharedPreferences preferences;
         protected Resources resources;
+        protected int colorPrimary;
         protected int colorTextSecondary;
         protected int colorTextPrimary;
         protected int colorAccent;
@@ -416,11 +417,12 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
 
             resources = itemView.getResources();
             preferences = PreferenceManager.getDefaultSharedPreferences(itemView.getContext());
-            TypedArray typedArray = itemView.getContext().getTheme().obtainStyledAttributes(new int[] {android.R.attr.textColor, android.R.attr.textColorSecondary, R.attr.colorAccent, R.attr.colorIconFilter});
-            colorTextPrimary = typedArray.getColor(0, resources.getColor(R.color.darkThemeTextColor));
-            colorTextSecondary = typedArray.getColor(1, resources.getColor(R.color.darkThemeTextColorMuted));
-            colorAccent = typedArray.getColor(2, resources.getColor(R.color.colorAccent));
-            colorIconFilter = typedArray.getColor(3, 0xFFFFFFFF);
+            TypedArray typedArray = itemView.getContext().getTheme().obtainStyledAttributes(new int[] {R.attr.colorPrimary, android.R.attr.textColor, android.R.attr.textColorSecondary, R.attr.colorAccent, R.attr.colorIconFilter});
+            colorPrimary = typedArray.getColor(0, resources.getColor(R.color.colorPrimary));
+            colorTextPrimary = typedArray.getColor(1, resources.getColor(R.color.darkThemeTextColor));
+            colorTextSecondary = typedArray.getColor(2, resources.getColor(R.color.darkThemeTextColorMuted));
+            colorAccent = typedArray.getColor(3, resources.getColor(R.color.colorAccent));
+            colorIconFilter = typedArray.getColor(4, 0xFFFFFFFF);
             typedArray.recycle();
 
             this.drawableUpvote = resources.getDrawable(R.drawable.ic_keyboard_arrow_up_white_24dp);
@@ -704,8 +706,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
 
             int overlayColor = ColorUtils.setAlphaComponent(0xFF000000,
                     alphaLevel <= MAX_ALPHA ? alphaLevel : MAX_ALPHA);
-            int indicatorColor = ColorUtils.compositeColors(overlayColor,
-                    resources.getColor(R.color.colorPrimary));
+            int indicatorColor = ColorUtils.compositeColors(overlayColor, colorPrimary);
 
             viewIndicator.setBackgroundColor(indicatorColor);
             viewIndicatorContainer.setBackgroundColor(indicatorColor);
@@ -801,7 +802,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                 color = colorAccent;
             }
             else if (userName.equals(comment.getAuthor())) {
-                color = resources.getColor(R.color.colorPrimary);
+                color = resources.getColor(colorPrimary);
             }
             else {
                 switch (comment.getDistinguished()) {

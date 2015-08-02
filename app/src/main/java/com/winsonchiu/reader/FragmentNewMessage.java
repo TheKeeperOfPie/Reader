@@ -362,7 +362,7 @@ public class FragmentNewMessage extends FragmentBase implements Toolbar.OnMenuIt
                         if (!TextUtils.isEmpty(captcha)) {
                             captchaId = captcha;
                             editCaptcha.setText("");
-                            Picasso.with(activity)
+                            Reddit.loadPicasso(activity)
                                     .load(Reddit.BASE_URL + "/captcha/" + captchaId + ".png")
                                     .resize(getResources().getDisplayMetrics().widthPixels, 0).into(
                                     imageCaptcha);
@@ -404,7 +404,7 @@ public class FragmentNewMessage extends FragmentBase implements Toolbar.OnMenuIt
                     captchaId = jsonObject.getJSONObject("json").getJSONObject("data").getString(
                             "iden");
                     Log.d(TAG, "captchaId: " + captchaId);
-                    Picasso.with(activity).load(Reddit.BASE_URL + "/captcha/" + captchaId + ".png")
+                    Reddit.loadPicasso(activity).load(Reddit.BASE_URL + "/captcha/" + captchaId + ".png")
                             .resize(getResources().getDisplayMetrics().widthPixels, 0).into(
                             imageCaptcha);
                 }

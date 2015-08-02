@@ -45,10 +45,19 @@
 
     </style>
 
+    <style name="AppPinkTheme" parent="AppLightTheme">
+
+        <item name="colorPrimary">@color/pinkThemeColorPrimary</item>
+        <item name="colorPrimaryDark">@color/pinkThemeColorPrimaryDark</item>
+
+    </style>
+
     <style name="AppBlackTheme" parent="AppDarkTheme">
         <item name="android:windowBackground">@color/blackThemeBackground</item>
         <item name="colorRowBackground">@color/blackThemeBackground</item>
+        <item name="colorRowOverlay">@color/blackThemeOverlay</item>
         <item name="colorCellBackground">@color/blackThemeBackground</item>
+        <item name="colorCellOverlay">@color/blackThemeOverlay</item>
     </style>
 
     <style name="OverflowStyleDark" parent="Widget.AppCompat.ActionButton.Overflow">

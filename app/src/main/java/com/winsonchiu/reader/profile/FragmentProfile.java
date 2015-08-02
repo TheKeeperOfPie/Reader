@@ -29,6 +29,7 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.Spinner;
 
+import com.winsonchiu.reader.CustomApplication;
 import com.winsonchiu.reader.data.Page;
 import com.winsonchiu.reader.views.CustomItemTouchHelper;
 import com.winsonchiu.reader.utils.DisallowListener;
@@ -224,7 +225,8 @@ public class FragmentProfile extends FragmentBase implements Toolbar.OnMenuItemC
         };
 
         TypedArray typedArray = activity.getTheme().obtainStyledAttributes(
-                new int[]{R.attr.colorIconFilter});
+                new int[] {R.attr.colorPrimary, R.attr.colorIconFilter});
+        final int colorPrimary = typedArray.getColor(0, getResources().getColor(R.color.colorPrimary));
         int colorIconFilter = typedArray.getColor(0, 0xFFFFFFFF);
         typedArray.recycle();
 
@@ -435,7 +437,7 @@ public class FragmentProfile extends FragmentBase implements Toolbar.OnMenuItemC
                                     }
                                 });
                 snackbar.getView()
-                        .setBackgroundColor(getResources().getColor(R.color.colorPrimary));
+                        .setBackgroundColor(colorPrimary);
                 snackbar.show();
             }
         };
@@ -490,8 +492,7 @@ public class FragmentProfile extends FragmentBase implements Toolbar.OnMenuItemC
     @Override
     public void onDestroy() {
         super.onDestroy();
-//        CustomApplication.getRefWatcher(getActivity())
-//                .watch(this);
+        CustomApplication.getRefWatcher(getActivity()).watch(this);
     }
 
     @Override

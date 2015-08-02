@@ -135,6 +135,9 @@ public class MainActivity extends YouTubeBaseActivity
             case AppSettings.THEME_BLACK:
                 setTheme(R.style.AppBlackTheme);
                 break;
+            case AppSettings.THEME_PINK:
+                setTheme(R.style.AppPinkTheme);
+                break;
         }
 
         super.onCreate(savedInstanceState);
@@ -650,8 +653,6 @@ public class MainActivity extends YouTubeBaseActivity
                 sharedPreferences.edit().putBoolean(AppSettings.BETA_NOTICE_0, false).apply();
             }
         }
-
-        ViewServer.get(this).addWindow(this);
 
     }
 
@@ -1170,7 +1171,6 @@ public class MainActivity extends YouTubeBaseActivity
     protected void onResume() {
         super.onResume();
         handler.postDelayed(runnableInbox, 1000);
-        ViewServer.get(this).setFocusedWindow(this);
     }
 
     @Override
@@ -1189,7 +1189,6 @@ public class MainActivity extends YouTubeBaseActivity
 
     @Override
     protected void onDestroy() {
-        ViewServer.get(this).removeWindow(this);
         super.onDestroy();
     }
 }

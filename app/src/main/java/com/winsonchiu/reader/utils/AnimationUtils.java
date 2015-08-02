@@ -4,9 +4,9 @@
 
 package com.winsonchiu.reader.utils;
 
-import android.animation.Animator;
 import android.animation.ValueAnimator;
 import android.content.Context;
+import android.graphics.Color;
 import android.graphics.Point;
 import android.support.v4.graphics.ColorUtils;
 import android.util.Log;
@@ -31,9 +31,11 @@ public class AnimationUtils {
     public static final long BACKGROUND_DURATION = 500;
     private static final String TAG = AnimationUtils.class.getCanonicalName();
 
-    public static void animateBackgroundColor(final View view, final int start, final int end, Animator.AnimatorListener listener) {
+    public static void animateBackgroundColor(final View view, final int start, final int end) {
 
-        ValueAnimator valueAnimator = ValueAnimator.ofInt(0, 255);
+        final int alphaTarget = Color.alpha(end);
+
+        ValueAnimator valueAnimator = ValueAnimator.ofInt(0, alphaTarget);
         valueAnimator.setDuration(BACKGROUND_DURATION);
         valueAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
             @Override
@@ -41,13 +43,12 @@ public class AnimationUtils {
                 int foreground = ColorUtils.setAlphaComponent(end,
                         (Integer) animation.getAnimatedValue());
                 int background = ColorUtils.setAlphaComponent(start,
-                        255 - (Integer) animation.getAnimatedValue());
+                        alphaTarget - (Integer) animation.getAnimatedValue());
 
                 view.setBackgroundColor(ColorUtils.compositeColors(foreground, background));
             }
         });
 
-        valueAnimator.addListener(listener);
         valueAnimator.start();
     }
 

@@ -80,11 +80,13 @@
         <item>Dark</item>
         <item>Light</item>
         <item>Black</item>
+        <item>Pink</item>
     </string-array>
     <string-array name="pref_theme_values">
         <item>Dark</item>
         <item>Light</item>
         <item>Black</item>
+        <item>Pink</item>
     </string-array>
 
 </resources>

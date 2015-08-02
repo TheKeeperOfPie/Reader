@@ -43,6 +43,9 @@ public class ActivitySettings extends AppCompatActivity {
             case AppSettings.THEME_BLACK:
                 setTheme(R.style.AppBlackTheme);
                 break;
+            case AppSettings.THEME_PINK:
+                setTheme(R.style.AppPinkTheme);
+                break;
         }
 
         super.onCreate(savedInstanceState);

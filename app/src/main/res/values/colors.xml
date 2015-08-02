@@ -43,6 +43,10 @@
     <color name="lightThemeCellOverlay">#BBFAFAFA</color>
     <color name="lightThemeIconFilter">#FF212121</color>
 
+    <color name="pinkThemeColorPrimary">#FFEC407A</color>
+    <color name="pinkThemeColorPrimaryDark">#FFAD1457</color>
+
     <color name="blackThemeBackground">#FF000000</color>
+    <color name="blackThemeOverlay">#BB000000</color>
 
 </resources>

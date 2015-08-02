@@ -78,6 +78,7 @@ public class ControllerLinks implements ControllerLinksBase {
         listener.loadSideBar(subreddit);
         if (!isLoading() && listingLinks.getChildren().isEmpty()) {
             reloadSubreddit();
+            Log.d(TAG, "addListener reloaded");
         }
         Log.d(TAG, "addListener: " + listener);
     }
@@ -280,27 +281,37 @@ public class ControllerLinks implements ControllerLinksBase {
         reddit.loadGet(url,
                 new Response.Listener<String>() {
                     @Override
-                    public void onResponse(String response) {
-                        try {
-                            int positionStart = listingLinks.getChildren()
-                                    .size();
-                            Listing listing = Listing.fromJson(Reddit.getObjectMapper().readValue(
-                                    response, JsonNode.class));
-                            listingLinks.addChildren(listing.getChildren());
-                            listingLinks.setAfter(listing.getAfter());
-                            for (Listener listener : listeners) {
-                                listener.getAdapter()
-                                        .notifyItemRangeInserted(positionStart + 1,
-                                                listingLinks.getChildren()
-                                                        .size() - positionStart);
+                    public void onResponse(final String response) {
+                        new Thread(new Runnable() {
+                            @Override
+                            public void run() {
+                                try {
+                                    final int positionStart = listingLinks.getChildren()
+                                            .size();
+                                    Listing listing = Listing.fromJson(Reddit.getObjectMapper().readValue(
+                                            response, JsonNode.class));
+                                    listingLinks.addChildren(listing.getChildren());
+                                    listingLinks.setAfter(listing.getAfter());
+                                    for (final Listener listener : listeners) {
+                                        listener.post(new Runnable() {
+                                            @Override
+                                            public void run() {
+                                                listener.getAdapter()
+                                                        .notifyItemRangeInserted(positionStart + 1,
+                                                                listingLinks.getChildren()
+                                                                        .size() - positionStart);
+                                            }
+                                        });
+                                    }
+                                }
+                                catch (IOException e) {
+                                    e.printStackTrace();
+                                }
+                                finally {
+                                    setLoading(false);
+                                }
                             }
-                        }
-                        catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                        finally {
-                            setLoading(false);
-                        }
+                        }).start();
                     }
                 }, new ErrorListener() {
                     @Override

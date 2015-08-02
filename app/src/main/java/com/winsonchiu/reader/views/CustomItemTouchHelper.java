@@ -2271,8 +2271,7 @@ public class CustomItemTouchHelper extends RecyclerView.ItemDecoration
 
             TypedArray typedArray = context.getTheme().obtainStyledAttributes(
                     new int[]{R.attr.colorPrimary, R.attr.colorIconFilter});
-            int colorPrimary = typedArray.getColor(0,
-                    context.getResources().getColor(R.color.colorPrimary));
+            int colorPrimary = typedArray.getColor(0, context.getResources().getColor(R.color.colorPrimary));
             int colorIconFilter = typedArray.getColor(1, 0xFFFFFFFF);
             typedArray.recycle();
 
@@ -2358,16 +2357,24 @@ public class CustomItemTouchHelper extends RecyclerView.ItemDecoration
 
                 if (dX > 0) {
                     int left = viewHolder.itemView.getLeft();
+                    int right = (int) (left + sideMargin + sizeIcon);
+                    if (right > dX) {
+                        right = (int) dX;
+                    }
                     iconUnder.setBounds((int) (left + sideMargin),
                             (int) ((bottom - top) / 2f - sizeIcon / 2f + top),
-                            (int) (left + sideMargin + sizeIcon),
+                            right,
                             (int) ((bottom - top) / 2f + sizeIcon / 2f + top));
                     canvas.drawRect(left, top, dX, bottom, paintUnder);
                 }
                 else {
                     int right = viewHolder.itemView.getRight();
+                    int left = (int) (right - sideMargin - sizeIcon);
+                    if (left < viewHolder.itemView.getRight() + dX) {
+                        left = (int) (viewHolder.itemView.getRight() + dX);
+                    }
                     iconUnder.setBounds(
-                            (int) (right - sideMargin - sizeIcon),
+                            left,
                             (int) ((bottom - top) / 2f - sizeIcon / 2f + top),
                             (int) (right - sideMargin),
                             (int) ((bottom - top) / 2f + sizeIcon / 2f + top));

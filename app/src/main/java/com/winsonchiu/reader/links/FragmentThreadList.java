@@ -48,6 +48,7 @@ import android.widget.Toast;
 
 import com.squareup.picasso.Picasso;
 import com.winsonchiu.reader.AppSettings;
+import com.winsonchiu.reader.CustomApplication;
 import com.winsonchiu.reader.FragmentNewPost;
 import com.winsonchiu.reader.history.Historian;
 import com.winsonchiu.reader.views.CustomItemTouchHelper;
@@ -347,11 +348,14 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
             final Bundle savedInstanceState) {
 
+        Log.d(TAG, "onCreateView");
+
         final View view = inflater.inflate(R.layout.fragment_thread_list, container, false);
 
         TypedArray typedArray = activity.getTheme().obtainStyledAttributes(
-                new int[]{R.attr.colorIconFilter});
-        int colorIconFilter = typedArray.getColor(0, 0xFFFFFFFF);
+                new int[] {R.attr.colorPrimary, R.attr.colorIconFilter});
+        final int colorPrimary = typedArray.getColor(0, getResources().getColor(R.color.colorPrimary));
+        int colorIconFilter = typedArray.getColor(1, 0xFFFFFFFF);
         typedArray.recycle();
 
         colorFilterIcon = new PorterDuffColorFilter(colorIconFilter,
@@ -535,10 +539,10 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
                 switch (newState) {
                     case RecyclerView.SCROLL_STATE_IDLE:
                     case RecyclerView.SCROLL_STATE_DRAGGING:
-                        Picasso.with(activity).resumeTag(AdapterLink.TAG_PICASSO);
+                        Reddit.loadPicasso(activity).resumeTag(AdapterLink.TAG_PICASSO);
                         break;
                     case RecyclerView.SCROLL_STATE_SETTLING:
-                        Picasso.with(activity).pauseTag(AdapterLink.TAG_PICASSO);
+                        Reddit.loadPicasso(activity).pauseTag(AdapterLink.TAG_PICASSO);
                         break;
                 }
             }
@@ -625,8 +629,7 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
                                                 recyclerThreadList.invalidate();
                                             }
                                         });
-                        snackbar.getView()
-                                .setBackgroundColor(getResources().getColor(R.color.colorPrimary));
+                        snackbar.getView().setBackgroundColor(colorPrimary);
                         snackbar.show();
                     }
                 });
@@ -679,11 +682,11 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
 
         for (int index = layoutActions.getChildCount() - 1; index >= 0; index--) {
             final View view = layoutActions.getChildAt(index);
+            view.setVisibility(View.VISIBLE);
             AlphaAnimation alphaAnimation = new AlphaAnimation(0f, 1f);
             alphaAnimation.setAnimationListener(new Animation.AnimationListener() {
                 @Override
                 public void onAnimationStart(Animation animation) {
-                    view.setVisibility(View.VISIBLE);
                     buttonExpandActions.setImageResource(android.R.color.transparent);
                 }
 
@@ -784,8 +787,7 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
     @Override
     public void onDestroy() {
         super.onDestroy();
-//        CustomApplication.getRefWatcher(getActivity())
-//                .watch(this);
+        CustomApplication.getRefWatcher(getActivity()).watch(this);
     }
 
     @Override

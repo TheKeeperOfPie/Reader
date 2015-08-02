@@ -176,8 +176,16 @@ public class AdapterLinkGrid extends AdapterLink {
 
             int position = getAdapterPosition();
 
+            if (viewOverlay.getVisibility() == View.GONE) {
+                itemView.setBackgroundColor(colorBackgroundDefault);
+                viewOverlay.setBackgroundColor(0x00000000);
+            }
+            else {
+                itemView.setBackgroundColor(0x00000000);
+                viewOverlay.setBackgroundColor(ColorUtils.setAlphaComponent(colorBackgroundDefault, 187));
+            }
+
             link.setBackgroundColor(colorBackgroundDefault);
-            itemView.setBackgroundColor(colorBackgroundDefault);
             buttonComments.setColorFilter(colorFilterIconDefault);
             imagePlay.setColorFilter(colorFilterIconDefault);
             textThreadInfo.setTextColor(colorTextSecondaryDefault);
@@ -208,7 +216,7 @@ public class AdapterLinkGrid extends AdapterLink {
                 imageFull.setVisibility(View.GONE);
                 imageThumbnail.clearColorFilter();
                 imageThumbnail.setVisibility(View.VISIBLE);
-                Picasso.with(itemView.getContext())
+                Reddit.loadPicasso(itemView.getContext())
                         .load(link.getThumbnail())
                         .tag(TAG_PICASSO)
                         .into(imageThumbnail);
@@ -270,7 +278,7 @@ public class AdapterLinkGrid extends AdapterLink {
                     RelativeLayout.START_OF, buttonComments.getId());
             ((RelativeLayout.LayoutParams) textThreadTitle.getLayoutParams()).setMarginEnd(0);
 
-            Picasso.with(itemView.getContext())
+            Reddit.loadPicasso(itemView.getContext())
                     .load(android.R.color.transparent)
                     .into(imageFull);
 
@@ -279,7 +287,7 @@ public class AdapterLinkGrid extends AdapterLink {
                         link) && position == getAdapterPosition()) {
                     int size = getAdjustedThumbnailSize();
 
-                    Picasso.with(itemView.getContext())
+                    Reddit.loadPicasso(itemView.getContext())
                             .load(link.getUrl())
                             .tag(TAG_PICASSO)
                             .resize(size, size)
@@ -313,7 +321,7 @@ public class AdapterLinkGrid extends AdapterLink {
                 }
             }
             else {
-                Picasso.with(itemView.getContext())
+                Reddit.loadPicasso(itemView.getContext())
                         .load(link.getThumbnail())
                         .tag(TAG_PICASSO)
                         .into(imageFull,
@@ -325,7 +333,7 @@ public class AdapterLinkGrid extends AdapterLink {
                                         if (position == getAdapterPosition()) {
                                             if (Reddit.placeImageUrl(link)) {
                                                 int size = getAdjustedThumbnailSize();
-                                                Picasso.with(itemView.getContext())
+                                                Reddit.loadPicasso(itemView.getContext())
                                                         .load(link.getUrl())
                                                         .tag(TAG_PICASSO)
                                                         .resize(size, size)
@@ -404,30 +412,23 @@ public class AdapterLinkGrid extends AdapterLink {
 
             link.setBackgroundColor(color);
 
-            AnimationUtils.animateBackgroundColor(
-                    itemView,
-                    ((ColorDrawable) itemView.getBackground())
-                            .getColor(), color, new Animator.AnimatorListener() {
-                        @Override
-                        public void onAnimationStart(Animator animation) {
+            if (viewOverlay.getVisibility() == View.GONE) {
+                AnimationUtils.animateBackgroundColor(
+                        itemView,
+                        ((ColorDrawable) itemView.getBackground())
+                                .getColor(), color);
+            }
+            else {
 
-                        }
+                color = ColorUtils.setAlphaComponent(color, 187);
 
-                        @Override
-                        public void onAnimationEnd(Animator animation) {
-                            itemView.setBackgroundColor(link.getBackgroundColor());
-                        }
+                itemView.setBackgroundColor(0x00000000);
+                AnimationUtils.animateBackgroundColor(
+                        viewOverlay,
+                        ((ColorDrawable) viewOverlay.getBackground())
+                                .getColor(), color);
 
-                        @Override
-                        public void onAnimationCancel(Animator animation) {
-
-                        }
-
-                        @Override
-                        public void onAnimationRepeat(Animator animation) {
-
-                        }
-                    });
+            }
 
             setTextColors(color);
 
@@ -529,6 +530,14 @@ public class AdapterLinkGrid extends AdapterLink {
                     RelativeLayout.START_OF);
             ((RelativeLayout.LayoutParams) textThreadTitle.getLayoutParams())
                     .setMarginEnd(titleMargin);
+        }
+
+        @Override
+        public void clearOverlay() {
+            if (viewOverlay.getBackground() instanceof ColorDrawable) {
+                itemView.setBackgroundColor(link.getBackgroundColor());
+            }
+            viewOverlay.setVisibility(View.GONE);
         }
     }
 

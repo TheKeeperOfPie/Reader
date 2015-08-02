@@ -8,6 +8,8 @@ package com.winsonchiu.reader;
 import android.app.Activity;
 import android.app.Fragment;
 import android.os.Bundle;
+import android.util.Log;
+import android.widget.Toast;
 
 import com.winsonchiu.reader.comments.ControllerComments;
 import com.winsonchiu.reader.data.reddit.Sort;
@@ -43,6 +45,8 @@ public class FragmentData extends FragmentBase {
     }
 
     public void initializeControllers(Activity activity) {
+        Log.d(TAG, "initializeControllers");
+
         controllerLinks = new ControllerLinks(activity, "", Sort.HOT);
         controllerComments = new ControllerComments(activity);
         controllerProfile = new ControllerProfile(activity);
@@ -56,6 +60,7 @@ public class FragmentData extends FragmentBase {
 
     public void resetActivity(Activity activity) {
         if (controllerSearch == null) {
+            Toast.makeText(activity, R.string.error_memory_recreation, Toast.LENGTH_SHORT).show();
             initializeControllers(activity);
         }
 
@@ -119,8 +124,7 @@ public class FragmentData extends FragmentBase {
     @Override
     public void onDestroy() {
         super.onDestroy();
-//        CustomApplication.getRefWatcher(getActivity())
-//                .watch(this);
+        CustomApplication.getRefWatcher(getActivity()).watch(this);
     }
 
     @Override

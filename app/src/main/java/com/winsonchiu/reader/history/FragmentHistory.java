@@ -190,8 +190,9 @@ public class FragmentHistory extends FragmentBase implements Toolbar.OnMenuItemC
         };
 
         TypedArray typedArray = activity.getTheme().obtainStyledAttributes(
-                new int[]{R.attr.colorIconFilter});
-        int colorIconFilter = typedArray.getColor(0, 0xFFFFFFFF);
+                new int[] {R.attr.colorPrimary, R.attr.colorIconFilter});
+        final int colorPrimary = typedArray.getColor(0, getResources().getColor(R.color.colorPrimary));
+        int colorIconFilter = typedArray.getColor(1, 0xFFFFFFFF);
         typedArray.recycle();
 
         colorFilterIcon = new PorterDuffColorFilter(colorIconFilter,
@@ -403,7 +404,7 @@ public class FragmentHistory extends FragmentBase implements Toolbar.OnMenuItemC
                                             }
                                         });
                         snackbar.getView()
-                                .setBackgroundColor(getResources().getColor(R.color.colorPrimary));
+                                .setBackgroundColor(colorPrimary);
                         snackbar.show();
                     }
                 });

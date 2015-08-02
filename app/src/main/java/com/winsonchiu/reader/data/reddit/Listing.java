@@ -86,6 +86,10 @@ public class Listing {
         Listing listing = new Listing();
         JsonNode nodeData = nodeRoot.get("data");
 
+        if (nodeData == null) {
+             return listing;
+        }
+
         listing.setBefore(UtilsJson.getString(nodeData.get("before")));
         listing.setAfter(UtilsJson.getString(nodeData.get("after")));
         listing.setModHash(UtilsJson.getString(nodeData.get("modhash")));

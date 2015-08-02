@@ -22,6 +22,7 @@ public class AppSettings {
     public static final String THEME_DARK = "Dark";
     public static final String THEME_LIGHT = "Light";
     public static final String THEME_BLACK = "Black";
+    public static final String THEME_PINK = "Pink";
 
     // List of all possible tokens
     public static final String INITIALIZED = "initialized";

@@ -121,7 +121,7 @@ public class AdapterLinkList extends AdapterLink {
                 }
                 else {
                     imageThumbnail.clearColorFilter();
-                    Picasso.with(itemView.getContext())
+                    Reddit.loadPicasso(itemView.getContext())
                             .load(link.getThumbnail())
                             .tag(TAG_PICASSO)
                             .into(imageThumbnail);

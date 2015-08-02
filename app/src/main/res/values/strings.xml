@@ -247,4 +247,5 @@
     <string name="expand_to_read_first_message">Expand to read first message</string>
     <string name="from">from</string>
     <string name="mark_read">Mark read</string>
+    <string name="error_memory_recreation">Memory was cleared; now recreating data</string>
 </resources>

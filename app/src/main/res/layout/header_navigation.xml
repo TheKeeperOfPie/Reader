@@ -16,7 +16,7 @@
         android:layout_height="wrap_content"
         android:layout_alignParentTop="true"
         android:contentDescription="@string/content_description_image_navigation_header"
-        android:src="@color/colorPrimary"
+        android:src="?attr/colorPrimary"
         />
 
     <TextView
