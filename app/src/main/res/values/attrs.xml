@@ -11,6 +11,7 @@
         <attr name="colorCellBackground" format="color"/>
         <attr name="colorCellOverlay" format="color"/>
         <attr name="colorIconFilter" format="color"/>
+        <attr name="colorGold" format="color"/>
         <attr name="colorAlert" format="color"/>
     </declare-styleable>
 

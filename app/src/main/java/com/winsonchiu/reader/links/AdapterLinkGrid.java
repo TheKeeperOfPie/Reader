@@ -50,7 +50,8 @@ import java.util.ArrayList;
 public class AdapterLinkGrid extends AdapterLink {
 
     private static final String TAG = AdapterLinkGrid.class.getCanonicalName();
-
+    private static final int ALPHA_OVERLAY = 140;
+    private static final int ALPHA_OVERLAY_IMAGE = 200;
     protected int thumbnailSize;
 
     public AdapterLinkGrid(Activity activity,
@@ -182,7 +183,7 @@ public class AdapterLinkGrid extends AdapterLink {
             }
             else {
                 itemView.setBackgroundColor(0x00000000);
-                viewOverlay.setBackgroundColor(ColorUtils.setAlphaComponent(colorBackgroundDefault, 187));
+                viewOverlay.setBackgroundColor(ColorUtils.setAlphaComponent(colorBackgroundDefault, ALPHA_OVERLAY));
             }
 
             link.setBackgroundColor(colorBackgroundDefault);
@@ -417,10 +418,12 @@ public class AdapterLinkGrid extends AdapterLink {
                         itemView,
                         ((ColorDrawable) itemView.getBackground())
                                 .getColor(), color);
+
+                setTextColors(color);
             }
             else {
 
-                color = ColorUtils.setAlphaComponent(color, 187);
+                color = ColorUtils.setAlphaComponent(color, ALPHA_OVERLAY_IMAGE);
 
                 itemView.setBackgroundColor(0x00000000);
                 AnimationUtils.animateBackgroundColor(
@@ -428,9 +431,10 @@ public class AdapterLinkGrid extends AdapterLink {
                         ((ColorDrawable) viewOverlay.getBackground())
                                 .getColor(), color);
 
+                titleTextColor = colorTextPrimaryDefault;
+                colorTextSecondary = colorTextSecondaryDefault;
+                syncTitleColor();
             }
-
-            setTextColors(color);
 
         }
 
@@ -449,6 +453,7 @@ public class AdapterLinkGrid extends AdapterLink {
                 imagePlay.setColorFilter(colorFilterIconLight);
                 textThreadInfo.setTextColor(resources.getColor(R.color.darkThemeTextColorMuted));
                 textHidden.setTextColor(resources.getColor(R.color.darkThemeTextColorMuted));
+                colorTextSecondary = resources.getColor(R.color.darkThemeTextColorMuted);
                 titleTextColorAlert = resources.getColor(R.color.textColorAlert);
                 titleTextColor = resources.getColor(R.color.darkThemeTextColor);
                 colorFilterMenuItem = colorFilterIconLight;
@@ -459,6 +464,7 @@ public class AdapterLinkGrid extends AdapterLink {
                 imagePlay.setColorFilter(colorFilterIconDark);
                 textThreadInfo.setTextColor(resources.getColor(R.color.lightThemeTextColorMuted));
                 textHidden.setTextColor(resources.getColor(R.color.lightThemeTextColorMuted));
+                colorTextSecondary = resources.getColor(R.color.lightThemeTextColorMuted);
                 titleTextColorAlert = resources.getColor(R.color.textColorAlertMuted);
                 titleTextColor = resources.getColor(R.color.lightThemeTextColor);
                 colorFilterMenuItem = colorFilterIconDark;
@@ -536,6 +542,7 @@ public class AdapterLinkGrid extends AdapterLink {
         public void clearOverlay() {
             if (viewOverlay.getBackground() instanceof ColorDrawable) {
                 itemView.setBackgroundColor(link.getBackgroundColor());
+                setTextColors(link.getBackgroundColor());
             }
             viewOverlay.setVisibility(View.GONE);
         }

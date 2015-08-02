@@ -19,6 +19,7 @@ import android.view.View;
 
 import com.winsonchiu.reader.AppSettings;
 import com.winsonchiu.reader.R;
+import com.winsonchiu.reader.Theme;
 
 /**
  * Created by TheKeeperOfPie on 7/1/2015.
@@ -33,19 +34,10 @@ public class ActivitySettings extends AppCompatActivity {
 
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
 
-        switch (sharedPreferences.getString(AppSettings.PREF_THEME, "Dark")) {
-            case AppSettings.THEME_DARK:
-                setTheme(R.style.AppDarkTheme);
-                break;
-            case AppSettings.THEME_LIGHT:
-                setTheme(R.style.AppLightTheme);
-                break;
-            case AppSettings.THEME_BLACK:
-                setTheme(R.style.AppBlackTheme);
-                break;
-            case AppSettings.THEME_PINK:
-                setTheme(R.style.AppPinkTheme);
-                break;
+        Theme theme = Theme.fromString(sharedPreferences.getString(AppSettings.PREF_THEME_ACCENT, AppSettings.THEME_DEEP_PURPLE));
+        if (theme != null) {
+            setTheme(theme.getStyle((sharedPreferences
+                    .getString(AppSettings.PREF_THEME_PRIMARY, AppSettings.THEME_DARK))));
         }
 
         super.onCreate(savedInstanceState);

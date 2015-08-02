@@ -375,6 +375,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
         protected int colorTextPrimary;
         protected int colorAccent;
         protected int colorIconFilter;
+        protected int colorGold;
 
         public ViewHolderComment(final View itemView,
                 AdapterLink.ViewHolderBase.EventListener eventListenerBase,
@@ -417,12 +418,13 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
 
             resources = itemView.getResources();
             preferences = PreferenceManager.getDefaultSharedPreferences(itemView.getContext());
-            TypedArray typedArray = itemView.getContext().getTheme().obtainStyledAttributes(new int[] {R.attr.colorPrimary, android.R.attr.textColor, android.R.attr.textColorSecondary, R.attr.colorAccent, R.attr.colorIconFilter});
+            TypedArray typedArray = itemView.getContext().getTheme().obtainStyledAttributes(new int[] {R.attr.colorPrimary, android.R.attr.textColor, android.R.attr.textColorSecondary, R.attr.colorAccent, R.attr.colorIconFilter, R.attr.colorGold});
             colorPrimary = typedArray.getColor(0, resources.getColor(R.color.colorPrimary));
             colorTextPrimary = typedArray.getColor(1, resources.getColor(R.color.darkThemeTextColor));
             colorTextSecondary = typedArray.getColor(2, resources.getColor(R.color.darkThemeTextColorMuted));
             colorAccent = typedArray.getColor(3, resources.getColor(R.color.colorAccent));
             colorIconFilter = typedArray.getColor(4, 0xFFFFFFFF);
+            colorGold = typedArray.getColor(5, resources.getColor(R.color.darkThemeGold));
             typedArray.recycle();
 
             this.drawableUpvote = resources.getDrawable(R.drawable.ic_keyboard_arrow_up_white_24dp);
@@ -752,7 +754,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
             }
 
             textComment.setTextColor(
-                    comment.getGilded() > 0 ? resources.getColor(R.color.gildedComment) :
+                    comment.getGilded() > 0 ? colorGold :
                             colorTextPrimary);
 
         }
@@ -802,7 +804,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                 color = colorAccent;
             }
             else if (userName.equals(comment.getAuthor())) {
-                color = resources.getColor(colorPrimary);
+                color = colorPrimary;
             }
             else {
                 switch (comment.getDistinguished()) {

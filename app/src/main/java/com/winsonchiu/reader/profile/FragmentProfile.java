@@ -227,7 +227,7 @@ public class FragmentProfile extends FragmentBase implements Toolbar.OnMenuItemC
         TypedArray typedArray = activity.getTheme().obtainStyledAttributes(
                 new int[] {R.attr.colorPrimary, R.attr.colorIconFilter});
         final int colorPrimary = typedArray.getColor(0, getResources().getColor(R.color.colorPrimary));
-        int colorIconFilter = typedArray.getColor(0, 0xFFFFFFFF);
+        int colorIconFilter = typedArray.getColor(1, 0xFFFFFFFF);
         typedArray.recycle();
 
         colorFilterIcon = new PorterDuffColorFilter(colorIconFilter,

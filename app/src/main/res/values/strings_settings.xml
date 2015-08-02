@@ -75,18 +75,60 @@
     <string name="pref_history_size">History size</string>
     <string name="pref_history_size_summary">Max number of history entries to save</string>
 
-    <string name="pref_theme">Theme</string>
-    <string-array name="pref_theme_entries">
+    <string name="pref_theme_primary">Primary theme</string>
+    <string-array name="pref_theme_primary_entries">
         <item>Dark</item>
         <item>Light</item>
         <item>Black</item>
-        <item>Pink</item>
     </string-array>
-    <string-array name="pref_theme_values">
+    <string-array name="pref_theme_primary_values">
         <item>Dark</item>
         <item>Light</item>
         <item>Black</item>
+    </string-array>
+
+    <string name="pref_theme_accent">Accent theme</string>
+    <string-array name="pref_theme_accent_entries">
+        <item>Red</item>
         <item>Pink</item>
+        <item>Purple</item>
+        <item>Deep Purple</item>
+        <item>Indigo</item>
+        <item>Blue</item>
+        <item>Light Blue</item>
+        <item>Cyan</item>
+        <item>Teal</item>
+        <item>Green</item>
+        <item>Light Green</item>
+        <item>Lime</item>
+        <item>Yellow</item>
+        <item>Amber</item>
+        <item>Orange</item>
+        <item>Deep Orange</item>
+        <item>Brown</item>
+        <item>Grey</item>
+        <item>Blue Grey</item>
+    </string-array>
+    <string-array name="pref_theme_accent_values">
+        <item>Red</item>
+        <item>Pink</item>
+        <item>Purple</item>
+        <item>Deep Purple</item>
+        <item>Indigo</item>
+        <item>Blue</item>
+        <item>Light Blue</item>
+        <item>Cyan</item>
+        <item>Teal</item>
+        <item>Green</item>
+        <item>Light Green</item>
+        <item>Lime</item>
+        <item>Yellow</item>
+        <item>Amber</item>
+        <item>Orange</item>
+        <item>Deep Orange</item>
+        <item>Brown</item>
+        <item>Grey</item>
+        <item>Blue Grey</item>
     </string-array>
 
 </resources>

@@ -310,6 +310,7 @@ public class FragmentWeb extends FragmentBase implements Toolbar.OnMenuItemClick
     public void onDestroy() {
         destroyWebView();
         toolbar.setOnClickListener(null);
+        toolbar.setNavigationOnClickListener(null);
         toolbar.setOnMenuItemClickListener(null);
         toolbarActions.setOnMenuItemClickListener(null);
         super.onDestroy();

@@ -451,6 +451,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         public int colorTextAlertDefault;
         public int titleTextColor;
         public int titleTextColorAlert;
+        public int colorTextSecondary;
         public Drawable drawableDefault;
 
         public SharedPreferences preferences;
@@ -1584,6 +1585,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             this.userName = userName;
             titleTextColor = colorTextPrimaryDefault;
             titleTextColorAlert = colorTextAlertDefault;
+            colorTextSecondary = colorTextSecondaryDefault;
             colorFilterMenuItem = colorFilterIconDefault;
             isYouTubeFullscreen = false;
             layoutContainerExpand.setVisibility(View.GONE);
@@ -1637,6 +1639,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
 
         public void syncTitleColor() {
             textThreadTitle.setTextColor(link.isOver18() ? titleTextColorAlert : titleTextColor);
+            textThreadInfo.setTextColor(colorTextSecondary);
             itemMarkNsfw.setTitle(link.isOver18() ? R.string.unmark_nsfw : R.string.mark_nsfw);
         }
 

@@ -79,7 +79,9 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import io.fabric.sdk.android.Fabric;
@@ -125,19 +127,10 @@ public class MainActivity extends YouTubeBaseActivity
 
         sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
 
-        switch (sharedPreferences.getString(AppSettings.PREF_THEME, "Dark")) {
-            case AppSettings.THEME_DARK:
-                setTheme(R.style.AppDarkTheme);
-                break;
-            case AppSettings.THEME_LIGHT:
-                setTheme(R.style.AppLightTheme);
-                break;
-            case AppSettings.THEME_BLACK:
-                setTheme(R.style.AppBlackTheme);
-                break;
-            case AppSettings.THEME_PINK:
-                setTheme(R.style.AppPinkTheme);
-                break;
+        Theme theme = Theme.fromString(sharedPreferences.getString(AppSettings.PREF_THEME_ACCENT, AppSettings.THEME_DEEP_PURPLE));
+        if (theme != null) {
+            setTheme(theme.getStyle((sharedPreferences.getString(AppSettings.PREF_THEME_PRIMARY,
+                    AppSettings.THEME_DARK))));
         }
 
         super.onCreate(savedInstanceState);
@@ -683,13 +676,27 @@ public class MainActivity extends YouTubeBaseActivity
         textAccountName = (TextView) viewHeader.findViewById(R.id.text_account_name);
         textAccountInfo = (TextView) viewHeader.findViewById(R.id.text_account_info);
 
+        viewHeader.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+                String themeAccent = sharedPreferences.getString(AppSettings.PREF_THEME_ACCENT, AppSettings.THEME_DEEP_PURPLE);
+
+                List<Theme> themes = Arrays.asList(Theme.values());
+                Theme newTheme = themes.get((themes.indexOf(Theme.fromString(themeAccent)) + 1) % themes.size());
+                sharedPreferences.edit().putString(AppSettings.PREF_THEME_ACCENT, newTheme.getName()).apply();
+                recreate();
+
+            }
+        });
+
+
         View.OnClickListener clickListenerAccount = new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 onClickAccount();
             }
         };
-        viewHeader.setOnClickListener(clickListenerAccount);
         textAccountName.setOnClickListener(clickListenerAccount);
         textAccountInfo.setOnClickListener(clickListenerAccount);
 

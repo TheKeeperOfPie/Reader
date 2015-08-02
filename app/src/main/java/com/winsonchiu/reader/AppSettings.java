@@ -22,7 +22,26 @@ public class AppSettings {
     public static final String THEME_DARK = "Dark";
     public static final String THEME_LIGHT = "Light";
     public static final String THEME_BLACK = "Black";
+
+    public static final String THEME_RED = "Red";
     public static final String THEME_PINK = "Pink";
+    public static final String THEME_PURPLE = "Purple";
+    public static final String THEME_DEEP_PURPLE = "Deep Purple";
+    public static final String THEME_INDIGO = "Indigo";
+    public static final String THEME_BLUE = "Blue";
+    public static final String THEME_LIGHT_BLUE = "Light Blue";
+    public static final String THEME_CYAN = "Cyan";
+    public static final String THEME_TEAL = "Teal";
+    public static final String THEME_GREEN = "Green";
+    public static final String THEME_LIGHT_GREEN = "Light Green";
+    public static final String THEME_LIME = "Lime";
+    public static final String THEME_YELLOW = "Yellow";
+    public static final String THEME_AMBER = "Amber";
+    public static final String THEME_ORANGE = "Orange";
+    public static final String THEME_DEEP_ORANGE = "Deep Orange";
+    public static final String THEME_BROWN = "Brown";
+    public static final String THEME_GREY = "Grey";
+    public static final String THEME_BLUE_GREY = "Blue Grey";
 
     // List of all possible tokens
     public static final String INITIALIZED = "initialized";
@@ -54,7 +73,8 @@ public class AppSettings {
     public static final String PREF_HISTORY_SIZE = "pref_history_size";
     public static final String BETA_NOTICE_0 = "betaNotice0";
     public static final String SWIPE_EXIT_COMMENTS = "swipe_exit_comments";
-    public static final String PREF_THEME = "pref_theme";
+    public static final String PREF_THEME_PRIMARY = "pref_theme_primary";
+    public static final String PREF_THEME_ACCENT = "pref_theme_accent";
 
     private static final String TAG = AppSettings.class.getCanonicalName();
 

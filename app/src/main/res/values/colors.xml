@@ -16,7 +16,6 @@
     <color name="textColorAlert">#FFF44336</color>
     <color name="textColorAlertMuted">#FFC62828</color>
 
-    <color name="gildedComment">#FFD8C161</color>
     <color name="darkThemeShadowTranslucent">#55303030</color>
     <color name="moderator">#FF4CAF50</color>
     <color name="admin">#FFF44336</color>
@@ -31,8 +30,8 @@
     <color name="darkThemeCellBackground">#FF353535</color>
     <color name="darkThemeCellOverlay">#BB353535</color>
     <color name="darkThemeIconFilter">#FFFFFFFF</color>
+    <color name="darkThemeGold">#FFFFEB3B</color>
 
-    <color name="lightThemeColorAccent">#FFDDB000</color>
     <color name="lightThemeTextColor">#FF212121</color>
     <color name="lightThemeTextColorMuted">#FF555555</color>
     <color name="lightThemeShadowColor">#FFFAFAFA</color>
@@ -42,9 +41,146 @@
     <color name="lightThemeCellBackground">#FFFAFAFA</color>
     <color name="lightThemeCellOverlay">#BBFAFAFA</color>
     <color name="lightThemeIconFilter">#FF212121</color>
+    <color name="lightThemeGold">#FFDAA520</color>
 
-    <color name="pinkThemeColorPrimary">#FFEC407A</color>
-    <color name="pinkThemeColorPrimaryDark">#FFAD1457</color>
+    <!--<color name="redThemeColorPrimary">#E57373</color>-->
+    <!--<color name="redThemeColorPrimaryDark">#F44336</color>-->
+
+    <!--<color name="pinkThemeColorPrimary">#F06292</color>-->
+    <!--<color name="pinkThemeColorPrimaryDark">#E91E63</color>-->
+
+    <!--<color name="purpleThemeColorPrimary">#BA68C8</color>-->
+    <!--<color name="purpleThemeColorPrimaryDark">#9C27B0</color>-->
+
+    <!--<color name="deepPurpleThemeColorPrimary">#9575CD</color>-->
+    <!--<color name="deepPurpleThemeColorPrimaryDark">#673AB7</color>-->
+
+    <!--<color name="indigoThemeColorPrimary">#7986CB</color>-->
+    <!--<color name="indigoThemeColorPrimaryDark">#3F51B5</color>-->
+
+    <!--<color name="blueThemeColorPrimary">#64B5F6</color>-->
+    <!--<color name="blueThemeColorPrimaryDark">#2196F3</color>-->
+
+    <!--<color name="lightBlueThemeColorPrimary">#4FC3F7</color>-->
+    <!--<color name="lightBlueThemeColorPrimaryDark">#03A9F4</color>-->
+
+    <!--<color name="cyanThemeColorPrimary">#4DD0E1</color>-->
+    <!--<color name="cyanThemeColorPrimaryDark">#00BCD4</color>-->
+
+    <!--<color name="tealThemeColorPrimary">#4DB6AC</color>-->
+    <!--<color name="tealThemeColorPrimaryDark">#009688</color>-->
+
+    <!--<color name="greenThemeColorPrimary">#81C784</color>-->
+    <!--<color name="greenThemeColorPrimaryDark">#4CAF50</color>-->
+
+    <!--<color name="lightGreenThemeColorPrimary">#AED581</color>-->
+    <!--<color name="lightGreenThemeColorPrimaryDark">#8BC34A</color>-->
+
+    <!--<color name="limeThemeColorPrimary">#DCE775</color>-->
+    <!--<color name="limeThemeColorPrimaryDark">#CDDC39</color>-->
+
+    <!--<color name="yellowThemeColorPrimary">#FFF176</color>-->
+    <!--<color name="yellowThemeColorPrimaryDark">#FFEB3B</color>-->
+
+    <!--<color name="amberThemeColorPrimary">#FFD54F</color>-->
+    <!--<color name="amberThemeColorPrimaryDark">#FFC107</color>-->
+
+    <!--<color name="orangeThemeColorPrimary">#FFB74D</color>-->
+    <!--<color name="orangeThemeColorPrimaryDark">#FF9800</color>-->
+
+    <!--<color name="deepOrangeThemeColorPrimary">#FF8A65</color>-->
+    <!--<color name="deepOrangeThemeColorPrimaryDark">#FF5722</color>-->
+
+    <!--<color name="brownThemeColorPrimary">#A1887F</color>-->
+    <!--<color name="brownThemeColorPrimaryDark">#795548</color>-->
+
+    <!--<color name="greyThemeColorPrimary">#E0E0E0</color>-->
+    <!--<color name="greyThemeColorPrimaryDark">#9E9E9E</color>-->
+
+    <!--<color name="blueGreyThemeColorPrimary">#90A4AE</color>-->
+    <!--<color name="blueGreyThemeColorPrimaryDark">#607D8B</color>-->
+
+    <!--<color name="whiteThemeBackground">#FFFFFFFF</color>-->
+    <!--<color name="whiteThemeOverlay">#BBFFFFFF</color>-->
+
+    <color name="redThemeColorPrimary">#F44336</color>
+    <color name="redThemeColorPrimaryDark">#D32F2F</color>
+    <color name="redThemeColorAccent">#0BBCC9</color>
+
+    <color name="pinkThemeColorPrimary">#E91E63</color>
+    <color name="pinkThemeColorPrimaryDark">#C2185B</color>
+    <color name="pinkThemeColorAccent">#16E19C</color>
+
+    <color name="purpleThemeColorPrimary">#9C27B0</color>
+    <color name="purpleThemeColorPrimaryDark">#7B1FA2</color>
+    <color name="purpleThemeColorAccent">#63D84F</color>
+
+    <color name="deepPurpleThemeColorPrimary">#673AB7</color>
+    <color name="deepPurpleThemeColorPrimaryDark">#512DA8</color>
+    <color name="deepPurpleThemeColorAccent">#98C548</color>
+
+    <color name="indigoThemeColorPrimary">#3F51B5</color>
+    <color name="indigoThemeColorPrimaryDark">#303F9F</color>
+    <color name="indigoThemeColorAccent">#C0AE4A</color>
+
+    <color name="blueThemeColorPrimary">#2196F3</color>
+    <color name="blueThemeColorPrimaryDark">#1976D2</color>
+    <color name="blueThemeColorAccent">#DE690C</color>
+
+    <color name="lightBlueThemeColorPrimary">#03A9F4</color>
+    <color name="lightBlueThemeColorPrimaryDark">#0288D1</color>
+    <color name="lightBlueThemeColorAccent">#FC560B</color>
+
+    <color name="cyanThemeColorPrimary">#00BCD4</color>
+    <color name="cyanThemeColorPrimaryDark">#0097A7</color>
+    <color name="cyanThemeColorAccent">#FF432B</color>
+
+    <color name="tealThemeColorPrimary">#009688</color>
+    <color name="tealThemeColorPrimaryDark">#00796B</color>
+    <color name="tealThemeColorAccent">#FF6977</color>
+
+    <color name="greenThemeColorPrimary">#4CAF50</color>
+    <color name="greenThemeColorPrimaryDark">#388E3C</color>
+    <color name="greenThemeColorAccent">#B350AF</color>
+
+    <color name="lightGreenThemeColorPrimary">#8BC34A</color>
+    <color name="lightGreenThemeColorPrimaryDark">#689F38</color>
+    <color name="lightGreenThemeColorAccent">#743CB5</color>
+
+    <color name="limeThemeColorPrimary">#AFB42B</color>
+    <color name="limeThemeColorPrimaryDark">#827717</color>
+    <color name="limeThemeColorAccent">#504BD4</color>
+
+    <color name="yellowThemeColorPrimary">#FBC02D</color>
+    <color name="yellowThemeColorPrimaryDark">#F57F17</color>
+    <color name="yellowThemeColorAccent">#043FD2</color>
+
+    <color name="amberThemeColorPrimary">#FFC107</color>
+    <color name="amberThemeColorPrimaryDark">#FFA000</color>
+    <color name="amberThemeColorAccent">#003EF8</color>
+
+    <color name="orangeThemeColorPrimary">#FF9800</color>
+    <color name="orangeThemeColorPrimaryDark">#F57C00</color>
+    <color name="orangeThemeColorAccent">#0067FF</color>
+
+    <color name="deepOrangeThemeColorPrimary">#FF5722</color>
+    <color name="deepOrangeThemeColorPrimaryDark">#E64A19</color>
+    <color name="deepOrangeThemeColorAccent">#00A8DD</color>
+
+    <color name="brownThemeColorPrimary">#795548</color>
+    <color name="brownThemeColorPrimaryDark">#5D4037</color>
+    <color name="brownThemeColorAccent">#86AAB7</color>
+
+    <color name="greyThemeColorPrimary">#9E9E9E</color>
+    <color name="greyThemeColorPrimaryDark">#616161</color>
+    <color name="greyThemeColorAccent">#616161</color>
+
+    <color name="blueGreyThemeColorPrimary">#607D8B</color>
+    <color name="blueGreyThemeColorPrimaryDark">#455A64</color>
+    <color name="blueGreyThemeColorAccent">#9F8274</color>
+
+    <color name="whiteThemeBackground">#FFFFFFFF</color>
+    <color name="whiteThemeOverlay">#BBFFFFFF</color>
 
     <color name="blackThemeBackground">#FF000000</color>
     <color name="blackThemeOverlay">#BB000000</color>
