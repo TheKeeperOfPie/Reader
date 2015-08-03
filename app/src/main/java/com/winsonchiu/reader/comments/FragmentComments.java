@@ -1035,7 +1035,12 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
                             if (fragment != null) {
                                 fragment.onShown();
                             }
-                            getFragmentManager().popBackStackImmediate();
+                            try {
+                                getFragmentManager().popBackStackImmediate();
+                            }
+                            catch (IllegalStateException e) {
+                                e.printStackTrace();
+                            }
                         }
 
                         @Override

@@ -19,6 +19,7 @@ import android.os.Environment;
 import android.os.Handler;
 import android.preference.PreferenceManager;
 import android.support.design.widget.NavigationView;
+import android.support.v4.app.TaskStackBuilder;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.AlertDialog;
@@ -675,27 +676,13 @@ public class MainActivity extends YouTubeBaseActivity
         textAccountName = (TextView) viewHeader.findViewById(R.id.text_account_name);
         textAccountInfo = (TextView) viewHeader.findViewById(R.id.text_account_info);
 
-        viewHeader.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-
-                String themeAccent = sharedPreferences.getString(AppSettings.PREF_THEME_ACCENT, AppSettings.THEME_DEEP_PURPLE);
-
-                List<Theme> themes = Arrays.asList(Theme.values());
-                Theme newTheme = themes.get((themes.indexOf(Theme.fromString(themeAccent)) + 1) % themes.size());
-                sharedPreferences.edit().putString(AppSettings.PREF_THEME_ACCENT, newTheme.getName()).apply();
-                recreate();
-
-            }
-        });
-
-
         View.OnClickListener clickListenerAccount = new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 onClickAccount();
             }
         };
+        viewHeader.setOnClickListener(clickListenerAccount);
         textAccountName.setOnClickListener(clickListenerAccount);
         textAccountInfo.setOnClickListener(clickListenerAccount);
 
@@ -965,7 +952,6 @@ public class MainActivity extends YouTubeBaseActivity
         Log.d(TAG, "Back stack count: " + getFragmentManager().getBackStackEntryCount());
         if (getFragmentManager().getBackStackEntryCount() > 0) {
             getFragmentManager().popBackStack();
-//            mDrawerLayout.onDrawerSlide(mDrawerLayout, 0.0f);
         }
         else {
             if (mDrawerLayout.isDrawerVisible(GravityCompat.START)) {
@@ -999,10 +985,6 @@ public class MainActivity extends YouTubeBaseActivity
     @Override
     public void startActivity(Intent intent) {
         Log.d(TAG, "startActivity: " + intent.toString());
-
-//        Log.d(TAG, "three: " + (TextUtils.equals(
-//                getApplicationContext().getPackageName(), intent.getStringExtra(
-//                        Browser.EXTRA_APPLICATION_ID))));
 
         if (!intent.hasExtra(REDDIT_PAGE) && !sharedPreferences.getBoolean(AppSettings.PREF_EXTERNAL_BROWSER, false) && Intent.ACTION_VIEW.equals(intent.getAction())) {
             String urlString = intent.getDataString();
@@ -1046,7 +1028,10 @@ public class MainActivity extends YouTubeBaseActivity
         super.onActivityResult(requestCode, resultCode, data);
 
         if (requestCode == REQUEST_SETTINGS && resultCode == Activity.RESULT_OK) {
-            recreate();
+            TaskStackBuilder.create(this)
+                    .addNextIntent(new Intent(this, MainActivity.class))
+                    .addNextIntent(this.getIntent())
+                    .startActivities();
         }
     }
 

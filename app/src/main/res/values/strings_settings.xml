@@ -89,90 +89,90 @@
 
     <string name="pref_theme_primary">Primary theme</string>
     <string-array name="pref_theme_primary_entries">
-        <item>Red</item>
-        <item>Pink</item>
-        <item>Purple</item>
-        <item>Deep Purple</item>
-        <item>Indigo</item>
+        <item>Amber</item>
         <item>Blue</item>
-        <item>Light Blue</item>
+        <item>Blue Grey</item>
+        <item>Brown</item>
         <item>Cyan</item>
-        <item>Teal</item>
+        <item>Deep Orange</item>
+        <item>Deep Purple</item>
         <item>Green</item>
+        <item>Grey</item>
+        <item>Indigo</item>
+        <item>Light Blue</item>
         <item>Light Green</item>
         <item>Lime</item>
-        <item>Yellow</item>
-        <item>Amber</item>
         <item>Orange</item>
-        <item>Deep Orange</item>
-        <item>Brown</item>
-        <item>Grey</item>
-        <item>Blue Grey</item>
+        <item>Pink</item>
+        <item>Purple</item>
+        <item>Red</item>
+        <item>Teal</item>
+        <item>Yellow</item>
     </string-array>
     <string-array name="pref_theme_primary_values">
-        <item>Red</item>
-        <item>Pink</item>
-        <item>Purple</item>
-        <item>Deep Purple</item>
-        <item>Indigo</item>
+        <item>Amber</item>
         <item>Blue</item>
-        <item>Light Blue</item>
+        <item>Blue Grey</item>
+        <item>Brown</item>
         <item>Cyan</item>
-        <item>Teal</item>
+        <item>Deep Orange</item>
+        <item>Deep Purple</item>
         <item>Green</item>
+        <item>Grey</item>
+        <item>Indigo</item>
+        <item>Light Blue</item>
         <item>Light Green</item>
         <item>Lime</item>
-        <item>Yellow</item>
-        <item>Amber</item>
         <item>Orange</item>
-        <item>Deep Orange</item>
-        <item>Brown</item>
-        <item>Grey</item>
-        <item>Blue Grey</item>
+        <item>Pink</item>
+        <item>Purple</item>
+        <item>Red</item>
+        <item>Teal</item>
+        <item>Yellow</item>
     </string-array>
 
     <string name="pref_theme_accent">Accent theme</string>
     <string-array name="pref_theme_accent_entries">
-        <item>Red</item>
-        <item>Pink</item>
-        <item>Purple</item>
-        <item>Deep Purple</item>
-        <item>Indigo</item>
+        <item>Amber</item>
         <item>Blue</item>
-        <item>Light Blue</item>
+        <item>Blue Grey</item>
+        <item>Brown</item>
         <item>Cyan</item>
-        <item>Teal</item>
+        <item>Deep Orange</item>
+        <item>Deep Purple</item>
         <item>Green</item>
+        <item>Grey</item>
+        <item>Indigo</item>
+        <item>Light Blue</item>
         <item>Light Green</item>
         <item>Lime</item>
-        <item>Yellow</item>
-        <item>Amber</item>
         <item>Orange</item>
-        <item>Deep Orange</item>
-        <item>Brown</item>
-        <item>Grey</item>
-        <item>Blue Grey</item>
+        <item>Pink</item>
+        <item>Purple</item>
+        <item>Red</item>
+        <item>Teal</item>
+        <item>Yellow</item>
     </string-array>
     <string-array name="pref_theme_accent_values">
-        <item>Red</item>
-        <item>Pink</item>
-        <item>Purple</item>
-        <item>Deep Purple</item>
-        <item>Indigo</item>
+        <item>Amber</item>
         <item>Blue</item>
-        <item>Light Blue</item>
+        <item>Blue Grey</item>
+        <item>Brown</item>
         <item>Cyan</item>
-        <item>Teal</item>
+        <item>Deep Orange</item>
+        <item>Deep Purple</item>
         <item>Green</item>
+        <item>Grey</item>
+        <item>Indigo</item>
+        <item>Light Blue</item>
         <item>Light Green</item>
         <item>Lime</item>
-        <item>Yellow</item>
-        <item>Amber</item>
         <item>Orange</item>
-        <item>Deep Orange</item>
-        <item>Brown</item>
-        <item>Grey</item>
-        <item>Blue Grey</item>
+        <item>Pink</item>
+        <item>Purple</item>
+        <item>Red</item>
+        <item>Teal</item>
+        <item>Yellow</item>
     </string-array>
 
 </resources>

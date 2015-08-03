@@ -97,6 +97,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -271,6 +272,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             textHidden = (TextView) itemView.findViewById(R.id.text_hidden);
             viewDivider = itemView.findViewById(R.id.view_divider);
 
+            textDescription.setOnClickListener(this);
             buttonShowSidebar.setOnClickListener(this);
             buttonSubmitLink.setOnClickListener(this);
             buttomSubmitSelf.setOnClickListener(this);
@@ -614,6 +616,8 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             colorFilterSave = new PorterDuffColorFilter(colorAccent, PorterDuff.Mode.MULTIPLY);
 
             buttonComments.setColorFilter(colorFilterIconDefault);
+
+            videoFull.setZOrderOnTop(true);
         }
 
         protected void initializeListeners() {
@@ -1384,6 +1388,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
 
         private void loadVideo(String url, float heightRatio) {
             Log.d(TAG, "loadVideo: " + url + " : " + heightRatio);
+            Log.d(TAG, "stack: " + Arrays.toString(Thread.currentThread().getStackTrace()));
             Uri uri = Uri.parse(url);
             videoFull.setVideoURI(uri);
             videoFull.setVisibility(View.VISIBLE);

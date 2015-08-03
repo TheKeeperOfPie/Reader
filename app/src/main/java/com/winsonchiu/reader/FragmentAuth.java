@@ -6,7 +6,10 @@ package com.winsonchiu.reader;
 
 import android.app.Activity;
 import android.content.SharedPreferences;
+import android.content.res.TypedArray;
 import android.graphics.Bitmap;
+import android.graphics.PorterDuff;
+import android.graphics.PorterDuffColorFilter;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -17,11 +20,15 @@ import android.text.TextUtils;
 import android.util.Log;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.webkit.CookieManager;
+import android.webkit.WebChromeClient;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.widget.ProgressBar;
 
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
@@ -34,7 +41,7 @@ import org.json.JSONObject;
 import java.util.HashMap;
 import java.util.UUID;
 
-public class FragmentAuth extends FragmentBase {
+public class FragmentAuth extends FragmentBase implements Toolbar.OnMenuItemClickListener {
 
     public static final String TAG = FragmentAuth.class.getCanonicalName();
 
@@ -45,7 +52,9 @@ public class FragmentAuth extends FragmentBase {
     private Reddit reddit;
     private String state;
     private Toolbar toolbar;
-    private CustomSwipeRefreshLayout swipeRefreshAuth;
+    private ProgressBar progressBar;
+    private Menu menu;
+    private PorterDuffColorFilter colorFilterIcon;
 
     public static FragmentAuth newInstance() {
         FragmentAuth fragment = new FragmentAuth();
@@ -71,32 +80,34 @@ public class FragmentAuth extends FragmentBase {
 
         View view = inflater.inflate(R.layout.fragment_auth, container, false);
 
+        TypedArray typedArray = activity.getTheme().obtainStyledAttributes(
+                new int[]{R.attr.colorIconFilter});
+        int colorIconFilter = typedArray.getColor(0, 0xFFFFFFFF);
+        typedArray.recycle();
+
+        colorFilterIcon = new PorterDuffColorFilter(colorIconFilter,
+                PorterDuff.Mode.MULTIPLY);
+
         toolbar = (Toolbar) view.findViewById(R.id.toolbar);
         toolbar.setTitle("Login");
         toolbar.setNavigationIcon(R.drawable.ic_arrow_back_white_24dp);
+        toolbar.getNavigationIcon().mutate().setColorFilter(colorFilterIcon);
         toolbar.setNavigationOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 mListener.onNavigationBackClick();
             }
         });
+        setUpOptionsMenu();
 
-
-        swipeRefreshAuth = (CustomSwipeRefreshLayout) view.findViewById(R.id.swipe_refresh_auth);
-        swipeRefreshAuth.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
-            @Override
-            public void onRefresh() {
-                webAuth.reload();
-            }
-        });
-        swipeRefreshAuth.setMinScrollY(TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 150,
-                getResources().getDisplayMetrics()));
+        progressBar = (ProgressBar) view.findViewById(R.id.progress_web);
 
         webAuth = (WebView) view.findViewById(R.id.web_auth);
         webAuth.setWebViewClient(new WebViewClient() {
             @Override
             public void onPageStarted(WebView view, String url, Bitmap favicon) {
-                swipeRefreshAuth.setRefreshing(true);
+                progressBar.setIndeterminate(true);
+                progressBar.setVisibility(View.VISIBLE);
                 Uri uri = Uri.parse(url);
                 if (uri.getHost()
                         .equals(Reddit.REDIRECT_URI.replaceFirst("https://", ""))) {
@@ -153,7 +164,8 @@ public class FragmentAuth extends FragmentBase {
             @Override
             public void onPageFinished(WebView view, String url) {
                 super.onPageFinished(view, url);
-                swipeRefreshAuth.setRefreshing(false);
+                progressBar.setVisibility(View.GONE);
+                toolbar.setTitle(view.getTitle());
             }
 
             @Override
@@ -165,9 +177,28 @@ public class FragmentAuth extends FragmentBase {
                 Log.e(TAG, "WebView error: " + description);
             }
         });
+        webAuth.setWebChromeClient(new WebChromeClient() {
+            @Override
+            public void onProgressChanged(WebView view, int newProgress) {
+                super.onProgressChanged(view, newProgress);
+                progressBar.setIndeterminate(false);
+                progressBar.setProgress(newProgress);
+            }
+        });
         webAuth.loadUrl(reddit.getUserAuthUrl(state));
 
         return view;
+    }
+
+    private void setUpOptionsMenu() {
+        toolbar.inflateMenu(R.menu.menu_auth);
+        menu = toolbar.getMenu();
+
+        toolbar.setOnMenuItemClickListener(this);
+
+        for (int index = 0; index < menu.size(); index++) {
+            menu.getItem(index).getIcon().setColorFilter(colorFilterIcon);
+        }
     }
 
     private void loadSubredditList() {
@@ -244,8 +275,8 @@ public class FragmentAuth extends FragmentBase {
     @Override
     public void onDestroy() {
         super.onDestroy();
-//        CustomApplication.getRefWatcher(getActivity())
-//                .watch(this);
+        CustomApplication.getRefWatcher(getActivity())
+                .watch(this);
     }
 
     public boolean navigateBack() {
@@ -259,4 +290,14 @@ public class FragmentAuth extends FragmentBase {
         return true;
     }
 
+    @Override
+    public boolean onMenuItemClick(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.item_refresh:
+                webAuth.reload();
+                break;
+        }
+
+        return true;
+    }
 }
