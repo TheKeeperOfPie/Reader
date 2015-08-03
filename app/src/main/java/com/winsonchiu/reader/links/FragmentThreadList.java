@@ -5,10 +5,8 @@
 package com.winsonchiu.reader.links;
 
 import android.app.Activity;
-import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.TypedArray;
-import android.graphics.Canvas;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
 import android.os.Build;
@@ -19,7 +17,6 @@ import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v4.view.GravityCompat;
-import android.support.v4.view.MenuItemCompat;
 import android.support.v4.view.ViewCompat;
 import android.support.v4.view.animation.FastOutSlowInInterpolator;
 import android.support.v4.widget.DrawerLayout;
@@ -46,24 +43,23 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.squareup.picasso.Picasso;
 import com.winsonchiu.reader.AppSettings;
 import com.winsonchiu.reader.CustomApplication;
-import com.winsonchiu.reader.FragmentNewPost;
-import com.winsonchiu.reader.history.Historian;
-import com.winsonchiu.reader.views.CustomItemTouchHelper;
-import com.winsonchiu.reader.utils.DisallowListener;
 import com.winsonchiu.reader.FragmentBase;
 import com.winsonchiu.reader.FragmentListenerBase;
-import com.winsonchiu.reader.search.FragmentSearch;
+import com.winsonchiu.reader.FragmentNewPost;
 import com.winsonchiu.reader.R;
-import com.winsonchiu.reader.utils.RecyclerCallback;
-import com.winsonchiu.reader.utils.ScrollAwareFloatingActionButtonBehavior;
-import com.winsonchiu.reader.data.reddit.Sort;
-import com.winsonchiu.reader.data.reddit.Time;
 import com.winsonchiu.reader.data.reddit.Link;
 import com.winsonchiu.reader.data.reddit.Reddit;
+import com.winsonchiu.reader.data.reddit.Sort;
 import com.winsonchiu.reader.data.reddit.Subreddit;
+import com.winsonchiu.reader.data.reddit.Time;
+import com.winsonchiu.reader.history.Historian;
+import com.winsonchiu.reader.search.FragmentSearch;
+import com.winsonchiu.reader.utils.DisallowListener;
+import com.winsonchiu.reader.utils.RecyclerCallback;
+import com.winsonchiu.reader.utils.ScrollAwareFloatingActionButtonBehavior;
+import com.winsonchiu.reader.views.CustomItemTouchHelper;
 
 public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuItemClickListener {
 
@@ -457,7 +453,6 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
                 return false;
             }
         });
-
 
         // Margin is included within shadow margin on pre-Lollipop, so remove all regular margin
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {

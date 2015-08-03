@@ -41,11 +41,20 @@
             android:positiveButtonText="@null" />
 
         <ListPreference
+            android:key="pref_theme_background"
+            android:title="@string/pref_theme_background"
+            android:entries="@array/pref_theme_background_entries"
+            android:entryValues="@array/pref_theme_background_values"
+            android:defaultValue="Dark"
+            android:negativeButtonText="@null"
+            android:positiveButtonText="@null" />
+
+        <ListPreference
             android:key="pref_theme_primary"
             android:title="@string/pref_theme_primary"
             android:entries="@array/pref_theme_primary_entries"
             android:entryValues="@array/pref_theme_primary_values"
-            android:defaultValue="Dark"
+            android:defaultValue="Deep Purple"
             android:negativeButtonText="@null"
             android:positiveButtonText="@null" />
 
@@ -54,7 +63,7 @@
             android:title="@string/pref_theme_accent"
             android:entries="@array/pref_theme_accent_entries"
             android:entryValues="@array/pref_theme_accent_values"
-            android:defaultValue="Deep Purple"
+            android:defaultValue="Yellow"
             android:negativeButtonText="@null"
             android:positiveButtonText="@null" />
 

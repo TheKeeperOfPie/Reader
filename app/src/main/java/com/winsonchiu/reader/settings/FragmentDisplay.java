@@ -21,6 +21,17 @@ public class FragmentDisplay extends FragmentPreferences {
         addPreferencesFromResource(R.xml.prefs_display);
 
         bindPreferenceListenerSummary(findPreference(AppSettings.PREF_GRID_THUMBNAIL_SIZE));
+        bindPreferenceListenerSummary(findPreference(AppSettings.PREF_THEME_BACKGROUND));
+        findPreference(AppSettings.PREF_THEME_BACKGROUND).setOnPreferenceChangeListener(
+                new Preference.OnPreferenceChangeListener() {
+                    @Override
+                    public boolean onPreferenceChange(Preference preference, Object newValue) {
+                        if (getActivity() != null) {
+                            getActivity().recreate();
+                        }
+                        return true;
+                    }
+                });
         bindPreferenceListenerSummary(findPreference(AppSettings.PREF_THEME_PRIMARY));
         findPreference(AppSettings.PREF_THEME_PRIMARY).setOnPreferenceChangeListener(
                 new Preference.OnPreferenceChangeListener() {

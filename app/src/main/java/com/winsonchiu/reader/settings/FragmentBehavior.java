@@ -10,8 +10,8 @@ import android.preference.Preference;
 import android.widget.Toast;
 
 import com.winsonchiu.reader.AppSettings;
-import com.winsonchiu.reader.history.Historian;
 import com.winsonchiu.reader.R;
+import com.winsonchiu.reader.history.Historian;
 
 /**
  * Created by TheKeeperOfPie on 7/1/2015.

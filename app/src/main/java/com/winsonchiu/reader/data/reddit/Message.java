@@ -7,9 +7,6 @@ package com.winsonchiu.reader.data.reddit;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.winsonchiu.reader.utils.UtilsJson;
 
-import org.json.JSONException;
-import org.json.JSONObject;
-
 /**
  * Created by TheKeeperOfPie on 3/7/2015.
  */

@@ -11,21 +11,18 @@ import android.widget.Toast;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.winsonchiu.reader.data.Page;
-import com.winsonchiu.reader.data.reddit.Replyable;
-import com.winsonchiu.reader.utils.ControllerListener;
 import com.winsonchiu.reader.R;
 import com.winsonchiu.reader.comments.AdapterCommentList;
+import com.winsonchiu.reader.data.Page;
 import com.winsonchiu.reader.data.reddit.Comment;
 import com.winsonchiu.reader.data.reddit.Link;
 import com.winsonchiu.reader.data.reddit.Listing;
 import com.winsonchiu.reader.data.reddit.Message;
 import com.winsonchiu.reader.data.reddit.Reddit;
+import com.winsonchiu.reader.data.reddit.Replyable;
 import com.winsonchiu.reader.data.reddit.Subreddit;
 import com.winsonchiu.reader.data.reddit.Thing;
-
-import org.json.JSONException;
-import org.json.JSONObject;
+import com.winsonchiu.reader.utils.ControllerListener;
 
 import java.io.IOException;
 import java.util.HashMap;

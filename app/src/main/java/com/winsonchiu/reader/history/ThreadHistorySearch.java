@@ -4,7 +4,6 @@
 
 package com.winsonchiu.reader.history;
 
-import java.io.InterruptedIOException;
 import java.util.ArrayList;
 import java.util.List;
 

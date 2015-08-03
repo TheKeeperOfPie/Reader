@@ -11,7 +11,6 @@ import android.view.ViewGroup;
 
 import com.winsonchiu.reader.ControllerUser;
 import com.winsonchiu.reader.R;
-import com.winsonchiu.reader.links.AdapterLink;
 import com.winsonchiu.reader.links.AdapterLinkList;
 import com.winsonchiu.reader.links.ControllerLinksBase;
 import com.winsonchiu.reader.utils.DisallowListener;

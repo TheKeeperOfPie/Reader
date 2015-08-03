@@ -38,20 +38,18 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.winsonchiu.reader.AppSettings;
-import com.winsonchiu.reader.MainActivity;
-import com.winsonchiu.reader.utils.AnimationUtils;
 import com.winsonchiu.reader.ControllerUser;
-import com.winsonchiu.reader.utils.DisallowListener;
+import com.winsonchiu.reader.MainActivity;
 import com.winsonchiu.reader.R;
 import com.winsonchiu.reader.comments.AdapterCommentList;
 import com.winsonchiu.reader.data.reddit.Message;
-import com.winsonchiu.reader.data.reddit.Thing;
 import com.winsonchiu.reader.links.AdapterLink;
 import com.winsonchiu.reader.profile.ControllerProfile;
+import com.winsonchiu.reader.utils.AnimationUtils;
+import com.winsonchiu.reader.utils.DisallowListener;
 import com.winsonchiu.reader.utils.RecyclerCallback;
 
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 /**

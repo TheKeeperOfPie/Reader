@@ -12,11 +12,11 @@ import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
 
 import com.winsonchiu.reader.ControllerUser;
-import com.winsonchiu.reader.utils.DisallowListener;
 import com.winsonchiu.reader.R;
-import com.winsonchiu.reader.utils.RecyclerCallback;
 import com.winsonchiu.reader.links.AdapterLinkList;
 import com.winsonchiu.reader.links.ControllerLinksBase;
+import com.winsonchiu.reader.utils.DisallowListener;
+import com.winsonchiu.reader.utils.RecyclerCallback;
 
 /**
  * Created by TheKeeperOfPie on 6/21/2015.

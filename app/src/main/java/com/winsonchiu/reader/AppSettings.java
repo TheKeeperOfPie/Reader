@@ -7,12 +7,6 @@ package com.winsonchiu.reader;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
-import android.util.Log;
-
-import com.winsonchiu.reader.history.Historian;
-
-import java.util.HashSet;
-import java.util.Set;
 
 /**
  * Created by TheKeeperOfPie on 3/7/2015.
@@ -73,6 +67,7 @@ public class AppSettings {
     public static final String PREF_HISTORY_SIZE = "pref_history_size";
     public static final String BETA_NOTICE_0 = "betaNotice0";
     public static final String SWIPE_EXIT_COMMENTS = "swipe_exit_comments";
+    public static final String PREF_THEME_BACKGROUND = "pref_theme_background";
     public static final String PREF_THEME_PRIMARY = "pref_theme_primary";
     public static final String PREF_THEME_ACCENT = "pref_theme_accent";
 

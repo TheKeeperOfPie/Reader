@@ -18,8 +18,8 @@ import android.webkit.WebView;
 import android.widget.FrameLayout;
 import android.widget.RelativeLayout;
 
-import com.winsonchiu.reader.utils.AnimationUtils;
 import com.winsonchiu.reader.data.reddit.Reddit;
+import com.winsonchiu.reader.utils.AnimationUtils;
 
 /**
  * Created by TheKeeperOfPie on 3/17/2015.

@@ -29,18 +29,18 @@ import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
 
 import com.winsonchiu.reader.CustomApplication;
-import com.winsonchiu.reader.utils.DisallowListener;
 import com.winsonchiu.reader.FragmentBase;
 import com.winsonchiu.reader.FragmentListenerBase;
 import com.winsonchiu.reader.R;
-import com.winsonchiu.reader.utils.RecyclerCallback;
-import com.winsonchiu.reader.data.reddit.Sort;
-import com.winsonchiu.reader.data.reddit.Time;
 import com.winsonchiu.reader.data.reddit.Link;
 import com.winsonchiu.reader.data.reddit.Reddit;
+import com.winsonchiu.reader.data.reddit.Sort;
 import com.winsonchiu.reader.data.reddit.Subreddit;
+import com.winsonchiu.reader.data.reddit.Time;
 import com.winsonchiu.reader.links.AdapterLink;
 import com.winsonchiu.reader.links.ControllerLinksBase;
+import com.winsonchiu.reader.utils.DisallowListener;
+import com.winsonchiu.reader.utils.RecyclerCallback;
 
 public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemClickListener {
 

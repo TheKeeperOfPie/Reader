@@ -10,7 +10,6 @@ import android.graphics.PorterDuff;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.text.method.LinkMovementMethod;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
@@ -19,9 +18,9 @@ import android.widget.ImageButton;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
-import com.winsonchiu.reader.utils.AnimationUtils;
 import com.winsonchiu.reader.R;
 import com.winsonchiu.reader.data.reddit.Subreddit;
+import com.winsonchiu.reader.utils.AnimationUtils;
 
 import java.util.Date;
 

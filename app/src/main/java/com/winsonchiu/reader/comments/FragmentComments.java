@@ -49,15 +49,15 @@ import com.google.android.youtube.player.YouTubePlayerView;
 import com.winsonchiu.reader.ApiKeys;
 import com.winsonchiu.reader.AppSettings;
 import com.winsonchiu.reader.CustomApplication;
-import com.winsonchiu.reader.YouTubePlayerStateListener;
-import com.winsonchiu.reader.utils.DisallowListener;
 import com.winsonchiu.reader.FragmentBase;
 import com.winsonchiu.reader.FragmentListenerBase;
 import com.winsonchiu.reader.R;
+import com.winsonchiu.reader.YouTubePlayerStateListener;
+import com.winsonchiu.reader.data.reddit.Link;
+import com.winsonchiu.reader.data.reddit.Sort;
+import com.winsonchiu.reader.utils.DisallowListener;
 import com.winsonchiu.reader.utils.RecyclerCallback;
 import com.winsonchiu.reader.utils.ScrollAwareFloatingActionButtonBehavior;
-import com.winsonchiu.reader.data.reddit.Sort;
-import com.winsonchiu.reader.data.reddit.Link;
 
 import java.util.Arrays;
 
@@ -154,7 +154,9 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
 
     private void setUpToolbar() {
 
-        if (getFragmentManager().getBackStackEntryCount() == 0 && getActivity().isTaskRoot() && getFragmentManager().findFragmentByTag(fragmentParentTag) == null) {
+        if (getFragmentManager().getBackStackEntryCount() == 0 && getActivity()
+                .isTaskRoot() && getFragmentManager()
+                .findFragmentByTag(fragmentParentTag) == null) {
             toolbar.setNavigationIcon(R.drawable.ic_menu_white_24dp);
             toolbar.setNavigationOnClickListener(new View.OnClickListener() {
                 @Override
@@ -284,7 +286,8 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
 
             @Override
             public void hideToolbar() {
-                AppBarLayout.Behavior behaviorAppBar = (AppBarLayout.Behavior) ((CoordinatorLayout.LayoutParams) layoutAppBar.getLayoutParams()).getBehavior();
+                AppBarLayout.Behavior behaviorAppBar = (AppBarLayout.Behavior) ((CoordinatorLayout.LayoutParams) layoutAppBar
+                        .getLayoutParams()).getBehavior();
                 behaviorAppBar.onNestedFling(layoutCoordinator, layoutAppBar, null, 0, 1000, true);
             }
 
@@ -383,7 +386,8 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
         toolbar = (Toolbar) view.findViewById(R.id.toolbar);
         setUpToolbar();
 
-        behaviorFloatingActionButton = new ScrollAwareFloatingActionButtonBehavior(getActivity(), null,
+        behaviorFloatingActionButton = new ScrollAwareFloatingActionButtonBehavior(getActivity(),
+                null,
                 new ScrollAwareFloatingActionButtonBehavior.OnVisibilityChangeListener() {
                     @Override
                     public void onStartHideFromScroll() {
@@ -420,7 +424,8 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
         buttonJumpTop.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(View v) {
-                Toast.makeText(getActivity(), getString(R.string.content_description_button_jump_top),
+                Toast.makeText(getActivity(),
+                        getString(R.string.content_description_button_jump_top),
                         Toast.LENGTH_SHORT).show();
                 return false;
             }
@@ -534,21 +539,22 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
 
         final float swipeRightDistance = getResources().getDisplayMetrics().widthPixels * 0.65f;
 
-        gestureDetector = new GestureDetectorCompat(getActivity(), new GestureDetector.SimpleOnGestureListener() {
-            @Override
-            public boolean onScroll(MotionEvent e1,
-                    MotionEvent e2,
-                    float distanceX,
-                    float distanceY) {
+        gestureDetector = new GestureDetectorCompat(getActivity(),
+                new GestureDetector.SimpleOnGestureListener() {
+                    @Override
+                    public boolean onScroll(MotionEvent e1,
+                            MotionEvent e2,
+                            float distanceX,
+                            float distanceY) {
 
-                if (e2.getX() - e1.getX() > swipeRightDistance) {
-                    mListener.onNavigationBackClick();
-                    return true;
-                }
+                        if (e2.getX() - e1.getX() > swipeRightDistance) {
+                            mListener.onNavigationBackClick();
+                            return true;
+                        }
 
-                return super.onScroll(e1, e2, distanceX, distanceY);
-            }
-        });
+                        return super.onScroll(e1, e2, distanceX, distanceY);
+                    }
+                });
 
         if (preferences.getBoolean(AppSettings.SWIPE_EXIT_COMMENTS, true)) {
             recyclerCommentList.addOnItemTouchListener(new RecyclerView.OnItemTouchListener() {
@@ -569,7 +575,8 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
             });
         }
 
-        adapterCommentList = new AdapterCommentList(getActivity(), mListener.getControllerComments(),
+        adapterCommentList = new AdapterCommentList(getActivity(),
+                mListener.getControllerComments(),
                 mListener.getControllerUser(),
                 mListener.getEventListenerBase(),
                 mListener.getEventListenerComment(),
@@ -883,7 +890,8 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
     @Override
     public void onAttach(Activity activity) {
         super.onAttach(activity);
-        this.preferences = PreferenceManager.getDefaultSharedPreferences(activity.getApplicationContext());
+        this.preferences = PreferenceManager
+                .getDefaultSharedPreferences(activity.getApplicationContext());
         try {
             mListener = (FragmentListenerBase) activity;
         }

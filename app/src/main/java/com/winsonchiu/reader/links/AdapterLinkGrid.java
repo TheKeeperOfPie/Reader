@@ -4,13 +4,9 @@
 
 package com.winsonchiu.reader.links;
 
-import android.animation.Animator;
 import android.app.Activity;
 import android.content.res.Resources;
 import android.graphics.Color;
-import android.graphics.ColorFilter;
-import android.graphics.PorterDuff;
-import android.graphics.PorterDuffColorFilter;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
@@ -22,7 +18,6 @@ import android.support.v7.widget.StaggeredGridLayoutManager;
 import android.text.TextUtils;
 import android.text.util.Linkify;
 import android.util.DisplayMetrics;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.View;
@@ -31,16 +26,15 @@ import android.widget.ImageView;
 import android.widget.RelativeLayout;
 
 import com.squareup.picasso.Callback;
-import com.squareup.picasso.Picasso;
-import com.winsonchiu.reader.utils.AnimationUtils;
 import com.winsonchiu.reader.AppSettings;
 import com.winsonchiu.reader.ControllerUser;
-import com.winsonchiu.reader.utils.DisallowListener;
 import com.winsonchiu.reader.R;
-import com.winsonchiu.reader.utils.RecyclerCallback;
+import com.winsonchiu.reader.data.imgur.Album;
 import com.winsonchiu.reader.data.reddit.Link;
 import com.winsonchiu.reader.data.reddit.Reddit;
-import com.winsonchiu.reader.data.imgur.Album;
+import com.winsonchiu.reader.utils.AnimationUtils;
+import com.winsonchiu.reader.utils.DisallowListener;
+import com.winsonchiu.reader.utils.RecyclerCallback;
 
 import java.util.ArrayList;
 
@@ -186,7 +180,9 @@ public class AdapterLinkGrid extends AdapterLink {
                 viewOverlay.setBackgroundColor(ColorUtils.setAlphaComponent(colorBackgroundDefault, ALPHA_OVERLAY));
             }
 
-            link.setBackgroundColor(colorBackgroundDefault);
+            if (link.getBackgroundColor() == 0) {
+                link.setBackgroundColor(colorBackgroundDefault);
+            }
             buttonComments.setColorFilter(colorFilterIconDefault);
             imagePlay.setColorFilter(colorFilterIconDefault);
             textThreadInfo.setTextColor(colorTextSecondaryDefault);
@@ -540,10 +536,8 @@ public class AdapterLinkGrid extends AdapterLink {
 
         @Override
         public void clearOverlay() {
-            if (viewOverlay.getBackground() instanceof ColorDrawable) {
-                itemView.setBackgroundColor(link.getBackgroundColor());
-                setTextColors(link.getBackgroundColor());
-            }
+            itemView.setBackgroundColor(link.getBackgroundColor());
+            setTextColors(link.getBackgroundColor());
             viewOverlay.setVisibility(View.GONE);
         }
     }

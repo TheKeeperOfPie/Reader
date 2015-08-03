@@ -17,7 +17,6 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
-import android.os.Looper;
 import android.preference.PreferenceManager;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
@@ -123,15 +122,15 @@ public class MainActivity extends YouTubeBaseActivity
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        Fabric.with(this, new Crashlytics());
-
         sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
-
-        Theme theme = Theme.fromString(sharedPreferences.getString(AppSettings.PREF_THEME_ACCENT, AppSettings.THEME_DEEP_PURPLE));
+        Theme theme = Theme.fromString(sharedPreferences.getString(AppSettings.PREF_THEME_PRIMARY, AppSettings.THEME_DEEP_PURPLE));
         if (theme != null) {
-            setTheme(theme.getStyle((sharedPreferences.getString(AppSettings.PREF_THEME_PRIMARY,
-                    AppSettings.THEME_DARK))));
+            String themeBackground = sharedPreferences.getString(AppSettings.PREF_THEME_BACKGROUND, AppSettings.THEME_DARK);
+            String themeAccent = sharedPreferences.getString(AppSettings.PREF_THEME_ACCENT, AppSettings.THEME_YELLOW);
+
+            setTheme(theme.getStyle(themeBackground, themeAccent));
         }
+        Fabric.with(this, new Crashlytics());
 
         super.onCreate(savedInstanceState);
 

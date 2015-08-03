@@ -5,15 +5,9 @@
 package com.winsonchiu.reader.data.reddit;
 
 import android.text.Html;
-import android.text.TextUtils;
-import android.util.Log;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.winsonchiu.reader.utils.UtilsJson;
-
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.LinkedList;

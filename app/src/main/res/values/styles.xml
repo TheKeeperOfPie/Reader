@@ -4,6 +4,13 @@
 
 <resources>
 
+    <style name="AppDefaultTheme" parent="@style/Theme.AppCompat.NoActionBar">
+        <item name="colorPrimary">@color/darkThemeBackground</item>
+        <item name="colorPrimaryDark">@color/darkThemeBackground</item>
+        <item name="colorAccent">@color/darkThemeBackground</item>
+        <item name="android:windowBackground">@color/darkThemeBackground</item>
+    </style>
+
     <style name="AppDarkTheme" parent="@style/Theme.AppCompat.NoActionBar">
 
         <item name="colorPrimary">@color/colorPrimary</item>
@@ -63,346 +70,328 @@
         <item name="android:contentDescription">toolbar_overflow_access</item>
     </style>
 
-    <style name="AppRedDarkTheme" parent="AppDarkTheme">
-        <item name="colorPrimary">@color/redThemeColorPrimary</item>
-        <item name="colorPrimaryDark">@color/redThemeColorPrimaryDark</item>
-        <item name="colorAccent">@color/redThemeColorAccent</item>
-    </style>
-
-    <style name="AppRedLightTheme" parent="AppLightTheme">
-        <item name="colorPrimary">@color/redThemeColorPrimary</item>
-        <item name="colorPrimaryDark">@color/redThemeColorPrimaryDark</item>
-        <item name="colorAccent">@color/redThemeColorAccent</item>
-    </style>
-
-    <style name="AppRedBlackTheme" parent="AppBlackTheme">
-        <item name="colorPrimary">@color/redThemeColorPrimary</item>
-        <item name="colorPrimaryDark">@color/redThemeColorPrimaryDark</item>
-        <item name="colorAccent">@color/redThemeColorAccent</item>
-    </style>
-
     <style name="AppPinkDarkTheme" parent="AppDarkTheme">
         <item name="colorPrimary">@color/pinkThemeColorPrimary</item>
         <item name="colorPrimaryDark">@color/pinkThemeColorPrimaryDark</item>
-        <item name="colorAccent">@color/pinkThemeColorAccent</item>
+        <!--<item name="colorAccent">@color/pinkThemeColorAccent</item>-->
     </style>
 
     <style name="AppPinkLightTheme" parent="AppLightTheme">
         <item name="colorPrimary">@color/pinkThemeColorPrimary</item>
         <item name="colorPrimaryDark">@color/pinkThemeColorPrimaryDark</item>
-        <item name="colorAccent">@color/pinkThemeColorAccent</item>
+        <!--<item name="colorAccent">@color/pinkThemeColorAccent</item>-->
     </style>
 
     <style name="AppPinkBlackTheme" parent="AppBlackTheme">
         <item name="colorPrimary">@color/pinkThemeColorPrimary</item>
         <item name="colorPrimaryDark">@color/pinkThemeColorPrimaryDark</item>
-        <item name="colorAccent">@color/pinkThemeColorAccent</item>
+        <!--<item name="colorAccent">@color/pinkThemeColorAccent</item>-->
     </style>
 
     <style name="AppPurpleDarkTheme" parent="AppDarkTheme">
         <item name="colorPrimary">@color/purpleThemeColorPrimary</item>
         <item name="colorPrimaryDark">@color/purpleThemeColorPrimaryDark</item>
-        <item name="colorAccent">@color/purpleThemeColorAccent</item>
+        <!--<item name="colorAccent">@color/purpleThemeColorAccent</item>-->
     </style>
 
     <style name="AppPurpleLightTheme" parent="AppLightTheme">
         <item name="colorPrimary">@color/purpleThemeColorPrimary</item>
         <item name="colorPrimaryDark">@color/purpleThemeColorPrimaryDark</item>
-        <item name="colorAccent">@color/purpleThemeColorAccent</item>
+        <!--<item name="colorAccent">@color/purpleThemeColorAccent</item>-->
     </style>
 
     <style name="AppPurpleBlackTheme" parent="AppBlackTheme">
         <item name="colorPrimary">@color/purpleThemeColorPrimary</item>
         <item name="colorPrimaryDark">@color/purpleThemeColorPrimaryDark</item>
-        <item name="colorAccent">@color/purpleThemeColorAccent</item>
+        <!--<item name="colorAccent">@color/purpleThemeColorAccent</item>-->
     </style>
 
     <style name="AppDeepPurpleDarkTheme" parent="AppDarkTheme">
         <item name="colorPrimary">@color/deepPurpleThemeColorPrimary</item>
         <item name="colorPrimaryDark">@color/deepPurpleThemeColorPrimaryDark</item>
-        <item name="colorAccent">@color/deepPurpleThemeColorAccent</item>
+        <!--<item name="colorAccent">@color/deepPurpleThemeColorAccent</item>-->
     </style>
 
     <style name="AppDeepPurpleLightTheme" parent="AppLightTheme">
         <item name="colorPrimary">@color/deepPurpleThemeColorPrimary</item>
         <item name="colorPrimaryDark">@color/deepPurpleThemeColorPrimaryDark</item>
-        <item name="colorAccent">@color/deepPurpleThemeColorAccent</item>
+        <!--<item name="colorAccent">@color/deepPurpleThemeColorAccent</item>-->
     </style>
 
     <style name="AppDeepPurpleBlackTheme" parent="AppBlackTheme">
         <item name="colorPrimary">@color/deepPurpleThemeColorPrimary</item>
         <item name="colorPrimaryDark">@color/deepPurpleThemeColorPrimaryDark</item>
-        <item name="colorAccent">@color/deepPurpleThemeColorAccent</item>
+        <!--<item name="colorAccent">@color/deepPurpleThemeColorAccent</item>-->
     </style>
 
     <style name="AppIndigoDarkTheme" parent="AppDarkTheme">
         <item name="colorPrimary">@color/indigoThemeColorPrimary</item>
         <item name="colorPrimaryDark">@color/indigoThemeColorPrimaryDark</item>
-        <item name="colorAccent">@color/indigoThemeColorAccent</item>
+        <!--<item name="colorAccent">@color/indigoThemeColorAccent</item>-->
     </style>
 
     <style name="AppIndigoLightTheme" parent="AppLightTheme">
         <item name="colorPrimary">@color/indigoThemeColorPrimary</item>
         <item name="colorPrimaryDark">@color/indigoThemeColorPrimaryDark</item>
-        <item name="colorAccent">@color/indigoThemeColorAccent</item>
+        <!--<item name="colorAccent">@color/indigoThemeColorAccent</item>-->
     </style>
 
     <style name="AppIndigoBlackTheme" parent="AppBlackTheme">
         <item name="colorPrimary">@color/indigoThemeColorPrimary</item>
         <item name="colorPrimaryDark">@color/indigoThemeColorPrimaryDark</item>
-        <item name="colorAccent">@color/indigoThemeColorAccent</item>
+        <!--<item name="colorAccent">@color/indigoThemeColorAccent</item>-->
     </style>
 
     <style name="AppBlueDarkTheme" parent="AppDarkTheme">
         <item name="colorPrimary">@color/blueThemeColorPrimary</item>
         <item name="colorPrimaryDark">@color/blueThemeColorPrimaryDark</item>
-        <item name="colorAccent">@color/blueThemeColorAccent</item>
+        <!--<item name="colorAccent">@color/blueThemeColorAccent</item>-->
     </style>
 
     <style name="AppBlueLightTheme" parent="AppLightTheme">
         <item name="colorPrimary">@color/blueThemeColorPrimary</item>
         <item name="colorPrimaryDark">@color/blueThemeColorPrimaryDark</item>
-        <item name="colorAccent">@color/blueThemeColorAccent</item>
+        <!--<item name="colorAccent">@color/blueThemeColorAccent</item>-->
     </style>
 
     <style name="AppBlueBlackTheme" parent="AppBlackTheme">
         <item name="colorPrimary">@color/blueThemeColorPrimary</item>
         <item name="colorPrimaryDark">@color/blueThemeColorPrimaryDark</item>
-        <item name="colorAccent">@color/blueThemeColorAccent</item>
+        <!--<item name="colorAccent">@color/blueThemeColorAccent</item>-->
     </style>
 
     <style name="AppLightBlueDarkTheme" parent="AppDarkTheme">
         <item name="colorPrimary">@color/lightBlueThemeColorPrimary</item>
         <item name="colorPrimaryDark">@color/lightBlueThemeColorPrimaryDark</item>
-        <item name="colorAccent">@color/lightBlueThemeColorAccent</item>
+        <!--<item name="colorAccent">@color/lightBlueThemeColorAccent</item>-->
     </style>
 
     <style name="AppLightBlueLightTheme" parent="AppLightTheme">
         <item name="colorPrimary">@color/lightBlueThemeColorPrimary</item>
         <item name="colorPrimaryDark">@color/lightBlueThemeColorPrimaryDark</item>
-        <item name="colorAccent">@color/lightBlueThemeColorAccent</item>
+        <!--<item name="colorAccent">@color/lightBlueThemeColorAccent</item>-->
     </style>
 
     <style name="AppLightBlueBlackTheme" parent="AppBlackTheme">
         <item name="colorPrimary">@color/lightBlueThemeColorPrimary</item>
         <item name="colorPrimaryDark">@color/lightBlueThemeColorPrimaryDark</item>
-        <item name="colorAccent">@color/lightBlueThemeColorAccent</item>
+        <!--<item name="colorAccent">@color/lightBlueThemeColorAccent</item>-->
     </style>
 
     <style name="AppCyanDarkTheme" parent="AppDarkTheme">
         <item name="colorPrimary">@color/cyanThemeColorPrimary</item>
         <item name="colorPrimaryDark">@color/cyanThemeColorPrimaryDark</item>
-        <item name="colorAccent">@color/cyanThemeColorAccent</item>
+        <!--<item name="colorAccent">@color/cyanThemeColorAccent</item>-->
     </style>
 
     <style name="AppCyanLightTheme" parent="AppLightTheme">
         <item name="colorPrimary">@color/cyanThemeColorPrimary</item>
         <item name="colorPrimaryDark">@color/cyanThemeColorPrimaryDark</item>
-        <item name="colorAccent">@color/cyanThemeColorAccent</item>
+        <!--<item name="colorAccent">@color/cyanThemeColorAccent</item>-->
     </style>
 
     <style name="AppCyanBlackTheme" parent="AppBlackTheme">
         <item name="colorPrimary">@color/cyanThemeColorPrimary</item>
         <item name="colorPrimaryDark">@color/cyanThemeColorPrimaryDark</item>
-        <item name="colorAccent">@color/cyanThemeColorAccent</item>
+        <!--<item name="colorAccent">@color/cyanThemeColorAccent</item>-->
     </style>
 
     <style name="AppTealDarkTheme" parent="AppDarkTheme">
         <item name="colorPrimary">@color/tealThemeColorPrimary</item>
         <item name="colorPrimaryDark">@color/tealThemeColorPrimaryDark</item>
-        <item name="colorAccent">@color/tealThemeColorAccent</item>
+        <!--<item name="colorAccent">@color/tealThemeColorAccent</item>-->
     </style>
 
     <style name="AppTealLightTheme" parent="AppLightTheme">
         <item name="colorPrimary">@color/tealThemeColorPrimary</item>
         <item name="colorPrimaryDark">@color/tealThemeColorPrimaryDark</item>
-        <item name="colorAccent">@color/tealThemeColorAccent</item>
+        <!--<item name="colorAccent">@color/tealThemeColorAccent</item>-->
     </style>
 
     <style name="AppTealBlackTheme" parent="AppBlackTheme">
         <item name="colorPrimary">@color/tealThemeColorPrimary</item>
         <item name="colorPrimaryDark">@color/tealThemeColorPrimaryDark</item>
-        <item name="colorAccent">@color/tealThemeColorAccent</item>
+        <!--<item name="colorAccent">@color/tealThemeColorAccent</item>-->
     </style>
 
     <style name="AppGreenDarkTheme" parent="AppDarkTheme">
         <item name="colorPrimary">@color/greenThemeColorPrimary</item>
         <item name="colorPrimaryDark">@color/greenThemeColorPrimaryDark</item>
-        <item name="colorAccent">@color/greenThemeColorAccent</item>
+        <!--<item name="colorAccent">@color/greenThemeColorAccent</item>-->
     </style>
 
     <style name="AppGreenLightTheme" parent="AppLightTheme">
         <item name="colorPrimary">@color/greenThemeColorPrimary</item>
         <item name="colorPrimaryDark">@color/greenThemeColorPrimaryDark</item>
-        <item name="colorAccent">@color/greenThemeColorAccent</item>
+        <!--<item name="colorAccent">@color/greenThemeColorAccent</item>-->
     </style>
 
     <style name="AppGreenBlackTheme" parent="AppBlackTheme">
         <item name="colorPrimary">@color/greenThemeColorPrimary</item>
         <item name="colorPrimaryDark">@color/greenThemeColorPrimaryDark</item>
-        <item name="colorAccent">@color/greenThemeColorAccent</item>
+        <!--<item name="colorAccent">@color/greenThemeColorAccent</item>-->
     </style>
 
     <style name="AppLightGreenDarkTheme" parent="AppDarkTheme">
         <item name="colorPrimary">@color/lightGreenThemeColorPrimary</item>
         <item name="colorPrimaryDark">@color/lightGreenThemeColorPrimaryDark</item>
-        <item name="colorAccent">@color/lightGreenThemeColorAccent</item>
+        <!--<item name="colorAccent">@color/lightGreenThemeColorAccent</item>-->
     </style>
 
     <style name="AppLightGreenLightTheme" parent="AppLightTheme">
         <item name="colorPrimary">@color/lightGreenThemeColorPrimary</item>
         <item name="colorPrimaryDark">@color/lightGreenThemeColorPrimaryDark</item>
-        <item name="colorAccent">@color/lightGreenThemeColorAccent</item>
+        <!--<item name="colorAccent">@color/lightGreenThemeColorAccent</item>-->
     </style>
 
     <style name="AppLightGreenBlackTheme" parent="AppBlackTheme">
         <item name="colorPrimary">@color/lightGreenThemeColorPrimary</item>
         <item name="colorPrimaryDark">@color/lightGreenThemeColorPrimaryDark</item>
-        <item name="colorAccent">@color/lightGreenThemeColorAccent</item>
+        <!--<item name="colorAccent">@color/lightGreenThemeColorAccent</item>-->
     </style>
 
     <style name="AppLimeDarkTheme" parent="AppDarkTheme">
         <item name="colorPrimary">@color/limeThemeColorPrimary</item>
         <item name="colorPrimaryDark">@color/limeThemeColorPrimaryDark</item>
-        <item name="colorAccent">@color/limeThemeColorAccent</item>
+        <!--<item name="colorAccent">@color/limeThemeColorAccent</item>-->
     </style>
 
     <style name="AppLimeLightTheme" parent="AppLightTheme">
         <item name="colorPrimary">@color/limeThemeColorPrimary</item>
         <item name="colorPrimaryDark">@color/limeThemeColorPrimaryDark</item>
-        <item name="colorAccent">@color/limeThemeColorAccent</item>
+        <!--<item name="colorAccent">@color/limeThemeColorAccent</item>-->
     </style>
 
     <style name="AppLimeBlackTheme" parent="AppBlackTheme">
         <item name="colorPrimary">@color/limeThemeColorPrimary</item>
         <item name="colorPrimaryDark">@color/limeThemeColorPrimaryDark</item>
-        <item name="colorAccent">@color/limeThemeColorAccent</item>
+        <!--<item name="colorAccent">@color/limeThemeColorAccent</item>-->
     </style>
 
     <style name="AppYellowDarkTheme" parent="AppDarkTheme">
         <item name="colorPrimary">@color/yellowThemeColorPrimary</item>
         <item name="colorPrimaryDark">@color/yellowThemeColorPrimaryDark</item>
-        <item name="colorAccent">@color/yellowThemeColorAccent</item>
+        <!--<item name="colorAccent">@color/yellowThemeColorAccent</item>-->
     </style>
 
     <style name="AppYellowLightTheme" parent="AppLightTheme">
         <item name="colorPrimary">@color/yellowThemeColorPrimary</item>
         <item name="colorPrimaryDark">@color/yellowThemeColorPrimaryDark</item>
-        <item name="colorAccent">@color/yellowThemeColorAccent</item>
+        <!--<item name="colorAccent">@color/yellowThemeColorAccent</item>-->
     </style>
 
     <style name="AppYellowBlackTheme" parent="AppBlackTheme">
         <item name="colorPrimary">@color/yellowThemeColorPrimary</item>
         <item name="colorPrimaryDark">@color/yellowThemeColorPrimaryDark</item>
-        <item name="colorAccent">@color/yellowThemeColorAccent</item>
+        <!--<item name="colorAccent">@color/yellowThemeColorAccent</item>-->
     </style>
 
     <style name="AppAmberDarkTheme" parent="AppDarkTheme">
         <item name="colorPrimary">@color/amberThemeColorPrimary</item>
         <item name="colorPrimaryDark">@color/amberThemeColorPrimaryDark</item>
-        <item name="colorAccent">@color/amberThemeColorAccent</item>
+        <!--<item name="colorAccent">@color/amberThemeColorAccent</item>-->
     </style>
 
     <style name="AppAmberLightTheme" parent="AppLightTheme">
         <item name="colorPrimary">@color/amberThemeColorPrimary</item>
         <item name="colorPrimaryDark">@color/amberThemeColorPrimaryDark</item>
-        <item name="colorAccent">@color/amberThemeColorAccent</item>
+        <!--<item name="colorAccent">@color/amberThemeColorAccent</item>-->
     </style>
 
     <style name="AppAmberBlackTheme" parent="AppBlackTheme">
         <item name="colorPrimary">@color/amberThemeColorPrimary</item>
         <item name="colorPrimaryDark">@color/amberThemeColorPrimaryDark</item>
-        <item name="colorAccent">@color/amberThemeColorAccent</item>
+        <!--<item name="colorAccent">@color/amberThemeColorAccent</item>-->
     </style>
 
     <style name="AppOrangeDarkTheme" parent="AppDarkTheme">
         <item name="colorPrimary">@color/orangeThemeColorPrimary</item>
         <item name="colorPrimaryDark">@color/orangeThemeColorPrimaryDark</item>
-        <item name="colorAccent">@color/orangeThemeColorAccent</item>
+        <!--<item name="colorAccent">@color/orangeThemeColorAccent</item>-->
     </style>
 
     <style name="AppOrangeLightTheme" parent="AppLightTheme">
         <item name="colorPrimary">@color/orangeThemeColorPrimary</item>
         <item name="colorPrimaryDark">@color/orangeThemeColorPrimaryDark</item>
-        <item name="colorAccent">@color/orangeThemeColorAccent</item>
+        <!--<item name="colorAccent">@color/orangeThemeColorAccent</item>-->
     </style>
 
     <style name="AppOrangeBlackTheme" parent="AppBlackTheme">
         <item name="colorPrimary">@color/orangeThemeColorPrimary</item>
         <item name="colorPrimaryDark">@color/orangeThemeColorPrimaryDark</item>
-        <item name="colorAccent">@color/orangeThemeColorAccent</item>
+        <!--<item name="colorAccent">@color/orangeThemeColorAccent</item>-->
     </style>
 
     <style name="AppDeepOrangeDarkTheme" parent="AppDarkTheme">
         <item name="colorPrimary">@color/deepOrangeThemeColorPrimary</item>
         <item name="colorPrimaryDark">@color/deepOrangeThemeColorPrimaryDark</item>
-        <item name="colorAccent">@color/deepOrangeThemeColorAccent</item>
+        <!--<item name="colorAccent">@color/deepOrangeThemeColorAccent</item>-->
     </style>
 
     <style name="AppDeepOrangeLightTheme" parent="AppLightTheme">
         <item name="colorPrimary">@color/deepOrangeThemeColorPrimary</item>
         <item name="colorPrimaryDark">@color/deepOrangeThemeColorPrimaryDark</item>
-        <item name="colorAccent">@color/deepOrangeThemeColorAccent</item>
+        <!--<item name="colorAccent">@color/deepOrangeThemeColorAccent</item>-->
     </style>
 
     <style name="AppDeepOrangeBlackTheme" parent="AppBlackTheme">
         <item name="colorPrimary">@color/deepOrangeThemeColorPrimary</item>
         <item name="colorPrimaryDark">@color/deepOrangeThemeColorPrimaryDark</item>
-        <item name="colorAccent">@color/deepOrangeThemeColorAccent</item>
+        <!--<item name="colorAccent">@color/deepOrangeThemeColorAccent</item>-->
     </style>
 
     <style name="AppBrownDarkTheme" parent="AppDarkTheme">
         <item name="colorPrimary">@color/brownThemeColorPrimary</item>
         <item name="colorPrimaryDark">@color/brownThemeColorPrimaryDark</item>
-        <item name="colorAccent">@color/brownThemeColorAccent</item>
+        <!--<item name="colorAccent">@color/brownThemeColorAccent</item>-->
     </style>
 
     <style name="AppBrownLightTheme" parent="AppLightTheme">
         <item name="colorPrimary">@color/brownThemeColorPrimary</item>
         <item name="colorPrimaryDark">@color/brownThemeColorPrimaryDark</item>
-        <item name="colorAccent">@color/brownThemeColorAccent</item>
+        <!--<item name="colorAccent">@color/brownThemeColorAccent</item>-->
     </style>
 
     <style name="AppBrownBlackTheme" parent="AppBlackTheme">
         <item name="colorPrimary">@color/brownThemeColorPrimary</item>
         <item name="colorPrimaryDark">@color/brownThemeColorPrimaryDark</item>
-        <item name="colorAccent">@color/brownThemeColorAccent</item>
+        <!--<item name="colorAccent">@color/brownThemeColorAccent</item>-->
     </style>
 
     <style name="AppGreyDarkTheme" parent="AppDarkTheme">
         <item name="colorPrimary">@color/greyThemeColorPrimary</item>
         <item name="colorPrimaryDark">@color/greyThemeColorPrimaryDark</item>
-        <item name="colorAccent">@color/greyThemeColorAccent</item>
+        <!--<item name="colorAccent">@color/greyThemeColorAccent</item>-->
     </style>
 
     <style name="AppGreyLightTheme" parent="AppLightTheme">
         <item name="colorPrimary">@color/greyThemeColorPrimary</item>
         <item name="colorPrimaryDark">@color/greyThemeColorPrimaryDark</item>
-        <item name="colorAccent">@color/greyThemeColorAccent</item>
+        <!--<item name="colorAccent">@color/greyThemeColorAccent</item>-->
     </style>
 
     <style name="AppGreyBlackTheme" parent="AppBlackTheme">
         <item name="colorPrimary">@color/greyThemeColorPrimary</item>
         <item name="colorPrimaryDark">@color/greyThemeColorPrimaryDark</item>
-        <item name="colorAccent">@color/greyThemeColorAccent</item>
+        <!--<item name="colorAccent">@color/greyThemeColorAccent</item>-->
     </style>
 
     <style name="AppBlueGreyDarkTheme" parent="AppDarkTheme">
         <item name="colorPrimary">@color/blueGreyThemeColorPrimary</item>
         <item name="colorPrimaryDark">@color/blueGreyThemeColorPrimaryDark</item>
-        <item name="colorAccent">@color/blueGreyThemeColorAccent</item>
+        <!--<item name="colorAccent">@color/blueGreyThemeColorAccent</item>-->
     </style>
 
     <style name="AppBlueGreyLightTheme" parent="AppLightTheme">
         <item name="colorPrimary">@color/blueGreyThemeColorPrimary</item>
         <item name="colorPrimaryDark">@color/blueGreyThemeColorPrimaryDark</item>
-        <item name="colorAccent">@color/blueGreyThemeColorAccent</item>
+        <!--<item name="colorAccent">@color/blueGreyThemeColorAccent</item>-->
     </style>
 
     <style name="AppBlueGreyBlackTheme" parent="AppBlackTheme">
         <item name="colorPrimary">@color/blueGreyThemeColorPrimary</item>
         <item name="colorPrimaryDark">@color/blueGreyThemeColorPrimaryDark</item>
-        <item name="colorAccent">@color/blueGreyThemeColorAccent</item>
+        <!--<item name="colorAccent">@color/blueGreyThemeColorAccent</item>-->
     </style>
 
 </resources>

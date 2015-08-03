@@ -16,14 +16,14 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import com.winsonchiu.reader.ControllerUser;
-import com.winsonchiu.reader.utils.DisallowListener;
 import com.winsonchiu.reader.R;
-import com.winsonchiu.reader.utils.RecyclerCallback;
 import com.winsonchiu.reader.comments.AdapterCommentList;
 import com.winsonchiu.reader.data.reddit.User;
 import com.winsonchiu.reader.links.AdapterLink;
 import com.winsonchiu.reader.links.AdapterLinkList;
 import com.winsonchiu.reader.links.ControllerLinksBase;
+import com.winsonchiu.reader.utils.DisallowListener;
+import com.winsonchiu.reader.utils.RecyclerCallback;
 
 import java.util.ArrayList;
 import java.util.List;

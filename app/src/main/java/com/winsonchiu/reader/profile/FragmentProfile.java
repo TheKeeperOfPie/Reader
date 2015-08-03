@@ -30,20 +30,20 @@ import android.widget.AdapterView;
 import android.widget.Spinner;
 
 import com.winsonchiu.reader.CustomApplication;
-import com.winsonchiu.reader.data.Page;
-import com.winsonchiu.reader.views.CustomItemTouchHelper;
-import com.winsonchiu.reader.utils.DisallowListener;
 import com.winsonchiu.reader.FragmentBase;
 import com.winsonchiu.reader.FragmentListenerBase;
 import com.winsonchiu.reader.MainActivity;
 import com.winsonchiu.reader.R;
-import com.winsonchiu.reader.utils.RecyclerCallback;
-import com.winsonchiu.reader.data.reddit.Sort;
-import com.winsonchiu.reader.data.reddit.Time;
 import com.winsonchiu.reader.comments.AdapterCommentList;
+import com.winsonchiu.reader.data.Page;
 import com.winsonchiu.reader.data.reddit.Comment;
 import com.winsonchiu.reader.data.reddit.Link;
 import com.winsonchiu.reader.data.reddit.Reddit;
+import com.winsonchiu.reader.data.reddit.Sort;
+import com.winsonchiu.reader.data.reddit.Time;
+import com.winsonchiu.reader.utils.DisallowListener;
+import com.winsonchiu.reader.utils.RecyclerCallback;
+import com.winsonchiu.reader.views.CustomItemTouchHelper;
 
 public class FragmentProfile extends FragmentBase implements Toolbar.OnMenuItemClickListener {
 

@@ -2,26 +2,37 @@
   ~ Copyright 2015 Winson Chiu
   -->
 
-<RelativeLayout
+<com.winsonchiu.reader.views.CustomRelativeLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/layout_coordinator"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
+    android:layout_height="match_parent" xmlns:app="http://schemas.android.com/apk/res-auto"
     tools:context="com.winsonchiu.reader.settings.FragmentPreferences.ActivitySettings"
     >
 
-    <include
-        layout="@layout/toolbar"
+    <android.support.design.widget.AppBarLayout
+        android:id="@+id/layout_app_bar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_alignParentTop="true"
-        />
+        >
+
+        <include
+            layout="@layout/toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignParentTop="true"
+            app:layout_scrollFlags="scroll|enterAlways"
+            />
+
+    </android.support.design.widget.AppBarLayout>
 
     <FrameLayout
         android:id="@id/frame_fragment"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_below="@+id/toolbar"
+        android:layout_below="@id/layout_app_bar"
         />
 
-</RelativeLayout>
+</com.winsonchiu.reader.views.CustomRelativeLayout>

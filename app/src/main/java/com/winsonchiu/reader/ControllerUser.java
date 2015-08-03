@@ -13,9 +13,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.winsonchiu.reader.data.reddit.Reddit;
 import com.winsonchiu.reader.data.reddit.User;
 
-import org.json.JSONException;
-import org.json.JSONObject;
-
 import java.io.IOException;
 
 /**

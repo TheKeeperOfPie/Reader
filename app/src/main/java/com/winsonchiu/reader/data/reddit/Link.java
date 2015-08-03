@@ -7,13 +7,8 @@ package com.winsonchiu.reader.data.reddit;
 import android.text.Html;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.github.rjeschke.txtmark.Processor;
 import com.winsonchiu.reader.data.imgur.Album;
 import com.winsonchiu.reader.utils.UtilsJson;
-
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
 
 import java.io.IOException;
 

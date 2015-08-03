@@ -10,6 +10,7 @@ import android.os.Bundle;
 import android.preference.ListPreference;
 import android.preference.Preference;
 import android.preference.PreferenceFragment;
+import android.support.v7.widget.Toolbar;
 
 /**
  * Created by TheKeeperOfPie on 6/30/2015.
@@ -21,6 +22,7 @@ public abstract class FragmentPreferences extends PreferenceFragment
 
     protected Activity activity;
     protected SharedPreferences preferences;
+    private Toolbar toolbar;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {

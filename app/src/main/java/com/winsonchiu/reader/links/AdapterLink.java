@@ -16,7 +16,6 @@ import android.content.res.TypedArray;
 import android.graphics.Bitmap;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
-import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.media.MediaPlayer;
 import android.net.Uri;
@@ -73,26 +72,26 @@ import com.android.volley.VolleyError;
 import com.google.android.youtube.player.YouTubeInitializationResult;
 import com.google.android.youtube.player.YouTubePlayer;
 import com.google.android.youtube.player.YouTubePlayerView;
-import com.winsonchiu.reader.data.reddit.Replyable;
-import com.winsonchiu.reader.history.Historian;
-import com.winsonchiu.reader.utils.AnimationUtils;
 import com.winsonchiu.reader.ApiKeys;
 import com.winsonchiu.reader.AppSettings;
 import com.winsonchiu.reader.ControllerUser;
-import com.winsonchiu.reader.utils.CustomColorFilter;
-import com.winsonchiu.reader.utils.DisallowListener;
 import com.winsonchiu.reader.MainActivity;
-import com.winsonchiu.reader.utils.OnTouchListenerDisallow;
 import com.winsonchiu.reader.R;
-import com.winsonchiu.reader.utils.RecyclerCallback;
-import com.winsonchiu.reader.views.WebViewFixed;
+import com.winsonchiu.reader.data.imgur.Album;
+import com.winsonchiu.reader.data.imgur.Image;
 import com.winsonchiu.reader.data.reddit.Comment;
 import com.winsonchiu.reader.data.reddit.Link;
 import com.winsonchiu.reader.data.reddit.Reddit;
+import com.winsonchiu.reader.data.reddit.Replyable;
 import com.winsonchiu.reader.data.reddit.Subreddit;
 import com.winsonchiu.reader.data.reddit.Thing;
-import com.winsonchiu.reader.data.imgur.Album;
-import com.winsonchiu.reader.data.imgur.Image;
+import com.winsonchiu.reader.history.Historian;
+import com.winsonchiu.reader.utils.AnimationUtils;
+import com.winsonchiu.reader.utils.CustomColorFilter;
+import com.winsonchiu.reader.utils.DisallowListener;
+import com.winsonchiu.reader.utils.OnTouchListenerDisallow;
+import com.winsonchiu.reader.utils.RecyclerCallback;
+import com.winsonchiu.reader.views.WebViewFixed;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -1671,10 +1670,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         }
 
         public int getBackgroundColor() {
-            if (itemView.getBackground() instanceof ColorDrawable) {
-                return ((ColorDrawable) itemView.getBackground()).getColor();
-            }
-            return 0x00000000;
+            return link.getBackgroundColor();
         }
 
         public void clearOverlay() {

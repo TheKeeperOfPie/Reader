@@ -50,21 +50,21 @@ import android.widget.ImageButton;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
-import com.winsonchiu.reader.utils.AnimationUtils;
 import com.winsonchiu.reader.AppSettings;
-import com.winsonchiu.reader.profile.ControllerProfile;
 import com.winsonchiu.reader.ControllerUser;
-import com.winsonchiu.reader.utils.DisallowListener;
 import com.winsonchiu.reader.MainActivity;
-import com.winsonchiu.reader.utils.OnTouchListenerDisallow;
 import com.winsonchiu.reader.R;
-import com.winsonchiu.reader.utils.RecyclerCallback;
 import com.winsonchiu.reader.data.reddit.Comment;
 import com.winsonchiu.reader.data.reddit.Link;
 import com.winsonchiu.reader.data.reddit.Reddit;
 import com.winsonchiu.reader.links.AdapterLink;
 import com.winsonchiu.reader.links.AdapterLinkGrid;
 import com.winsonchiu.reader.links.AdapterLinkList;
+import com.winsonchiu.reader.profile.ControllerProfile;
+import com.winsonchiu.reader.utils.AnimationUtils;
+import com.winsonchiu.reader.utils.DisallowListener;
+import com.winsonchiu.reader.utils.OnTouchListenerDisallow;
+import com.winsonchiu.reader.utils.RecyclerCallback;
 
 /**
  * Created by TheKeeperOfPie on 3/12/2015.

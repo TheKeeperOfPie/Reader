@@ -4,7 +4,6 @@
 
 package com.winsonchiu.reader.links;
 
-import android.graphics.PorterDuffColorFilter;
 import android.graphics.Rect;
 import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
@@ -23,14 +22,14 @@ import android.widget.RelativeLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
 
+import com.winsonchiu.reader.R;
+import com.winsonchiu.reader.data.imgur.Album;
+import com.winsonchiu.reader.data.imgur.Image;
+import com.winsonchiu.reader.data.reddit.Reddit;
 import com.winsonchiu.reader.utils.CustomColorFilter;
 import com.winsonchiu.reader.utils.DisallowListener;
 import com.winsonchiu.reader.utils.OnTouchListenerDisallow;
-import com.winsonchiu.reader.R;
 import com.winsonchiu.reader.views.WebViewFixed;
-import com.winsonchiu.reader.data.reddit.Reddit;
-import com.winsonchiu.reader.data.imgur.Album;
-import com.winsonchiu.reader.data.imgur.Image;
 
 import java.util.Stack;
 

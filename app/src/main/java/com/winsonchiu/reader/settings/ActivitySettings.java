@@ -14,7 +14,6 @@ import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.util.Log;
 import android.view.View;
 
 import com.winsonchiu.reader.AppSettings;
@@ -34,10 +33,12 @@ public class ActivitySettings extends AppCompatActivity {
 
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
 
-        Theme theme = Theme.fromString(sharedPreferences.getString(AppSettings.PREF_THEME_ACCENT, AppSettings.THEME_DEEP_PURPLE));
+        Theme theme = Theme.fromString(sharedPreferences.getString(AppSettings.PREF_THEME_PRIMARY, AppSettings.THEME_DEEP_PURPLE));
         if (theme != null) {
-            setTheme(theme.getStyle((sharedPreferences
-                    .getString(AppSettings.PREF_THEME_PRIMARY, AppSettings.THEME_DARK))));
+            String themeBackground = sharedPreferences.getString(AppSettings.PREF_THEME_BACKGROUND, AppSettings.THEME_DARK);
+            String themeAccent = sharedPreferences.getString(AppSettings.PREF_THEME_ACCENT, AppSettings.THEME_YELLOW);
+
+            setTheme(theme.getStyle(themeBackground, themeAccent));
         }
 
         super.onCreate(savedInstanceState);
