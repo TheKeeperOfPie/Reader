@@ -143,7 +143,7 @@ public class FragmentAuth extends FragmentBase implements Toolbar.OnMenuItemClic
                                                 System.currentTimeMillis() + jsonObject.getLong(
                                                         Reddit.QUERY_EXPIRES_IN) * Reddit.SEC_TO_MS)
                                         .apply();
-                                loadSubredditList();
+                                destroy(true);
                             }
                             catch (JSONException e1) {
                                 e1.printStackTrace();
@@ -199,28 +199,6 @@ public class FragmentAuth extends FragmentBase implements Toolbar.OnMenuItemClic
         for (int index = 0; index < menu.size(); index++) {
             menu.getItem(index).getIcon().setColorFilter(colorFilterIcon);
         }
-    }
-
-    private void loadSubredditList() {
-        // TODO: Support loading moderated, contributor, and multiple pages using after
-        reddit.loadGet(Reddit.OAUTH_URL + "/api/v1/me",
-                new Response.Listener<String>() {
-                    @Override
-                    public void onResponse(String response) {
-                        Log.d(TAG, "User onResponse: " + response);
-                        preferences.edit()
-                                .putString(AppSettings.ACCOUNT_JSON,
-                                        response)
-                                .apply();
-                        destroy(true);
-                    }
-                }, new Response.ErrorListener() {
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
-                        // TODO: Check user info error
-                        destroy(false);
-                    }
-                }, 0);
     }
 
     private void destroy(boolean success) {

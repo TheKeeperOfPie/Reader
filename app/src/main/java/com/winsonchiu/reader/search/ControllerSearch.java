@@ -139,11 +139,11 @@ public class ControllerSearch {
     public void reloadSubscriptionList() {
         String url;
 
-        if (TextUtils.isEmpty(controllerUser.getUser().getName())) {
-            url = Reddit.OAUTH_URL + "/subreddits/default?show=all&limit=100";
+        if (controllerUser.hasUser()) {
+            url = Reddit.OAUTH_URL + "/subreddits/mine/subscriber?show=all&limit=100";
         }
         else {
-            url = Reddit.OAUTH_URL + "/subreddits/mine/subscriber?show=all&limit=100";
+            url = Reddit.OAUTH_URL + "/subreddits/default?show=all&limit=100";
         }
 
         reddit.loadGet(url,

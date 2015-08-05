@@ -446,7 +446,7 @@ public class MainActivity extends YouTubeBaseActivity
 
             @Override
             public boolean isUserLoggedIn() {
-                return !TextUtils.isEmpty(sharedPreferences.getString(AppSettings.ACCOUNT_JSON, ""));
+                return getControllerUser().hasUser();
             }
 
             @Override
@@ -740,17 +740,8 @@ public class MainActivity extends YouTubeBaseActivity
                 break;
             case R.id.item_profile:
 
-                if (!TextUtils.isEmpty(
-                        sharedPreferences.getString(AppSettings.ACCOUNT_JSON, ""))) {
-                    try {
-                        getControllerProfile().setUser(User.fromJson(
-                                Reddit.getObjectMapper().readValue(sharedPreferences.getString(
-                                        AppSettings.ACCOUNT_JSON, ""),
-                                        JsonNode.class)));
-                    }
-                    catch (IOException e) {
-                        e.printStackTrace();
-                    }
+                if (getControllerUser().hasUser()) {
+                    getControllerProfile().setUser(getControllerUser().getUser());
                 }
 
                 fragmentTransaction.replace(R.id.frame_fragment,

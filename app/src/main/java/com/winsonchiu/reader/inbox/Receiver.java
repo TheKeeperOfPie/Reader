@@ -16,6 +16,7 @@ import android.content.res.TypedArray;
 import android.os.Build;
 import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.util.Log;
 
 import com.android.volley.Response;
@@ -87,7 +88,16 @@ public class Receiver extends BroadcastReceiver {
 
     }
 
-    public static void checkInbox(final Context context, @NonNull final ArrayList<String> readNames) {
+    public static void checkInbox(final Context context, @Nullable final ArrayList<String> names) {
+
+        final ArrayList<String> readNames;
+
+        if (names == null) {
+            readNames = new ArrayList<>();
+        }
+        else {
+            readNames = names;
+        }
 
         Reddit.getInstance(context).loadGet(Reddit.OAUTH_URL + "/message/unread",
                 new Response.Listener<String>() {

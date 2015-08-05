@@ -246,9 +246,7 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
                 else {
                     buttonSubscribe.setText(R.string.subscribe);
                 }
-                buttonSubscribe.setVisibility(TextUtils.isEmpty(
-                        preferences.getString(AppSettings.ACCOUNT_JSON,
-                                "")) ? View.GONE : View.VISIBLE);
+                buttonSubscribe.setVisibility(mListener.getControllerUser().hasUser() ? View.VISIBLE : View.GONE);
             }
 
             @Override

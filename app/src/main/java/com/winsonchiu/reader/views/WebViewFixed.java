@@ -67,7 +67,7 @@ public class WebViewFixed extends WebView {
             }
 
             if (getHeight() == 0) {
-                Toast.makeText(getContext(), "Error: height == 0", Toast.LENGTH_SHORT).show();
+//                Toast.makeText(getContext(), "Error: height == 0", Toast.LENGTH_SHORT).show();
                 reload();
             }
             else if (onFinishedListener != null) {
@@ -75,13 +75,13 @@ public class WebViewFixed extends WebView {
                 onFinishedListener = null;
             }
         }
-        else if (!TextUtils.isEmpty(data) && getProgress() == 100 && isShown() && isSingular) {
-            Toast.makeText(getContext(), "Data reload", Toast.LENGTH_SHORT).show();
+//        else if (!TextUtils.isEmpty(data) && getProgress() == 100 && isShown() && isSingular) {
+//            Toast.makeText(getContext(), "Data reload", Toast.LENGTH_SHORT).show();
 //            data = null;
 //            setVisibility(GONE);
 //            loadData(data, "text/html", "UTF-8");
 //            setVisibility(VISIBLE);
-        }
+//        }
     }
 
     @SuppressLint("DrawAllocation")

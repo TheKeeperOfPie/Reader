@@ -8,7 +8,10 @@ import android.app.Activity;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
 import android.text.TextUtils;
+import android.util.Log;
 
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.winsonchiu.reader.data.reddit.Reddit;
 import com.winsonchiu.reader.data.reddit.User;
@@ -20,14 +23,18 @@ import java.io.IOException;
  */
 public class ControllerUser {
 
+    private static final String TAG = ControllerUser.class.getCanonicalName();
     private SharedPreferences preferences;
     private User user;
+    private Reddit reddit;
 
     public ControllerUser(Activity activity) {
         super();
+        setActivity(activity);
         preferences = PreferenceManager.getDefaultSharedPreferences(activity);
         user = new User();
         reloadUser();
+        loadSubredditList();
     }
 
     public User getUser() {
@@ -35,7 +42,31 @@ public class ControllerUser {
     }
 
     public void setActivity(Activity activity) {
+        reddit = Reddit.getInstance(activity);
+    }
 
+    public void addUser(String accountToken, String refreshToken) {
+
+    }
+
+    private void loadSubredditList() {
+        // TODO: Support loading moderated, contributor, and multiple pages using after
+        reddit.loadGet(Reddit.OAUTH_URL + "/api/v1/me",
+                new Response.Listener<String>() {
+                    @Override
+                    public void onResponse(String response) {
+                        Log.d(TAG, "User onResponse: " + response);
+                        preferences.edit()
+                                .putString(AppSettings.ACCOUNT_JSON,
+                                        response)
+                                .apply();
+                    }
+                }, new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        // TODO: Check user info error
+                    }
+                }, 0);
     }
 
     public void reloadUser() {
@@ -48,5 +79,9 @@ public class ControllerUser {
                 e.printStackTrace();
             }
         }
+    }
+
+    public boolean hasUser() {
+        return user != null && !TextUtils.isEmpty(user.getName());
     }
 }
