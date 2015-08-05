@@ -436,7 +436,7 @@ public class MainActivity extends YouTubeBaseActivity
 
             @Override
             public WebViewFixed getNewWebView(WebViewFixed.OnFinishedListener onFinishedListener) {
-                return WebViewFixed.newInstance(getApplicationContext(), onFinishedListener);
+                return WebViewFixed.newInstance(getApplicationContext(), true, onFinishedListener);
             }
 
             @Override

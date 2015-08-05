@@ -5,6 +5,7 @@
 package com.winsonchiu.reader.data.reddit;
 
 import android.text.Html;
+import android.util.Log;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.winsonchiu.reader.data.imgur.Album;

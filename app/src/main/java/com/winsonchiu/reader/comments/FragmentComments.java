@@ -196,8 +196,6 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
 
         final View view = inflater.inflate(R.layout.fragment_comments, container, false);
 
-        view.setLayerType(View.LAYER_TYPE_HARDWARE, null);
-
         listener = new ControllerComments.Listener() {
             @Override
             public void setSort(Sort sort) {

@@ -11,6 +11,6 @@
     android:useLevel="true"
     >
 
-    <solid android:color="@color/colorAccent" />
+    <solid android:color="?attr/colorAccent" />
 
 </shape>

@@ -12,6 +12,7 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v7.widget.RecyclerView;
 import android.text.Html;
+import android.text.Spanned;
 import android.text.SpannedString;
 import android.text.TextUtils;
 import android.util.Base64;
@@ -807,6 +808,7 @@ public class Reddit {
     }
 
     public static CharSequence getFormattedHtml(String html) {
+
         if (TextUtils.isEmpty(html)) {
             return new SpannedString("");
         }
@@ -824,6 +826,8 @@ public class Reddit {
         while (end > start && Character.isWhitespace(sequence.charAt(end - 1))) {
             end--;
         }
+
+
         return sequence.subSequence(start, end);
     }
 

@@ -11,6 +11,7 @@ import android.text.Spanned;
 import android.text.style.BulletSpan;
 import android.text.style.LeadingMarginSpan;
 import android.text.style.StrikethroughSpan;
+import android.util.Log;
 
 import org.xml.sax.XMLReader;
 
@@ -48,6 +49,8 @@ public class TagHandlerReddit implements Html.TagHandler {
 
     @Override
     public void handleTag(boolean opening, String tag, Editable output, XMLReader xmlReader) {
+
+        Log.d(TAG, "handleTag: " + opening + ", " + tag + ", output: " + output);
 
         if (tag.equalsIgnoreCase("del") || tag.equalsIgnoreCase("strike") || tag.equals("s")) {
 

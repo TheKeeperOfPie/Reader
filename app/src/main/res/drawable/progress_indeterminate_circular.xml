@@ -20,8 +20,8 @@
         <gradient
             android:centerY="0.5"
             android:angle="45"
-            android:startColor="?attr/colorAccent"
-            android:endColor="?attr/colorAccent"
+            android:startColor="@color/colorAccent"
+            android:endColor="@color/colorAccent"
             />
 
     </shape>

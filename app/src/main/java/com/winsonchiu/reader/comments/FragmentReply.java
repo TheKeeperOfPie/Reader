@@ -19,6 +19,7 @@ import android.support.v4.view.ViewPager;
 import android.support.v4.widget.NestedScrollView;
 import android.support.v7.widget.Toolbar;
 import android.text.Html;
+import android.util.Log;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -127,7 +128,7 @@ public class FragmentReply extends FragmentBase implements Toolbar.OnMenuItemCli
         scrollText = (NestedScrollView) view.findViewById(R.id.scroll_text);
 
         textParent = (TextView) view.findViewById(R.id.text_parent);
-        textParent.setText(getArguments().getCharSequence(ARG_TEXT_PARENT));
+        textParent.setText(getArguments().getCharSequence(ARG_TEXT_PARENT, ""));
 
         editMarginDefault = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 8,
                 getResources().getDisplayMetrics());
@@ -210,7 +211,8 @@ public class FragmentReply extends FragmentBase implements Toolbar.OnMenuItemCli
                                 .getHeight());
                     }
                     else if (position == PAGE_PARENT) {
-                        translationY = (1f - positionOffset) * (toolbarActions.getHeight() + viewDivider
+                        translationY = (1f - positionOffset) * (toolbarActions
+                                .getHeight() + viewDivider
                                 .getHeight());
                     }
                     viewDivider.setTranslationY(translationY);

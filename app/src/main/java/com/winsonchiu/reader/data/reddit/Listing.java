@@ -92,7 +92,6 @@ public class Listing {
 
         for (JsonNode node : nodeData.get("children")) {
 
-
             switch (UtilsJson.getString(node.get("kind"))) {
 
                 // TODO: Add cases for all ID36s and fix adding Comments

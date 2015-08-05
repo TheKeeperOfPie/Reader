@@ -17,6 +17,7 @@ import android.view.ViewGroup;
 import android.webkit.WebView;
 import android.widget.FrameLayout;
 import android.widget.RelativeLayout;
+import android.widget.Toast;
 
 import com.winsonchiu.reader.data.reddit.Reddit;
 import com.winsonchiu.reader.utils.AnimationUtils;
@@ -30,9 +31,12 @@ public class WebViewFixed extends WebView {
     private OnFinishedListener onFinishedListener;
     private String data;
     private int maxHeight = Integer.MAX_VALUE;
+    private boolean isSingular;
+    private int lastInvalidateHeight = -1;
 
-    private WebViewFixed(Context context, OnFinishedListener onFinishedListener) {
+    private WebViewFixed(Context context, boolean isSingular, OnFinishedListener onFinishedListener) {
         super(context);
+        this.isSingular = isSingular;
         this.onFinishedListener = onFinishedListener;
     }
 
@@ -57,22 +61,26 @@ public class WebViewFixed extends WebView {
         Log.d(TAG, "height: " + getHeight());
 
         if (getContentHeight() > 0) {
+            if (lastInvalidateHeight < 0) {
+                lastInvalidateHeight = getContentHeight();
+                return;
+            }
+
             if (getHeight() == 0) {
-                 reload();
+                Toast.makeText(getContext(), "Error: height == 0", Toast.LENGTH_SHORT).show();
+                reload();
             }
             else if (onFinishedListener != null) {
                 onFinishedListener.onFinished();
                 onFinishedListener = null;
             }
         }
-        else if (!TextUtils.isEmpty(data) && getProgress() == 100) {
-            setVisibility(GONE);
-            reload();
-            Rect rect = new Rect();
-            getParent().getChildVisibleRect(this, rect, null);
-            getParent().invalidateChild(this, rect);
-            setVisibility(VISIBLE);
-            data = null;
+        else if (!TextUtils.isEmpty(data) && getProgress() == 100 && isShown() && isSingular) {
+            Toast.makeText(getContext(), "Data reload", Toast.LENGTH_SHORT).show();
+//            data = null;
+//            setVisibility(GONE);
+//            loadData(data, "text/html", "UTF-8");
+//            setVisibility(VISIBLE);
         }
     }
 
@@ -108,8 +116,18 @@ public class WebViewFixed extends WebView {
 
     @Override
     public void loadData(String data, String mimeType, String encoding) {
-        super.loadData(data, mimeType, encoding);
         this.data = data;
+        super.loadData(data, mimeType, encoding);
+    }
+
+    @Override
+    public void loadDataWithBaseURL(String baseUrl,
+            String data,
+            String mimeType,
+            String encoding,
+            String historyUrl) {
+        this.data = data;
+        super.loadDataWithBaseURL(baseUrl, data, mimeType, encoding, historyUrl);
     }
 
     public void lockHeight() {
@@ -120,8 +138,8 @@ public class WebViewFixed extends WebView {
         requestLayout();
     }
 
-    public static WebViewFixed newInstance(Context context, OnFinishedListener onFinishedListener) {
-        final WebViewFixed webViewFixed = new WebViewFixed(context.getApplicationContext(), onFinishedListener);
+    public static WebViewFixed newInstance(Context context, boolean isSingular, OnFinishedListener onFinishedListener) {
+        final WebViewFixed webViewFixed = new WebViewFixed(context, isSingular, onFinishedListener);
         Reddit.incrementCreate();
         webViewFixed.setMinimumHeight(
                 (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 48,

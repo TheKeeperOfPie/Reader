@@ -6,6 +6,7 @@ package com.winsonchiu.reader.links;
 
 import android.app.Activity;
 import android.content.SharedPreferences;
+import android.content.res.Configuration;
 import android.content.res.TypedArray;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
@@ -309,7 +310,10 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
     }
 
     private void resetAdapter(AdapterLink newAdapter) {
-        int[] currentPosition = new int[3];
+
+        int size = layoutManager instanceof StaggeredGridLayoutManager ? ((StaggeredGridLayoutManager) layoutManager).getSpanCount() : 1;
+
+        int[] currentPosition = new int[size];
         if (layoutManager instanceof LinearLayoutManager) {
             currentPosition[0] = ((LinearLayoutManager) layoutManager)
                     .findFirstVisibleItemPosition();
@@ -897,4 +901,25 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
                 .setListener(null)
                 .start();
     }
+
+//    @Override
+//    public void onConfigurationChanged(Configuration newConfig) {
+//        super.onConfigurationChanged(newConfig);
+//        adapterLink.setActivity(getActivity());
+//
+//        int size = layoutManager instanceof StaggeredGridLayoutManager ? ((StaggeredGridLayoutManager) layoutManager).getSpanCount() : 1;
+//
+//        int[] currentPosition = new int[size];
+//        if (layoutManager instanceof LinearLayoutManager) {
+//            currentPosition[0] = ((LinearLayoutManager) layoutManager)
+//                    .findFirstVisibleItemPosition();
+//        }
+//        else if (layoutManager instanceof StaggeredGridLayoutManager) {
+//            ((StaggeredGridLayoutManager) layoutManager).findFirstCompletelyVisibleItemPositions(
+//                    currentPosition);
+//        }
+//
+//        recyclerThreadList.setLayoutManager(adapterLink.getLayoutManager());
+//        recyclerThreadList.scrollToPosition(currentPosition[0]);
+//    }
 }

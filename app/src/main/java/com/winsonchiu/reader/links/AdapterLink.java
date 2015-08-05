@@ -100,6 +100,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
+import java.util.Random;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -617,7 +618,6 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
 
             buttonComments.setColorFilter(colorFilterIconDefault);
 
-            videoFull.setZOrderOnTop(true);
         }
 
         protected void initializeListeners() {
@@ -940,6 +940,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
 
             addToHistory();
             clearOverlay();
+            videoFull.stopPlayback();
 
             // TODO: Improve where this logic is handled in click timeline
             if (link.getNumComments() == 0) {
@@ -1144,15 +1145,9 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                             frameFull.addView(webFull, frameFull.getChildCount() - 1);
 
                         }
-                        webFull.setWebChromeClient(new WebChromeClient() {
-
-                            @Override
-                            public void onProgressChanged(WebView view, int newProgress) {
-                                super.onProgressChanged(view, newProgress);
-                            }
-                        });
                         webFull.onResume();
-                        webFull.loadData(Reddit.getImageHtml(link.getUrl()), "text/html", "UTF-8");
+                        webFull.loadData(Reddit.getImageHtml(link.getUrl()),
+                                "text/html", "UTF-8");
                     }
                 }, 50);
             }

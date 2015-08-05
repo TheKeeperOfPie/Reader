@@ -72,6 +72,7 @@ public class FragmentWeb extends FragmentBase implements Toolbar.OnMenuItemClick
             url = getArguments().getString(ARG_URL);
         }
         setHasOptionsMenu(true);
+        setRetainInstance(true);
     }
 
     private void setUpOptionsMenu() {
@@ -226,7 +227,15 @@ public class FragmentWeb extends FragmentBase implements Toolbar.OnMenuItemClick
         webView.getSettings().setSupportMultipleWindows(false);
         webView.setBackgroundColor(0xFFFFFFFF);
         webView.setScrollBarStyle(View.SCROLLBARS_INSIDE_OVERLAY);
-        webView.loadUrl(url);
+
+        Log.d(TAG, "savedInstanceState: " + savedInstanceState);
+
+        if (savedInstanceState == null) {
+            webView.loadUrl(url);
+        }
+        else {
+            webView.restoreState(savedInstanceState);
+        }
 
         toolbarActions = (Toolbar) view.findViewById(R.id.toolbar_actions);
         toolbarActions.inflateMenu(R.menu.menu_web_search);
@@ -271,6 +280,12 @@ public class FragmentWeb extends FragmentBase implements Toolbar.OnMenuItemClick
         super.onPause();
     }
 
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        webView.saveState(outState);
+    }
+
     public boolean navigateBack() {
         if (isFinished) {
             destroyWebView();
@@ -308,6 +323,11 @@ public class FragmentWeb extends FragmentBase implements Toolbar.OnMenuItemClick
     @Override
     public void onDestroy() {
         destroyWebView();
+        if (itemSearch != null) {
+            ((SearchView) itemSearch.getActionView()).setOnQueryTextListener(null);
+            MenuItemCompat.setOnActionExpandListener(itemSearch, null);
+        }
+
         toolbar.setOnClickListener(null);
         toolbar.setNavigationOnClickListener(null);
         toolbar.setOnMenuItemClickListener(null);

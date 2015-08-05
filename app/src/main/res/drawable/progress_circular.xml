@@ -10,6 +10,6 @@
     android:thickness="4dp"
     >
 
-    <solid android:color="?attr/colorAccent" />
+    <solid android:color="@color/colorAccent" />
 
 </shape>
