@@ -783,7 +783,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                     eventListener.downloadImage(link.getId(), link.getUrl());
                     break;
                 case R.id.item_web:
-                    eventListener.loadUrl(link.getUrl());
+                    eventListener.loadWebFragment(link.getUrl());
                     break;
                 case R.id.item_reply:
                     toggleReply();
@@ -1314,7 +1314,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                                 @Override
                                 public void onErrorResponse(VolleyError error) {
                                     progressImage.setVisibility(View.GONE);
-                                    Log.d(TAG, "loadGallery error: " + error.toString());
+                                    Log.d(TAG, "loadGallery error: " + error);
                                 }
                             }, 0);
         }
@@ -1721,6 +1721,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             void showReplyEditor(Replyable replyable);
             void markRead(Thing thing);
             void markNsfw(Link link);
+            void loadWebFragment(String url);
         }
 
     }

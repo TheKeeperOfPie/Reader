@@ -246,6 +246,10 @@ public class AdapterAlbum extends PagerAdapter {
                 textTitle.scrollTo(0, 0);
                 textTitleHidden.setText(image.getTitle());
             }
+            else {
+                textTitle.setText("");
+                textTitleHidden.setText("");
+            }
 
             if (!TextUtils.isEmpty(image.getDescription()) && !"null".equals(image.getDescription())) {
                 textDescription.setText(image.getDescription());

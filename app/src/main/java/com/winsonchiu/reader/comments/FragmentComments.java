@@ -19,7 +19,6 @@ import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.view.GestureDetectorCompat;
 import android.support.v4.view.ViewCompat;
-import android.support.v4.view.ViewPropertyAnimatorListener;
 import android.support.v4.view.animation.FastOutSlowInInterpolator;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.LinearLayoutManager;
@@ -55,6 +54,7 @@ import com.winsonchiu.reader.R;
 import com.winsonchiu.reader.YouTubePlayerStateListener;
 import com.winsonchiu.reader.data.reddit.Link;
 import com.winsonchiu.reader.data.reddit.Sort;
+import com.winsonchiu.reader.utils.AnimationUtils;
 import com.winsonchiu.reader.utils.DisallowListener;
 import com.winsonchiu.reader.utils.RecyclerCallback;
 import com.winsonchiu.reader.utils.ScrollAwareFloatingActionButtonBehavior;
@@ -946,115 +946,104 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
                 return true;
             }
 
-            linearLayoutManager.scrollToPositionWithOffset(0, 0);
-
-            adapterCommentList.setAnimationFinished(false);
-            adapterCommentList.collapseViewHolderLink();
-
-            viewBackground.setVisibility(View.VISIBLE);
-
-            recyclerCommentList.post(new Runnable() {
-                @Override
-                public void run() {
-
-                    final float screenWidth = getResources().getDisplayMetrics().widthPixels;
-                    final float screenHeight = getResources().getDisplayMetrics().heightPixels;
-                    ViewCompat.animate(buttonExpandActions)
-                            .scaleX(0f)
-                            .scaleY(0f)
-                            .alpha(0f)
-                            .setDuration(ScrollAwareFloatingActionButtonBehavior.DURATION)
-                            .setInterpolator(ScrollAwareFloatingActionButtonBehavior.INTERPOLATOR)
-                            .setListener(new ViewPropertyAnimatorListener() {
-                                @Override
-                                public void onAnimationStart(View view) {
-
-                                }
-
-                                @Override
-                                public void onAnimationEnd(View view) {
-
-                                }
-
-                                @Override
-                                public void onAnimationCancel(View view) {
-
-                                }
-                            })
-                            .start();
-
-
-                    final Animation animation = new Animation() {
-                        @Override
-                        public boolean willChangeBounds() {
-                            return true;
-                        }
-
-                        @Override
-                        protected void applyTransformation(float interpolatedTime,
-                                Transformation t) {
-                            super.applyTransformation(interpolatedTime, t);
-                            RelativeLayout.LayoutParams layoutParams = (RelativeLayout.LayoutParams) swipeRefreshCommentList
-                                    .getLayoutParams();
-                            layoutParams.topMargin = (int) (startY * interpolatedTime);
-                            layoutParams.setMarginStart((int) (startX * interpolatedTime));
-                            layoutParams.setMarginEnd(
-                                    (int) (startMarginEnd * interpolatedTime));
-                            swipeRefreshCommentList.setLayoutParams(layoutParams);
-                            layoutAppBar.setTranslationY(-toolbarHeight * interpolatedTime);
-
-                            RelativeLayout.LayoutParams layoutParamsBackground = (RelativeLayout.LayoutParams) viewBackground
-                                    .getLayoutParams();
-                            layoutParamsBackground.width = (int) (screenWidth - (startX + startMarginEnd) * interpolatedTime);
-                            layoutParamsBackground.height = (int) ((1f - interpolatedTime) * screenHeight);
-                            viewBackground.setLayoutParams(layoutParamsBackground);
-                            viewBackground.setTranslationX(startX * interpolatedTime);
-                            viewBackground.setTranslationY(startY * interpolatedTime);
-                        }
-                    };
-                    animation.setDuration(DURATION_EXIT);
-                    animation.setStartOffset(ScrollAwareFloatingActionButtonBehavior.DURATION);
-                    animation.setInterpolator(fastOutSlowInInterpolator);
-                    animation.setAnimationListener(new Animation.AnimationListener() {
-                        @Override
-                        public void onAnimationStart(Animation animation) {
-                            Fragment fragment = getFragmentManager()
-                                    .findFragmentByTag(fragmentParentTag);
-                            if (fragment != null) {
-                                getFragmentManager().beginTransaction().show(fragment)
-                                        .commit();
-                            }
-                        }
-
-                        @Override
-                        public void onAnimationEnd(Animation animation) {
-                            FragmentBase fragment = (FragmentBase) getFragmentManager()
-                                    .findFragmentByTag(fragmentParentTag);
-                            if (fragment != null) {
-                                fragment.onShown();
-                            }
-                            try {
-                                getFragmentManager().popBackStackImmediate();
-                            }
-                            catch (IllegalStateException e) {
-                                e.printStackTrace();
-                            }
-                        }
-
-                        @Override
-                        public void onAnimationRepeat(Animation animation) {
-
-                        }
-                    });
-
-                    recyclerCommentList.startAnimation(animation);
-
-                }
-            });
+            animateExit();
 
             return false;
         }
 
+    }
+
+    private void animateExit() {
+        linearLayoutManager.scrollToPositionWithOffset(0, 0);
+
+        adapterCommentList.setAnimationFinished(false);
+        adapterCommentList.collapseViewHolderLink();
+
+        viewBackground.setVisibility(View.VISIBLE);
+
+        recyclerCommentList.post(new Runnable() {
+            @Override
+            public void run() {
+
+                final float screenWidth = getResources().getDisplayMetrics().widthPixels;
+                final float screenHeight = getResources().getDisplayMetrics().heightPixels;
+
+                long duration = ScrollAwareFloatingActionButtonBehavior.DURATION;
+
+                AnimationUtils.shrinkAndFadeOut(buttonExpandActions, duration).start();
+
+                if (buttonJumpTop.isShown()) {
+                    AnimationUtils.shrinkAndFadeOut(buttonJumpTop, duration).start();
+                    AnimationUtils.shrinkAndFadeOut(buttonCommentNext, duration).start();
+                    AnimationUtils.shrinkAndFadeOut(buttonCommentPrevious, duration).start();
+                }
+
+                final Animation animation = new Animation() {
+                    @Override
+                    public boolean willChangeBounds() {
+                        return true;
+                    }
+
+                    @Override
+                    protected void applyTransformation(float interpolatedTime,
+                                                       Transformation t) {
+                        super.applyTransformation(interpolatedTime, t);
+                        RelativeLayout.LayoutParams layoutParams = (RelativeLayout.LayoutParams) swipeRefreshCommentList
+                                .getLayoutParams();
+                        layoutParams.topMargin = (int) (startY * interpolatedTime);
+                        layoutParams.setMarginStart((int) (startX * interpolatedTime));
+                        layoutParams.setMarginEnd(
+                                (int) (startMarginEnd * interpolatedTime));
+                        swipeRefreshCommentList.setLayoutParams(layoutParams);
+                        layoutAppBar.setTranslationY(-toolbarHeight * interpolatedTime);
+
+                        RelativeLayout.LayoutParams layoutParamsBackground = (RelativeLayout.LayoutParams) viewBackground
+                                .getLayoutParams();
+                        layoutParamsBackground.width = (int) (screenWidth - (startX + startMarginEnd) * interpolatedTime);
+                        layoutParamsBackground.height = (int) ((1f - interpolatedTime) * screenHeight);
+                        viewBackground.setLayoutParams(layoutParamsBackground);
+                        viewBackground.setTranslationX(startX * interpolatedTime);
+                        viewBackground.setTranslationY(startY * interpolatedTime);
+                    }
+                };
+                animation.setDuration(DURATION_EXIT);
+                animation.setStartOffset(ScrollAwareFloatingActionButtonBehavior.DURATION);
+                animation.setInterpolator(fastOutSlowInInterpolator);
+                animation.setAnimationListener(new Animation.AnimationListener() {
+                    @Override
+                    public void onAnimationStart(Animation animation) {
+                        Fragment fragment = getFragmentManager()
+                                .findFragmentByTag(fragmentParentTag);
+                        if (fragment != null) {
+                            getFragmentManager().beginTransaction().show(fragment)
+                                    .commit();
+                        }
+                    }
+
+                    @Override
+                    public void onAnimationEnd(Animation animation) {
+                        FragmentBase fragment = (FragmentBase) getFragmentManager()
+                                .findFragmentByTag(fragmentParentTag);
+                        if (fragment != null) {
+                            fragment.onShown();
+                        }
+                        try {
+                            getFragmentManager().popBackStackImmediate();
+                        }
+                        catch (IllegalStateException e) {
+                            e.printStackTrace();
+                        }
+                    }
+
+                    @Override
+                    public void onAnimationRepeat(Animation animation) {
+
+                    }
+                });
+
+                recyclerCommentList.startAnimation(animation);
+            }
+        });
     }
 
     @Override

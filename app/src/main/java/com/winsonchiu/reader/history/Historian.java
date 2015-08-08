@@ -214,7 +214,6 @@ public class Historian {
         try {
             String data = getInstance(context).toJsonArray(max).toString();
 
-            Log.d(TAG, "Save Historian: " + data);
             OutputStreamWriter outputStreamWriter = new OutputStreamWriter(context.openFileOutput(FILE_NAME, Context.MODE_PRIVATE));
             outputStreamWriter.write(data);
             outputStreamWriter.close();

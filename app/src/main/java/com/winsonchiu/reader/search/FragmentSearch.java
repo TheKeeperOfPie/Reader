@@ -133,7 +133,6 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
                 if (!isAdded() || mListener == null) {
                     return false;
                 }
-                Log.d(TAG, "newText: " + newText);
 
                 mListener.getControllerSearch()
                         .setQuery(newText);
@@ -235,6 +234,16 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
             @Override
             public void setSort(Sort sort) {
                 menu.findItem(sort.getMenuId()).setChecked(true);
+            }
+
+            @Override
+            public void scrollToLinks(int position) {
+                layoutManagerLinks.scrollToPositionWithOffset(0, 0);
+            }
+
+            @Override
+            public void scrollToLinksSubreddit(int position) {
+                layoutManagerLinksSubreddit.scrollToPositionWithOffset(0, 0);
             }
         };
 

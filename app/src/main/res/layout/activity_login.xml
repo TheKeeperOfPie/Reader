@@ -1,13 +1,10 @@
-<!--
-  ~ Copyright 2015 Winson Chiu
-  -->
-
 <RelativeLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent" xmlns:app="http://schemas.android.com/apk/res-auto"
-    tools:context="com.winsonchiu.reader.FragmentWeb"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    tools:context="com.winsonchiu.reader.auth.ActivityLogin"
     >
 
     <include
@@ -20,29 +17,18 @@
 
     <ProgressBar
         style="?android:attr/progressBarStyleHorizontal"
-        android:id="@+id/progress_web"
+        android:id="@+id/progress_auth"
         android:layout_width="match_parent"
         android:layout_height="6dp"
-        android:layout_below="@id/toolbar"
+        android:layout_below="@+id/toolbar"
         android:progressDrawable="@drawable/progress_horizontal"
         />
 
     <WebView
-        android:id="@+id/web"
+        android:id="@+id/web_auth"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_below="@id/progress_web"
-        android:layout_above="@+id/toolbar_actions"
-        />
-
-    <android.support.v7.widget.Toolbar
-        android:id="@+id/toolbar_actions"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
-        android:gravity="end"
-        android:visibility="gone"
-        android:background="@color/darkThemeBackground"
+        android:layout_below="@id/progress_auth"
         />
 
 </RelativeLayout>

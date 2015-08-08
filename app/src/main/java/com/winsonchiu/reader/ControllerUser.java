@@ -4,6 +4,8 @@
 
 package com.winsonchiu.reader;
 
+import android.accounts.Account;
+import android.accounts.AccountManager;
 import android.app.Activity;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
@@ -27,14 +29,14 @@ public class ControllerUser {
     private SharedPreferences preferences;
     private User user;
     private Reddit reddit;
+    private AccountManager accountManager;
+    private Account account;
 
     public ControllerUser(Activity activity) {
         super();
         setActivity(activity);
         preferences = PreferenceManager.getDefaultSharedPreferences(activity);
         user = new User();
-        reloadUser();
-        loadSubredditList();
     }
 
     public User getUser() {
@@ -43,23 +45,24 @@ public class ControllerUser {
 
     public void setActivity(Activity activity) {
         reddit = Reddit.getInstance(activity);
+        accountManager = AccountManager.get(activity.getApplicationContext());
     }
 
-    public void addUser(String accountToken, String refreshToken) {
-
+    public void addUser(String tokenAccess, String tokenRefresh, long timeExpire) {
     }
 
-    private void loadSubredditList() {
-        // TODO: Support loading moderated, contributor, and multiple pages using after
+    public void reloadUser() {
         reddit.loadGet(Reddit.OAUTH_URL + "/api/v1/me",
                 new Response.Listener<String>() {
                     @Override
                     public void onResponse(String response) {
                         Log.d(TAG, "User onResponse: " + response);
-                        preferences.edit()
-                                .putString(AppSettings.ACCOUNT_JSON,
-                                        response)
-                                .apply();
+                        try {
+                            user = User.fromJson(Reddit.getObjectMapper().readValue(response, JsonNode.class));
+                        }
+                        catch (IOException e) {
+                            e.printStackTrace();
+                        }
                     }
                 }, new Response.ErrorListener() {
                     @Override
@@ -69,19 +72,30 @@ public class ControllerUser {
                 }, 0);
     }
 
-    public void reloadUser() {
-        if (!TextUtils.isEmpty(preferences.getString(AppSettings.ACCOUNT_JSON, ""))) {
-            try {
-                this.user = User.fromJson(Reddit.getObjectMapper().readValue(
-                        preferences.getString(AppSettings.ACCOUNT_JSON, ""), JsonNode.class));
-            }
-            catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
+    public boolean hasUser() {
+        return account != null;//user != null && !TextUtils.isEmpty(user.getName());
     }
 
-    public boolean hasUser() {
-        return user != null && !TextUtils.isEmpty(user.getName());
+    public void clearAccount() {
+        account = null;
+        user = new User();
+    }
+
+    public void setAccount(Account accountUser) {
+        boolean accountFound = false;
+        Account[] accounts = accountManager.getAccountsByType(Reddit.ACCOUNT_TYPE);
+        for (Account account : accounts) {
+            if (account.name.equals(accountUser.name)) {
+                this.account = account;
+                accountFound = true;
+                reloadUser();
+                break;
+            }
+        }
+
+        if (!accountFound) {
+            account = null;
+            user = new User();
+        }
     }
 }

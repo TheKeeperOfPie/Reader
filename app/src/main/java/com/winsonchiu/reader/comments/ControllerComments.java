@@ -171,7 +171,7 @@ public class ControllerComments {
                 }, new ErrorListener() {
                     @Override
                     public void onErrorResponse(VolleyError error) {
-                        Log.d(TAG, "reloadAllComments onErrorResponse: " + error.toString());
+                        Log.d(TAG, "reloadAllComments onErrorResponse: " + error);
                         setRefreshing(false);
                     }
                 }, 0);
@@ -205,7 +205,7 @@ public class ControllerComments {
                 }, new ErrorListener() {
                     @Override
                     public void onErrorResponse(VolleyError error) {
-                        Log.d(TAG, "onErrorResponse: " + error.toString());
+                        Log.d(TAG, "onErrorResponse: " + error);
                         setRefreshing(false);
                     }
                 }, 0);
@@ -346,7 +346,7 @@ public class ControllerComments {
                     @Override
                     public void onErrorResponse(VolleyError error) {
                         setRefreshing(false);
-                        Log.d(TAG, "error" + error.toString());
+                        Log.d(TAG, "error" + error);
                     }
                 }, params, 0);
     }

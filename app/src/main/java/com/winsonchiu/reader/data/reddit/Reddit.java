@@ -4,9 +4,18 @@
 
 package com.winsonchiu.reader.data.reddit;
 
+import android.accounts.Account;
+import android.accounts.AccountManager;
+import android.accounts.AccountManagerCallback;
+import android.accounts.AccountManagerFuture;
+import android.accounts.AuthenticatorException;
+import android.accounts.OperationCanceledException;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.graphics.drawable.Drawable;
+import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -35,6 +44,7 @@ import com.winsonchiu.reader.ApiKeys;
 import com.winsonchiu.reader.AppSettings;
 import com.winsonchiu.reader.BuildConfig;
 import com.winsonchiu.reader.R;
+import com.winsonchiu.reader.auth.ActivityLogin;
 import com.winsonchiu.reader.comments.AdapterCommentList;
 import com.winsonchiu.reader.links.AdapterLink;
 import com.winsonchiu.reader.utils.OkHttpStack;
@@ -42,6 +52,7 @@ import com.winsonchiu.reader.utils.OkHttpStack;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -89,14 +100,6 @@ public class Reddit {
         Log.d(TAG, "onRecycled: " + recycled.incrementAndGet());
     }
 
-    public void markRead(String name) {
-
-        Map<String, String> params = new HashMap<>();
-        params.put("id", name);
-
-        loadPost(Reddit.OAUTH_URL + "/api/read_message", null, null, params, 0);
-    }
-
     // Constant values to represent Thing states
     public enum Distinguished {
         NOT_DISTINGUISHED, MODERATOR, ADMIN, SPECIAL
@@ -112,6 +115,8 @@ public class Reddit {
     public static final String USER_AGENT = "User-Agent";
     public static final String CUSTOM_USER_AGENT = "android:com.winsonchiu.reader:" + BuildConfig.VERSION_NAME + " (by /u/TheKeeperOfPie)";
     public static final String REDIRECT_URI = "https://com.winsonchiu.reader";
+    public static final String ACCOUNT_TYPE = "com.winsonchiu.reader.ACCOUNT_REDDIT";
+    public static final String AUTH_TOKEN_FULL_ACCESS = "com.winsonchiu.reader.AUTH_FULL_ACCESS";
 
     public static final String GFYCAT_PREFIX = "gfycat.com/";
     public static final String GFYCAT_URL = "http://gfycat.com/cajax/get/";
@@ -172,6 +177,10 @@ public class Reddit {
     private static Reddit reddit;
     private RequestQueue requestQueue;
     private SharedPreferences preferences;
+    private AccountManager accountManager;
+    private String tokenAuth;
+    private Account account;
+    private long timeExpire;
 
     private static Picasso picasso;
     private static ObjectMapper objectMapper;
@@ -193,12 +202,6 @@ public class Reddit {
         return objectMapper;
     }
 
-    private Reddit(Context context) {
-        requestQueue = Volley.newRequestQueue(context.getApplicationContext(), new OkHttpStack());
-        preferences = PreferenceManager.getDefaultSharedPreferences(
-                context.getApplicationContext());
-    }
-
     public static Reddit getInstance(Context context) {
         if (reddit == null) {
             reddit = new Reddit(context);
@@ -206,23 +209,133 @@ public class Reddit {
         return reddit;
     }
 
+    private Reddit(Context context) {
+        requestQueue = Volley.newRequestQueue(context.getApplicationContext(), new OkHttpStack());
+        preferences = PreferenceManager.getDefaultSharedPreferences(
+                context.getApplicationContext());
+        accountManager = AccountManager.get(context.getApplicationContext());
+    }
+
+    private Request<String> fetchApplicationWideToken(final RedditErrorListener listener) {
+
+        final HashMap<String, String> params = new HashMap<>(2);
+
+        if ("".equals(preferences.getString(AppSettings.DEVICE_ID, ""))) {
+            preferences.edit()
+                    .putString(AppSettings.DEVICE_ID, UUID.randomUUID()
+                            .toString())
+                    .apply();
+        }
+
+        params.put(QUERY_GRANT_TYPE, INSTALLED_CLIENT_GRANT);
+        params.put(QUERY_DEVICE_ID, preferences.getString(AppSettings.DEVICE_ID, UUID.randomUUID()
+                        .toString()));
+
+        return loadPostDefault(ACCESS_URL, new Listener<String>() {
+            @Override
+            public void onResponse(String response) {
+
+                try {
+                    JSONObject jsonObject = new JSONObject(response);
+                    tokenAuth = jsonObject.getString(QUERY_ACCESS_TOKEN);
+                    timeExpire = System.currentTimeMillis() + jsonObject.getLong(
+                                            QUERY_EXPIRES_IN) * SEC_TO_MS;
+
+                    if (listener != null) {
+                        listener.onErrorHandled();
+                    }
+                }
+                catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }
+        }, new ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+
+            }
+        }, params);
+    }
+
+    public void clearAccount() {
+        account = null;
+        fetchToken(null);
+    }
+
+    public void setAccount(Account accountUser) {
+        boolean accountFound = false;
+        Account[] accounts = accountManager.getAccountsByType(Reddit.ACCOUNT_TYPE);
+        for (Account account : accounts) {
+            if (account.name.equals(accountUser.name)) {
+                this.account = account;
+                accountFound = true;
+                fetchToken(null);
+                break;
+            }
+        }
+
+        if (!accountFound) {
+            account = null;
+            fetchToken(null);
+        }
+    }
+
     public RequestQueue getRequestQueue() {
         return requestQueue;
     }
 
     public boolean needsToken() {
-        return preferences.getLong(AppSettings.EXPIRE_TIME,
-                Long.MAX_VALUE) < System.currentTimeMillis() || "".equals(preferences.getString(
-                AppSettings.ACCESS_TOKEN, ""));
 
+        Log.d(TAG, "needsToken: " + (System.currentTimeMillis() > timeExpire || TextUtils.isEmpty(tokenAuth)));
+
+        return System.currentTimeMillis() > timeExpire || TextUtils.isEmpty(tokenAuth);
     }
 
-    public String getUserAuthUrl(String state) {
+    public static String getUserAuthUrl(String state) {
 
         return USER_AUTHENTICATION_URL + QUERY_CLIENT_ID + "=" + ApiKeys.REDDIT_CLIENT_ID + "&response_type=code&state=" + state + "&" + QUERY_REDIRECT_URI + "=" + REDIRECT_URI + "&" + QUERY_DURATION + "=permanent&scope=" + AUTH_SCOPES;
     }
 
-    public Request<String> fetchToken(final RedditErrorListener listener) {
+    public void fetchToken(final RedditErrorListener listener) {
+
+        if (account == null) {
+            fetchApplicationWideToken(listener);
+            return;
+        }
+
+        accountManager.invalidateAuthToken(Reddit.ACCOUNT_TYPE, tokenAuth);
+        final AccountManagerFuture<Bundle> future = accountManager.getAuthToken(account, Reddit.AUTH_TOKEN_FULL_ACCESS, null, true, null, null);
+
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    Bundle bundle = future.getResult();
+                    tokenAuth = bundle.getString(AccountManager.KEY_AUTHTOKEN);
+                    Log.d(TAG, "getAuthToken: " + tokenAuth);
+
+                    try {
+                        timeExpire = Long.parseLong(accountManager.getUserData(account, ActivityLogin.KEY_TIME_EXPIRATION));
+                    }
+                    catch (NumberFormatException e) {
+                        e.printStackTrace();
+                    }
+
+                    Log.d(TAG, "time: " + System.currentTimeMillis());
+                    Log.d(TAG, "timeExpire: " + timeExpire);
+
+                    if (listener != null) {
+                        listener.onErrorHandled();
+                    }
+                }
+                catch (OperationCanceledException | IOException | AuthenticatorException e) {
+                    e.printStackTrace();
+                }
+            }
+        }).start();
+    }
+
+    public Request<String> fetchToken(final RedditErrorListener listener, String blank) {
 
         final HashMap<String, String> params = new HashMap<>(2);
 
@@ -418,7 +531,12 @@ public class Reddit {
             fetchToken(new RedditErrorListener() {
                 @Override
                 public void onErrorHandled() {
-                    loadGet(url, listenerFinal, errorListener, iteration + 1);
+                    new Handler(Looper.getMainLooper()).post(new Runnable() {
+                        @Override
+                        public void run() {
+                            loadGet(url, listenerFinal, errorListener, iteration + 1);
+                        }
+                    });
                 }
             });
             return null;
@@ -626,6 +744,14 @@ public class Reddit {
         reddit.loadPost(Reddit.OAUTH_URL + "/api/unmarknsfw", null, errorListener, params, 0);
     }
 
+    public void markRead(String name) {
+
+        Map<String, String> params = new HashMap<>();
+        params.put("id", name);
+
+        loadPost(Reddit.OAUTH_URL + "/api/read_message", null, null, params, 0);
+    }
+
     public static String parseUrlId(String url, String prefix, String suffix) {
         int startIndex = url.indexOf(prefix) + prefix.length();
         int slashIndex = url.substring(startIndex)
@@ -728,7 +854,7 @@ public class Reddit {
     }
 
     private String getAuthorizationHeader() {
-        return Reddit.BEARER + preferences.getString(AppSettings.ACCESS_TOKEN, "");
+        return Reddit.BEARER + tokenAuth;//preferences.getString(AppSettings.ACCESS_TOKEN, "");
     }
 
     public static boolean checkIsImage(String url) {

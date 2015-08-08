@@ -56,7 +56,7 @@
     <string name="profile">Profile</string>
     <string name="inbox">Inbox</string>
     <string name="settings">Settings</string>
-    <string name="add_account">Add Account +</string>
+    <string name="add_account">Add Account</string>
     <string name="login">Login</string>
     <string name="subreddit">Subreddit</string>
     <string name="link">Link</string>
@@ -248,4 +248,8 @@
     <string name="from">from</string>
     <string name="mark_read">Mark read</string>
     <string name="error_memory_recreation">Memory was cleared; now recreating data</string>
+    <string name="title_activity_activity_login">ActivityLogin</string>
+    <string name="auth_full_access">Full Access</string>
+    <string name="reddit">Reddit</string>
+    <string name="error_account">Error loading account</string>
 </resources>

@@ -151,7 +151,7 @@ public class ControllerSearch {
                     @Override
                     public void onResponse(String response) {
                         try {
-                            Log.d(TAG, "response: " + response);
+                            Log.d(TAG, "reloadSubscriptionList response: " + response);
                             Listing listing = Listing.fromJson(Reddit.getObjectMapper().readValue(
                                     response, JsonNode.class));
                             subredditsSubscribed = listing;
@@ -569,6 +569,7 @@ public class ControllerSearch {
                                     response, JsonNode.class));
                                 for (Listener listener : listeners) {
                                     listener.getAdapterLinks().notifyDataSetChanged();
+                                    listener.scrollToLinks(0);
                                 }
                                 setLoadingLinks(false);
                             }
@@ -618,6 +619,7 @@ public class ControllerSearch {
                                     response, JsonNode.class));
                                 for (Listener listener : listeners) {
                                     listener.getAdapterLinksSubreddit().notifyDataSetChanged();
+                                    listener.scrollToLinksSubreddit(0);
                                 }
                                 setLoadingLinksSubreddit(false);
                             }
@@ -856,7 +858,6 @@ public class ControllerSearch {
     public void setControllers(ControllerLinks controllerLinks, ControllerUser controllerUser) {
         this.controllerLinks = controllerLinks;
         this.controllerUser = controllerUser;
-        reloadSubscriptionList();
     }
 
     public void addSubreddit(Subreddit subreddit) {
@@ -943,6 +944,8 @@ public class ControllerSearch {
         AdapterLink getAdapterLinksSubreddit();
         void setToolbarTitle(CharSequence title);
         void setSort(Sort sort);
+        void scrollToLinks(int position);
+        void scrollToLinksSubreddit(int position);
     }
 
 }

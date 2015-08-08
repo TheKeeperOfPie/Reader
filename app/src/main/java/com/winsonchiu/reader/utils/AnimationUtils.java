@@ -8,7 +8,12 @@ import android.animation.ValueAnimator;
 import android.content.Context;
 import android.graphics.Color;
 import android.graphics.Point;
+import android.support.design.widget.FloatingActionButton;
 import android.support.v4.graphics.ColorUtils;
+import android.support.v4.view.ViewCompat;
+import android.support.v4.view.ViewPropertyAnimatorCompat;
+import android.support.v4.view.ViewPropertyAnimatorListener;
+import android.support.v4.view.animation.FastOutSlowInInterpolator;
 import android.util.Log;
 import android.util.TypedValue;
 import android.view.Display;
@@ -205,6 +210,31 @@ public class AnimationUtils {
         int heightMeasureSpec = View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED);
         view.measure(widthMeasureSpec, heightMeasureSpec);
         return view.getMeasuredHeight();
+    }
+
+    public static ViewPropertyAnimatorCompat shrinkAndFadeOut(View view, long duration) {
+        return ViewCompat.animate(view)
+                .scaleX(0f)
+                .scaleY(0f)
+                .alpha(0f)
+                .setDuration(duration)
+                .setInterpolator(new FastOutSlowInInterpolator())
+                .setListener(new ViewPropertyAnimatorListener() {
+                    @Override
+                    public void onAnimationStart(View view) {
+
+                    }
+
+                    @Override
+                    public void onAnimationEnd(View view) {
+
+                    }
+
+                    @Override
+                    public void onAnimationCancel(View view) {
+
+                    }
+                });
     }
 
     public interface OnAnimationEndListener {
