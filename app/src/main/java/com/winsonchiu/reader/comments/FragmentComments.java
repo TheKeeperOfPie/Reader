@@ -575,7 +575,6 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
 
         adapterCommentList = new AdapterCommentList(getActivity(),
                 mListener.getControllerComments(),
-                mListener.getControllerUser(),
                 mListener.getEventListenerBase(),
                 mListener.getEventListenerComment(),
                 disallowListener,

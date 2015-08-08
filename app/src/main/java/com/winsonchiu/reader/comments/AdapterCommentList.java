@@ -81,7 +81,6 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
     private static final int MAX_ALPHA = 180;
 
     private final int colorLink;
-    private ControllerUser controllerUser;
     private AdapterLink.ViewHolderBase.EventListener eventListenerBase;
     private ViewHolderComment.EventListener eventListenerComment;
     private DisallowListener disallowListener;
@@ -96,7 +95,6 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
 
     public AdapterCommentList(Activity activity,
             ControllerComments controllerComments,
-            ControllerUser controllerUser,
             AdapterLink.ViewHolderBase.EventListener eventListenerBase,
             ViewHolderComment.EventListener eventListenerComment,
             DisallowListener disallowListener,
@@ -104,7 +102,6 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
             FragmentComments.YouTubeListener youTubeListener,
             boolean isGrid, int colorLink) {
         this.controllerComments = controllerComments;
-        this.controllerUser = controllerUser;
         this.eventListenerBase = eventListenerBase;
         this.eventListenerComment = eventListenerComment;
         this.disallowListener = disallowListener;
@@ -161,9 +158,8 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
 
                     @Override
                     public void onBind(Link link,
-                            boolean showSubbreddit,
-                            String userName) {
-                        super.onBind(link, showSubbreddit, userName);
+                            boolean showSubbreddit) {
+                        super.onBind(link, showSubbreddit);
                         if (animationFinished) {
                             if (!TextUtils.isEmpty(link.getSelfText())) {
                                 loadSelfText();
@@ -216,9 +212,8 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
 
                     @Override
                     public void onBind(Link link,
-                            boolean showSubreddit,
-                            String userName) {
-                        super.onBind(link, showSubreddit, userName);
+                            boolean showSubreddit) {
+                        super.onBind(link, showSubreddit);
                         if (animationFinished) {
                             if (!TextUtils.isEmpty(link.getSelfText())) {
                                 loadSelfText();
@@ -264,8 +259,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
             AdapterLink.ViewHolderBase viewHolderBase = (AdapterLink.ViewHolderBase) holder;
 
             viewHolderBase
-                    .onBind(controllerComments.getLink(), controllerComments.showSubreddit(),
-                            controllerUser.getUser().getName());
+                    .onBind(controllerComments.getLink(), controllerComments.showSubreddit());
 
             viewHolderBase.itemView.invalidate();
 
@@ -273,8 +267,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
         }
         else {
             ViewHolderComment viewHolderComment = (ViewHolderComment) holder;
-            viewHolderComment.onBind(controllerComments.getComment(position),
-                    controllerUser.getUser().getName());
+            viewHolderComment.onBind(controllerComments.getComment(position));
         }
 
     }
@@ -309,8 +302,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
             viewHolderLink.destroyWebViews();
             viewHolderLink.onRecycle();
             viewHolderLink.onBind(controllerComments.getLink(),
-                    controllerComments.showSubreddit(),
-                    controllerUser.getUser().getName());
+                    controllerComments.showSubreddit());
         }
     }
 
@@ -365,7 +357,6 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
         protected EventListener eventListener;
         protected DisallowListener disallowListener;
         protected RecyclerCallback recyclerCallback;
-        protected String userName;
         protected int indentWidth;
         protected int toolbarItemWidth;
         protected SharedPreferences preferences;
@@ -481,7 +472,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
 
                 @Override
                 public boolean onDoubleTap(MotionEvent e) {
-                    if (!TextUtils.isEmpty(userName)) {
+                    if (!comment.isMore() && !TextUtils.isEmpty(eventListenerBase.getUser().getName())) {
                         eventListener.voteComment(ViewHolderComment.this, comment, 1);
                     }
                     return true;
@@ -613,9 +604,9 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
             int maxNum = (itemView.getWidth() - getIndentWidth()) / toolbarItemWidth;
             int numShown = 0;
 
-            boolean loggedIn = !TextUtils.isEmpty(userName);
+            boolean loggedIn = !TextUtils.isEmpty(eventListenerBase.getUser().getName());
             boolean isAuthor = comment.getAuthor()
-                    .equals(userName);
+                    .equals(eventListenerBase.getUser().getName());
 
             itemEdit.setEnabled(isAuthor);
             itemEdit.setVisible(isAuthor);
@@ -686,10 +677,9 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
             return indentWidth * comment.getLevel();
         }
 
-        public void onBind(Comment comment, String userName) {
+        public void onBind(Comment comment) {
 
             this.comment = comment;
-            this.userName = userName;
 
             if (itemView.getBackground() != null) {
                 itemView.getBackground().setState(new int[0]);
@@ -803,7 +793,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
             if (comment.getLinkAuthor().equals(comment.getAuthor())) {
                 color = colorAccent;
             }
-            else if (userName.equals(comment.getAuthor())) {
+            else if (comment.getAuthor().equals(eventListenerBase.getUser().getName())) {
                 color = colorPrimary;
             }
             else {

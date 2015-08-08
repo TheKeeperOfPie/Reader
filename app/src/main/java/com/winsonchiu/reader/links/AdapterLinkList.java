@@ -31,13 +31,12 @@ public class AdapterLinkList extends AdapterLink {
 
     public AdapterLinkList(Activity activity,
             ControllerLinksBase controllerLinks,
-            ControllerUser controllerUser,
             ViewHolderHeader.EventListener eventListenerHeader,
             ViewHolderBase.EventListener eventListenerBase,
             DisallowListener disallowListener,
             RecyclerCallback recyclerCallback) {
         super(eventListenerHeader, eventListenerBase, disallowListener, recyclerCallback);
-        setControllers(controllerLinks, controllerUser);
+        setController(controllerLinks);
         setActivity(activity);
     }
 
@@ -71,7 +70,7 @@ public class AdapterLinkList extends AdapterLink {
                 break;
             case VIEW_LINK:
                 ViewHolder viewHolder = (ViewHolder) holder;
-                viewHolder.onBind(controllerLinks.getLink(position), controllerLinks.showSubreddit(), controllerUser.getUser().getName());
+                viewHolder.onBind(controllerLinks.getLink(position), controllerLinks.showSubreddit());
                 break;
         }
     }
@@ -107,8 +106,8 @@ public class AdapterLinkList extends AdapterLink {
         }
 
         @Override
-        public void onBind(Link link, boolean showSubreddit, String userName) {
-            super.onBind(link, showSubreddit, userName);
+        public void onBind(Link link, boolean showSubreddit) {
+            super.onBind(link, showSubreddit);
 
             imageThumbnail.setVisibility(View.VISIBLE);
 

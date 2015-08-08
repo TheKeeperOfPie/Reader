@@ -7,62 +7,76 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="?attr/colorPrimary"
     >
 
-    <com.winsonchiu.reader.views.ImageViewHeader
-        android:id="@+id/image_nav_header"
+    <RelativeLayout
+        xmlns:android="http://schemas.android.com/apk/res/android"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_alignParentTop="true"
-        android:contentDescription="@string/content_description_image_navigation_header"
-        android:src="?attr/colorPrimary"
-        />
+        android:layout_height="match_parent"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        >
 
-    <TextView
-        android:id="@+id/text_account_name"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_above="@+id/text_account_info"
-        android:layout_alignParentStart="true"
-        android:layout_toStartOf="@+id/button_accounts"
-        android:layout_marginStart="@dimen/activity_horizontal_margin"
-        android:layout_marginEnd="@dimen/activity_horizontal_margin"
-        android:textSize="14sp"
-        android:textStyle="bold"
-        />
+        <com.winsonchiu.reader.views.ImageViewHeader
+            android:id="@+id/image_nav_header"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignParentTop="true"
+            android:contentDescription="@string/content_description_image_navigation_header"
+            android:clickable="false"
+            />
 
-    <TextView
-        android:id="@+id/text_account_info"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignBottom="@id/image_nav_header"
-        android:layout_alignParentStart="true"
-        android:layout_marginStart="@dimen/activity_horizontal_margin"
-        android:layout_marginEnd="@dimen/activity_horizontal_margin"
-        android:layout_marginBottom="16dp"
-        android:layout_toStartOf="@+id/button_accounts"
-        android:textSize="14sp"
-        />
+        <TextView
+            android:id="@+id/text_account_name"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_above="@+id/text_account_info"
+            android:layout_alignParentStart="true"
+            android:layout_toStartOf="@+id/button_accounts"
+            android:layout_marginStart="@dimen/activity_horizontal_margin"
+            android:layout_marginEnd="@dimen/activity_horizontal_margin"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:clickable="false"
+            />
 
-    <ImageButton
-        android:id="@+id/button_accounts"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignBottom="@id/image_nav_header"
-        android:layout_alignParentEnd="true"
-        android:layout_marginEnd="@dimen/activity_horizontal_margin"
-        android:layout_marginBottom="16dp"
-        android:src="@drawable/ic_arrow_drop_down_white_24dp"
-        android:background="@android:color/transparent"
-        />
+        <TextView
+            android:id="@+id/text_account_info"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignBottom="@id/image_nav_header"
+            android:layout_alignParentStart="true"
+            android:layout_marginStart="@dimen/activity_horizontal_margin"
+            android:layout_marginEnd="@dimen/activity_horizontal_margin"
+            android:layout_marginBottom="16dp"
+            android:layout_toStartOf="@+id/button_accounts"
+            android:textSize="14sp"
+            android:clickable="false"
+            />
 
-    <LinearLayout
-        android:id="@+id/layout_accounts"
-        android:orientation="vertical"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_below="@id/text_account_info"
-        android:visibility="gone"
-        />
+        <ImageButton
+            android:id="@+id/button_accounts"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignBottom="@id/image_nav_header"
+            android:layout_alignParentEnd="true"
+            android:layout_marginEnd="@dimen/activity_horizontal_margin"
+            android:layout_marginBottom="16dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@drawable/ic_arrow_drop_down_white_24dp"
+            android:clickable="false"
+            />
+
+        <LinearLayout
+            android:id="@+id/layout_accounts"
+            android:orientation="vertical"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/text_account_info"
+            android:animateLayoutChanges="true"
+            android:visibility="gone"
+            />
+
+    </RelativeLayout>
 
 </RelativeLayout>

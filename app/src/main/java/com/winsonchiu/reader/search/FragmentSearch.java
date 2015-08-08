@@ -20,7 +20,6 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.SearchView;
 import android.support.v7.widget.Toolbar;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -186,7 +185,7 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
-            Bundle savedInstanceState) {
+                             Bundle savedInstanceState) {
         final View view = inflater.inflate(R.layout.fragment_search, container, false);
 
         listenerSearch = new ControllerSearch.Listener() {
@@ -351,18 +350,17 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
                 mListener.getControllerSearch().setNsfwLinks(name, over18);
             }
 
-        }, mListener.getControllerUser(),
-                new AdapterLink.ViewHolderHeader.EventListener() {
-                    @Override
-                    public void onClickSubmit(String postType) {
+        }, new AdapterLink.ViewHolderHeader.EventListener() {
+            @Override
+            public void onClickSubmit(String postType) {
 
-                    }
+            }
 
-                    @Override
-                    public void showSidebar() {
+            @Override
+            public void showSidebar() {
 
-                    }
-                }, mListener.getEventListenerBase(), disallowListener,
+            }
+        }, mListener.getEventListenerBase(), disallowListener,
                 new RecyclerCallback() {
                     @Override
                     public void scrollTo(int position) {
@@ -439,18 +437,17 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
                 mListener.getControllerSearch().setNsfwLinksSubreddit(name, over18);
             }
 
-        }, mListener.getControllerUser(),
-                new AdapterLink.ViewHolderHeader.EventListener() {
-                    @Override
-                    public void onClickSubmit(String postType) {
+        }, new AdapterLink.ViewHolderHeader.EventListener() {
+            @Override
+            public void onClickSubmit(String postType) {
 
-                    }
+            }
 
-                    @Override
-                    public void showSidebar() {
+            @Override
+            public void showSidebar() {
 
-                    }
-                }, mListener.getEventListenerBase(), disallowListener,
+            }
+        }, mListener.getEventListenerBase(), disallowListener,
                 new RecyclerCallback() {
                     @Override
                     public void scrollTo(int position) {
@@ -526,8 +523,8 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
         viewPager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
             @Override
             public void onPageScrolled(int position,
-                    float positionOffset,
-                    int positionOffsetPixels) {
+                                       float positionOffset,
+                                       int positionOffsetPixels) {
 
             }
 

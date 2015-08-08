@@ -119,11 +119,11 @@ public class AdapterInbox extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
         switch (getItemViewType(position)) {
             case ControllerInbox.VIEW_TYPE_MESSAGE:
                 ViewHolderMessage viewHolderMessage = (ViewHolderMessage) holder;
-                viewHolderMessage.onBind(controllerInbox.getMessage(position), controllerUser.getUser().getName());
+                viewHolderMessage.onBind(controllerInbox.getMessage(position));
                 break;
             case ControllerInbox.VIEW_TYPE_COMMENT:
                 AdapterCommentList.ViewHolderComment viewHolderComment = (AdapterCommentList.ViewHolderComment) holder;
-                viewHolderComment.onBind(controllerInbox.getComment(position), controllerUser.getUser().getName());
+                viewHolderComment.onBind(controllerInbox.getComment(position));
                 break;
         }
         viewHolders.add(holder);
@@ -166,7 +166,6 @@ public class AdapterInbox extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
 
         protected SharedPreferences preferences;
         protected int toolbarItemWidth;
-        protected String userName;
         private Resources resources;
 
         public ViewHolderMessage(View itemView, final AdapterLink.ViewHolderBase.EventListener listener, RecyclerCallback recyclerCallback) {
@@ -244,7 +243,7 @@ public class AdapterInbox extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
                     if (message.isNew()) {
                         eventListener.markRead(message);
                         message.setIsNew(false);
-                        onBind(message, userName);
+                        onBind(message);
                     }
 
                     AnimationUtils.animateExpand(toolbarActions, 1f, null);
@@ -281,10 +280,9 @@ public class AdapterInbox extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
             }
         }
 
-        public void onBind(Message message, String userName) {
+        public void onBind(Message message) {
 
             this.message = message;
-            this.userName = userName;
 
             toolbarActions.setVisibility(View.GONE);
 
@@ -298,7 +296,7 @@ public class AdapterInbox extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
 
             String prefix;
 
-            if (message.getAuthor().equals(userName)) {
+            if (message.getAuthor().equals(eventListener.getUser().getName())) {
                 prefix = "to " + message.getDest().replaceAll("#", "/r/");
             }
             else {

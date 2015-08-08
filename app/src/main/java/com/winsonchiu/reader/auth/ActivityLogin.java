@@ -1,6 +1,5 @@
 package com.winsonchiu.reader.auth;
 
-import android.accounts.AbstractAccountAuthenticator;
 import android.accounts.Account;
 import android.accounts.AccountAuthenticatorActivity;
 import android.accounts.AccountManager;
@@ -22,6 +21,7 @@ import android.webkit.WebChromeClient;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.ProgressBar;
+import android.widget.RelativeLayout;
 import android.widget.Toast;
 
 import com.android.volley.AuthFailureError;
@@ -55,6 +55,7 @@ public class ActivityLogin extends AccountAuthenticatorActivity {
     private ProgressBar progressAuth;
     private WebView webAuth;
     private String state;
+    private RelativeLayout layoutRoot;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -65,6 +66,7 @@ public class ActivityLogin extends AccountAuthenticatorActivity {
         preferences = PreferenceManager.getDefaultSharedPreferences(this);
         state = UUID.randomUUID().toString();
 
+        layoutRoot = (RelativeLayout) findViewById(R.id.layout_root);
         toolbar = (Toolbar) findViewById(R.id.toolbar);
         progressAuth = (ProgressBar) findViewById(R.id.progress_auth);
         webAuth = (WebView) findViewById(R.id.web_auth);
@@ -140,12 +142,6 @@ public class ActivityLogin extends AccountAuthenticatorActivity {
 
                     Log.d(TAG, "timeExpire in: " + jsonObject.getLong(Reddit.QUERY_EXPIRES_IN));
 
-                    SharedPreferences.Editor editor = preferences.edit();
-                    editor.putString(AppSettings.ACCESS_TOKEN, tokenAccess);
-                    editor.putString(AppSettings.REFRESH_TOKEN, tokenRefresh);
-                    editor.putLong(AppSettings.EXPIRE_TIME, timeExpire);
-                    editor.apply();
-
                     loadAccountInfo(tokenAccess, tokenRefresh, timeExpire);
                 }
                 catch (JSONException e1) {
@@ -187,7 +183,7 @@ public class ActivityLogin extends AccountAuthenticatorActivity {
                                 accountManager.setAuthToken(account, Reddit.AUTH_TOKEN_FULL_ACCESS, tokenAuth);
                             }
 
-                            clearCookies();
+                            destroyWebView();
 
                             setAccountAuthenticatorResult(result.getExtras());
                             setResult(RESULT_OK, result);
@@ -218,17 +214,23 @@ public class ActivityLogin extends AccountAuthenticatorActivity {
 
     @Override
     public void onBackPressed() {
-        clearCookies();
+        destroyWebView();
         super.onBackPressed();
     }
 
-    private void clearCookies() {
+    private void destroyWebView() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             CookieManager.getInstance().removeAllCookies(null);
         }
         else {
             CookieManager.getInstance().removeAllCookie();
         }
+        webAuth.setVisibility(View.GONE);
+        webAuth.removeAllViews();
+        webAuth.setWebChromeClient(null);
+        webAuth.setWebViewClient(null);
+        layoutRoot.removeView(webAuth);
+        webAuth.destroy();
     }
 
     @Override

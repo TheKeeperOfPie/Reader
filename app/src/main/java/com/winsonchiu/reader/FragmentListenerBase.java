@@ -20,7 +20,6 @@ import com.winsonchiu.reader.search.ControllerSearch;
 public interface FragmentListenerBase {
     void onNavigationBackClick();
     void openDrawer();
-    void onAuthFinished(boolean success);
     ControllerLinks getControllerLinks();
     ControllerInbox getControllerInbox();
     ControllerComments getControllerComments();

@@ -50,13 +50,12 @@ public class AdapterLinkGrid extends AdapterLink {
 
     public AdapterLinkGrid(Activity activity,
             ControllerLinksBase controllerLinks,
-            ControllerUser controllerUser,
             ViewHolderHeader.EventListener eventListenerHeader,
             ViewHolderBase.EventListener eventListenerBase,
             DisallowListener disallowListener,
             RecyclerCallback recyclerCallback) {
         super(eventListenerHeader, eventListenerBase, disallowListener, recyclerCallback);
-        setControllers(controllerLinks, controllerUser);
+        setController(controllerLinks);
         setActivity(activity);
     }
 
@@ -105,8 +104,7 @@ public class AdapterLinkGrid extends AdapterLink {
             case VIEW_LINK:
                 ViewHolder viewHolder = (ViewHolder) holder;
                 viewHolder
-                        .onBind(controllerLinks.getLink(position), controllerLinks.showSubreddit(),
-                                controllerUser.getUser().getName());
+                        .onBind(controllerLinks.getLink(position), controllerLinks.showSubreddit());
                 break;
         }
     }
@@ -165,9 +163,9 @@ public class AdapterLinkGrid extends AdapterLink {
         }
 
         @Override
-        public void onBind(Link link, boolean showSubbreddit, String userName) {
+        public void onBind(Link link, boolean showSubbreddit) {
 
-            super.onBind(link, showSubbreddit, userName);
+            super.onBind(link, showSubbreddit);
 
             int position = getAdapterPosition();
 

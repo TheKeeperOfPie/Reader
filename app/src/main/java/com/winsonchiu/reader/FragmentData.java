@@ -63,14 +63,15 @@ public class FragmentData extends FragmentBase {
             Toast.makeText(activity, R.string.error_memory_recreation, Toast.LENGTH_SHORT).show();
             initializeControllers(activity);
         }
-
-        controllerLinks.setActivity(activity);
-        controllerComments.setActivity(activity);
-        controllerProfile.setActivity(activity);
-        controllerInbox.setActivity(activity);
-        controllerSearch.setActivity(activity);
-        controllerHistory.setActivity(activity);
-        controllerUser.setActivity(activity);
+        else {
+            controllerLinks.setActivity(activity);
+            controllerComments.setActivity(activity);
+            controllerProfile.setActivity(activity);
+            controllerInbox.setActivity(activity);
+            controllerSearch.setActivity(activity);
+            controllerHistory.setActivity(activity);
+            controllerUser.setActivity(activity);
+        }
     }
 
     public ControllerLinks getControllerLinks() {

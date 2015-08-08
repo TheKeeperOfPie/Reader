@@ -291,7 +291,6 @@ public class FragmentProfile extends FragmentBase implements Toolbar.OnMenuItemC
         if (adapterProfile == null) {
             adapterProfile = new AdapterProfile(mListener.getControllerProfile(),
                     mListener.getControllerLinks(),
-                    mListener.getControllerUser(),
                     mListener.getEventListenerBase(),
                     new AdapterCommentList.ViewHolderComment.EventListener() {
                         @Override

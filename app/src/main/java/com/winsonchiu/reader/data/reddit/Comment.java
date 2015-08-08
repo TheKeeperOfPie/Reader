@@ -50,6 +50,7 @@ public class Comment extends Replyable {
     private List<String> children = new ArrayList<>();
     private List<String> replies = new ArrayList<>();
     private boolean isNew;
+    private String dest;
     private String context;
 
     // For More entries
@@ -185,6 +186,7 @@ public class Comment extends Replyable {
         comment.setLinkUrl(UtilsJson.getString(jsonNode.get("link_url")));
 
         comment.setIsNew(UtilsJson.getBoolean(jsonNode.get("new")));
+        comment.setDest(UtilsJson.getString(jsonNode.get("dest")));
         comment.setContext(UtilsJson.getString(jsonNode.get("context")));
 
         return comment;
@@ -481,5 +483,13 @@ public class Comment extends Replyable {
 
     public void setReplies(List<String> replies) {
         this.replies = replies;
+    }
+
+    public String getDest() {
+        return dest;
+    }
+
+    public void setDest(String dest) {
+        this.dest = dest;
     }
 }

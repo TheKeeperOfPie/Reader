@@ -252,4 +252,7 @@
     <string name="auth_full_access">Full Access</string>
     <string name="reddit">Reddit</string>
     <string name="error_account">Error loading account</string>
+    <string name="delete_account">Delete account?</string>
+    <string name="error_delete_account_securely">Cannot securely delete account right now</string>
+    <string name="comment_karma">Comment Karma</string>
 </resources>

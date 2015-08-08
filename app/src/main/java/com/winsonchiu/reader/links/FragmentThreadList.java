@@ -496,7 +496,6 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
         });
         if (adapterLinkList == null) {
             adapterLinkList = new AdapterLinkList(activity, mListener.getControllerLinks(),
-                    mListener.getControllerUser(),
                     eventListenerHeader,
                     mListener.getEventListenerBase(),
                     disallowListener,
@@ -504,7 +503,6 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
         }
         if (adapterLinkGrid == null) {
             adapterLinkGrid = new AdapterLinkGrid(activity, mListener.getControllerLinks(),
-                    mListener.getControllerUser(),
                     eventListenerHeader,
                     mListener.getEventListenerBase(),
                     disallowListener,

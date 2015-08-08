@@ -20,12 +20,14 @@ import android.content.res.TypedArray;
 import android.graphics.Bitmap;
 import android.media.MediaScannerConnection;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.preference.PreferenceManager;
 import android.support.design.widget.NavigationView;
 import android.support.v4.app.TaskStackBuilder;
+import android.support.v4.util.ArrayMap;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.AlertDialog;
@@ -48,7 +50,6 @@ import com.android.volley.toolbox.ImageRequest;
 import com.crashlytics.android.Crashlytics;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.android.youtube.player.YouTubeBaseActivity;
-import com.winsonchiu.reader.auth.ActivityLogin;
 import com.winsonchiu.reader.comments.AdapterCommentList;
 import com.winsonchiu.reader.comments.ControllerComments;
 import com.winsonchiu.reader.comments.FragmentComments;
@@ -90,7 +91,6 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import io.fabric.sdk.android.Fabric;
@@ -102,6 +102,7 @@ public class MainActivity extends YouTubeBaseActivity
     public static final String REDDIT_PAGE = "redditPage";
     public static final String NAV_ID = "navId";
     public static final String NAV_PAGE = "navPage";
+    public static final String ACCOUNT = "account";
 
     private static final String TAG = MainActivity.class.getCanonicalName();
     private static final int REQUEST_SETTINGS = 0;
@@ -114,15 +115,15 @@ public class MainActivity extends YouTubeBaseActivity
     private DrawerLayout mDrawerLayout;
     private NavigationView viewNavigation;
 
-    private ImageView imageNavHeader;
     private TextView textAccountName;
     private TextView textAccountInfo;
-    private ImageButton buttonAccount;
+    private ImageButton buttonAccounts;
     private LinearLayout layoutAccounts;
 
     private Reddit reddit;
     private Handler handler;
     private AccountManager accountManager;
+    private Account accountUser;
     private AdapterLink.ViewHolderBase.EventListener eventListenerBase;
     private AdapterCommentList.ViewHolderComment.EventListener eventListenerComment;
     private final Runnable runnableInbox = new Runnable() {
@@ -167,26 +168,6 @@ public class MainActivity extends YouTubeBaseActivity
 
         inflateNavigationDrawer();
 
-        String name = sharedPreferences.getString(AppSettings.ACCOUNT_NAME, "");
-        Account[] accounts = accountManager.getAccountsByType(Reddit.ACCOUNT_TYPE);
-        Log.d(TAG, "Accounts: " + Arrays.toString(accounts));
-
-        Account accountUser = null;
-
-        for (Account account : accounts) {
-            if (account.name.equals(name)) {
-                accountUser = account;
-                break;
-            }
-        }
-
-        if (accountUser == null) {
-            getControllerSearch().reloadSubscriptionList();
-        }
-        else {
-            setAccount(accountUser);
-        }
-
         Receiver.setAlarm(this);
 
         mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
@@ -208,6 +189,7 @@ public class MainActivity extends YouTubeBaseActivity
                 if (loadId != 0) {
                     selectNavigationItem(loadId, null, true);
                 }
+                setAccountsVisible(false);
             }
 
             @Override
@@ -215,31 +197,6 @@ public class MainActivity extends YouTubeBaseActivity
 
             }
         });
-
-        if (savedInstanceState == null) {
-            if (Intent.ACTION_VIEW.equals(getIntent().getAction())) {
-                Log.d(TAG, "load intent: " + getIntent().toString());
-                String urlString = getIntent().getDataString();
-                if (getIntent().hasExtra(REDDIT_PAGE)) {
-                    urlString = getIntent().getExtras()
-                            .getString(REDDIT_PAGE);
-                }
-                if (URLUtil.isValidUrl(urlString)) {
-                    parseUrl(urlString);
-                }
-                else {
-                    Log.d(TAG, "Not valid URL: " + urlString);
-                    getControllerLinks().loadFrontPage(Sort.HOT, true);
-                    selectNavigationItem(getIntent().getIntExtra(NAV_ID, R.id.item_home), getIntent().getStringExtra(
-                            NAV_PAGE), false);
-                }
-            }
-            else {
-                getControllerLinks().loadFrontPage(Sort.HOT, true);
-                selectNavigationItem(getIntent().getIntExtra(NAV_ID, R.id.item_home), getIntent().getStringExtra(
-                        NAV_PAGE), false);
-            }
-        }
 
         eventListenerBase = new AdapterLink.ViewHolderBase.EventListener() {
 
@@ -618,6 +575,11 @@ public class MainActivity extends YouTubeBaseActivity
                         .commit();
             }
 
+            @Override
+            public User getUser() {
+                return getControllerUser().getUser();
+            }
+
         };
 
         eventListenerComment = new AdapterCommentList.ViewHolderComment.EventListener() {
@@ -690,6 +652,65 @@ public class MainActivity extends YouTubeBaseActivity
             }
         }
 
+        Reddit.ErrorListener redditErrorListener = new Reddit.ErrorListener() {
+            @Override
+            public void onErrorHandled() {
+
+            }
+        };
+
+        if (savedInstanceState == null) {
+            if (Intent.ACTION_VIEW.equals(getIntent().getAction())) {
+                Log.d(TAG, "load intent: " + getIntent().toString());
+                String urlString = getIntent().getDataString();
+                if (getIntent().hasExtra(REDDIT_PAGE)) {
+                    urlString = getIntent().getExtras()
+                            .getString(REDDIT_PAGE);
+                }
+                if (URLUtil.isValidUrl(urlString)) {
+                    parseUrl(urlString);
+                }
+                else {
+                    Log.d(TAG, "Not valid URL: " + urlString);
+                    getControllerLinks().loadFrontPage(Sort.HOT, true);
+                    selectNavigationItem(getIntent().getIntExtra(NAV_ID, R.id.item_home), getIntent().getStringExtra(
+                            NAV_PAGE), false);
+                }
+            }
+            else {
+                getControllerLinks().loadFrontPage(Sort.HOT, true);
+                selectNavigationItem(getIntent().getIntExtra(NAV_ID, R.id.item_home), getIntent().getStringExtra(
+                        NAV_PAGE), false);
+            }
+        }
+
+        String name;
+        if (getIntent().hasExtra(ACCOUNT)) {
+            name = getIntent().getStringExtra(ACCOUNT);
+        }
+        else {
+            name = sharedPreferences.getString(AppSettings.ACCOUNT_NAME, "");
+        }
+
+        Account[] accounts = accountManager.getAccountsByType(Reddit.ACCOUNT_TYPE);
+        Log.d(TAG, "Accounts: " + Arrays.toString(accounts));
+
+        Account accountUser = null;
+
+        for (Account account : accounts) {
+            if (account.name.equals(name)) {
+                accountUser = account;
+                break;
+            }
+        }
+
+        if (accountUser == null) {
+            clearAccount();
+        }
+        else {
+            setAccount(accountUser);
+        }
+
     }
 
     private void inflateNavigationDrawer() {
@@ -715,33 +736,19 @@ public class MainActivity extends YouTubeBaseActivity
                 .inflate(R.layout.header_navigation,
                         viewNavigation, false);
 
-        imageNavHeader = (ImageView) viewHeader.findViewById(R.id.image_nav_header);
         textAccountName = (TextView) viewHeader.findViewById(R.id.text_account_name);
         textAccountInfo = (TextView) viewHeader.findViewById(R.id.text_account_info);
-        buttonAccount = (ImageButton) viewHeader.findViewById(R.id.button_accounts);
+        buttonAccounts = (ImageButton) viewHeader.findViewById(R.id.button_accounts);
         layoutAccounts = (LinearLayout) viewHeader.findViewById(R.id.layout_accounts);
 
-        buttonAccount.setOnClickListener(new View.OnClickListener() {
+        viewHeader.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                layoutAccounts.setVisibility(layoutAccounts.isShown() ? View.GONE : View.VISIBLE);
+                setAccountsVisible(!layoutAccounts.isShown());
             }
         });
 
         resetAccountList();
-
-//        View.OnClickListener clickListenerAccount = new View.OnClickListener() {
-//            @Override
-//            public void onClick(View v) {
-//                onClickAccount();
-//            }
-//        };
-//        viewHeader.setOnClickListener(clickListenerAccount);
-//        textAccountName.setOnClickListener(clickListenerAccount);
-//        textAccountInfo.setOnClickListener(clickListenerAccount);
-
-        // TODO: Move to after initial fetch of token
-//        loadAccountInfo();
 
         viewNavigation.addHeaderView(viewHeader);
         viewNavigation.setNavigationItemSelectedListener(
@@ -765,7 +772,6 @@ public class MainActivity extends YouTubeBaseActivity
             View viewAccount = getLayoutInflater().inflate(R.layout.row_account, layoutAccounts, false);
             TextView textUsername = (TextView) viewAccount.findViewById(R.id.text_username);
             ImageButton buttonDeleteAccount = (ImageButton) viewAccount.findViewById(R.id.button_delete_account);
-            buttonDeleteAccount.setVisibility(View.VISIBLE);
 
             textUsername.setText(account.name);
 
@@ -787,47 +793,148 @@ public class MainActivity extends YouTubeBaseActivity
 
 
         View viewAddAccount = getLayoutInflater().inflate(R.layout.row_account, layoutAccounts, false);
-        TextView textAddAccount = (TextView) viewAddAccount.findViewById(R.id.text_username);
-        textAddAccount.setText(R.string.add_account);
         viewAddAccount.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 addNewAccount();
             }
         });
+        TextView textAddAccount = (TextView) viewAddAccount.findViewById(R.id.text_username);
+        textAddAccount.setText(R.string.add_account);
+        ImageButton buttonAddAccount = (ImageButton) viewAddAccount.findViewById(R.id.button_delete_account);
+        buttonAddAccount.setImageResource(R.drawable.ic_add_white_24dp);
+        buttonAddAccount.setClickable(false);
         layoutAccounts.addView(viewAddAccount);
 
         View viewLogout = getLayoutInflater().inflate(R.layout.row_account, layoutAccounts, false);
-        TextView textLogout = (TextView) viewLogout.findViewById(R.id.text_username);
-        textLogout.setText(R.string.logout);
         viewLogout.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 clearAccount();
             }
         });
+        TextView textLogout = (TextView) viewLogout.findViewById(R.id.text_username);
+        textLogout.setText(R.string.logout);
+        ImageButton buttonLogout = (ImageButton) viewLogout.findViewById(R.id.button_delete_account);
+        buttonLogout.setImageResource(R.drawable.ic_exit_to_app_white_24dp);
+        buttonLogout.setClickable(false);
         layoutAccounts.addView(viewLogout);
     }
 
     private void clearAccount() {
-        reddit.clearAccount();
-        getControllerUser().clearAccount();
-        getControllerSearch().reloadSubscriptionList();
-        loadAccountInfo();
-        layoutAccounts.setVisibility(View.GONE);
+        accountUser = null;
+        reddit.clearAccount(new Reddit.ErrorListener() {
+            @Override
+            public void onErrorHandled() {
+                handler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        getControllerUser().clearAccount();
+                        getControllerSearch().reloadSubscriptionList();
+                        loadAccountInfo();
+                    }
+                });
+            }
+        });
     }
 
-    private void setAccount(Account account) {
+    private void setAccount(final Account account) {
+        accountUser = account;
         sharedPreferences.edit().putString(AppSettings.ACCOUNT_NAME, account.name).apply();
-        reddit.setAccount(account);
-        getControllerUser().setAccount(account);
-        getControllerSearch().reloadSubscriptionList();
-        loadAccountInfo();
-        layoutAccounts.setVisibility(View.GONE);
+        reddit.setAccount(account, new Reddit.ErrorListener() {
+            @Override
+            public void onErrorHandled() {
+                handler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        getControllerUser().setAccount(account);
+                        getControllerSearch().reloadSubscriptionList();
+                        loadAccountInfo();
+                    }
+                });
+            }
+        });
+
     }
 
-    private void deleteAccount(Account account) {
+    private void deleteAccount(final Account account) {
 
+        new AlertDialog.Builder(this)
+                .setTitle(R.string.delete_account)
+                .setMessage(account.name)
+                .setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+
+
+                        String tokenRefresh = accountManager.getPassword(account);
+
+                        Map<String, String> params = new ArrayMap<>(2);
+                        params.put("token_type_hint", "refresh_token");
+                        params.put("token", tokenRefresh);
+
+                        reddit.loadPostDefault(Reddit.REVOKE_URL, new Response.Listener<String>() {
+                            @Override
+                            public void onResponse(String response) {
+                                Log.d(TAG, "revoke_token response: " + response);
+
+                                new Thread(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        final AccountManagerFuture future;
+                                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
+                                            future = accountManager.removeAccount(account, null, null, null);
+                                        }
+                                        else {
+                                            future = accountManager.removeAccount(account, null, null);
+                                        }
+
+                                        try {
+                                            // Force changes in AccountManager
+                                            future.getResult();
+                                        }
+                                        catch (OperationCanceledException | IOException | AuthenticatorException e) {
+                                            e.printStackTrace();
+                                        }
+
+                                        handler.post(new Runnable() {
+                                            @Override
+                                            public void run() {
+                                                resetAccountList();
+                                                if (account.equals(accountUser)) {
+                                                    clearAccount();
+                                                }
+                                            }
+                                        });
+                                    }
+                                }).start();
+                            }
+                        }, new Response.ErrorListener() {
+                            @Override
+                            public void onErrorResponse(VolleyError error) {
+                                handler.post(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        Toast.makeText(MainActivity.this, R.string.error_delete_account_securely, Toast.LENGTH_LONG).show();
+                                    }
+                                });
+                            }
+                        }, params);
+                    }
+                })
+                .setNegativeButton(R.string.cancel, null)
+                .show();
+    }
+
+    private void setAccountsVisible(boolean visible) {
+        if (visible) {
+            layoutAccounts.setVisibility(View.VISIBLE);
+            buttonAccounts.setImageResource(R.drawable.ic_arrow_drop_up_white_24dp);
+        }
+        else {
+            layoutAccounts.setVisibility(View.GONE);
+            buttonAccounts.setImageResource(R.drawable.ic_arrow_drop_down_white_24dp);
+        }
     }
 
     private void selectNavigationItem(final int id, String page, boolean animate) {
@@ -922,8 +1029,8 @@ public class MainActivity extends YouTubeBaseActivity
                                         JSONObject jsonObject = new JSONObject(response);
                                         textAccountName.setText(jsonObject.getString("name"));
                                         textAccountInfo.setText(jsonObject.getString(
-                                                "link_karma") + " Link " + jsonObject.getString(
-                                                "comment_karma") + " Comment");
+                                                "link_karma") + " " + getString(R.string.link) + " " + jsonObject.getString(
+                                                "comment_karma") + " " + getString(R.string.comment_karma));
                                     }
                                     catch (JSONException e) {
                                         e.printStackTrace();
@@ -932,7 +1039,7 @@ public class MainActivity extends YouTubeBaseActivity
                             }, new Response.ErrorListener() {
                                 @Override
                                 public void onErrorResponse(VolleyError error) {
-
+                                    Log.d(TAG, "loadAccountInfo error: " + error);
                                 }
                             }, 0);
         }
@@ -985,17 +1092,6 @@ public class MainActivity extends YouTubeBaseActivity
                 }).start();
             }
         }, null);
-    }
-
-    private void onClickAccount() {
-        if (accountManager.getAccountsByType(Reddit.ACCOUNT_TYPE).length == 0) {
-            addNewAccount();
-        }
-        else {
-            // TODO: Open up list of accounts
-        }
-
-        mDrawerLayout.closeDrawer(GravityCompat.START);
     }
 
     private void parseUrl(String urlString) {
@@ -1214,22 +1310,6 @@ public class MainActivity extends YouTubeBaseActivity
     @Override
     public ControllerProfile getControllerProfile() {
         return fragmentData.getControllerProfile();
-    }
-
-    @Override
-    public void onAuthFinished(boolean success) {
-        if (success) {
-            Toast.makeText(this, getString(R.string.login_success), Toast.LENGTH_SHORT)
-                    .show();
-            loadAccountInfo();
-            getControllerUser().reloadUser();
-            getControllerSearch().reloadSubscriptionList();
-            onNavigationBackClick();
-        }
-        else {
-            Toast.makeText(this, getString(R.string.login_failure), Toast.LENGTH_SHORT)
-                    .show();
-        }
     }
 
     @Override

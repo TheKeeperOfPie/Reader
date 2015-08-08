@@ -47,7 +47,6 @@ public class AdapterProfile extends RecyclerView.Adapter<RecyclerView.ViewHolder
 
     public AdapterProfile(ControllerProfile controllerProfile,
             ControllerLinksBase controllerLinks,
-            ControllerUser controllerUser,
             AdapterLink.ViewHolderBase.EventListener eventListenerBase,
             AdapterCommentList.ViewHolderComment.EventListener eventListenerComment,
             DisallowListener disallowListener,
@@ -60,7 +59,6 @@ public class AdapterProfile extends RecyclerView.Adapter<RecyclerView.ViewHolder
         this.listener = listener;
         this.controllerProfile = controllerProfile;
         this.controllerLinks = controllerLinks;
-        this.controllerUser = controllerUser;
         viewHolders = new ArrayList<>();
     }
     @Override
@@ -145,7 +143,7 @@ public class AdapterProfile extends RecyclerView.Adapter<RecyclerView.ViewHolder
                 if (getItemViewType(position) == ControllerProfile.VIEW_TYPE_LINK) {
                     AdapterLinkList.ViewHolder viewHolderLinkTop = (AdapterLinkList.ViewHolder) holder;
                     viewHolderLinkTop.onRecycle();
-                    viewHolderLinkTop.onBind(controllerProfile.getTopLink(), controllerLinks.showSubreddit(), controllerUser.getUser().getName());
+                    viewHolderLinkTop.onBind(controllerProfile.getTopLink(), controllerLinks.showSubreddit());
                 }
                 else {
                     ViewHolderText viewHolderText = (ViewHolderText) holder;
@@ -163,7 +161,7 @@ public class AdapterProfile extends RecyclerView.Adapter<RecyclerView.ViewHolder
             case 4:
                 if (getItemViewType(position) == ControllerProfile.VIEW_TYPE_COMMENT) {
                     AdapterCommentList.ViewHolderComment viewHolderCommentTop = (AdapterCommentList.ViewHolderComment) holder;
-                    viewHolderCommentTop.onBind(controllerProfile.getTopComment(), controllerUser.getUser().getName());
+                    viewHolderCommentTop.onBind(controllerProfile.getTopComment());
                 }
                 else {
                     ViewHolderText viewHolderText = (ViewHolderText) holder;
@@ -178,13 +176,13 @@ public class AdapterProfile extends RecyclerView.Adapter<RecyclerView.ViewHolder
                 if (holder instanceof AdapterLinkList.ViewHolder) {
 
                     AdapterLinkList.ViewHolder viewHolderLink = (AdapterLinkList.ViewHolder) holder;
-                    viewHolderLink.onBind(controllerProfile.getLink(position), controllerLinks.showSubreddit(), controllerUser.getUser().getName());
+                    viewHolderLink.onBind(controllerProfile.getLink(position), controllerLinks.showSubreddit());
 
                 }
                 else if (holder instanceof AdapterCommentList.ViewHolderComment) {
 
                     AdapterCommentList.ViewHolderComment viewHolderComment = (AdapterCommentList.ViewHolderComment) holder;
-                    viewHolderComment.onBind(controllerProfile.getComment(position), controllerUser.getUser().getName());
+                    viewHolderComment.onBind(controllerProfile.getComment(position));
                 }
         }
         viewHolders.add(holder);

@@ -313,9 +313,11 @@ public class FragmentWeb extends FragmentBase implements Toolbar.OnMenuItemClick
 
     public void destroyWebView() {
         if (webView != null) {
+            webView.removeAllViews();
             webView.setWebChromeClient(null);
             webView.setWebViewClient(null);
             webView.destroy();
+            layoutRoot.removeView(webView);
             webView = null;
         }
     }

@@ -85,6 +85,7 @@ import com.winsonchiu.reader.data.reddit.Reddit;
 import com.winsonchiu.reader.data.reddit.Replyable;
 import com.winsonchiu.reader.data.reddit.Subreddit;
 import com.winsonchiu.reader.data.reddit.Thing;
+import com.winsonchiu.reader.data.reddit.User;
 import com.winsonchiu.reader.history.Historian;
 import com.winsonchiu.reader.utils.AnimationUtils;
 import com.winsonchiu.reader.utils.CustomColorFilter;
@@ -144,10 +145,8 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         this.preferences = PreferenceManager.getDefaultSharedPreferences(activity);
     }
 
-    public void setControllers(ControllerLinksBase controllerLinks,
-            ControllerUser controllerUser) {
+    public void setController(ControllerLinksBase controllerLinks) {
         this.controllerLinks = controllerLinks;
-        this.controllerUser = controllerUser;
     }
 
     public LayoutManager getLayoutManager() {
@@ -389,7 +388,6 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             View.OnLongClickListener {
 
         public Link link;
-        public String userName;
         public boolean showSubreddit;
 
         public FrameLayout frameFull;
@@ -632,7 +630,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
 
                 @Override
                 public boolean onDoubleTap(MotionEvent e) {
-                    if (!TextUtils.isEmpty(userName)) {
+                    if (!TextUtils.isEmpty(eventListener.getUser().getName())) {
                         eventListener.voteLink(ViewHolderBase.this, link, 1);
                     }
                     clearOverlay();
@@ -1508,7 +1506,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             Menu menu = toolbarActions.getMenu();
 
             boolean loggedIn = eventListener.isUserLoggedIn();
-            boolean isAuthor = link.getAuthor().equals(userName);
+            boolean isAuthor = link.getAuthor().equals(eventListener.getUser().getName());
 
             itemEdit.setVisible(link.isSelf() && isAuthor);
             itemEdit.setEnabled(link.isSelf() && isAuthor);
@@ -1578,10 +1576,9 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             imageThumbnail.setImageBitmap(null);
         }
 
-        public void onBind(Link link, boolean showSubreddit, String userName) {
+        public void onBind(Link link, boolean showSubreddit) {
             this.link = link;
             this.showSubreddit = showSubreddit;
-            this.userName = userName;
             titleTextColor = colorTextPrimaryDefault;
             titleTextColorAlert = colorTextAlertDefault;
             colorTextSecondary = colorTextSecondaryDefault;
@@ -1722,6 +1719,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             void markRead(Thing thing);
             void markNsfw(Link link);
             void loadWebFragment(String url);
+            User getUser();
         }
 
     }

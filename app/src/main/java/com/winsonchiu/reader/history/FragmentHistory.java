@@ -294,7 +294,6 @@ public class FragmentHistory extends FragmentBase implements Toolbar.OnMenuItemC
 
         if (adapterLinkList == null) {
             adapterLinkList = new AdapterHistoryLinkList(activity, mListener.getControllerHistory(),
-                    mListener.getControllerUser(),
                     eventListenerHeader,
                     mListener.getEventListenerBase(),
                     disallowListener,
@@ -302,7 +301,6 @@ public class FragmentHistory extends FragmentBase implements Toolbar.OnMenuItemC
         }
         if (adapterLinkGrid == null) {
             adapterLinkGrid = new AdapterHistoryLinkGrid(activity, mListener.getControllerHistory(),
-                    mListener.getControllerUser(),
                     eventListenerHeader,
                     mListener.getEventListenerBase(),
                     disallowListener,

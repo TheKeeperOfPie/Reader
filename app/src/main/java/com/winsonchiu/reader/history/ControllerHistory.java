@@ -54,7 +54,6 @@ public class ControllerHistory implements ControllerLinksBase {
         history = new Listing();
         namesToFetch = new ArrayList<>();
         query = "";
-
         timeEnd = Long.MAX_VALUE;
     }
 

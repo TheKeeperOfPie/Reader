@@ -6,7 +6,6 @@ package com.winsonchiu.reader.data.reddit;
 
 import android.accounts.Account;
 import android.accounts.AccountManager;
-import android.accounts.AccountManagerCallback;
 import android.accounts.AccountManagerFuture;
 import android.accounts.AuthenticatorException;
 import android.accounts.OperationCanceledException;
@@ -21,7 +20,6 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v7.widget.RecyclerView;
 import android.text.Html;
-import android.text.Spanned;
 import android.text.SpannedString;
 import android.text.TextUtils;
 import android.util.Base64;
@@ -30,7 +28,6 @@ import android.util.Log;
 import com.android.volley.AuthFailureError;
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
-import com.android.volley.Response.ErrorListener;
 import com.android.volley.Response.Listener;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
@@ -153,7 +150,9 @@ public class Reddit {
 
     public static final long SEC_TO_MS = 1000;
 
+    // As a note, both of these URLs require the www. part to function
     public static final String ACCESS_URL = "https://www.reddit.com/api/v1/access_token";
+    public static final String REVOKE_URL = "https://www.reddit.com/api/v1/revoke_token";
 
     private static final String USER_AUTHENTICATION_URL = "https://www.reddit.com/api/v1/authorize.compact?";
     private static final String AUTH_SCOPES = "account,creddits,edit,flair,history,identity,livemanage,modconfig,modflair,modlog,modothers,modposts,modself,modwiki,mysubreddits,privatemessages,read,report,save,submit,subscribe,vote,wikiedit,wikiread";
@@ -216,7 +215,7 @@ public class Reddit {
         accountManager = AccountManager.get(context.getApplicationContext());
     }
 
-    private Request<String> fetchApplicationWideToken(final RedditErrorListener listener) {
+    private Request<String> fetchApplicationWideToken(final ErrorListener listener) {
 
         final HashMap<String, String> params = new HashMap<>(2);
 
@@ -229,17 +228,20 @@ public class Reddit {
 
         params.put(QUERY_GRANT_TYPE, INSTALLED_CLIENT_GRANT);
         params.put(QUERY_DEVICE_ID, preferences.getString(AppSettings.DEVICE_ID, UUID.randomUUID()
-                        .toString()));
+                .toString()));
 
         return loadPostDefault(ACCESS_URL, new Listener<String>() {
             @Override
             public void onResponse(String response) {
 
                 try {
-                    JSONObject jsonObject = new JSONObject(response);
-                    tokenAuth = jsonObject.getString(QUERY_ACCESS_TOKEN);
-                    timeExpire = System.currentTimeMillis() + jsonObject.getLong(
-                                            QUERY_EXPIRES_IN) * SEC_TO_MS;
+                    // Check if an account was set while fetching a token
+                    if (account == null) {
+                        JSONObject jsonObject = new JSONObject(response);
+                        tokenAuth = jsonObject.getString(QUERY_ACCESS_TOKEN);
+                        timeExpire = System.currentTimeMillis() + jsonObject.getLong(
+                                QUERY_EXPIRES_IN) * SEC_TO_MS;
+                    }
 
                     if (listener != null) {
                         listener.onErrorHandled();
@@ -249,7 +251,7 @@ public class Reddit {
                     e.printStackTrace();
                 }
             }
-        }, new ErrorListener() {
+        }, new com.android.volley.Response.ErrorListener() {
             @Override
             public void onErrorResponse(VolleyError error) {
 
@@ -257,26 +259,26 @@ public class Reddit {
         }, params);
     }
 
-    public void clearAccount() {
+    public void clearAccount(ErrorListener errorListener) {
         account = null;
-        fetchToken(null);
+        fetchToken(errorListener);
     }
 
-    public void setAccount(Account accountUser) {
+    public void setAccount(Account accountUser, ErrorListener errorListener) {
         boolean accountFound = false;
         Account[] accounts = accountManager.getAccountsByType(Reddit.ACCOUNT_TYPE);
         for (Account account : accounts) {
             if (account.name.equals(accountUser.name)) {
                 this.account = account;
                 accountFound = true;
-                fetchToken(null);
+                fetchToken(errorListener);
                 break;
             }
         }
 
         if (!accountFound) {
             account = null;
-            fetchToken(null);
+            fetchToken(errorListener);
         }
     }
 
@@ -296,7 +298,7 @@ public class Reddit {
         return USER_AUTHENTICATION_URL + QUERY_CLIENT_ID + "=" + ApiKeys.REDDIT_CLIENT_ID + "&response_type=code&state=" + state + "&" + QUERY_REDIRECT_URI + "=" + REDIRECT_URI + "&" + QUERY_DURATION + "=permanent&scope=" + AUTH_SCOPES;
     }
 
-    public void fetchToken(final RedditErrorListener listener) {
+    public void fetchToken(final ErrorListener listener) {
 
         if (account == null) {
             fetchApplicationWideToken(listener);
@@ -335,64 +337,9 @@ public class Reddit {
         }).start();
     }
 
-    public Request<String> fetchToken(final RedditErrorListener listener, String blank) {
-
-        final HashMap<String, String> params = new HashMap<>(2);
-
-        if (TextUtils.isEmpty(preferences.getString(AppSettings.REFRESH_TOKEN, ""))) {
-            if ("".equals(preferences.getString(AppSettings.DEVICE_ID, ""))) {
-                preferences.edit()
-                        .putString(AppSettings.DEVICE_ID, UUID.randomUUID()
-                                .toString())
-                        .apply();
-            }
-
-            params.put(QUERY_GRANT_TYPE, INSTALLED_CLIENT_GRANT);
-            params.put(QUERY_DEVICE_ID,
-                    preferences.getString(AppSettings.DEVICE_ID, UUID.randomUUID()
-                            .toString()));
-        }
-        else {
-            params.put(QUERY_GRANT_TYPE, QUERY_REFRESH_TOKEN);
-            params.put(QUERY_REFRESH_TOKEN, preferences.getString(AppSettings.REFRESH_TOKEN, ""));
-        }
-
-        return loadPostDefault(ACCESS_URL, new Listener<String>() {
-            @Override
-            public void onResponse(String response) {
-                try {
-                    JSONObject jsonObject = new JSONObject(response);
-                    preferences.edit()
-                            .putString(AppSettings.ACCESS_TOKEN,
-                                    jsonObject.getString(QUERY_ACCESS_TOKEN))
-                            .apply();
-                    preferences.edit()
-                            .putLong(AppSettings.EXPIRE_TIME,
-                                    System.currentTimeMillis() + jsonObject.getLong(
-                                            QUERY_EXPIRES_IN) * SEC_TO_MS)
-                            .apply();
-                }
-                catch (JSONException e1) {
-                    e1.printStackTrace();
-                }
-
-                if (listener != null) {
-                    listener.onErrorHandled();
-                }
-
-            }
-        }, new ErrorListener() {
-            @Override
-            public void onErrorResponse(VolleyError error) {
-
-            }
-        }, params);
-
-    }
-
     public Request<String> loadPostDefault(final String url,
             @Nullable Listener<String> listener,
-            @Nullable final ErrorListener errorListener,
+            @Nullable final com.android.volley.Response.ErrorListener errorListener,
             final Map<String, String> params) {
 
         if (listener == null) {
@@ -439,7 +386,7 @@ public class Reddit {
      */
     public Request<String> loadPost(final String url,
             @Nullable Listener<String> listener,
-            @Nullable final ErrorListener errorListener,
+            @Nullable final com.android.volley.Response.ErrorListener errorListener,
             final Map<String, String> params,
             final int iteration) {
 
@@ -460,7 +407,7 @@ public class Reddit {
         }
 
         if (needsToken()) {
-            fetchToken(new RedditErrorListener() {
+            fetchToken(new ErrorListener() {
                 @Override
                 public void onErrorHandled() {
                     loadPost(url, listenerFinal, errorListener, params, iteration + 1);
@@ -470,7 +417,7 @@ public class Reddit {
         }
 
         StringRequest getRequest = new StringRequest(Request.Method.POST, url,
-                listener, new ErrorListener() {
+                listener, new com.android.volley.Response.ErrorListener() {
             @Override
             public void onErrorResponse(VolleyError error) {
                 Log.d(TAG, "loadPost error: " + error);
@@ -508,8 +455,10 @@ public class Reddit {
      */
     public Request<String> loadGet(final String url,
             @Nullable Listener<String> listener,
-            @Nullable final ErrorListener errorListener,
+            @Nullable final com.android.volley.Response.ErrorListener errorListener,
             final int iteration) {
+
+        Log.d(TAG, "loadGet, tokenAuth: " + tokenAuth);
 
         if (listener == null) {
             // Volley can't handle a null Response.Listener, so for convenience, we check if it's null
@@ -528,7 +477,7 @@ public class Reddit {
         }
 
         if (needsToken()) {
-            fetchToken(new RedditErrorListener() {
+            fetchToken(new ErrorListener() {
                 @Override
                 public void onErrorHandled() {
                     new Handler(Looper.getMainLooper()).post(new Runnable() {
@@ -543,7 +492,7 @@ public class Reddit {
         }
 
         StringRequest getRequest = new StringRequest(Request.Method.GET, url,
-                listener, new ErrorListener() {
+                listener, new com.android.volley.Response.ErrorListener() {
             @Override
             public void onErrorResponse(VolleyError error) {
                 Log.d(TAG, "loadGet error: " + error);
@@ -594,7 +543,7 @@ public class Reddit {
             @Override
             public void onResponse(String response) {
             }
-        }, new ErrorListener() {
+        }, new com.android.volley.Response.ErrorListener() {
             @Override
             public void onErrorResponse(VolleyError error) {
                 voteResponseListener.onVoteFailed();
@@ -612,7 +561,7 @@ public class Reddit {
     public Request<String> sendComment(String name,
             String text,
             Listener<String> listener,
-            ErrorListener errorListener) {
+            com.android.volley.Response.ErrorListener errorListener) {
         Log.d(TAG, "sendComment");
         Map<String, String> params = new HashMap<>();
         params.put("api_type", "json");
@@ -650,7 +599,7 @@ public class Reddit {
             @Override
             public void onResponse(String response) {
             }
-        }, new ErrorListener() {
+        }, new com.android.volley.Response.ErrorListener() {
             @Override
             public void onErrorResponse(VolleyError error) {
                 voteResponseListener.onVoteFailed();
@@ -665,7 +614,7 @@ public class Reddit {
         return true;
     }
 
-    public void save(Thing thing, String category, ErrorListener errorListener) {
+    public void save(Thing thing, String category, com.android.volley.Response.ErrorListener errorListener) {
 
         HashMap<String, String> params = new HashMap<>(2);
         params.put(Reddit.QUERY_ID, thing.getName());
@@ -688,7 +637,7 @@ public class Reddit {
             @Override
             public void onResponse(String response) {
             }
-        }, new ErrorListener() {
+        }, new com.android.volley.Response.ErrorListener() {
             @Override
             public void onErrorResponse(VolleyError error) {
             }
@@ -704,7 +653,7 @@ public class Reddit {
             @Override
             public void onResponse(String response) {
             }
-        }, new ErrorListener() {
+        }, new com.android.volley.Response.ErrorListener() {
             @Override
             public void onErrorResponse(VolleyError error) {
             }
@@ -720,7 +669,7 @@ public class Reddit {
             @Override
             public void onResponse(String response) {
             }
-        }, new ErrorListener() {
+        }, new com.android.volley.Response.ErrorListener() {
             @Override
             public void onErrorResponse(VolleyError error) {
             }
@@ -728,7 +677,7 @@ public class Reddit {
     }
 
 
-    public void markNsfw(Link link, ErrorListener errorListener) {
+    public void markNsfw(Link link, com.android.volley.Response.ErrorListener errorListener) {
 
         HashMap<String, String> params = new HashMap<>(1);
         params.put(Reddit.QUERY_ID, link.getName());
@@ -736,7 +685,7 @@ public class Reddit {
         reddit.loadPost(Reddit.OAUTH_URL + "/api/marknsfw", null, errorListener, params, 0);
     }
 
-    public void unmarkNsfw(Link link, ErrorListener errorListener) {
+    public void unmarkNsfw(Link link, com.android.volley.Response.ErrorListener errorListener) {
 
         HashMap<String, String> params = new HashMap<>(1);
         params.put(Reddit.QUERY_ID, link.getName());
@@ -777,7 +726,7 @@ public class Reddit {
 
     public Request<String> loadImgurImage(String id,
             @NonNull Listener<String> listener,
-            @Nullable final ErrorListener errorListener,
+            @Nullable final com.android.volley.Response.ErrorListener errorListener,
             final int iteration) {
 
         if (iteration > 2 && errorListener != null) {
@@ -803,7 +752,7 @@ public class Reddit {
 
     public Request<String> loadImgurAlbum(String id,
             @NonNull Listener<String> listener,
-            @Nullable final ErrorListener errorListener,
+            @Nullable final com.android.volley.Response.ErrorListener errorListener,
             final int iteration) {
 
         if (iteration > 2 && errorListener != null) {
@@ -829,7 +778,7 @@ public class Reddit {
 
     public Request<String> loadImgurGallery(String id,
             @NonNull Listener<String> listener,
-            @Nullable final ErrorListener errorListener,
+            @Nullable final com.android.volley.Response.ErrorListener errorListener,
             final int iteration) {
 
         if (iteration > 2 && errorListener != null) {
@@ -957,7 +906,7 @@ public class Reddit {
         return sequence.subSequence(start, end);
     }
 
-    public interface RedditErrorListener {
+    public interface ErrorListener {
         void onErrorHandled();
     }
 

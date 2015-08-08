@@ -37,7 +37,6 @@ public class AdapterHeaders extends RecyclerView.Adapter<AdapterHeaders.ViewHold
         headers.add(new Header(R.drawable.ic_build_white_24dp, R.string.prefs_category_behavior, R.string.prefs_category_behavior_summary));
         headers.add(new Header(R.drawable.ic_mail_white_24dp, R.string.prefs_category_mail, R.string.prefs_category_mail_summary));
         headers.add(new Header(R.drawable.ic_help_outline_white_24dp, R.string.prefs_category_about, R.string.prefs_category_about_summary));
-        headers.add(new Header(R.drawable.ic_exit_to_app_white_24dp, R.string.logout, R.string.logout_summary));
 
         TypedArray typedArray = activity.getTheme().obtainStyledAttributes(new int[] {R.attr.colorIconFilter});
         int colorIconFilter = typedArray.getColor(0, 0xFFFFFFFF);

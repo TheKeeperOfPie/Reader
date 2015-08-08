@@ -37,22 +37,15 @@ public class AppSettings {
     public static final String THEME_GREY = "Grey";
     public static final String THEME_BLUE_GREY = "Blue Grey";
 
-    // List of all possible tokens
+    // List of all possible keys
     public static final String INITIALIZED = "initialized";
-    public static final String ACCESS_TOKEN = "accessToken";
     public static final String DEVICE_ID = "deviceId";
-    public static final String EXPIRE_TIME = "expireTime";
 
     public static final String INTERFACE_MODE = "interfaceMode";
     public static final String MODE_LIST = "List";
     public static final String MODE_GRID = "Grid";
 
-    public static final String ACCOUNT_JSON = "accountJson";
-    public static final String SUBSCRIBED_SUBREDDITS = "subscribedSubreddits";
-    public static final String REFRESH_TOKEN = "refreshToken";
     public static final String ACCOUNT_NAME = "accountName";
-
-    public static final String HISTORY_SET = "historySet";
 
     // Preferences
 
