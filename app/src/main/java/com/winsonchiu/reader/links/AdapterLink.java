@@ -92,6 +92,7 @@ import com.winsonchiu.reader.utils.CustomColorFilter;
 import com.winsonchiu.reader.utils.DisallowListener;
 import com.winsonchiu.reader.utils.OnTouchListenerDisallow;
 import com.winsonchiu.reader.utils.RecyclerCallback;
+import com.winsonchiu.reader.utils.VideoViewContextWrapper;
 import com.winsonchiu.reader.views.WebViewFixed;
 
 import org.json.JSONException;
@@ -540,7 +541,6 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
 
             progressImage = (ProgressBar) itemView.findViewById(R.id.progress_image);
             imagePlay = (ImageView) itemView.findViewById(R.id.image_play);
-            videoFull = (VideoView) itemView.findViewById(R.id.video_full);
             frameFull = (FrameLayout) itemView.findViewById(R.id.frame_full);
             viewPagerFull = (ViewPager) itemView.findViewById(R.id.view_pager_full);
             imageThumbnail = (ImageView) itemView.findViewById(R.id.image_thumbnail);
@@ -615,6 +615,11 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             colorFilterSave = new PorterDuffColorFilter(colorAccent, PorterDuff.Mode.MULTIPLY);
 
             buttonComments.setColorFilter(colorFilterIconDefault);
+
+            videoFull = new VideoView(new VideoViewContextWrapper(itemView.getContext()));
+            videoFull.setVisibility(View.GONE);
+
+            frameFull.addView(videoFull, FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.WRAP_CONTENT);
 
         }
 

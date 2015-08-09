@@ -87,7 +87,7 @@ public class Authenticator extends AbstractAccountAuthenticator {
             params.put(Reddit.QUERY_GRANT_TYPE, Reddit.QUERY_REFRESH_TOKEN);
             params.put(Reddit.QUERY_REFRESH_TOKEN, accountManager.getPassword(account));
 
-            Reddit.getInstance(context).loadPostDefault(Reddit.ACCESS_URL, requestFuture, requestFuture, params);
+            Reddit.getInstance(context).loadPostDefault(Reddit.ACCESS_URL, requestFuture, requestFuture, params, 0);
             try {
                 String responseNetwork = requestFuture.get();
 

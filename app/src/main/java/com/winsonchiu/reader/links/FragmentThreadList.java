@@ -103,6 +103,7 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
     private FloatingActionButton buttonJumpTop;
     private PorterDuffColorFilter colorFilterIcon;
     private ScrollAwareFloatingActionButtonBehavior behaviorButtonExpandActions;
+    private View view;
 
     public static FragmentThreadList newInstance() {
         FragmentThreadList fragment = new FragmentThreadList();
@@ -348,7 +349,7 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
 
         Log.d(TAG, "onCreateView");
 
-        final View view = inflater.inflate(R.layout.fragment_thread_list, container, false);
+        view = inflater.inflate(R.layout.fragment_thread_list, container, false);
 
         TypedArray typedArray = activity.getTheme().obtainStyledAttributes(
                 new int[] {R.attr.colorPrimary, R.attr.colorIconFilter});
@@ -864,6 +865,10 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
         super.onHiddenChanged(hidden);
         if (hidden) {
             adapterLink.pauseViewHolders();
+            view.setVisibility(View.INVISIBLE);
+        }
+        else {
+            view.setVisibility(View.VISIBLE);
         }
     }
 

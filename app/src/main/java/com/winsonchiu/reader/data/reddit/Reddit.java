@@ -11,6 +11,7 @@ import android.accounts.AuthenticatorException;
 import android.accounts.OperationCanceledException;
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.content.res.Resources;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.os.Handler;
@@ -24,10 +25,14 @@ import android.text.SpannedString;
 import android.text.TextUtils;
 import android.util.Base64;
 import android.util.Log;
+import android.view.MenuItem;
+import android.webkit.URLUtil;
+import android.widget.EditText;
 
 import com.android.volley.AuthFailureError;
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
+import com.android.volley.Response;
 import com.android.volley.Response.Listener;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
@@ -256,7 +261,7 @@ public class Reddit {
             public void onErrorResponse(VolleyError error) {
 
             }
-        }, params);
+        }, params, 0);
     }
 
     public void clearAccount(ErrorListener errorListener) {
@@ -340,7 +345,8 @@ public class Reddit {
     public Request<String> loadPostDefault(final String url,
             @Nullable Listener<String> listener,
             @Nullable final com.android.volley.Response.ErrorListener errorListener,
-            final Map<String, String> params) {
+            final Map<String, String> params,
+            final int iteration) {
 
         if (listener == null) {
             // Volley can't handle a null Response.Listener, so for convenience, we check if it's null
@@ -351,9 +357,23 @@ public class Reddit {
                 }
             };
         }
+        final Listener<String> listenerFinal = listener;
 
         StringRequest postRequest = new StringRequest(Request.Method.POST, url,
-                listener, errorListener) {
+                listener, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+
+                if (iteration > 2) {
+                    if (errorListener != null) {
+                        errorListener.onErrorResponse(error);
+                    }
+                }
+                else {
+                    loadPostDefault(url, listenerFinal, errorListener, params, iteration + 1);
+                }
+            }
+        }) {
             @Override
             protected Map<String, String> getParams() throws AuthFailureError {
                 return params;
@@ -401,7 +421,7 @@ public class Reddit {
         }
         final Listener<String> listenerFinal = listener;
 
-        if (iteration > 2 && errorListener != null) {
+        if (iteration > 3 && errorListener != null) {
             errorListener.onErrorResponse(null);
             return null;
         }
@@ -421,8 +441,13 @@ public class Reddit {
             @Override
             public void onErrorResponse(VolleyError error) {
                 Log.d(TAG, "loadPost error: " + error);
-                if (errorListener != null) {
-                    errorListener.onErrorResponse(error);
+                if (iteration > 2) {
+                    if (errorListener != null) {
+                        errorListener.onErrorResponse(error);
+                    }
+                }
+                else {
+                    loadPost(url, listenerFinal, errorListener, params, iteration + 1);
                 }
             }
         }) {
@@ -471,7 +496,7 @@ public class Reddit {
         }
         final Listener<String> listenerFinal = listener;
 
-        if (iteration > 2 && errorListener != null) {
+        if (iteration > 3 && errorListener != null) {
             errorListener.onErrorResponse(null);
             return null;
         }
@@ -496,8 +521,13 @@ public class Reddit {
             @Override
             public void onErrorResponse(VolleyError error) {
                 Log.d(TAG, "loadGet error: " + error);
-                if (errorListener != null) {
-                    errorListener.onErrorResponse(error);
+                if (iteration > 2) {
+                    if (errorListener != null) {
+                        errorListener.onErrorResponse(error);
+                    }
+                }
+                else {
+                    loadGet(url, listenerFinal, errorListener, iteration + 1);
                 }
             }
         }) {
@@ -675,7 +705,6 @@ public class Reddit {
             }
         }, params, 0);
     }
-
 
     public void markNsfw(Link link, com.android.volley.Response.ErrorListener errorListener) {
 
@@ -904,6 +933,133 @@ public class Reddit {
 
 
         return sequence.subSequence(start, end);
+    }
+
+    public static void onMenuItemClickEditor(EditText editText, MenuItem menuItem, Resources resources) {
+
+        int selectionStart = editText.getSelectionStart();
+        int selectionEnd = editText.getSelectionEnd();
+        boolean isMultipleSelected = selectionEnd != selectionStart;
+        boolean isNewLine = editText.getText().length() == 0 || editText.getText().charAt(editText.length() - 1) == '\n';
+
+        switch (menuItem.getItemId()) {
+            case R.id.item_editor_italicize:
+                if (isMultipleSelected) {
+                    editText.getText().insert(selectionEnd, "*");
+                    editText.getText().insert(selectionStart, "*");
+                    setSelectionHelper(editText, selectionStart + 1, selectionEnd + 1);
+                }
+                else {
+                    editText.getText().insert(selectionStart, "**");
+                    setSelectionHelper(editText, selectionStart + 1);
+                }
+                break;
+            case R.id.item_editor_bold:
+                if (isMultipleSelected) {
+                    editText.getText().insert(selectionEnd, "**");
+                    editText.getText().insert(selectionStart, "**");
+                    setSelectionHelper(editText, selectionStart + 2, selectionEnd + 2);
+                }
+                else {
+                    editText.getText().insert(selectionStart, "****");
+                    setSelectionHelper(editText, selectionStart + 2);
+                }
+                break;
+            case R.id.item_editor_strikethrough:
+                if (isMultipleSelected) {
+                    editText.getText().insert(selectionEnd, "~~");
+                    editText.getText().insert(selectionStart, "~~");
+                    setSelectionHelper(editText, selectionStart + 2, selectionEnd + 2);
+                }
+                else {
+                    editText.getText().insert(selectionStart, "~~~~");
+                    setSelectionHelper(editText, selectionStart + 2);
+                }
+                break;
+            case R.id.item_editor_quote:
+                if (isMultipleSelected) {
+                    editText.getText().insert(selectionStart, "> ");
+                    setSelectionHelper(editText, selectionStart + 2, selectionEnd + 2);
+                }
+                else if (isNewLine) {
+                    editText.getText().insert(selectionStart, "> ");
+                    setSelectionHelper(editText, selectionStart + 2);
+                }
+                else {
+                    editText.getText().insert(selectionStart, "\n> ");
+                    setSelectionHelper(editText, selectionStart + 3);
+                }
+                break;
+            case R.id.item_editor_link:
+                String labelText = resources.getString(R.string.editor_label_text);
+                String labelLink = resources.getString(R.string.editor_label_link);
+                if (isMultipleSelected) {
+                    if (URLUtil.isValidUrl(editText.getText().subSequence(selectionStart, selectionEnd).toString())) {
+                        editText.getText().insert(selectionEnd, ")");
+                        editText.getText().insert(selectionStart, "[" + labelText + "](");
+                        setSelectionHelper(editText, selectionStart + 1, selectionStart + 1 + labelText.length());
+                    }
+                    else {
+                        editText.getText().insert(selectionEnd, "](" + labelLink + ")");
+                        editText.getText().insert(selectionStart, "[");
+                        setSelectionHelper(editText, selectionEnd + 3, selectionEnd + 3 + labelLink.length());
+                    }
+                }
+                else {
+                    editText.getText().insert(selectionStart, "[" + labelText + "](" + labelLink + ")");
+                    setSelectionHelper(editText, selectionStart + 1, selectionStart + 1 + labelText.length());
+                }
+                break;
+            case R.id.item_editor_list_bulleted:
+                if (isNewLine) {
+                    editText.getText().insert(selectionStart, "* \n* \n* ");
+                    setSelectionHelper(editText, selectionStart + 2);
+                }
+                else {
+                    editText.getText().insert(selectionStart, "\n\n* \n* \n* ");
+                    setSelectionHelper(editText, selectionStart + 4);
+                }
+                break;
+            case R.id.item_editor_list_numbered:
+                if (isNewLine) {
+                    editText.getText().insert(selectionStart, "1. \n2. \n3. ");
+                    setSelectionHelper(editText, selectionStart + 3);
+                }
+                else {
+                    editText.getText().insert(selectionStart, "\n\n1. \n2. \n3. ");
+                    setSelectionHelper(editText, selectionStart + 5);
+                }
+                break;
+        }
+    }
+
+
+    /**
+     * Helper method to ensure selection is valid (due to max length requirements)
+     * @param editText
+     * @param selectionStart
+     */
+    private static void setSelectionHelper(EditText editText, int selectionStart) {
+        setSelectionHelper(editText, selectionStart, selectionStart);
+    }
+
+    /**
+     * Helper method to ensure selection is valid (due to max length requirements)
+     * @param editText
+     * @param selectionStart
+     * @param selectionEnd
+     */
+    private static void setSelectionHelper(EditText editText, int selectionStart, int selectionEnd) {
+
+        if (selectionStart > editText.getText().length()) {
+            selectionStart = editText.getText().length();
+        }
+
+        if (selectionEnd > editText.getText().length()) {
+            selectionEnd = editText.getText().length();
+        }
+
+        editText.setSelection(selectionStart, selectionEnd);
     }
 
     public interface ErrorListener {

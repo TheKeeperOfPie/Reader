@@ -68,6 +68,7 @@ public class FragmentProfile extends FragmentBase implements Toolbar.OnMenuItemC
     private CustomItemTouchHelper itemTouchHelper;
     private PorterDuffColorFilter colorFilterIcon;
     private CustomItemTouchHelper.SimpleCallback callback;
+    private View view;
 
     public static FragmentProfile newInstance() {
         FragmentProfile fragment = new FragmentProfile();
@@ -161,7 +162,7 @@ public class FragmentProfile extends FragmentBase implements Toolbar.OnMenuItemC
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
             Bundle savedInstanceState) {
 
-        final View view = inflater.inflate(R.layout.fragment_profile, container, false);
+        view = inflater.inflate(R.layout.fragment_profile, container, false);
 
         listener = new ControllerProfile.Listener() {
             @Override
@@ -525,6 +526,10 @@ public class FragmentProfile extends FragmentBase implements Toolbar.OnMenuItemC
         super.onHiddenChanged(hidden);
         if (hidden) {
             adapterProfile.pauseViewHolders();
+            view.setVisibility(View.INVISIBLE);
+        }
+        else {
+            view.setVisibility(View.VISIBLE);
         }
     }
 

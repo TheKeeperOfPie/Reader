@@ -11,6 +11,7 @@ import android.accounts.AccountManagerFuture;
 import android.accounts.AuthenticatorException;
 import android.accounts.OperationCanceledException;
 import android.app.Activity;
+import android.app.ActivityManager;
 import android.app.Fragment;
 import android.app.FragmentTransaction;
 import android.content.DialogInterface;
@@ -18,6 +19,10 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.TypedArray;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.ColorFilter;
+import android.graphics.PorterDuff;
+import android.graphics.PorterDuffColorFilter;
 import android.media.MediaScannerConnection;
 import android.net.Uri;
 import android.os.Build;
@@ -133,6 +138,7 @@ public class MainActivity extends YouTubeBaseActivity
             handler.postDelayed(this, 60000);
         }
     };
+    private PorterDuffColorFilter colorFilterIcon;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -143,6 +149,17 @@ public class MainActivity extends YouTubeBaseActivity
             String themeAccent = sharedPreferences.getString(AppSettings.PREF_THEME_ACCENT, AppSettings.THEME_YELLOW);
 
             setTheme(theme.getStyle(themeBackground, themeAccent));
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+
+                TypedArray typedArray = obtainStyledAttributes(new int[] {R.attr.colorPrimary});
+                int colorPrimary = typedArray.getColor(0, getResources().getColor(R.color.colorPrimary));
+                typedArray.recycle();
+
+                ActivityManager.TaskDescription taskDescription = new ActivityManager.TaskDescription("Reader", BitmapFactory.decodeResource(getResources(), R.mipmap.app_icon_dark_outline), colorPrimary);
+                setTaskDescription(taskDescription);
+            }
+
         }
         Fabric.with(this, new Crashlytics());
 
@@ -721,9 +738,13 @@ public class MainActivity extends YouTubeBaseActivity
         float screenWidth = getResources().getDisplayMetrics().widthPixels;
 
         TypedArray typedArray = getTheme().obtainStyledAttributes(
-                new int[]{android.R.attr.actionBarSize});
+                new int[]{android.R.attr.actionBarSize, R.attr.colorIconFilter});
         float marginEnd = typedArray.getDimension(0, standardIncrement);
+        int colorIconFilter = typedArray.getColor(1, 0xFFFFFFFF);
         typedArray.recycle();
+
+        colorFilterIcon = new PorterDuffColorFilter(colorIconFilter,
+                PorterDuff.Mode.MULTIPLY);
 
         float navigationWidth = screenWidth - marginEnd;
         if (navigationWidth > standardIncrement * 6) {
@@ -740,6 +761,8 @@ public class MainActivity extends YouTubeBaseActivity
         textAccountInfo = (TextView) viewHeader.findViewById(R.id.text_account_info);
         buttonAccounts = (ImageButton) viewHeader.findViewById(R.id.button_accounts);
         layoutAccounts = (LinearLayout) viewHeader.findViewById(R.id.layout_accounts);
+
+        buttonAccounts.setColorFilter(colorFilterIcon);
 
         viewHeader.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -772,6 +795,7 @@ public class MainActivity extends YouTubeBaseActivity
             View viewAccount = getLayoutInflater().inflate(R.layout.row_account, layoutAccounts, false);
             TextView textUsername = (TextView) viewAccount.findViewById(R.id.text_username);
             ImageButton buttonDeleteAccount = (ImageButton) viewAccount.findViewById(R.id.button_delete_account);
+            buttonDeleteAccount.setColorFilter(colorFilterIcon);
 
             textUsername.setText(account.name);
 
@@ -803,6 +827,7 @@ public class MainActivity extends YouTubeBaseActivity
         textAddAccount.setText(R.string.add_account);
         ImageButton buttonAddAccount = (ImageButton) viewAddAccount.findViewById(R.id.button_delete_account);
         buttonAddAccount.setImageResource(R.drawable.ic_add_white_24dp);
+        buttonAddAccount.setColorFilter(colorFilterIcon);
         buttonAddAccount.setClickable(false);
         layoutAccounts.addView(viewAddAccount);
 
@@ -817,6 +842,7 @@ public class MainActivity extends YouTubeBaseActivity
         textLogout.setText(R.string.logout);
         ImageButton buttonLogout = (ImageButton) viewLogout.findViewById(R.id.button_delete_account);
         buttonLogout.setImageResource(R.drawable.ic_exit_to_app_white_24dp);
+        buttonLogout.setColorFilter(colorFilterIcon);
         buttonLogout.setClickable(false);
         layoutAccounts.addView(viewLogout);
     }
@@ -919,7 +945,7 @@ public class MainActivity extends YouTubeBaseActivity
                                     }
                                 });
                             }
-                        }, params);
+                        }, params, 0);
                     }
                 })
                 .setNegativeButton(R.string.cancel, null)
@@ -935,6 +961,7 @@ public class MainActivity extends YouTubeBaseActivity
             layoutAccounts.setVisibility(View.GONE);
             buttonAccounts.setImageResource(R.drawable.ic_arrow_drop_down_white_24dp);
         }
+        buttonAccounts.setColorFilter(colorFilterIcon);
     }
 
     private void selectNavigationItem(final int id, String page, boolean animate) {
@@ -1363,6 +1390,7 @@ public class MainActivity extends YouTubeBaseActivity
 
             fragment = (FragmentBase) getFragmentManager().findFragmentById(R.id.frame_fragment);
             if (fragment != null) {
+                fragment.onHiddenChanged(false);
                 getFragmentManager().beginTransaction().show(fragment).commit();
                 fragment.onShown();
                 Log.d(TAG, "Fragment shown");

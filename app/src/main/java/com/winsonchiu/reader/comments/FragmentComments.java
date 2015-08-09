@@ -94,7 +94,7 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
     private YouTubePlayer youTubePlayer;
     private RecyclerView.AdapterDataObserver observer;
     private FastOutSlowInInterpolator fastOutSlowInInterpolator;
-    private Fragment fragmentToHide;
+    private FragmentBase fragmentToHide;
     private String fragmentParentTag;
     private boolean isFullscreen;
     private int viewHolderWidth;
@@ -709,7 +709,8 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
                     return;
                 }
                 if (fragmentToHide != null) {
-                    getFragmentManager().beginTransaction().hide(fragmentToHide).commit();
+                    fragmentToHide.onHiddenChanged(true);
+//                    getFragmentManager().beginTransaction().hide(fragmentToHide).commit();
                     fragmentToHide = null;
                 }
                 swipeRefreshCommentList.postDelayed(new Runnable() {
@@ -920,7 +921,7 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
         CustomApplication.getRefWatcher(getActivity()).watch(this);
     }
 
-    public void setFragmentToHide(Fragment fragmentToHide, View viewHolderView) {
+    public void setFragmentToHide(FragmentBase fragmentToHide, View viewHolderView) {
         this.fragmentToHide = fragmentToHide;
         this.viewHolderView = viewHolderView;
         fragmentParentTag = fragmentToHide.getTag();
@@ -1011,9 +1012,10 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
                 animation.setAnimationListener(new Animation.AnimationListener() {
                     @Override
                     public void onAnimationStart(Animation animation) {
-                        Fragment fragment = getFragmentManager()
+                        FragmentBase fragment = (FragmentBase) getFragmentManager()
                                 .findFragmentByTag(fragmentParentTag);
                         if (fragment != null) {
+                            fragment.onHiddenChanged(false);
                             getFragmentManager().beginTransaction().show(fragment)
                                     .commit();
                         }

@@ -37,6 +37,7 @@ import com.winsonchiu.reader.FragmentBase;
 import com.winsonchiu.reader.FragmentListenerBase;
 import com.winsonchiu.reader.R;
 import com.winsonchiu.reader.data.reddit.Comment;
+import com.winsonchiu.reader.data.reddit.Reddit;
 import com.winsonchiu.reader.data.reddit.Replyable;
 import com.winsonchiu.reader.history.FragmentHistory;
 import com.winsonchiu.reader.inbox.FragmentInbox;
@@ -140,6 +141,7 @@ public class FragmentReply extends FragmentBase implements Toolbar.OnMenuItemCli
         editReply.setSelection(editReply.length());
 
         View.OnFocusChangeListener onFocusChangeListener = new View.OnFocusChangeListener() {
+
             @Override
             public void onFocusChange(View v, boolean hasFocus) {
                 if (hasFocus) {
@@ -339,9 +341,6 @@ public class FragmentReply extends FragmentBase implements Toolbar.OnMenuItemCli
     @Override
     public boolean onMenuItemClick(MenuItem item) {
 
-        int selectionStart = editReply.getSelectionStart();
-        boolean isNewLine = editReply.getText().length() == 0 || editReply.getText().charAt(editReply.length() - 1) == '\n';
-
         switch (item.getItemId()) {
             case R.id.item_send_reply:
                 InputMethodManager inputManager = (InputMethodManager) activity.getSystemService(
@@ -362,57 +361,9 @@ public class FragmentReply extends FragmentBase implements Toolbar.OnMenuItemCli
             case R.id.item_hide_actions:
                 toggleActions();
                 break;
-            case R.id.item_editor_italicize:
-                editReply.getText().insert(selectionStart, "**");
-                editReply.setSelection(selectionStart + 1);
-                break;
-            case R.id.item_editor_bold:
-                editReply.getText().insert(selectionStart, "****");
-                editReply.setSelection(selectionStart + 2);
-                break;
-            case R.id.item_editor_strikethrough:
-                editReply.getText().insert(selectionStart, "~~~~");
-                editReply.setSelection(selectionStart + 2);
-                break;
-            case R.id.item_editor_quote:
-                if (isNewLine) {
-                    editReply.getText().insert(selectionStart, "> ");
-                    editReply.setSelection(selectionStart + 2);
-                }
-                else {
-                    editReply.getText().insert(selectionStart, "\n> ");
-                    editReply.setSelection(selectionStart + 3);
-                }
-                break;
-            case R.id.item_editor_link:
-                String labelText = getString(R.string.editor_label_text);
-                String labelLink = getString(R.string.editor_label_link);
-                int indexStart = selectionStart + 1;
-                int indexEnd = indexStart + labelText.length();
-                editReply.getText().insert(selectionStart, "[" + labelText + "](" + labelLink + ")");
-                editReply.setSelection(indexStart, indexEnd);
-                break;
-            case R.id.item_editor_list_bulleted:
-                if (isNewLine) {
-                    editReply.getText().insert(selectionStart, "* \n* \n* ");
-                    editReply.setSelection(selectionStart + 2);
-                }
-                else {
-                    editReply.getText().insert(selectionStart, "\n\n* \n* \n* ");
-                    editReply.setSelection(selectionStart + 4);
-                }
-                break;
-            case R.id.item_editor_list_numbered:
-                if (isNewLine) {
-                    editReply.getText().insert(selectionStart, "1. \n2. \n3. ");
-                    editReply.setSelection(selectionStart + 3);
-                }
-                else {
-                    editReply.getText().insert(selectionStart, "\n\n1. \n2. \n3. ");
-                    editReply.setSelection(selectionStart + 5);
-                }
-                break;
         }
+
+        Reddit.onMenuItemClickEditor(editReply, item, getResources());
 
         return true;
     }

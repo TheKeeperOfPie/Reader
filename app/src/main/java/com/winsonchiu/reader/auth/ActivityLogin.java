@@ -153,7 +153,7 @@ public class ActivityLogin extends AccountAuthenticatorActivity {
             public void onErrorResponse(VolleyError error) {
                 Log.d(TAG, "onErrorResponse: " + error);
             }
-        }, params);
+        }, params, 0);
     }
 
     private void loadAccountInfo(final String tokenAuth, final String tokenRefresh, final long timeExpire) {

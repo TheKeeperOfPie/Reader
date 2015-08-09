@@ -79,6 +79,7 @@ public class FragmentHistory extends FragmentBase implements Toolbar.OnMenuItemC
     private PorterDuffColorFilter colorFilterIcon;
     private CoordinatorLayout layoutCoordinator;
     private AppBarLayout layoutAppBar;
+    private View view;
 
     public static FragmentHistory newInstance() {
         FragmentHistory fragment = new FragmentHistory();
@@ -164,8 +165,7 @@ public class FragmentHistory extends FragmentBase implements Toolbar.OnMenuItemC
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
             Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.fragment_history, container, false);
-
+        view = inflater.inflate(R.layout.fragment_history, container, false);
 
         listener = new ControllerHistory.Listener() {
             @Override
@@ -459,6 +459,10 @@ public class FragmentHistory extends FragmentBase implements Toolbar.OnMenuItemC
         super.onHiddenChanged(hidden);
         if (hidden) {
             adapterLink.pauseViewHolders();
+            view.setVisibility(View.INVISIBLE);
+        }
+        else {
+            view.setVisibility(View.VISIBLE);
         }
     }
 
@@ -662,4 +666,5 @@ public class FragmentHistory extends FragmentBase implements Toolbar.OnMenuItemC
         recyclerHistory.setAdapter(adapterLink);
         recyclerHistory.scrollToPosition(currentPosition[0]);
     }
+
 }

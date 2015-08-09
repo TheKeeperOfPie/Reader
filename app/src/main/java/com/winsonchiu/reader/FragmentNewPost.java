@@ -556,9 +556,6 @@ public class FragmentNewPost extends FragmentBase implements Toolbar.OnMenuItemC
     @Override
     public boolean onMenuItemClick(MenuItem item) {
 
-        int selectionStart = editTextBody.getSelectionStart();
-        boolean isNewLine = editTextBody.getText().length() == 0 || editTextBody.getText().charAt(editTextBody.length() - 1) == '\n';
-
         switch (item.getItemId()) {
             case R.id.item_submit_post:
                 if (getArguments().getBoolean(IS_EDIT, false)) {
@@ -571,57 +568,8 @@ public class FragmentNewPost extends FragmentBase implements Toolbar.OnMenuItemC
             case R.id.item_hide_actions:
                 toggleActions();
                 break;
-            case R.id.item_editor_italicize:
-                editTextBody.getText().insert(selectionStart, "**");
-                editTextBody.setSelection(selectionStart + 1);
-                break;
-            case R.id.item_editor_bold:
-                editTextBody.getText().insert(selectionStart, "****");
-                editTextBody.setSelection(selectionStart + 2);
-                break;
-            case R.id.item_editor_strikethrough:
-                editTextBody.getText().insert(selectionStart, "~~~~");
-                editTextBody.setSelection(selectionStart + 2);
-                break;
-            case R.id.item_editor_quote:
-                if (isNewLine) {
-                    editTextBody.getText().insert(selectionStart, "> ");
-                    editTextBody.setSelection(selectionStart + 2);
-                }
-                else {
-                    editTextBody.getText().insert(selectionStart, "\n> ");
-                    editTextBody.setSelection(selectionStart + 3);
-                }
-                break;
-            case R.id.item_editor_link:
-                String labelText = getString(R.string.editor_label_text);
-                String labelLink = getString(R.string.editor_label_link);
-                int indexStart = selectionStart + 1;
-                int indexEnd = indexStart + labelText.length();
-                editTextBody.getText().insert(selectionStart, "[" + labelText + "](" + labelLink + ")");
-                editTextBody.setSelection(indexStart, indexEnd);
-                break;
-            case R.id.item_editor_list_bulleted:
-                if (isNewLine) {
-                    editTextBody.getText().insert(selectionStart, "* \n* \n* ");
-                    editTextBody.setSelection(selectionStart + 2);
-                }
-                else {
-                    editTextBody.getText().insert(selectionStart, "\n\n* \n* \n* ");
-                    editTextBody.setSelection(selectionStart + 4);
-                }
-                break;
-            case R.id.item_editor_list_numbered:
-                if (isNewLine) {
-                    editTextBody.getText().insert(selectionStart, "1. \n2. \n3. ");
-                    editTextBody.setSelection(selectionStart + 3);
-                }
-                else {
-                    editTextBody.getText().insert(selectionStart, "\n\n1. \n2. \n3. ");
-                    editTextBody.setSelection(selectionStart + 5);
-                }
-                break;
         }
+        Reddit.onMenuItemClickEditor(editTextBody, item, getResources());
 
         return true;
     }

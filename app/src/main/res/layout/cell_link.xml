@@ -33,14 +33,6 @@
                 android:minHeight="48dp"
                 />
 
-            <VideoView
-                android:id="@+id/video_full"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:visibility="gone"
-                android:minHeight="48dp"
-                />
-
             <com.google.android.youtube.player.YouTubePlayerView
                 android:id="@+id/youtube"
                 android:layout_width="match_parent"
