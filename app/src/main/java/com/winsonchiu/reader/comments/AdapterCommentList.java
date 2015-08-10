@@ -13,6 +13,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.content.res.TypedArray;
+import android.graphics.Bitmap;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
 import android.graphics.drawable.Drawable;
@@ -35,6 +36,7 @@ import android.text.method.LinkMovementMethod;
 import android.text.style.ForegroundColorSpan;
 import android.text.util.Linkify;
 import android.util.DisplayMetrics;
+import android.util.Log;
 import android.util.TypedValue;
 import android.view.GestureDetector;
 import android.view.LayoutInflater;
@@ -142,17 +144,18 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
 
                     @Override
                     public boolean isInHistory() {
+
                         return false;
                     }
-
                     @Override
-                    public void loadBackgroundColor() {
+                    public void loadBackgroundColor(Bitmap bitmap) {
+                        Log.d(TAG, "colorLink: " + colorLink);
                         if (colorLink != 0) {
-                            itemView.setBackgroundColor(colorLink);
+                            setBackgroundColor(colorLink);
                             setTextColors(colorLink);
                         }
                         else {
-                            super.loadBackgroundColor();
+                            super.loadBackgroundColor(bitmap);
                         }
                     }
 

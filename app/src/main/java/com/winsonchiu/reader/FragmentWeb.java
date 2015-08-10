@@ -323,7 +323,7 @@ public class FragmentWeb extends FragmentBase implements Toolbar.OnMenuItemClick
     }
 
     @Override
-    public void onDestroy() {
+    public void onDestroyView() {
         destroyWebView();
         if (itemSearch != null) {
             ((SearchView) itemSearch.getActionView()).setOnQueryTextListener(null);
@@ -334,6 +334,11 @@ public class FragmentWeb extends FragmentBase implements Toolbar.OnMenuItemClick
         toolbar.setNavigationOnClickListener(null);
         toolbar.setOnMenuItemClickListener(null);
         toolbarActions.setOnMenuItemClickListener(null);
+        super.onDestroyView();
+    }
+
+    @Override
+    public void onDestroy() {
         super.onDestroy();
         CustomApplication.getRefWatcher(getActivity()).watch(this);
     }

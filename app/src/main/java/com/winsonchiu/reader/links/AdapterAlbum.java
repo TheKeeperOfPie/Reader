@@ -11,6 +11,7 @@ import android.text.TextPaint;
 import android.text.TextUtils;
 import android.text.util.Linkify;
 import android.util.Log;
+import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -41,6 +42,7 @@ public class AdapterAlbum extends PagerAdapter {
     private static final String TAG = AdapterAlbum.class.getCanonicalName();
     private final EventListener eventListener;
     private final ViewPager viewPager;
+    private int margin;
     private CustomColorFilter colorFilterIcon;
     private DisallowListener disallowListener;
     private Album album;
@@ -53,6 +55,7 @@ public class AdapterAlbum extends PagerAdapter {
         this.disallowListener = disallowListener;
         this.colorFilterIcon = colorFilterIcon;
         recycledViews = new Stack<>();
+        margin = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 8, viewPager.getContext().getResources().getDisplayMetrics());
 
     }
 
@@ -115,31 +118,19 @@ public class AdapterAlbum extends PagerAdapter {
         layoutParams.addRule(RelativeLayout.ALIGN_PARENT_START, RelativeLayout.TRUE);
         layoutParams.addRule(RelativeLayout.ALIGN_PARENT_END, RelativeLayout.TRUE);
         layoutParams.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM, RelativeLayout.TRUE);
-        layoutParams.addRule(RelativeLayout.BELOW, R.id.text_image_title);
+        layoutParams.addRule(RelativeLayout.ALIGN_PARENT_TOP, RelativeLayout.TRUE);
 
         ((RelativeLayout) view).addView(webView, 0, layoutParams);
 
-        webView.loadData(Reddit.getImageHtml(image.getLink()), "text/html", "UTF-8");
+        String title = !TextUtils.isEmpty(image.getTitle()) && !"null".equals(image.getTitle()) ? image.getTitle() : "";
+
+        String description = !TextUtils.isEmpty(image.getDescription()) && !"null".equals(image.getDescription()) ? image.getDescription() : "";
+
+        webView.loadData(Reddit.getImageHtmlForAlbum(image.getLink(), title, description, 0xFFFFFFFF, margin), "text/html", "UTF-8");
         webView.setVisibility(View.VISIBLE);
 
         container.addView(view);
-
         container.requestLayout();
-        viewHolder.textTitle.post(new Runnable() {
-            @Override
-            public void run() {
-                if (!viewHolder.layoutInfo.isShown()) {
-                    TextPaint textPaint = viewHolder.textTitle.getPaint();
-                    Rect rect = new Rect();
-                    textPaint.getTextBounds(viewHolder.textTitle.getText().toString(), 0,
-                            viewHolder.textTitle.length(), rect);
-                    if (rect.height() > viewHolder.textTitle.getHeight() || rect
-                            .width() > viewHolder.textTitle.getWidth()) {
-                        viewHolder.layoutInfo.setVisibility(View.VISIBLE);
-                    }
-                }
-            }
-        });
 
         return view;
     }
@@ -199,13 +190,7 @@ public class AdapterAlbum extends PagerAdapter {
         private DisallowListener disallowListener;
 
         protected RelativeLayout layoutRelative;
-        protected TextView textTitle;
-        protected ScrollView scrollDescription;
-        protected TextView textTitleHidden;
-        protected TextView textDescription;
-        protected RelativeLayout layoutInfo;
         protected RelativeLayout layoutDownloadImage;
-        protected ImageButton buttonInfo;
         protected ImageButton buttonDownload;
         protected TextView textAlbumIndicator;
         protected WebViewFixed webView;
@@ -215,25 +200,13 @@ public class AdapterAlbum extends PagerAdapter {
             this.disallowListener = disallowListener;
             layoutRelative = (RelativeLayout) view;
             textAlbumIndicator = (TextView) view.findViewById(R.id.text_album_indicator);
-            textTitle = (TextView) view.findViewById(R.id.text_image_title);
-            scrollDescription = (ScrollView) view.findViewById(R.id.scroll_description);
-            textTitleHidden = (TextView) view.findViewById(R.id.text_title_hidden);
-            textDescription = (TextView) view.findViewById(R.id.text_image_description);
-            layoutInfo = (RelativeLayout) view.findViewById(R.id.layout_info);
             layoutDownloadImage = (RelativeLayout) view.findViewById(R.id.layout_download_image);
-            buttonInfo = (ImageButton) view.findViewById(R.id.button_info);
             buttonDownload = (ImageButton) view.findViewById(R.id.button_download_image);
 
-            buttonInfo.setColorFilter(colorFilterIcon);
             buttonDownload.setColorFilter(colorFilterIcon);
             textAlbumIndicator.setTextColor(colorFilterIcon.getColor());
 
-            view.setOnClickListener(this);
-            buttonInfo.setOnClickListener(this);
             buttonDownload.setOnClickListener(this);
-            textTitleHidden.setOnClickListener(this);
-            textDescription.setOnClickListener(this);
-            scrollDescription.setOnTouchListener(new OnTouchListenerDisallow(disallowListener));
         }
 
         public void instantiate(Image image, int position, int maxImages) {
@@ -241,45 +214,13 @@ public class AdapterAlbum extends PagerAdapter {
 
             textAlbumIndicator.setText((position + 1) + " / " + maxImages);
 
-            if (!TextUtils.isEmpty(image.getTitle()) && !"null".equals(image.getTitle())) {
-                textTitle.setText(image.getTitle());
-                textTitle.scrollTo(0, 0);
-                textTitleHidden.setText(image.getTitle());
-            }
-            else {
-                textTitle.setText("");
-                textTitleHidden.setText("");
-            }
-
-            if (!TextUtils.isEmpty(image.getDescription()) && !"null".equals(image.getDescription())) {
-                textDescription.setText(image.getDescription());
-                layoutInfo.setVisibility(View.VISIBLE);
-            }
-            else {
-                layoutInfo.setVisibility(View.GONE);
-            }
-
-            scrollDescription.scrollTo(0, 0);
-            scrollDescription.setVisibility(View.GONE);
-            textTitle.setVisibility(View.VISIBLE);
-
-            Linkify.addLinks(textDescription, Linkify.ALL);
-
         }
 
         @Override
         public void onClick(View v) {
             switch (v.getId()) {
-                case R.id.button_info:
-                    scrollDescription.setVisibility(scrollDescription.isShown() ? View.GONE : View.VISIBLE);
-                    textTitle.setVisibility(scrollDescription.isShown() ? View.INVISIBLE : View.VISIBLE);
-                    break;
                 case R.id.button_download_image:
                     eventListener.downloadImage("Imgur" + image.getId(), image.getLink());
-                    break;
-                default:
-                    scrollDescription.setVisibility(View.GONE);
-                    textTitle.setVisibility(View.VISIBLE);
                     break;
             }
         }

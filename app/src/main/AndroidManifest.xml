@@ -12,6 +12,7 @@
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
+
     <application
         android:name=".CustomApplication"
         android:allowBackup="true"
@@ -21,6 +22,15 @@
         android:largeHeap="true"
         android:supportsRtl="true"
         android:theme="@style/AppDefaultTheme" >
+
+        <meta-data
+            android:name="com.bumptech.glide.integration.okhttp.OkHttpGlideModule"
+            android:value="GlideModule" />
+
+        <meta-data
+            android:name="io.fabric.ApiKey"
+            android:value="ffde8327e4ffacbe347101a90afc33a9fec234cb" />
+        
         <activity
             android:name=".MainActivity"
             android:label="@string/app_name"
@@ -78,10 +88,6 @@
                 <action android:name="com.winsonchiu.reader.inbox.Receiver.ACTION_MARK_READ" />
             </intent-filter>
         </receiver>
-
-        <meta-data
-            android:name="io.fabric.ApiKey"
-            android:value="ffde8327e4ffacbe347101a90afc33a9fec234cb" />
 
         <activity
             android:name=".settings.ActivitySettings"

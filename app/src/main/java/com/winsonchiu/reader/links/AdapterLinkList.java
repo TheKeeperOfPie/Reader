@@ -119,9 +119,12 @@ public class AdapterLinkList extends AdapterLink {
                 }
                 else {
                     imageThumbnail.clearColorFilter();
-                    Reddit.loadPicasso(itemView.getContext())
+//                    Reddit.loadPicasso(itemView.getContext())
+//                            .load(link.getThumbnail())
+//                            .tag(TAG_PICASSO)
+//                            .into(imageThumbnail);
+                    Reddit.loadGlide(itemView.getContext())
                             .load(link.getThumbnail())
-                            .tag(TAG_PICASSO)
                             .into(imageThumbnail);
                 }
             }

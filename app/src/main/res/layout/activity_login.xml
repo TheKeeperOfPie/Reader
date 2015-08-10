@@ -8,11 +8,12 @@
     tools:context="com.winsonchiu.reader.auth.ActivityLogin"
     >
 
-    <include
-        layout="@layout/toolbar"
+    <android.support.v7.widget.Toolbar
+        android:id="@+id/toolbar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_alignParentTop="true"
+        android:background="?attr/colorPrimary"
         app:layout_scrollFlags="scroll|enterAlways"
         />
 

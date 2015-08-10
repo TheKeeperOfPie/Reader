@@ -69,6 +69,7 @@ import com.android.volley.Request;
 import com.android.volley.Response;
 import com.android.volley.Response.Listener;
 import com.android.volley.VolleyError;
+import com.bumptech.glide.Glide;
 import com.google.android.youtube.player.YouTubeInitializationResult;
 import com.google.android.youtube.player.YouTubePlayer;
 import com.google.android.youtube.player.YouTubePlayerView;
@@ -235,6 +236,15 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         }
 
         return navigateBack;
+    }
+
+    public void destroyViewHolders() {
+        for (RecyclerView.ViewHolder viewHolder : viewHolders) {
+            if (viewHolder instanceof ViewHolderBase) {
+                Reddit.incrementRecycled();
+                ((ViewHolderBase) viewHolder).onRecycle();
+            }
+        }
     }
 
     public static class ViewHolderHeader extends RecyclerView.ViewHolder
@@ -596,8 +606,6 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                             viewHolder.textAlbumIndicator.setTranslationX(
                                     -position * page.getWidth());
                             viewHolder.layoutDownloadImage.setTranslationX(
-                                    -position * page.getWidth());
-                            viewHolder.layoutInfo.setTranslationX(
                                     -position * page.getWidth());
                         }
                     }
@@ -1565,6 +1573,8 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             if (request != null) {
                 request.cancel();
             }
+
+            Glide.clear(imageThumbnail);
 
             if (youTubePlayer != null) {
                 isYouTubeFullscreen = false;

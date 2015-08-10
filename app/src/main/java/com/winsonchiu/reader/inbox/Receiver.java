@@ -212,7 +212,7 @@ public class Receiver extends BroadcastReceiver {
 
 
                 Notification.Builder builder = new Notification.Builder(context)
-                        .setSmallIcon(R.mipmap.app_icon_notification)
+                        .setSmallIcon(R.mipmap.app_icon_white_outline)
                         .setContentTitle(messages.getChildren().size() + " " + context
                                 .getResources()
                                 .getString(titleSuffixResource))

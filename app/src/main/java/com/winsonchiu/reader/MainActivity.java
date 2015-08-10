@@ -20,7 +20,7 @@ import android.content.SharedPreferences;
 import android.content.res.TypedArray;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.ColorFilter;
+import android.graphics.Color;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
 import android.media.MediaScannerConnection;
@@ -83,6 +83,7 @@ import com.winsonchiu.reader.profile.FragmentProfile;
 import com.winsonchiu.reader.search.ControllerSearch;
 import com.winsonchiu.reader.search.FragmentSearch;
 import com.winsonchiu.reader.settings.ActivitySettings;
+import com.winsonchiu.reader.utils.AnimationUtils;
 import com.winsonchiu.reader.views.WebViewFixed;
 
 import org.json.JSONException;
@@ -152,11 +153,13 @@ public class MainActivity extends YouTubeBaseActivity
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
 
-                TypedArray typedArray = obtainStyledAttributes(new int[] {R.attr.colorPrimary});
+                TypedArray typedArray = obtainStyledAttributes(new int[]{R.attr.colorPrimary});
                 int colorPrimary = typedArray.getColor(0, getResources().getColor(R.color.colorPrimary));
                 typedArray.recycle();
 
-                ActivityManager.TaskDescription taskDescription = new ActivityManager.TaskDescription("Reader", BitmapFactory.decodeResource(getResources(), R.mipmap.app_icon_dark_outline), colorPrimary);
+                int resourceIcon = AnimationUtils.computeContrast(colorPrimary, Color.WHITE) > 3f ? R.mipmap.app_icon_white_outline : R.mipmap.app_icon_dark_outline;
+
+                ActivityManager.TaskDescription taskDescription = new ActivityManager.TaskDescription("Reader", BitmapFactory.decodeResource(getResources(), resourceIcon), colorPrimary);
                 setTaskDescription(taskDescription);
             }
 

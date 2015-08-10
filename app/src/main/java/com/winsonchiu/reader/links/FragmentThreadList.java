@@ -535,10 +535,10 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
                 switch (newState) {
                     case RecyclerView.SCROLL_STATE_IDLE:
                     case RecyclerView.SCROLL_STATE_DRAGGING:
-                        Reddit.loadPicasso(activity).resumeTag(AdapterLink.TAG_PICASSO);
+//                        Reddit.loadPicasso(activity).resumeTag(AdapterLink.TAG_PICASSO);
                         break;
                     case RecyclerView.SCROLL_STATE_SETTLING:
-                        Reddit.loadPicasso(activity).pauseTag(AdapterLink.TAG_PICASSO);
+//                        Reddit.loadPicasso(activity).pauseTag(AdapterLink.TAG_PICASSO);
                         break;
                 }
             }
@@ -778,6 +778,12 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
         mListener.getControllerLinks()
                 .removeListener(listener);
         super.onPause();
+    }
+
+    @Override
+    public void onDestroyView() {
+        adapterLink.destroyViewHolders();
+        super.onDestroyView();
     }
 
     @Override

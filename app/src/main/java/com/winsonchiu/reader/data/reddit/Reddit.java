@@ -12,6 +12,7 @@ import android.accounts.OperationCanceledException;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.res.Resources;
+import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.os.Handler;
@@ -37,6 +38,8 @@ import com.android.volley.Response.Listener;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.RequestManager;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.squareup.okhttp.OkHttpClient;
@@ -196,6 +199,10 @@ public class Reddit {
                     .build();
         }
         return picasso;
+    }
+
+    public static RequestManager loadGlide(Context context) {
+        return Glide.with(context);
     }
 
     public static ObjectMapper getObjectMapper() {
@@ -907,6 +914,43 @@ public class Reddit {
                 "</head>" +
                 "<body>" +
                 "<img src=\"" + src + "\"/>" +
+                "</body>" +
+                "</html>";
+    }
+
+    public static String getImageHtmlForAlbum(String src, String title, String description, int textColor, int margin) {
+
+        String rgbText = "rgb(" + Color.red(textColor) + ", " + Color.green(textColor) + ", " + Color.blue(textColor) + ")";
+
+        String htmlTitle = TextUtils.isEmpty(title) ? "" : "<h2>" + title + "</h2>";
+        String htmlDescription = TextUtils.isEmpty(description) ? "" : "<p>" + description + "</p>";
+
+        return "<html>" +
+                "<head>" +
+                "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1, minimum-scale=0.1\">" +
+                "<style>" +
+                "    img {" +
+                "        width:100%;" +
+                "    }" +
+                "    body {" +
+                "        color: " + rgbText + ";" +
+                "        margin:0px;" +
+                "    }" +
+                "    h2 {" +
+                "        margin-left:" + margin + "px;" +
+                "        margin-right:" + margin + "px;" +
+                "    }" +
+                "    p {" +
+                "        margin-left:" + margin + "px;" +
+                "        margin-right:" + margin + "px;" +
+                "        margin-bottom:" + margin + "px;" +
+                "    }" +
+                "</style>" +
+                "</head>" +
+                "<body>" +
+                "<img src=\"" + src + "\"/>" +
+                htmlTitle +
+                htmlDescription +
                 "</body>" +
                 "</html>";
     }

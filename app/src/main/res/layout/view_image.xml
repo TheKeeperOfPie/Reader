@@ -21,85 +21,85 @@
         />
 
 
-    <ScrollView
-        android:id="@+id/scroll_description"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:background="?android:attr/windowBackground"
-        android:alpha="0.85"
-        android:visibility="gone"
-        >
+    <!--<ScrollView-->
+        <!--android:id="@+id/scroll_description"-->
+        <!--android:layout_width="match_parent"-->
+        <!--android:layout_height="match_parent"-->
+        <!--android:background="?android:attr/windowBackground"-->
+        <!--android:alpha="0.85"-->
+        <!--android:visibility="gone"-->
+        <!-->-->
 
-        <RelativeLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            >
+        <!--<RelativeLayout-->
+            <!--android:layout_width="match_parent"-->
+            <!--android:layout_height="wrap_content"-->
+            <!-->-->
 
-            <TextView
-                android:id="@+id/text_title_hidden"
-                android:minHeight="48dp"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_alignParentTop="true"
-                android:layout_alignParentStart="true"
-                android:paddingTop="8dp"
-                android:paddingStart="@dimen/activity_horizontal_margin"
-                android:paddingEnd="116dp"
-                android:textAppearance="?android:textAppearanceMedium"
-                />
+            <!--<TextView-->
+                <!--android:id="@+id/text_title_hidden"-->
+                <!--android:minHeight="48dp"-->
+                <!--android:layout_width="match_parent"-->
+                <!--android:layout_height="wrap_content"-->
+                <!--android:layout_alignParentTop="true"-->
+                <!--android:layout_alignParentStart="true"-->
+                <!--android:paddingTop="8dp"-->
+                <!--android:paddingStart="@dimen/activity_horizontal_margin"-->
+                <!--android:paddingEnd="116dp"-->
+                <!--android:textAppearance="?android:textAppearanceMedium"-->
+                <!--/>-->
 
-            <TextView
-                android:id="@+id/text_image_description"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_below="@id/text_title_hidden"
-                android:paddingTop="16dp"
-                android:paddingStart="@dimen/activity_horizontal_margin"
-                android:paddingEnd="@dimen/activity_horizontal_margin"
-                android:textColor="?android:attr/textColor"
-                />
+            <!--<TextView-->
+                <!--android:id="@+id/text_image_description"-->
+                <!--android:layout_width="match_parent"-->
+                <!--android:layout_height="wrap_content"-->
+                <!--android:layout_below="@id/text_title_hidden"-->
+                <!--android:paddingTop="16dp"-->
+                <!--android:paddingStart="@dimen/activity_horizontal_margin"-->
+                <!--android:paddingEnd="@dimen/activity_horizontal_margin"-->
+                <!--android:textColor="?android:attr/textColor"-->
+                <!--/>-->
 
-        </RelativeLayout>
+        <!--</RelativeLayout>-->
 
-    </ScrollView>
+    <!--</ScrollView>-->
 
-    <TextView
-        android:id="@+id/text_image_title"
-        android:minHeight="48dp"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentTop="true"
-        android:layout_alignParentStart="true"
-        android:layout_toStartOf="@+id/layout_info"
-        android:paddingTop="8dp"
-        android:paddingStart="@dimen/activity_horizontal_margin"
-        android:paddingEnd="@dimen/activity_horizontal_margin"
-        android:textAppearance="?android:textAppearanceMedium"
-        android:ellipsize="marquee"
-        android:singleLine="true"
-        />
+    <!--<TextView-->
+        <!--android:id="@+id/text_image_title"-->
+        <!--android:minHeight="48dp"-->
+        <!--android:layout_width="wrap_content"-->
+        <!--android:layout_height="wrap_content"-->
+        <!--android:layout_alignParentTop="true"-->
+        <!--android:layout_alignParentStart="true"-->
+        <!--android:layout_toStartOf="@+id/layout_info"-->
+        <!--android:paddingTop="8dp"-->
+        <!--android:paddingStart="@dimen/activity_horizontal_margin"-->
+        <!--android:paddingEnd="@dimen/activity_horizontal_margin"-->
+        <!--android:textAppearance="?android:textAppearanceMedium"-->
+        <!--android:ellipsize="marquee"-->
+        <!--android:singleLine="true"-->
+        <!--/>-->
 
-    <RelativeLayout
-        android:id="@+id/layout_info"
-        android:layout_width="48dp"
-        android:layout_height="48dp"
-        android:layout_alignParentTop="true"
-        android:layout_toStartOf="@+id/layout_download_image"
-        android:background="@drawable/circular_shadow"
-        android:visibility="gone"
-        >
+    <!--<RelativeLayout-->
+        <!--android:id="@+id/layout_info"-->
+        <!--android:layout_width="48dp"-->
+        <!--android:layout_height="48dp"-->
+        <!--android:layout_alignParentTop="true"-->
+        <!--android:layout_toStartOf="@+id/layout_download_image"-->
+        <!--android:background="@drawable/circular_shadow"-->
+        <!--android:visibility="gone"-->
+        <!-->-->
 
-        <ImageButton
-            android:id="@+id/button_info"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:contentDescription="@string/content_description_button_open"
-            android:background="?attr/selectableItemBackground"
-            android:src="@drawable/ic_info_outline_white_24dp"
-            android:padding="12dp"
-            />
+        <!--<ImageButton-->
+            <!--android:id="@+id/button_info"-->
+            <!--android:layout_width="match_parent"-->
+            <!--android:layout_height="match_parent"-->
+            <!--android:contentDescription="@string/content_description_button_open"-->
+            <!--android:background="?attr/selectableItemBackground"-->
+            <!--android:src="@drawable/ic_info_outline_white_24dp"-->
+            <!--android:padding="12dp"-->
+            <!--/>-->
 
-    </RelativeLayout>
+    <!--</RelativeLayout>-->
 
     <RelativeLayout
         android:id="@+id/layout_download_image"
