@@ -2,10 +2,11 @@
   ~ Copyright 2015 Winson Chiu
   -->
 
-<RelativeLayout
+<com.winsonchiu.reader.views.CustomRelativeLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/layout_root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context="com.winsonchiu.reader.comments.FragmentComments"
@@ -19,6 +20,7 @@
         >
 
         <RelativeLayout
+            android:id="@+id/layout_relative"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             app:layout_behavior="@string/appbar_scrolling_view_behavior"
@@ -169,4 +171,4 @@
 
     </RelativeLayout>
 
-</RelativeLayout>
+</com.winsonchiu.reader.views.CustomRelativeLayout>

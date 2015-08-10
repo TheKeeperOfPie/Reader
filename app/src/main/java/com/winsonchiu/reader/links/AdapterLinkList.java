@@ -15,7 +15,6 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import com.winsonchiu.reader.AppSettings;
-import com.winsonchiu.reader.ControllerUser;
 import com.winsonchiu.reader.R;
 import com.winsonchiu.reader.data.reddit.Link;
 import com.winsonchiu.reader.data.reddit.Reddit;
@@ -119,11 +118,7 @@ public class AdapterLinkList extends AdapterLink {
                 }
                 else {
                     imageThumbnail.clearColorFilter();
-//                    Reddit.loadPicasso(itemView.getContext())
-//                            .load(link.getThumbnail())
-//                            .tag(TAG_PICASSO)
-//                            .into(imageThumbnail);
-                    Reddit.loadGlide(itemView.getContext())
+                    Reddit.loadPicasso(itemView.getContext())
                             .load(link.getThumbnail())
                             .into(imageThumbnail);
                 }

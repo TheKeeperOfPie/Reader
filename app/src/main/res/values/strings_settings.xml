@@ -55,6 +55,8 @@
     <string name="prefs_category_licenses">Licenses</string>
     <string name="pref_license_picasso">Picasso</string>
     <string name="pref_license_picasso_summary">Copyright 2013 Square, Inc.</string>
+    <string name="pref_license_glide">Glide</string>
+    <string name="pref_license_glide_summary">Sam Judd</string>
     <string name="pref_license_volley">Volley</string>
     <string name="pref_license_volley_summary">Copyright © 2012 The Android Open Source Project</string>
 

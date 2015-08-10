@@ -19,21 +19,22 @@
         app:layout_scrollFlags="scroll|enterAlways"
         />
 
+    <WebView
+        android:id="@+id/web"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_below="@id/toolbar"
+        android:layout_above="@+id/toolbar_actions"
+        />
+
     <ProgressBar
         style="?android:attr/progressBarStyleHorizontal"
         android:id="@+id/progress_web"
         android:layout_width="match_parent"
         android:layout_height="6dp"
         android:layout_below="@id/toolbar"
+        android:background="@android:color/transparent"
         android:progressDrawable="@drawable/progress_horizontal"
-        />
-
-    <WebView
-        android:id="@+id/web"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_below="@id/progress_web"
-        android:layout_above="@+id/toolbar_actions"
         />
 
     <android.support.v7.widget.Toolbar

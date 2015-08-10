@@ -9,7 +9,7 @@
 
         <shape>
 
-            <solid android:color="@android:color/transparent" />
+            <solid android:color="?attr/colorPrimary" />
 
         </shape>
 

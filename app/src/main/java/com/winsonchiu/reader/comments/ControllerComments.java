@@ -13,7 +13,6 @@ import com.android.volley.Response;
 import com.android.volley.Response.ErrorListener;
 import com.android.volley.VolleyError;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.winsonchiu.reader.BuildConfig;
 import com.winsonchiu.reader.R;
 import com.winsonchiu.reader.data.reddit.Comment;
 import com.winsonchiu.reader.data.reddit.Link;

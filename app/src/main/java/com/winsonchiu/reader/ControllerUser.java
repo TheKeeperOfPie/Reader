@@ -9,7 +9,6 @@ import android.accounts.AccountManager;
 import android.app.Activity;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
-import android.text.TextUtils;
 import android.util.Log;
 
 import com.android.volley.Response;

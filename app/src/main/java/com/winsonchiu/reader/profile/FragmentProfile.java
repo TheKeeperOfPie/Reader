@@ -40,6 +40,7 @@ import com.winsonchiu.reader.data.reddit.Comment;
 import com.winsonchiu.reader.data.reddit.Link;
 import com.winsonchiu.reader.data.reddit.Reddit;
 import com.winsonchiu.reader.data.reddit.Sort;
+import com.winsonchiu.reader.data.reddit.Thing;
 import com.winsonchiu.reader.data.reddit.Time;
 import com.winsonchiu.reader.utils.DisallowListener;
 import com.winsonchiu.reader.utils.RecyclerCallback;
@@ -531,6 +532,12 @@ public class FragmentProfile extends FragmentBase implements Toolbar.OnMenuItemC
         else {
             view.setVisibility(View.VISIBLE);
         }
+    }
+
+    @Override
+    public void setVisibilityOfThing(int visibility, Thing thing) {
+        super.setVisibilityOfThing(visibility, thing);
+        adapterProfile.setVisibility(visibility, thing);
     }
 
     @Override

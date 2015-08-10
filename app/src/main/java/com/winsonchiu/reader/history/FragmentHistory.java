@@ -43,6 +43,7 @@ import com.winsonchiu.reader.FragmentBase;
 import com.winsonchiu.reader.FragmentListenerBase;
 import com.winsonchiu.reader.R;
 import com.winsonchiu.reader.data.reddit.Link;
+import com.winsonchiu.reader.data.reddit.Thing;
 import com.winsonchiu.reader.links.AdapterLink;
 import com.winsonchiu.reader.links.AdapterLinkGrid;
 import com.winsonchiu.reader.links.AdapterLinkList;
@@ -464,6 +465,12 @@ public class FragmentHistory extends FragmentBase implements Toolbar.OnMenuItemC
         else {
             view.setVisibility(View.VISIBLE);
         }
+    }
+
+    @Override
+    public void setVisibilityOfThing(int visibility, Thing thing) {
+        super.setVisibilityOfThing(visibility, thing);
+        adapterLink.setVisibility(visibility, thing);
     }
 
     @Override

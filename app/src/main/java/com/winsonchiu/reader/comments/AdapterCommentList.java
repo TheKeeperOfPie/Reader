@@ -4,6 +4,7 @@
 
 package com.winsonchiu.reader.comments;
 
+import android.animation.Animator;
 import android.app.Activity;
 import android.content.ClipData;
 import android.content.ClipboardManager;
@@ -13,7 +14,6 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.content.res.TypedArray;
-import android.graphics.Bitmap;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
 import android.graphics.drawable.Drawable;
@@ -53,7 +53,6 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.winsonchiu.reader.AppSettings;
-import com.winsonchiu.reader.ControllerUser;
 import com.winsonchiu.reader.MainActivity;
 import com.winsonchiu.reader.R;
 import com.winsonchiu.reader.data.reddit.Comment;
@@ -67,6 +66,9 @@ import com.winsonchiu.reader.utils.AnimationUtils;
 import com.winsonchiu.reader.utils.DisallowListener;
 import com.winsonchiu.reader.utils.OnTouchListenerDisallow;
 import com.winsonchiu.reader.utils.RecyclerCallback;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by TheKeeperOfPie on 3/12/2015.
@@ -88,6 +90,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
     private DisallowListener disallowListener;
     private RecyclerCallback recyclerCallback;
     private FragmentComments.YouTubeListener youTubeListener;
+    protected List<RecyclerView.ViewHolder> viewHolders;
 
     private ControllerComments controllerComments;
     private AdapterLink.ViewHolderBase viewHolderLink;
@@ -113,6 +116,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
         this.colorLink = colorLink;
         DisplayMetrics displayMetrics = activity.getResources().getDisplayMetrics();
         this.thumbnailSize = displayMetrics.widthPixels / 2;
+        viewHolders = new ArrayList<>();
     }
 
     @Override
@@ -148,21 +152,21 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                         return false;
                     }
                     @Override
-                    public void loadBackgroundColor(Bitmap bitmap) {
-                        Log.d(TAG, "colorLink: " + colorLink);
+                    public void loadBackgroundColor() {
                         if (colorLink != 0) {
-                            setBackgroundColor(colorLink);
+                            link.setBackgroundColor(colorLink);
+                            itemView.setBackgroundColor(colorLink);
                             setTextColors(colorLink);
                         }
                         else {
-                            super.loadBackgroundColor(bitmap);
+                            super.loadBackgroundColor();
                         }
                     }
 
                     @Override
                     public void onBind(Link link,
-                            boolean showSubbreddit) {
-                        super.onBind(link, showSubbreddit);
+                            boolean showSubreddit) {
+                        super.onBind(link, showSubreddit);
                         if (animationFinished) {
                             if (!TextUtils.isEmpty(link.getSelfText())) {
                                 loadSelfText();
@@ -272,6 +276,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
             ViewHolderComment viewHolderComment = (ViewHolderComment) holder;
             viewHolderComment.onBind(controllerComments.getComment(position));
         }
+        viewHolders.add(holder);
 
     }
 
@@ -281,6 +286,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
         if (getItemViewType(holder.getAdapterPosition()) == VIEW_LINK) {
             ((AdapterLink.ViewHolderBase) holder).onRecycle();
         }
+        viewHolders.remove(holder);
     }
 
     @Override
@@ -318,6 +324,25 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
     public void setAnimationFinished(boolean isAnimationFinished) {
         this.animationFinished = isAnimationFinished;
         notifyDataSetChanged();
+    }
+
+    public boolean isAnimationFinished() {
+        return animationFinished;
+    }
+
+    public void fadeComments(Animator.AnimatorListener listener) {
+        boolean listenerSet = false;
+        for (RecyclerView.ViewHolder viewHolder : viewHolders) {
+            if (getItemViewType(viewHolder.getAdapterPosition()) == VIEW_COMMENT) {
+                if (listenerSet) {
+                    viewHolder.itemView.animate().alpha(0);
+                }
+                else {
+                    listenerSet = true;
+                    viewHolder.itemView.animate().alpha(0).setListener(listener);
+                }
+            }
+        }
     }
 
     public static class ViewHolderComment extends RecyclerView.ViewHolder

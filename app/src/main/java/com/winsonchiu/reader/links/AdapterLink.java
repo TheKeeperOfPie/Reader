@@ -20,6 +20,7 @@ import android.graphics.drawable.Drawable;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.preference.PreferenceManager;
+import android.support.annotation.NonNull;
 import android.support.v4.view.GestureDetectorCompat;
 import android.support.v4.view.MenuItemCompat;
 import android.support.v4.view.ViewPager;
@@ -50,7 +51,6 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
-import android.webkit.WebChromeClient;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.Button;
@@ -69,7 +69,6 @@ import com.android.volley.Request;
 import com.android.volley.Response;
 import com.android.volley.Response.Listener;
 import com.android.volley.VolleyError;
-import com.bumptech.glide.Glide;
 import com.google.android.youtube.player.YouTubeInitializationResult;
 import com.google.android.youtube.player.YouTubePlayer;
 import com.google.android.youtube.player.YouTubePlayerView;
@@ -103,7 +102,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
-import java.util.Random;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -191,21 +189,12 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         }
     }
 
-    @Override
-    public void onViewAttachedToWindow(RecyclerView.ViewHolder holder) {
-        super.onViewAttachedToWindow(holder);
-//        viewHolders.add(holder);
-        holder.itemView.setVisibility(View.VISIBLE);
-    }
-
-    @Override
-    public void onViewDetachedFromWindow(RecyclerView.ViewHolder holder) {
-        super.onViewDetachedFromWindow(holder);
-//        viewHolders.remove(holder);
-//        if (holder instanceof ViewHolderBase) {
-//            ((ViewHolderBase) holder).destroyWebViews();
-//            ((ViewHolderBase) holder).onDetach();
-//        }
+    public void setVisibility(int visibility, @NonNull Thing thing) {
+        for (RecyclerView.ViewHolder viewHolder : viewHolders) {
+            if (getItemViewType(viewHolder.getAdapterPosition()) == VIEW_LINK && thing.equals(((ViewHolderBase) viewHolder).link)) {
+                viewHolder.itemView.setVisibility(visibility);
+            }
+        }
     }
 
     public void pauseViewHolders() {
@@ -1573,8 +1562,6 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             if (request != null) {
                 request.cancel();
             }
-
-            Glide.clear(imageThumbnail);
 
             if (youTubePlayer != null) {
                 isYouTubeFullscreen = false;

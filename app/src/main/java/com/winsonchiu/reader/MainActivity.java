@@ -226,11 +226,10 @@ public class MainActivity extends YouTubeBaseActivity
                     @Override
                     public void onResponse(String response) {
                         try {
-                            Comment newComment = Comment.fromJson(Reddit.getObjectMapper().readValue(
-                                    response, JsonNode.class).get("json")
-                                            .get("data")
-                                            .get("things")
-                                            .get(0), 0);
+                            Comment newComment = Comment.fromJson(Reddit.getObjectMapper().readValue(response, JsonNode.class).get("json")
+                                    .get("data")
+                                    .get("things")
+                                    .get(0), 0);
                             if (getFragmentManager().findFragmentByTag(FragmentComments.TAG) != null) {
                                 getControllerComments().insertComment(newComment);
                             }
@@ -260,13 +259,12 @@ public class MainActivity extends YouTubeBaseActivity
                     @Override
                     public void onResponse(String response) {
                         try {
-                        Message newMessage = Message.fromJson(Reddit.getObjectMapper().readValue(
-                                        response, JsonNode.class).get("json")
-                                        .get("data")
-                                        .get("things")
-                                        .get(0));
-                        getControllerInbox()
-                                .insertMessage(newMessage);
+                            Message newMessage = Message.fromJson(Reddit.getObjectMapper().readValue(response, JsonNode.class).get("json")
+                                    .get("data")
+                                    .get("things")
+                                    .get(0));
+                            getControllerInbox()
+                                    .insertMessage(newMessage);
                         }
                         catch (IOException e) {
                             e.printStackTrace();
@@ -852,6 +850,7 @@ public class MainActivity extends YouTubeBaseActivity
 
     private void clearAccount() {
         accountUser = null;
+        sharedPreferences.edit().putString(AppSettings.ACCOUNT_NAME, "").apply();
         reddit.clearAccount(new Reddit.ErrorListener() {
             @Override
             public void onErrorHandled() {
@@ -1188,46 +1187,50 @@ public class MainActivity extends YouTubeBaseActivity
                         .commit();
                 getControllerComments().setLinkId(subreddit, id);
             }
-            else if (path.contains("/u/")) {
-                int indexUser = path.indexOf("u/") + 2;
-                getControllerProfile().loadUser(
-                        path.substring(indexUser, path.indexOf("/", indexUser)));
-                getFragmentManager().beginTransaction()
-                        .replace(R.id.frame_fragment, FragmentProfile.newInstance(),
-                                FragmentProfile.TAG)
-                        .commit();
-            }
-            else if (path.contains("/user/")) {
-                int indexUser = path.indexOf("user/") + 5;
-                int endIndex = path.indexOf("/", indexUser);
-                if (endIndex > -1) {
-                    getControllerProfile()
-                            .loadUser(
-                                    path.substring(indexUser, endIndex));
+            else {
+                if (path.contains("/u/")) {
+                    int indexUser = path.indexOf("u/") + 2;
+                    getControllerProfile().loadUser(
+                            path.substring(indexUser, path.indexOf("/", indexUser)));
+                    getFragmentManager().beginTransaction()
+                            .replace(R.id.frame_fragment, FragmentProfile.newInstance(),
+                                    FragmentProfile.TAG)
+                            .commit();
                 }
                 else {
-                    getControllerProfile()
-                            .loadUser(
-                                    path.substring(indexUser));
-                }
-                getFragmentManager().beginTransaction()
-                        .replace(R.id.frame_fragment, FragmentProfile.newInstance(),
-                                FragmentProfile.TAG)
-                        .commit();
+                    if (path.contains("/user/")) {
+                        int indexUser = path.indexOf("user/") + 5;
+                        int endIndex = path.indexOf("/", indexUser);
+                        if (endIndex > -1) {
+                            getControllerProfile()
+                                    .loadUser(
+                                            path.substring(indexUser, endIndex));
+                        }
+                        else {
+                            getControllerProfile()
+                                    .loadUser(
+                                            path.substring(indexUser));
+                        }
+                        getFragmentManager().beginTransaction()
+                                .replace(R.id.frame_fragment, FragmentProfile.newInstance(),
+                                        FragmentProfile.TAG)
+                                .commit();
 
-            }
-            else {
-                getFragmentManager().beginTransaction()
-                        .replace(R.id.frame_fragment, FragmentThreadList.newInstance(),
-                                FragmentThreadList.TAG)
-                        .commit();
-                int indexSort = path.indexOf("/", subreddit.length() + 1);
-                String sort =
-                        indexSort > -1 ? path.substring(subreddit.length() + 1, indexSort) :
-                                "hot";
-                Log.d(TAG, "Sort: " + sort);
-                // TODO: Parse time
-                getControllerLinks().setParameters(subreddit, Sort.HOT, Time.ALL);
+                    }
+                    else {
+                        getFragmentManager().beginTransaction()
+                                .replace(R.id.frame_fragment, FragmentThreadList.newInstance(),
+                                        FragmentThreadList.TAG)
+                                .commit();
+                        int indexSort = path.indexOf("/", subreddit.length() + 1);
+                        String sort =
+                                indexSort > -1 ? path.substring(subreddit.length() + 1, indexSort) :
+                                        "hot";
+                        Log.d(TAG, "Sort: " + sort);
+                        // TODO: Parse time
+                        getControllerLinks().setParameters(subreddit, Sort.HOT, Time.ALL);
+                    }
+                }
             }
         }
         catch (MalformedURLException e) {
@@ -1286,23 +1289,27 @@ public class MainActivity extends YouTubeBaseActivity
                 super.startActivity(intentActivity);
 
             }
-            else if (urlString.indexOf("reddit.com") < 20) {
-                intentActivity.putExtra(REDDIT_PAGE, urlString);
-                Log.d(TAG, "startActivity with REDDIT_PAGE");
-                super.startActivity(intentActivity);
-            }
-            else if (URLUtil.isValidUrl(urlString)) {
-                FragmentTransaction fragmentTransaction = getFragmentManager().beginTransaction();
-
-                Fragment fragment = getFragmentManager().findFragmentById(R.id.frame_fragment);
-                if (fragment != null) {
-                    fragmentTransaction.hide(fragment);
+            else {
+                if (urlString.indexOf("reddit.com") < 20) {
+                    intentActivity.putExtra(REDDIT_PAGE, urlString);
+                    Log.d(TAG, "startActivity with REDDIT_PAGE");
+                    super.startActivity(intentActivity);
                 }
+                else {
+                    if (URLUtil.isValidUrl(urlString)) {
+                        FragmentTransaction fragmentTransaction = getFragmentManager().beginTransaction();
 
-                fragmentTransaction.add(R.id.frame_fragment, FragmentWeb
+                        Fragment fragment = getFragmentManager().findFragmentById(R.id.frame_fragment);
+                        if (fragment != null) {
+                            fragmentTransaction.hide(fragment);
+                        }
+
+                        fragmentTransaction.add(R.id.frame_fragment, FragmentWeb
                                 .newInstance(urlString), FragmentWeb.TAG)
-                        .addToBackStack(null)
-                        .commit();
+                                .addToBackStack(null)
+                                .commit();
+                    }
+                }
             }
         }
         else {

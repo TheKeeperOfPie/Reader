@@ -6,6 +6,8 @@ package com.winsonchiu.reader.views;
 
 import android.content.Context;
 import android.util.AttributeSet;
+import android.util.Log;
+import android.view.MotionEvent;
 import android.view.ViewTreeObserver;
 import android.widget.RelativeLayout;
 
@@ -14,9 +16,11 @@ import android.widget.RelativeLayout;
  */
 public class CustomRelativeLayout extends RelativeLayout {
 
+    private static final String TAG = CustomRelativeLayout.class.getCanonicalName();
     private float xFraction = 0;
     private float yFraction = 0;
     private ViewTreeObserver.OnPreDrawListener preDrawListener = null;
+    private OnInterceptTouchEventListener onInterceptTouchEventListener;
 
     public CustomRelativeLayout(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
@@ -88,6 +92,29 @@ public class CustomRelativeLayout extends RelativeLayout {
 
         float translationX = getWidth() * fraction;
         setTranslationX(translationX);
+    }
+
+    @Override
+    public boolean onInterceptTouchEvent(MotionEvent ev) {
+
+        Log.d(TAG, "onInterceptTouchEvent: " + ev);
+
+        if (onInterceptTouchEventListener != null) {
+            return onInterceptTouchEventListener.onInterceptTouchEvent(ev);
+        }
+        return super.onInterceptTouchEvent(ev);
+    }
+
+    public OnInterceptTouchEventListener getOnInterceptTouchEventListener() {
+        return onInterceptTouchEventListener;
+    }
+
+    public void setOnInterceptTouchEventListener(OnInterceptTouchEventListener onInterceptTouchEventListener) {
+        this.onInterceptTouchEventListener = onInterceptTouchEventListener;
+    }
+
+    public interface OnInterceptTouchEventListener {
+        boolean onInterceptTouchEvent(MotionEvent event);
     }
 
 }

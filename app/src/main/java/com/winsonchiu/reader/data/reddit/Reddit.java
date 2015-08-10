@@ -38,8 +38,6 @@ import com.android.volley.Response.Listener;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
-import com.bumptech.glide.Glide;
-import com.bumptech.glide.RequestManager;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.squareup.okhttp.OkHttpClient;
@@ -201,9 +199,9 @@ public class Reddit {
         return picasso;
     }
 
-    public static RequestManager loadGlide(Context context) {
-        return Glide.with(context);
-    }
+//    public static RequestManager loadGlide(Context context) {
+//        return Glide.with(context);
+//    }
 
     public static ObjectMapper getObjectMapper() {
         if (objectMapper == null) {

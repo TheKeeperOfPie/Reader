@@ -28,8 +28,6 @@ public class CustomApplication extends Application {
     public void onCreate() {
         super.onCreate();
         refWatcher = LeakCanary.install(this);
-//        Picasso.with(this).setIndicatorsEnabled(true);
-//        Picasso.with(this).setLoggingEnabled(true);
         AppSettings.initPrefs(getApplicationContext());
         Reddit.getInstance(getApplicationContext());
         Historian.getInstance(getApplicationContext());

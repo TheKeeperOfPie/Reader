@@ -6,7 +6,6 @@ package com.winsonchiu.reader.links;
 
 import android.app.Activity;
 import android.content.SharedPreferences;
-import android.content.res.Configuration;
 import android.content.res.TypedArray;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
@@ -54,6 +53,7 @@ import com.winsonchiu.reader.data.reddit.Link;
 import com.winsonchiu.reader.data.reddit.Reddit;
 import com.winsonchiu.reader.data.reddit.Sort;
 import com.winsonchiu.reader.data.reddit.Subreddit;
+import com.winsonchiu.reader.data.reddit.Thing;
 import com.winsonchiu.reader.data.reddit.Time;
 import com.winsonchiu.reader.history.Historian;
 import com.winsonchiu.reader.search.FragmentSearch;
@@ -535,10 +535,10 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
                 switch (newState) {
                     case RecyclerView.SCROLL_STATE_IDLE:
                     case RecyclerView.SCROLL_STATE_DRAGGING:
-//                        Reddit.loadPicasso(activity).resumeTag(AdapterLink.TAG_PICASSO);
+                        Reddit.loadPicasso(activity).resumeTag(AdapterLink.TAG_PICASSO);
                         break;
                     case RecyclerView.SCROLL_STATE_SETTLING:
-//                        Reddit.loadPicasso(activity).pauseTag(AdapterLink.TAG_PICASSO);
+                        Reddit.loadPicasso(activity).pauseTag(AdapterLink.TAG_PICASSO);
                         break;
                 }
             }
@@ -876,6 +876,12 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
         else {
             view.setVisibility(View.VISIBLE);
         }
+    }
+
+    @Override
+    public void setVisibilityOfThing(int visibility, Thing thing) {
+        super.setVisibilityOfThing(visibility, thing);
+        adapterLink.setVisibility(visibility, thing);
     }
 
     @Override

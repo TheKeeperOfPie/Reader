@@ -4,6 +4,7 @@
 
 package com.winsonchiu.reader.profile;
 
+import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
 import android.text.Spannable;
 import android.text.SpannableString;
@@ -18,6 +19,7 @@ import android.widget.TextView;
 import com.winsonchiu.reader.ControllerUser;
 import com.winsonchiu.reader.R;
 import com.winsonchiu.reader.comments.AdapterCommentList;
+import com.winsonchiu.reader.data.reddit.Thing;
 import com.winsonchiu.reader.data.reddit.User;
 import com.winsonchiu.reader.links.AdapterLink;
 import com.winsonchiu.reader.links.AdapterLinkList;
@@ -208,6 +210,22 @@ public class AdapterProfile extends RecyclerView.Adapter<RecyclerView.ViewHolder
     public void setVisibility(int visibility) {
         for (RecyclerView.ViewHolder viewHolder : viewHolders) {
             viewHolder.itemView.setVisibility(visibility);
+        }
+    }
+
+    public void setVisibility(int visibility, @NonNull Thing thing) {
+        for (RecyclerView.ViewHolder viewHolder : viewHolders) {
+            switch (getItemViewType(viewHolder.getAdapterPosition())) {
+
+                case ControllerProfile.VIEW_TYPE_LINK:
+                    if (thing.equals(((AdapterLink.ViewHolderBase) viewHolder).link)) {
+                        viewHolder.itemView.setVisibility(visibility);
+                    }
+                case ControllerProfile.VIEW_TYPE_COMMENT:
+                case ControllerProfile.VIEW_TYPE_HEADER:
+                case ControllerProfile.VIEW_TYPE_HEADER_TEXT:
+                    break;
+            }
         }
     }
 

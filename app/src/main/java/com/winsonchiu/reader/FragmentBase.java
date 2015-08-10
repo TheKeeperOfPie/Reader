@@ -6,6 +6,8 @@ package com.winsonchiu.reader;
 
 import android.app.Fragment;
 
+import com.winsonchiu.reader.data.reddit.Thing;
+
 /**
  * Created by TheKeeperOfPie on 6/25/2015.
  */
@@ -20,6 +22,9 @@ public abstract class FragmentBase extends Fragment {
 
     }
     public void onWindowTransitionStart() {
+
+    }
+    public void setVisibilityOfThing(int visibility, Thing thing) {
 
     }
 }
