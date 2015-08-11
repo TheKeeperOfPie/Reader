@@ -8,6 +8,10 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
+
 /**
  * Created by TheKeeperOfPie on 3/7/2015.
  */
@@ -46,6 +50,7 @@ public class AppSettings {
     public static final String MODE_GRID = "Grid";
 
     public static final String ACCOUNT_NAME = "accountName";
+    public static final String SECRET = "secret";
 
     // Preferences
 
@@ -64,6 +69,7 @@ public class AppSettings {
     public static final String PREF_THEME_BACKGROUND = "pref_theme_background";
     public static final String PREF_THEME_PRIMARY = "pref_theme_primary";
     public static final String PREF_THEME_ACCENT = "pref_theme_accent";
+    public static final String PREF_VERSION = "pref_version";
 
     private static final String TAG = AppSettings.class.getCanonicalName();
 
@@ -85,4 +91,29 @@ public class AppSettings {
         return initialized;
     }
 
+    public static String randomThemeString() {
+
+        List<String> themes = new ArrayList<>(19);
+        themes.add(THEME_RED);
+        themes.add(THEME_PINK);
+        themes.add(THEME_PURPLE);
+        themes.add(THEME_DEEP_PURPLE);
+        themes.add(THEME_INDIGO);
+        themes.add(THEME_BLUE);
+        themes.add(THEME_LIGHT_BLUE);
+        themes.add(THEME_CYAN);
+        themes.add(THEME_TEAL);
+        themes.add(THEME_GREEN);
+        themes.add(THEME_LIGHT_GREEN);
+        themes.add(THEME_LIME);
+        themes.add(THEME_YELLOW);
+        themes.add(THEME_AMBER);
+        themes.add(THEME_ORANGE);
+        themes.add(THEME_DEEP_ORANGE);
+        themes.add(THEME_BROWN);
+        themes.add(THEME_GREY);
+        themes.add(THEME_BLUE_GREY);
+
+        return themes.get(new Random().nextInt(themes.size()));
+    }
 }

@@ -8,6 +8,8 @@ import android.app.Activity;
 import android.app.Fragment;
 import android.content.SharedPreferences;
 import android.content.res.TypedArray;
+import android.graphics.Color;
+import android.graphics.ColorFilter;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
 import android.os.Bundle;
@@ -19,6 +21,7 @@ import android.view.View;
 import com.winsonchiu.reader.AppSettings;
 import com.winsonchiu.reader.R;
 import com.winsonchiu.reader.Theme;
+import com.winsonchiu.reader.utils.UtilsColor;
 
 /**
  * Created by TheKeeperOfPie on 7/1/2015.
@@ -27,6 +30,7 @@ public class ActivitySettings extends AppCompatActivity {
 
     private static final String TAG = ActivitySettings.class.getCanonicalName();
     private Toolbar toolbar;
+    private ColorFilter colorFilterPrimary;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -46,17 +50,19 @@ public class ActivitySettings extends AppCompatActivity {
         setContentView(R.layout.activity_settings);
 
         TypedArray typedArray = getTheme().obtainStyledAttributes(
-                new int[]{R.attr.colorIconFilter});
-        int colorIconFilter = typedArray.getColor(0, 0xFFFFFFFF);
+                new int[]{R.attr.colorPrimary});
+        final int colorPrimary = typedArray.getColor(0, getResources().getColor(R.color.colorPrimary));
         typedArray.recycle();
 
-        PorterDuffColorFilter colorFilterIcon = new PorterDuffColorFilter(colorIconFilter,
-                PorterDuff.Mode.MULTIPLY);
+        int colorResourcePrimary = UtilsColor.computeContrast(colorPrimary, Color.WHITE) > 3f ? R.color.darkThemeIconFilter : R.color.lightThemeIconFilter;
+
+        colorFilterPrimary = new PorterDuffColorFilter(getResources().getColor(colorResourcePrimary), PorterDuff.Mode.MULTIPLY);
 
         toolbar = (Toolbar) findViewById(R.id.toolbar);
         toolbar.setTitle(R.string.settings);
+        toolbar.setTitleTextColor(getResources().getColor(colorResourcePrimary));
         toolbar.setNavigationIcon(R.drawable.ic_arrow_back_white_24dp);
-        toolbar.getNavigationIcon().mutate().setColorFilter(colorFilterIcon);
+        toolbar.getNavigationIcon().mutate().setColorFilter(colorFilterPrimary);
         toolbar.setNavigationOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {

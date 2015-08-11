@@ -82,6 +82,7 @@ public class ControllerComments {
     public void setLink(Link link) {
         this.listingComments = new Listing();
         this.link = link;
+        setSort(Sort.CONFIDENCE);
         reloadAllComments();
     }
 
@@ -100,6 +101,7 @@ public class ControllerComments {
         link = new Link();
         link.setSubreddit(subreddit);
         link.setId(linkId);
+        setSort(Sort.CONFIDENCE);
     }
 
     public void reloadAllComments() {
@@ -729,6 +731,9 @@ public class ControllerComments {
     public void setSort(Sort sort) {
         if (this.sort != sort) {
             this.sort = sort;
+            for (Listener listener : listeners) {
+                listener.setSort(sort);
+            }
             reloadAllComments();
         }
     }

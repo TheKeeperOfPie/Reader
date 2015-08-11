@@ -11,6 +11,12 @@
         >
 
         <Preference
+            android:key="pref_version"
+            android:title="@string/app_name"
+            android:summary="@string/versionName"
+            />
+
+        <Preference
             android:key="pref_author"
             android:title="@string/pref_author"
             android:summary="@string/pref_author_summary"

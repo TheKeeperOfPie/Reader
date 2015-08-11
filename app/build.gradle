@@ -27,6 +27,11 @@ android {
         versionCode 53
         versionName "1.3"
     }
+
+    applicationVariants.all { variant ->
+        variant.resValue "string", "versionName", "Version $variant.versionName ($variant.versionCode)"
+    }
+
     buildTypes {
         release {
             minifyEnabled false

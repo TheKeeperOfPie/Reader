@@ -7,6 +7,8 @@ package com.winsonchiu.reader.profile;
 import android.app.Activity;
 import android.content.Intent;
 import android.content.res.TypedArray;
+import android.graphics.Color;
+import android.graphics.ColorFilter;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
 import android.os.Bundle;
@@ -27,6 +29,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
+import android.widget.ImageView;
 import android.widget.Spinner;
 
 import com.winsonchiu.reader.CustomApplication;
@@ -44,6 +47,7 @@ import com.winsonchiu.reader.data.reddit.Thing;
 import com.winsonchiu.reader.data.reddit.Time;
 import com.winsonchiu.reader.utils.DisallowListener;
 import com.winsonchiu.reader.utils.RecyclerCallback;
+import com.winsonchiu.reader.utils.UtilsColor;
 import com.winsonchiu.reader.views.CustomItemTouchHelper;
 
 public class FragmentProfile extends FragmentBase implements Toolbar.OnMenuItemClickListener {
@@ -67,9 +71,9 @@ public class FragmentProfile extends FragmentBase implements Toolbar.OnMenuItemC
     private AdapterProfilePage adapterProfilePage;
     private Snackbar snackbar;
     private CustomItemTouchHelper itemTouchHelper;
-    private PorterDuffColorFilter colorFilterIcon;
     private CustomItemTouchHelper.SimpleCallback callback;
     private View view;
+    private ColorFilter colorFilterPrimary;
 
     public static FragmentProfile newInstance() {
         FragmentProfile fragment = new FragmentProfile();
@@ -98,6 +102,11 @@ public class FragmentProfile extends FragmentBase implements Toolbar.OnMenuItemC
         itemSearch = menu.findItem(R.id.item_search);
 
         final SearchView searchView = (SearchView) itemSearch.getActionView();
+
+        View view = searchView.findViewById(android.support.v7.appcompat.R.id.search_go_btn);
+        if (view instanceof ImageView) {
+            ((ImageView) view).setColorFilter(colorFilterPrimary);
+        }
 
         searchView.setQueryHint(getString(R.string.username));
         searchView.setOnCloseListener(new SearchView.OnCloseListener() {
@@ -133,7 +142,7 @@ public class FragmentProfile extends FragmentBase implements Toolbar.OnMenuItemC
         }
 
         for (int index = 0; index < menu.size(); index++) {
-            menu.getItem(index).getIcon().setColorFilter(colorFilterIcon);
+            menu.getItem(index).getIcon().setColorFilter(colorFilterPrimary);
         }
 
     }
@@ -227,13 +236,13 @@ public class FragmentProfile extends FragmentBase implements Toolbar.OnMenuItemC
         };
 
         TypedArray typedArray = activity.getTheme().obtainStyledAttributes(
-                new int[] {R.attr.colorPrimary, R.attr.colorIconFilter});
+                new int[]{R.attr.colorPrimary});
         final int colorPrimary = typedArray.getColor(0, getResources().getColor(R.color.colorPrimary));
-        int colorIconFilter = typedArray.getColor(1, 0xFFFFFFFF);
         typedArray.recycle();
 
-        colorFilterIcon = new PorterDuffColorFilter(colorIconFilter,
-                PorterDuff.Mode.MULTIPLY);
+        int colorResourcePrimary = UtilsColor.computeContrast(colorPrimary, Color.WHITE) > 3f ? R.color.darkThemeIconFilter : R.color.lightThemeIconFilter;
+
+        colorFilterPrimary = new PorterDuffColorFilter(getResources().getColor(colorResourcePrimary), PorterDuff.Mode.MULTIPLY);
 
         toolbar = (Toolbar) view.findViewById(R.id.toolbar);
         if (getFragmentManager().getBackStackEntryCount() <= 1) {
@@ -254,7 +263,8 @@ public class FragmentProfile extends FragmentBase implements Toolbar.OnMenuItemC
                 }
             });
         }
-        toolbar.getNavigationIcon().mutate().setColorFilter(colorFilterIcon);
+        toolbar.getNavigationIcon().mutate().setColorFilter(colorFilterPrimary);
+        toolbar.setTitleTextColor(getResources().getColor(colorResourcePrimary));
         setUpOptionsMenu();
 
         layoutCoordinator = (CoordinatorLayout) view.findViewById(R.id.layout_coordinator);

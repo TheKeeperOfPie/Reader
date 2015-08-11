@@ -224,12 +224,12 @@ public class ActivityLogin extends AccountAuthenticatorActivity {
         else {
             CookieManager.getInstance().removeAllCookie();
         }
-        webAuth.setVisibility(View.GONE);
         webAuth.removeAllViews();
         webAuth.setWebChromeClient(null);
         webAuth.setWebViewClient(null);
         layoutRoot.removeView(webAuth);
         webAuth.destroy();
+        webAuth = null;
     }
 
     @Override

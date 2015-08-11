@@ -8,6 +8,8 @@ import android.animation.Animator;
 import android.app.Activity;
 import android.content.SharedPreferences;
 import android.content.res.TypedArray;
+import android.graphics.Color;
+import android.graphics.ColorFilter;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
 import android.graphics.Rect;
@@ -58,6 +60,7 @@ import com.winsonchiu.reader.utils.AnimationUtils;
 import com.winsonchiu.reader.utils.DisallowListener;
 import com.winsonchiu.reader.utils.RecyclerCallback;
 import com.winsonchiu.reader.utils.ScrollAwareFloatingActionButtonBehavior;
+import com.winsonchiu.reader.utils.UtilsColor;
 import com.winsonchiu.reader.views.CustomRelativeLayout;
 
 import java.util.Arrays;
@@ -108,7 +111,6 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
     private float toolbarHeight;
     private GestureDetectorCompat gestureDetector;
     private SharedPreferences preferences;
-    private PorterDuffColorFilter colorFilterIcon;
     private CoordinatorLayout layoutCoordinator;
     private AppBarLayout layoutAppBar;
     private boolean hasSwipedRight;
@@ -116,6 +118,8 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
     private CustomRelativeLayout layoutRoot;
     private boolean isFinished;
     private float swipeDifferenceX;
+    private ColorFilter colorFilterPrimary;
+    private ColorFilter colorFilterAccent;
 
     public static FragmentComments newInstance() {
         FragmentComments fragment = new FragmentComments();
@@ -181,7 +185,7 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
             });
         }
 
-        toolbar.getNavigationIcon().mutate().setColorFilter(colorFilterIcon);
+        toolbar.getNavigationIcon().mutate().setColorFilter(colorFilterPrimary);
 
         toolbar.inflateMenu(R.menu.menu_comments);
         itemLoadFullComments = toolbar.getMenu().findItem(R.id.item_load_full_comments);
@@ -193,7 +197,7 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
         Menu menu = toolbar.getMenu();
 
         for (int index = 0; index < menu.size(); index++) {
-            menu.getItem(index).getIcon().setColorFilter(colorFilterIcon);
+            menu.getItem(index).getIcon().setColorFilter(colorFilterPrimary);
         }
     }
 
@@ -382,13 +386,19 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
         };
 
         TypedArray typedArray = getActivity().getTheme().obtainStyledAttributes(
-                new int[]{R.attr.colorIconFilter});
-        int colorIconFilter = typedArray.getColor(0, 0xFFFFFFFF);
+                new int[] {R.attr.colorPrimary, R.attr.colorAccent});
+        final int colorPrimary = typedArray.getColor(0, getResources().getColor(R.color.colorPrimary));
+        int colorAccent = typedArray.getColor(1, getResources().getColor(R.color.colorAccent));
         typedArray.recycle();
 
-        colorFilterIcon = new PorterDuffColorFilter(colorIconFilter,
-                PorterDuff.Mode.MULTIPLY);
+        int colorResourcePrimary = UtilsColor.computeContrast(colorPrimary, Color.WHITE) > 3f ? R.color.darkThemeIconFilter : R.color.lightThemeIconFilter;
+        int colorResourceAccent = UtilsColor.computeContrast(colorAccent, Color.WHITE) > 3f ? R.color.darkThemeIconFilter : R.color.lightThemeIconFilter;
+
+        colorFilterPrimary = new PorterDuffColorFilter(getResources().getColor(colorResourcePrimary), PorterDuff.Mode.MULTIPLY);
+        colorFilterAccent = new PorterDuffColorFilter(getResources().getColor(colorResourceAccent), PorterDuff.Mode.MULTIPLY);
+
         toolbar = (Toolbar) layoutRoot.findViewById(R.id.toolbar);
+        toolbar.setTitleTextColor(getResources().getColor(colorResourcePrimary));
         setUpToolbar();
 
         behaviorFloatingActionButton = new ScrollAwareFloatingActionButtonBehavior(getActivity(),
@@ -402,7 +412,7 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
                     @Override
                     public void onEndHideFromScroll() {
                         buttonExpandActions.setImageResource(R.drawable.ic_unfold_more_white_24dp);
-                        buttonExpandActions.setColorFilter(colorFilterIcon);
+                        buttonExpandActions.setColorFilter(colorFilterAccent);
                     }
 
                 });
@@ -518,10 +528,10 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
             layoutActions.setLayoutParams(layoutParamsActions);
         }
 
-        buttonExpandActions.setColorFilter(colorFilterIcon);
-        buttonJumpTop.setColorFilter(colorFilterIcon);
-        buttonCommentPrevious.setColorFilter(colorFilterIcon);
-        buttonCommentNext.setColorFilter(colorFilterIcon);
+        buttonExpandActions.setColorFilter(colorFilterAccent);
+        buttonJumpTop.setColorFilter(colorFilterAccent);
+        buttonCommentPrevious.setColorFilter(colorFilterAccent);
+        buttonCommentNext.setColorFilter(colorFilterAccent);
 
         viewYouTube = (YouTubePlayerView) layoutRoot.findViewById(R.id.youtube);
 
@@ -589,16 +599,15 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
 
                     boolean value = gestureDetector.onTouchEvent(event);
 
-                    if (isFinished || event.getAction() != MotionEvent.ACTION_UP) {
+                    if (isFinished || event.getAction() != MotionEvent.ACTION_UP || !hasSwipedRight) {
                         return false;
                     }
-
 
                     if (swipeDifferenceX > swipeRightDistance) {
                         slideExit();
                         return true;
                     }
-                    else if (hasSwipedRight) {
+                    else {
                         hasSwipedRight = false;
                         if (!value) {
                             layoutRelative.animate().translationX(0).setListener(new Animator.AnimatorListener() {
@@ -787,11 +796,8 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
             toolbarHeight = styledAttributes.getDimension(0, 0);
             styledAttributes.recycle();
 
-            int[] locationRootView = new int[2];
-            view.getLocationOnScreen(locationRootView);
-
             startX = location[0];
-            startY = location[1] - locationRootView[1] - toolbarHeight;
+            startY = location[1];
 
             Log.d(TAG, "location: " + Arrays.toString(location));
             Log.d(TAG, "toolbarHeight: " + toolbarHeight);
@@ -808,8 +814,11 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
             startMarginEnd = (int) (screenWidth - startX - viewHolderWidth);
         }
 
+        int[] locationRootView = new int[2];
+        view.getLocationOnScreen(locationRootView);
         final float screenWidth = getResources().getDisplayMetrics().widthPixels;
         final float screenHeight = getResources().getDisplayMetrics().heightPixels;
+        final float targetY = startY - locationRootView[1] - toolbarHeight;
 
         final Animation animation = new Animation() {
             @Override
@@ -823,7 +832,7 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
                 RelativeLayout.LayoutParams layoutParams = (RelativeLayout.LayoutParams) swipeRefreshCommentList
                         .getLayoutParams();
                 float reverseInterpolation = 1.0f - interpolatedTime;
-                layoutParams.topMargin = (int) (startY * reverseInterpolation);
+                layoutParams.topMargin = (int) (targetY * reverseInterpolation);
                 layoutParams.setMarginStart((int) (startX * reverseInterpolation));
                 layoutParams.setMarginEnd((int) (startMarginEnd * reverseInterpolation));
                 swipeRefreshCommentList.setLayoutParams(layoutParams);
@@ -835,7 +844,7 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
                 layoutParamsBackground.height = (int) (interpolatedTime * screenHeight);
                 viewBackground.setLayoutParams(layoutParamsBackground);
                 viewBackground.setTranslationX(startX * reverseInterpolation);
-                viewBackground.setTranslationY(startY * reverseInterpolation);
+                viewBackground.setTranslationY(targetY * reverseInterpolation);
             }
         };
         animation.setDuration(DURATION_ENTER);
@@ -894,7 +903,7 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
 
         RelativeLayout.LayoutParams layoutParams = (RelativeLayout.LayoutParams) swipeRefreshCommentList
                 .getLayoutParams();
-        layoutParams.topMargin = (int) startY;
+        layoutParams.topMargin = (int) targetY;
         layoutParams.setMarginStart((int) startX);
         layoutParams.setMarginEnd(startMarginEnd);
         swipeRefreshCommentList.setLayoutParams(layoutParams);
@@ -992,7 +1001,7 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
                 public void onAnimationEnd(Animation animation) {
                     view.setVisibility(View.GONE);
                     buttonExpandActions.setImageResource(R.drawable.ic_unfold_more_white_24dp);
-                    buttonExpandActions.setColorFilter(colorFilterIcon);
+                    buttonExpandActions.setColorFilter(colorFilterAccent);
                 }
 
                 @Override
@@ -1140,6 +1149,7 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
 
             @Override
             public void onAnimationEnd(Animator animation) {
+                adapterCommentList.setAnimationFinished(false);
                 recyclerCommentList.post(new Runnable() {
                     @Override
                     public void run() {
@@ -1148,8 +1158,11 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
                             return;
                         }
 
+                        int[] locationSwipeRefresh = new int[2];
+                        swipeRefreshCommentList.getLocationOnScreen(locationSwipeRefresh);
                         final float screenWidth = getResources().getDisplayMetrics().widthPixels;
                         final float screenHeight = getResources().getDisplayMetrics().heightPixels;
+                        final float targetY = startY - locationSwipeRefresh[1];
 
                         long duration = ScrollAwareFloatingActionButtonBehavior.DURATION;
 
@@ -1173,7 +1186,7 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
                                 super.applyTransformation(interpolatedTime, t);
                                 RelativeLayout.LayoutParams layoutParams = (RelativeLayout.LayoutParams) swipeRefreshCommentList
                                         .getLayoutParams();
-                                layoutParams.topMargin = (int) (startY * interpolatedTime);
+                                layoutParams.topMargin = (int) (targetY * interpolatedTime);
                                 layoutParams.setMarginStart((int) (startX * interpolatedTime));
                                 layoutParams.setMarginEnd(
                                         (int) (startMarginEnd * interpolatedTime));
@@ -1186,7 +1199,7 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
                                 layoutParamsBackground.height = (int) ((1f - interpolatedTime) * screenHeight);
                                 viewBackground.setLayoutParams(layoutParamsBackground);
                                 viewBackground.setTranslationX(startX * interpolatedTime);
-                                viewBackground.setTranslationY(startY * interpolatedTime);
+                                viewBackground.setTranslationY(targetY * interpolatedTime);
                             }
                         };
                         animation.setDuration(DURATION_EXIT);
@@ -1243,6 +1256,7 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
     }
 
     private void slideExit() {
+        viewBackground.setVisibility(View.VISIBLE);
         FragmentBase fragment = (FragmentBase) getFragmentManager()
                 .findFragmentByTag(fragmentParentTag);
         if (fragment != null) {

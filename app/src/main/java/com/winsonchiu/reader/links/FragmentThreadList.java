@@ -7,6 +7,8 @@ package com.winsonchiu.reader.links;
 import android.app.Activity;
 import android.content.SharedPreferences;
 import android.content.res.TypedArray;
+import android.graphics.Color;
+import android.graphics.ColorFilter;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
 import android.os.Build;
@@ -60,6 +62,7 @@ import com.winsonchiu.reader.search.FragmentSearch;
 import com.winsonchiu.reader.utils.DisallowListener;
 import com.winsonchiu.reader.utils.RecyclerCallback;
 import com.winsonchiu.reader.utils.ScrollAwareFloatingActionButtonBehavior;
+import com.winsonchiu.reader.utils.UtilsColor;
 import com.winsonchiu.reader.views.CustomItemTouchHelper;
 
 public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuItemClickListener {
@@ -101,9 +104,10 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
     private LinearLayout layoutActions;
     private FloatingActionButton buttonClearViewed;
     private FloatingActionButton buttonJumpTop;
-    private PorterDuffColorFilter colorFilterIcon;
     private ScrollAwareFloatingActionButtonBehavior behaviorButtonExpandActions;
     private View view;
+    private ColorFilter colorFilterPrimary;
+    private ColorFilter colorFilterAccent;
 
     public static FragmentThreadList newInstance() {
         FragmentThreadList fragment = new FragmentThreadList();
@@ -277,8 +281,27 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
         };
     }
 
-    private void setUpOptionsMenu() {
+    private void setUpToolbar() {
 
+        if (getFragmentManager().getBackStackEntryCount() <= 1) {
+            toolbar.setNavigationIcon(R.drawable.ic_menu_white_24dp);
+            toolbar.setNavigationOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    mListener.openDrawer();
+                }
+            });
+        }
+        else {
+            toolbar.setNavigationIcon(R.drawable.ic_arrow_back_white_24dp);
+            toolbar.setNavigationOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    mListener.onNavigationBackClick();
+                }
+            });
+        }
+        toolbar.getNavigationIcon().mutate().setColorFilter(colorFilterPrimary);
         toolbar.inflateMenu(R.menu.menu_thread_list);
         toolbar.setOnMenuItemClickListener(this);
         menu = toolbar.getMenu();
@@ -303,7 +326,7 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
                                 .getTime().getMenuId()).toString());
 
         for (int index = 0; index < menu.size(); index++) {
-            menu.getItem(index).getIcon().setColorFilter(colorFilterIcon);
+            menu.getItem(index).getIcon().setColorFilter(colorFilterPrimary);
         }
 
     }
@@ -352,15 +375,19 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
         view = inflater.inflate(R.layout.fragment_thread_list, container, false);
 
         TypedArray typedArray = activity.getTheme().obtainStyledAttributes(
-                new int[] {R.attr.colorPrimary, R.attr.colorIconFilter});
+                new int[] {R.attr.colorPrimary, R.attr.colorAccent});
         final int colorPrimary = typedArray.getColor(0, getResources().getColor(R.color.colorPrimary));
-        int colorIconFilter = typedArray.getColor(1, 0xFFFFFFFF);
+        int colorAccent = typedArray.getColor(1, getResources().getColor(R.color.colorAccent));
         typedArray.recycle();
 
-        colorFilterIcon = new PorterDuffColorFilter(colorIconFilter,
-                PorterDuff.Mode.MULTIPLY);
+        int colorResourcePrimary = UtilsColor.computeContrast(colorPrimary, Color.WHITE) > 3f ? R.color.darkThemeIconFilter : R.color.lightThemeIconFilter;
+        int colorResourceAccent = UtilsColor.computeContrast(colorAccent, Color.WHITE) > 3f ? R.color.darkThemeIconFilter : R.color.lightThemeIconFilter;
+
+        colorFilterPrimary = new PorterDuffColorFilter(getResources().getColor(colorResourcePrimary), PorterDuff.Mode.MULTIPLY);
+        colorFilterAccent = new PorterDuffColorFilter(getResources().getColor(colorResourceAccent), PorterDuff.Mode.MULTIPLY);
 
         toolbar = (Toolbar) view.findViewById(R.id.toolbar);
+        toolbar.setTitleTextColor(getResources().getColor(colorResourcePrimary));
         toolbar.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -372,31 +399,13 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
                         .commit();
             }
         });
-        if (getFragmentManager().getBackStackEntryCount() <= 1) {
-            toolbar.setNavigationIcon(R.drawable.ic_menu_white_24dp);
-            toolbar.setNavigationOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    mListener.openDrawer();
-                }
-            });
-        }
-        else {
-            toolbar.setNavigationIcon(R.drawable.ic_arrow_back_white_24dp);
-            toolbar.setNavigationOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    mListener.onNavigationBackClick();
-                }
-            });
-        }
-        toolbar.getNavigationIcon().mutate().setColorFilter(colorFilterIcon);
-        setUpOptionsMenu();
+        setUpToolbar();
 
         layoutCoordinator = (CoordinatorLayout) view.findViewById(R.id.layout_coordinator);
         layoutAppBar = (AppBarLayout) view.findViewById(R.id.layout_app_bar);
 
         layoutActions = (LinearLayout) view.findViewById(R.id.layout_actions);
+
         buttonExpandActions = (FloatingActionButton) view.findViewById(R.id.button_expand_actions);
         buttonExpandActions.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -416,7 +425,7 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
                     @Override
                     public void onEndHideFromScroll() {
                         buttonExpandActions.setImageResource(R.drawable.ic_unfold_more_white_24dp);
-                        buttonExpandActions.setColorFilter(colorFilterIcon);
+                        buttonExpandActions.setColorFilter(colorFilterAccent);
                     }
 
                 });
@@ -482,9 +491,9 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
             layoutActions.setLayoutParams(layoutParamsActions);
         }
 
-        buttonExpandActions.setColorFilter(colorFilterIcon);
-        buttonJumpTop.setColorFilter(colorFilterIcon);
-        buttonClearViewed.setColorFilter(colorFilterIcon);
+        buttonExpandActions.setColorFilter(colorFilterAccent);
+        buttonJumpTop.setColorFilter(colorFilterAccent);
+        buttonClearViewed.setColorFilter(colorFilterAccent);
 
         swipeRefreshThreadList = (SwipeRefreshLayout) view.findViewById(
                 R.id.swipe_refresh_thread_list);
@@ -718,7 +727,7 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
                 public void onAnimationEnd(Animation animation) {
                     view.setVisibility(View.GONE);
                     buttonExpandActions.setImageResource(R.drawable.ic_unfold_more_white_24dp);
-                    buttonExpandActions.setColorFilter(colorFilterIcon);
+                    buttonExpandActions.setColorFilter(colorFilterAccent);
                 }
 
                 @Override
@@ -810,7 +819,6 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
                         preferences.getString(AppSettings.INTERFACE_MODE, AppSettings.MODE_GRID))) {
                     resetAdapter(adapterLinkGrid);
                     item.setIcon(getResources().getDrawable(R.drawable.ic_view_list_white_24dp));
-                    item.getIcon().setColorFilter(colorFilterIcon);
                     preferences.edit()
                             .putString(AppSettings.INTERFACE_MODE, AppSettings.MODE_GRID)
                             .apply();
@@ -818,11 +826,11 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
                 else {
                     resetAdapter(adapterLinkList);
                     item.setIcon(getResources().getDrawable(R.drawable.ic_view_module_white_24dp));
-                    item.getIcon().setColorFilter(colorFilterIcon);
                     preferences.edit()
                             .putString(AppSettings.INTERFACE_MODE, AppSettings.MODE_LIST)
                             .apply();
                 }
+                item.getIcon().setColorFilter(colorFilterPrimary);
                 return true;
 
         }

@@ -22,6 +22,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.annotation.Nullable;
+import android.text.TextUtils;
 import android.util.Log;
 
 import com.android.volley.AuthFailureError;
@@ -37,6 +38,8 @@ import com.winsonchiu.reader.data.reddit.Listing;
 import com.winsonchiu.reader.data.reddit.Message;
 import com.winsonchiu.reader.data.reddit.Reddit;
 import com.winsonchiu.reader.data.reddit.Thing;
+
+import org.w3c.dom.Text;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -166,7 +169,7 @@ public class Receiver extends BroadcastReceiver {
                 for (int index = 0; index < messages.getChildren().size(); index++) {
                     thing = messages.getChildren().get(index);
                     if (readNames.contains(thing.getName())) {
-                        Reddit.getInstance(context).markRead(thing.getName());
+                        reddit.markRead(thing.getName());
                     }
                     else {
                         readNames.add(thing.getName());
@@ -205,11 +208,10 @@ public class Receiver extends BroadcastReceiver {
                 PendingIntent pendingIntentActivity = PendingIntent
                         .getActivity(context, 0, intentActivity, PendingIntent.FLAG_CANCEL_CURRENT);
 
-                Intent intentMarkRead = new Intent(INTENT_INBOX);
-                intentMarkRead.putExtra(READ_NAMES, readNames);
-                PendingIntent pendingIntentMarkRead = PendingIntent
-                        .getBroadcast(context, 0, intentMarkRead, PendingIntent.FLAG_CANCEL_CURRENT);
-
+                Intent intentRecheckInbox = new Intent(INTENT_INBOX);
+                intentRecheckInbox.putExtra(READ_NAMES, readNames);
+                PendingIntent pendingIntentRecheckInbox = PendingIntent
+                        .getBroadcast(context, 0, intentRecheckInbox, PendingIntent.FLAG_CANCEL_CURRENT);
 
                 Notification.Builder builder = new Notification.Builder(context)
                         .setSmallIcon(R.mipmap.app_icon_white_outline)
@@ -225,7 +227,8 @@ public class Receiver extends BroadcastReceiver {
                         .setContentIntent(pendingIntentActivity)
                         .addAction(R.drawable.ic_check_white_24dp,
                                 context.getString(R.string.mark_read),
-                                pendingIntentMarkRead)
+                                pendingIntentRecheckInbox)
+                        .setDeleteIntent(pendingIntentRecheckInbox)
                         .setAutoCancel(true);
 
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {

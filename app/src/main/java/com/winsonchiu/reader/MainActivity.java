@@ -83,7 +83,7 @@ import com.winsonchiu.reader.profile.FragmentProfile;
 import com.winsonchiu.reader.search.ControllerSearch;
 import com.winsonchiu.reader.search.FragmentSearch;
 import com.winsonchiu.reader.settings.ActivitySettings;
-import com.winsonchiu.reader.utils.AnimationUtils;
+import com.winsonchiu.reader.utils.UtilsColor;
 import com.winsonchiu.reader.views.WebViewFixed;
 
 import org.json.JSONException;
@@ -139,25 +139,36 @@ public class MainActivity extends YouTubeBaseActivity
             handler.postDelayed(this, 60000);
         }
     };
-    private PorterDuffColorFilter colorFilterIcon;
+    private PorterDuffColorFilter colorFilterPrimary;
+    private int colorResourcePrimary;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
-        Theme theme = Theme.fromString(sharedPreferences.getString(AppSettings.PREF_THEME_PRIMARY, AppSettings.THEME_DEEP_PURPLE));
+
+        Theme theme;
+        String themeAccent;
+
+        if (sharedPreferences.getBoolean(AppSettings.SECRET, false)) {
+            theme = Theme.random();
+            themeAccent = AppSettings.randomThemeString();
+        }
+        else {
+            theme = Theme.fromString(sharedPreferences.getString(AppSettings.PREF_THEME_PRIMARY, AppSettings.THEME_DEEP_PURPLE));
+            themeAccent = sharedPreferences.getString(AppSettings.PREF_THEME_ACCENT, AppSettings.THEME_YELLOW);
+        }
         if (theme != null) {
             String themeBackground = sharedPreferences.getString(AppSettings.PREF_THEME_BACKGROUND, AppSettings.THEME_DARK);
-            String themeAccent = sharedPreferences.getString(AppSettings.PREF_THEME_ACCENT, AppSettings.THEME_YELLOW);
 
             setTheme(theme.getStyle(themeBackground, themeAccent));
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
 
-                TypedArray typedArray = obtainStyledAttributes(new int[]{R.attr.colorPrimary});
+                TypedArray typedArray = obtainStyledAttributes(new int[] {R.attr.colorPrimary});
                 int colorPrimary = typedArray.getColor(0, getResources().getColor(R.color.colorPrimary));
                 typedArray.recycle();
 
-                int resourceIcon = AnimationUtils.computeContrast(colorPrimary, Color.WHITE) > 3f ? R.mipmap.app_icon_white_outline : R.mipmap.app_icon_dark_outline;
+                int resourceIcon = UtilsColor.computeContrast(colorPrimary, Color.WHITE) > 3f ? R.mipmap.app_icon_white_outline : R.mipmap.app_icon_dark_outline;
 
                 ActivityManager.TaskDescription taskDescription = new ActivityManager.TaskDescription("Reader", BitmapFactory.decodeResource(getResources(), resourceIcon), colorPrimary);
                 setTaskDescription(taskDescription);
@@ -739,13 +750,14 @@ public class MainActivity extends YouTubeBaseActivity
         float screenWidth = getResources().getDisplayMetrics().widthPixels;
 
         TypedArray typedArray = getTheme().obtainStyledAttributes(
-                new int[]{android.R.attr.actionBarSize, R.attr.colorIconFilter});
+                new int[]{android.R.attr.actionBarSize, R.attr.colorPrimary});
         float marginEnd = typedArray.getDimension(0, standardIncrement);
-        int colorIconFilter = typedArray.getColor(1, 0xFFFFFFFF);
+        int colorPrimary = typedArray.getColor(1, getResources().getColor(R.color.colorPrimary));
         typedArray.recycle();
 
-        colorFilterIcon = new PorterDuffColorFilter(colorIconFilter,
-                PorterDuff.Mode.MULTIPLY);
+        colorResourcePrimary = UtilsColor.computeContrast(colorPrimary, Color.WHITE) > 3f ? R.color.darkThemeIconFilter : R.color.lightThemeIconFilter;
+
+        colorFilterPrimary = new PorterDuffColorFilter(getResources().getColor(colorResourcePrimary), PorterDuff.Mode.MULTIPLY);
 
         float navigationWidth = screenWidth - marginEnd;
         if (navigationWidth > standardIncrement * 6) {
@@ -763,7 +775,10 @@ public class MainActivity extends YouTubeBaseActivity
         buttonAccounts = (ImageButton) viewHeader.findViewById(R.id.button_accounts);
         layoutAccounts = (LinearLayout) viewHeader.findViewById(R.id.layout_accounts);
 
-        buttonAccounts.setColorFilter(colorFilterIcon);
+        textAccountName.setTextColor(getResources().getColor(colorResourcePrimary));
+        textAccountInfo.setTextColor(getResources().getColor(colorResourcePrimary));
+
+        buttonAccounts.setColorFilter(colorFilterPrimary);
 
         viewHeader.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -796,9 +811,10 @@ public class MainActivity extends YouTubeBaseActivity
             View viewAccount = getLayoutInflater().inflate(R.layout.row_account, layoutAccounts, false);
             TextView textUsername = (TextView) viewAccount.findViewById(R.id.text_username);
             ImageButton buttonDeleteAccount = (ImageButton) viewAccount.findViewById(R.id.button_delete_account);
-            buttonDeleteAccount.setColorFilter(colorFilterIcon);
+            buttonDeleteAccount.setColorFilter(colorFilterPrimary);
 
             textUsername.setText(account.name);
+            textUsername.setTextColor(getResources().getColor(colorResourcePrimary));
 
             viewAccount.setOnClickListener(new View.OnClickListener() {
                 @Override
@@ -826,9 +842,10 @@ public class MainActivity extends YouTubeBaseActivity
         });
         TextView textAddAccount = (TextView) viewAddAccount.findViewById(R.id.text_username);
         textAddAccount.setText(R.string.add_account);
+        textAddAccount.setTextColor(getResources().getColor(colorResourcePrimary));
         ImageButton buttonAddAccount = (ImageButton) viewAddAccount.findViewById(R.id.button_delete_account);
         buttonAddAccount.setImageResource(R.drawable.ic_add_white_24dp);
-        buttonAddAccount.setColorFilter(colorFilterIcon);
+        buttonAddAccount.setColorFilter(colorFilterPrimary);
         buttonAddAccount.setClickable(false);
         layoutAccounts.addView(viewAddAccount);
 
@@ -841,9 +858,10 @@ public class MainActivity extends YouTubeBaseActivity
         });
         TextView textLogout = (TextView) viewLogout.findViewById(R.id.text_username);
         textLogout.setText(R.string.logout);
+        textLogout.setTextColor(getResources().getColor(colorResourcePrimary));
         ImageButton buttonLogout = (ImageButton) viewLogout.findViewById(R.id.button_delete_account);
         buttonLogout.setImageResource(R.drawable.ic_exit_to_app_white_24dp);
-        buttonLogout.setColorFilter(colorFilterIcon);
+        buttonLogout.setColorFilter(colorFilterPrimary);
         buttonLogout.setClickable(false);
         layoutAccounts.addView(viewLogout);
     }
@@ -963,7 +981,7 @@ public class MainActivity extends YouTubeBaseActivity
             layoutAccounts.setVisibility(View.GONE);
             buttonAccounts.setImageResource(R.drawable.ic_arrow_drop_down_white_24dp);
         }
-        buttonAccounts.setColorFilter(colorFilterIcon);
+        buttonAccounts.setColorFilter(colorFilterPrimary);
     }
 
     private void selectNavigationItem(final int id, String page, boolean animate) {
@@ -1059,7 +1077,7 @@ public class MainActivity extends YouTubeBaseActivity
                                         textAccountName.setText(jsonObject.getString("name"));
                                         textAccountInfo.setText(jsonObject.getString(
                                                 "link_karma") + " " + getString(R.string.link) + " " + jsonObject.getString(
-                                                "comment_karma") + " " + getString(R.string.comment_karma));
+                                                "comment_karma") + " " + getString(R.string.comment));
                                     }
                                     catch (JSONException e) {
                                         e.printStackTrace();

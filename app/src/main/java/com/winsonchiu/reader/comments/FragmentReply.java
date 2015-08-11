@@ -8,6 +8,8 @@ import android.animation.Animator;
 import android.app.Activity;
 import android.content.Context;
 import android.content.res.TypedArray;
+import android.graphics.Color;
+import android.graphics.ColorFilter;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
 import android.os.Bundle;
@@ -43,6 +45,7 @@ import com.winsonchiu.reader.inbox.FragmentInbox;
 import com.winsonchiu.reader.links.FragmentThreadList;
 import com.winsonchiu.reader.profile.FragmentProfile;
 import com.winsonchiu.reader.search.FragmentSearch;
+import com.winsonchiu.reader.utils.UtilsColor;
 
 public class FragmentReply extends FragmentBase implements Toolbar.OnMenuItemClickListener {
 
@@ -63,6 +66,7 @@ public class FragmentReply extends FragmentBase implements Toolbar.OnMenuItemCli
     private CoordinatorLayout layoutCoordinator;
     private AppBarLayout layoutAppBar;
     private NestedScrollView scrollText;
+    private TextView textAuthor;
     private TextView textParent;
     private EditText editReply;
     private TextView textPreview;
@@ -71,7 +75,6 @@ public class FragmentReply extends FragmentBase implements Toolbar.OnMenuItemCli
     private Toolbar toolbar;
     private Toolbar toolbarActions;
     private View viewDivider;
-    private PorterDuffColorFilter colorFilterIcon;
     private Menu menu;
 
     private String nameParent;
@@ -79,6 +82,8 @@ public class FragmentReply extends FragmentBase implements Toolbar.OnMenuItemCli
     private int editMarginDefault;
     private int editMarginWithActions;
     private boolean collapsed;
+    private ColorFilter colorFilterPrimary;
+    private ColorFilter colorFilterIcon;
 
     public static FragmentReply newInstance(Replyable replyable) {
         FragmentReply fragment = new FragmentReply();
@@ -115,15 +120,22 @@ public class FragmentReply extends FragmentBase implements Toolbar.OnMenuItemCli
         layoutAppBar = (AppBarLayout) view.findViewById(R.id.layout_app_bar);
 
         TypedArray typedArray = activity.getTheme().obtainStyledAttributes(
-                new int[]{R.attr.colorIconFilter});
-        int colorIconFilter = typedArray.getColor(0, 0xFFFFFFFF);
+                new int[] {R.attr.colorPrimary, R.attr.colorIconFilter});
+        final int colorPrimary = typedArray.getColor(0, getResources().getColor(R.color.colorPrimary));
+        int colorIcon = typedArray.getColor(1, getResources().getColor(R.color.darkThemeIconFilter));
         typedArray.recycle();
 
-        colorFilterIcon = new PorterDuffColorFilter(colorIconFilter,
-                PorterDuff.Mode.MULTIPLY);
+        int colorResourcePrimary = UtilsColor.computeContrast(colorPrimary, Color.WHITE) > 3f ? R.color.darkThemeIconFilter : R.color.lightThemeIconFilter;
+
+        colorFilterPrimary = new PorterDuffColorFilter(getResources().getColor(colorResourcePrimary), PorterDuff.Mode.MULTIPLY);
+        colorFilterIcon = new PorterDuffColorFilter(colorIcon, PorterDuff.Mode.MULTIPLY);
 
         toolbar = (Toolbar) view.findViewById(R.id.toolbar);
+        toolbar.setTitleTextColor(getResources().getColor(colorResourcePrimary));
         setUpToolbar();
+
+        textAuthor = (TextView) view.findViewById(R.id.text_author);
+        textAuthor.setText(getString(R.string.replying_from) + " " + mListener.getControllerUser().getUser().getName());
 
         scrollText = (NestedScrollView) view.findViewById(R.id.scroll_text);
 
@@ -306,14 +318,14 @@ public class FragmentReply extends FragmentBase implements Toolbar.OnMenuItemCli
                 mListener.onNavigationBackClick();
             }
         });
-        toolbar.getNavigationIcon().mutate().setColorFilter(colorFilterIcon);
+        toolbar.getNavigationIcon().mutate().setColorFilter(colorFilterPrimary);
 
         toolbar.inflateMenu(R.menu.menu_reply);
         toolbar.setOnMenuItemClickListener(this);
         menu = toolbar.getMenu();
 
         for (int index = 0; index < menu.size(); index++) {
-            menu.getItem(index).getIcon().setColorFilter(colorFilterIcon);
+            menu.getItem(index).getIcon().setColorFilter(colorFilterPrimary);
         }
     }
 

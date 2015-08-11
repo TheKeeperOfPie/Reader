@@ -144,6 +144,9 @@ public class ControllerLinks implements ControllerLinksBase {
     public void setSort(Sort sort) {
         if (this.sort != sort) {
             this.sort = sort;
+            for (Listener listener : listeners) {
+                listener.setSortAndTime(sort, time);
+            }
             reloadAllLinks();
         }
     }
@@ -151,6 +154,9 @@ public class ControllerLinks implements ControllerLinksBase {
     public void setTime(Time time) {
         if (this.time != time) {
             this.time = time;
+            for (Listener listener : listeners) {
+                listener.setSortAndTime(sort, time);
+            }
             reloadAllLinks();
         }
     }

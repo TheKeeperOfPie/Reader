@@ -7,6 +7,8 @@ package com.winsonchiu.reader.inbox;
 import android.app.Activity;
 import android.content.Intent;
 import android.content.res.TypedArray;
+import android.graphics.Color;
+import android.graphics.ColorFilter;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
 import android.os.Bundle;
@@ -44,6 +46,7 @@ import com.winsonchiu.reader.utils.AnimationUtils;
 import com.winsonchiu.reader.utils.DisallowListener;
 import com.winsonchiu.reader.utils.RecyclerCallback;
 import com.winsonchiu.reader.utils.ScrollAwareFloatingActionButtonBehavior;
+import com.winsonchiu.reader.utils.UtilsColor;
 
 public class FragmentInbox extends FragmentBase implements Toolbar.OnMenuItemClickListener {
 
@@ -61,10 +64,11 @@ public class FragmentInbox extends FragmentBase implements Toolbar.OnMenuItemCli
     private Spinner spinnerPage;
     private AdapterInboxPage adapterInboxPage;
     private ScrollAwareFloatingActionButtonBehavior behaviorFloatingActionButton;
-    private PorterDuffColorFilter colorFilterIcon;
     private Menu menu;
     private CoordinatorLayout layoutCoordinator;
     private AppBarLayout layoutAppBar;
+    private ColorFilter colorFilterPrimary;
+    private ColorFilter colorFilterAccent;
 
     public static FragmentInbox newInstance() {
         FragmentInbox fragment = new FragmentInbox();
@@ -126,16 +130,21 @@ public class FragmentInbox extends FragmentBase implements Toolbar.OnMenuItemCli
         layoutAppBar = (AppBarLayout) view.findViewById(R.id.layout_app_bar);
 
         TypedArray typedArray = activity.getTheme().obtainStyledAttributes(
-                new int[]{R.attr.colorIconFilter});
-        int colorIconFilter = typedArray.getColor(0, 0xFFFFFFFF);
+                new int[] {R.attr.colorPrimary, R.attr.colorAccent});
+        final int colorPrimary = typedArray.getColor(0, getResources().getColor(R.color.colorPrimary));
+        int colorAccent = typedArray.getColor(1, getResources().getColor(R.color.colorAccent));
         typedArray.recycle();
 
-        colorFilterIcon = new PorterDuffColorFilter(colorIconFilter,
-                PorterDuff.Mode.MULTIPLY);
+        int colorResourcePrimary = UtilsColor.computeContrast(colorPrimary, Color.WHITE) > 3f ? R.color.darkThemeIconFilter : R.color.lightThemeIconFilter;
+        int colorResourceAccent = UtilsColor.computeContrast(colorAccent, Color.WHITE) > 3f ? R.color.darkThemeIconFilter : R.color.lightThemeIconFilter;
+
+        colorFilterPrimary = new PorterDuffColorFilter(getResources().getColor(colorResourcePrimary), PorterDuff.Mode.MULTIPLY);
+        colorFilterAccent = new PorterDuffColorFilter(getResources().getColor(colorResourceAccent), PorterDuff.Mode.MULTIPLY);
 
         toolbar = (Toolbar) view.findViewById(R.id.toolbar);
+        toolbar.setTitleTextColor(getResources().getColor(colorResourcePrimary));
         toolbar.setNavigationIcon(R.drawable.ic_menu_white_24dp);
-        toolbar.getNavigationIcon().mutate().setColorFilter(colorFilterIcon);
+        toolbar.getNavigationIcon().mutate().setColorFilter(colorFilterPrimary);
         toolbar.setNavigationOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -157,7 +166,7 @@ public class FragmentInbox extends FragmentBase implements Toolbar.OnMenuItemCli
                         .commit();
             }
         });
-        floatingActionButtonNewMessage.setColorFilter(colorFilterIcon);
+        floatingActionButtonNewMessage.setColorFilter(colorFilterAccent);
 
         behaviorFloatingActionButton = new ScrollAwareFloatingActionButtonBehavior(activity, null,
                 new ScrollAwareFloatingActionButtonBehavior.OnVisibilityChangeListener() {
@@ -341,7 +350,7 @@ public class FragmentInbox extends FragmentBase implements Toolbar.OnMenuItemCli
         menu = toolbar.getMenu();
 
         for (int index = 0; index < menu.size(); index++) {
-            menu.getItem(index).getIcon().setColorFilter(colorFilterIcon);
+            menu.getItem(index).getIcon().setColorFilter(colorFilterPrimary);
         }
     }
 

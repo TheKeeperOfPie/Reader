@@ -896,6 +896,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             link.setReplyExpanded(!link.isReplyExpanded());
             layoutContainerReply.setVisibility(link.isReplyExpanded() ? View.VISIBLE : View.GONE);
             if (link.isReplyExpanded()) {
+                recyclerCallback.hideToolbar();
                 recyclerCallback.onReplyShown();
                 InputMethodManager inputManager = (InputMethodManager) itemView.getContext()
                         .getSystemService(Context.INPUT_METHOD_SERVICE);

@@ -50,8 +50,6 @@ public class TagHandlerReddit implements Html.TagHandler {
     @Override
     public void handleTag(boolean opening, String tag, Editable output, XMLReader xmlReader) {
 
-        Log.d(TAG, "handleTag: " + opening + ", " + tag + ", output: " + output);
-
         if (tag.equalsIgnoreCase("del") || tag.equalsIgnoreCase("strike") || tag.equals("s")) {
 
             if (opening) {

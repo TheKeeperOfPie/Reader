@@ -11,6 +11,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.res.TypedArray;
 import android.graphics.Bitmap;
+import android.graphics.Color;
+import android.graphics.ColorFilter;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
 import android.net.Uri;
@@ -30,6 +32,8 @@ import android.webkit.WebViewClient;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.Toast;
+
+import com.winsonchiu.reader.utils.UtilsColor;
 
 public class FragmentWeb extends FragmentBase implements Toolbar.OnMenuItemClickListener,
         View.OnClickListener {
@@ -51,7 +55,8 @@ public class FragmentWeb extends FragmentBase implements Toolbar.OnMenuItemClick
     private RelativeLayout layoutRoot;
     private boolean isFinished;
     private WebChromeClient.CustomViewCallback customViewCallback;
-    private PorterDuffColorFilter colorFilterIcon;
+    private ColorFilter colorFilterPrimary;
+    private ColorFilter colorFilterIcon;
 
     public static FragmentWeb newInstance(String url) {
         FragmentWeb fragment = new FragmentWeb();
@@ -116,7 +121,7 @@ public class FragmentWeb extends FragmentBase implements Toolbar.OnMenuItemClick
         toolbar.setOnMenuItemClickListener(this);
 
         for (int index = 0; index < menu.size(); index++) {
-            menu.getItem(index).getIcon().setColorFilter(colorFilterIcon);
+            menu.getItem(index).getIcon().setColorFilter(colorFilterPrimary);
         }
     }
 
@@ -142,18 +147,22 @@ public class FragmentWeb extends FragmentBase implements Toolbar.OnMenuItemClick
         layoutRoot = (RelativeLayout) view;
 
         TypedArray typedArray = activity.getTheme().obtainStyledAttributes(
-                new int[]{R.attr.colorIconFilter});
-        int colorIconFilter = typedArray.getColor(0, 0xFFFFFFFF);
+                new int[]{R.attr.colorPrimary, R.attr.colorIconFilter});
+        final int colorPrimary = typedArray.getColor(0, getResources().getColor(R.color.colorPrimary));
+        int colorIcon = typedArray.getColor(1, getResources().getColor(R.color.darkThemeIconFilter));
         typedArray.recycle();
 
-        colorFilterIcon = new PorterDuffColorFilter(colorIconFilter,
-                PorterDuff.Mode.MULTIPLY);
+        int colorResourcePrimary = UtilsColor.computeContrast(colorPrimary, Color.WHITE) > 3f ? R.color.darkThemeIconFilter : R.color.lightThemeIconFilter;
+
+        colorFilterPrimary = new PorterDuffColorFilter(getResources().getColor(colorResourcePrimary), PorterDuff.Mode.MULTIPLY);
+        colorFilterIcon = new PorterDuffColorFilter(colorIcon, PorterDuff.Mode.MULTIPLY);
 
         toolbar = (Toolbar) view.findViewById(R.id.toolbar);
         toolbar.setTitle(getString(R.string.loading_web_page));
+        toolbar.setTitleTextColor(getResources().getColor(colorResourcePrimary));
         toolbar.setOnClickListener(this);
         toolbar.setNavigationIcon(R.drawable.ic_arrow_back_white_24dp);
-        toolbar.getNavigationIcon().mutate().setColorFilter(colorFilterIcon);
+        toolbar.getNavigationIcon().mutate().setColorFilter(colorFilterPrimary);
         toolbar.setNavigationOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -240,6 +249,11 @@ public class FragmentWeb extends FragmentBase implements Toolbar.OnMenuItemClick
         toolbarActions = (Toolbar) view.findViewById(R.id.toolbar_actions);
         toolbarActions.inflateMenu(R.menu.menu_web_search);
         toolbarActions.setOnMenuItemClickListener(this);
+
+        Menu menuActions = toolbarActions.getMenu();
+        for (int index = 0; index < menuActions.size(); index++) {
+            menuActions.getItem(index).getIcon().setColorFilter(colorFilterIcon);
+        }
 
         return view;
     }

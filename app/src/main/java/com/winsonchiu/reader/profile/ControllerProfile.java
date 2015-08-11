@@ -624,6 +624,9 @@ public class ControllerProfile implements ControllerLinksBase {
     public void setSort(Sort sort) {
         if (this.sort != sort) {
             this.sort = sort;
+            for (Listener listener : listeners) {
+                listener.setSortAndTime(sort, time);
+            }
             reload();
         }
     }
@@ -635,6 +638,9 @@ public class ControllerProfile implements ControllerLinksBase {
     public void setTime(Time time) {
         if (this.time != time) {
             this.time = time;
+            for (Listener listener : listeners) {
+                listener.setSortAndTime(sort, time);
+            }
             reload();
         }
     }

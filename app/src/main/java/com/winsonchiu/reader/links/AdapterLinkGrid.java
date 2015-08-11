@@ -34,6 +34,7 @@ import com.winsonchiu.reader.data.reddit.Reddit;
 import com.winsonchiu.reader.utils.AnimationUtils;
 import com.winsonchiu.reader.utils.DisallowListener;
 import com.winsonchiu.reader.utils.RecyclerCallback;
+import com.winsonchiu.reader.utils.UtilsColor;
 
 import java.util.ArrayList;
 
@@ -561,7 +562,7 @@ public class AdapterLinkGrid extends AdapterLink {
 
             Menu menu = toolbarActions.getMenu();
 
-            double contrast = AnimationUtils.computeContrast(color, Color.WHITE);
+            double contrast = UtilsColor.computeContrast(color, Color.WHITE);
 
             if (contrast > 3f) {
                 buttonComments.setColorFilter(colorFilterIconLight);

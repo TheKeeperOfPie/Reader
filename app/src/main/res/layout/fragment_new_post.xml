@@ -52,7 +52,7 @@
                             android:layout_marginBottom="@dimen/activity_vertical_margin"
                             android:paddingStart="16dp"
                             android:paddingEnd="16dp"
-                            android:textAppearance="?android:textAppearanceMedium"
+                            android:textAppearance="@style/TextAppearance.AppCompat.Subhead"
                             />
 
                         <TextView

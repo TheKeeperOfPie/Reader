@@ -4,6 +4,8 @@
 
 package com.winsonchiu.reader;
 
+import java.util.Random;
+
 /**
  * Created by TheKeeperOfPie on 8/2/2015.
  */
@@ -619,6 +621,11 @@ public enum Theme {
             }
         }
         return THEME_YELLOW;
+    }
+
+
+    public static Theme random() {
+        return values()[new Random().nextInt(values().length)];
     }
 
     public int getStyle(String themeBackground, String themeAccent) {

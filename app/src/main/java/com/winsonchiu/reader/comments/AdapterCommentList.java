@@ -343,6 +343,9 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                 }
             }
         }
+        if (!listenerSet) {
+            listener.onAnimationEnd(null);
+        }
     }
 
     public static class ViewHolderComment extends RecyclerView.ViewHolder
@@ -882,6 +885,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
             layoutContainerReply.setVisibility(
                     comment.isReplyExpanded() ? View.VISIBLE : View.GONE);
             if (comment.isReplyExpanded()) {
+                recyclerCallback.hideToolbar();
                 recyclerCallback.onReplyShown();
                 editTextReply.setText(comment.getReplyText());
                 editTextReply.clearFocus();

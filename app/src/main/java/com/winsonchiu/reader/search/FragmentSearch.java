@@ -7,8 +7,11 @@ package com.winsonchiu.reader.search;
 import android.app.Activity;
 import android.content.Context;
 import android.content.res.TypedArray;
+import android.graphics.Color;
+import android.graphics.ColorFilter;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.support.design.widget.AppBarLayout;
 import android.support.design.widget.CoordinatorLayout;
@@ -16,16 +19,20 @@ import android.support.design.widget.TabLayout;
 import android.support.v4.view.MenuItemCompat;
 import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
+import android.support.v7.internal.widget.TintImageView;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.SearchView;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
+import android.widget.ImageView;
+import android.widget.TextView;
 
 import com.winsonchiu.reader.CustomApplication;
 import com.winsonchiu.reader.FragmentBase;
@@ -35,11 +42,13 @@ import com.winsonchiu.reader.data.reddit.Link;
 import com.winsonchiu.reader.data.reddit.Reddit;
 import com.winsonchiu.reader.data.reddit.Sort;
 import com.winsonchiu.reader.data.reddit.Subreddit;
+import com.winsonchiu.reader.data.reddit.Thing;
 import com.winsonchiu.reader.data.reddit.Time;
 import com.winsonchiu.reader.links.AdapterLink;
 import com.winsonchiu.reader.links.ControllerLinksBase;
 import com.winsonchiu.reader.utils.DisallowListener;
 import com.winsonchiu.reader.utils.RecyclerCallback;
+import com.winsonchiu.reader.utils.UtilsColor;
 
 public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemClickListener {
 
@@ -69,9 +78,10 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
     private MenuItem itemSearch;
     private MenuItem itemSortTime;
     private Toolbar toolbar;
-    private PorterDuffColorFilter colorFilterIcon;
     private CoordinatorLayout layoutCoordinator;
     private AppBarLayout layoutAppBar;
+    private View view;
+    private ColorFilter colorFilterPrimary;
 
     public static FragmentSearch newInstance(boolean hideKeyboard) {
         FragmentSearch fragment = new FragmentSearch();
@@ -93,7 +103,7 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
 
     private void setUpToolbar() {
         toolbar.setNavigationIcon(R.drawable.ic_arrow_back_white_24dp);
-        toolbar.getNavigationIcon().mutate().setColorFilter(colorFilterIcon);
+        toolbar.getNavigationIcon().mutate().setColorFilter(colorFilterPrimary);
         toolbar.setNavigationOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -111,6 +121,23 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
 
         final SearchView searchView = (SearchView) itemSearch.getActionView();
 
+        View view = searchView.findViewById(android.support.v7.appcompat.R.id.search_go_btn);
+        if (view instanceof ImageView) {
+            ((ImageView) view).setColorFilter(colorFilterPrimary);
+        }
+
+        MenuItemCompat.setOnActionExpandListener(itemSearch, new MenuItemCompat.OnActionExpandListener() {
+            @Override
+            public boolean onMenuItemActionExpand(MenuItem item) {
+                toolbar.getNavigationIcon().mutate().setColorFilter(colorFilterPrimary);
+                return true;
+            }
+
+            @Override
+            public boolean onMenuItemActionCollapse(MenuItem item) {
+                return true;
+            }
+        });
         searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
             @Override
             public boolean onQueryTextSubmit(String query) {
@@ -154,7 +181,7 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
         }
 
         for (int index = 0; index < menu.size(); index++) {
-            menu.getItem(index).getIcon().setColorFilter(colorFilterIcon);
+            menu.getItem(index).getIcon().setColorFilter(colorFilterPrimary);
         }
 
     }
@@ -186,7 +213,7 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        final View view = inflater.inflate(R.layout.fragment_search, container, false);
+        view = inflater.inflate(R.layout.fragment_search, container, false);
 
         listenerSearch = new ControllerSearch.Listener() {
 
@@ -261,14 +288,16 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
         };
 
         TypedArray typedArray = activity.getTheme().obtainStyledAttributes(
-                new int[]{R.attr.colorIconFilter});
-        int colorIconFilter = typedArray.getColor(0, 0xFFFFFFFF);
+                new int[]{R.attr.colorPrimary});
+        final int colorPrimary = typedArray.getColor(0, getResources().getColor(R.color.colorPrimary));
         typedArray.recycle();
 
-        colorFilterIcon = new PorterDuffColorFilter(colorIconFilter,
-                PorterDuff.Mode.MULTIPLY);
+        int colorResourcePrimary = UtilsColor.computeContrast(colorPrimary, Color.WHITE) > 3f ? R.color.darkThemeIconFilter : R.color.lightThemeIconFilter;
+
+        colorFilterPrimary = new PorterDuffColorFilter(getResources().getColor(colorResourcePrimary), PorterDuff.Mode.MULTIPLY);
 
         toolbar = (Toolbar) view.findViewById(R.id.toolbar);
+        toolbar.setTitleTextColor(getResources().getColor(colorResourcePrimary));
         setUpToolbar();
 
         layoutCoordinator = (CoordinatorLayout) view.findViewById(R.id.layout_coordinator);
@@ -664,6 +693,39 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
     @Override
     public boolean navigateBack() {
         return true;
+    }
+
+
+    @Override
+    public void onHiddenChanged(boolean hidden) {
+        super.onHiddenChanged(hidden);
+        if (hidden) {
+            switch (viewPager.getCurrentItem()) {
+                case ControllerSearch.PAGE_LINKS:
+                    adapterLinks.pauseViewHolders();
+                    break;
+                case ControllerSearch.PAGE_LINKS_SUBREDDIT:
+                    adapterLinksSubreddit.pauseViewHolders();
+                    break;
+            }
+            view.setVisibility(View.INVISIBLE);
+        }
+        else {
+            view.setVisibility(View.VISIBLE);
+        }
+    }
+
+    @Override
+    public void setVisibilityOfThing(int visibility, Thing thing) {
+        super.setVisibilityOfThing(visibility, thing);
+        switch (viewPager.getCurrentItem()) {
+            case ControllerSearch.PAGE_LINKS:
+                adapterLinks.setVisibility(visibility, thing);
+                break;
+            case ControllerSearch.PAGE_LINKS_SUBREDDIT:
+                adapterLinksSubreddit.setVisibility(visibility, thing);
+                break;
+        }
     }
 
     @Override

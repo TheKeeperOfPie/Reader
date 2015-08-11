@@ -8,6 +8,8 @@ import android.animation.Animator;
 import android.app.Activity;
 import android.content.Context;
 import android.content.res.TypedArray;
+import android.graphics.Color;
+import android.graphics.ColorFilter;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
 import android.os.Bundle;
@@ -40,6 +42,7 @@ import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.github.rjeschke.txtmark.Processor;
 import com.winsonchiu.reader.data.reddit.Reddit;
+import com.winsonchiu.reader.utils.UtilsColor;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -53,6 +56,7 @@ public class FragmentNewMessage extends FragmentBase implements Toolbar.OnMenuIt
     private Reddit reddit;
 
     private Toolbar toolbar;
+    private TextView textAuthor;
     private EditText editTextRecipient;
     private EditText editTextSubject;
     private EditText editTextMessage;
@@ -67,7 +71,6 @@ public class FragmentNewMessage extends FragmentBase implements Toolbar.OnMenuIt
     private static final int PAGE_BODY = 0;
     private static final int PAGE_PREVIEW = 1;
 
-    private PorterDuffColorFilter colorFilterIcon;
     private int editMarginDefault;
     private int editMarginWithActions;
 
@@ -81,6 +84,8 @@ public class FragmentNewMessage extends FragmentBase implements Toolbar.OnMenuIt
     private Activity activity;
     private MenuItem itemHideActions;
     private Menu menu;
+    private ColorFilter colorFilterPrimary;
+    private ColorFilter colorFilterIcon;
 
     public static FragmentNewMessage newInstance() {
         FragmentNewMessage fragment = new FragmentNewMessage();
@@ -109,20 +114,27 @@ public class FragmentNewMessage extends FragmentBase implements Toolbar.OnMenuIt
         layoutAppBar = (AppBarLayout) view.findViewById(R.id.layout_app_bar);
         scrollText = (NestedScrollView) view.findViewById(R.id.scroll_text);
 
+        textAuthor = (TextView) view.findViewById(R.id.text_author);
+        textAuthor.setText(getString(R.string.sending_from) + " " + mListener.getControllerUser().getUser().getName());
+
         editTextRecipient = (EditText) view.findViewById(R.id.edit_recipient);
         editTextSubject = (EditText) view.findViewById(R.id.edit_subject);
         editTextMessage = (EditText) view.findViewById(R.id.edit_message);
 
         TypedArray typedArray = activity.getTheme().obtainStyledAttributes(
-                new int[]{R.attr.colorIconFilter});
-        int colorIconFilter = typedArray.getColor(0, 0xFFFFFFFF);
+                new int[]{R.attr.colorPrimary, R.attr.colorIconFilter});
+        final int colorPrimary = typedArray.getColor(0, getResources().getColor(R.color.colorPrimary));
+        int colorIcon = typedArray.getColor(1, getResources().getColor(R.color.darkThemeIconFilter));
         typedArray.recycle();
 
-        colorFilterIcon = new PorterDuffColorFilter(colorIconFilter,
-                PorterDuff.Mode.MULTIPLY);
+        int colorResourcePrimary = UtilsColor.computeContrast(colorPrimary, Color.WHITE) > 3f ? R.color.darkThemeIconFilter : R.color.lightThemeIconFilter;
+
+        colorFilterPrimary = new PorterDuffColorFilter(getResources().getColor(colorResourcePrimary), PorterDuff.Mode.MULTIPLY);
+        colorFilterIcon = new PorterDuffColorFilter(colorIcon, PorterDuff.Mode.MULTIPLY);
 
         toolbar = (Toolbar) view.findViewById(R.id.toolbar);
         toolbar.setTitle(getString(R.string.new_post));
+        toolbar.setTitleTextColor(getResources().getColor(colorResourcePrimary));
         toolbar.setNavigationIcon(R.drawable.ic_arrow_back_white_24dp);
         toolbar.setNavigationOnClickListener(new View.OnClickListener() {
             @Override
@@ -133,7 +145,7 @@ public class FragmentNewMessage extends FragmentBase implements Toolbar.OnMenuIt
                 mListener.onNavigationBackClick();
             }
         });
-        toolbar.getNavigationIcon().mutate().setColorFilter(colorFilterIcon);
+        toolbar.getNavigationIcon().mutate().setColorFilter(colorFilterPrimary);
         setUpOptionsMenu();
 
         View.OnFocusChangeListener onFocusChangeListener = new View.OnFocusChangeListener() {
@@ -314,7 +326,7 @@ public class FragmentNewMessage extends FragmentBase implements Toolbar.OnMenuIt
         itemHideActions = menu.findItem(R.id.item_hide_actions);
 
         for (int index = 0; index < menu.size(); index++) {
-            menu.getItem(index).getIcon().setColorFilter(colorFilterIcon);
+            menu.getItem(index).getIcon().setColorFilter(colorFilterPrimary);
         }
     }
 

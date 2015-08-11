@@ -9,6 +9,8 @@ import android.app.AlarmManager;
 import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.content.res.TypedArray;
+import android.graphics.Color;
+import android.graphics.ColorFilter;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
 import android.os.Bundle;
@@ -37,6 +39,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.DatePicker;
+import android.widget.ImageView;
 
 import com.winsonchiu.reader.AppSettings;
 import com.winsonchiu.reader.FragmentBase;
@@ -49,6 +52,7 @@ import com.winsonchiu.reader.links.AdapterLinkGrid;
 import com.winsonchiu.reader.links.AdapterLinkList;
 import com.winsonchiu.reader.utils.DisallowListener;
 import com.winsonchiu.reader.utils.RecyclerCallback;
+import com.winsonchiu.reader.utils.UtilsColor;
 import com.winsonchiu.reader.views.CustomItemTouchHelper;
 
 import java.util.Calendar;
@@ -77,10 +81,10 @@ public class FragmentHistory extends FragmentBase implements Toolbar.OnMenuItemC
     private SharedPreferences preferences;
     private AdapterLinkList adapterLinkList;
     private AdapterLinkGrid adapterLinkGrid;
-    private PorterDuffColorFilter colorFilterIcon;
     private CoordinatorLayout layoutCoordinator;
     private AppBarLayout layoutAppBar;
     private View view;
+    private ColorFilter colorFilterPrimary;
 
     public static FragmentHistory newInstance() {
         FragmentHistory fragment = new FragmentHistory();
@@ -118,6 +122,11 @@ public class FragmentHistory extends FragmentBase implements Toolbar.OnMenuItemC
 
         final SearchView searchView = (SearchView) itemSearch.getActionView();
 
+        View view = searchView.findViewById(android.support.v7.appcompat.R.id.search_go_btn);
+        if (view instanceof ImageView) {
+            ((ImageView) view).setColorFilter(colorFilterPrimary);
+        }
+
         MenuItemCompat.setOnActionExpandListener(itemSearch,
                 new MenuItemCompat.OnActionExpandListener() {
                     @Override
@@ -150,7 +159,7 @@ public class FragmentHistory extends FragmentBase implements Toolbar.OnMenuItemC
         searchView.setSubmitButtonEnabled(true);
 
         for (int index = 0; index < menu.size(); index++) {
-            menu.getItem(index).getIcon().setColorFilter(colorFilterIcon);
+            menu.getItem(index).getIcon().setColorFilter(colorFilterPrimary);
         }
     }
 
@@ -191,13 +200,13 @@ public class FragmentHistory extends FragmentBase implements Toolbar.OnMenuItemC
         };
 
         TypedArray typedArray = activity.getTheme().obtainStyledAttributes(
-                new int[] {R.attr.colorPrimary, R.attr.colorIconFilter});
+                new int[]{R.attr.colorPrimary});
         final int colorPrimary = typedArray.getColor(0, getResources().getColor(R.color.colorPrimary));
-        int colorIconFilter = typedArray.getColor(1, 0xFFFFFFFF);
         typedArray.recycle();
 
-        colorFilterIcon = new PorterDuffColorFilter(colorIconFilter,
-                PorterDuff.Mode.MULTIPLY);
+        int colorResourcePrimary = UtilsColor.computeContrast(colorPrimary, Color.WHITE) > 3f ? R.color.darkThemeIconFilter : R.color.lightThemeIconFilter;
+
+        colorFilterPrimary = new PorterDuffColorFilter(getResources().getColor(colorResourcePrimary), PorterDuff.Mode.MULTIPLY);
 
         toolbar = (Toolbar) view.findViewById(R.id.toolbar);
         if (getFragmentManager().getBackStackEntryCount() <= 1) {
@@ -218,7 +227,8 @@ public class FragmentHistory extends FragmentBase implements Toolbar.OnMenuItemC
                 }
             });
         }
-        toolbar.getNavigationIcon().mutate().setColorFilter(colorFilterIcon);
+        toolbar.getNavigationIcon().mutate().setColorFilter(colorFilterPrimary);
+        toolbar.setTitleTextColor(getResources().getColor(colorResourcePrimary));
         setUpOptionsMenu();
 
         layoutCoordinator = (CoordinatorLayout) view.findViewById(R.id.layout_coordinator);
@@ -491,7 +501,6 @@ public class FragmentHistory extends FragmentBase implements Toolbar.OnMenuItemC
                         preferences.getString(AppSettings.INTERFACE_MODE, AppSettings.MODE_GRID))) {
                     resetAdapter(adapterLinkGrid);
                     item.setIcon(getResources().getDrawable(R.drawable.ic_view_list_white_24dp));
-                    item.getIcon().setColorFilter(colorFilterIcon);
                     preferences.edit()
                             .putString(AppSettings.INTERFACE_MODE, AppSettings.MODE_GRID)
                             .apply();
@@ -499,11 +508,11 @@ public class FragmentHistory extends FragmentBase implements Toolbar.OnMenuItemC
                 else {
                     resetAdapter(adapterLinkList);
                     item.setIcon(getResources().getDrawable(R.drawable.ic_view_module_white_24dp));
-                    item.getIcon().setColorFilter(colorFilterIcon);
                     preferences.edit()
                             .putString(AppSettings.INTERFACE_MODE, AppSettings.MODE_LIST)
                             .apply();
                 }
+                item.getIcon().setColorFilter(colorFilterPrimary);
                 return true;
             case R.id.item_time_range:
                 showDateRangeDialog();

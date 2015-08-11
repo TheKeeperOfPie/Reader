@@ -813,6 +813,9 @@ public class ControllerSearch {
     public void setSort(Sort sort) {
         if (this.sort != sort) {
             this.sort = sort;
+            for (Listener listener : listeners) {
+                listener.setSort(sort);
+            }
             reloadCurrentPage();
         }
     }
