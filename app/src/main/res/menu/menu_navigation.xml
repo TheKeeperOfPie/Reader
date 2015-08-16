@@ -36,6 +36,8 @@
         android:orderInCategory="400"
         android:icon="@drawable/ic_inbox_white_24dp"
         app:showAsAction="ifRoom"
+        android:visible="false"
+        android:enabled="false"
         />
 
     <item

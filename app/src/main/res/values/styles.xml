@@ -5,13 +5,16 @@
 <resources>
 
     <style name="AppDefaultTheme" parent="@style/Theme.AppCompat.NoActionBar">
+
         <item name="colorPrimary">@color/darkThemeBackground</item>
         <item name="colorPrimaryDark">@color/darkThemeBackground</item>
         <item name="colorAccent">@color/darkThemeBackground</item>
-        <item name="android:windowBackground">@color/darkThemeBackground</item>
+
     </style>
 
     <style name="AppDarkTheme" parent="@style/Theme.AppCompat.NoActionBar">
+
+        <item name="android:windowIsTranslucent">false</item>
 
         <item name="colorPrimary">@color/colorPrimary</item>
         <item name="colorPrimaryDark">@color/colorPrimaryDark</item>

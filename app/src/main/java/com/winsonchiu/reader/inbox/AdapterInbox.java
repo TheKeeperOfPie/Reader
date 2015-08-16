@@ -60,7 +60,6 @@ public class AdapterInbox extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
     private static final String TAG = AdapterInbox.class.getCanonicalName();
 
     private ControllerInbox controllerInbox;
-    private ControllerUser controllerUser;
     private AdapterLink.ViewHolderBase.EventListener eventListenerBase;
     private AdapterCommentList.ViewHolderComment.EventListener eventListenerComment;
     private DisallowListener disallowListener;
@@ -69,14 +68,12 @@ public class AdapterInbox extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
     private List<RecyclerView.ViewHolder> viewHolders;
 
     public AdapterInbox(ControllerInbox controllerInbox,
-            ControllerUser controllerUser,
             AdapterLink.ViewHolderBase.EventListener eventListenerBase,
             AdapterCommentList.ViewHolderComment.EventListener eventListenerComment,
             DisallowListener disallowListener,
             RecyclerCallback recyclerCallback,
             ControllerProfile.Listener listener) {
         this.controllerInbox = controllerInbox;
-        this.controllerUser = controllerUser;
         this.eventListenerBase = eventListenerBase;
         this.eventListenerComment = eventListenerComment;
         this.disallowListener = disallowListener;
@@ -157,6 +154,7 @@ public class AdapterInbox extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
         protected TextView textInfo;
         protected RelativeLayout layoutContainerReply;
         protected EditText editTextReply;
+        protected TextView textUsername;
         protected Button buttonSendReply;
         protected ImageButton buttonReplyEditor;
         protected Toolbar toolbarActions;
@@ -200,6 +198,14 @@ public class AdapterInbox extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
                     message.setReplyText(s.toString());
                 }
             });
+            textUsername = (TextView) itemView.findViewById(R.id.text_username);
+
+            if (resources.getConfiguration().getLayoutDirection() == View.LAYOUT_DIRECTION_RTL) {
+                textUsername.setText(eventListener.getUser().getName() + " -");
+            }
+            else {
+                textUsername.setText("- " + eventListener.getUser().getName());
+            }
             buttonSendReply = (Button) itemView.findViewById(R.id.button_send_reply);
             buttonSendReply.setOnClickListener(new View.OnClickListener() {
                 @Override

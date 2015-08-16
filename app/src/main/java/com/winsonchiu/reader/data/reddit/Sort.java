@@ -47,4 +47,15 @@ public enum Sort {
     public String toString() {
         return super.toString().toLowerCase();
     }
+
+    public static Sort fromString(String string) {
+
+        for (Sort sort : values()) {
+            if (sort.name().equalsIgnoreCase(string)) {
+                return sort;
+            }
+        }
+
+        return CONFIDENCE;
+    }
 }

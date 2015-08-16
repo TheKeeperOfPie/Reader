@@ -40,6 +40,7 @@ public class Link extends Replyable {
     private CharSequence selfTextHtml = "";
     private String subreddit = "";
     private String subredditId = "";
+    private Sort suggestedSort = Sort.CONFIDENCE;
     private String thumbnail = "";
     private String title = "";
     private String url = "";
@@ -111,6 +112,7 @@ public class Link extends Replyable {
                 nodeData.get("selftext_html"))));
         link.setSubreddit(UtilsJson.getString(nodeData.get("subreddit")));
         link.setSubredditId(UtilsJson.getString(nodeData.get("subreddit_id")));
+        link.setSuggestedSort(Sort.fromString(UtilsJson.getString(nodeData.get("suggested_sort"))));
         link.setThumbnail(UtilsJson.getString(nodeData.get("thumbnail")));
         link.setTitle(Html.fromHtml(UtilsJson.getString(nodeData.get("title"))).toString());
         link.setUrl(String.valueOf(Html.fromHtml(UtilsJson.getString(nodeData.get("url")))));
@@ -439,4 +441,51 @@ public class Link extends Replyable {
         return getSelfTextHtml();
     }
 
+    public Sort getSuggestedSort() {
+        return suggestedSort;
+    }
+
+    public void setSuggestedSort(Sort suggestedSort) {
+        this.suggestedSort = suggestedSort;
+    }
+
+    @Override
+    public String toString() {
+        return "Link{" +
+                "album=" + album +
+                ", author='" + author + '\'' +
+                ", authorFlairCssClass='" + authorFlairCssClass + '\'' +
+                ", authorFlairText='" + authorFlairText + '\'' +
+                ", clicked=" + clicked +
+                ", domain='" + domain + '\'' +
+                ", hidden=" + hidden +
+                ", isSelf=" + isSelf +
+                ", likes=" + likes +
+                ", linkFlairCssClass='" + linkFlairCssClass + '\'' +
+                ", linkFlairText='" + linkFlairText + '\'' +
+                ", media='" + media + '\'' +
+                ", mediaEmbed='" + mediaEmbed + '\'' +
+                ", numComments=" + numComments +
+                ", over18=" + over18 +
+                ", permalink='" + permalink + '\'' +
+                ", saved=" + saved +
+                ", score=" + score +
+                ", selfText=" + selfText +
+                ", selfTextHtml=" + selfTextHtml +
+                ", subreddit='" + subreddit + '\'' +
+                ", subredditId='" + subredditId + '\'' +
+                ", suggestedSort=" + suggestedSort +
+                ", thumbnail='" + thumbnail + '\'' +
+                ", title='" + title + '\'' +
+                ", url='" + url + '\'' +
+                ", edited=" + edited +
+                ", distinguished=" + distinguished +
+                ", stickied=" + stickied +
+                ", created=" + created +
+                ", createdUtc=" + createdUtc +
+                ", comments=" + comments +
+                ", commentsClicked=" + commentsClicked +
+                ", backgroundColor=" + backgroundColor +
+                '}';
+    }
 }

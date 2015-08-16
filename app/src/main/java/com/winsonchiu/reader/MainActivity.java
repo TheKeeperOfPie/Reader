@@ -12,8 +12,10 @@ import android.accounts.AuthenticatorException;
 import android.accounts.OperationCanceledException;
 import android.app.Activity;
 import android.app.ActivityManager;
+import android.app.AlarmManager;
 import android.app.Fragment;
 import android.app.FragmentTransaction;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -23,6 +25,8 @@ import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
 import android.media.MediaScannerConnection;
 import android.net.Uri;
 import android.os.Build;
@@ -33,14 +37,17 @@ import android.preference.PreferenceManager;
 import android.support.design.widget.NavigationView;
 import android.support.v4.app.TaskStackBuilder;
 import android.support.v4.util.ArrayMap;
+import android.support.v4.view.GestureDetectorCompat;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.AlertDialog;
 import android.text.TextUtils;
 import android.util.Log;
 import android.util.TypedValue;
+import android.view.GestureDetector;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
 import android.webkit.URLUtil;
 import android.widget.ImageButton;
@@ -55,6 +62,9 @@ import com.android.volley.toolbox.ImageRequest;
 import com.crashlytics.android.Crashlytics;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.android.youtube.player.YouTubeBaseActivity;
+import com.squareup.picasso.Callback;
+import com.squareup.picasso.Picasso;
+import com.squareup.picasso.Target;
 import com.winsonchiu.reader.comments.AdapterCommentList;
 import com.winsonchiu.reader.comments.ControllerComments;
 import com.winsonchiu.reader.comments.FragmentComments;
@@ -62,6 +72,7 @@ import com.winsonchiu.reader.comments.FragmentReply;
 import com.winsonchiu.reader.data.Page;
 import com.winsonchiu.reader.data.reddit.Comment;
 import com.winsonchiu.reader.data.reddit.Link;
+import com.winsonchiu.reader.data.reddit.Listing;
 import com.winsonchiu.reader.data.reddit.Message;
 import com.winsonchiu.reader.data.reddit.Reddit;
 import com.winsonchiu.reader.data.reddit.Replyable;
@@ -83,6 +94,7 @@ import com.winsonchiu.reader.profile.FragmentProfile;
 import com.winsonchiu.reader.search.ControllerSearch;
 import com.winsonchiu.reader.search.FragmentSearch;
 import com.winsonchiu.reader.settings.ActivitySettings;
+import com.winsonchiu.reader.utils.CustomColorFilter;
 import com.winsonchiu.reader.utils.UtilsColor;
 import com.winsonchiu.reader.views.WebViewFixed;
 
@@ -93,9 +105,11 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -121,6 +135,7 @@ public class MainActivity extends YouTubeBaseActivity
     private DrawerLayout mDrawerLayout;
     private NavigationView viewNavigation;
 
+    private ImageView imageHeader;
     private TextView textAccountName;
     private TextView textAccountInfo;
     private ImageButton buttonAccounts;
@@ -139,8 +154,7 @@ public class MainActivity extends YouTubeBaseActivity
             handler.postDelayed(this, 60000);
         }
     };
-    private PorterDuffColorFilter colorFilterPrimary;
-    private int colorResourcePrimary;
+    private CustomColorFilter colorFilterPrimary;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -755,9 +769,9 @@ public class MainActivity extends YouTubeBaseActivity
         int colorPrimary = typedArray.getColor(1, getResources().getColor(R.color.colorPrimary));
         typedArray.recycle();
 
-        colorResourcePrimary = UtilsColor.computeContrast(colorPrimary, Color.WHITE) > 3f ? R.color.darkThemeIconFilter : R.color.lightThemeIconFilter;
+        int colorResourcePrimary = UtilsColor.computeContrast(colorPrimary, Color.WHITE) > 3f ? R.color.darkThemeIconFilter : R.color.lightThemeIconFilter;
 
-        colorFilterPrimary = new PorterDuffColorFilter(getResources().getColor(colorResourcePrimary), PorterDuff.Mode.MULTIPLY);
+        colorFilterPrimary = new CustomColorFilter(getResources().getColor(colorResourcePrimary), PorterDuff.Mode.MULTIPLY);
 
         float navigationWidth = screenWidth - marginEnd;
         if (navigationWidth > standardIncrement * 6) {
@@ -770,13 +784,14 @@ public class MainActivity extends YouTubeBaseActivity
                 .inflate(R.layout.header_navigation,
                         viewNavigation, false);
 
+        imageHeader = (ImageView) viewHeader.findViewById(R.id.image_nav_header);
         textAccountName = (TextView) viewHeader.findViewById(R.id.text_account_name);
         textAccountInfo = (TextView) viewHeader.findViewById(R.id.text_account_info);
         buttonAccounts = (ImageButton) viewHeader.findViewById(R.id.button_accounts);
         layoutAccounts = (LinearLayout) viewHeader.findViewById(R.id.layout_accounts);
 
-        textAccountName.setTextColor(getResources().getColor(colorResourcePrimary));
-        textAccountInfo.setTextColor(getResources().getColor(colorResourcePrimary));
+        textAccountName.setTextColor(colorFilterPrimary.getColor());
+        textAccountInfo.setTextColor(colorFilterPrimary.getColor());
 
         buttonAccounts.setColorFilter(colorFilterPrimary);
 
@@ -789,6 +804,36 @@ public class MainActivity extends YouTubeBaseActivity
 
         resetAccountList();
 
+        final GestureDetectorCompat gestureDetector = new GestureDetectorCompat(this, new GestureDetector.SimpleOnGestureListener() {
+            @Override
+            public boolean onDoubleTap(MotionEvent e) {
+                fetchHeaderImage(true);
+                return true;
+            }
+
+            @Override
+            public boolean onSingleTapConfirmed(MotionEvent e) {
+                String permalink = sharedPreferences.getString(AppSettings.HEADER_PERMALINK, "");
+
+                if (!TextUtils.isEmpty(permalink)) {
+                    Intent intentActivity = new Intent(MainActivity.this, MainActivity.class);
+                    intentActivity.setAction(Intent.ACTION_VIEW);
+                    intentActivity.putExtra(REDDIT_PAGE, Reddit.BASE_URL + permalink);
+                    MainActivity.super.startActivity(intentActivity);
+                    return true;
+                }
+                return super.onSingleTapConfirmed(e);
+            }
+        });
+
+        imageHeader.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                Log.d(TAG, "imageHeader onTouch: " + event);
+                return gestureDetector.onTouchEvent(event);
+            }
+        });
+
         viewNavigation.addHeaderView(viewHeader);
         viewNavigation.setNavigationItemSelectedListener(
                 new NavigationView.OnNavigationItemSelectedListener() {
@@ -800,6 +845,117 @@ public class MainActivity extends YouTubeBaseActivity
                     }
                 });
 
+        loadHeaderImage();
+    }
+
+    private void loadHeaderImage() {
+
+        if (fetchHeaderImage(false)) {
+            Picasso.with(this).load(getFileStreamPath(AppSettings.HEADER_FILE_NAME)).noPlaceholder().fit().centerCrop().into(imageHeader, new Callback() {
+                @Override
+                public void onSuccess() {
+                    textAccountName.setTextColor(Color.WHITE);
+                    textAccountInfo.setTextColor(Color.WHITE);
+                    buttonAccounts.clearColorFilter();
+                }
+
+                @Override
+                public void onError() {
+
+                }
+            });
+        }
+
+    }
+
+    private boolean fetchHeaderImage(boolean force) {
+
+        // TODO: Implement expiration enabled history
+
+        if (!force && getFileStreamPath(AppSettings.HEADER_FILE_NAME).exists() && System.currentTimeMillis() < sharedPreferences.getLong(AppSettings.HEADER_EXPIRATION, 0)) {
+            return true;
+        }
+
+        String subreddit = loadAndParseHeaderSubreddit();
+
+        String url = Reddit.OAUTH_URL + subreddit + Sort.HOT.toString() + "?t=" + Time.ALL.toString() + "&limit=100&showAll=true";
+
+        reddit.loadGet(url, new Response.Listener<String>() {
+            @Override
+            public void onResponse(final String response) {
+                // TODO: Catch null errors in parent method call
+                if (response == null) {
+                    return;
+                }
+
+                try {
+                    Listing listing = Listing.fromJson(Reddit.getObjectMapper().readValue(
+                            response, JsonNode.class));
+                    Collections.shuffle(listing.getChildren());
+
+                    Link linkChosen = null;
+                    String nameCurrent = sharedPreferences.getString(AppSettings.HEADER_NAME, "");
+
+                    for (Thing thing : listing.getChildren()) {
+                        Link link = (Link) thing;
+                        if (Reddit.checkIsImage(link.getUrl()) && !thing.getName().equals(nameCurrent)) {
+                            linkChosen = link;
+                            break;
+                        }
+                    }
+
+                    if (linkChosen != null) {
+                        downloadHeaderImage(linkChosen);
+                    }
+
+                }
+                catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+            }
+        }, 0);
+
+        return false;
+
+    }
+
+    private void downloadHeaderImage(final Link link) {
+        Reddit.loadPicasso(MainActivity.this).load(link.getUrl()).fit().centerCrop().noPlaceholder().into(imageHeader, new Callback() {
+            @Override
+            public void onSuccess() {
+                sharedPreferences.edit().putString(AppSettings.HEADER_NAME, link.getName()).apply();
+                sharedPreferences.edit().putString(AppSettings.HEADER_PERMALINK, link.getPermalink()).apply();
+                sharedPreferences.edit().putLong(AppSettings.HEADER_EXPIRATION, System.currentTimeMillis() + sharedPreferences.getLong(AppSettings.HEADER_INTERVAL, AlarmManager.INTERVAL_HALF_DAY)).apply();
+                textAccountName.setTextColor(Color.WHITE);
+                textAccountInfo.setTextColor(Color.WHITE);
+                buttonAccounts.clearColorFilter();
+                Drawable drawable = imageHeader.getDrawable();
+                if (drawable instanceof BitmapDrawable) {
+                    try {
+                        FileOutputStream fileOutputStream = openFileOutput(AppSettings.HEADER_FILE_NAME, Context.MODE_PRIVATE);
+                        ((BitmapDrawable) drawable).getBitmap().compress(Bitmap.CompressFormat.PNG, 100, fileOutputStream);
+                        fileOutputStream.close();
+                    }
+                    catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+
+            @Override
+            public void onError() {
+
+            }
+        });
+    }
+
+    private String loadAndParseHeaderSubreddit() {
+        // TODO: Sanitize any possible user entry input syntax
+        return "/r/" + sharedPreferences.getString(AppSettings.PREF_HEADER_SUBREDDIT, "earthporn") + "/";
     }
 
     private void resetAccountList() {
@@ -814,7 +970,7 @@ public class MainActivity extends YouTubeBaseActivity
             buttonDeleteAccount.setColorFilter(colorFilterPrimary);
 
             textUsername.setText(account.name);
-            textUsername.setTextColor(getResources().getColor(colorResourcePrimary));
+            textUsername.setTextColor(colorFilterPrimary.getColor());
 
             viewAccount.setOnClickListener(new View.OnClickListener() {
                 @Override
@@ -842,7 +998,7 @@ public class MainActivity extends YouTubeBaseActivity
         });
         TextView textAddAccount = (TextView) viewAddAccount.findViewById(R.id.text_username);
         textAddAccount.setText(R.string.add_account);
-        textAddAccount.setTextColor(getResources().getColor(colorResourcePrimary));
+        textAddAccount.setTextColor(colorFilterPrimary.getColor());
         ImageButton buttonAddAccount = (ImageButton) viewAddAccount.findViewById(R.id.button_delete_account);
         buttonAddAccount.setImageResource(R.drawable.ic_add_white_24dp);
         buttonAddAccount.setColorFilter(colorFilterPrimary);
@@ -858,7 +1014,7 @@ public class MainActivity extends YouTubeBaseActivity
         });
         TextView textLogout = (TextView) viewLogout.findViewById(R.id.text_username);
         textLogout.setText(R.string.logout);
-        textLogout.setTextColor(getResources().getColor(colorResourcePrimary));
+        textLogout.setTextColor(colorFilterPrimary.getColor());
         ImageButton buttonLogout = (ImageButton) viewLogout.findViewById(R.id.button_delete_account);
         buttonLogout.setImageResource(R.drawable.ic_exit_to_app_white_24dp);
         buttonLogout.setColorFilter(colorFilterPrimary);

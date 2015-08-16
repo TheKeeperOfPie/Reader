@@ -67,6 +67,13 @@
             android:negativeButtonText="@null"
             android:positiveButtonText="@null" />
 
+        <EditTextPreference
+            android:key="pref_header_subreddit"
+            android:title="@string/pref_header_subreddit"
+            android:summary="@string/pref_header_subreddit_summary"
+            android:defaultValue="earthporn"
+            android:inputType="text"
+            />
 
     </PreferenceCategory>
 

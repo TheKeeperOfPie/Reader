@@ -52,6 +52,12 @@ public class AppSettings {
     public static final String ACCOUNT_NAME = "accountName";
     public static final String SECRET = "secret";
 
+    public static final String HEADER_FILE_NAME = "image_header";
+    public static final String HEADER_NAME = "headerName";
+    public static final String HEADER_PERMALINK = "headerPermalink";
+    public static final String HEADER_EXPIRATION = "headerExpiration";
+    public static final String HEADER_INTERVAL = "headerInterval";
+
     // Preferences
 
     public static final String PREF_FULL_TIMESTAMPS = "pref_full_timestamps";
@@ -70,6 +76,7 @@ public class AppSettings {
     public static final String PREF_THEME_PRIMARY = "pref_theme_primary";
     public static final String PREF_THEME_ACCENT = "pref_theme_accent";
     public static final String PREF_VERSION = "pref_version";
+    public static final String PREF_HEADER_SUBREDDIT = "pref_header_subreddit";
 
     private static final String TAG = AppSettings.class.getCanonicalName();
 

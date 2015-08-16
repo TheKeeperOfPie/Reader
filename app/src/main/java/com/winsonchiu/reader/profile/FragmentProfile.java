@@ -353,8 +353,22 @@ public class FragmentProfile extends FragmentBase implements Toolbar.OnMenuItemC
                         }
                     }, new RecyclerCallback() {
                 @Override
-                public void scrollTo(int position) {
-                    linearLayoutManager.scrollToPositionWithOffset(position, 0);
+                public void scrollTo(final int position) {
+                    recyclerProfile.requestLayout();
+                    recyclerProfile.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            RecyclerView.ViewHolder viewHolder = recyclerProfile.findViewHolderForAdapterPosition(position);
+                            int offset = 0;
+                            if (viewHolder != null) {
+                                int difference = recyclerProfile.getHeight() - viewHolder.itemView.getHeight();
+                                if (difference > 0) {
+                                    offset = difference / 2;
+                                }
+                            }
+                            linearLayoutManager.scrollToPositionWithOffset(position, offset);
+                        }
+                    });
                 }
 
                 @Override

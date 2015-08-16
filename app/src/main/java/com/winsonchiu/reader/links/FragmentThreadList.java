@@ -184,10 +184,7 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
                             if (difference > 0) {
                                 offset = difference / 2;
                             }
-                            Log.d(TAG, "view height: " + viewHolder.itemView.getHeight());
                         }
-                        Log.d(TAG, "recyclerThreadList height: " + recyclerThreadList.getHeight());
-                        Log.d(TAG, "offset: " + offset);
                         scrollToPositionWithOffset(position, offset);
                     }
                 });

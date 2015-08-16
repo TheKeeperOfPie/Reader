@@ -10,6 +10,7 @@ import android.graphics.Color;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
+import android.os.Build;
 import android.support.v4.graphics.ColorUtils;
 import android.support.v7.graphics.Palette;
 import android.support.v7.internal.widget.TintImageView;
@@ -27,6 +28,7 @@ import android.widget.RelativeLayout;
 
 import com.squareup.picasso.Callback;
 import com.winsonchiu.reader.AppSettings;
+import com.winsonchiu.reader.BuildConfig;
 import com.winsonchiu.reader.R;
 import com.winsonchiu.reader.data.imgur.Album;
 import com.winsonchiu.reader.data.reddit.Link;
@@ -630,6 +632,9 @@ public class AdapterLinkGrid extends AdapterLink {
             Linkify.addLinks(textThreadInfo, Linkify.WEB_URLS);
 
             textHidden.setText(getTimestamp() + ", " + link.getNumComments() + " comments");
+            if (BuildConfig.DEBUG) {
+                textHidden.append("\n\n" + String.valueOf(link));
+            }
 
         }
 

@@ -25,12 +25,14 @@ import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.SearchView;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
+import android.view.ContextThemeWrapper;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -46,9 +48,12 @@ import com.winsonchiu.reader.data.reddit.Thing;
 import com.winsonchiu.reader.data.reddit.Time;
 import com.winsonchiu.reader.links.AdapterLink;
 import com.winsonchiu.reader.links.ControllerLinksBase;
+import com.winsonchiu.reader.utils.CustomColorFilter;
 import com.winsonchiu.reader.utils.DisallowListener;
 import com.winsonchiu.reader.utils.RecyclerCallback;
 import com.winsonchiu.reader.utils.UtilsColor;
+
+import java.util.Arrays;
 
 public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemClickListener {
 
@@ -81,7 +86,7 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
     private CoordinatorLayout layoutCoordinator;
     private AppBarLayout layoutAppBar;
     private View view;
-    private ColorFilter colorFilterPrimary;
+    private CustomColorFilter colorFilterPrimary;
 
     public static FragmentSearch newInstance(boolean hideKeyboard) {
         FragmentSearch fragment = new FragmentSearch();
@@ -125,6 +130,11 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
         if (view instanceof ImageView) {
             ((ImageView) view).setColorFilter(colorFilterPrimary);
         }
+        view = searchView.findViewById(android.support.v7.appcompat.R.id.search_src_text);
+        if (view instanceof EditText) {
+            ((EditText) view).setTextColor(colorFilterPrimary.getColor());
+            ((EditText) view).setHintTextColor(colorFilterPrimary.getColor());
+        }
 
         MenuItemCompat.setOnActionExpandListener(itemSearch, new MenuItemCompat.OnActionExpandListener() {
             @Override
@@ -141,7 +151,7 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
         searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
             @Override
             public boolean onQueryTextSubmit(String query) {
-                if (mListener.getControllerSearch().getCurrentPage() == ControllerSearch.PAGE_SUBREDDITS) {
+                if (viewPager.getCurrentItem() == ControllerSearch.PAGE_SUBREDDITS) {
                     mListener.getControllerLinks()
                             .setParameters(query.replaceAll("\\s", ""), Sort.HOT, Time.ALL);
                     getFragmentManager().popBackStack();
@@ -294,14 +304,19 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
 
         int colorResourcePrimary = UtilsColor.computeContrast(colorPrimary, Color.WHITE) > 3f ? R.color.darkThemeIconFilter : R.color.lightThemeIconFilter;
 
-        colorFilterPrimary = new PorterDuffColorFilter(getResources().getColor(colorResourcePrimary), PorterDuff.Mode.MULTIPLY);
-
-        toolbar = (Toolbar) view.findViewById(R.id.toolbar);
-        toolbar.setTitleTextColor(getResources().getColor(colorResourcePrimary));
-        setUpToolbar();
+        colorFilterPrimary = new CustomColorFilter(getResources().getColor(colorResourcePrimary), PorterDuff.Mode.MULTIPLY);
 
         layoutCoordinator = (CoordinatorLayout) view.findViewById(R.id.layout_coordinator);
         layoutAppBar = (AppBarLayout) view.findViewById(R.id.layout_app_bar);
+
+
+        int styleToolbar = UtilsColor.computeContrast(colorPrimary, Color.WHITE) > 3f ? R.style.AppDarkTheme : R.style.AppLightTheme;
+
+        toolbar = (Toolbar) activity.getLayoutInflater().cloneInContext(new ContextThemeWrapper(activity, styleToolbar)).inflate(R.layout.toolbar, layoutAppBar, false);
+        layoutAppBar.addView(toolbar);
+        ((AppBarLayout.LayoutParams) toolbar.getLayoutParams()).setScrollFlags(AppBarLayout.LayoutParams.SCROLL_FLAG_SCROLL | AppBarLayout.LayoutParams.SCROLL_FLAG_ENTER_ALWAYS);
+        toolbar.setTitleTextColor(getResources().getColor(colorResourcePrimary));
+        setUpToolbar();
 
         adapterSearchSubreddits = new AdapterSearchSubreddits(activity,
                 new ControllerSearchBase() {
@@ -392,8 +407,22 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
         }, mListener.getEventListenerBase(), disallowListener,
                 new RecyclerCallback() {
                     @Override
-                    public void scrollTo(int position) {
-                        layoutManagerLinks.scrollToPositionWithOffset(position, 0);
+                    public void scrollTo(final int position) {
+                        recyclerSearchLinks.requestLayout();
+                        recyclerSearchLinks.post(new Runnable() {
+                            @Override
+                            public void run() {
+                                RecyclerView.ViewHolder viewHolder = recyclerSearchLinks.findViewHolderForAdapterPosition(position);
+                                int offset = 0;
+                                if (viewHolder != null) {
+                                    int difference = recyclerSearchLinks.getHeight() - viewHolder.itemView.getHeight();
+                                    if (difference > 0) {
+                                        offset = difference / 2;
+                                    }
+                                }
+                                layoutManagerLinks.scrollToPositionWithOffset(position, offset);
+                            }
+                        });
                     }
 
                     @Override
@@ -479,8 +508,22 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
         }, mListener.getEventListenerBase(), disallowListener,
                 new RecyclerCallback() {
                     @Override
-                    public void scrollTo(int position) {
-                        layoutManagerLinksSubreddit.scrollToPositionWithOffset(position, 0);
+                    public void scrollTo(final int position) {
+                        recyclerSearchLinksSubreddit.requestLayout();
+                        recyclerSearchLinksSubreddit.post(new Runnable() {
+                            @Override
+                            public void run() {
+                                RecyclerView.ViewHolder viewHolder = recyclerSearchLinksSubreddit.findViewHolderForAdapterPosition(position);
+                                int offset = 0;
+                                if (viewHolder != null) {
+                                    int difference = recyclerSearchLinksSubreddit.getHeight() - viewHolder.itemView.getHeight();
+                                    if (difference > 0) {
+                                        offset = difference / 2;
+                                    }
+                                }
+                                layoutManagerLinksSubreddit.scrollToPositionWithOffset(position, offset);
+                            }
+                        });
                     }
 
                     @Override
@@ -662,11 +705,9 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
 
         item.setChecked(true);
 
-
         Sort sort = Sort.fromMenuId(item.getItemId());
         if (sort != null) {
-            mListener.getControllerSearch()
-                    .setSort(sort);
+            mListener.getControllerSearch().setSort(sort);
             flashSearchView();
             return true;
         }
@@ -694,7 +735,6 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
     public boolean navigateBack() {
         return true;
     }
-
 
     @Override
     public void onHiddenChanged(boolean hidden) {
@@ -739,4 +779,5 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
                 break;
         }
     }
+
 }

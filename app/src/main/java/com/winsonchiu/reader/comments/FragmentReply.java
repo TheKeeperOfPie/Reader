@@ -368,10 +368,10 @@ public class FragmentReply extends FragmentBase implements Toolbar.OnMenuItemCli
 
                 collapsed = true;
                 mListener.onNavigationBackClick();
-                break;
+                return true;
             case R.id.item_hide_actions:
                 toggleActions();
-                break;
+                return true;
         }
 
         Reddit.onMenuItemClickEditor(editReply, item, getResources());

@@ -201,53 +201,14 @@
 
         </RelativeLayout>
 
-        <RelativeLayout
-            android:id="@+id/layout_container_reply"
-            android:layout_width="wrap_content"
+        <include
+            layout="@layout/reply"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_below="@id/layout_container_expand"
             android:layout_alignParentBottom="true"
             android:layout_alignParentEnd="true"
-            android:visibility="gone"
-            >
-
-            <EditText
-                android:id="@+id/edit_text_reply"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_alignParentTop="true"
-                android:layout_marginStart="@dimen/activity_horizontal_margin"
-                android:layout_marginEnd="@dimen/activity_horizontal_margin"
-                android:inputType="textCapSentences|textAutoCorrect|textMultiLine"
-                android:scrollbars="vertical"
-                android:maxLength="10000"
-                />
-
-
-            <Button
-                android:id="@+id/button_send_reply"
-                android:layout_width="wrap_content"
-                android:layout_height="48dp"
-                android:layout_below="@id/edit_text_reply"
-                android:layout_marginEnd="@dimen/activity_horizontal_margin"
-                android:layout_alignParentEnd="true"
-                android:layout_alignParentBottom="true"
-                android:textAllCaps="true"
-                android:text="@string/button_send"
-                />
-
-            <ImageButton
-                android:id="@+id/button_reply_editor"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:layout_alignParentBottom="true"
-                android:layout_toStartOf="@id/button_send_reply"
-                android:layout_marginStart="@dimen/activity_horizontal_margin"
-                android:padding="12dp"
-                android:src="@drawable/ic_open_in_new_white_24dp"
-                />
-
-        </RelativeLayout>
+            />
 
     </RelativeLayout>
 

@@ -270,14 +270,22 @@ public class FragmentHistory extends FragmentBase implements Toolbar.OnMenuItemC
 
         RecyclerCallback recyclerCallback = new RecyclerCallback() {
             @Override
-            public void scrollTo(int position) {
-                if (layoutManager instanceof LinearLayoutManager) {
-                    ((LinearLayoutManager) layoutManager).scrollToPositionWithOffset(position, 0);
-                }
-                else if (layoutManager instanceof StaggeredGridLayoutManager) {
-                    ((StaggeredGridLayoutManager) layoutManager)
-                            .scrollToPositionWithOffset(position, 0);
-                }
+            public void scrollTo(final int position) {
+                recyclerHistory.requestLayout();
+                recyclerHistory.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        RecyclerView.ViewHolder viewHolder = recyclerHistory.findViewHolderForAdapterPosition(position);
+                        int offset = 0;
+                        if (viewHolder != null) {
+                            int difference = recyclerHistory.getHeight() - viewHolder.itemView.getHeight();
+                            if (difference > 0) {
+                                offset = difference / 2;
+                            }
+                        }
+                        scrollToPositionWithOffset(position, offset);
+                    }
+                });
             }
 
             @Override
@@ -429,6 +437,15 @@ public class FragmentHistory extends FragmentBase implements Toolbar.OnMenuItemC
         }
 
         return view;
+    }
+
+    private void scrollToPositionWithOffset(int position, int offset) {
+        if (layoutManager instanceof LinearLayoutManager) {
+            ((LinearLayoutManager) layoutManager).scrollToPositionWithOffset(position, offset);
+        }
+        else if (layoutManager instanceof StaggeredGridLayoutManager) {
+            ((StaggeredGridLayoutManager) layoutManager).scrollToPositionWithOffset(position, offset);
+        }
     }
 
     @Override

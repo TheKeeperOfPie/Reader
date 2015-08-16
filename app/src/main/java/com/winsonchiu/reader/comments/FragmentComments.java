@@ -452,13 +452,32 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
             @Override
             public void onClick(View v) {
                 int position = linearLayoutManager.findFirstCompletelyVisibleItemPosition();
+                if (position == -1) {
+                    position = linearLayoutManager.findFirstVisibleItemPosition();
+                }
                 if (position == 1) {
                     linearLayoutManager.scrollToPositionWithOffset(0, 0);
                     return;
                 }
-                int newPosition = mListener.getControllerComments().getPreviousCommentPosition(
+                final int newPosition = mListener.getControllerComments().getPreviousCommentPosition(
                         position - 1) + 1;
-                listener.scrollTo(newPosition);
+                linearLayoutManager.scrollToPositionWithOffset(newPosition, 0);
+                recyclerCommentList.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        final RecyclerView.ViewHolder viewHolder = recyclerCommentList
+                                .findViewHolderForAdapterPosition(newPosition);
+                        if (viewHolder != null) {
+                            viewHolder.itemView.setPressed(true);
+                            recyclerCommentList.postDelayed(new Runnable() {
+                                @Override
+                                public void run() {
+                                    viewHolder.itemView.setPressed(false);
+                                }
+                            }, 150);
+                        }
+                    }
+                }, 150);
             }
         });
         buttonCommentPrevious.setOnLongClickListener(new View.OnLongClickListener() {
@@ -484,7 +503,23 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
                 }
                 final int newPosition = mListener.getControllerComments()
                         .getNextCommentPosition(position - 1) + 1;
-                listener.scrollTo(newPosition);
+                linearLayoutManager.scrollToPositionWithOffset(newPosition, 0);
+                recyclerCommentList.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        final RecyclerView.ViewHolder viewHolder = recyclerCommentList
+                                .findViewHolderForAdapterPosition(newPosition);
+                        if (viewHolder != null) {
+                            viewHolder.itemView.setPressed(true);
+                            recyclerCommentList.postDelayed(new Runnable() {
+                                @Override
+                                public void run() {
+                                    viewHolder.itemView.setPressed(false);
+                                }
+                            }, 150);
+                        }
+                    }
+                }, 150);
 
             }
         });
@@ -585,6 +620,11 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
                                 viewBackground.setVisibility(View.VISIBLE);
                                 hasSwipedRight = true;
                             }
+                            float ratio = 1f - swipeDifferenceX / screenWidth;
+                            buttonExpandActions.setAlpha(ratio);
+                            buttonExpandActions.setScaleX(ratio);
+                            buttonExpandActions.setScaleY(ratio);
+                            layoutAppBar.setTranslationX(swipeDifferenceX);
                             layoutRelative.setTranslationX(swipeDifferenceX);
                         }
 
@@ -610,6 +650,8 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
                     else {
                         hasSwipedRight = false;
                         if (!value) {
+                            behaviorFloatingActionButton.animateIn(buttonExpandActions);
+                            layoutAppBar.animate().translationX(0);
                             layoutRelative.animate().translationX(0).setListener(new Animator.AnimatorListener() {
                                 @Override
                                 public void onAnimationStart(Animator animation) {
@@ -645,92 +687,6 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
                     return false;
                 }
             });
-//            recyclerCommentList.setOnTouchListener(new View.OnTouchListener() {
-//                @Override
-//                public boolean onTouch(View v, MotionEvent event) {
-//
-//                    boolean value = gestureDetector.onTouchEvent(event);
-//
-//                    if (event.getAction() == MotionEvent.ACTION_UP && hasSwipedRight) {
-//                        hasSwipedRight = false;
-//                        view.animate().translationX(0).setListener(new Animator.AnimatorListener() {
-//                            @Override
-//                            public void onAnimationStart(Animator animation) {
-//
-//                            }
-//
-//                            @Override
-//                            public void onAnimationEnd(Animator animation) {
-//                                FragmentBase fragment = (FragmentBase) getFragmentManager()
-//                                        .findFragmentByTag(fragmentParentTag);
-//                                if (fragment != null) {
-//                                    fragment.onHiddenChanged(true);
-//                                }
-//                                viewBackground.setVisibility(View.GONE);
-//                            }
-//
-//                            @Override
-//                            public void onAnimationCancel(Animator animation) {
-//
-//                            }
-//
-//                            @Override
-//                            public void onAnimationRepeat(Animator animation) {
-//
-//                            }
-//                        });
-//                    }
-//
-//                    return value;
-//                }
-//            });
-
-//            recyclerCommentList.addOnItemTouchListener(new RecyclerView.OnItemTouchListener() {
-//                @Override
-//                public boolean onInterceptTouchEvent(RecyclerView rv, MotionEvent e) {
-//                    return false;
-//                }
-//
-//                @Override
-//                public void onTouchEvent(RecyclerView rv, MotionEvent e) {
-//                    gestureDetector.onTouchEvent(e);
-//
-//                    if (e.getAction() == MotionEvent.ACTION_UP && hasSwipedRight) {
-//                        hasSwipedRight = false;
-//                        layoutRelative.animate().translationX(0).setListener(new Animator.AnimatorListener() {
-//                            @Override
-//                            public void onAnimationStart(Animator animation) {
-//
-//                            }
-//
-//                            @Override
-//                            public void onAnimationEnd(Animator animation) {
-//                                FragmentBase fragment = (FragmentBase) getFragmentManager()
-//                                        .findFragmentByTag(fragmentParentTag);
-//                                if (fragment != null) {
-//                                    fragment.onHiddenChanged(true);
-//                                }
-//                                viewBackground.setVisibility(View.GONE);
-//                            }
-//
-//                            @Override
-//                            public void onAnimationCancel(Animator animation) {
-//
-//                            }
-//
-//                            @Override
-//                            public void onAnimationRepeat(Animator animation) {
-//
-//                            }
-//                        });
-//                    }
-//                }
-//
-//                @Override
-//                public void onRequestDisallowInterceptTouchEvent(boolean disallowIntercept) {
-//
-//                }
-//            });
         }
 
         adapterCommentList = new AdapterCommentList(getActivity(),
@@ -1114,7 +1070,7 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
 
     private void calculateExit() {
         isFinished = true;
-        if (linearLayoutManager.findFirstCompletelyVisibleItemPosition() == 0) {
+        if (recyclerCommentList.getScrollY() == 0 || linearLayoutManager.findFirstCompletelyVisibleItemPosition() == 0) {
             animateExit();
         }
         else if (linearLayoutManager.findFirstVisibleItemPosition() < 20) {
@@ -1264,6 +1220,8 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
             fragment.onHiddenChanged(false);
         }
         float screenWidth = getResources().getDisplayMetrics().widthPixels;
+        behaviorFloatingActionButton.animateOut(buttonExpandActions);
+        layoutAppBar.animate().translationX(screenWidth);
         layoutRelative.animate().translationX(screenWidth).setListener(new Animator.AnimatorListener() {
             @Override
             public void onAnimationStart(Animator animation) {
@@ -1273,15 +1231,21 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
             @Override
             public void onAnimationEnd(Animator animation) {
                 FragmentBase fragment = (FragmentBase) getFragmentManager()
-                        .findFragmentById(R.id.frame_fragment);
+                        .findFragmentByTag(fragmentParentTag);
                 if (fragment != null) {
+                    fragment.onShown();
                     fragment.onHiddenChanged(false);
                     getFragmentManager().beginTransaction()
                             .show(fragment)
                             .commit();
                 }
-                getFragmentManager().popBackStackImmediate();
-
+                if (getFragmentManager().getBackStackEntryCount() == 0) {
+                    Log.d(TAG, "Back stack count: " + getFragmentManager().getBackStackEntryCount());
+                    getActivity().finish();
+                }
+                else {
+                    getFragmentManager().popBackStackImmediate();
+                }
             }
 
             @Override

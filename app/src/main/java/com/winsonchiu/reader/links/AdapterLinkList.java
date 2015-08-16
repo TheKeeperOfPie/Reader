@@ -15,6 +15,7 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import com.winsonchiu.reader.AppSettings;
+import com.winsonchiu.reader.BuildConfig;
 import com.winsonchiu.reader.R;
 import com.winsonchiu.reader.data.reddit.Link;
 import com.winsonchiu.reader.data.reddit.Reddit;
@@ -143,6 +144,9 @@ public class AdapterLinkList extends AdapterLink {
             // TODO: Add link edited indicator
 
             textHidden.setText(getTimestamp() + ", " + link.getNumComments() + " comments");
+            if (BuildConfig.DEBUG) {
+                textHidden.append("\n\n" + String.valueOf(link));
+            }
 
         }
     }

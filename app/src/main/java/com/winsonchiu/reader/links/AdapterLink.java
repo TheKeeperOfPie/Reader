@@ -407,6 +407,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         public Toolbar toolbarActions;
         public RelativeLayout layoutContainerReply;
         public EditText editTextReply;
+        public TextView textUsername;
         public Button buttonSendReply;
         public ImageButton buttonReplyEditor;
         public YouTubePlayerView viewYouTube;
@@ -554,10 +555,18 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             layoutContainerReply = (RelativeLayout) itemView.findViewById(
                     R.id.layout_container_reply);
             editTextReply = (EditText) itemView.findViewById(R.id.edit_text_reply);
+            textUsername = (TextView) itemView.findViewById(R.id.text_username);
             buttonSendReply = (Button) itemView.findViewById(R.id.button_send_reply);
             buttonReplyEditor = (ImageButton) itemView.findViewById(R.id.button_reply_editor);
             viewYouTube = (YouTubePlayerView) itemView.findViewById(R.id.youtube);
             viewOverlay = itemView.findViewById(R.id.view_overlay);
+
+            if (resources.getConfiguration().getLayoutDirection() == View.LAYOUT_DIRECTION_RTL) {
+                textUsername.setText(eventListener.getUser().getName() + " -");
+            }
+            else {
+                textUsername.setText("- " + eventListener.getUser().getName());
+            }
 
             toolbarItemWidth = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 48,
                     resources.getDisplayMetrics());

@@ -218,7 +218,6 @@ public class FragmentInbox extends FragmentBase implements Toolbar.OnMenuItemCli
 
         if (adapterInbox == null) {
             adapterInbox = new AdapterInbox(mListener.getControllerInbox(),
-                    mListener.getControllerUser(),
                     mListener.getEventListenerBase(),
                     new AdapterCommentList.ViewHolderComment.EventListener() {
                         @Override

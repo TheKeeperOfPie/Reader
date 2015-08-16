@@ -23,7 +23,7 @@
             android:layout_height="wrap_content"
             android:layout_alignParentTop="true"
             android:contentDescription="@string/content_description_image_navigation_header"
-            android:clickable="false"
+            android:clickable="true"
             />
 
         <TextView
@@ -38,6 +38,11 @@
             android:textSize="14sp"
             android:textStyle="bold"
             android:clickable="false"
+            android:textColor="@android:color/white"
+            android:shadowColor="@android:color/black"
+            android:shadowRadius="3"
+            android:shadowDx="-1"
+            android:shadowDy="-1"
             />
 
         <TextView
@@ -52,6 +57,11 @@
             android:layout_toStartOf="@+id/button_accounts"
             android:textSize="14sp"
             android:clickable="false"
+            android:textColor="@android:color/white"
+            android:shadowColor="@android:color/black"
+            android:shadowRadius="3"
+            android:shadowDx="-1"
+            android:shadowDy="-1"
             />
 
         <ImageButton

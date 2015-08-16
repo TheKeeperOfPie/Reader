@@ -360,6 +360,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
         protected TextView textHidden;
         protected RelativeLayout layoutContainerReply;
         protected EditText editTextReply;
+        protected TextView textUsername;
         protected Button buttonSendReply;
         protected ImageButton buttonReplyEditor;
         protected RelativeLayout layoutContainerExpand;
@@ -469,8 +470,16 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
             layoutContainerReply = (RelativeLayout) itemView.findViewById(
                     R.id.layout_container_reply);
             editTextReply = (EditText) itemView.findViewById(R.id.edit_text_reply);
+            textUsername = (TextView) itemView.findViewById(R.id.text_username);
             buttonSendReply = (Button) itemView.findViewById(R.id.button_send_reply);
             buttonReplyEditor = (ImageButton) itemView.findViewById(R.id.button_reply_editor);
+
+            if (resources.getConfiguration().getLayoutDirection() == View.LAYOUT_DIRECTION_RTL) {
+                textUsername.setText(eventListenerBase.getUser().getName() + " -");
+            }
+            else {
+                textUsername.setText("- " + eventListenerBase.getUser().getName());
+            }
 
             viewIndicatorCollapsed = itemView.findViewById(R.id.view_indicator_collapsed);
             layoutContainerCollapsed = (RelativeLayout) itemView.findViewById(R.id.layout_container_collapsed);
