@@ -27,6 +27,8 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.webkit.WebChromeClient;
+import android.webkit.WebResourceError;
+import android.webkit.WebResourceRequest;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.ProgressBar;
@@ -121,7 +123,7 @@ public class FragmentWeb extends FragmentBase implements Toolbar.OnMenuItemClick
         toolbar.setOnMenuItemClickListener(this);
 
         for (int index = 0; index < menu.size(); index++) {
-            menu.getItem(index).getIcon().setColorFilter(colorFilterPrimary);
+            menu.getItem(index).getIcon().mutate().setColorFilter(colorFilterPrimary);
         }
     }
 
@@ -193,13 +195,11 @@ public class FragmentWeb extends FragmentBase implements Toolbar.OnMenuItemClick
             }
 
             @Override
-            public void onReceivedError(WebView view,
-                    int errorCode,
-                    String description,
-                    String failingUrl) {
-                super.onReceivedError(view, errorCode, description, failingUrl);
-                Log.e(TAG, "WebView error: " + description);
+            public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
+                super.onReceivedError(view, request, error);
+                Log.e(TAG, "WebView error: " + error);
             }
+
         });
         webView.setWebChromeClient(new WebChromeClient() {
             @Override
@@ -252,7 +252,7 @@ public class FragmentWeb extends FragmentBase implements Toolbar.OnMenuItemClick
 
         Menu menuActions = toolbarActions.getMenu();
         for (int index = 0; index < menuActions.size(); index++) {
-            menuActions.getItem(index).getIcon().setColorFilter(colorFilterIcon);
+            menuActions.getItem(index).getIcon().mutate().setColorFilter(colorFilterIcon);
         }
 
         return view;

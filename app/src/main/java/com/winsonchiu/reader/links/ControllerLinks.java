@@ -118,12 +118,12 @@ public class ControllerLinks implements ControllerLinksBase {
                         catch (IOException e) {
                             e.printStackTrace();
                         }
-                        reloadAllLinks();
+                        reloadAllLinks(true);
                     }
                 }, new Response.ErrorListener() {
                     @Override
                     public void onErrorResponse(VolleyError error) {
-                        reloadAllLinks();
+                        reloadAllLinks(true);
                     }
                 }, 0);
     }
@@ -136,7 +136,7 @@ public class ControllerLinks implements ControllerLinksBase {
             this.sort = sort;
             subreddit = new Subreddit();
             subreddit.setUrl("/");
-            reloadAllLinks();
+            reloadAllLinks(true);
         }
         Log.d(TAG, "loadFrontPage");
     }
@@ -147,7 +147,7 @@ public class ControllerLinks implements ControllerLinksBase {
             for (Listener listener : listeners) {
                 listener.setSortAndTime(sort, time);
             }
-            reloadAllLinks();
+            reloadAllLinks(true);
         }
     }
 
@@ -157,7 +157,7 @@ public class ControllerLinks implements ControllerLinksBase {
             for (Listener listener : listeners) {
                 listener.setSortAndTime(sort, time);
             }
-            reloadAllLinks();
+            reloadAllLinks(true);
         }
     }
 
@@ -189,10 +189,6 @@ public class ControllerLinks implements ControllerLinksBase {
     public int sizeLinks() {
         return listingLinks.getChildren() == null ? 0 : listingLinks.getChildren()
                 .size();
-    }
-
-    public void reloadAllLinks() {
-        reloadAllLinks(true);
     }
 
     public void reloadAllLinks(final boolean scroll) {

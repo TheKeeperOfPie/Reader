@@ -192,9 +192,12 @@ public class Reddit {
 
     public static Picasso loadPicasso(Context context) {
         if (picasso == null) {
-            picasso = new Picasso.Builder(context)
-                    .downloader(new OkHttpDownloader(new OkHttpClient()))
-                    .build();
+            Picasso.Builder builder = new Picasso.Builder(context)
+                    .downloader(new OkHttpDownloader(new OkHttpClient()));
+            if (BuildConfig.DEBUG) {
+                builder = builder.loggingEnabled(true);
+            }
+            picasso = builder.build();
         }
         return picasso;
     }

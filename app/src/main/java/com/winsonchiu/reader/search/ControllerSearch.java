@@ -105,7 +105,7 @@ public class ControllerSearch {
         listeners.add(listener);
         setTitle();
         listener.getAdapterSearchSubreddits().notifyDataSetChanged();
-        listener.setSort(sort);
+        listener.setSortAndTime(sort, time);
     }
 
     public void removeListener(Listener listener) {
@@ -814,7 +814,7 @@ public class ControllerSearch {
         if (this.sort != sort) {
             this.sort = sort;
             for (Listener listener : listeners) {
-                listener.setSort(sort);
+                listener.setSortAndTime(sort, time);
             }
             reloadCurrentPage();
         }
@@ -851,7 +851,7 @@ public class ControllerSearch {
         query = "";
         sort = Sort.RELEVANCE;
         for (Listener listener : listeners) {
-            listener.setSort(sort);
+            listener.setSortAndTime(sort, time);
             listener.getAdapterSearchSubreddits().notifyDataSetChanged();
             listener.getAdapterLinks().notifyDataSetChanged();
             listener.getAdapterLinksSubreddit().notifyDataSetChanged();
@@ -940,13 +940,33 @@ public class ControllerSearch {
         }
     }
 
+    public void moveSubreddit(int startAdapterPosition, int targetAdapterPosition) {
+        if (startAdapterPosition < targetAdapterPosition) {
+            for (int index = startAdapterPosition; index < targetAdapterPosition; index++) {
+                Collections.swap(subredditsSubscribed.getChildren(), index, index + 1);
+            }
+        } else {
+            for (int index = startAdapterPosition; index > targetAdapterPosition; index--) {
+                Collections.swap(subredditsSubscribed.getChildren(), index, index - 1);
+            }
+        }
+
+        for (Listener listener : listeners) {
+            listener.getAdapterSearchSubreddits().notifyItemMoved(startAdapterPosition, targetAdapterPosition);
+        }
+    }
+
+    public boolean isSubscriptionListShown() {
+        return subreddits == subredditsSubscribed;
+    }
+
     public interface Listener extends ControllerListener {
         AdapterSearchSubreddits getAdapterSearchSubreddits();
         AdapterSearchSubreddits getAdapterSearchSubredditsRecommended();
         AdapterLink getAdapterLinks();
         AdapterLink getAdapterLinksSubreddit();
         void setToolbarTitle(CharSequence title);
-        void setSort(Sort sort);
+        void setSortAndTime(Sort sort, Time time);
         void scrollToLinks(int position);
         void scrollToLinksSubreddit(int position);
     }

@@ -51,6 +51,8 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
+import android.webkit.WebResourceError;
+import android.webkit.WebResourceRequest;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.Button;
@@ -1144,13 +1146,11 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                                 }
 
                                 @Override
-                                public void onReceivedError(WebView view,
-                                        int errorCode,
-                                        String description,
-                                        String failingUrl) {
-                                    super.onReceivedError(view, errorCode, description, failingUrl);
-                                    Log.e(TAG, "WebView error: " + description);
+                                public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
+                                    super.onReceivedError(view, request, error);
+                                    Log.e(TAG, "WebView error: " + error);
                                 }
+
                             });
                             frameFull.addView(webFull, frameFull.getChildCount() - 1);
 

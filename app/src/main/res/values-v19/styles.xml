@@ -1,18 +1,9 @@
-<!--
-  ~ Copyright 2015 Winson Chiu
-  -->
-
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <style name="AppDefaultTheme" parent="@style/Theme.AppCompat.NoActionBar">
-
-        <item name="colorPrimary">@color/darkThemeBackground</item>
-        <item name="colorPrimaryDark">@color/darkThemeBackground</item>
-        <item name="colorAccent">@color/darkThemeBackground</item>
-
-    </style>
-
     <style name="AppDarkTheme" parent="@style/Theme.AppCompat.NoActionBar">
+
+        <item name="android:windowTranslucentStatus">true</item>
 
         <item name="colorPrimary">@color/darkThemeBackground</item>
         <item name="colorPrimaryDark">@color/darkThemeBackground</item>
@@ -31,9 +22,12 @@
         <item name="colorAlert">@color/textColorAlert</item>
 
         <item name="android:actionOverflowButtonStyle">@style/OverflowStyleDark</item>
+
     </style>
 
     <style name="AppLightTheme" parent="@style/Theme.AppCompat.Light.NoActionBar">
+
+        <item name="android:windowTranslucentStatus">true</item>
 
         <item name="colorPrimary">@color/lightThemeBackground</item>
         <item name="colorPrimaryDark">@color/lightThemeBackground</item>
@@ -53,22 +47,6 @@
 
         <item name="android:actionOverflowButtonStyle">@style/OverflowStyleLight</item>
 
-    </style>
-
-    <style name="AppBlackTheme" parent="AppDarkTheme">
-        <item name="android:windowBackground">@color/blackThemeBackground</item>
-        <item name="colorRowBackground">@color/blackThemeBackground</item>
-        <item name="colorRowOverlay">@color/blackThemeOverlay</item>
-        <item name="colorCellBackground">@color/blackThemeBackground</item>
-        <item name="colorCellOverlay">@color/blackThemeOverlay</item>
-    </style>
-
-    <style name="OverflowStyleDark" parent="Widget.AppCompat.ActionButton.Overflow">
-        <item name="android:contentDescription">toolbar_overflow_access</item>
-    </style>
-
-    <style name="OverflowStyleLight" parent="Widget.AppCompat.Light.ActionButton.Overflow">
-        <item name="android:contentDescription">toolbar_overflow_access</item>
     </style>
 
 </resources>

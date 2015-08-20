@@ -20,6 +20,9 @@ import android.graphics.drawable.Drawable;
 import android.preference.PreferenceManager;
 import android.support.v4.graphics.ColorUtils;
 import android.support.v4.view.GestureDetectorCompat;
+import android.support.v4.view.ViewCompat;
+import android.support.v4.view.ViewPropertyAnimatorCompat;
+import android.support.v4.view.ViewPropertyAnimatorListener;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
@@ -45,6 +48,8 @@ import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.AlphaAnimation;
+import android.view.animation.AnimationSet;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
@@ -330,21 +335,26 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
         return animationFinished;
     }
 
-    public void fadeComments(Animator.AnimatorListener listener) {
+    public void fadeComments(Resources resources, Runnable runnable) {
+
+        float width = resources.getDisplayMetrics().widthPixels;
+        float height = resources.getDisplayMetrics().heightPixels;
         boolean listenerSet = false;
         for (RecyclerView.ViewHolder viewHolder : viewHolders) {
             if (getItemViewType(viewHolder.getAdapterPosition()) == VIEW_COMMENT) {
-                if (listenerSet) {
-                    viewHolder.itemView.animate().alpha(0);
-                }
-                else {
-                    listenerSet = true;
-                    viewHolder.itemView.animate().alpha(0).setListener(listener);
+                if (viewHolder.itemView.getWidth() < width && viewHolder.itemView.getHeight() < height) {
+                    if (listenerSet) {
+                        ViewCompat.animate(viewHolder.itemView).alpha(0).setListener(null).withLayer();
+                    }
+                    else {
+                        listenerSet = true;
+                        ViewCompat.animate(viewHolder.itemView).alpha(0).setListener(null).withLayer().withEndAction(runnable);
+                    }
                 }
             }
         }
         if (!listenerSet) {
-            listener.onAnimationEnd(null);
+            runnable.run();
         }
     }
 
@@ -606,7 +616,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
             colorFilterSave = new PorterDuffColorFilter(colorAccent, PorterDuff.Mode.MULTIPLY);
 
             for (int index = 0; index < menu.size(); index++) {
-                menu.getItem(index).getIcon().setColorFilter(colorFilterMenuItem);
+                menu.getItem(index).getIcon().mutate().setColorFilter(colorFilterMenuItem);
             }
 
             buttonReplyEditor.setColorFilter(colorFilterMenuItem);

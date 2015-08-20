@@ -16,6 +16,7 @@ import android.support.design.widget.AppBarLayout;
 import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.Snackbar;
 import android.support.v4.widget.SwipeRefreshLayout;
+import android.support.v7.widget.AppCompatSpinner;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.SearchView;
@@ -23,6 +24,8 @@ import android.support.v7.widget.Toolbar;
 import android.support.v7.widget.helper.ItemTouchHelper;
 import android.text.TextUtils;
 import android.util.Log;
+import android.util.TypedValue;
+import android.view.ContextThemeWrapper;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -48,7 +51,7 @@ import com.winsonchiu.reader.data.reddit.Time;
 import com.winsonchiu.reader.utils.DisallowListener;
 import com.winsonchiu.reader.utils.RecyclerCallback;
 import com.winsonchiu.reader.utils.UtilsColor;
-import com.winsonchiu.reader.views.CustomItemTouchHelper;
+import com.winsonchiu.reader.utils.CustomItemTouchHelper;
 
 public class FragmentProfile extends FragmentBase implements Toolbar.OnMenuItemClickListener {
 
@@ -142,7 +145,7 @@ public class FragmentProfile extends FragmentBase implements Toolbar.OnMenuItemC
         }
 
         for (int index = 0; index < menu.size(); index++) {
-            menu.getItem(index).getIcon().setColorFilter(colorFilterPrimary);
+            menu.getItem(index).getIcon().mutate().setColorFilter(colorFilterPrimary);
         }
 
     }
@@ -174,10 +177,14 @@ public class FragmentProfile extends FragmentBase implements Toolbar.OnMenuItemC
 
         view = inflater.inflate(R.layout.fragment_profile, container, false);
 
+        layoutCoordinator = (CoordinatorLayout) view.findViewById(R.id.layout_coordinator);
+        layoutAppBar = (AppBarLayout) view.findViewById(R.id.layout_app_bar);
+
         listener = new ControllerProfile.Listener() {
             @Override
             public void setSortAndTime(Sort sort, Time time) {
                 menu.findItem(sort.getMenuId()).setChecked(true);
+                menu.findItem(time.getMenuId()).setChecked(true);
                 itemSortTime.setTitle(
                         getString(R.string.time) + Reddit.TIME_SEPARATOR + menu
                                 .findItem(mListener.getControllerLinks()
@@ -242,9 +249,17 @@ public class FragmentProfile extends FragmentBase implements Toolbar.OnMenuItemC
 
         int colorResourcePrimary = UtilsColor.computeContrast(colorPrimary, Color.WHITE) > 3f ? R.color.darkThemeIconFilter : R.color.lightThemeIconFilter;
 
+        int styleToolbar = UtilsColor.computeContrast(colorPrimary, Color.WHITE) > 3f ? R.style.AppDarkTheme : R.style.AppLightTheme;
+
         colorFilterPrimary = new PorterDuffColorFilter(getResources().getColor(colorResourcePrimary), PorterDuff.Mode.MULTIPLY);
 
-        toolbar = (Toolbar) view.findViewById(R.id.toolbar);
+        ContextThemeWrapper contextThemeWrapper = new ContextThemeWrapper(activity, styleToolbar);
+
+        toolbar = (Toolbar) activity.getLayoutInflater().cloneInContext(contextThemeWrapper).inflate(R.layout.toolbar, layoutAppBar, false);
+        layoutAppBar.addView(toolbar);
+        ((AppBarLayout.LayoutParams) toolbar.getLayoutParams()).setScrollFlags(AppBarLayout.LayoutParams.SCROLL_FLAG_SCROLL | AppBarLayout.LayoutParams.SCROLL_FLAG_ENTER_ALWAYS);
+
+        toolbar.setTitleTextColor(getResources().getColor(colorResourcePrimary));
         if (getFragmentManager().getBackStackEntryCount() <= 1) {
             toolbar.setNavigationIcon(R.drawable.ic_menu_white_24dp);
             toolbar.setNavigationOnClickListener(new View.OnClickListener() {
@@ -267,11 +282,10 @@ public class FragmentProfile extends FragmentBase implements Toolbar.OnMenuItemC
         toolbar.setTitleTextColor(getResources().getColor(colorResourcePrimary));
         setUpOptionsMenu();
 
-        layoutCoordinator = (CoordinatorLayout) view.findViewById(R.id.layout_coordinator);
-        layoutAppBar = (AppBarLayout) view.findViewById(R.id.layout_app_bar);
-
         adapterProfilePage = new AdapterProfilePage(activity);
-        spinnerPage = (Spinner) view.findViewById(R.id.spinner_page);
+        spinnerPage = new AppCompatSpinner(contextThemeWrapper);
+        toolbar.addView(spinnerPage);
+        ((Toolbar.LayoutParams) spinnerPage.getLayoutParams()).setMarginEnd((int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 8, getResources().getDisplayMetrics()));
         spinnerPage.setAdapter(adapterProfilePage);
         spinnerPage.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override

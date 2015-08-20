@@ -48,12 +48,19 @@ public class FragmentDisplay extends FragmentPreferences {
                 new Preference.OnPreferenceChangeListener() {
                     @Override
                     public boolean onPreferenceChange(Preference preference, Object newValue) {
-                        if (getActivity() != null){
+                        if (getActivity() != null) {
                             getActivity().recreate();
                         }
                         return true;
                     }
                 });
+        findPreference(AppSettings.PREF_HEADER_SUBREDDIT).setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
+            @Override
+            public boolean onPreferenceChange(Preference preference, Object newValue) {
+                preferences.edit().putLong(AppSettings.HEADER_EXPIRATION, 0);
+                return true;
+            }
+        });
     }
 
 }

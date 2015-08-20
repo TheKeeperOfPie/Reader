@@ -7,6 +7,7 @@ package com.winsonchiu.reader.search;
 import android.app.Activity;
 import android.content.res.TypedArray;
 import android.graphics.PorterDuff;
+import android.support.v4.view.MotionEventCompat;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.text.method.LinkMovementMethod;
@@ -21,6 +22,7 @@ import android.widget.TextView;
 import com.winsonchiu.reader.R;
 import com.winsonchiu.reader.data.reddit.Subreddit;
 import com.winsonchiu.reader.utils.AnimationUtils;
+import com.winsonchiu.reader.utils.CustomColorFilter;
 
 import java.util.Date;
 
@@ -60,32 +62,36 @@ public class AdapterSearchSubreddits extends RecyclerView.Adapter<AdapterSearchS
     public static class ViewHolder extends RecyclerView.ViewHolder {
 
         protected EventListener eventListener;
+        protected ImageButton buttonReorder;
         protected TextView textName;
         protected TextView textTitle;
         protected TextView textDescription;
         protected TextView textInfo;
-        protected ImageButton buttonOpen;
         protected RelativeLayout layoutContainerExpand;
         private Subreddit subreddit;
 
-        public ViewHolder(View itemView, EventListener eventListener) {
+        public ViewHolder(View itemView, final EventListener eventListener) {
             super(itemView);
             this.eventListener = eventListener;
 
+            buttonReorder = (ImageButton) itemView.findViewById(R.id.button_reorder);
             textName = (TextView) itemView.findViewById(R.id.text_name);
             textTitle = (TextView) itemView.findViewById(R.id.text_title);
             textDescription = (TextView) itemView.findViewById(R.id.text_description);
             textDescription.setMovementMethod(LinkMovementMethod.getInstance());
             textInfo = (TextView) itemView.findViewById(R.id.text_info);
             layoutContainerExpand = (RelativeLayout) itemView.findViewById(R.id.layout_container_expand);
-            buttonOpen = (ImageButton) itemView.findViewById(R.id.button_open);
 
-            buttonOpen.setOnClickListener(new View.OnClickListener() {
+            buttonReorder.setOnTouchListener(new View.OnTouchListener() {
                 @Override
-                public void onClick(View v) {
-                    ViewHolder.this.eventListener.onClickSubreddit(subreddit);
+                public boolean onTouch(View v, MotionEvent event) {
+                    if (MotionEventCompat.getActionMasked(event) == MotionEvent.ACTION_DOWN) {
+                        eventListener.onStartDrag(ViewHolder.this);
+                    }
+                    return false;
                 }
             });
+
             textDescription.setOnTouchListener(new View.OnTouchListener() {
                 @Override
                 public boolean onTouch(View v, MotionEvent event) {
@@ -110,11 +116,14 @@ public class AdapterSearchSubreddits extends RecyclerView.Adapter<AdapterSearchS
                 }
             });
 
-            TypedArray typedArray = itemView.getContext().getTheme().obtainStyledAttributes(
-                    new int[] {R.attr.colorIconFilter});
-            buttonOpen.setColorFilter(typedArray.getColor(0, 0xFFFFFFFF),
-                    PorterDuff.Mode.MULTIPLY);
-            typedArray.recycle();
+            if (eventListener.supportsDrag()) {
+                TypedArray typedArray = itemView.getContext().getTheme().obtainStyledAttributes(
+                        new int[] {R.attr.colorIconFilter});
+                CustomColorFilter colorFilterIcon = new CustomColorFilter(typedArray.getColor(0, 0xFFFFFFFF), PorterDuff.Mode.MULTIPLY);
+                typedArray.recycle();
+                buttonReorder.setColorFilter(colorFilterIcon);
+                buttonReorder.setVisibility(View.VISIBLE);
+            }
 
         }
 
@@ -140,6 +149,8 @@ public class AdapterSearchSubreddits extends RecyclerView.Adapter<AdapterSearchS
 
         public interface EventListener {
             void onClickSubreddit(Subreddit subreddit);
+            boolean supportsDrag();
+            void onStartDrag(ViewHolder viewHolder);
         }
 
     }

@@ -63,7 +63,7 @@ import com.winsonchiu.reader.utils.DisallowListener;
 import com.winsonchiu.reader.utils.RecyclerCallback;
 import com.winsonchiu.reader.utils.ScrollAwareFloatingActionButtonBehavior;
 import com.winsonchiu.reader.utils.UtilsColor;
-import com.winsonchiu.reader.views.CustomItemTouchHelper;
+import com.winsonchiu.reader.utils.CustomItemTouchHelper;
 
 public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuItemClickListener {
 
@@ -218,10 +218,10 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
             @Override
             public void setSortAndTime(Sort sort, Time time) {
                 menu.findItem(sort.getMenuId()).setChecked(true);
+                menu.findItem(time.getMenuId()).setCheckable(true);
                 itemSortTime.setTitle(
                         getString(R.string.time) + Reddit.TIME_SEPARATOR + menu
-                                .findItem(mListener.getControllerLinks()
-                                        .getTime().getMenuId()).toString());
+                                .findItem(time.getMenuId()).toString());
             }
 
             @Override
@@ -317,13 +317,14 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
         itemSearch = menu.findItem(R.id.item_search);
 
         menu.findItem(mListener.getControllerLinks().getSort().getMenuId()).setChecked(true);
+        menu.findItem(mListener.getControllerLinks().getTime().getMenuId()).setChecked(true);
         itemSortTime.setTitle(
                 getString(R.string.time) + Reddit.TIME_SEPARATOR + menu
                         .findItem(mListener.getControllerLinks()
                                 .getTime().getMenuId()).toString());
 
         for (int index = 0; index < menu.size(); index++) {
-            menu.getItem(index).getIcon().setColorFilter(colorFilterPrimary);
+            menu.getItem(index).getIcon().mutate().setColorFilter(colorFilterPrimary);
         }
 
     }
@@ -497,8 +498,7 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
         swipeRefreshThreadList.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
-                mListener.getControllerLinks()
-                        .reloadAllLinks();
+                mListener.getControllerLinks().reloadSubreddit();
             }
         });
         if (adapterLinkList == null) {
@@ -901,10 +901,10 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
                 .scaleX(1f)
                 .scaleY(1f)
                 .alpha(1f)
+                .withLayer()
                 .setDuration(DURATION_TRANSITION)
                 .setInterpolator(ScrollAwareFloatingActionButtonBehavior.INTERPOLATOR)
-                .setListener(null)
-                .start();
+                .setListener(null);
     }
 
     @Override
@@ -914,30 +914,10 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
                 .scaleX(0f)
                 .scaleY(0f)
                 .alpha(0f)
+                .withLayer()
                 .setDuration(DURATION_TRANSITION)
                 .setInterpolator(ScrollAwareFloatingActionButtonBehavior.INTERPOLATOR)
-                .setListener(null)
-                .start();
+                .setListener(null);
     }
 
-//    @Override
-//    public void onConfigurationChanged(Configuration newConfig) {
-//        super.onConfigurationChanged(newConfig);
-//        adapterLink.setActivity(getActivity());
-//
-//        int size = layoutManager instanceof StaggeredGridLayoutManager ? ((StaggeredGridLayoutManager) layoutManager).getSpanCount() : 1;
-//
-//        int[] currentPosition = new int[size];
-//        if (layoutManager instanceof LinearLayoutManager) {
-//            currentPosition[0] = ((LinearLayoutManager) layoutManager)
-//                    .findFirstVisibleItemPosition();
-//        }
-//        else if (layoutManager instanceof StaggeredGridLayoutManager) {
-//            ((StaggeredGridLayoutManager) layoutManager).findFirstCompletelyVisibleItemPositions(
-//                    currentPosition);
-//        }
-//
-//        recyclerThreadList.setLayoutManager(adapterLink.getLayoutManager());
-//        recyclerThreadList.scrollToPosition(currentPosition[0]);
-//    }
 }

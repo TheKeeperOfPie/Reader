@@ -8,23 +8,45 @@
     android:id="@+id/drawer_layout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:fitsSystemWindows="true"
     >
 
-    <!-- As the main content view, the view below consumes the entire
-         space available using match_parent in both dimensions. -->
     <FrameLayout
         android:id="@+id/frame_fragment"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        app:layout_behavior="@string/appbar_scrolling_view_behavior"
         />
 
-    <android.support.design.widget.NavigationView
-        android:id="@+id/navigation"
-        android:layout_width="@dimen/navigation_drawer_width"
-        android:layout_height="match_parent"
+    <android.support.design.internal.ScrimInsetsFrameLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
         android:layout_gravity="start"
-        app:menu="@menu/menu_navigation"
-        />
+        android:fitsSystemWindows="true"
+        >
+
+        <RelativeLayout
+            android:id="@+id/drawer_navigation"
+            android:layout_width="@dimen/navigation_drawer_width"
+            android:layout_height="match_parent"
+            android:layout_gravity="start"
+            android:background="?android:attr/windowBackground"
+            >
+
+            <include
+                android:id="@+id/layout_header_navigation"
+                layout="@layout/header_navigation"
+                />
+
+            <android.support.design.widget.NavigationView
+                android:id="@+id/navigation"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_below="@+id/layout_header_navigation"
+                app:menu="@menu/menu_navigation"
+                />
+
+        </RelativeLayout>
+
+    </android.support.design.internal.ScrimInsetsFrameLayout>
 
 </android.support.v4.widget.DrawerLayout>

@@ -325,7 +325,7 @@ public class FragmentReply extends FragmentBase implements Toolbar.OnMenuItemCli
         menu = toolbar.getMenu();
 
         for (int index = 0; index < menu.size(); index++) {
-            menu.getItem(index).getIcon().setColorFilter(colorFilterPrimary);
+            menu.getItem(index).getIcon().mutate().setColorFilter(colorFilterPrimary);
         }
     }
 
@@ -387,58 +387,27 @@ public class FragmentReply extends FragmentBase implements Toolbar.OnMenuItemCli
         if (toolbarActions.isShown()) {
             margin = editMarginDefault;
             viewDivider.animate().translationY(translationY);
-            toolbarActions.animate().translationY(translationY).setListener(
-                    new Animator.AnimatorListener() {
-                        @Override
-                        public void onAnimationStart(Animator animation) {
+            toolbarActions.animate().translationY(translationY).withEndAction(new Runnable() {
+                @Override
+                public void run() {
+                    toolbarActions.setVisibility(View.GONE);
 
-                        }
-
-                        @Override
-                        public void onAnimationEnd(Animator animation) {
-                            toolbarActions.setVisibility(View.GONE);
-
-                            ((RelativeLayout.LayoutParams) scrollText.getLayoutParams()).bottomMargin = margin;
-                            scrollText.requestLayout();
-                        }
-
-                        @Override
-                        public void onAnimationCancel(Animator animation) {
-
-                        }
-
-                        @Override
-                        public void onAnimationRepeat(Animator animation) {
-
-                        }
-                    });
+                    ((RelativeLayout.LayoutParams) scrollText.getLayoutParams()).bottomMargin = margin;
+                    scrollText.requestLayout();
+                }
+            });
         }
         else {
             margin = editMarginWithActions;
             viewDivider.animate().translationY(0);
-            toolbarActions.animate().translationY(0).setListener(
-                    new Animator.AnimatorListener() {
-                        @Override
-                        public void onAnimationStart(Animator animation) {
-                            toolbarActions.setVisibility(View.VISIBLE);
-                        }
-
-                        @Override
-                        public void onAnimationEnd(Animator animation) {
-                            ((RelativeLayout.LayoutParams) scrollText.getLayoutParams()).bottomMargin = margin;
-                            scrollText.requestLayout();
-                        }
-
-                        @Override
-                        public void onAnimationCancel(Animator animation) {
-
-                        }
-
-                        @Override
-                        public void onAnimationRepeat(Animator animation) {
-
-                        }
-                    });
+            toolbarActions.setVisibility(View.VISIBLE);
+            toolbarActions.animate().translationY(0).withEndAction(new Runnable() {
+                @Override
+                public void run() {
+                    ((RelativeLayout.LayoutParams) scrollText.getLayoutParams()).bottomMargin = margin;
+                    scrollText.requestLayout();
+                }
+            });
         }
     }
 

@@ -72,6 +72,7 @@
             android:title="@string/pref_header_subreddit"
             android:summary="@string/pref_header_subreddit_summary"
             android:defaultValue="earthporn"
+            android:hint="@string/subreddit"
             android:inputType="text"
             />
 

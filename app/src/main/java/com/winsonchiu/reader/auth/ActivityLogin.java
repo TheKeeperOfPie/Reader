@@ -5,7 +5,11 @@ import android.accounts.AccountAuthenticatorActivity;
 import android.accounts.AccountManager;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.res.TypedArray;
 import android.graphics.Bitmap;
+import android.graphics.Color;
+import android.graphics.PorterDuff;
+import android.graphics.PorterDuffColorFilter;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -16,8 +20,11 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.WindowManager;
 import android.webkit.CookieManager;
 import android.webkit.WebChromeClient;
+import android.webkit.WebResourceError;
+import android.webkit.WebResourceRequest;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.ProgressBar;
@@ -30,9 +37,12 @@ import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.winsonchiu.reader.AppSettings;
 import com.winsonchiu.reader.R;
+import com.winsonchiu.reader.Theme;
 import com.winsonchiu.reader.data.reddit.Reddit;
 import com.winsonchiu.reader.data.reddit.User;
+import com.winsonchiu.reader.utils.UtilsColor;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -58,15 +68,48 @@ public class ActivityLogin extends AccountAuthenticatorActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+
+        Theme theme;
+        String themeAccent;
+
+        if (sharedPreferences.getBoolean(AppSettings.SECRET, false)) {
+            theme = Theme.random();
+            themeAccent = AppSettings.randomThemeString();
+        }
+        else {
+            theme = Theme.fromString(sharedPreferences.getString(AppSettings.PREF_THEME_PRIMARY, AppSettings.THEME_DEEP_PURPLE));
+            themeAccent = sharedPreferences.getString(AppSettings.PREF_THEME_ACCENT, AppSettings.THEME_YELLOW);
+        }
+        if (theme != null) {
+            String themeBackground = sharedPreferences.getString(AppSettings.PREF_THEME_BACKGROUND, AppSettings.THEME_DARK);
+
+            setTheme(theme.getStyle(themeBackground, themeAccent));
+        }
+
         super.onCreate(savedInstanceState);
+
         setContentView(R.layout.activity_login);
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+            getWindow().clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
+        }
 
         reddit = Reddit.getInstance(this);
         preferences = PreferenceManager.getDefaultSharedPreferences(this);
         state = UUID.randomUUID().toString();
 
         layoutRoot = (RelativeLayout) findViewById(R.id.layout_root);
+
+        TypedArray typedArray = getTheme().obtainStyledAttributes(
+                new int[]{R.attr.colorPrimary, R.attr.colorAccent});
+        int colorPrimary = typedArray.getColor(0, getResources().getColor(R.color.colorPrimary));
+
+        int colorResourcePrimary = UtilsColor.computeContrast(colorPrimary, Color.WHITE) > 3f ? R.color.darkThemeIconFilter : R.color.lightThemeIconFilter;
+
         toolbar = (Toolbar) findViewById(R.id.toolbar);
+        toolbar.setTitleTextColor(getResources().getColor(colorResourcePrimary));
+
         progressAuth = (ProgressBar) findViewById(R.id.progress_auth);
         webAuth = (WebView) findViewById(R.id.web_auth);
         webAuth.setWebViewClient(new WebViewClient() {
@@ -102,13 +145,11 @@ public class ActivityLogin extends AccountAuthenticatorActivity {
             }
 
             @Override
-            public void onReceivedError(WebView view,
-                                        int errorCode,
-                                        String description,
-                                        String failingUrl) {
-                super.onReceivedError(view, errorCode, description, failingUrl);
-                Log.e(TAG, "WebView error: " + description);
+            public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
+                super.onReceivedError(view, request, error);
+                Log.e(TAG, "WebView error: " + error);
             }
+
         });
         webAuth.setWebChromeClient(new WebChromeClient() {
             @Override

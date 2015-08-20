@@ -53,7 +53,7 @@ import com.winsonchiu.reader.links.AdapterLinkList;
 import com.winsonchiu.reader.utils.DisallowListener;
 import com.winsonchiu.reader.utils.RecyclerCallback;
 import com.winsonchiu.reader.utils.UtilsColor;
-import com.winsonchiu.reader.views.CustomItemTouchHelper;
+import com.winsonchiu.reader.utils.CustomItemTouchHelper;
 
 import java.util.Calendar;
 import java.util.TimeZone;
@@ -159,7 +159,7 @@ public class FragmentHistory extends FragmentBase implements Toolbar.OnMenuItemC
         searchView.setSubmitButtonEnabled(true);
 
         for (int index = 0; index < menu.size(); index++) {
-            menu.getItem(index).getIcon().setColorFilter(colorFilterPrimary);
+            menu.getItem(index).getIcon().mutate().setColorFilter(colorFilterPrimary);
         }
     }
 

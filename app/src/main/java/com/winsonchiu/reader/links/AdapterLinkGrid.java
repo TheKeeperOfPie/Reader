@@ -632,9 +632,6 @@ public class AdapterLinkGrid extends AdapterLink {
             Linkify.addLinks(textThreadInfo, Linkify.WEB_URLS);
 
             textHidden.setText(getTimestamp() + ", " + link.getNumComments() + " comments");
-            if (BuildConfig.DEBUG) {
-                textHidden.append("\n\n" + String.valueOf(link));
-            }
 
         }
 

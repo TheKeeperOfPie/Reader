@@ -51,30 +51,12 @@
 
     </RelativeLayout>
 
+    <!-- Toolbar is added programmatically to allow dynamic themes-->
     <android.support.design.widget.AppBarLayout
         android:id="@+id/layout_app_bar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        >
-
-        <android.support.v7.widget.Toolbar
-            android:id="@+id/toolbar"
-            android:minHeight="?android:actionBarSize"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            app:layout_scrollFlags="scroll|enterAlways"
-            >
-
-            <Spinner
-                android:id="@+id/spinner_page"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginEnd="16dp"
-                />
-
-        </android.support.v7.widget.Toolbar>
-
-    </android.support.design.widget.AppBarLayout>
+        />
 
     <android.support.design.widget.FloatingActionButton
         android:id="@+id/fab_new_message"

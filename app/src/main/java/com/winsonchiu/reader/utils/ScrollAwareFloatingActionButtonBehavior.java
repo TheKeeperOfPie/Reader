@@ -75,9 +75,9 @@ public class ScrollAwareFloatingActionButtonBehavior extends FloatingActionButto
             listener.onStartHideFromScroll();
         }
         ViewCompat.animate(button)
-                .scaleX(0.0F)
-                .scaleY(0.0F)
-                .alpha(0.0F)
+                .scaleX(0f)
+                .scaleY(0f)
+                .alpha(0f)
                 .setDuration(DURATION)
                 .setInterpolator(INTERPOLATOR)
                 .withLayer()
@@ -97,22 +97,20 @@ public class ScrollAwareFloatingActionButtonBehavior extends FloatingActionButto
                             listener.onEndHideFromScroll();
                         }
                     }
-                })
-                .start();
+                });
     }
 
     // Same animation that FloatingActionButton.Behavior uses to show the FAB when the AppBarLayout enters
     public void animateIn(FloatingActionButton button) {
         button.setVisibility(View.VISIBLE);
         ViewCompat.animate(button)
-                .scaleX(1.0F)
-                .scaleY(1.0F)
-                .alpha(1.0F)
+                .scaleX(1f)
+                .scaleY(1f)
+                .alpha(1f)
                 .setDuration(DURATION)
                 .setInterpolator(INTERPOLATOR)
                 .setListener(null)
-                .withLayer()
-                .start();
+                .withLayer();
     }
 
     public interface OnVisibilityChangeListener {

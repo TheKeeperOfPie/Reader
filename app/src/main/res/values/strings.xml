@@ -214,7 +214,7 @@
     <string name="item_editor_list_numbered">Numbered list</string>
     <string name="page_post">Post</string>
     <string name="page_reply">Reply</string>
-    <string name="page_message">Reply</string>
+    <string name="page_message">Message</string>
     <string name="page_preview">Preview</string>
     <string name="editor_label_text">Text</string>
     <string name="editor_label_link">URL</string>
@@ -259,4 +259,5 @@
     <string name="secret_prefix">You are</string>
     <string name="secret_suffix">steps from the secret</string>
     <string name="secret_toggled">Secret toggled!</string>
+    <string name="header_subreddit_error">Error fetching header image</string>
 </resources>

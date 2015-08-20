@@ -7,11 +7,9 @@ package com.winsonchiu.reader.search;
 import android.app.Activity;
 import android.content.Context;
 import android.content.res.TypedArray;
+import android.graphics.Canvas;
 import android.graphics.Color;
-import android.graphics.ColorFilter;
 import android.graphics.PorterDuff;
-import android.graphics.PorterDuffColorFilter;
-import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.support.design.widget.AppBarLayout;
 import android.support.design.widget.CoordinatorLayout;
@@ -19,11 +17,11 @@ import android.support.design.widget.TabLayout;
 import android.support.v4.view.MenuItemCompat;
 import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
-import android.support.v7.internal.widget.TintImageView;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.SearchView;
 import android.support.v7.widget.Toolbar;
+import android.support.v7.widget.helper.ItemTouchHelper;
 import android.util.Log;
 import android.view.ContextThemeWrapper;
 import android.view.LayoutInflater;
@@ -34,7 +32,6 @@ import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.ImageView;
-import android.widget.TextView;
 
 import com.winsonchiu.reader.CustomApplication;
 import com.winsonchiu.reader.FragmentBase;
@@ -51,9 +48,8 @@ import com.winsonchiu.reader.links.ControllerLinksBase;
 import com.winsonchiu.reader.utils.CustomColorFilter;
 import com.winsonchiu.reader.utils.DisallowListener;
 import com.winsonchiu.reader.utils.RecyclerCallback;
+import com.winsonchiu.reader.utils.SimpleCallbackBackground;
 import com.winsonchiu.reader.utils.UtilsColor;
-
-import java.util.Arrays;
 
 public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemClickListener {
 
@@ -87,6 +83,7 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
     private AppBarLayout layoutAppBar;
     private View view;
     private CustomColorFilter colorFilterPrimary;
+    private ItemTouchHelper itemTouchHelperSubreddits;
 
     public static FragmentSearch newInstance(boolean hideKeyboard) {
         FragmentSearch fragment = new FragmentSearch();
@@ -191,7 +188,7 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
         }
 
         for (int index = 0; index < menu.size(); index++) {
-            menu.getItem(index).getIcon().setColorFilter(colorFilterPrimary);
+            menu.getItem(index).getIcon().mutate().setColorFilter(colorFilterPrimary);
         }
 
     }
@@ -258,6 +255,15 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
             }
 
             @Override
+            public void setSortAndTime(Sort sort, Time time) {
+                menu.findItem(sort.getMenuId()).setChecked(true);
+                menu.findItem(time.getMenuId()).setChecked(true);
+                itemSortTime.setTitle(
+                        getString(R.string.time) + Reddit.TIME_SEPARATOR + menu
+                                .findItem(time.getMenuId()).toString());
+            }
+
+            @Override
             public void setRefreshing(boolean refreshing) {
 
             }
@@ -265,11 +271,6 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
             @Override
             public void post(Runnable runnable) {
                 view.post(runnable);
-            }
-
-            @Override
-            public void setSort(Sort sort) {
-                menu.findItem(sort.getMenuId()).setChecked(true);
             }
 
             @Override
@@ -298,8 +299,9 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
         };
 
         TypedArray typedArray = activity.getTheme().obtainStyledAttributes(
-                new int[]{R.attr.colorPrimary});
+                new int[]{R.attr.colorPrimary, android.R.attr.windowBackground});
         final int colorPrimary = typedArray.getColor(0, getResources().getColor(R.color.colorPrimary));
+        final int windowBackground = typedArray.getColor(1, getResources().getColor(R.color.darkThemeBackground));
         typedArray.recycle();
 
         int colorResourcePrimary = UtilsColor.computeContrast(colorPrimary, Color.WHITE) > 3f ? R.color.darkThemeIconFilter : R.color.lightThemeIconFilter;
@@ -308,7 +310,6 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
 
         layoutCoordinator = (CoordinatorLayout) view.findViewById(R.id.layout_coordinator);
         layoutAppBar = (AppBarLayout) view.findViewById(R.id.layout_app_bar);
-
 
         int styleToolbar = UtilsColor.computeContrast(colorPrimary, Color.WHITE) > 3f ? R.style.AppDarkTheme : R.style.AppLightTheme;
 
@@ -341,6 +342,16 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
                                 InputMethodManager.HIDE_NOT_ALWAYS);
                         getFragmentManager().popBackStack();
                     }
+
+                    @Override
+                    public boolean supportsDrag() {
+                        return true;
+                    }
+
+                    @Override
+                    public void onStartDrag(AdapterSearchSubreddits.ViewHolder viewHolder) {
+                        itemTouchHelperSubreddits.startDrag(viewHolder);
+                    }
                 });
 
         layoutManagerSubreddits = new LinearLayoutManager(activity, LinearLayoutManager.VERTICAL, false);
@@ -348,6 +359,30 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
                 R.id.recycler_search_subreddits);
         recyclerSearchSubreddits.setLayoutManager(layoutManagerSubreddits);
         recyclerSearchSubreddits.setAdapter(adapterSearchSubreddits);
+
+        itemTouchHelperSubreddits = new ItemTouchHelper(new SimpleCallbackBackground(0, 0, windowBackground) {
+
+            @Override
+            public int getDragDirs(RecyclerView recyclerView, RecyclerView.ViewHolder viewHolder) {
+                if (mListener.getControllerSearch().isSubscriptionListShown()) {
+                    return ItemTouchHelper.UP | ItemTouchHelper.DOWN;
+                }
+
+                return super.getDragDirs(recyclerView, viewHolder);
+            }
+
+            @Override
+            public boolean onMove(RecyclerView recyclerView, RecyclerView.ViewHolder viewHolder, RecyclerView.ViewHolder target) {
+                mListener.getControllerSearch().moveSubreddit(viewHolder.getAdapterPosition(), target.getAdapterPosition());
+                return true;
+            }
+
+            @Override
+            public void onSwiped(RecyclerView.ViewHolder viewHolder, int direction) {
+
+            }
+        });
+        itemTouchHelperSubreddits.attachToRecyclerView(recyclerSearchSubreddits);
 
         adapterLinks = new AdapterSearchLinkList(activity, new ControllerLinksBase() {
             @Override
@@ -583,6 +618,16 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
                                 InputMethodManager.HIDE_NOT_ALWAYS);
                         getFragmentManager().popBackStack();
                     }
+
+                    @Override
+                    public boolean supportsDrag() {
+                        return false;
+                    }
+
+                    @Override
+                    public void onStartDrag(AdapterSearchSubreddits.ViewHolder viewHolder) {
+
+                    }
                 });
 
         layoutManagerSubredditsRecommended = new LinearLayoutManager(activity, LinearLayoutManager.VERTICAL, false);
@@ -716,8 +761,6 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
         if (time != null) {
             mListener.getControllerSearch()
                     .setTime(time);
-            itemSortTime.setTitle(
-                    getString(R.string.time) + Reddit.TIME_SEPARATOR + item.toString());
             flashSearchView();
             return true;
         }

@@ -16,10 +16,13 @@ import android.support.design.widget.AppBarLayout;
 import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.widget.SwipeRefreshLayout;
+import android.support.v7.widget.AppCompatSpinner;
 import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
+import android.util.TypedValue;
+import android.view.ContextThemeWrapper;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -137,11 +140,16 @@ public class FragmentInbox extends FragmentBase implements Toolbar.OnMenuItemCli
 
         int colorResourcePrimary = UtilsColor.computeContrast(colorPrimary, Color.WHITE) > 3f ? R.color.darkThemeIconFilter : R.color.lightThemeIconFilter;
         int colorResourceAccent = UtilsColor.computeContrast(colorAccent, Color.WHITE) > 3f ? R.color.darkThemeIconFilter : R.color.lightThemeIconFilter;
+        int styleToolbar = UtilsColor.computeContrast(colorPrimary, Color.WHITE) > 3f ? R.style.AppDarkTheme : R.style.AppLightTheme;
 
         colorFilterPrimary = new PorterDuffColorFilter(getResources().getColor(colorResourcePrimary), PorterDuff.Mode.MULTIPLY);
         colorFilterAccent = new PorterDuffColorFilter(getResources().getColor(colorResourceAccent), PorterDuff.Mode.MULTIPLY);
 
-        toolbar = (Toolbar) view.findViewById(R.id.toolbar);
+        ContextThemeWrapper contextThemeWrapper = new ContextThemeWrapper(activity, styleToolbar);
+
+        toolbar = (Toolbar) activity.getLayoutInflater().cloneInContext(contextThemeWrapper).inflate(R.layout.toolbar, layoutAppBar, false);
+        layoutAppBar.addView(toolbar);
+        ((AppBarLayout.LayoutParams) toolbar.getLayoutParams()).setScrollFlags(AppBarLayout.LayoutParams.SCROLL_FLAG_SCROLL | AppBarLayout.LayoutParams.SCROLL_FLAG_ENTER_ALWAYS);
         toolbar.setTitleTextColor(getResources().getColor(colorResourcePrimary));
         toolbar.setNavigationIcon(R.drawable.ic_menu_white_24dp);
         toolbar.getNavigationIcon().mutate().setColorFilter(colorFilterPrimary);
@@ -183,7 +191,9 @@ public class FragmentInbox extends FragmentBase implements Toolbar.OnMenuItemCli
                 .setBehavior(behaviorFloatingActionButton);
 
         adapterInboxPage = new AdapterInboxPage(activity);
-        spinnerPage = (Spinner) view.findViewById(R.id.spinner_page);
+        spinnerPage = new AppCompatSpinner(contextThemeWrapper);
+        toolbar.addView(spinnerPage);
+        ((Toolbar.LayoutParams) spinnerPage.getLayoutParams()).setMarginEnd((int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 8, getResources().getDisplayMetrics()));
         spinnerPage.setAdapter(adapterInboxPage);
         spinnerPage.setSelection(
                 adapterInboxPage.getPages().indexOf(mListener.getControllerInbox().getPage()));
@@ -349,7 +359,7 @@ public class FragmentInbox extends FragmentBase implements Toolbar.OnMenuItemCli
         menu = toolbar.getMenu();
 
         for (int index = 0; index < menu.size(); index++) {
-            menu.getItem(index).getIcon().setColorFilter(colorFilterPrimary);
+            menu.getItem(index).getIcon().mutate().setColorFilter(colorFilterPrimary);
         }
     }
 

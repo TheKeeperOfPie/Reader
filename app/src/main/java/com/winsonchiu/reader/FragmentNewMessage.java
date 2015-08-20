@@ -133,7 +133,7 @@ public class FragmentNewMessage extends FragmentBase implements Toolbar.OnMenuIt
         colorFilterIcon = new PorterDuffColorFilter(colorIcon, PorterDuff.Mode.MULTIPLY);
 
         toolbar = (Toolbar) view.findViewById(R.id.toolbar);
-        toolbar.setTitle(getString(R.string.new_post));
+        toolbar.setTitle(getString(R.string.new_message));
         toolbar.setTitleTextColor(getResources().getColor(colorResourcePrimary));
         toolbar.setNavigationIcon(R.drawable.ic_arrow_back_white_24dp);
         toolbar.setNavigationOnClickListener(new View.OnClickListener() {
@@ -326,7 +326,7 @@ public class FragmentNewMessage extends FragmentBase implements Toolbar.OnMenuIt
         itemHideActions = menu.findItem(R.id.item_hide_actions);
 
         for (int index = 0; index < menu.size(); index++) {
-            menu.getItem(index).getIcon().setColorFilter(colorFilterPrimary);
+            menu.getItem(index).getIcon().mutate().setColorFilter(colorFilterPrimary);
         }
     }
 
@@ -479,60 +479,30 @@ public class FragmentNewMessage extends FragmentBase implements Toolbar.OnMenuIt
         if (toolbarActions.isShown()) {
             margin = editMarginDefault;
             viewDivider.animate().translationY(translationY);
-            toolbarActions.animate().translationY(translationY).setListener(
-                    new Animator.AnimatorListener() {
-                        @Override
-                        public void onAnimationStart(Animator animation) {
+            toolbarActions.animate().translationY(translationY).withEndAction(new Runnable() {
+                @Override
+                public void run() {
 
-                        }
+                    toolbarActions.setVisibility(View.GONE);
+                    viewDivider.setVisibility(View.GONE);
 
-                        @Override
-                        public void onAnimationEnd(Animator animation) {
-                            toolbarActions.setVisibility(View.GONE);
-                            viewDivider.setVisibility(View.GONE);
-
-                            ((RelativeLayout.LayoutParams) scrollText.getLayoutParams()).bottomMargin = margin;
-                            scrollText.requestLayout();
-                        }
-
-                        @Override
-                        public void onAnimationCancel(Animator animation) {
-
-                        }
-
-                        @Override
-                        public void onAnimationRepeat(Animator animation) {
-
-                        }
-                    });
+                    ((RelativeLayout.LayoutParams) scrollText.getLayoutParams()).bottomMargin = margin;
+                    scrollText.requestLayout();
+                }
+            });
         }
         else {
             margin = editMarginWithActions;
+            toolbarActions.setVisibility(View.VISIBLE);
+            viewDivider.setVisibility(View.VISIBLE);
             viewDivider.animate().translationY(0);
-            toolbarActions.animate().translationY(0).setListener(
-                    new Animator.AnimatorListener() {
-                        @Override
-                        public void onAnimationStart(Animator animation) {
-                            toolbarActions.setVisibility(View.VISIBLE);
-                            viewDivider.setVisibility(View.VISIBLE);
-                        }
-
-                        @Override
-                        public void onAnimationEnd(Animator animation) {
-                            ((RelativeLayout.LayoutParams) scrollText.getLayoutParams()).bottomMargin = margin;
-                            scrollText.requestLayout();
-                        }
-
-                        @Override
-                        public void onAnimationCancel(Animator animation) {
-
-                        }
-
-                        @Override
-                        public void onAnimationRepeat(Animator animation) {
-
-                        }
-                    });
+            toolbarActions.animate().translationY(0).withEndAction(new Runnable() {
+                @Override
+                public void run() {
+                    ((RelativeLayout.LayoutParams) scrollText.getLayoutParams()).bottomMargin = margin;
+                    scrollText.requestLayout();
+                }
+            });
         }
     }
 }

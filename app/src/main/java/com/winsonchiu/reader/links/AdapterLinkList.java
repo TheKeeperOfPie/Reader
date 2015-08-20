@@ -141,12 +141,7 @@ public class AdapterLinkList extends AdapterLink {
 
             Linkify.addLinks(textThreadInfo, Linkify.WEB_URLS);
 
-            // TODO: Add link edited indicator
-
             textHidden.setText(getTimestamp() + ", " + link.getNumComments() + " comments");
-            if (BuildConfig.DEBUG) {
-                textHidden.append("\n\n" + String.valueOf(link));
-            }
 
         }
     }

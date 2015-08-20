@@ -238,7 +238,7 @@ public class AdapterInbox extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
                     PorterDuff.Mode.MULTIPLY);
 
             for (int index = 0; index < menu.size(); index++) {
-                menu.getItem(index).getIcon().setColorFilter(colorFilter);
+                menu.getItem(index).getIcon().mutate().setColorFilter(colorFilter);
             }
             buttonReplyEditor.setColorFilter(colorFilter);
             preferences = PreferenceManager.getDefaultSharedPreferences(itemView.getContext());

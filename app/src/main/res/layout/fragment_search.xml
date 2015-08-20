@@ -91,20 +91,11 @@
 
     </RelativeLayout>
 
+    <!-- Toolbar is added programmatically to allow dynamic themes-->
     <android.support.design.widget.AppBarLayout
         android:id="@+id/layout_app_bar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        >
-
-        <!--<include-->
-            <!--layout="@layout/toolbar"-->
-            <!--android:layout_width="match_parent"-->
-            <!--android:layout_height="wrap_content"-->
-            <!--android:layout_alignParentTop="true"-->
-            <!--app:layout_scrollFlags="scroll|enterAlways"-->
-            <!--/>-->
-
-    </android.support.design.widget.AppBarLayout>
+        />
 
 </android.support.design.widget.CoordinatorLayout>

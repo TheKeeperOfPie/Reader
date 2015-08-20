@@ -5,6 +5,7 @@
 package com.winsonchiu.reader.inbox;
 
 import android.app.Activity;
+import android.content.res.TypedArray;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -23,11 +24,11 @@ import java.util.List;
 public class AdapterInboxPage extends BaseAdapter {
 
     private List<Page> pages;
+    private int colorPrimary;
 
     public AdapterInboxPage(Activity activity) {
         super();
 
-        // TODO: IMPORTANT FOR TRANSLATIONS, decouple UI title of page from actual page value
         pages = new ArrayList<>();
         pages.add(new Page(ControllerInbox.INBOX, activity.getString(R.string.inbox_page_inbox)));
         pages.add(new Page(ControllerInbox.UNREAD, activity.getString(R.string.inbox_page_unread)));
@@ -37,6 +38,11 @@ public class AdapterInboxPage extends BaseAdapter {
         pages.add(new Page(ControllerInbox.MENTIONS, activity.getString(R.string.inbox_page_mentions)));
         pages.add(new Page(ControllerInbox.MODERATOR, activity.getString(R.string.inbox_page_moderator)));
         pages.add(new Page(ControllerInbox.MODERATOR_UNREAD, activity.getString(R.string.inbox_page_moderator_unread)));
+
+        TypedArray typedArray = activity.getTheme().obtainStyledAttributes(
+                new int[]{R.attr.colorPrimary});
+        colorPrimary = typedArray.getColor(0, activity.getResources().getColor(R.color.colorPrimary));
+        typedArray.recycle();
     }
 
     @Override
@@ -58,6 +64,7 @@ public class AdapterInboxPage extends BaseAdapter {
     public View getView(int position, View convertView, ViewGroup parent) {
         if (convertView == null) {
             convertView = LayoutInflater.from(parent.getContext()).inflate(R.layout.row_page, parent, false);
+            convertView.setBackgroundColor(colorPrimary);
         }
 
         TextView textPage = (TextView) convertView.findViewById(R.id.text_page);

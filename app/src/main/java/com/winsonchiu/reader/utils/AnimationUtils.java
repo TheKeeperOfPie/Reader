@@ -216,24 +216,11 @@ public class AnimationUtils {
                 .scaleX(0f)
                 .scaleY(0f)
                 .alpha(0f)
+                .withLayer()
                 .setDuration(duration)
                 .setInterpolator(new FastOutSlowInInterpolator())
-                .setListener(new ViewPropertyAnimatorListener() {
-                    @Override
-                    public void onAnimationStart(View view) {
-
-                    }
-
-                    @Override
-                    public void onAnimationEnd(View view) {
-
-                    }
-
-                    @Override
-                    public void onAnimationCancel(View view) {
-
-                    }
-                });
+                .setListener(null)
+                ;
     }
 
     public interface OnAnimationEndListener {

@@ -24,7 +24,6 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
-import android.graphics.PorterDuffColorFilter;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.media.MediaScannerConnection;
@@ -53,6 +52,7 @@ import android.webkit.URLUtil;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -64,7 +64,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.google.android.youtube.player.YouTubeBaseActivity;
 import com.squareup.picasso.Callback;
 import com.squareup.picasso.Picasso;
-import com.squareup.picasso.Target;
 import com.winsonchiu.reader.comments.AdapterCommentList;
 import com.winsonchiu.reader.comments.ControllerComments;
 import com.winsonchiu.reader.comments.FragmentComments;
@@ -105,7 +104,6 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.OutputStreamWriter;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Arrays;
@@ -132,9 +130,10 @@ public class MainActivity extends YouTubeBaseActivity
     private int loadId = -1;
 
     private SharedPreferences sharedPreferences;
-    private DrawerLayout mDrawerLayout;
+    private DrawerLayout drawerLayout;
     private NavigationView viewNavigation;
 
+    private ScrollView scrollHeader;
     private ImageView imageHeader;
     private TextView textAccountName;
     private TextView textAccountInfo;
@@ -178,11 +177,15 @@ public class MainActivity extends YouTubeBaseActivity
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
 
-                TypedArray typedArray = obtainStyledAttributes(new int[] {R.attr.colorPrimary});
+                TypedArray typedArray = obtainStyledAttributes(new int[]{R.attr.colorPrimary});
                 int colorPrimary = typedArray.getColor(0, getResources().getColor(R.color.colorPrimary));
                 typedArray.recycle();
 
+                int colorResourcePrimary = UtilsColor.computeContrast(colorPrimary, Color.WHITE) > 3f ? R.color.darkThemeIconFilter : R.color.lightThemeIconFilter;
+
                 int resourceIcon = UtilsColor.computeContrast(colorPrimary, Color.WHITE) > 3f ? R.mipmap.app_icon_white_outline : R.mipmap.app_icon_dark_outline;
+
+                colorFilterPrimary = new CustomColorFilter(getResources().getColor(colorResourcePrimary), PorterDuff.Mode.MULTIPLY);
 
                 ActivityManager.TaskDescription taskDescription = new ActivityManager.TaskDescription("Reader", BitmapFactory.decodeResource(getResources(), resourceIcon), colorPrimary);
                 setTaskDescription(taskDescription);
@@ -215,9 +218,8 @@ public class MainActivity extends YouTubeBaseActivity
 
         Receiver.setAlarm(this);
 
-        mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
-        mDrawerLayout.setDrawerShadow(R.drawable.drawer_shadow, GravityCompat.START);
-        mDrawerLayout.setDrawerListener(new DrawerLayout.DrawerListener() {
+        drawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
+        drawerLayout.setDrawerListener(new DrawerLayout.DrawerListener() {
             @Override
             public void onDrawerSlide(View drawerView, float slideOffset) {
 
@@ -757,6 +759,7 @@ public class MainActivity extends YouTubeBaseActivity
     }
 
     private void inflateNavigationDrawer() {
+        View viewHeader = findViewById(R.id.layout_header_navigation);
         viewNavigation = (NavigationView) findViewById(R.id.navigation);
 
         // TODO: Adhere to guidelines by making the increment 56dp on mobile and 64dp on tablet
@@ -766,24 +769,16 @@ public class MainActivity extends YouTubeBaseActivity
         TypedArray typedArray = getTheme().obtainStyledAttributes(
                 new int[]{android.R.attr.actionBarSize, R.attr.colorPrimary});
         float marginEnd = typedArray.getDimension(0, standardIncrement);
-        int colorPrimary = typedArray.getColor(1, getResources().getColor(R.color.colorPrimary));
         typedArray.recycle();
-
-        int colorResourcePrimary = UtilsColor.computeContrast(colorPrimary, Color.WHITE) > 3f ? R.color.darkThemeIconFilter : R.color.lightThemeIconFilter;
-
-        colorFilterPrimary = new CustomColorFilter(getResources().getColor(colorResourcePrimary), PorterDuff.Mode.MULTIPLY);
 
         float navigationWidth = screenWidth - marginEnd;
         if (navigationWidth > standardIncrement * 6) {
             navigationWidth = standardIncrement * 6;
         }
 
-        viewNavigation.getLayoutParams().width = (int) navigationWidth;
+        findViewById(R.id.drawer_navigation).getLayoutParams().width = (int) navigationWidth;
 
-        View viewHeader = LayoutInflater.from(this)
-                .inflate(R.layout.header_navigation,
-                        viewNavigation, false);
-
+        scrollHeader = (ScrollView) viewHeader.findViewById(R.id.scroll_header);
         imageHeader = (ImageView) viewHeader.findViewById(R.id.image_nav_header);
         textAccountName = (TextView) viewHeader.findViewById(R.id.text_account_name);
         textAccountInfo = (TextView) viewHeader.findViewById(R.id.text_account_info);
@@ -795,19 +790,23 @@ public class MainActivity extends YouTubeBaseActivity
 
         buttonAccounts.setColorFilter(colorFilterPrimary);
 
-        viewHeader.setOnClickListener(new View.OnClickListener() {
+        View.OnClickListener onClickListener = new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 setAccountsVisible(!layoutAccounts.isShown());
             }
-        });
+        };
+
+        textAccountName.setOnClickListener(onClickListener);
+        textAccountInfo.setOnClickListener(onClickListener);
+        buttonAccounts.setOnClickListener(onClickListener);
 
         resetAccountList();
 
         final GestureDetectorCompat gestureDetector = new GestureDetectorCompat(this, new GestureDetector.SimpleOnGestureListener() {
             @Override
             public boolean onDoubleTap(MotionEvent e) {
-                fetchHeaderImage(true);
+                loadHeaderImage(true);
                 return true;
             }
 
@@ -834,29 +833,40 @@ public class MainActivity extends YouTubeBaseActivity
             }
         });
 
-        viewNavigation.addHeaderView(viewHeader);
+        // Add an empty view to remove extra margin on top
+        viewNavigation.addHeaderView(new View(this));
         viewNavigation.setNavigationItemSelectedListener(
                 new NavigationView.OnNavigationItemSelectedListener() {
                     @Override
                     public boolean onNavigationItemSelected(MenuItem menuItem) {
-                        mDrawerLayout.closeDrawer(GravityCompat.START);
                         loadId = menuItem.getItemId();
+                        drawerLayout.closeDrawer(GravityCompat.START);
                         return true;
                     }
                 });
 
-        loadHeaderImage();
+        loadHeaderImage(false);
     }
 
-    private void loadHeaderImage() {
+    private void loadHeaderImage(boolean force) {
 
-        if (fetchHeaderImage(false)) {
-            Picasso.with(this).load(getFileStreamPath(AppSettings.HEADER_FILE_NAME)).noPlaceholder().fit().centerCrop().into(imageHeader, new Callback() {
+        // TODO: Implement expiration enabled history
+
+        if (!force && getFileStreamPath(AppSettings.HEADER_FILE_NAME).exists() && System.currentTimeMillis() < sharedPreferences.getLong(AppSettings.HEADER_EXPIRATION, 0)) {
+            Picasso.with(this).load(getFileStreamPath(AppSettings.HEADER_FILE_NAME)).noPlaceholder().into(imageHeader, new Callback() {
                 @Override
                 public void onSuccess() {
                     textAccountName.setTextColor(Color.WHITE);
+                    textAccountName.setShadowLayer(3, 0, 0, Color.BLACK);
                     textAccountInfo.setTextColor(Color.WHITE);
+                    textAccountInfo.setShadowLayer(3, 0, 0, Color.BLACK);
                     buttonAccounts.clearColorFilter();
+                    imageHeader.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            scrollHeader.scrollTo(0, imageHeader.getHeight() / 2 - scrollHeader.getHeight() / 2);
+                        }
+                    });
                 }
 
                 @Override
@@ -864,19 +874,16 @@ public class MainActivity extends YouTubeBaseActivity
 
                 }
             });
-        }
-
-    }
-
-    private boolean fetchHeaderImage(boolean force) {
-
-        // TODO: Implement expiration enabled history
-
-        if (!force && getFileStreamPath(AppSettings.HEADER_FILE_NAME).exists() && System.currentTimeMillis() < sharedPreferences.getLong(AppSettings.HEADER_EXPIRATION, 0)) {
-            return true;
+            return;
         }
 
         String subreddit = loadAndParseHeaderSubreddit();
+
+        if (TextUtils.isEmpty(subreddit)) {
+            Toast.makeText(this, R.string.header_subreddit_error, Toast.LENGTH_LONG).show();
+            Reddit.loadPicasso(this).load(android.R.color.transparent).into(imageHeader);
+            return;
+        }
 
         String url = Reddit.OAUTH_URL + subreddit + Sort.HOT.toString() + "?t=" + Time.ALL.toString() + "&limit=100&showAll=true";
 
@@ -919,43 +926,67 @@ public class MainActivity extends YouTubeBaseActivity
             }
         }, 0);
 
-        return false;
-
     }
 
     private void downloadHeaderImage(final Link link) {
-        Reddit.loadPicasso(MainActivity.this).load(link.getUrl()).fit().centerCrop().noPlaceholder().into(imageHeader, new Callback() {
+        imageHeader.post(new Runnable() {
             @Override
-            public void onSuccess() {
-                sharedPreferences.edit().putString(AppSettings.HEADER_NAME, link.getName()).apply();
-                sharedPreferences.edit().putString(AppSettings.HEADER_PERMALINK, link.getPermalink()).apply();
-                sharedPreferences.edit().putLong(AppSettings.HEADER_EXPIRATION, System.currentTimeMillis() + sharedPreferences.getLong(AppSettings.HEADER_INTERVAL, AlarmManager.INTERVAL_HALF_DAY)).apply();
-                textAccountName.setTextColor(Color.WHITE);
-                textAccountInfo.setTextColor(Color.WHITE);
-                buttonAccounts.clearColorFilter();
-                Drawable drawable = imageHeader.getDrawable();
-                if (drawable instanceof BitmapDrawable) {
-                    try {
-                        FileOutputStream fileOutputStream = openFileOutput(AppSettings.HEADER_FILE_NAME, Context.MODE_PRIVATE);
-                        ((BitmapDrawable) drawable).getBitmap().compress(Bitmap.CompressFormat.PNG, 100, fileOutputStream);
-                        fileOutputStream.close();
-                    }
-                    catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                }
-            }
+            public void run() {
 
-            @Override
-            public void onError() {
+                Reddit.loadPicasso(MainActivity.this).load(link.getUrl()).noPlaceholder().resize(imageHeader.getWidth(), 0).into(imageHeader, new Callback() {
+                    @Override
+                    public void onSuccess() {
+                        sharedPreferences.edit().putString(AppSettings.HEADER_NAME, link.getName()).apply();
+                        sharedPreferences.edit().putString(AppSettings.HEADER_PERMALINK, link.getPermalink()).apply();
+                        sharedPreferences.edit().putLong(AppSettings.HEADER_EXPIRATION, System.currentTimeMillis() + sharedPreferences.getLong(AppSettings.HEADER_INTERVAL, AlarmManager.INTERVAL_HALF_DAY)).apply();
+                        textAccountName.setTextColor(Color.WHITE);
+                        textAccountName.setShadowLayer(3, 0, 0, Color.BLACK);
+                        textAccountInfo.setTextColor(Color.WHITE);
+                        textAccountInfo.setShadowLayer(3, 0, 0, Color.BLACK);
+                        buttonAccounts.clearColorFilter();
+                        imageHeader.post(new Runnable() {
+                            @Override
+                            public void run() {
+                                scrollHeader.scrollTo(0, imageHeader.getHeight() / 2 - scrollHeader.getHeight() / 2);
+                            }
+                        });
+                        Drawable drawable = imageHeader.getDrawable();
+                        if (drawable instanceof BitmapDrawable) {
+                            try {
+                                FileOutputStream fileOutputStream = openFileOutput(AppSettings.HEADER_FILE_NAME, Context.MODE_PRIVATE);
+                                ((BitmapDrawable) drawable).getBitmap().compress(Bitmap.CompressFormat.PNG, 100, fileOutputStream);
+                                fileOutputStream.close();
+                            }
+                            catch (IOException e) {
+                                e.printStackTrace();
+                            }
+                        }
+                    }
 
+                    @Override
+                    public void onError() {
+                        Log.d(TAG, "Error on download headerImage");
+                    }
+                });
             }
         });
     }
 
     private String loadAndParseHeaderSubreddit() {
-        // TODO: Sanitize any possible user entry input syntax
-        return "/r/" + sharedPreferences.getString(AppSettings.PREF_HEADER_SUBREDDIT, "earthporn") + "/";
+        String inputRaw = sharedPreferences.getString(AppSettings.PREF_HEADER_SUBREDDIT, "earthporn");
+
+        if (inputRaw.startsWith("/r/")) {
+            inputRaw = inputRaw.substring(3);
+        }
+        else if (inputRaw.startsWith("r/")) {
+            inputRaw = inputRaw.substring(2);
+        }
+
+        if (!inputRaw.matches("^[A-z]+$")) {
+            return null;
+        }
+
+        return "/r/" + inputRaw + "/";
     }
 
     private void resetAccountList() {
@@ -1041,6 +1072,9 @@ public class MainActivity extends YouTubeBaseActivity
     }
 
     private void setAccount(final Account account) {
+        if (account.equals(accountUser)) {
+            return;
+        }
         accountUser = account;
         sharedPreferences.edit().putString(AppSettings.ACCOUNT_NAME, account.name).apply();
         reddit.setAccount(account, new Reddit.ErrorListener() {
@@ -1137,7 +1171,6 @@ public class MainActivity extends YouTubeBaseActivity
             layoutAccounts.setVisibility(View.GONE);
             buttonAccounts.setImageResource(R.drawable.ic_arrow_drop_down_white_24dp);
         }
-        buttonAccounts.setColorFilter(colorFilterPrimary);
     }
 
     private void selectNavigationItem(final int id, String page, boolean animate) {
@@ -1148,6 +1181,11 @@ public class MainActivity extends YouTubeBaseActivity
             Intent intentSettings = new Intent(this, ActivitySettings.class);
             startActivityForResult(intentSettings, REQUEST_SETTINGS);
             return;
+        }
+
+        MenuItem item = viewNavigation.getMenu().findItem(id);
+        if (item != null) {
+            item.setChecked(true);
         }
 
         getFragmentManager().popBackStackImmediate();
@@ -1418,11 +1456,11 @@ public class MainActivity extends YouTubeBaseActivity
             getFragmentManager().popBackStack();
         }
         else {
-            if (mDrawerLayout.isDrawerVisible(GravityCompat.START)) {
-                mDrawerLayout.closeDrawer(GravityCompat.START);
+            if (drawerLayout.isDrawerVisible(GravityCompat.START)) {
+                drawerLayout.closeDrawer(GravityCompat.START);
             }
             else {
-                mDrawerLayout.openDrawer(GravityCompat.START);
+                drawerLayout.openDrawer(GravityCompat.START);
             }
         }
     }
@@ -1608,7 +1646,7 @@ public class MainActivity extends YouTubeBaseActivity
 
     @Override
     public void openDrawer() {
-        mDrawerLayout.openDrawer(GravityCompat.START);
+        drawerLayout.openDrawer(GravityCompat.START);
     }
 
     @Override

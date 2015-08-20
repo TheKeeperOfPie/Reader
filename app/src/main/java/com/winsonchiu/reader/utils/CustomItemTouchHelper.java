@@ -2,7 +2,7 @@
  * Copyright 2015 Winson Chiu
  */
 
-package com.winsonchiu.reader.views;
+package com.winsonchiu.reader.utils;
 
 /**
  * Created by TheKeeperOfPie on 7/4/2015.

@@ -5,6 +5,7 @@
 package com.winsonchiu.reader.profile;
 
 import android.app.Activity;
+import android.content.res.TypedArray;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -23,12 +24,12 @@ import java.util.List;
 public class AdapterProfilePage extends BaseAdapter {
 
     private List<Page> pages;
+    private int colorPrimary;
     private boolean isUser;
 
     public AdapterProfilePage(Activity activity) {
         super();
 
-        // TODO: IMPORTANT FOR TRANSLATIONS, decouple UI title of page from actual page value
         pages = new ArrayList<>();
         pages.add(new Page(ControllerProfile.PAGE_OVERVIEW, activity.getString(R.string.profile_page_overview)));
         pages.add(new Page(ControllerProfile.PAGE_SUBMITTED, activity.getString(R.string.profile_page_submitted)));
@@ -38,6 +39,11 @@ public class AdapterProfilePage extends BaseAdapter {
         pages.add(new Page(ControllerProfile.PAGE_DOWNVOTED, activity.getString(R.string.profile_page_downvoted)));
         pages.add(new Page(ControllerProfile.PAGE_HIDDEN, activity.getString(R.string.profile_page_hidden)));
         pages.add(new Page(ControllerProfile.PAGE_SAVED, activity.getString(R.string.profile_page_saved)));
+
+        TypedArray typedArray = activity.getTheme().obtainStyledAttributes(
+                new int[]{R.attr.colorPrimary});
+        colorPrimary = typedArray.getColor(0, activity.getResources().getColor(R.color.colorPrimary));
+        typedArray.recycle();
     }
 
     @Override
@@ -59,6 +65,7 @@ public class AdapterProfilePage extends BaseAdapter {
     public View getView(int position, View convertView, ViewGroup parent) {
         if (convertView == null) {
             convertView = LayoutInflater.from(parent.getContext()).inflate(R.layout.row_page, parent, false);
+            convertView.setBackgroundColor(colorPrimary);
         }
 
         TextView textPage = (TextView) convertView.findViewById(R.id.text_page);

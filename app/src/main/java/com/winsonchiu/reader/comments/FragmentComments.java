@@ -21,6 +21,7 @@ import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.view.GestureDetectorCompat;
 import android.support.v4.view.ViewCompat;
+import android.support.v4.view.ViewPropertyAnimatorListener;
 import android.support.v4.view.animation.FastOutSlowInInterpolator;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.LinearLayoutManager;
@@ -197,7 +198,7 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
         Menu menu = toolbar.getMenu();
 
         for (int index = 0; index < menu.size(); index++) {
-            menu.getItem(index).getIcon().setColorFilter(colorFilterPrimary);
+            menu.getItem(index).getIcon().mutate().setColorFilter(colorFilterPrimary);
         }
     }
 
@@ -652,14 +653,10 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
                         if (!value) {
                             behaviorFloatingActionButton.animateIn(buttonExpandActions);
                             layoutAppBar.animate().translationX(0);
-                            layoutRelative.animate().translationX(0).setListener(new Animator.AnimatorListener() {
+                            layoutRelative.animate().translationX(0).withEndAction(new Runnable() {
                                 @Override
-                                public void onAnimationStart(Animator animation) {
+                                public void run() {
 
-                                }
-
-                                @Override
-                                public void onAnimationEnd(Animator animation) {
                                     if (!isFinished) {
                                         FragmentBase fragment = (FragmentBase) getFragmentManager()
                                                 .findFragmentByTag(fragmentParentTag);
@@ -669,16 +666,6 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
                                         }
                                         viewBackground.setVisibility(View.GONE);
                                     }
-                                }
-
-                                @Override
-                                public void onAnimationCancel(Animator animation) {
-
-                                }
-
-                                @Override
-                                public void onAnimationRepeat(Animator animation) {
-
                                 }
                             });
                         }
@@ -845,10 +832,10 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
                         .scaleX(1.0F)
                         .scaleY(1.0F)
                         .alpha(1.0F)
+                        .withLayer()
                         .setDuration(DURATION_ACTIONS_FADE)
                         .setInterpolator(ScrollAwareFloatingActionButtonBehavior.INTERPOLATOR)
-                        .setListener(null)
-                        .start();
+                        .setListener(null);
             }
 
             @Override
@@ -1097,14 +1084,10 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
 
         viewBackground.setVisibility(View.VISIBLE);
         adapterCommentList.collapseViewHolderLink();
-        adapterCommentList.fadeComments(new Animator.AnimatorListener() {
+        adapterCommentList.fadeComments(getResources(), new Runnable() {
             @Override
-            public void onAnimationStart(Animator animation) {
+            public void run() {
 
-            }
-
-            @Override
-            public void onAnimationEnd(Animator animation) {
                 adapterCommentList.setAnimationFinished(false);
                 recyclerCommentList.post(new Runnable() {
                     @Override
@@ -1122,12 +1105,12 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
 
                         long duration = ScrollAwareFloatingActionButtonBehavior.DURATION;
 
-                        AnimationUtils.shrinkAndFadeOut(buttonExpandActions, duration).start();
+                        AnimationUtils.shrinkAndFadeOut(buttonExpandActions, duration);
 
                         if (buttonJumpTop.isShown()) {
-                            AnimationUtils.shrinkAndFadeOut(buttonJumpTop, duration).start();
-                            AnimationUtils.shrinkAndFadeOut(buttonCommentNext, duration).start();
-                            AnimationUtils.shrinkAndFadeOut(buttonCommentPrevious, duration).start();
+                            AnimationUtils.shrinkAndFadeOut(buttonJumpTop, duration);
+                            AnimationUtils.shrinkAndFadeOut(buttonCommentNext, duration);
+                            AnimationUtils.shrinkAndFadeOut(buttonCommentPrevious, duration);
                         }
 
                         final Animation animation = new Animation() {
@@ -1198,16 +1181,6 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
                     }
                 });
             }
-
-            @Override
-            public void onAnimationCancel(Animator animation) {
-
-            }
-
-            @Override
-            public void onAnimationRepeat(Animator animation) {
-
-            }
         });
     }
 
@@ -1222,14 +1195,9 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
         float screenWidth = getResources().getDisplayMetrics().widthPixels;
         behaviorFloatingActionButton.animateOut(buttonExpandActions);
         layoutAppBar.animate().translationX(screenWidth);
-        layoutRelative.animate().translationX(screenWidth).setListener(new Animator.AnimatorListener() {
+        layoutRelative.animate().translationX(screenWidth).withEndAction(new Runnable() {
             @Override
-            public void onAnimationStart(Animator animation) {
-
-            }
-
-            @Override
-            public void onAnimationEnd(Animator animation) {
+            public void run() {
                 FragmentBase fragment = (FragmentBase) getFragmentManager()
                         .findFragmentByTag(fragmentParentTag);
                 if (fragment != null) {
@@ -1246,16 +1214,6 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
                 else {
                     getFragmentManager().popBackStackImmediate();
                 }
-            }
-
-            @Override
-            public void onAnimationCancel(Animator animation) {
-
-            }
-
-            @Override
-            public void onAnimationRepeat(Animator animation) {
-
             }
         });
     }
