@@ -14,7 +14,9 @@ import android.widget.Toast;
 import com.android.volley.Request;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.winsonchiu.reader.AppSettings;
 import com.winsonchiu.reader.ControllerUser;
 import com.winsonchiu.reader.R;
 import com.winsonchiu.reader.data.reddit.Link;
@@ -62,6 +64,7 @@ public class ControllerSearch {
     private Activity activity;
     private SharedPreferences preferences;
     private Reddit reddit;
+    private Listing subredditsLoaded;
     private Listing subredditsSubscribed;
     private Listing subreddits;
     private Listing subredditsRecommended;
@@ -69,6 +72,7 @@ public class ControllerSearch {
     private Listing linksSubreddit;
     private String query;
     private Sort sort;
+    private Sort sortSubreddits;
     private Time time;
     private volatile int currentPage;
     private Request<String> requestSubreddits;
@@ -86,6 +90,7 @@ public class ControllerSearch {
         time = Time.ALL;
         listeners = new HashSet<>();
         query = "";
+        subredditsLoaded = new Listing();
         subredditsSubscribed = new Listing();
         subreddits = new Listing();
         subredditsRecommended = new Listing();
@@ -137,6 +142,36 @@ public class ControllerSearch {
     }
 
     public void reloadSubscriptionList() {
+
+        String subscriptionsJson = preferences.getString(AppSettings.SUBSCRIPTIONS, "");
+        Log.d(TAG, "subscriptionsJson: " + subscriptionsJson);
+
+        if (!TextUtils.isEmpty(subscriptionsJson)) {
+
+            try {
+                JsonNode jsonNode = Reddit.getObjectMapper().readValue(subscriptionsJson, JsonNode.class);
+                Listing listing = new Listing();
+
+                for (JsonNode node : jsonNode) {
+                    listing.getChildren().add(Subreddit.fromJson(node));
+                }
+
+                subredditsSubscribed = listing;
+
+                if (TextUtils.isEmpty(query)) {
+                    subreddits = subredditsSubscribed;
+                    for (Listener listener : listeners) {
+                        listener.getAdapterSearchSubreddits()
+                                .notifyDataSetChanged();
+                    }
+                }
+                loadContributorSubreddits();
+            }
+            catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
         String url;
 
         if (controllerUser.hasUser()) {
@@ -154,20 +189,7 @@ public class ControllerSearch {
                             Log.d(TAG, "reloadSubscriptionList response: " + response);
                             Listing listing = Listing.fromJson(Reddit.getObjectMapper().readValue(
                                     response, JsonNode.class));
-                            subredditsSubscribed = listing;
-                            Collections.sort(subredditsSubscribed.getChildren(), new Comparator<Thing>() {
-                                @Override
-                                public int compare(Thing lhs, Thing rhs) {
-                                    return ((Subreddit) lhs).getDisplayName().compareToIgnoreCase(((Subreddit) rhs).getDisplayName());
-                                }
-                            });
-                            if (TextUtils.isEmpty(query)) {
-                                subreddits = subredditsSubscribed;
-                                for (Listener listener : listeners) {
-                                    listener.getAdapterSearchSubreddits()
-                                            .notifyDataSetChanged();
-                                }
-                            }
+                            subredditsLoaded.addChildren(listing.getChildren());
                             if (listing.getChildren().size() == 100) {
                                 loadMoreSubscriptions();
                             }
@@ -205,20 +227,7 @@ public class ControllerSearch {
                         try {
                             Listing listing = Listing.fromJson(Reddit.getObjectMapper().readValue(
                                     response, JsonNode.class));
-                            subredditsSubscribed.addChildren(listing.getChildren());
-                            Collections.sort(subredditsSubscribed.getChildren(), new Comparator<Thing>() {
-                                @Override
-                                public int compare(Thing lhs, Thing rhs) {
-                                    return ((Subreddit) lhs).getDisplayName().compareToIgnoreCase(((Subreddit) rhs).getDisplayName());
-                                }
-                            });
-                            if (TextUtils.isEmpty(query)) {
-                                subreddits = subredditsSubscribed;
-                                for (Listener listener : listeners) {
-                                    listener.getAdapterSearchSubreddits()
-                                            .notifyDataSetChanged();
-                                }
-                            }
+                            subredditsLoaded.addChildren(listing.getChildren());
                             if (listing.getChildren().size() == 100) {
                                 loadMoreSubscriptions();
                             }
@@ -239,6 +248,46 @@ public class ControllerSearch {
                 }, 0);
     }
 
+    private void saveSubscriptions(Listing listing) {
+
+        boolean sort = subredditsSubscribed.getChildren().isEmpty();
+
+        subredditsSubscribed.getChildren().retainAll(listing.getChildren());
+        subredditsSubscribed.addChildren(listing.getChildren());
+
+        if (sort) {
+            Collections.sort(subredditsSubscribed.getChildren(), new Comparator<Thing>() {
+                @Override
+                public int compare(Thing lhs, Thing rhs) {
+                    return ((Subreddit) lhs).getDisplayName().compareToIgnoreCase(((Subreddit) rhs).getDisplayName());
+                }
+            });
+        }
+
+        saveSubscriptions();
+    }
+
+    public void saveSubscriptions() {
+
+        Log.d(TAG, "saveSubscriptions");
+
+        try {
+            preferences.edit().putString(AppSettings.SUBSCRIPTIONS, Reddit.getObjectMapper().writeValueAsString(subredditsSubscribed.getChildren())).apply();
+
+        }
+        catch (JsonProcessingException e) {
+            e.printStackTrace();
+        }
+
+        if (TextUtils.isEmpty(query)) {
+            subreddits = subredditsSubscribed;
+            for (Listener listener : listeners) {
+                listener.getAdapterSearchSubreddits()
+                        .notifyDataSetChanged();
+            }
+        }
+    }
+
     private void loadContributorSubreddits() {
 
         if (TextUtils.isEmpty(controllerUser.getUser().getName())) {
@@ -252,23 +301,12 @@ public class ControllerSearch {
                         try {
                             Listing listing = Listing.fromJson(Reddit.getObjectMapper().readValue(
                                     response, JsonNode.class));
-                            subredditsSubscribed.addChildren(listing.getChildren());
-                            Collections.sort(subredditsSubscribed.getChildren(), new Comparator<Thing>() {
-                                @Override
-                                public int compare(Thing lhs, Thing rhs) {
-                                    return ((Subreddit) lhs).getDisplayName().compareToIgnoreCase(
-                                            ((Subreddit) rhs).getDisplayName());
-                                }
-                            });
-                            if (TextUtils.isEmpty(query)) {
-                                subreddits = subredditsSubscribed;
-                                for (Listener listener : listeners) {
-                                    listener.getAdapterSearchSubreddits()
-                                            .notifyDataSetChanged();
-                                }
-                            }
+                            subredditsLoaded.addChildren(listing.getChildren());
                             if (listing.getChildren().size() == 100) {
                                 loadMoreContributorSubreddits();
+                            }
+                            else {
+                                saveSubscriptions(subredditsLoaded);
                             }
 
                         }
@@ -293,28 +331,12 @@ public class ControllerSearch {
                         try {
                             Listing listing = Listing.fromJson(Reddit.getObjectMapper().readValue(
                                     response, JsonNode.class));
-                            subredditsSubscribed.addChildren(listing.getChildren());
-                            Collections.sort(subredditsSubscribed.getChildren(),
-                                    new Comparator<Thing>() {
-                                        @Override
-                                        public int compare(Thing lhs, Thing rhs) {
-                                            return ((Subreddit) lhs).getDisplayName()
-                                                    .compareToIgnoreCase(
-                                                            ((Subreddit) rhs).getDisplayName());
-                                        }
-                                    });
-                            if (TextUtils.isEmpty(query)) {
-                                subreddits = subredditsSubscribed;
-                                for (Listener listener : listeners) {
-                                    listener.getAdapterSearchSubreddits()
-                                            .notifyDataSetChanged();
-                                }
-                            }
+                            subredditsLoaded.addChildren(listing.getChildren());
                             if (listing.getChildren().size() == 100) {
-                                loadMoreSubscriptions();
+                                loadMoreContributorSubreddits();
                             }
                             else {
-                                loadContributorSubreddits();
+                                saveSubscriptions(subredditsLoaded);
                             }
 
                         }
@@ -811,7 +833,88 @@ public class ControllerSearch {
     }
 
     public void setSort(Sort sort) {
-        if (this.sort != sort) {
+
+        Listing listingSort = getCurrentPage() == PAGE_SUBREDDITS_RECOMMENDED ? subredditsRecommended : subreddits;
+
+        if (Sort.ALPHABETICAL.equals(sort)) {
+
+            if (Sort.ALPHABETICAL.equals(sortSubreddits)) {
+                Collections.sort(listingSort.getChildren(), new Comparator<Thing>() {
+                    @Override
+                    public int compare(Thing lhs, Thing rhs) {
+                        return ((Subreddit) rhs).getDisplayName().compareToIgnoreCase(((Subreddit) lhs).getDisplayName());
+                    }
+                });
+                sortSubreddits = null;
+            }
+            else {
+                Collections.sort(listingSort.getChildren(), new Comparator<Thing>() {
+                    @Override
+                    public int compare(Thing lhs, Thing rhs) {
+                        return ((Subreddit) lhs).getDisplayName().compareToIgnoreCase(((Subreddit) rhs).getDisplayName());
+                    }
+                });
+                sortSubreddits = Sort.ALPHABETICAL;
+            }
+            if (listingSort == subredditsSubscribed) {
+                saveSubscriptions();
+            }
+            else if (listingSort == subredditsRecommended) {
+                for (Listener listener : listeners) {
+                    listener.getAdapterSearchSubredditsRecommended()
+                            .notifyDataSetChanged();
+                }
+            }
+            else {
+                for (Listener listener : listeners) {
+                    listener.getAdapterSearchSubreddits()
+                            .notifyDataSetChanged();
+                }
+            }
+        }
+        else if (Sort.SUBSCRIBERS.equals(sort)) {
+
+            if (Sort.SUBSCRIBERS.equals(sortSubreddits)) {
+                Collections.sort(listingSort.getChildren(), new Comparator<Thing>() {
+                    @Override
+                    public int compare(Thing lhs, Thing rhs) {
+                        long subscribersFirst = ((Subreddit) lhs).getSubscribers();
+                        long subscribersSecond = ((Subreddit) rhs).getSubscribers();
+
+                        return subscribersFirst < subscribersSecond ? -1 : (subscribersFirst == subscribersSecond ? 0 : 1);
+                    }
+                });
+                sortSubreddits = null;
+            }
+            else {
+                Collections.sort(listingSort.getChildren(), new Comparator<Thing>() {
+                    @Override
+                    public int compare(Thing lhs, Thing rhs) {
+                        long subscribersFirst = ((Subreddit) lhs).getSubscribers();
+                        long subscribersSecond = ((Subreddit) rhs).getSubscribers();
+
+                        return subscribersSecond < subscribersFirst ? -1 : (subscribersFirst == subscribersSecond ? 0 : 1);
+                    }
+                });
+                sortSubreddits = Sort.SUBSCRIBERS;
+            }
+            if (listingSort == subredditsSubscribed) {
+                saveSubscriptions();
+            }
+            else if (listingSort == subredditsRecommended) {
+                for (Listener listener : listeners) {
+                    listener.getAdapterSearchSubredditsRecommended()
+                            .notifyDataSetChanged();
+                }
+            }
+            else {
+                for (Listener listener : listeners) {
+                    listener.getAdapterSearchSubreddits()
+                            .notifyDataSetChanged();
+                }
+            }
+        }
+        else if (this.sort != sort) {
             this.sort = sort;
             for (Listener listener : listeners) {
                 listener.setSortAndTime(sort, time);
@@ -865,16 +968,10 @@ public class ControllerSearch {
 
     public void addSubreddit(Subreddit subreddit) {
         // TODO: Implement global data store for subscriptions, to be updated dynamically
-        subredditsSubscribed.getChildren().add(subreddit);
-        Collections.sort(subredditsSubscribed.getChildren(),
-                new Comparator<Thing>() {
-                    @Override
-                    public int compare(Thing lhs, Thing rhs) {
-                        return ((Subreddit) lhs).getDisplayName()
-                                .compareToIgnoreCase(
-                                        ((Subreddit) rhs).getDisplayName());
-                    }
-                });
+        List<Thing> additions = new ArrayList<>();
+        additions.add(subreddit);
+        subredditsSubscribed.addChildren(additions);
+        saveSubscriptions();
     }
 
     public boolean setReplyTextLinks(String name, String text, boolean collapsed) {
@@ -957,7 +1054,7 @@ public class ControllerSearch {
     }
 
     public boolean isSubscriptionListShown() {
-        return subreddits == subredditsSubscribed;
+        return getCurrentPage() == PAGE_SUBREDDITS && subreddits == subredditsSubscribed;
     }
 
     public interface Listener extends ControllerListener {

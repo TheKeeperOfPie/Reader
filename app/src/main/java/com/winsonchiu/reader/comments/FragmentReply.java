@@ -16,6 +16,7 @@ import android.os.Bundle;
 import android.support.design.widget.AppBarLayout;
 import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.TabLayout;
+import android.support.v4.app.Fragment;
 import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.support.v4.widget.NestedScrollView;
@@ -40,6 +41,7 @@ import com.winsonchiu.reader.R;
 import com.winsonchiu.reader.data.reddit.Comment;
 import com.winsonchiu.reader.data.reddit.Reddit;
 import com.winsonchiu.reader.data.reddit.Replyable;
+import com.winsonchiu.reader.data.reddit.Thing;
 import com.winsonchiu.reader.history.FragmentHistory;
 import com.winsonchiu.reader.inbox.FragmentInbox;
 import com.winsonchiu.reader.links.FragmentThreadList;
@@ -437,5 +439,20 @@ public class FragmentReply extends FragmentBase implements Toolbar.OnMenuItemCli
         }
 
         return true;
+    }
+
+    @Override
+    public void onShown() {
+
+    }
+
+    @Override
+    public void onWindowTransitionStart() {
+
+    }
+
+    @Override
+    public void setVisibilityOfThing(int visibility, Thing thing) {
+
     }
 }

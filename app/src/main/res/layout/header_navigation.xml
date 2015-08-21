@@ -3,7 +3,7 @@
   ~ Copyright 2015 Winson Chiu
   -->
 
-<RelativeLayout
+<com.winsonchiu.reader.views.CustomRelativeLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/layout_header_navigation"
     android:layout_width="match_parent"
@@ -19,22 +19,32 @@
         >
 
         <com.winsonchiu.reader.views.ScrollViewHeader
-            android:id="@+id/scroll_header"
+            android:id="@+id/scroll_header_vertical"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_alignParentTop="true"
+            android:layout_height="match_parent"
             android:scrollbars="vertical"
+            android:scrollbarSize="4dp"
             >
 
-            <ImageView
-                android:id="@+id/image_nav_header"
-                android:layout_width="match_parent"
+            <HorizontalScrollView
+                android:id="@+id/scroll_header_horizontal"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:contentDescription="@string/content_description_image_navigation_header"
-                android:adjustViewBounds="true"
-                android:clickable="true"
-                android:background="?attr/colorPrimary"
-                />
+                android:scrollbars="horizontal"
+                android:scrollbarSize="4dp"
+                >
+
+                <ImageView
+                    android:id="@+id/image_nav_header"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:contentDescription="@string/content_description_image_navigation_header"
+                    android:adjustViewBounds="true"
+                    android:clickable="true"
+                    android:background="?attr/colorPrimary"
+                    />
+
+            </HorizontalScrollView>
 
         </com.winsonchiu.reader.views.ScrollViewHeader>
 
@@ -58,7 +68,7 @@
             android:id="@+id/text_account_info"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_alignBottom="@id/scroll_header"
+            android:layout_alignBottom="@id/scroll_header_vertical"
             android:layout_alignParentStart="true"
             android:paddingStart="@dimen/activity_horizontal_margin"
             android:paddingEnd="@dimen/activity_horizontal_margin"
@@ -74,7 +84,7 @@
             android:id="@+id/button_accounts"
             android:layout_width="56dp"
             android:layout_height="56dp"
-            android:layout_alignBottom="@id/scroll_header"
+            android:layout_alignBottom="@id/scroll_header_vertical"
             android:layout_alignParentEnd="true"
             android:layout_marginEnd="@dimen/activity_horizontal_margin"
             android:padding="16dp"
@@ -94,4 +104,4 @@
 
     </RelativeLayout>
 
-</RelativeLayout>
+</com.winsonchiu.reader.views.CustomRelativeLayout>

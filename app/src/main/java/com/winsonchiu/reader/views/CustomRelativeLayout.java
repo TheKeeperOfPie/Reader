@@ -6,10 +6,11 @@ package com.winsonchiu.reader.views;
 
 import android.content.Context;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.MotionEvent;
 import android.view.ViewTreeObserver;
 import android.widget.RelativeLayout;
+
+import com.winsonchiu.reader.utils.TouchEventListener;
 
 /**
  * Created by TheKeeperOfPie on 7/3/2015.
@@ -20,7 +21,7 @@ public class CustomRelativeLayout extends RelativeLayout {
     private float xFraction = 0;
     private float yFraction = 0;
     private ViewTreeObserver.OnPreDrawListener preDrawListener = null;
-    private OnInterceptTouchEventListener onInterceptTouchEventListener;
+    private TouchEventListener touchEventListener;
 
     public CustomRelativeLayout(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
@@ -94,27 +95,20 @@ public class CustomRelativeLayout extends RelativeLayout {
         setTranslationX(translationX);
     }
 
+    public TouchEventListener getTouchEventListener() {
+        return touchEventListener;
+    }
+
+    public void setTouchEventListener(TouchEventListener touchEventListener) {
+        this.touchEventListener = touchEventListener;
+    }
+
     @Override
-    public boolean onInterceptTouchEvent(MotionEvent ev) {
-
-        Log.d(TAG, "onInterceptTouchEvent: " + ev);
-
-        if (onInterceptTouchEventListener != null) {
-            return onInterceptTouchEventListener.onInterceptTouchEvent(ev);
+    public boolean dispatchTouchEvent(MotionEvent ev) {
+        if (touchEventListener != null) {
+            touchEventListener.onTouchEvent(ev);
         }
-        return super.onInterceptTouchEvent(ev);
-    }
-
-    public OnInterceptTouchEventListener getOnInterceptTouchEventListener() {
-        return onInterceptTouchEventListener;
-    }
-
-    public void setOnInterceptTouchEventListener(OnInterceptTouchEventListener onInterceptTouchEventListener) {
-        this.onInterceptTouchEventListener = onInterceptTouchEventListener;
-    }
-
-    public interface OnInterceptTouchEventListener {
-        boolean onInterceptTouchEvent(MotionEvent event);
+        return super.dispatchTouchEvent(ev);
     }
 
 }

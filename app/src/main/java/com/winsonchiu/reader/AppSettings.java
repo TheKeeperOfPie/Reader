@@ -79,6 +79,7 @@ public class AppSettings {
     public static final String PREF_HEADER_SUBREDDIT = "pref_header_subreddit";
 
     private static final String TAG = AppSettings.class.getCanonicalName();
+    public static final String SUBSCRIPTIONS = "subscriptions";
 
     public static boolean initPrefs(Context context) {
 

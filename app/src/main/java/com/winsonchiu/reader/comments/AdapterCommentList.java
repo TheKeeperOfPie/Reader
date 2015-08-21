@@ -391,6 +391,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
         protected PorterDuffColorFilter colorFilterNegative;
         protected PorterDuffColorFilter colorFilterMenuItem;
         protected View viewIndicatorContainer;
+        protected View viewDivider;
         protected RelativeLayout layoutContainerCollapsed;
         protected View viewIndicatorCollapsed;
         protected TextView textCollapsed;
@@ -491,6 +492,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                 textUsername.setText("- " + eventListenerBase.getUser().getName());
             }
 
+            viewDivider = itemView.findViewById(R.id.view_divider);
             viewIndicatorCollapsed = itemView.findViewById(R.id.view_indicator_collapsed);
             layoutContainerCollapsed = (RelativeLayout) itemView.findViewById(R.id.layout_container_collapsed);
             textCollapsed = (TextView) itemView.findViewById(R.id.text_collapsed);
@@ -759,9 +761,11 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                         comment.getCollapsed() + " " + resources
                                 .getString(R.string.comments_collapsed));
                 layoutContainerCollapsed.setVisibility(View.VISIBLE);
+                viewDivider.setVisibility(View.VISIBLE);
             }
             else {
                 layoutContainerCollapsed.setVisibility(View.GONE);
+                viewDivider.setVisibility(View.INVISIBLE);
             }
 
             ViewGroup.LayoutParams layoutParams = viewIndent.getLayoutParams();

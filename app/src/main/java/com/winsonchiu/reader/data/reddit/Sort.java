@@ -20,7 +20,10 @@ public enum Sort {
     ACTIVITY(R.id.item_sort_activity),
     OLD(R.id.item_sort_old),
     RANDOM(R.id.item_sort_random),
-    QA(R.id.item_sort_qa);
+    QA(R.id.item_sort_qa),
+    ALPHABETICAL(R.id.item_sort_alphabetical),
+    SUBSCRIBERS(R.id.item_sort_subscribers),
+    ;
 
     private int menuId;
 

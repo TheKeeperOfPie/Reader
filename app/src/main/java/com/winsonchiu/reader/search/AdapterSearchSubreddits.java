@@ -7,10 +7,15 @@ package com.winsonchiu.reader.search;
 import android.app.Activity;
 import android.content.res.TypedArray;
 import android.graphics.PorterDuff;
+import android.support.v4.view.GestureDetectorCompat;
 import android.support.v4.view.MotionEventCompat;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.text.Html;
 import android.text.method.LinkMovementMethod;
+import android.util.Log;
+import android.util.TypedValue;
+import android.view.GestureDetector;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
@@ -20,6 +25,7 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.winsonchiu.reader.R;
+import com.winsonchiu.reader.data.reddit.Reddit;
 import com.winsonchiu.reader.data.reddit.Subreddit;
 import com.winsonchiu.reader.utils.AnimationUtils;
 import com.winsonchiu.reader.utils.CustomColorFilter;
@@ -68,9 +74,10 @@ public class AdapterSearchSubreddits extends RecyclerView.Adapter<AdapterSearchS
         protected TextView textDescription;
         protected TextView textInfo;
         protected RelativeLayout layoutContainerExpand;
-        private Subreddit subreddit;
+        protected CustomColorFilter colorFilterIcon;
+        protected Subreddit subreddit;
 
-        public ViewHolder(View itemView, final EventListener eventListener) {
+        public ViewHolder(final View itemView, final EventListener eventListener) {
             super(itemView);
             this.eventListener = eventListener;
 
@@ -82,11 +89,47 @@ public class AdapterSearchSubreddits extends RecyclerView.Adapter<AdapterSearchS
             textInfo = (TextView) itemView.findViewById(R.id.text_info);
             layoutContainerExpand = (RelativeLayout) itemView.findViewById(R.id.layout_container_expand);
 
+            final GestureDetectorCompat gestureDetector = new GestureDetectorCompat(itemView.getContext(), new GestureDetector.SimpleOnGestureListener() {
+
+                @Override
+                public boolean onSingleTapConfirmed(MotionEvent e) {
+                    if (!eventListener.isSubscriptionListShown()) {
+                        eventListener.onClickSubreddit(subreddit);
+                        return true;
+                    }
+                    return super.onSingleTapConfirmed(e);
+                }
+
+                @Override
+                public boolean onDoubleTap(MotionEvent e) {
+                    if (eventListener.isSubscriptionListShown()) {
+                        eventListener.sendToTop(ViewHolder.this);
+                        return true;
+                    }
+                    return super.onDoubleTap(e);
+                }
+            });
+
             buttonReorder.setOnTouchListener(new View.OnTouchListener() {
+
+                private float startY;
+                private float dragDistance = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 4, itemView.getContext().getResources().getDisplayMetrics());
+
                 @Override
                 public boolean onTouch(View v, MotionEvent event) {
-                    if (MotionEventCompat.getActionMasked(event) == MotionEvent.ACTION_DOWN) {
-                        eventListener.onStartDrag(ViewHolder.this);
+                    if (gestureDetector.onTouchEvent(event)) {
+                        return true;
+                    }
+
+                    switch (MotionEventCompat.getActionMasked(event)) {
+                        case MotionEvent.ACTION_DOWN:
+                            startY = event.getY();
+                            break;
+                        case MotionEvent.ACTION_MOVE:
+                            if (Math.abs(event.getY() - startY) > dragDistance) {
+                                eventListener.onStartDrag(ViewHolder.this);
+                            }
+                            break;
                     }
                     return false;
                 }
@@ -119,7 +162,7 @@ public class AdapterSearchSubreddits extends RecyclerView.Adapter<AdapterSearchS
             if (eventListener.supportsDrag()) {
                 TypedArray typedArray = itemView.getContext().getTheme().obtainStyledAttributes(
                         new int[] {R.attr.colorIconFilter});
-                CustomColorFilter colorFilterIcon = new CustomColorFilter(typedArray.getColor(0, 0xFFFFFFFF), PorterDuff.Mode.MULTIPLY);
+                colorFilterIcon = new CustomColorFilter(typedArray.getColor(0, 0xFFFFFFFF), PorterDuff.Mode.MULTIPLY);
                 typedArray.recycle();
                 buttonReorder.setColorFilter(colorFilterIcon);
                 buttonReorder.setVisibility(View.VISIBLE);
@@ -133,17 +176,25 @@ public class AdapterSearchSubreddits extends RecyclerView.Adapter<AdapterSearchS
             layoutContainerExpand.setVisibility(View.GONE);
 
             textName.setText(subreddit.getDisplayName());
-            textTitle.setText(subreddit.getTitle());
+            textTitle.setText(Html.fromHtml(subreddit.getTitle()));
 
             if ("null".equals(subreddit.getPublicDescriptionHtml())) {
                 textDescription.setVisibility(View.GONE);
             }
             else {
-                textDescription.setText(subreddit.getPublicDescriptionHtml());
+                textDescription.setText(Reddit.getFormattedHtml(subreddit.getPublicDescriptionHtml()));
             }
 
             textInfo.setText(subreddit.getSubscribers() + " subscribers\n" +
                     "created " + new Date(subreddit.getCreatedUtc()));
+
+            if (eventListener.isSubscriptionListShown()) {
+                buttonReorder.setImageResource(R.drawable.ic_reorder_white_24dp);
+            }
+            else {
+                buttonReorder.setImageResource(R.drawable.ic_open_in_new_white_24dp);
+            }
+            buttonReorder.setColorFilter(colorFilterIcon);
 
         }
 
@@ -151,6 +202,8 @@ public class AdapterSearchSubreddits extends RecyclerView.Adapter<AdapterSearchS
             void onClickSubreddit(Subreddit subreddit);
             boolean supportsDrag();
             void onStartDrag(ViewHolder viewHolder);
+            void sendToTop(ViewHolder viewHolder);
+            boolean isSubscriptionListShown();
         }
 
     }

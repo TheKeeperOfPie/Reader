@@ -4,7 +4,6 @@
 
 package com.winsonchiu.reader;
 
-
 import android.app.Activity;
 import android.app.Fragment;
 import android.os.Bundle;

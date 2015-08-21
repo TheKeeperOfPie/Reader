@@ -47,6 +47,7 @@ import com.winsonchiu.reader.links.AdapterLink;
 import com.winsonchiu.reader.links.ControllerLinksBase;
 import com.winsonchiu.reader.utils.CustomColorFilter;
 import com.winsonchiu.reader.utils.DisallowListener;
+import com.winsonchiu.reader.utils.ItemDecorationDivider;
 import com.winsonchiu.reader.utils.RecyclerCallback;
 import com.winsonchiu.reader.utils.SimpleCallbackBackground;
 import com.winsonchiu.reader.utils.UtilsColor;
@@ -151,7 +152,7 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
                 if (viewPager.getCurrentItem() == ControllerSearch.PAGE_SUBREDDITS) {
                     mListener.getControllerLinks()
                             .setParameters(query.replaceAll("\\s", ""), Sort.HOT, Time.ALL);
-                    getFragmentManager().popBackStack();
+                    mListener.onNavigationBackClick();
                 }
                 else {
                     mListener.getControllerSearch()
@@ -340,7 +341,7 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
                                 .getSystemService(Context.INPUT_METHOD_SERVICE);
                         inputManager.hideSoftInputFromWindow(view.getWindowToken(),
                                 InputMethodManager.HIDE_NOT_ALWAYS);
-                        getFragmentManager().popBackStack();
+                        mListener.onNavigationBackClick();
                     }
 
                     @Override
@@ -352,6 +353,24 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
                     public void onStartDrag(AdapterSearchSubreddits.ViewHolder viewHolder) {
                         itemTouchHelperSubreddits.startDrag(viewHolder);
                     }
+
+                    @Override
+                    public void sendToTop(AdapterSearchSubreddits.ViewHolder viewHolder) {
+                        mListener.getControllerSearch().moveSubreddit(viewHolder.getAdapterPosition(), 0);
+                        recyclerSearchSubreddits.postDelayed(new Runnable() {
+                            @Override
+                            public void run() {
+                                if (layoutManagerSubreddits.findFirstVisibleItemPosition() <= 1) {
+                                    layoutManagerSubreddits.smoothScrollToPosition(recyclerSearchSubreddits, null, 0);
+                                }
+                            }
+                        }, 150);
+                    }
+
+                    @Override
+                    public boolean isSubscriptionListShown() {
+                        return mListener.getControllerSearch().isSubscriptionListShown();
+                    }
                 });
 
         layoutManagerSubreddits = new LinearLayoutManager(activity, LinearLayoutManager.VERTICAL, false);
@@ -359,6 +378,7 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
                 R.id.recycler_search_subreddits);
         recyclerSearchSubreddits.setLayoutManager(layoutManagerSubreddits);
         recyclerSearchSubreddits.setAdapter(adapterSearchSubreddits);
+        recyclerSearchSubreddits.addItemDecoration(new ItemDecorationDivider(activity, ItemDecorationDivider.VERTICAL_LIST));
 
         itemTouchHelperSubreddits = new ItemTouchHelper(new SimpleCallbackBackground(0, 0, windowBackground) {
 
@@ -616,7 +636,7 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
                                 .getSystemService(Context.INPUT_METHOD_SERVICE);
                         inputManager.hideSoftInputFromWindow(view.getWindowToken(),
                                 InputMethodManager.HIDE_NOT_ALWAYS);
-                        getFragmentManager().popBackStack();
+                        mListener.onNavigationBackClick();
                     }
 
                     @Override
@@ -628,6 +648,16 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
                     public void onStartDrag(AdapterSearchSubreddits.ViewHolder viewHolder) {
 
                     }
+
+                    @Override
+                    public void sendToTop(AdapterSearchSubreddits.ViewHolder viewHolder) {
+
+                    }
+
+                    @Override
+                    public boolean isSubscriptionListShown() {
+                        return mListener.getControllerSearch().isSubscriptionListShown();
+                    }
                 });
 
         layoutManagerSubredditsRecommended = new LinearLayoutManager(activity, LinearLayoutManager.VERTICAL, false);
@@ -635,6 +665,7 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
                 R.id.recycler_search_subreddits_recommended);
         recyclerSearchSubredditsRecommended.setLayoutManager(layoutManagerSubredditsRecommended);
         recyclerSearchSubredditsRecommended.setAdapter(adapterSearchSubredditsRecommended);
+        recyclerSearchSubredditsRecommended.addItemDecoration(new ItemDecorationDivider(activity, ItemDecorationDivider.VERTICAL_LIST));
 
         viewPager = (ViewPager) view.findViewById(R.id.view_pager_search);
         viewPager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
@@ -649,6 +680,12 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
             public void onPageSelected(int position) {
                 mListener.getControllerSearch()
                         .setCurrentPage(position);
+                boolean sortSubredditsShown = mListener.getControllerSearch().getCurrentPage() == ControllerSearch.PAGE_SUBREDDITS || mListener.getControllerSearch().getCurrentPage() == ControllerSearch.PAGE_SUBREDDITS_RECOMMENDED;
+
+                menu.findItem(R.id.item_sort_subreddits).setEnabled(sortSubredditsShown);
+                menu.findItem(R.id.item_sort_subreddits).setVisible(sortSubredditsShown);
+                menu.findItem(R.id.item_sort).setEnabled(!sortSubredditsShown);
+                menu.findItem(R.id.item_sort).setVisible(!sortSubredditsShown);
             }
 
             @Override
@@ -720,6 +757,7 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
     public void onPause() {
         mListener.getControllerSearch()
                 .removeListener(listenerSearch);
+        mListener.getControllerSearch().saveSubscriptions();
         super.onPause();
     }
 

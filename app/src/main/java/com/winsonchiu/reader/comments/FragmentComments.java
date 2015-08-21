@@ -20,8 +20,8 @@ import android.support.design.widget.AppBarLayout;
 import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.view.GestureDetectorCompat;
+import android.support.v4.view.MotionEventCompat;
 import android.support.v4.view.ViewCompat;
-import android.support.v4.view.ViewPropertyAnimatorListener;
 import android.support.v4.view.animation.FastOutSlowInInterpolator;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.LinearLayoutManager;
@@ -59,14 +59,14 @@ import com.winsonchiu.reader.data.reddit.Link;
 import com.winsonchiu.reader.data.reddit.Sort;
 import com.winsonchiu.reader.utils.AnimationUtils;
 import com.winsonchiu.reader.utils.DisallowListener;
+import com.winsonchiu.reader.utils.ItemDecorationDivider;
 import com.winsonchiu.reader.utils.RecyclerCallback;
 import com.winsonchiu.reader.utils.ScrollAwareFloatingActionButtonBehavior;
+import com.winsonchiu.reader.utils.TouchEventListener;
 import com.winsonchiu.reader.utils.UtilsColor;
 import com.winsonchiu.reader.views.CustomRelativeLayout;
 
-import java.util.Arrays;
-
-public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItemClickListener {
+public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItemClickListener, TouchEventListener {
 
     public static final String TAG = FragmentComments.class.getCanonicalName();
 
@@ -121,6 +121,7 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
     private float swipeDifferenceX;
     private ColorFilter colorFilterPrimary;
     private ColorFilter colorFilterAccent;
+    private float swipeRightDistance;
 
     public static FragmentComments newInstance() {
         FragmentComments fragment = new FragmentComments();
@@ -588,9 +589,10 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
         recyclerCommentList = (RecyclerView) layoutRoot.findViewById(R.id.recycler_comment_list);
         recyclerCommentList.setLayoutManager(linearLayoutManager);
         recyclerCommentList.setItemAnimator(null);
+        recyclerCommentList.addItemDecoration(new ItemDecorationDivider(getActivity(), ItemDecorationDivider.VERTICAL_LIST));
 
         final float screenWidth = getResources().getDisplayMetrics().widthPixels;
-        final float swipeRightDistance = screenWidth * 0.4f;
+        swipeRightDistance = screenWidth * 0.4f;
 
         gestureDetector = new GestureDetectorCompat(getActivity(),
                 new GestureDetector.SimpleOnGestureListener() {
@@ -634,46 +636,7 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
                 });
 
         if (preferences.getBoolean(AppSettings.SWIPE_EXIT_COMMENTS, true)) {
-            layoutRoot.setOnInterceptTouchEventListener(new CustomRelativeLayout.OnInterceptTouchEventListener() {
-                @Override
-                public boolean onInterceptTouchEvent(MotionEvent event) {
-
-                    boolean value = gestureDetector.onTouchEvent(event);
-
-                    if (isFinished || event.getAction() != MotionEvent.ACTION_UP || !hasSwipedRight) {
-                        return false;
-                    }
-
-                    if (swipeDifferenceX > swipeRightDistance) {
-                        slideExit();
-                        return true;
-                    }
-                    else {
-                        hasSwipedRight = false;
-                        if (!value) {
-                            behaviorFloatingActionButton.animateIn(buttonExpandActions);
-                            layoutAppBar.animate().translationX(0);
-                            layoutRelative.animate().translationX(0).withEndAction(new Runnable() {
-                                @Override
-                                public void run() {
-
-                                    if (!isFinished) {
-                                        FragmentBase fragment = (FragmentBase) getFragmentManager()
-                                                .findFragmentByTag(fragmentParentTag);
-                                        if (fragment != null) {
-                                            fragment.setVisibilityOfThing(View.INVISIBLE, mListener.getControllerComments().getLink());
-                                            fragment.onHiddenChanged(true);
-                                        }
-                                        viewBackground.setVisibility(View.GONE);
-                                    }
-                                }
-                            });
-                        }
-                    }
-
-                    return false;
-                }
-            });
+            layoutRoot.setTouchEventListener(this);
         }
 
         adapterCommentList = new AdapterCommentList(getActivity(),
@@ -741,11 +704,6 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
 
             startX = location[0];
             startY = location[1];
-
-            Log.d(TAG, "location: " + Arrays.toString(location));
-            Log.d(TAG, "toolbarHeight: " + toolbarHeight);
-            Log.d(TAG, "startX: " + startX);
-            Log.d(TAG, "startY: " + startY);
 
             if (getArguments().getBoolean(ARG_IS_GRID)) {
                 float margin = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 1,
@@ -1080,8 +1038,6 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
 
     private void animateExit() {
 
-        // TODO: Make startY solely dependent on literal screen location
-
         viewBackground.setVisibility(View.VISIBLE);
         adapterCommentList.collapseViewHolderLink();
         adapterCommentList.fadeComments(getResources(), new Runnable() {
@@ -1177,6 +1133,10 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
                             }
                         });
 
+                        if (viewYouTube.isShown()) {
+                            viewYouTube.animate().translationY(-viewYouTube.getHeight());
+                        }
+
                         recyclerCommentList.startAnimation(animation);
                     }
                 });
@@ -1195,9 +1155,15 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
         float screenWidth = getResources().getDisplayMetrics().widthPixels;
         behaviorFloatingActionButton.animateOut(buttonExpandActions);
         layoutAppBar.animate().translationX(screenWidth);
-        layoutRelative.animate().translationX(screenWidth).withEndAction(new Runnable() {
+        layoutRelative.animate().translationX(screenWidth).setListener(new Animator.AnimatorListener() {
             @Override
-            public void run() {
+            public void onAnimationStart(Animator animation) {
+
+            }
+
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                adapterCommentList.destroyViewHolderLink();
                 FragmentBase fragment = (FragmentBase) getFragmentManager()
                         .findFragmentByTag(fragmentParentTag);
                 if (fragment != null) {
@@ -1214,6 +1180,16 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
                 else {
                     getFragmentManager().popBackStackImmediate();
                 }
+            }
+
+            @Override
+            public void onAnimationCancel(Animator animation) {
+
+            }
+
+            @Override
+            public void onAnimationRepeat(Animator animation) {
+
             }
         });
     }
@@ -1237,6 +1213,59 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
         }
 
         return true;
+    }
+
+    @Override
+    public boolean onTouchEvent(MotionEvent event) {
+
+        boolean value = gestureDetector.onTouchEvent(event);
+
+        if (isFinished || MotionEventCompat.getActionMasked(event) != MotionEvent.ACTION_UP || !hasSwipedRight) {
+            return false;
+        }
+
+        if (swipeDifferenceX > swipeRightDistance) {
+            slideExit();
+            return false;
+        }
+        else {
+            hasSwipedRight = false;
+            if (!value) {
+                behaviorFloatingActionButton.animateIn(buttonExpandActions);
+                layoutAppBar.animate().translationX(0);
+                layoutRelative.animate().translationX(0).setListener(new Animator.AnimatorListener() {
+                    @Override
+                    public void onAnimationStart(Animator animation) {
+
+                    }
+
+                    @Override
+                    public void onAnimationEnd(Animator animation) {
+                        if (!isFinished) {
+                            FragmentBase fragment = (FragmentBase) getFragmentManager()
+                                    .findFragmentByTag(fragmentParentTag);
+                            if (fragment != null) {
+                                fragment.setVisibilityOfThing(View.INVISIBLE, mListener.getControllerComments().getLink());
+                                fragment.onHiddenChanged(true);
+                            }
+                            viewBackground.setVisibility(View.GONE);
+                        }
+                    }
+
+                    @Override
+                    public void onAnimationCancel(Animator animation) {
+
+                    }
+
+                    @Override
+                    public void onAnimationRepeat(Animator animation) {
+
+                    }
+                });
+            }
+        }
+
+        return false;
     }
 
     public interface YouTubeListener {

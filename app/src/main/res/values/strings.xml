@@ -16,8 +16,11 @@
     <string name="item_search">Search</string>
     <string name="item_interface">Interface</string>
     <string name="item_sort">Sort</string>
+    <string name="item_sort_subreddits">Sort</string>
     <string name="item_sort_relevance">Relevancy</string>
     <string name="item_sort_activity">Activity</string>
+    <string name="item_sort_subscribers">Subscribers</string>
+    <string name="item_sort_alphabetical">Alphabetical</string>
     <string name="item_sort_top">Top</string>
     <string name="item_sort_hot">Hot</string>
     <string name="item_sort_new">New</string>

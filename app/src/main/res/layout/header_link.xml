@@ -149,14 +149,4 @@
 
     </RelativeLayout>
 
-    <View
-        android:id="@+id/view_divider"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_below="@id/layout_buttons"
-        android:layout_alignParentBottom="true"
-        android:layout_marginBottom="1dp"
-        android:background="?android:listDivider"
-        />
-
 </RelativeLayout>

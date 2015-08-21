@@ -124,6 +124,7 @@
         android:layout_below="@id/layout_container_reply"
         android:layout_toEndOf="@id/view_indicator"
         android:background="?android:listDivider"
+        android:visibility="invisible"
         />
 
     <RelativeLayout
@@ -158,15 +159,6 @@
             android:layout_toEndOf="@id/view_indicator_collapsed"
             android:textAppearance="@style/TextAppearance.AppCompat.Caption"
             android:textColor="?android:attr/textColorSecondary"
-            />
-
-        <View
-            android:id="@+id/view_divider_collapsed"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_below="@id/text_collapsed"
-            android:layout_alignParentBottom="true"
-            android:background="?android:listDivider"
             />
 
     </RelativeLayout>

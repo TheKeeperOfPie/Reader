@@ -117,9 +117,6 @@ public class Listing {
 
         listing.setChildren(things);
 
-        Log.d(TAG, Arrays.toString(Thread.currentThread().getStackTrace()));
-        Log.d(TAG, "fromJson end: " + (System.currentTimeMillis() - start));
-
         return listing;
     }
 }

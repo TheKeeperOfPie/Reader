@@ -209,13 +209,4 @@
         android:visibility="gone"
         />
 
-    <View
-        android:id="@+id/view_divider"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_below="@id/layout"
-        android:layout_alignParentBottom="true"
-        android:background="?android:listDivider"
-        />
-
 </RelativeLayout>

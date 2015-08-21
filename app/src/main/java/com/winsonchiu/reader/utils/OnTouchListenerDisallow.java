@@ -4,6 +4,7 @@
 
 package com.winsonchiu.reader.utils;
 
+import android.support.v4.view.MotionEventCompat;
 import android.view.MotionEvent;
 import android.view.View;
 
@@ -27,7 +28,7 @@ public class OnTouchListenerDisallow implements View.OnTouchListener {
             return false;
         }
 
-        switch (event.getAction()) {
+        switch (MotionEventCompat.getActionMasked(event)) {
             case MotionEvent.ACTION_DOWN:
                 startY = event.getY();
 

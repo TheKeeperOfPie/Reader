@@ -5,6 +5,7 @@
 package com.winsonchiu.reader.views;
 
 import android.content.Context;
+import android.support.v4.view.MotionEventCompat;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.util.AttributeSet;
 import android.util.TypedValue;
@@ -34,7 +35,7 @@ public class CustomSwipeRefreshLayout extends SwipeRefreshLayout {
     @Override
     public boolean onInterceptTouchEvent(MotionEvent event) {
 
-        switch (event.getAction()) {
+        switch (MotionEventCompat.getActionMasked(event)) {
             case MotionEvent.ACTION_DOWN:
                 initialY = event.getY();
                 break;

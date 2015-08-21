@@ -19,19 +19,12 @@
         android:layout_alignParentTop="true"
         >
 
-        <RelativeLayout
+        <com.winsonchiu.reader.views.CustomRelativeLayout
             android:id="@+id/layout_relative"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             app:layout_behavior="@string/appbar_scrolling_view_behavior"
             >
-
-            <View
-                android:id="@+id/view_background"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:background="?android:attr/windowBackground"
-                />
 
             <com.google.android.youtube.player.YouTubePlayerView
                 android:id="@+id/youtube"
@@ -39,6 +32,14 @@
                 android:layout_height="wrap_content"
                 android:visibility="gone"
                 android:layout_alignParentTop="true"
+                />
+
+            <View
+                android:id="@+id/view_background"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_below="@id/youtube"
+                android:background="?android:attr/windowBackground"
                 />
 
             <com.winsonchiu.reader.views.CustomSwipeRefreshLayout
@@ -60,7 +61,7 @@
 
             </com.winsonchiu.reader.views.CustomSwipeRefreshLayout>
 
-        </RelativeLayout>
+        </com.winsonchiu.reader.views.CustomRelativeLayout>
 
         <android.support.design.widget.AppBarLayout
             android:id="@+id/layout_app_bar"

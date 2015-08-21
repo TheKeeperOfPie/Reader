@@ -23,6 +23,7 @@ import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.v4.view.GestureDetectorCompat;
 import android.support.v4.view.MenuItemCompat;
+import android.support.v4.view.MotionEventCompat;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.RecyclerView;
@@ -250,7 +251,6 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         protected Button buttomSubmitSelf;
         protected RelativeLayout layoutContainerExpand;
         protected TextView textHidden;
-        protected View viewDivider;
         protected ImageButton buttonShowSidebar;
 
         private String defaultTextSubmitLink;
@@ -272,7 +272,6 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             layoutContainerExpand = (RelativeLayout) itemView
                     .findViewById(R.id.layout_container_expand);
             textHidden = (TextView) itemView.findViewById(R.id.text_hidden);
-            viewDivider = itemView.findViewById(R.id.view_divider);
 
             textDescription.setOnClickListener(this);
             buttonShowSidebar.setOnClickListener(this);
@@ -309,7 +308,6 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             buttonShowSidebar.setVisibility(visibility);
             buttonSubmitLink.setVisibility(visibility);
             buttomSubmitSelf.setVisibility(visibility);
-            viewDivider.setVisibility(visibility);
         }
 
         public void onBind(Subreddit subreddit) {
@@ -322,14 +320,14 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             setVisibility(View.VISIBLE);
 
             textName.setText(subreddit.getDisplayName());
-            textTitle.setText(subreddit.getTitle());
+            textTitle.setText(Html.fromHtml(subreddit.getTitle()));
 
             if (TextUtils.isEmpty(subreddit.getPublicDescription())) {
                 textDescription.setText("");
                 textDescription.setVisibility(View.GONE);
             }
             else {
-                textDescription.setText(subreddit.getPublicDescriptionHtml());
+                textDescription.setText(Reddit.getFormattedHtml(subreddit.getPublicDescriptionHtml()));
                 textDescription.setVisibility(View.VISIBLE);
             }
 
@@ -681,7 +679,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                 @Override
                 public boolean onTouch(View v, MotionEvent event) {
                     // TODO: Use custom MediaController
-                    if (event.getAction() == MotionEvent.ACTION_DOWN) {
+                    if (MotionEventCompat.getActionMasked(event) == MotionEvent.ACTION_DOWN) {
                         if (mediaController.isShowing()) {
                             mediaController.hide();
                         }
@@ -1392,8 +1390,6 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         }
 
         private void loadVideo(String url, float heightRatio) {
-            Log.d(TAG, "loadVideo: " + url + " : " + heightRatio);
-            Log.d(TAG, "stack: " + Arrays.toString(Thread.currentThread().getStackTrace()));
             Uri uri = Uri.parse(url);
             videoFull.setVideoURI(uri);
             videoFull.setVisibility(View.VISIBLE);

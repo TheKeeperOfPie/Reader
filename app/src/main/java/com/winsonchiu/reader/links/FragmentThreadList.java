@@ -60,6 +60,7 @@ import com.winsonchiu.reader.data.reddit.Time;
 import com.winsonchiu.reader.history.Historian;
 import com.winsonchiu.reader.search.FragmentSearch;
 import com.winsonchiu.reader.utils.DisallowListener;
+import com.winsonchiu.reader.utils.ItemDecorationDivider;
 import com.winsonchiu.reader.utils.RecyclerCallback;
 import com.winsonchiu.reader.utils.ScrollAwareFloatingActionButtonBehavior;
 import com.winsonchiu.reader.utils.UtilsColor;
@@ -108,6 +109,7 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
     private View view;
     private ColorFilter colorFilterPrimary;
     private ColorFilter colorFilterAccent;
+    private ItemDecorationDivider itemDecorationDivider;
 
     public static FragmentThreadList newInstance() {
         FragmentThreadList fragment = new FragmentThreadList();
@@ -239,7 +241,7 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
                 }
 
                 drawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED, GravityCompat.END);
-                textSidebar.setText(subreddit.getDescriptionHtml());
+                textSidebar.setText(Reddit.getFormattedHtml(subreddit.getDescriptionHtml()));
                 drawerLayout.setDrawerLockMode(
                         DrawerLayout.LOCK_MODE_UNLOCKED);
                 if (subreddit.isUserIsSubscriber()) {
@@ -362,6 +364,12 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
         recyclerThreadList.setAdapter(adapterLink);
         recyclerThreadList.setLayoutManager(layoutManager);
         recyclerThreadList.scrollToPosition(currentPosition[0]);
+        if (layoutManager instanceof LinearLayoutManager) {
+            recyclerThreadList.addItemDecoration(itemDecorationDivider);
+        }
+        else {
+            recyclerThreadList.removeItemDecoration(itemDecorationDivider);
+        }
     }
 
     @Override
@@ -527,12 +535,11 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
         adapterLinkList.setActivity(activity);
         adapterLinkGrid.setActivity(activity);
 
-        layoutManager = adapterLink.getLayoutManager();
+        itemDecorationDivider = new ItemDecorationDivider(activity, ItemDecorationDivider.VERTICAL_LIST);
 
         recyclerThreadList = (RecyclerView) view.findViewById(R.id.recycler_thread_list);
-        recyclerThreadList.setLayoutManager(layoutManager);
-        recyclerThreadList.setAdapter(adapterLink);
         recyclerThreadList.setItemAnimator(null);
+        resetAdapter(adapterLink);
 
         recyclerThreadList.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override

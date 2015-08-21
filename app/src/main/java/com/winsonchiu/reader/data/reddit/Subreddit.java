@@ -6,17 +6,25 @@ package com.winsonchiu.reader.data.reddit;
 
 import android.support.annotation.Nullable;
 import android.text.Html;
+import android.util.Log;
 
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.JsonSerializable;
+import com.fasterxml.jackson.databind.SerializerProvider;
+import com.fasterxml.jackson.databind.jsontype.TypeSerializer;
 import com.winsonchiu.reader.utils.UtilsJson;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
  * Created by TheKeeperOfPie on 3/7/2015.
  */
-public class Subreddit extends Thing {
+public class Subreddit extends Thing implements JsonSerializable {
 
     public static final String PUBLIC = "public";
     public static final String PRIVATE = "private";
@@ -64,7 +72,6 @@ public class Subreddit extends Thing {
         super();
     }
 
-
     public static Subreddit fromJson(JsonNode nodeRoot) {
 
         Subreddit subreddit = new Subreddit();
@@ -91,8 +98,7 @@ public class Subreddit extends Thing {
             subreddit.setBannerSize(list);
         }
 
-        subreddit.setCollapseDeletedComments(UtilsJson.getBoolean(
-                nodeData.get("collapse_deleted_comments")));
+        subreddit.setCollapseDeletedComments(UtilsJson.getBoolean(nodeData.get("collapse_deleted_comments")));
         subreddit.setDescription(UtilsJson.getString(nodeData.get("description")));
         subreddit.setDescriptionHtml(UtilsJson.getString(nodeData.get("description_html")));
         subreddit.setDisplayName(UtilsJson.getString(nodeData.get("display_name")));
@@ -115,7 +121,6 @@ public class Subreddit extends Thing {
             List<Integer> list = new ArrayList<>();
             for (JsonNode jsonNode : nodeData.get("icon_size")) {
                 list.add(UtilsJson.getInt(jsonNode));
-
             }
             subreddit.setIconSize(list);
         }
@@ -133,8 +138,7 @@ public class Subreddit extends Thing {
         subreddit.setSubmitTextLabel(UtilsJson.getString(nodeData.get("submit_text_label")));
         subreddit.setSubmitTextHtml(UtilsJson.getString(nodeData.get("submit_text_html")));
         subreddit.setSubredditType(UtilsJson.getString(nodeData.get("subreddit_type")));
-        subreddit.setTitle(Html.fromHtml(
-                UtilsJson.getString(nodeData.get("title"))).toString());
+        subreddit.setTitle(UtilsJson.getString(nodeData.get("title")));
         subreddit.setUrl(UtilsJson.getString(nodeData.get("url")));
         subreddit.setUserIsBanned(UtilsJson.getBoolean(nodeData.get("user_is_banned")));
         subreddit.setUserIsContributor(UtilsJson.getBoolean(
@@ -199,8 +203,8 @@ public class Subreddit extends Thing {
         this.description = description;
     }
 
-    public CharSequence getDescriptionHtml() {
-        return Reddit.getFormattedHtml(descriptionHtml);
+    public String getDescriptionHtml() {
+        return descriptionHtml;
     }
 
     public void setDescriptionHtml(String descriptionHtml) {
@@ -287,8 +291,8 @@ public class Subreddit extends Thing {
         this.publicDescription = publicDescription;
     }
 
-    public CharSequence getPublicDescriptionHtml() {
-        return Reddit.getFormattedHtml(publicDescriptionHtml);
+    public String getPublicDescriptionHtml() {
+        return publicDescriptionHtml;
     }
 
     public void setPublicDescriptionHtml(String publicDescriptionHtml) {
@@ -430,5 +434,72 @@ public class Subreddit extends Thing {
 
     public void setCreatedUtc(long createdUtc) {
         this.createdUtc = createdUtc;
+    }
+
+    @Override
+    public void serialize(JsonGenerator gen, SerializerProvider serializers) throws IOException {
+
+        gen.writeStartObject();
+        gen.writeStringField("kind", getKind());
+        gen.writeObjectFieldStart("data");
+        gen.writeStringField("id", getId());
+        gen.writeStringField("name", getName());
+        gen.writeNumberField("created", getCreated() / 1000);
+        gen.writeNumberField("created_utc", getCreatedUtc() / 1000);
+        gen.writeNumberField("accounts_active", getAccountsActive());
+        gen.writeStringField("banner_img", getBannerImg());
+        if (getBannerSize() != null) {
+            gen.writeArrayFieldStart("banner_size");
+            for (int size : getBannerSize()) {
+                gen.writeNumber(size);
+            }
+            gen.writeEndArray();
+        }
+        gen.writeBooleanField("collapse_deleted_comments", isCollapseDeletedComments());
+        gen.writeStringField("description", getDescription());
+        gen.writeStringField("description_html", getDescriptionHtml());
+        gen.writeStringField("display_name", getDisplayName());
+        gen.writeStringField("header_img", getHeaderImg());
+        if (getHeaderSize() != null) {
+            gen.writeArrayFieldStart("header_size");
+            for (int size : getHeaderSize()) {
+                gen.writeNumber(size);
+            }
+            gen.writeEndArray();
+        }
+        gen.writeStringField("header_title", getHeaderTitle());
+        gen.writeBooleanField("hide_ads", isHideAds());
+        gen.writeStringField("icon_img", getIconImg());
+        if (getIconSize() != null) {
+            gen.writeArrayFieldStart("icon_size");
+            for (int size : getIconSize()) {
+                gen.writeNumber(size);
+            }
+            gen.writeEndArray();
+        }
+        gen.writeBooleanField("over18", isOver18());
+        gen.writeStringField("public_description", getPublicDescription());
+        gen.writeStringField("public_description_html", getPublicDescriptionHtml());
+        gen.writeBooleanField("public_traffic", isPublicTraffic());
+        gen.writeNumberField("subscribers", getSubscribers());
+        gen.writeStringField("submission_type", getSubmissionType());
+        gen.writeStringField("submit_link_label", getSubmitLinkLabel());
+        gen.writeStringField("submit_text", getSubmitText());
+        gen.writeStringField("submit_text_label", getSubmitLinkLabel());
+        gen.writeStringField("submit_text_html", getSubmitTextHtml());
+        gen.writeStringField("subreddit_type", getSubredditType());
+        gen.writeStringField("title", getTitle());
+        gen.writeStringField("url", getUrl());
+        gen.writeBooleanField("user_is_banned", isUserIsBanned());
+        gen.writeBooleanField("user_is_contributor", isUserIsContributor());
+        gen.writeBooleanField("user_is_moderator", isUserIsModerator());
+        gen.writeBooleanField("user_is_subscriber", isUserIsSubscriber());
+        gen.writeEndObject();
+        gen.writeEndObject();
+    }
+
+    @Override
+    public void serializeWithType(JsonGenerator gen, SerializerProvider serializers, TypeSerializer typeSer) throws IOException {
+        serialize(gen, serializers);
     }
 }
