@@ -152,6 +152,7 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
                 if (viewPager.getCurrentItem() == ControllerSearch.PAGE_SUBREDDITS) {
                     mListener.getControllerLinks()
                             .setParameters(query.replaceAll("\\s", ""), Sort.HOT, Time.ALL);
+                    closeKeyboard();
                     mListener.onNavigationBackClick();
                 }
                 else {
@@ -335,12 +336,10 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
                 new AdapterSearchSubreddits.ViewHolder.EventListener() {
                     @Override
                     public void onClickSubreddit(Subreddit subreddit) {
+                        mListener.getControllerSearch().addViewedSubreddit(subreddit);
                         mListener.getControllerLinks()
                                 .setParameters(subreddit.getDisplayName(), Sort.HOT, Time.ALL);
-                        InputMethodManager inputManager = (InputMethodManager) activity
-                                .getSystemService(Context.INPUT_METHOD_SERVICE);
-                        inputManager.hideSoftInputFromWindow(view.getWindowToken(),
-                                InputMethodManager.HIDE_NOT_ALWAYS);
+                        closeKeyboard();
                         mListener.onNavigationBackClick();
                     }
 
@@ -608,12 +607,14 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
         recyclerSearchLinks = (RecyclerView) view.findViewById(R.id.recycler_search_links);
         recyclerSearchLinks.setLayoutManager(layoutManagerLinks);
         recyclerSearchLinks.setAdapter(adapterLinks);
+        recyclerSearchLinks.addItemDecoration(new ItemDecorationDivider(activity, ItemDecorationDivider.VERTICAL_LIST));
 
         layoutManagerLinksSubreddit = new LinearLayoutManager(activity, LinearLayoutManager.VERTICAL, false);
         recyclerSearchLinksSubreddit = (RecyclerView) view.findViewById(
                 R.id.recycler_search_links_subreddit);
         recyclerSearchLinksSubreddit.setLayoutManager(layoutManagerLinksSubreddit);
         recyclerSearchLinksSubreddit.setAdapter(adapterLinksSubreddit);
+        recyclerSearchLinksSubreddit.addItemDecoration(new ItemDecorationDivider(activity, ItemDecorationDivider.VERTICAL_LIST));
 
         adapterSearchSubredditsRecommended = new AdapterSearchSubreddits(activity,
                 new ControllerSearchBase() {
@@ -632,10 +633,7 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
                     public void onClickSubreddit(Subreddit subreddit) {
                         mListener.getControllerLinks()
                                 .setParameters(subreddit.getDisplayName(), Sort.HOT, Time.ALL);
-                        InputMethodManager inputManager = (InputMethodManager) activity
-                                .getSystemService(Context.INPUT_METHOD_SERVICE);
-                        inputManager.hideSoftInputFromWindow(view.getWindowToken(),
-                                InputMethodManager.HIDE_NOT_ALWAYS);
+                        closeKeyboard();
                         mListener.onNavigationBackClick();
                     }
 
@@ -744,6 +742,13 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
         viewPager.addOnPageChangeListener(new TabLayout.TabLayoutOnPageChangeListener(tabLayout));
 
         return view;
+    }
+
+    private void closeKeyboard() {
+        InputMethodManager inputManager = (InputMethodManager) activity
+                .getSystemService(Context.INPUT_METHOD_SERVICE);
+        inputManager.hideSoftInputFromWindow(view.getWindowToken(),
+                InputMethodManager.HIDE_NOT_ALWAYS);
     }
 
     @Override

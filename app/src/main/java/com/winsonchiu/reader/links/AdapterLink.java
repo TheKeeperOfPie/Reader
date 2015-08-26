@@ -561,13 +561,6 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             viewYouTube = (YouTubePlayerView) itemView.findViewById(R.id.youtube);
             viewOverlay = itemView.findViewById(R.id.view_overlay);
 
-            if (resources.getConfiguration().getLayoutDirection() == View.LAYOUT_DIRECTION_RTL) {
-                textUsername.setText(eventListener.getUser().getName() + " -");
-            }
-            else {
-                textUsername.setText("- " + eventListener.getUser().getName());
-            }
-
             toolbarItemWidth = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 48,
                     resources.getDisplayMetrics());
             titleMargin = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 16,
@@ -905,6 +898,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             link.setReplyExpanded(!link.isReplyExpanded());
             layoutContainerReply.setVisibility(link.isReplyExpanded() ? View.VISIBLE : View.GONE);
             if (link.isReplyExpanded()) {
+                textUsername.setText("- " + eventListener.getUser().getName());
                 recyclerCallback.hideToolbar();
                 recyclerCallback.onReplyShown();
                 InputMethodManager inputManager = (InputMethodManager) itemView.getContext()

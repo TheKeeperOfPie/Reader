@@ -1190,6 +1190,8 @@ public class MainActivity extends YouTubeBaseActivity
                                             future = accountManager.removeAccount(account, null, null);
                                         }
 
+                                        sharedPreferences.edit().putString(AppSettings.SUBSCRIPTIONS + account.name, "").apply();
+
                                         try {
                                             // Force changes in AccountManager
                                             future.getResult();

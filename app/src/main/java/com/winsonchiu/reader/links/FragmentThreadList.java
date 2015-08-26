@@ -333,15 +333,17 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
 
     private void resetAdapter(AdapterLink newAdapter) {
 
-        int size = layoutManager instanceof StaggeredGridLayoutManager ? ((StaggeredGridLayoutManager) layoutManager).getSpanCount() : 1;
+        RecyclerView.LayoutManager layoutManagerCurrent = recyclerThreadList.getLayoutManager();
+
+        int size = layoutManagerCurrent instanceof StaggeredGridLayoutManager ? ((StaggeredGridLayoutManager) layoutManagerCurrent).getSpanCount() : 1;
 
         int[] currentPosition = new int[size];
-        if (layoutManager instanceof LinearLayoutManager) {
-            currentPosition[0] = ((LinearLayoutManager) layoutManager)
+        if (layoutManagerCurrent instanceof LinearLayoutManager) {
+            currentPosition[0] = ((LinearLayoutManager) layoutManagerCurrent)
                     .findFirstVisibleItemPosition();
         }
-        else if (layoutManager instanceof StaggeredGridLayoutManager) {
-            ((StaggeredGridLayoutManager) layoutManager).findFirstCompletelyVisibleItemPositions(
+        else if (layoutManagerCurrent instanceof StaggeredGridLayoutManager) {
+            ((StaggeredGridLayoutManager) layoutManagerCurrent).findFirstCompletelyVisibleItemPositions(
                     currentPosition);
         }
 

@@ -5,10 +5,14 @@
 package com.winsonchiu.reader;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
 import android.content.res.TypedArray;
 import android.graphics.Bitmap;
 import android.graphics.Color;
@@ -37,6 +41,10 @@ import android.widget.Toast;
 
 import com.winsonchiu.reader.utils.UtilsColor;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 public class FragmentWeb extends FragmentBase implements Toolbar.OnMenuItemClickListener,
         View.OnClickListener {
 
@@ -59,6 +67,7 @@ public class FragmentWeb extends FragmentBase implements Toolbar.OnMenuItemClick
     private WebChromeClient.CustomViewCallback customViewCallback;
     private ColorFilter colorFilterPrimary;
     private ColorFilter colorFilterIcon;
+    private List<ResolveInfo> listDefaultWebResolveInfo = new ArrayList<>();
 
     public static FragmentWeb newInstance(String url) {
         FragmentWeb fragment = new FragmentWeb();
@@ -194,6 +203,27 @@ public class FragmentWeb extends FragmentBase implements Toolbar.OnMenuItemClick
                 toolbar.setTitle(view.getTitle());
             }
 
+//            @Override
+//            public boolean shouldOverrideUrlLoading(WebView view, String url) {
+//                Intent intent = new Intent(Intent.ACTION_VIEW);
+//                intent.setData(Uri.parse(url));
+//                PackageManager packageManager = view.getContext().getPackageManager();
+//                List<ResolveInfo> listResolveInfo = packageManager.queryIntentActivities(intent, 0);
+//
+//                Log.d(TAG, "listResolveInfo: " + listResolveInfo);
+//
+//                if (listDefaultWebResolveInfo.containsAll(listResolveInfo)) {
+//                    view.loadUrl(url);
+//                }
+//                else {
+//                    listResolveInfo.removeAll(listDefaultWebResolveInfo);
+//                    Collections.sort(listResolveInfo, new ResolveInfo.DisplayNameComparator(packageManager));
+//                    listResolveInfo.addAll(listDefaultWebResolveInfo);
+//                    showExternalLaunchDialog(url, listResolveInfo, packageManager);
+//                }
+//                return true;
+//            }
+
             @Override
             public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
                 super.onReceivedError(view, request, error);
@@ -258,11 +288,36 @@ public class FragmentWeb extends FragmentBase implements Toolbar.OnMenuItemClick
         return view;
     }
 
+    private void showExternalLaunchDialog(final String data, final List<ResolveInfo> listResolveInfo, PackageManager packageManager) {
+        CharSequence[] titles = new CharSequence[listResolveInfo.size()];
+        for (int index = 0; index < titles.length; index++) {
+            titles[index] = listResolveInfo.get(index).loadLabel(packageManager);
+        }
+
+        new AlertDialog.Builder(getActivity())
+                .setItems(titles, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        ResolveInfo resolveInfo = listResolveInfo.get(which);
+                        Intent intent = new Intent();
+                        intent.setData(Uri.parse(data));
+                        intent.setClassName(resolveInfo.activityInfo.applicationInfo.packageName,
+                                resolveInfo.activityInfo.name);
+                        startActivity(intent);
+                    }
+                })
+                .show();
+
+    }
+
     @Override
     public void onAttach(Activity activity) {
         super.onAttach(activity);
         this.activity = activity;
         try {
+            Intent intent = new Intent(Intent.ACTION_VIEW);
+            intent.setData(Uri.parse("http://www.defaulturlthatnoappshouldevercatchspecifically.com"));
+            listDefaultWebResolveInfo = activity.getPackageManager().queryIntentActivities(intent, 0);
             mListener = (FragmentListenerBase) activity;
         }
         catch (ClassCastException e) {

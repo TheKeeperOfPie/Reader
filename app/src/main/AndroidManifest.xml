@@ -88,7 +88,6 @@
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
                 <action android:name="com.winsonchiu.reader.inbox.Receiver.INTENT_INBOX" />
-                <action android:name="com.winsonchiu.reader.inbox.Receiver.ACTION_MARK_READ" />
             </intent-filter>
         </receiver>
 

@@ -200,12 +200,6 @@ public class AdapterInbox extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
             });
             textUsername = (TextView) itemView.findViewById(R.id.text_username);
 
-            if (resources.getConfiguration().getLayoutDirection() == View.LAYOUT_DIRECTION_RTL) {
-                textUsername.setText(eventListener.getUser().getName() + " -");
-            }
-            else {
-                textUsername.setText("- " + eventListener.getUser().getName());
-            }
             buttonSendReply = (Button) itemView.findViewById(R.id.button_send_reply);
             buttonSendReply.setOnClickListener(new View.OnClickListener() {
                 @Override
@@ -363,6 +357,7 @@ public class AdapterInbox extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
             layoutContainerReply.setVisibility(
                     message.isReplyExpanded() ? View.VISIBLE : View.GONE);
             if (message.isReplyExpanded()) {
+                textUsername.setText("- " + eventListener.getUser().getName());
                 recyclerCallback.onReplyShown();
                 editTextReply.setText(message.getReplyText());
                 editTextReply.clearFocus();

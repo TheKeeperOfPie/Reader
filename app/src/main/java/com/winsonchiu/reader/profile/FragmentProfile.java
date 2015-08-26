@@ -49,6 +49,7 @@ import com.winsonchiu.reader.data.reddit.Sort;
 import com.winsonchiu.reader.data.reddit.Thing;
 import com.winsonchiu.reader.data.reddit.Time;
 import com.winsonchiu.reader.utils.DisallowListener;
+import com.winsonchiu.reader.utils.ItemDecorationDivider;
 import com.winsonchiu.reader.utils.RecyclerCallback;
 import com.winsonchiu.reader.utils.UtilsColor;
 import com.winsonchiu.reader.utils.CustomItemTouchHelper;
@@ -313,6 +314,7 @@ public class FragmentProfile extends FragmentBase implements Toolbar.OnMenuItemC
         recyclerProfile.setHasFixedSize(true);
         recyclerProfile.setItemAnimator(null);
         recyclerProfile.setLayoutManager(linearLayoutManager);
+        recyclerProfile.addItemDecoration(new ItemDecorationDivider(activity, ItemDecorationDivider.VERTICAL_LIST));
 
         if (adapterProfile == null) {
             adapterProfile = new AdapterProfile(mListener.getControllerProfile(),

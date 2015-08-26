@@ -11,7 +11,6 @@ import android.accounts.AuthenticatorException;
 import android.accounts.OperationCanceledException;
 import android.app.AlarmManager;
 import android.app.Notification;
-import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -22,7 +21,8 @@ import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.annotation.Nullable;
-import android.text.TextUtils;
+import android.support.v4.app.NotificationCompat;
+import android.support.v4.app.NotificationManagerCompat;
 import android.util.Log;
 
 import com.android.volley.AuthFailureError;
@@ -38,8 +38,6 @@ import com.winsonchiu.reader.data.reddit.Listing;
 import com.winsonchiu.reader.data.reddit.Message;
 import com.winsonchiu.reader.data.reddit.Reddit;
 import com.winsonchiu.reader.data.reddit.Thing;
-
-import org.w3c.dom.Text;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -57,6 +55,8 @@ public class Receiver extends BroadcastReceiver {
 
     private static final int NOTIFICATION_INBOX = 0;
     private static final String TAG = Receiver.class.getCanonicalName();
+    private static final int LED_MS_ON = 250;
+    private static final int LED_MS_OFF = 250;
 
     public static void setAlarm(Context context) {
 
@@ -65,7 +65,7 @@ public class Receiver extends BroadcastReceiver {
 
         SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
         Intent intentInbox = new Intent(INTENT_INBOX);
-        PendingIntent pendingIntent = PendingIntent.getBroadcast(context, 0, intentInbox, 0);
+        PendingIntent pendingIntent = PendingIntent.getBroadcast(context, 0, intentInbox, PendingIntent.FLAG_UPDATE_CURRENT);
 
         long interval = Long.parseLong(
                 preferences.getString(AppSettings.PREF_INBOX_CHECK_INTERVAL, "1800000"));
@@ -160,9 +160,7 @@ public class Receiver extends BroadcastReceiver {
 
                 }
 
-                NotificationManager notificationManager =
-                        (NotificationManager) context.getSystemService(
-                                Context.NOTIFICATION_SERVICE);
+                NotificationManagerCompat notificationManager = NotificationManagerCompat.from(context);
 
                 Thing thing = null;
 
@@ -170,6 +168,7 @@ public class Receiver extends BroadcastReceiver {
                     thing = messages.getChildren().get(index);
                     if (readNames.contains(thing.getName())) {
                         reddit.markRead(thing.getName());
+                        thing = null;
                     }
                     else {
                         readNames.add(thing.getName());
@@ -213,32 +212,29 @@ public class Receiver extends BroadcastReceiver {
                 PendingIntent pendingIntentRecheckInbox = PendingIntent
                         .getBroadcast(context, 0, intentRecheckInbox, PendingIntent.FLAG_CANCEL_CURRENT);
 
-                Notification.Builder builder = new Notification.Builder(context)
+                TypedArray typedArray = context.obtainStyledAttributes(new int[]{R.attr.colorPrimary});
+                int colorPrimary = typedArray.getColor(0, context.getResources().getColor(R.color.colorPrimary));
+                typedArray.recycle();
+
+                NotificationCompat.Builder builder = new NotificationCompat.Builder(context)
                         .setSmallIcon(R.mipmap.app_icon_white_outline)
                         .setContentTitle(messages.getChildren().size() + " " + context
                                 .getResources()
                                 .getString(titleSuffixResource))
-                        .setContentText(
-                                context.getString(
-                                        R.string.expand_to_read_first_message))
-                        .setStyle(new Notification.BigTextStyle().setSummaryText(
-                                context.getString(R.string.from) + " /u/" + author)
+                        .setContentText(context.getString(R.string.expand_to_read_first_message))
+                        .setStyle(new NotificationCompat.BigTextStyle()
+                                .setSummaryText(context.getString(R.string.from) + " /u/" + author)
                                 .bigText(content))
                         .setContentIntent(pendingIntentActivity)
-                        .addAction(R.drawable.ic_check_white_24dp,
+                        .addAction(new NotificationCompat.Action(
+                                R.drawable.ic_check_white_24dp,
                                 context.getString(R.string.mark_read),
-                                pendingIntentRecheckInbox)
+                                pendingIntentRecheckInbox))
                         .setDeleteIntent(pendingIntentRecheckInbox)
-                        .setAutoCancel(true);
-
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-
-                    TypedArray typedArray = context.obtainStyledAttributes(new int[] {R.attr.colorPrimary});
-                    int colorPrimary = typedArray.getColor(0, context.getResources().getColor(R.color.colorPrimary));
-                    typedArray.recycle();
-
-                    builder.setColor(colorPrimary);
-                }
+                        .setAutoCancel(true)
+                        .setCategory(NotificationCompat.CATEGORY_MESSAGE)
+                        .setColor(colorPrimary)
+                        .setLights(colorPrimary, LED_MS_ON, LED_MS_OFF);
 
                 notificationManager.notify(NOTIFICATION_INBOX, builder.build());
 

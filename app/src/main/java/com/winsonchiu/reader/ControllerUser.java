@@ -58,6 +58,7 @@ public class ControllerUser {
                         Log.d(TAG, "User onResponse: " + response);
                         try {
                             user = User.fromJson(Reddit.getObjectMapper().readValue(response, JsonNode.class));
+
                         }
                         catch (IOException e) {
                             e.printStackTrace();
@@ -92,9 +93,13 @@ public class ControllerUser {
             }
         }
 
+        user = new User();
+
         if (!accountFound) {
             account = null;
-            user = new User();
+        }
+        else {
+            user.setName(account.name);
         }
     }
 }

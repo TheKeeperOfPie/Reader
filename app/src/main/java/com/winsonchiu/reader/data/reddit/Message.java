@@ -12,19 +12,19 @@ import com.winsonchiu.reader.utils.UtilsJson;
  */
 public class Message extends Replyable {
 
-    private String author;
-    private String body;
-    private CharSequence bodyHtml;
-    private String context;
-    private String dest;
-    private String firstMessageName;
+    private String author = "";
+    private String body = "";
+    private CharSequence bodyHtml = "";
+    private String context = "";
+    private String dest = "";
+    private String firstMessageName = "";
     private int likes;
-    private String linkTitle;
+    private String linkTitle = "";
     private boolean isNew;
-    private String parentId;
-    private String replies;
-    private String subject;
-    private String subreddit;
+    private String parentId = "";
+    private String replies = "";
+    private String subject = "";
+    private String subreddit = "";
     private boolean wasComment;
     private long created;
     private long createdUtc;

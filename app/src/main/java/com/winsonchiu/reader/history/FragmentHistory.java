@@ -51,6 +51,7 @@ import com.winsonchiu.reader.links.AdapterLink;
 import com.winsonchiu.reader.links.AdapterLinkGrid;
 import com.winsonchiu.reader.links.AdapterLinkList;
 import com.winsonchiu.reader.utils.DisallowListener;
+import com.winsonchiu.reader.utils.ItemDecorationDivider;
 import com.winsonchiu.reader.utils.RecyclerCallback;
 import com.winsonchiu.reader.utils.UtilsColor;
 import com.winsonchiu.reader.utils.CustomItemTouchHelper;
@@ -85,6 +86,7 @@ public class FragmentHistory extends FragmentBase implements Toolbar.OnMenuItemC
     private AppBarLayout layoutAppBar;
     private View view;
     private ColorFilter colorFilterPrimary;
+    private ItemDecorationDivider itemDecorationDivider;
 
     public static FragmentHistory newInstance() {
         FragmentHistory fragment = new FragmentHistory();
@@ -336,11 +338,12 @@ public class FragmentHistory extends FragmentBase implements Toolbar.OnMenuItemC
 
         layoutManager = adapterLink.getLayoutManager();
 
+        itemDecorationDivider = new ItemDecorationDivider(activity, ItemDecorationDivider.VERTICAL_LIST);
+
         recyclerHistory = (RecyclerView) view.findViewById(R.id.recycler_history);
         recyclerHistory.setHasFixedSize(true);
         recyclerHistory.setItemAnimator(null);
-        recyclerHistory.setLayoutManager(layoutManager);
-        recyclerHistory.setAdapter(adapterLink);
+        resetAdapter(adapterLink);
 
         itemTouchHelper = new CustomItemTouchHelper(
                 new CustomItemTouchHelper.SimpleCallback(activity,
@@ -673,18 +676,22 @@ public class FragmentHistory extends FragmentBase implements Toolbar.OnMenuItemC
 
     private void resetAdapter(AdapterLink newAdapter) {
 
-        int[] currentPosition = new int[3];
-        if (layoutManager instanceof LinearLayoutManager) {
-            currentPosition[0] = ((LinearLayoutManager) layoutManager)
+        RecyclerView.LayoutManager layoutManagerCurrent = recyclerHistory.getLayoutManager();
+
+        int size = layoutManagerCurrent instanceof StaggeredGridLayoutManager ? ((StaggeredGridLayoutManager) layoutManagerCurrent).getSpanCount() : 1;
+
+        int[] currentPosition = new int[size];
+        if (layoutManagerCurrent instanceof LinearLayoutManager) {
+            currentPosition[0] = ((LinearLayoutManager) layoutManagerCurrent)
                     .findFirstVisibleItemPosition();
         }
-        else if (layoutManager instanceof StaggeredGridLayoutManager) {
-            ((StaggeredGridLayoutManager) layoutManager).findFirstCompletelyVisibleItemPositions(
+        else if (layoutManagerCurrent instanceof StaggeredGridLayoutManager) {
+            ((StaggeredGridLayoutManager) layoutManagerCurrent).findFirstCompletelyVisibleItemPositions(
                     currentPosition);
         }
 
-        adapterLink = newAdapter;
-        layoutManager = adapterLink.getLayoutManager();
+        this.adapterLink = newAdapter;
+        this.layoutManager = adapterLink.getLayoutManager();
 
         if (layoutManager instanceof LinearLayoutManager) {
             recyclerHistory.setPadding(0, 0, 0, 0);
@@ -695,9 +702,19 @@ public class FragmentHistory extends FragmentBase implements Toolbar.OnMenuItemC
             recyclerHistory.setPadding(padding, 0, padding, 0);
         }
 
-        recyclerHistory.setLayoutManager(layoutManager);
+        /*
+            Note that we must call setAdapter before setLayoutManager or the ViewHolders
+            will not be properly recycled, leading to memory leaks.
+         */
         recyclerHistory.setAdapter(adapterLink);
+        recyclerHistory.setLayoutManager(layoutManager);
         recyclerHistory.scrollToPosition(currentPosition[0]);
+        if (layoutManager instanceof LinearLayoutManager) {
+            recyclerHistory.addItemDecoration(itemDecorationDivider);
+        }
+        else {
+            recyclerHistory.removeItemDecoration(itemDecorationDivider);
+        }
     }
 
 }

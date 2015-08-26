@@ -4,6 +4,8 @@
 
 package com.winsonchiu.reader.search;
 
+import android.accounts.Account;
+import android.accounts.AccountManager;
 import android.app.Activity;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
@@ -44,6 +46,7 @@ import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Set;
 
 /**
@@ -64,6 +67,7 @@ public class ControllerSearch {
     private Activity activity;
     private SharedPreferences preferences;
     private Reddit reddit;
+    private AccountManager accountManager;
     private Listing subredditsLoaded;
     private Listing subredditsSubscribed;
     private Listing subreddits;
@@ -104,6 +108,7 @@ public class ControllerSearch {
         this.reddit = Reddit.getInstance(activity);
         this.preferences = PreferenceManager.getDefaultSharedPreferences(
                 activity.getApplicationContext());
+        this.accountManager = AccountManager.get(activity.getApplicationContext());
     }
 
     public void addListener(Listener listener) {
@@ -143,32 +148,32 @@ public class ControllerSearch {
 
     public void reloadSubscriptionList() {
 
-        String subscriptionsJson = preferences.getString(AppSettings.SUBSCRIPTIONS, "");
+        Listing listing = new Listing();
+        String subscriptionsJson = preferences.getString(AppSettings.SUBSCRIPTIONS + controllerUser.getUser().getName(), "");
+
         Log.d(TAG, "subscriptionsJson: " + subscriptionsJson);
 
         if (!TextUtils.isEmpty(subscriptionsJson)) {
 
             try {
                 JsonNode jsonNode = Reddit.getObjectMapper().readValue(subscriptionsJson, JsonNode.class);
-                Listing listing = new Listing();
 
                 for (JsonNode node : jsonNode) {
                     listing.getChildren().add(Subreddit.fromJson(node));
                 }
-
-                subredditsSubscribed = listing;
-
-                if (TextUtils.isEmpty(query)) {
-                    subreddits = subredditsSubscribed;
-                    for (Listener listener : listeners) {
-                        listener.getAdapterSearchSubreddits()
-                                .notifyDataSetChanged();
-                    }
-                }
-                loadContributorSubreddits();
             }
             catch (IOException e) {
                 e.printStackTrace();
+            }
+        }
+
+        subredditsSubscribed = listing;
+
+        if (TextUtils.isEmpty(query)) {
+            subreddits = subredditsSubscribed;
+            for (Listener listener : listeners) {
+                listener.getAdapterSearchSubreddits()
+                        .notifyDataSetChanged();
             }
         }
 
@@ -250,10 +255,25 @@ public class ControllerSearch {
 
     private void saveSubscriptions(Listing listing) {
 
+        Log.d(TAG, "saveSubscriptions with listing: " + listing.getChildren());
+
         boolean sort = subredditsSubscribed.getChildren().isEmpty();
 
-        subredditsSubscribed.getChildren().retainAll(listing.getChildren());
+        ListIterator<Thing> iterator = subredditsSubscribed.getChildren().listIterator();
+        while (iterator.hasNext()) {
+            Thing next = iterator.next();
+            int index = listing.getChildren().indexOf(next);
+            if (index > -1) {
+                iterator.set(listing.getChildren().get(index));
+            }
+            else {
+                iterator.remove();
+            }
+        }
+
         subredditsSubscribed.addChildren(listing.getChildren());
+
+        subredditsLoaded = new Listing();
 
         if (sort) {
             Collections.sort(subredditsSubscribed.getChildren(), new Comparator<Thing>() {
@@ -269,15 +289,18 @@ public class ControllerSearch {
 
     public void saveSubscriptions() {
 
-        Log.d(TAG, "saveSubscriptions");
+        String data = null;
 
         try {
-            preferences.edit().putString(AppSettings.SUBSCRIPTIONS, Reddit.getObjectMapper().writeValueAsString(subredditsSubscribed.getChildren())).apply();
+            data = Reddit.getObjectMapper().writeValueAsString(subredditsSubscribed.getChildren());
 
         }
         catch (JsonProcessingException e) {
             e.printStackTrace();
+            return;
         }
+
+        preferences.edit().putString(AppSettings.SUBSCRIPTIONS + controllerUser.getUser().getName(), data).apply();
 
         if (TextUtils.isEmpty(query)) {
             subreddits = subredditsSubscribed;
@@ -291,6 +314,7 @@ public class ControllerSearch {
     private void loadContributorSubreddits() {
 
         if (TextUtils.isEmpty(controllerUser.getUser().getName())) {
+            saveSubscriptions(subredditsLoaded);
             return;
         }
 
@@ -472,7 +496,6 @@ public class ControllerSearch {
     }
 
     public void reloadSubredditsRecommended() {
-        Log.d(TAG, "reloadSubredditsRecommended");
 
         for (Request request : requestsSubredditsRecommended) {
             request.cancel();
@@ -943,24 +966,6 @@ public class ControllerSearch {
         return currentPage;
     }
 
-    public void clearResults() {
-        if (subreddits != subredditsSubscribed) {
-            subreddits.getChildren()
-                    .clear();
-            subreddits = subredditsSubscribed;
-        }
-        links.getChildren().clear();
-        linksSubreddit.getChildren().clear();
-        query = "";
-        sort = Sort.RELEVANCE;
-        for (Listener listener : listeners) {
-            listener.setSortAndTime(sort, time);
-            listener.getAdapterSearchSubreddits().notifyDataSetChanged();
-            listener.getAdapterLinks().notifyDataSetChanged();
-            listener.getAdapterLinksSubreddit().notifyDataSetChanged();
-        }
-    }
-
     public void setControllers(ControllerLinks controllerLinks, ControllerUser controllerUser) {
         this.controllerLinks = controllerLinks;
         this.controllerUser = controllerUser;
@@ -1055,6 +1060,18 @@ public class ControllerSearch {
 
     public boolean isSubscriptionListShown() {
         return getCurrentPage() == PAGE_SUBREDDITS && subreddits == subredditsSubscribed;
+    }
+
+    public void addViewedSubreddit(Subreddit subreddit) {
+        if (!controllerUser.hasUser()) {
+            subredditsSubscribed.getChildren().add(subreddit);
+            if (getCurrentPage() == PAGE_SUBREDDITS || getCurrentPage() == PAGE_SUBREDDITS_RECOMMENDED) {
+                for (Listener listener : listeners) {
+                    listener.getAdapterSearchSubreddits()
+                            .notifyDataSetChanged();
+                }
+            }
+        }
     }
 
     public interface Listener extends ControllerListener {

@@ -485,13 +485,6 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
             buttonSendReply = (Button) itemView.findViewById(R.id.button_send_reply);
             buttonReplyEditor = (ImageButton) itemView.findViewById(R.id.button_reply_editor);
 
-            if (resources.getConfiguration().getLayoutDirection() == View.LAYOUT_DIRECTION_RTL) {
-                textUsername.setText(eventListenerBase.getUser().getName() + " -");
-            }
-            else {
-                textUsername.setText("- " + eventListenerBase.getUser().getName());
-            }
-
             viewDivider = itemView.findViewById(R.id.view_divider);
             viewIndicatorCollapsed = itemView.findViewById(R.id.view_indicator_collapsed);
             layoutContainerCollapsed = (RelativeLayout) itemView.findViewById(R.id.layout_container_collapsed);
@@ -908,6 +901,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
             layoutContainerReply.setVisibility(
                     comment.isReplyExpanded() ? View.VISIBLE : View.GONE);
             if (comment.isReplyExpanded()) {
+                textUsername.setText("- " + eventListenerBase.getUser().getName());
                 recyclerCallback.hideToolbar();
                 recyclerCallback.onReplyShown();
                 editTextReply.setText(comment.getReplyText());

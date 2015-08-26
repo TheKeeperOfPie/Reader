@@ -47,6 +47,7 @@ import com.winsonchiu.reader.data.reddit.Time;
 import com.winsonchiu.reader.profile.ControllerProfile;
 import com.winsonchiu.reader.utils.AnimationUtils;
 import com.winsonchiu.reader.utils.DisallowListener;
+import com.winsonchiu.reader.utils.ItemDecorationDivider;
 import com.winsonchiu.reader.utils.RecyclerCallback;
 import com.winsonchiu.reader.utils.ScrollAwareFloatingActionButtonBehavior;
 import com.winsonchiu.reader.utils.UtilsColor;
@@ -225,6 +226,7 @@ public class FragmentInbox extends FragmentBase implements Toolbar.OnMenuItemCli
         recyclerInbox.getItemAnimator()
                 .setRemoveDuration(AnimationUtils.EXPAND_ACTION_DURATION);
         recyclerInbox.setLayoutManager(linearLayoutManager);
+        recyclerInbox.addItemDecoration(new ItemDecorationDivider(activity, ItemDecorationDivider.VERTICAL_LIST));
 
         if (adapterInbox == null) {
             adapterInbox = new AdapterInbox(mListener.getControllerInbox(),
