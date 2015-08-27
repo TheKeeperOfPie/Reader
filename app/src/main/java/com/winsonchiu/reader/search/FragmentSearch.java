@@ -6,11 +6,12 @@ package com.winsonchiu.reader.search;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.content.res.TypedArray;
-import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.design.widget.AppBarLayout;
 import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.TabLayout;
@@ -22,7 +23,6 @@ import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.SearchView;
 import android.support.v7.widget.Toolbar;
 import android.support.v7.widget.helper.ItemTouchHelper;
-import android.util.Log;
 import android.view.ContextThemeWrapper;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -33,10 +33,12 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.ImageView;
 
+import com.winsonchiu.reader.AppSettings;
 import com.winsonchiu.reader.CustomApplication;
 import com.winsonchiu.reader.FragmentBase;
 import com.winsonchiu.reader.FragmentListenerBase;
 import com.winsonchiu.reader.R;
+import com.winsonchiu.reader.Theme;
 import com.winsonchiu.reader.data.reddit.Link;
 import com.winsonchiu.reader.data.reddit.Reddit;
 import com.winsonchiu.reader.data.reddit.Sort;
@@ -313,9 +315,11 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
         layoutCoordinator = (CoordinatorLayout) view.findViewById(R.id.layout_coordinator);
         layoutAppBar = (AppBarLayout) view.findViewById(R.id.layout_app_bar);
 
-        int styleToolbar = UtilsColor.computeContrast(colorPrimary, Color.WHITE) > 3f ? R.style.AppDarkTheme : R.style.AppLightTheme;
+        int styleToolbar = UtilsColor.computeContrast(colorPrimary, Color.WHITE) > 3f ? mListener.getAppColorTheme().getStyle(AppSettings.THEME_DARK, mListener.getThemeAccentPrefString()) : mListener.getAppColorTheme().getStyle(AppSettings.THEME_LIGHT, mListener.getThemeAccentPrefString());
 
-        toolbar = (Toolbar) activity.getLayoutInflater().cloneInContext(new ContextThemeWrapper(activity, styleToolbar)).inflate(R.layout.toolbar, layoutAppBar, false);
+        ContextThemeWrapper contextThemeWrapper = new ContextThemeWrapper(new ContextThemeWrapper(activity, styleToolbar), Theme.getMenuStyle(mListener.getThemePrimaryPrefString()));
+
+        toolbar = (Toolbar) activity.getLayoutInflater().cloneInContext(contextThemeWrapper).inflate(R.layout.toolbar, layoutAppBar, false);
         layoutAppBar.addView(toolbar);
         ((AppBarLayout.LayoutParams) toolbar.getLayoutParams()).setScrollFlags(AppBarLayout.LayoutParams.SCROLL_FLAG_SCROLL | AppBarLayout.LayoutParams.SCROLL_FLAG_ENTER_ALWAYS);
         toolbar.setTitleTextColor(getResources().getColor(colorResourcePrimary));

@@ -64,7 +64,6 @@ public class AdapterInboxPage extends BaseAdapter {
     public View getView(int position, View convertView, ViewGroup parent) {
         if (convertView == null) {
             convertView = LayoutInflater.from(parent.getContext()).inflate(R.layout.row_page, parent, false);
-            convertView.setBackgroundColor(colorPrimary);
         }
 
         TextView textPage = (TextView) convertView.findViewById(R.id.text_page);

@@ -270,23 +270,7 @@ public class ControllerInbox {
             listener.getAdapter().notifyItemRemoved(commentIndex);
         }
 
-        Map<String, String> params = new HashMap<>();
-        params.put("id", comment.getName());
-
-        reddit.loadPost(Reddit.OAUTH_URL + "/api/del",
-                new Response.Listener<String>() {
-                    @Override
-                    public void onResponse(
-                            String response) {
-                    }
-                },
-                new Response.ErrorListener() {
-                    @Override
-                    public void onErrorResponse(
-                            VolleyError error) {
-
-                    }
-                }, params, 0);
+        reddit.delete(comment, null, null);
     }
 
     public boolean toggleComment(int position) {

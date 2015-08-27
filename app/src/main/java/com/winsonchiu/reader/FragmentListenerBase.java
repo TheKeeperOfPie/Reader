@@ -30,4 +30,7 @@ public interface FragmentListenerBase {
     Reddit getReddit();
     AdapterLink.ViewHolderBase.EventListener getEventListenerBase();
     AdapterCommentList.ViewHolderComment.EventListener getEventListenerComment();
+    Theme getAppColorTheme();
+    String getThemePrimaryPrefString();
+    String getThemeAccentPrefString();
 }

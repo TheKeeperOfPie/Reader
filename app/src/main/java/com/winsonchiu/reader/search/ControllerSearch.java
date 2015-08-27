@@ -259,15 +259,17 @@ public class ControllerSearch {
 
         boolean sort = subredditsSubscribed.getChildren().isEmpty();
 
-        ListIterator<Thing> iterator = subredditsSubscribed.getChildren().listIterator();
-        while (iterator.hasNext()) {
-            Thing next = iterator.next();
-            int index = listing.getChildren().indexOf(next);
-            if (index > -1) {
-                iterator.set(listing.getChildren().get(index));
-            }
-            else {
-                iterator.remove();
+        if (controllerUser.hasUser()) {
+            ListIterator<Thing> iterator = subredditsSubscribed.getChildren().listIterator();
+            while (iterator.hasNext()) {
+                Thing next = iterator.next();
+                int index = listing.getChildren().indexOf(next);
+                if (index > -1) {
+                    iterator.set(listing.getChildren().get(index));
+                }
+                else {
+                    iterator.remove();
+                }
             }
         }
 

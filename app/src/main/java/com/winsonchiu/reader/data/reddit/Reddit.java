@@ -652,6 +652,15 @@ public class Reddit {
         return true;
     }
 
+    public void delete(Thing thing, Listener<String> listener, com.android.volley.Response.ErrorListener errorListener) {
+
+        Map<String, String> params = new HashMap<>();
+        params.put("id", thing.getName());
+
+        reddit.loadPost(Reddit.OAUTH_URL + "/api/del",
+                listener, errorListener, params, 0);
+    }
+
     public void save(Thing thing, String category, com.android.volley.Response.ErrorListener errorListener) {
 
         HashMap<String, String> params = new HashMap<>(2);
@@ -919,7 +928,7 @@ public class Reddit {
                 "</html>";
     }
 
-    public static String getImageHtmlForAlbum(String src, String title, String description, int textColor, int margin) {
+    public static String getImageHtmlForAlbum(String src, CharSequence title, CharSequence description, int textColor, int margin) {
 
         String rgbText = "rgb(" + Color.red(textColor) + ", " + Color.green(textColor) + ", " + Color.blue(textColor) + ")";
 

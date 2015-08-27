@@ -448,15 +448,12 @@ public class ControllerComments {
             }
         }
 
-        Map<String, String> params = new HashMap<>();
-        params.put("id", comment.getName());
-
-        reddit.loadPost(Reddit.OAUTH_URL + "/api/del", null, new ErrorListener() {
+        reddit.delete(comment, null, new ErrorListener() {
             @Override
             public void onErrorResponse(VolleyError error) {
                 Toast.makeText(activity, R.string.error_deleting_comment, Toast.LENGTH_LONG).show();
             }
-        }, params, 0);
+        });
     }
 
 

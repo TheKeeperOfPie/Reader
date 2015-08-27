@@ -6,6 +6,7 @@ package com.winsonchiu.reader.links;
 
 import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
+import android.text.Html;
 import android.text.TextUtils;
 import android.util.Log;
 import android.util.TypedValue;
@@ -118,9 +119,9 @@ public class AdapterAlbum extends PagerAdapter {
 
         ((RelativeLayout) view).addView(webView, 0, layoutParams);
 
-        String title = !TextUtils.isEmpty(image.getTitle()) && !"null".equals(image.getTitle()) ? image.getTitle() : "";
+        CharSequence title = !TextUtils.isEmpty(image.getTitle()) && !"null".equals(image.getTitle()) ? Html.fromHtml(image.getTitle()) : "";
 
-        String description = !TextUtils.isEmpty(image.getDescription()) && !"null".equals(image.getDescription()) ? image.getDescription() : "";
+        CharSequence description = !TextUtils.isEmpty(image.getDescription()) && !"null".equals(image.getDescription()) ? Html.fromHtml(image.getDescription()) : "";
 
         webView.loadData(Reddit.getImageHtmlForAlbum(image.getLink(), title, description, 0xFFFFFFFF, margin), "text/html", "UTF-8");
         webView.setVisibility(View.VISIBLE);

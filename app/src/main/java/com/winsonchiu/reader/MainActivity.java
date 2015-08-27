@@ -199,27 +199,31 @@ public class MainActivity extends YouTubeBaseActivity
         }
     };
     private Link linkHeader;
+    private Theme theme;
+    private int style;
+    private String themePrimary;
+    private String themeAccent;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
 
-        Theme theme;
-        String themeAccent;
+        style = R.style.AppDarkTheme;
 
         if (sharedPreferences.getBoolean(AppSettings.SECRET, false)) {
             theme = Theme.random();
+            themePrimary = theme.getName();
             themeAccent = AppSettings.randomThemeString();
         }
         else {
-            theme = Theme.fromString(sharedPreferences.getString(AppSettings.PREF_THEME_PRIMARY, AppSettings.THEME_DEEP_PURPLE));
+            themePrimary = sharedPreferences.getString(AppSettings.PREF_THEME_PRIMARY, AppSettings.THEME_DEEP_PURPLE);
+            theme = Theme.fromString(themePrimary);
             themeAccent = sharedPreferences.getString(AppSettings.PREF_THEME_ACCENT, AppSettings.THEME_YELLOW);
         }
         if (theme != null) {
             String themeBackground = sharedPreferences.getString(AppSettings.PREF_THEME_BACKGROUND, AppSettings.THEME_DARK);
-
-            setTheme(theme.getStyle(themeBackground, themeAccent));
-
+            style = theme.getStyle(themeBackground, themeAccent);
+            setTheme(style);
         }
         Fabric.with(this, new Crashlytics());
 
@@ -550,6 +554,7 @@ public class MainActivity extends YouTubeBaseActivity
             @Override
             public void deletePost(Link link) {
                 getControllerLinks().deletePost(link);
+                getControllerProfile().deletePost(link);
             }
 
             @Override
@@ -1662,6 +1667,21 @@ public class MainActivity extends YouTubeBaseActivity
     @Override
     public AdapterCommentList.ViewHolderComment.EventListener getEventListenerComment() {
         return eventListenerComment;
+    }
+
+    @Override
+    public Theme getAppColorTheme() {
+        return theme;
+    }
+
+    @Override
+    public String getThemePrimaryPrefString() {
+        return themePrimary;
+    }
+
+    @Override
+    public String getThemeAccentPrefString() {
+        return themeAccent;
     }
 
     @Override

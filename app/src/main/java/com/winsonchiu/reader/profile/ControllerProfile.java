@@ -475,6 +475,27 @@ public class ControllerProfile implements ControllerLinksBase {
 
     }
 
+
+    public boolean deletePost(Link link) {
+        int index = data.getChildren()
+                .indexOf(link);
+
+        if (index < 0) {
+            return false;
+        }
+
+        data.getChildren()
+                .remove(index);
+        for (Listener listener : listeners) {
+            listener.getAdapter()
+                    .notifyItemRemoved(index + 6);
+        }
+
+        reddit.delete(link, null, null);
+
+        return true;
+    }
+
     public void deleteComment(Comment comment) {
         int commentIndex = data.getChildren().indexOf(comment);
         data.getChildren().remove(commentIndex);
@@ -484,23 +505,7 @@ public class ControllerProfile implements ControllerLinksBase {
 
         }
 
-        Map<String, String> params = new HashMap<>();
-        params.put("id", comment.getName());
-
-        reddit.loadPost(Reddit.OAUTH_URL + "/api/del",
-                new Response.Listener<String>() {
-                    @Override
-                    public void onResponse(
-                            String response) {
-                    }
-                },
-                new Response.ErrorListener() {
-                    @Override
-                    public void onErrorResponse(
-                            VolleyError error) {
-
-                    }
-                }, params, 0);
+        reddit.delete(comment, null, null);
     }
 
     public boolean toggleComment(int position) {

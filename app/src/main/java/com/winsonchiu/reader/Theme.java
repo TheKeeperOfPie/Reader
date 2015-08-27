@@ -756,4 +756,51 @@ public enum Theme {
         }
         return R.style.AppDarkTheme;
     }
+
+    public static int getMenuStyle(String themeAccent) {
+        switch (themeAccent) {
+
+            case AppSettings.THEME_RED:
+                return R.style.MenuRed;
+            case AppSettings.THEME_PINK:
+                return R.style.MenuPink;
+            case AppSettings.THEME_PURPLE:
+                return R.style.MenuPurple;
+            case AppSettings.THEME_DEEP_PURPLE:
+                return R.style.MenuDeepPurple;
+            case AppSettings.THEME_INDIGO:
+                return R.style.MenuIndigo;
+            case AppSettings.THEME_BLUE:
+                return R.style.MenuBlue;
+            case AppSettings.THEME_LIGHT_BLUE:
+                return R.style.MenuLightBlue;
+            case AppSettings.THEME_CYAN:
+                return R.style.MenuCyan;
+            case AppSettings.THEME_TEAL:
+                return R.style.MenuTeal;
+            case AppSettings.THEME_GREEN:
+                return R.style.MenuGreen;
+            case AppSettings.THEME_LIGHT_GREEN:
+                return R.style.MenuLightGreen;
+            case AppSettings.THEME_LIME:
+                return R.style.MenuLime;
+            case AppSettings.THEME_YELLOW:
+                return R.style.MenuYellow;
+            case AppSettings.THEME_AMBER:
+                return R.style.MenuAmber;
+            case AppSettings.THEME_ORANGE:
+                return R.style.MenuOrange;
+            case AppSettings.THEME_DEEP_ORANGE:
+                return R.style.MenuDeepOrange;
+            case AppSettings.THEME_BROWN:
+                return R.style.MenuBrown;
+            case AppSettings.THEME_GREY:
+                return R.style.MenuGrey;
+            case AppSettings.THEME_BLUE_GREY:
+                return R.style.MenuBlueGrey;
+        }
+
+        return R.style.AppDarkTheme;
+    }
+
 }

@@ -328,36 +328,24 @@ public class ControllerLinks implements ControllerLinksBase {
         return subreddit;
     }
 
-    public void deletePost(Link link) {
+    public boolean deletePost(Link link) {
         int index = listingLinks.getChildren()
                 .indexOf(link);
 
-        if (index >= 0) {
-            listingLinks.getChildren()
-                    .remove(index);
-            for (Listener listener : listeners) {
-                listener.getAdapter()
-                        .notifyItemRemoved(index + 1);
-            }
-
-            Map<String, String> params = new HashMap<>();
-            params.put("id", link.getName());
-
-            reddit.loadPost(Reddit.OAUTH_URL + "/api/del",
-                    new Response.Listener<String>() {
-                        @Override
-                        public void onResponse(
-                                String response) {
-                        }
-                    },
-                    new Response.ErrorListener() {
-                        @Override
-                        public void onErrorResponse(
-                                VolleyError error) {
-
-                        }
-                    }, params, 0);
+        if (index < 0) {
+            return false;
         }
+
+        listingLinks.getChildren()
+                .remove(index);
+        for (Listener listener : listeners) {
+            listener.getAdapter()
+                    .notifyItemRemoved(index + 1);
+        }
+
+        reddit.delete(link, null, null);
+
+        return true;
     }
 
     public Reddit getReddit() {

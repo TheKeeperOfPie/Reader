@@ -12,6 +12,7 @@ import android.graphics.ColorFilter;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.design.widget.AppBarLayout;
 import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.FloatingActionButton;
@@ -32,12 +33,14 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.Spinner;
 
+import com.winsonchiu.reader.AppSettings;
 import com.winsonchiu.reader.CustomApplication;
 import com.winsonchiu.reader.FragmentBase;
 import com.winsonchiu.reader.FragmentListenerBase;
 import com.winsonchiu.reader.FragmentNewMessage;
 import com.winsonchiu.reader.MainActivity;
 import com.winsonchiu.reader.R;
+import com.winsonchiu.reader.Theme;
 import com.winsonchiu.reader.comments.AdapterCommentList;
 import com.winsonchiu.reader.data.Page;
 import com.winsonchiu.reader.data.reddit.Comment;
@@ -141,12 +144,13 @@ public class FragmentInbox extends FragmentBase implements Toolbar.OnMenuItemCli
 
         int colorResourcePrimary = UtilsColor.computeContrast(colorPrimary, Color.WHITE) > 3f ? R.color.darkThemeIconFilter : R.color.lightThemeIconFilter;
         int colorResourceAccent = UtilsColor.computeContrast(colorAccent, Color.WHITE) > 3f ? R.color.darkThemeIconFilter : R.color.lightThemeIconFilter;
-        int styleToolbar = UtilsColor.computeContrast(colorPrimary, Color.WHITE) > 3f ? R.style.AppDarkTheme : R.style.AppLightTheme;
+
+        int styleToolbar = UtilsColor.computeContrast(colorPrimary, Color.WHITE) > 3f ? mListener.getAppColorTheme().getStyle(AppSettings.THEME_DARK, mListener.getThemeAccentPrefString()) : mListener.getAppColorTheme().getStyle(AppSettings.THEME_LIGHT, mListener.getThemeAccentPrefString());
 
         colorFilterPrimary = new PorterDuffColorFilter(getResources().getColor(colorResourcePrimary), PorterDuff.Mode.MULTIPLY);
         colorFilterAccent = new PorterDuffColorFilter(getResources().getColor(colorResourceAccent), PorterDuff.Mode.MULTIPLY);
 
-        ContextThemeWrapper contextThemeWrapper = new ContextThemeWrapper(activity, styleToolbar);
+        ContextThemeWrapper contextThemeWrapper = new ContextThemeWrapper(new ContextThemeWrapper(activity, styleToolbar), Theme.getMenuStyle(mListener.getThemePrimaryPrefString()));
 
         toolbar = (Toolbar) activity.getLayoutInflater().cloneInContext(contextThemeWrapper).inflate(R.layout.toolbar, layoutAppBar, false);
         layoutAppBar.addView(toolbar);

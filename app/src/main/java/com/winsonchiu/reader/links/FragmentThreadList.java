@@ -32,6 +32,7 @@ import android.text.TextUtils;
 import android.text.method.LinkMovementMethod;
 import android.util.Log;
 import android.util.TypedValue;
+import android.view.ContextThemeWrapper;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -51,6 +52,7 @@ import com.winsonchiu.reader.FragmentBase;
 import com.winsonchiu.reader.FragmentListenerBase;
 import com.winsonchiu.reader.FragmentNewPost;
 import com.winsonchiu.reader.R;
+import com.winsonchiu.reader.Theme;
 import com.winsonchiu.reader.data.reddit.Link;
 import com.winsonchiu.reader.data.reddit.Reddit;
 import com.winsonchiu.reader.data.reddit.Sort;
@@ -220,7 +222,7 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
             @Override
             public void setSortAndTime(Sort sort, Time time) {
                 menu.findItem(sort.getMenuId()).setChecked(true);
-                menu.findItem(time.getMenuId()).setCheckable(true);
+                menu.findItem(time.getMenuId()).setChecked(true);
                 itemSortTime.setTitle(
                         getString(R.string.time) + Reddit.TIME_SEPARATOR + menu
                                 .findItem(time.getMenuId()).toString());
@@ -382,6 +384,9 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
 
         view = inflater.inflate(R.layout.fragment_thread_list, container, false);
 
+        layoutCoordinator = (CoordinatorLayout) view.findViewById(R.id.layout_coordinator);
+        layoutAppBar = (AppBarLayout) view.findViewById(R.id.layout_app_bar);
+
         TypedArray typedArray = activity.getTheme().obtainStyledAttributes(
                 new int[] {R.attr.colorPrimary, R.attr.colorAccent});
         final int colorPrimary = typedArray.getColor(0, getResources().getColor(R.color.colorPrimary));
@@ -394,7 +399,13 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
         colorFilterPrimary = new PorterDuffColorFilter(getResources().getColor(colorResourcePrimary), PorterDuff.Mode.MULTIPLY);
         colorFilterAccent = new PorterDuffColorFilter(getResources().getColor(colorResourceAccent), PorterDuff.Mode.MULTIPLY);
 
-        toolbar = (Toolbar) view.findViewById(R.id.toolbar);
+        int styleToolbar = UtilsColor.computeContrast(colorPrimary, Color.WHITE) > 3f ? mListener.getAppColorTheme().getStyle(AppSettings.THEME_DARK, mListener.getThemeAccentPrefString()) : mListener.getAppColorTheme().getStyle(AppSettings.THEME_LIGHT, mListener.getThemeAccentPrefString());
+
+        ContextThemeWrapper contextThemeWrapper = new ContextThemeWrapper(new ContextThemeWrapper(activity, styleToolbar), Theme.getMenuStyle(mListener.getThemePrimaryPrefString()));
+
+        toolbar = (Toolbar) activity.getLayoutInflater().cloneInContext(contextThemeWrapper).inflate(R.layout.toolbar, layoutAppBar, false);
+        layoutAppBar.addView(toolbar);
+        ((AppBarLayout.LayoutParams) toolbar.getLayoutParams()).setScrollFlags(AppBarLayout.LayoutParams.SCROLL_FLAG_SCROLL | AppBarLayout.LayoutParams.SCROLL_FLAG_ENTER_ALWAYS);
         toolbar.setTitleTextColor(getResources().getColor(colorResourcePrimary));
         toolbar.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -408,9 +419,6 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
             }
         });
         setUpToolbar();
-
-        layoutCoordinator = (CoordinatorLayout) view.findViewById(R.id.layout_coordinator);
-        layoutAppBar = (AppBarLayout) view.findViewById(R.id.layout_app_bar);
 
         layoutActions = (LinearLayout) view.findViewById(R.id.layout_actions);
 
