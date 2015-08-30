@@ -4,13 +4,12 @@
 
 package com.winsonchiu.reader.links;
 
+import android.animation.Animator;
 import android.app.Activity;
 import android.content.SharedPreferences;
 import android.content.res.TypedArray;
 import android.graphics.Color;
-import android.graphics.ColorFilter;
 import android.graphics.PorterDuff;
-import android.graphics.PorterDuffColorFilter;
 import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
@@ -28,8 +27,11 @@ import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.StaggeredGridLayoutManager;
 import android.support.v7.widget.Toolbar;
 import android.support.v7.widget.helper.ItemTouchHelper;
+import android.text.SpannableString;
+import android.text.Spanned;
 import android.text.TextUtils;
 import android.text.method.LinkMovementMethod;
+import android.text.style.ForegroundColorSpan;
 import android.util.Log;
 import android.util.TypedValue;
 import android.view.ContextThemeWrapper;
@@ -52,7 +54,7 @@ import com.winsonchiu.reader.FragmentBase;
 import com.winsonchiu.reader.FragmentListenerBase;
 import com.winsonchiu.reader.FragmentNewPost;
 import com.winsonchiu.reader.R;
-import com.winsonchiu.reader.Theme;
+import com.winsonchiu.reader.comments.FragmentComments;
 import com.winsonchiu.reader.data.reddit.Link;
 import com.winsonchiu.reader.data.reddit.Reddit;
 import com.winsonchiu.reader.data.reddit.Sort;
@@ -61,12 +63,14 @@ import com.winsonchiu.reader.data.reddit.Thing;
 import com.winsonchiu.reader.data.reddit.Time;
 import com.winsonchiu.reader.history.Historian;
 import com.winsonchiu.reader.search.FragmentSearch;
+import com.winsonchiu.reader.utils.AnimationUtils;
+import com.winsonchiu.reader.utils.CustomColorFilter;
+import com.winsonchiu.reader.utils.CustomItemTouchHelper;
 import com.winsonchiu.reader.utils.DisallowListener;
 import com.winsonchiu.reader.utils.ItemDecorationDivider;
 import com.winsonchiu.reader.utils.RecyclerCallback;
 import com.winsonchiu.reader.utils.ScrollAwareFloatingActionButtonBehavior;
 import com.winsonchiu.reader.utils.UtilsColor;
-import com.winsonchiu.reader.utils.CustomItemTouchHelper;
 
 public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuItemClickListener {
 
@@ -109,8 +113,8 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
     private FloatingActionButton buttonJumpTop;
     private ScrollAwareFloatingActionButtonBehavior behaviorButtonExpandActions;
     private View view;
-    private ColorFilter colorFilterPrimary;
-    private ColorFilter colorFilterAccent;
+    private CustomColorFilter colorFilterPrimary;
+    private CustomColorFilter colorFilterAccent;
     private ItemDecorationDivider itemDecorationDivider;
 
     public static FragmentThreadList newInstance() {
@@ -396,12 +400,14 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
         int colorResourcePrimary = UtilsColor.computeContrast(colorPrimary, Color.WHITE) > 3f ? R.color.darkThemeIconFilter : R.color.lightThemeIconFilter;
         int colorResourceAccent = UtilsColor.computeContrast(colorAccent, Color.WHITE) > 3f ? R.color.darkThemeIconFilter : R.color.lightThemeIconFilter;
 
-        colorFilterPrimary = new PorterDuffColorFilter(getResources().getColor(colorResourcePrimary), PorterDuff.Mode.MULTIPLY);
-        colorFilterAccent = new PorterDuffColorFilter(getResources().getColor(colorResourceAccent), PorterDuff.Mode.MULTIPLY);
+        colorFilterPrimary = new CustomColorFilter(getResources().getColor(colorResourcePrimary), PorterDuff.Mode.MULTIPLY);
+        colorFilterAccent = new CustomColorFilter(getResources().getColor(colorResourceAccent), PorterDuff.Mode.MULTIPLY);
 
         int styleToolbar = UtilsColor.computeContrast(colorPrimary, Color.WHITE) > 3f ? mListener.getAppColorTheme().getStyle(AppSettings.THEME_DARK, mListener.getThemeAccentPrefString()) : mListener.getAppColorTheme().getStyle(AppSettings.THEME_LIGHT, mListener.getThemeAccentPrefString());
 
-        ContextThemeWrapper contextThemeWrapper = new ContextThemeWrapper(new ContextThemeWrapper(activity, styleToolbar), Theme.getMenuStyle(mListener.getThemePrimaryPrefString()));
+        int styleColorBackground = AppSettings.THEME_DARK.equals(mListener.getThemeBackgroundPrefString()) ? R.style.MenuDark : R.style.MenuLight;
+
+        ContextThemeWrapper contextThemeWrapper = new ContextThemeWrapper(new ContextThemeWrapper(activity, styleToolbar), styleColorBackground);
 
         toolbar = (Toolbar) activity.getLayoutInflater().cloneInContext(contextThemeWrapper).inflate(R.layout.toolbar, layoutAppBar, false);
         layoutAppBar.addView(toolbar);
@@ -635,10 +641,14 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
                         if (snackbar != null) {
                             snackbar.dismiss();
                         }
-                        snackbar = Snackbar.make(recyclerThreadList,
-                                link.isHidden() ? R.string.link_hidden : R.string.link_shown,
-                                Snackbar.LENGTH_LONG)
-                                .setActionTextColor(getResources().getColor(R.color.colorAccent))
+
+                        SpannableString text = new SpannableString(link.isHidden() ? getString(R.string.link_hidden) : getString(R.string.link_shown));
+                        text.setSpan(new ForegroundColorSpan(colorFilterPrimary.getColor()), 0, text.length(), Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
+
+                        //noinspection ResourceType
+                        snackbar = Snackbar.make(recyclerThreadList, text,
+                                AnimationUtils.SNACKBAR_DURATION)
+                                .setActionTextColor(colorFilterPrimary.getColor())
                                 .setAction(
                                         R.string.undo, new View.OnClickListener() {
                                             @Override
@@ -896,6 +906,7 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
             view.setVisibility(View.INVISIBLE);
         }
         else {
+            view.setAlpha(1f);
             view.setVisibility(View.VISIBLE);
         }
     }

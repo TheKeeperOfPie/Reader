@@ -23,7 +23,10 @@ import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.SearchView;
 import android.support.v7.widget.Toolbar;
 import android.support.v7.widget.helper.ItemTouchHelper;
+import android.text.SpannableString;
+import android.text.Spanned;
 import android.text.TextUtils;
+import android.text.style.ForegroundColorSpan;
 import android.util.Log;
 import android.util.TypedValue;
 import android.view.ContextThemeWrapper;
@@ -51,6 +54,8 @@ import com.winsonchiu.reader.data.reddit.Reddit;
 import com.winsonchiu.reader.data.reddit.Sort;
 import com.winsonchiu.reader.data.reddit.Thing;
 import com.winsonchiu.reader.data.reddit.Time;
+import com.winsonchiu.reader.utils.AnimationUtils;
+import com.winsonchiu.reader.utils.CustomColorFilter;
 import com.winsonchiu.reader.utils.DisallowListener;
 import com.winsonchiu.reader.utils.ItemDecorationDivider;
 import com.winsonchiu.reader.utils.RecyclerCallback;
@@ -80,7 +85,7 @@ public class FragmentProfile extends FragmentBase implements Toolbar.OnMenuItemC
     private CustomItemTouchHelper itemTouchHelper;
     private CustomItemTouchHelper.SimpleCallback callback;
     private View view;
-    private ColorFilter colorFilterPrimary;
+    private CustomColorFilter colorFilterPrimary;
 
     public static FragmentProfile newInstance() {
         FragmentProfile fragment = new FragmentProfile();
@@ -255,9 +260,11 @@ public class FragmentProfile extends FragmentBase implements Toolbar.OnMenuItemC
 
         int styleToolbar = UtilsColor.computeContrast(colorPrimary, Color.WHITE) > 3f ? mListener.getAppColorTheme().getStyle(AppSettings.THEME_DARK, mListener.getThemeAccentPrefString()) : mListener.getAppColorTheme().getStyle(AppSettings.THEME_LIGHT, mListener.getThemeAccentPrefString());
 
-        colorFilterPrimary = new PorterDuffColorFilter(getResources().getColor(colorResourcePrimary), PorterDuff.Mode.MULTIPLY);
+        int styleColorBackground = AppSettings.THEME_DARK.equals(mListener.getThemeBackgroundPrefString()) ? R.style.MenuDark : R.style.MenuLight;
 
-        ContextThemeWrapper contextThemeWrapper = new ContextThemeWrapper(new ContextThemeWrapper(activity, styleToolbar), Theme.getMenuStyle(mListener.getThemePrimaryPrefString()));
+        colorFilterPrimary = new CustomColorFilter(getResources().getColor(colorResourcePrimary), PorterDuff.Mode.MULTIPLY);
+
+        ContextThemeWrapper contextThemeWrapper = new ContextThemeWrapper(new ContextThemeWrapper(activity, styleToolbar), styleColorBackground);
 
         toolbar = (Toolbar) activity.getLayoutInflater().cloneInContext(contextThemeWrapper).inflate(R.layout.toolbar, layoutAppBar, false);
         layoutAppBar.addView(toolbar);
@@ -459,10 +466,14 @@ public class FragmentProfile extends FragmentBase implements Toolbar.OnMenuItemC
                 if (snackbar != null) {
                     snackbar.dismiss();
                 }
-                snackbar = Snackbar.make(recyclerProfile,
-                        link.isHidden() ? R.string.link_hidden : R.string.link_shown,
-                        Snackbar.LENGTH_LONG)
-                        .setActionTextColor(getResources().getColor(R.color.colorAccent))
+
+                SpannableString text = new SpannableString(link.isHidden() ? getString(R.string.link_hidden) : getString(R.string.link_shown));
+                text.setSpan(new ForegroundColorSpan(colorFilterPrimary.getColor()), 0, text.length(), Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
+
+                //noinspection ResourceType
+                snackbar = Snackbar.make(recyclerProfile, text,
+                        AnimationUtils.SNACKBAR_DURATION)
+                        .setActionTextColor(colorFilterPrimary.getColor())
                         .setAction(
                                 R.string.undo, new View.OnClickListener() {
                                     @Override

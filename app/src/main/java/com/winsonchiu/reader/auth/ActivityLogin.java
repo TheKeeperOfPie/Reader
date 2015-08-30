@@ -56,7 +56,6 @@ public class ActivityLogin extends AccountAuthenticatorActivity {
 
     private static final String TAG = ActivityLogin.class.getCanonicalName();
     public static final String KEY_IS_NEW_ACCOUNT = "isNewAccount";
-    public static final String KEY_PASSWORD = "password";
     public static final String KEY_TIME_EXPIRATION = "timeExpiration";
     private Reddit reddit;
     private SharedPreferences preferences;
@@ -258,19 +257,27 @@ public class ActivityLogin extends AccountAuthenticatorActivity {
         super.onBackPressed();
     }
 
+    @Override
+    protected void onDestroy() {
+        destroyWebView();
+        super.onDestroy();
+    }
+
     private void destroyWebView() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            CookieManager.getInstance().removeAllCookies(null);
+        if (webAuth != null) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                CookieManager.getInstance().removeAllCookies(null);
+            }
+            else {
+                CookieManager.getInstance().removeAllCookie();
+            }
+            webAuth.removeAllViews();
+            webAuth.setWebChromeClient(null);
+            webAuth.setWebViewClient(null);
+            layoutRoot.removeView(webAuth);
+            webAuth.destroy();
+            webAuth = null;
         }
-        else {
-            CookieManager.getInstance().removeAllCookie();
-        }
-        webAuth.removeAllViews();
-        webAuth.setWebChromeClient(null);
-        webAuth.setWebViewClient(null);
-        layoutRoot.removeView(webAuth);
-        webAuth.destroy();
-        webAuth = null;
     }
 
     @Override

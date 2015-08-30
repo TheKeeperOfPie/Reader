@@ -77,8 +77,8 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
     private static final String ARG_ITEM_WIDTH = "itemWidth";
     private static final String ARG_INITIALIZED = "initialized";
 
-    private static final long DURATION_ENTER = 250;
-    private static final long DURATION_EXIT = 150;
+    public static final long DURATION_ENTER = 300;
+    public static final long DURATION_EXIT = 150;
     private static final long DURATION_ACTIONS_FADE = 150;
     private static final float OFFSET_MODIFIER = 0.25f;
 
@@ -666,7 +666,8 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
         viewBackground = layoutRoot.findViewById(R.id.view_background);
 
         if (!getArguments().getBoolean(ARG_INITIALIZED, false)) {
-            viewBackground.setVisibility(View.GONE);
+//            viewBackground.setAlpha(0f);
+            viewBackground.setVisibility(View.INVISIBLE);
             recyclerCommentList.setVisibility(View.GONE);
             swipeRefreshCommentList.setVisibility(View.GONE);
             toolbar.setVisibility(View.GONE);
@@ -738,14 +739,16 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
                 layoutParams.setMarginEnd((int) (startMarginEnd * reverseInterpolation));
                 swipeRefreshCommentList.setLayoutParams(layoutParams);
                 layoutAppBar.setTranslationY(-toolbarHeight * reverseInterpolation);
-
+//                viewBackground.setAlpha(interpolatedTime);
                 RelativeLayout.LayoutParams layoutParamsBackground = (RelativeLayout.LayoutParams) viewBackground
                         .getLayoutParams();
                 layoutParamsBackground.width = (int) (screenWidth - (startX + startMarginEnd) * reverseInterpolation);
                 layoutParamsBackground.height = (int) (interpolatedTime * screenHeight);
                 viewBackground.setLayoutParams(layoutParamsBackground);
                 viewBackground.setTranslationX(startX * reverseInterpolation);
-                viewBackground.setTranslationY(targetY * reverseInterpolation);
+                viewBackground.setTranslationY(reverseInterpolation * screenHeight);
+//                viewBackground.requestLayout();
+//                viewBackground.setTranslationY(targetY * reverseInterpolation);
             }
         };
         animation.setDuration(DURATION_ENTER);
@@ -753,7 +756,6 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
         animation.setAnimationListener(new Animation.AnimationListener() {
             @Override
             public void onAnimationStart(Animation animation) {
-
                 viewBackground.setVisibility(View.VISIBLE);
                 swipeRefreshCommentList.setVisibility(View.VISIBLE);
                 recyclerCommentList.setVisibility(View.VISIBLE);
@@ -769,11 +771,12 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
                 if (!isAdded()) {
                     return;
                 }
+
                 if (fragmentToHide != null) {
                     fragmentToHide.onHiddenChanged(true);
-//                    getFragmentManager().beginTransaction().hide(fragmentToHide).commit();
                     fragmentToHide = null;
                 }
+
                 swipeRefreshCommentList.postDelayed(new Runnable() {
                     @Override
                     public void run() {
@@ -781,6 +784,7 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
                         adapterCommentList.setAnimationFinished(true);
                     }
                 }, 150);
+
                 getArguments().putBoolean(ARG_INITIALIZED, true);
                 buttonExpandActions.setVisibility(View.VISIBLE);
                 buttonExpandActions.setScaleX(0f);

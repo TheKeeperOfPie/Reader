@@ -173,6 +173,7 @@ public class AdapterProfile extends RecyclerView.Adapter<RecyclerView.ViewHolder
             case 5:
                 ViewHolderText viewHolderTextOverview = (ViewHolderText) holder;
                 viewHolderTextOverview.onBind(controllerProfile.getPage().getText());
+                viewHolderTextOverview.setVisibility(View.VISIBLE);
                 break;
             default:
                 if (holder instanceof AdapterLinkList.ViewHolder) {

@@ -71,80 +71,90 @@
         <item name="android:contentDescription">toolbar_overflow_access</item>
     </style>
 
-    <style name="MenuRed">
-        <item name="android:colorBackground">@color/redThemeColorPrimary</item>
+    <style name="MenuDark">
+        <item name="android:colorBackground">@color/darkThemeBackground</item>
+        <item name="android:textColor">@color/darkThemeTextColor</item>
     </style>
 
-    <style name="MenuPink">
-        <item name="android:colorBackground">@color/pinkThemeColorPrimary</item>
+    <style name="MenuLight">
+        <item name="android:colorBackground">@color/lightThemeBackground</item>
+        <item name="android:textColor">@color/lightThemeTextColor</item>
     </style>
 
-    <style name="MenuPurple">
-        <item name="android:colorBackground">@color/purpleThemeColorPrimary</item>
-    </style>
+    <!--<style name="MenuRed">-->
+        <!--<item name="android:colorBackground">@color/redThemeColorPrimary</item>-->
+    <!--</style>-->
 
-    <style name="MenuDeepPurple">
-        <item name="android:colorBackground">@color/deepPurpleThemeColorPrimary</item>
-    </style>
+    <!--<style name="MenuPink">-->
+        <!--<item name="android:colorBackground">@color/pinkThemeColorPrimary</item>-->
+    <!--</style>-->
 
-    <style name="MenuIndigo">
-        <item name="android:colorBackground">@color/indigoThemeColorPrimary</item>
-    </style>
+    <!--<style name="MenuPurple">-->
+        <!--<item name="android:colorBackground">@color/purpleThemeColorPrimary</item>-->
+    <!--</style>-->
 
-    <style name="MenuBlue">
-        <item name="android:colorBackground">@color/blueThemeColorPrimary</item>
-    </style>
+    <!--<style name="MenuDeepPurple">-->
+        <!--<item name="android:colorBackground">@color/deepPurpleThemeColorPrimary</item>-->
+    <!--</style>-->
 
-    <style name="MenuLightBlue">
-        <item name="android:colorBackground">@color/lightBlueThemeColorPrimary</item>
-    </style>
+    <!--<style name="MenuIndigo">-->
+        <!--<item name="android:colorBackground">@color/indigoThemeColorPrimary</item>-->
+    <!--</style>-->
 
-    <style name="MenuCyan">
-        <item name="android:colorBackground">@color/cyanThemeColorPrimary</item>
-    </style>
+    <!--<style name="MenuBlue">-->
+        <!--<item name="android:colorBackground">@color/blueThemeColorPrimary</item>-->
+    <!--</style>-->
 
-    <style name="MenuTeal">
-        <item name="android:colorBackground">@color/tealThemeColorPrimary</item>
-    </style>
+    <!--<style name="MenuLightBlue">-->
+        <!--<item name="android:colorBackground">@color/lightBlueThemeColorPrimary</item>-->
+    <!--</style>-->
 
-    <style name="MenuGreen">
-        <item name="android:colorBackground">@color/greenThemeColorPrimary</item>
-    </style>
+    <!--<style name="MenuCyan">-->
+        <!--<item name="android:colorBackground">@color/cyanThemeColorPrimary</item>-->
+    <!--</style>-->
 
-    <style name="MenuLightGreen">
-        <item name="android:colorBackground">@color/lightGreenThemeColorPrimary</item>
-    </style>
+    <!--<style name="MenuTeal">-->
+        <!--<item name="android:colorBackground">@color/tealThemeColorPrimary</item>-->
+    <!--</style>-->
 
-    <style name="MenuLime">
-        <item name="android:colorBackground">@color/limeThemeColorPrimary</item>
-    </style>
+    <!--<style name="MenuGreen">-->
+        <!--<item name="android:colorBackground">@color/greenThemeColorPrimary</item>-->
+    <!--</style>-->
 
-    <style name="MenuYellow">
-        <item name="android:colorBackground">@color/yellowThemeColorPrimary</item>
-    </style>
+    <!--<style name="MenuLightGreen">-->
+        <!--<item name="android:colorBackground">@color/lightGreenThemeColorPrimary</item>-->
+    <!--</style>-->
 
-    <style name="MenuAmber">
-        <item name="android:colorBackground">@color/amberThemeColorPrimary</item>
-    </style>
+    <!--<style name="MenuLime">-->
+        <!--<item name="android:colorBackground">@color/limeThemeColorPrimary</item>-->
+    <!--</style>-->
 
-    <style name="MenuOrange">
-        <item name="android:colorBackground">@color/orangeThemeColorPrimary</item>
-    </style>
+    <!--<style name="MenuYellow">-->
+        <!--<item name="android:colorBackground">@color/yellowThemeColorPrimary</item>-->
+    <!--</style>-->
 
-    <style name="MenuDeepOrange">
-        <item name="android:colorBackground">@color/deepOrangeThemeColorPrimary</item>
-    </style>
+    <!--<style name="MenuAmber">-->
+        <!--<item name="android:colorBackground">@color/amberThemeColorPrimary</item>-->
+    <!--</style>-->
 
-    <style name="MenuBrown">
-        <item name="android:colorBackground">@color/brownThemeColorPrimary</item>
-    </style>
+    <!--<style name="MenuOrange">-->
+        <!--<item name="android:colorBackground">@color/orangeThemeColorPrimary</item>-->
+    <!--</style>-->
 
-    <style name="MenuGrey">
-        <item name="android:colorBackground">@color/greyThemeColorPrimary</item>
-    </style>
+    <!--<style name="MenuDeepOrange">-->
+        <!--<item name="android:colorBackground">@color/deepOrangeThemeColorPrimary</item>-->
+    <!--</style>-->
 
-    <style name="MenuBlueGrey">
-        <item name="android:colorBackground">@color/blueGreyThemeColorPrimary</item>
-    </style>
+    <!--<style name="MenuBrown">-->
+        <!--<item name="android:colorBackground">@color/brownThemeColorPrimary</item>-->
+    <!--</style>-->
+
+    <!--<style name="MenuGrey">-->
+        <!--<item name="android:colorBackground">@color/greyThemeColorPrimary</item>-->
+    <!--</style>-->
+
+    <!--<style name="MenuBlueGrey">-->
+        <!--<item name="android:colorBackground">@color/blueGreyThemeColorPrimary</item>-->
+    <!--</style>-->
 
 </resources>

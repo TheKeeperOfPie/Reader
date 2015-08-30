@@ -407,13 +407,16 @@ public class FragmentNewMessage extends FragmentBase implements Toolbar.OnMenuIt
         reddit.loadPost(Reddit.OAUTH_URL + "/api/new_captcha", new Response.Listener<String>() {
             @Override
             public void onResponse(String response) {
+                if (!isAdded()) {
+                    return;
+                }
                 try {
                     JSONObject jsonObject = new JSONObject(response);
                     captchaId = jsonObject.getJSONObject("json").getJSONObject("data").getString(
                             "iden");
                     Log.d(TAG, "captchaId: " + captchaId);
                     Reddit.loadPicasso(activity).load(Reddit.BASE_URL + "/captcha/" + captchaId + ".png")
-                            .resize(getResources().getDisplayMetrics().widthPixels, 0).into(
+                            .resize(imageCaptcha.getWidth(), 0).into(
                             imageCaptcha);
                 }
                 catch (JSONException e) {

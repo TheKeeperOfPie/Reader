@@ -30,6 +30,7 @@ import java.util.List;
  */
 public class AnimationUtils {
 
+    public static final int SNACKBAR_DURATION = 2000;
     public static final long EXPAND_ACTION_DURATION = 150;
     public static final long ALPHA_DURATION = 500;
     public static final long BACKGROUND_DURATION = 500;

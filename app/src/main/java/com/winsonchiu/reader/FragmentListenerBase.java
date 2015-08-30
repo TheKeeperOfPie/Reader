@@ -31,6 +31,7 @@ public interface FragmentListenerBase {
     AdapterLink.ViewHolderBase.EventListener getEventListenerBase();
     AdapterCommentList.ViewHolderComment.EventListener getEventListenerComment();
     Theme getAppColorTheme();
+    String getThemeBackgroundPrefString();
     String getThemePrimaryPrefString();
     String getThemeAccentPrefString();
 }

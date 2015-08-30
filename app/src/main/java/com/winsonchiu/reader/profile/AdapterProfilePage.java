@@ -6,6 +6,7 @@ package com.winsonchiu.reader.profile;
 
 import android.app.Activity;
 import android.content.res.TypedArray;
+import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -14,6 +15,8 @@ import android.widget.TextView;
 
 import com.winsonchiu.reader.R;
 import com.winsonchiu.reader.data.Page;
+import com.winsonchiu.reader.utils.UtilsColor;
+import com.winsonchiu.reader.utils.UtilsJson;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -23,6 +26,8 @@ import java.util.List;
  */
 public class AdapterProfilePage extends BaseAdapter {
 
+    private final int colorTextPrimary;
+    private final int colorTextMenu;
     private List<Page> pages;
     private int colorPrimary;
     private boolean isUser;
@@ -41,9 +46,12 @@ public class AdapterProfilePage extends BaseAdapter {
         pages.add(new Page(ControllerProfile.PAGE_SAVED, activity.getString(R.string.profile_page_saved)));
 
         TypedArray typedArray = activity.getTheme().obtainStyledAttributes(
-                new int[]{R.attr.colorPrimary});
+                new int[] {R.attr.colorPrimary, android.R.attr.textColor});
         colorPrimary = typedArray.getColor(0, activity.getResources().getColor(R.color.colorPrimary));
+        colorTextMenu = typedArray.getColor(1, Color.WHITE);
         typedArray.recycle();
+
+        colorTextPrimary = UtilsColor.computeContrast(colorPrimary, Color.WHITE) > 3f ? Color.WHITE : Color.BLACK;
     }
 
     @Override
@@ -62,13 +70,29 @@ public class AdapterProfilePage extends BaseAdapter {
     }
 
     @Override
-    public View getView(int position, View convertView, ViewGroup parent) {
+    public View getDropDownView(int position, View convertView, ViewGroup parent) {
         if (convertView == null) {
             convertView = LayoutInflater.from(parent.getContext()).inflate(R.layout.row_page, parent, false);
+//            convertView.setBackgroundColor(colorPrimary);
         }
 
         TextView textPage = (TextView) convertView.findViewById(R.id.text_page);
         textPage.setText(pages.get(position).getText());
+        textPage.setTextColor(colorTextMenu);
+
+        return convertView;
+    }
+
+    @Override
+    public View getView(int position, View convertView, ViewGroup parent) {
+        if (convertView == null) {
+            convertView = LayoutInflater.from(parent.getContext()).inflate(R.layout.row_page, parent, false);
+//            convertView.setBackgroundColor(colorPrimary);
+        }
+
+        TextView textPage = (TextView) convertView.findViewById(R.id.text_page);
+        textPage.setText(pages.get(position).getText());
+        textPage.setTextColor(colorTextPrimary);
 
         return convertView;
     }

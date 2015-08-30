@@ -201,6 +201,7 @@ public class MainActivity extends YouTubeBaseActivity
     private Link linkHeader;
     private Theme theme;
     private int style;
+    private String themeBackground;
     private String themePrimary;
     private String themeAccent;
 
@@ -220,11 +221,10 @@ public class MainActivity extends YouTubeBaseActivity
             theme = Theme.fromString(themePrimary);
             themeAccent = sharedPreferences.getString(AppSettings.PREF_THEME_ACCENT, AppSettings.THEME_YELLOW);
         }
-        if (theme != null) {
-            String themeBackground = sharedPreferences.getString(AppSettings.PREF_THEME_BACKGROUND, AppSettings.THEME_DARK);
-            style = theme.getStyle(themeBackground, themeAccent);
-            setTheme(style);
-        }
+        themeBackground = sharedPreferences.getString(AppSettings.PREF_THEME_BACKGROUND, AppSettings.THEME_DARK);
+        style = theme.getStyle(themeBackground, themeAccent);
+        setTheme(style);
+
         Fabric.with(this, new Crashlytics());
 
         TypedArray typedArray = obtainStyledAttributes(new int[]{R.attr.colorPrimary});
@@ -1580,7 +1580,7 @@ public class MainActivity extends YouTubeBaseActivity
 
             }
             else {
-                if (urlString.indexOf("reddit.com") < 20) {
+                if (urlString.indexOf("reddit.com") > 0 && urlString.indexOf("reddit.com") < 20) {
                     intentActivity.putExtra(REDDIT_PAGE, urlString);
                     Log.d(TAG, "startActivity with REDDIT_PAGE");
                     super.startActivity(intentActivity);
@@ -1593,6 +1593,7 @@ public class MainActivity extends YouTubeBaseActivity
                         if (fragment != null) {
                             fragmentTransaction.hide(fragment);
                         }
+                        Log.d(TAG, "FragmentWeb added");
 
                         fragmentTransaction.add(R.id.frame_fragment, FragmentWeb
                                 .newInstance(urlString), FragmentWeb.TAG)
@@ -1672,6 +1673,11 @@ public class MainActivity extends YouTubeBaseActivity
     @Override
     public Theme getAppColorTheme() {
         return theme;
+    }
+
+    @Override
+    public String getThemeBackgroundPrefString() {
+        return themeBackground;
     }
 
     @Override

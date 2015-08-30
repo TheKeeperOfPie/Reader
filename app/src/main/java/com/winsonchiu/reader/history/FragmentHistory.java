@@ -30,9 +30,13 @@ import android.support.v7.widget.SearchView;
 import android.support.v7.widget.StaggeredGridLayoutManager;
 import android.support.v7.widget.Toolbar;
 import android.support.v7.widget.helper.ItemTouchHelper;
+import android.text.SpannableString;
+import android.text.Spanned;
 import android.text.format.DateUtils;
+import android.text.style.ForegroundColorSpan;
 import android.util.Log;
 import android.util.TypedValue;
+import android.view.ContextThemeWrapper;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -50,6 +54,8 @@ import com.winsonchiu.reader.data.reddit.Thing;
 import com.winsonchiu.reader.links.AdapterLink;
 import com.winsonchiu.reader.links.AdapterLinkGrid;
 import com.winsonchiu.reader.links.AdapterLinkList;
+import com.winsonchiu.reader.utils.AnimationUtils;
+import com.winsonchiu.reader.utils.CustomColorFilter;
 import com.winsonchiu.reader.utils.DisallowListener;
 import com.winsonchiu.reader.utils.ItemDecorationDivider;
 import com.winsonchiu.reader.utils.RecyclerCallback;
@@ -85,7 +91,7 @@ public class FragmentHistory extends FragmentBase implements Toolbar.OnMenuItemC
     private CoordinatorLayout layoutCoordinator;
     private AppBarLayout layoutAppBar;
     private View view;
-    private ColorFilter colorFilterPrimary;
+    private CustomColorFilter colorFilterPrimary;
     private ItemDecorationDivider itemDecorationDivider;
 
     public static FragmentHistory newInstance() {
@@ -177,7 +183,11 @@ public class FragmentHistory extends FragmentBase implements Toolbar.OnMenuItemC
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
             Bundle savedInstanceState) {
+
         view = inflater.inflate(R.layout.fragment_history, container, false);
+
+        layoutCoordinator = (CoordinatorLayout) view.findViewById(R.id.layout_coordinator);
+        layoutAppBar = (AppBarLayout) view.findViewById(R.id.layout_app_bar);
 
         listener = new ControllerHistory.Listener() {
             @Override
@@ -208,9 +218,16 @@ public class FragmentHistory extends FragmentBase implements Toolbar.OnMenuItemC
 
         int colorResourcePrimary = UtilsColor.computeContrast(colorPrimary, Color.WHITE) > 3f ? R.color.darkThemeIconFilter : R.color.lightThemeIconFilter;
 
-        colorFilterPrimary = new PorterDuffColorFilter(getResources().getColor(colorResourcePrimary), PorterDuff.Mode.MULTIPLY);
+        colorFilterPrimary = new CustomColorFilter(getResources().getColor(colorResourcePrimary), PorterDuff.Mode.MULTIPLY);
 
-        toolbar = (Toolbar) view.findViewById(R.id.toolbar);
+        int styleToolbar = UtilsColor.computeContrast(colorPrimary, Color.WHITE) > 3f ? mListener.getAppColorTheme().getStyle(AppSettings.THEME_DARK, mListener.getThemeAccentPrefString()) : mListener.getAppColorTheme().getStyle(AppSettings.THEME_LIGHT, mListener.getThemeAccentPrefString());
+
+        ContextThemeWrapper contextThemeWrapper = new ContextThemeWrapper(activity, styleToolbar);
+
+        toolbar = (Toolbar) activity.getLayoutInflater().cloneInContext(contextThemeWrapper).inflate(R.layout.toolbar, layoutAppBar, false);
+        layoutAppBar.addView(toolbar);
+        ((AppBarLayout.LayoutParams) toolbar.getLayoutParams()).setScrollFlags(AppBarLayout.LayoutParams.SCROLL_FLAG_SCROLL | AppBarLayout.LayoutParams.SCROLL_FLAG_ENTER_ALWAYS);
+
         if (getFragmentManager().getBackStackEntryCount() <= 1) {
             toolbar.setNavigationIcon(R.drawable.ic_menu_white_24dp);
             toolbar.setNavigationOnClickListener(new View.OnClickListener() {
@@ -232,9 +249,6 @@ public class FragmentHistory extends FragmentBase implements Toolbar.OnMenuItemC
         toolbar.getNavigationIcon().mutate().setColorFilter(colorFilterPrimary);
         toolbar.setTitleTextColor(getResources().getColor(colorResourcePrimary));
         setUpOptionsMenu();
-
-        layoutCoordinator = (CoordinatorLayout) view.findViewById(R.id.layout_coordinator);
-        layoutAppBar = (AppBarLayout) view.findViewById(R.id.layout_app_bar);
 
         swipeRefreshHistory = (SwipeRefreshLayout) view.findViewById(R.id.swipe_refresh_history);
         swipeRefreshHistory.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
@@ -411,9 +425,13 @@ public class FragmentHistory extends FragmentBase implements Toolbar.OnMenuItemC
                         if (snackbar != null) {
                             snackbar.dismiss();
                         }
-                        snackbar = Snackbar.make(recyclerHistory, R.string.history_entry_deleted,
-                                Snackbar.LENGTH_LONG)
-                                .setActionTextColor(getResources().getColor(R.color.colorAccent))
+                        SpannableString text = new SpannableString(getString(R.string.history_entry_deleted));
+                        text.setSpan(new ForegroundColorSpan(colorFilterPrimary.getColor()), 0, text.length(), Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
+
+                        //noinspection ResourceType
+                        snackbar = Snackbar.make(recyclerHistory, text,
+                                AnimationUtils.SNACKBAR_DURATION)
+                                .setActionTextColor(colorFilterPrimary.getColor())
                                 .setAction(
                                         R.string.undo, new View.OnClickListener() {
                                             @Override
