@@ -90,6 +90,10 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
     private static final int MAX_ALPHA = 180;
 
     private final int colorLink;
+
+    // TODO: Find a way to animate with the toolbar actions expanded without lagging
+    private boolean actionsExpanded;
+
     private AdapterLink.ViewHolderBase.EventListener eventListenerBase;
     private ViewHolderComment.EventListener eventListenerComment;
     private DisallowListener disallowListener;
@@ -110,7 +114,9 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
             DisallowListener disallowListener,
             RecyclerCallback recyclerCallback,
             FragmentComments.YouTubeListener youTubeListener,
-            boolean isGrid, int colorLink) {
+            boolean isGrid,
+            int colorLink,
+            boolean actionsExpanded) {
         this.controllerComments = controllerComments;
         this.eventListenerBase = eventListenerBase;
         this.eventListenerComment = eventListenerComment;
@@ -119,6 +125,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
         this.youTubeListener = youTubeListener;
         this.isGrid = isGrid;
         this.colorLink = colorLink;
+        this.actionsExpanded = actionsExpanded;
         DisplayMetrics displayMetrics = activity.getResources().getDisplayMetrics();
         this.thumbnailSize = displayMetrics.widthPixels / 2;
         viewHolders = new ArrayList<>();
@@ -356,6 +363,10 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
         if (!listenerSet) {
             runnable.run();
         }
+    }
+
+    public AdapterLink.ViewHolderBase getViewHolderLink() {
+        return viewHolderLink;
     }
 
     public static class ViewHolderComment extends RecyclerView.ViewHolder

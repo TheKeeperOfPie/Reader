@@ -204,60 +204,60 @@ public class FragmentWeb extends FragmentBase implements Toolbar.OnMenuItemClick
                 toolbar.setTitle(view.getTitle());
             }
 
-            @Override
-            public boolean shouldOverrideUrlLoading(WebView view, String url) {
-                Log.d(TAG, "shouldOverrideUrlLoading: " + url);
-
-                Intent intent = new Intent(Intent.ACTION_VIEW);
-                intent.setData(Uri.parse(url));
-                PackageManager packageManager = view.getContext().getPackageManager();
-                List<ResolveInfo> listResolveInfo = packageManager.queryIntentActivities(intent, 0);
-
-                Log.d(TAG, "listResolveInfo: " + listResolveInfo);
-
-                boolean containsAll = true;
-
-                for (ResolveInfo info : listResolveInfo) {
-
-                    boolean contains = false;
-                    for (ResolveInfo infoDefault : listDefaultWebResolveInfo) {
-                        if (infoDefault.activityInfo.name.equals(info.activityInfo.name) &&
-                                infoDefault.activityInfo.targetActivity.equals(info.activityInfo.targetActivity)) {
-                            contains = true;
-                            break;
-                        }
-                    }
-                    if (!contains) {
-                        containsAll = false;
-                        break;
-                    }
-                }
-
-                if (!containsAll) {
-                    Iterator<ResolveInfo> iterator = listResolveInfo.iterator();
-                    while (iterator.hasNext()) {
-                        ResolveInfo info = iterator.next();
-                        boolean contains = false;
-                        for (ResolveInfo infoDefault : listDefaultWebResolveInfo) {
-                            if (infoDefault.activityInfo.name.equals(info.activityInfo.name) &&
-                                    infoDefault.activityInfo.targetActivity.equals(info.activityInfo.targetActivity)) {
-                                contains = true;
-                                break;
-                            }
-                        }
-                        if (contains) {
-                            iterator.remove();
-                        }
-                    }
-
-                    listResolveInfo.removeAll(listDefaultWebResolveInfo);
-                    Collections.sort(listResolveInfo, new ResolveInfo.DisplayNameComparator(packageManager));
-                    listResolveInfo.addAll(listDefaultWebResolveInfo);
-                    showExternalLaunchDialog(url, listResolveInfo, packageManager);
-                    return true;
-                }
-                return false;
-            }
+//            @Override
+//            public boolean shouldOverrideUrlLoading(WebView view, String url) {
+//                Log.d(TAG, "shouldOverrideUrlLoading: " + url);
+//
+//                Intent intent = new Intent(Intent.ACTION_VIEW);
+//                intent.setData(Uri.parse(url));
+//                PackageManager packageManager = view.getContext().getPackageManager();
+//                List<ResolveInfo> listResolveInfo = packageManager.queryIntentActivities(intent, 0);
+//
+//                Log.d(TAG, "listResolveInfo: " + listResolveInfo);
+//
+//                boolean containsAll = true;
+//
+//                for (ResolveInfo info : listResolveInfo) {
+//
+//                    boolean contains = false;
+//                    for (ResolveInfo infoDefault : listDefaultWebResolveInfo) {
+//                        if (infoDefault.activityInfo.name.equals(info.activityInfo.name) &&
+//                                infoDefault.activityInfo.targetActivity.equals(info.activityInfo.targetActivity)) {
+//                            contains = true;
+//                            break;
+//                        }
+//                    }
+//                    if (!contains) {
+//                        containsAll = false;
+//                        break;
+//                    }
+//                }
+//
+//                if (!containsAll) {
+//                    Iterator<ResolveInfo> iterator = listResolveInfo.iterator();
+//                    while (iterator.hasNext()) {
+//                        ResolveInfo info = iterator.next();
+//                        boolean contains = false;
+//                        for (ResolveInfo infoDefault : listDefaultWebResolveInfo) {
+//                            if (infoDefault.activityInfo.name.equals(info.activityInfo.name) &&
+//                                    infoDefault.activityInfo.targetActivity.equals(info.activityInfo.targetActivity)) {
+//                                contains = true;
+//                                break;
+//                            }
+//                        }
+//                        if (contains) {
+//                            iterator.remove();
+//                        }
+//                    }
+//
+//                    listResolveInfo.removeAll(listDefaultWebResolveInfo);
+//                    Collections.sort(listResolveInfo, new ResolveInfo.DisplayNameComparator(packageManager));
+//                    listResolveInfo.addAll(listDefaultWebResolveInfo);
+//                    showExternalLaunchDialog(url, listResolveInfo, packageManager);
+//                    return true;
+//                }
+//                return false;
+//            }
 
             @Override
             public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {

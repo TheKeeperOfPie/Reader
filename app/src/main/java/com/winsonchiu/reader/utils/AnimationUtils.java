@@ -125,12 +125,20 @@ public class AnimationUtils {
     public static void animateExpand(final View view,
             float widthRatio,
             OnAnimationEndListener listener) {
-        animateExpandWithHeight(view, getMeasuredHeight(view, widthRatio), listener);
+        animateExpandWithHeight(view, getMeasuredHeight(view, widthRatio), listener, 0);
+    }
+
+    public static void animateExpand(final View view,
+            float widthRatio,
+            OnAnimationEndListener listener,
+            long duration) {
+        animateExpandWithHeight(view, getMeasuredHeight(view, widthRatio), listener, duration);
     }
 
     public static void animateExpandWithHeight(final View view,
             final float height,
-            final OnAnimationEndListener listener) {
+            final OnAnimationEndListener listener,
+            long duration) {
 
         final boolean isShown = view.isShown();
         Animation animation = new Animation() {
@@ -181,7 +189,12 @@ public class AnimationUtils {
                         .getResources()
                         .getDisplayMetrics());
 
-        animation.setDuration((long) (height / speed * 2));
+        if (duration > 0) {
+            animation.setDuration(duration);
+        }
+        else {
+            animation.setDuration((long) (height / speed * 2));
+        }
         view.setVisibility(View.VISIBLE);
         view.requestLayout();
         view.startAnimation(animation);

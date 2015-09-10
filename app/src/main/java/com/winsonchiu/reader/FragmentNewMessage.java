@@ -16,6 +16,7 @@ import android.os.Bundle;
 import android.support.design.widget.AppBarLayout;
 import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.TabLayout;
+import android.support.v4.content.ContextCompat;
 import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.support.v4.widget.NestedScrollView;
@@ -53,6 +54,10 @@ import java.util.Map;
 public class FragmentNewMessage extends FragmentBase implements Toolbar.OnMenuItemClickListener {
 
     public static final String TAG = FragmentNewMessage.class.getCanonicalName();
+    public static final String ARG_RECIPIENT = "recipient";
+    public static final String ARG_SUBJECT = "subject";
+    public static final String ARG_MESSAGE = "message";
+
     private Reddit reddit;
 
     private Toolbar toolbar;
@@ -94,6 +99,17 @@ public class FragmentNewMessage extends FragmentBase implements Toolbar.OnMenuIt
         return fragment;
     }
 
+    public static FragmentNewMessage newInstance(String recipient, String subject, String message) {
+        FragmentNewMessage fragment = new FragmentNewMessage();
+        Bundle args = new Bundle();
+        args.putString(ARG_RECIPIENT, recipient);
+        args.putString(ARG_SUBJECT, subject);
+        args.putString(ARG_MESSAGE, message);
+        fragment.setArguments(args);
+        return fragment;
+    }
+
+
     public FragmentNewMessage() {
         // Required empty public constructor
     }
@@ -121,19 +137,27 @@ public class FragmentNewMessage extends FragmentBase implements Toolbar.OnMenuIt
         editTextSubject = (EditText) view.findViewById(R.id.edit_subject);
         editTextMessage = (EditText) view.findViewById(R.id.edit_message);
 
+        Bundle arguments = getArguments();
+
+        editTextRecipient.setText(arguments.getString(ARG_RECIPIENT));
+        editTextSubject.setText(arguments.getString(ARG_SUBJECT));
+        editTextMessage.setText(arguments.getString(ARG_MESSAGE));
+
         TypedArray typedArray = activity.getTheme().obtainStyledAttributes(
                 new int[]{R.attr.colorPrimary, R.attr.colorIconFilter});
-        final int colorPrimary = typedArray.getColor(0, getResources().getColor(R.color.colorPrimary));
+        final int colorPrimary = typedArray.getColor(0,
+                getResources().getColor(R.color.colorPrimary));
         int colorIcon = typedArray.getColor(1, getResources().getColor(R.color.darkThemeIconFilter));
         typedArray.recycle();
 
         int colorResourcePrimary = UtilsColor.computeContrast(colorPrimary, Color.WHITE) > 3f ? R.color.darkThemeIconFilter : R.color.lightThemeIconFilter;
+        int colorResourceTextMuted = UtilsColor.computeContrast(colorPrimary, Color.WHITE) > 3f ? R.color.darkThemeTextColorMuted : R.color.lightThemeTextColorMuted;
 
         colorFilterPrimary = new PorterDuffColorFilter(getResources().getColor(colorResourcePrimary), PorterDuff.Mode.MULTIPLY);
         colorFilterIcon = new PorterDuffColorFilter(colorIcon, PorterDuff.Mode.MULTIPLY);
 
         toolbar = (Toolbar) view.findViewById(R.id.toolbar);
-        toolbar.setTitle(getString(R.string.new_message));
+        toolbar.setTitle(getString(R.string.message));
         toolbar.setTitleTextColor(getResources().getColor(colorResourcePrimary));
         toolbar.setNavigationIcon(R.drawable.ic_arrow_back_white_24dp);
         toolbar.setNavigationOnClickListener(new View.OnClickListener() {
@@ -179,6 +203,8 @@ public class FragmentNewMessage extends FragmentBase implements Toolbar.OnMenuIt
         tabLayout = (TabLayout) view.findViewById(R.id.layout_tab);
         tabLayout.setTabMode(TabLayout.MODE_FIXED);
         tabLayout.setTabGravity(TabLayout.GRAVITY_FILL);
+        tabLayout.setTabTextColors(getResources().getColor(colorResourceTextMuted),
+                getResources().getColor(colorResourcePrimary));
 
         viewPager = (ViewPager) view.findViewById(R.id.view_pager);
         viewPager.setAdapter(new PagerAdapter() {
@@ -280,8 +306,6 @@ public class FragmentNewMessage extends FragmentBase implements Toolbar.OnMenuIt
 
                     }
                 }, 0);
-
-
 
         view.getViewTreeObserver().addOnGlobalLayoutListener(
                 new ViewTreeObserver.OnGlobalLayoutListener() {

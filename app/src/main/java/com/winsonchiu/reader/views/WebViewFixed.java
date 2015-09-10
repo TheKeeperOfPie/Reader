@@ -55,20 +55,17 @@ public class WebViewFixed extends WebView {
     public void invalidate() {
         super.invalidate();
 
-        Log.d(TAG, "contentHeight: " + getContentHeight());
-        Log.d(TAG, "height: " + getHeight());
-
         if (getContentHeight() > 0) {
             if (lastInvalidateHeight < 0) {
                 lastInvalidateHeight = getContentHeight();
                 return;
             }
 
-            if (getHeight() == 0) {
+            /*if (getHeight() == 0) {
 //                Toast.makeText(getContext(), "Error: height == 0", Toast.LENGTH_SHORT).show();
-                reload();
+//                reload();
             }
-            else if (onFinishedListener != null) {
+            else*/ if (onFinishedListener != null) {
                 onFinishedListener.onFinished();
                 onFinishedListener = null;
             }

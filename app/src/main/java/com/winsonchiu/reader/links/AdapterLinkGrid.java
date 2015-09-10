@@ -144,9 +144,9 @@ public class AdapterLinkGrid extends AdapterLink {
             buttonComments.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    if (videoFull.isPlaying()) {
-                        videoFull.stopPlayback();
-                        videoFull.setVisibility(View.GONE);
+                    if (mediaPlayer != null && mediaPlayer.isPlaying()) {
+                        mediaPlayer.stop();
+                        surfaceVideo.setVisibility(View.GONE);
                         imageFull.setVisibility(View.VISIBLE);
                         imagePlay.setVisibility(View.VISIBLE);
                     }

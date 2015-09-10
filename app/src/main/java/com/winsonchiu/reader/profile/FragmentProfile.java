@@ -43,6 +43,7 @@ import com.winsonchiu.reader.AppSettings;
 import com.winsonchiu.reader.CustomApplication;
 import com.winsonchiu.reader.FragmentBase;
 import com.winsonchiu.reader.FragmentListenerBase;
+import com.winsonchiu.reader.FragmentNewMessage;
 import com.winsonchiu.reader.MainActivity;
 import com.winsonchiu.reader.R;
 import com.winsonchiu.reader.Theme;
@@ -552,8 +553,22 @@ public class FragmentProfile extends FragmentBase implements Toolbar.OnMenuItemC
 
     @Override
     public boolean onMenuItemClick(MenuItem item) {
-        item.setChecked(true);
+        int id = item.getItemId();
 
+        switch (id) {
+            case R.id.item_new_message:
+                FragmentNewMessage fragmentNewMessage = FragmentNewMessage.newInstance(mListener.getControllerProfile().getUser().getName(), "", "");
+                getFragmentManager().beginTransaction()
+                        .hide(FragmentProfile.this)
+                        .add(R.id.frame_fragment, fragmentNewMessage, FragmentNewMessage.TAG)
+                        .addToBackStack(null)
+                        .commit();
+                break;
+            case R.id.item_search:
+                return true;
+        }
+
+        item.setChecked(true);
 
         Sort sort = Sort.fromMenuId(item.getItemId());
         if (sort != null) {

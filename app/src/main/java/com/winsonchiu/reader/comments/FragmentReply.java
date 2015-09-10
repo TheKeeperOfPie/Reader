@@ -128,6 +128,7 @@ public class FragmentReply extends FragmentBase implements Toolbar.OnMenuItemCli
         typedArray.recycle();
 
         int colorResourcePrimary = UtilsColor.computeContrast(colorPrimary, Color.WHITE) > 3f ? R.color.darkThemeIconFilter : R.color.lightThemeIconFilter;
+        int colorResourceTextMuted = UtilsColor.computeContrast(colorPrimary, Color.WHITE) > 3f ? R.color.darkThemeTextColor : R.color.lightThemeTextColorMuted;
 
         colorFilterPrimary = new PorterDuffColorFilter(getResources().getColor(colorResourcePrimary), PorterDuff.Mode.MULTIPLY);
         colorFilterIcon = new PorterDuffColorFilter(colorIcon, PorterDuff.Mode.MULTIPLY);
@@ -260,6 +261,8 @@ public class FragmentReply extends FragmentBase implements Toolbar.OnMenuItemCli
         tabLayout = (TabLayout) view.findViewById(R.id.layout_tab);
         tabLayout.setTabMode(TabLayout.MODE_FIXED);
         tabLayout.setTabGravity(TabLayout.GRAVITY_FILL);
+        tabLayout.setTabTextColors(getResources().getColor(colorResourceTextMuted),
+                getResources().getColor(colorResourcePrimary));
         tabLayout.setupWithViewPager(viewPager);
         viewPager.addOnPageChangeListener(new TabLayout.TabLayoutOnPageChangeListener(tabLayout));
 

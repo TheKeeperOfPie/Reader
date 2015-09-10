@@ -29,6 +29,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewTreeObserver;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.ImageView;
@@ -309,6 +310,7 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
         typedArray.recycle();
 
         int colorResourcePrimary = UtilsColor.computeContrast(colorPrimary, Color.WHITE) > 3f ? R.color.darkThemeIconFilter : R.color.lightThemeIconFilter;
+        int colorResourceTextMuted = UtilsColor.computeContrast(colorPrimary, Color.WHITE) > 3f ? R.color.darkThemeTextColorMuted : R.color.lightThemeTextColorMuted;
 
         colorFilterPrimary = new CustomColorFilter(getResources().getColor(colorResourcePrimary), PorterDuff.Mode.MULTIPLY);
 
@@ -322,8 +324,9 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
         ContextThemeWrapper contextThemeWrapper = new ContextThemeWrapper(new ContextThemeWrapper(activity, styleToolbar), styleColorBackground);
 
         toolbar = (Toolbar) activity.getLayoutInflater().cloneInContext(contextThemeWrapper).inflate(R.layout.toolbar, layoutAppBar, false);
-        layoutAppBar.addView(toolbar);
-        ((AppBarLayout.LayoutParams) toolbar.getLayoutParams()).setScrollFlags(AppBarLayout.LayoutParams.SCROLL_FLAG_SCROLL | AppBarLayout.LayoutParams.SCROLL_FLAG_ENTER_ALWAYS);
+        layoutAppBar.addView(toolbar, 0);
+        ((AppBarLayout.LayoutParams) toolbar.getLayoutParams()).setScrollFlags(
+                AppBarLayout.LayoutParams.SCROLL_FLAG_SCROLL | AppBarLayout.LayoutParams.SCROLL_FLAG_ENTER_ALWAYS);
         toolbar.setTitleTextColor(getResources().getColor(colorResourcePrimary));
         setUpToolbar();
 
@@ -383,7 +386,8 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
                 R.id.recycler_search_subreddits);
         recyclerSearchSubreddits.setLayoutManager(layoutManagerSubreddits);
         recyclerSearchSubreddits.setAdapter(adapterSearchSubreddits);
-        recyclerSearchSubreddits.addItemDecoration(new ItemDecorationDivider(activity, ItemDecorationDivider.VERTICAL_LIST));
+        recyclerSearchSubreddits.addItemDecoration(
+                new ItemDecorationDivider(activity, ItemDecorationDivider.VERTICAL_LIST));
 
         itemTouchHelperSubreddits = new ItemTouchHelper(new SimpleCallbackBackground(0, 0, windowBackground) {
 
@@ -398,7 +402,8 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
 
             @Override
             public boolean onMove(RecyclerView recyclerView, RecyclerView.ViewHolder viewHolder, RecyclerView.ViewHolder target) {
-                mListener.getControllerSearch().moveSubreddit(viewHolder.getAdapterPosition(), target.getAdapterPosition());
+                mListener.getControllerSearch().moveSubreddit(viewHolder.getAdapterPosition(),
+                        target.getAdapterPosition());
                 return true;
             }
 
@@ -613,14 +618,16 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
         recyclerSearchLinks = (RecyclerView) view.findViewById(R.id.recycler_search_links);
         recyclerSearchLinks.setLayoutManager(layoutManagerLinks);
         recyclerSearchLinks.setAdapter(adapterLinks);
-        recyclerSearchLinks.addItemDecoration(new ItemDecorationDivider(activity, ItemDecorationDivider.VERTICAL_LIST));
+        recyclerSearchLinks.addItemDecoration(
+                new ItemDecorationDivider(activity, ItemDecorationDivider.VERTICAL_LIST));
 
         layoutManagerLinksSubreddit = new LinearLayoutManager(activity, LinearLayoutManager.VERTICAL, false);
         recyclerSearchLinksSubreddit = (RecyclerView) view.findViewById(
                 R.id.recycler_search_links_subreddit);
         recyclerSearchLinksSubreddit.setLayoutManager(layoutManagerLinksSubreddit);
         recyclerSearchLinksSubreddit.setAdapter(adapterLinksSubreddit);
-        recyclerSearchLinksSubreddit.addItemDecoration(new ItemDecorationDivider(activity, ItemDecorationDivider.VERTICAL_LIST));
+        recyclerSearchLinksSubreddit.addItemDecoration(
+                new ItemDecorationDivider(activity, ItemDecorationDivider.VERTICAL_LIST));
 
         adapterSearchSubredditsRecommended = new AdapterSearchSubreddits(activity,
                 new ControllerSearchBase() {
@@ -669,14 +676,15 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
                 R.id.recycler_search_subreddits_recommended);
         recyclerSearchSubredditsRecommended.setLayoutManager(layoutManagerSubredditsRecommended);
         recyclerSearchSubredditsRecommended.setAdapter(adapterSearchSubredditsRecommended);
-        recyclerSearchSubredditsRecommended.addItemDecoration(new ItemDecorationDivider(activity, ItemDecorationDivider.VERTICAL_LIST));
+        recyclerSearchSubredditsRecommended.addItemDecoration(
+                new ItemDecorationDivider(activity, ItemDecorationDivider.VERTICAL_LIST));
 
         viewPager = (ViewPager) view.findViewById(R.id.view_pager_search);
         viewPager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
             @Override
             public void onPageScrolled(int position,
-                                       float positionOffset,
-                                       int positionOffsetPixels) {
+                    float positionOffset,
+                    int positionOffsetPixels) {
 
             }
 
@@ -684,7 +692,10 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
             public void onPageSelected(int position) {
                 mListener.getControllerSearch()
                         .setCurrentPage(position);
-                boolean sortSubredditsShown = mListener.getControllerSearch().getCurrentPage() == ControllerSearch.PAGE_SUBREDDITS || mListener.getControllerSearch().getCurrentPage() == ControllerSearch.PAGE_SUBREDDITS_RECOMMENDED;
+                boolean sortSubredditsShown = mListener.getControllerSearch()
+                        .getCurrentPage() == ControllerSearch.PAGE_SUBREDDITS || mListener
+                        .getControllerSearch()
+                        .getCurrentPage() == ControllerSearch.PAGE_SUBREDDITS_RECOMMENDED;
 
                 menu.findItem(R.id.item_sort_subreddits).setEnabled(sortSubredditsShown);
                 menu.findItem(R.id.item_sort_subreddits).setVisible(sortSubredditsShown);
@@ -744,8 +755,21 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
 
         tabLayout = (TabLayout) view.findViewById(R.id.tab_search);
         tabLayout.setTabMode(TabLayout.MODE_SCROLLABLE);
+        tabLayout.setTabTextColors(getResources().getColor(colorResourceTextMuted),
+                getResources().getColor(colorResourcePrimary));
+        tabLayout.setBackgroundColor(getResources().getColor(android.R.color.transparent));
         tabLayout.setupWithViewPager(viewPager);
         viewPager.addOnPageChangeListener(new TabLayout.TabLayoutOnPageChangeListener(tabLayout));
+
+        tabLayout.getViewTreeObserver().addOnGlobalLayoutListener(
+                new ViewTreeObserver.OnGlobalLayoutListener() {
+                    @Override
+                    public void onGlobalLayout() {
+                        tabLayout.setVisibility(View.GONE);
+                        tabLayout.setVisibility(View.VISIBLE);
+                        tabLayout.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+                    }
+                });
 
         return view;
     }

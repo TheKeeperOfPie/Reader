@@ -115,4 +115,12 @@
 
     </item>
 
+    <item
+        android:id="@+id/item_new_message"
+        android:title="@string/item_new_message"
+        android:icon="@drawable/ic_email_white_24dp"
+        android:orderInCategory="300"
+        app:showAsAction="ifRoom"
+        />
+
 </menu>

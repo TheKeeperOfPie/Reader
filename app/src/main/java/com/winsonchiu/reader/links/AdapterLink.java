@@ -14,6 +14,7 @@ import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.content.res.TypedArray;
 import android.graphics.Bitmap;
+import android.graphics.Canvas;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
 import android.graphics.drawable.Drawable;
@@ -26,6 +27,7 @@ import android.support.v4.view.MenuItemCompat;
 import android.support.v4.view.MotionEventCompat;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AlertDialog;
+import android.support.v7.internal.view.menu.MenuItemImpl;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.RecyclerView.LayoutManager;
 import android.support.v7.widget.ShareActionProvider;
@@ -49,6 +51,8 @@ import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
+import android.view.SurfaceHolder;
+import android.view.SurfaceView;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
@@ -101,6 +105,7 @@ import com.winsonchiu.reader.views.WebViewFixed;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
@@ -204,7 +209,9 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         for (RecyclerView.ViewHolder viewHolder : viewHolders) {
             if (viewHolder instanceof AdapterLink.ViewHolderBase) {
                 AdapterLink.ViewHolderBase viewHolderBase = (AdapterLink.ViewHolderBase) viewHolder;
-                viewHolderBase.videoFull.pause();
+                if (viewHolderBase.mediaPlayer != null) {
+                    viewHolderBase.mediaPlayer.stop();
+                }
             }
         }
     }
@@ -385,13 +392,12 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
 
     public static abstract class ViewHolderBase extends RecyclerView.ViewHolder
             implements Toolbar.OnMenuItemClickListener, View.OnClickListener,
-            View.OnLongClickListener {
+            View.OnLongClickListener, SurfaceHolder.Callback {
 
         public Link link;
         public boolean showSubreddit;
 
         public FrameLayout frameFull;
-        public VideoView videoFull;
         public ProgressBar progressImage;
         public ViewPager viewPagerFull;
         public ImageView imagePlay;
@@ -458,6 +464,11 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         public SharedPreferences preferences;
         public Resources resources;
         public boolean isYouTubeFullscreen;
+        public SurfaceView surfaceVideo;
+        public SurfaceHolder surfaceHolder;
+        public MediaPlayer mediaPlayer;
+        public Uri uriVideo;
+        public int bufferPercentage;
 
         public ViewHolderBase(View itemView,
                 EventListener eventListener,
@@ -483,25 +494,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         protected void expandToolbarActions() {
 
             if (!toolbarActions.isShown()) {
-                addToHistory();
-                setVoteColors();
-
-                ShareActionProvider shareActionProvider = (ShareActionProvider) MenuItemCompat
-                        .getActionProvider(
-                                itemShare);
-                if (shareActionProvider != null) {
-                    shareActionProvider.setShareIntent(getShareIntent());
-                }
-
-                itemDownloadImage.setVisible(
-                        Reddit.checkIsImage(link.getUrl()) || Reddit.placeImageUrl(link) && !link
-                                .getUrl().endsWith(Reddit.GIF));
-                itemDownloadImage.setEnabled(
-                        Reddit.checkIsImage(link.getUrl()) || Reddit.placeImageUrl(link) && !link
-                                .getUrl().endsWith(Reddit.GIF));
-
-                setToolbarMenuVisibility();
-                clearOverlay();
+                setToolbarValues();
             }
 
             toolbarActions.post(new Runnable() {
@@ -511,6 +504,40 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                             getRatio(), null);
                 }
             });
+        }
+
+        protected void showToolbarActionsInstant() {
+
+            if (!toolbarActions.isShown()) {
+                setToolbarValues();
+            }
+
+            layoutContainerExpand.setVisibility(View.VISIBLE);
+            layoutContainerExpand.getLayoutParams().height = AnimationUtils.getMeasuredHeight(layoutContainerExpand, getRatio());
+            layoutContainerExpand.requestLayout();
+        }
+
+        private void setToolbarValues() {
+
+            addToHistory();
+            setVoteColors();
+
+            ShareActionProvider shareActionProvider = (ShareActionProvider) MenuItemCompat
+                    .getActionProvider(
+                            itemShare);
+            if (shareActionProvider != null) {
+                shareActionProvider.setShareIntent(getShareIntent());
+            }
+
+            itemDownloadImage.setVisible(
+                    Reddit.checkIsImage(link.getUrl()) || Reddit.placeImageUrl(link) && !link
+                            .getUrl().endsWith(Reddit.GIF));
+            itemDownloadImage.setEnabled(
+                    Reddit.checkIsImage(link.getUrl()) || Reddit.placeImageUrl(link) && !link
+                            .getUrl().endsWith(Reddit.GIF));
+
+            setToolbarMenuVisibility();
+            clearOverlay();
         }
 
         private void sendComment() {
@@ -527,7 +554,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             preferences = PreferenceManager.getDefaultSharedPreferences(itemView.getContext());
 
             TypedArray typedArray = itemView.getContext().getTheme().obtainStyledAttributes(
-                    new int[] {android.R.attr.textColorPrimary, android.R.attr.textColorSecondary, R.attr.colorAlert, R.attr.colorAccent, R.attr.colorIconFilter});
+                    new int[]{android.R.attr.textColorPrimary, android.R.attr.textColorSecondary, R.attr.colorAlert, R.attr.colorAccent, R.attr.colorIconFilter});
             colorTextPrimaryDefault = typedArray.getColor(0,
                     resources.getColor(R.color.darkThemeTextColor));
             colorTextSecondaryDefault = typedArray.getColor(1,
@@ -615,11 +642,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
 
             buttonComments.setColorFilter(colorFilterIconDefault);
 
-            videoFull = new VideoView(new VideoViewContextWrapper(itemView.getContext()));
-            videoFull.setVisibility(View.GONE);
-
-            frameFull.addView(videoFull, FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.WRAP_CONTENT);
-
+            surfaceVideo = (SurfaceView) itemView.findViewById(R.id.surface_video);
         }
 
         protected void initializeListeners() {
@@ -656,19 +679,74 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                 }
             };
 
+            // setClickable is needed otherwise we can't intercept touch events
             itemView.setClickable(true);
             itemView.setOnTouchListener(onTouchListener);
+            toolbarActions.setOnTouchListener(onTouchListener);
 
-            editTextReply.setOnTouchListener(new OnTouchListenerDisallow(disallowListener));
-
-            videoFull.setMediaController(mediaController);
-            videoFull.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
+            mediaController.setMediaPlayer(new MediaController.MediaPlayerControl() {
                 @Override
-                public void onPrepared(MediaPlayer mp) {
-                    mediaController.hide();
+                public void start() {
+                    if (mediaPlayer != null) {
+                        mediaPlayer.start();
+                    }
+                }
+
+                @Override
+                public void pause() {
+                    if (mediaPlayer != null) {
+                        mediaPlayer.pause();
+                    }
+                }
+
+                @Override
+                public int getDuration() {
+                    return mediaPlayer != null ? mediaPlayer.getDuration() : 0;
+                }
+
+                @Override
+                public int getCurrentPosition() {
+                    return mediaPlayer != null ? mediaPlayer.getCurrentPosition() : 0;
+                }
+
+                @Override
+                public void seekTo(int pos) {
+                    if (mediaPlayer != null) {
+                        mediaPlayer.seekTo(pos);
+                    }
+                }
+
+                @Override
+                public boolean isPlaying() {
+                    return mediaPlayer != null && mediaPlayer.isPlaying();
+                }
+
+                @Override
+                public int getBufferPercentage() {
+                    return bufferPercentage;
+                }
+
+                @Override
+                public boolean canPause() {
+                    return true;
+                }
+
+                @Override
+                public boolean canSeekBackward() {
+                    return true;
+                }
+
+                @Override
+                public boolean canSeekForward() {
+                    return true;
+                }
+
+                @Override
+                public int getAudioSessionId() {
+                    return mediaPlayer != null ? mediaPlayer.getAudioSessionId() : 0;
                 }
             });
-            videoFull.setOnTouchListener(new View.OnTouchListener() {
+            surfaceVideo.setOnTouchListener(new View.OnTouchListener() {
                 @Override
                 public boolean onTouch(View v, MotionEvent event) {
                     // TODO: Use custom MediaController
@@ -683,8 +761,9 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                     return true;
                 }
             });
-            mediaController.setAnchorView(videoFull);
+            mediaController.setAnchorView(surfaceVideo);
 
+            editTextReply.setOnTouchListener(new OnTouchListenerDisallow(disallowListener));
             editTextReply.addTextChangedListener(new TextWatcher() {
                 @Override
                 public void beforeTextChanged(CharSequence s, int start, int count, int after) {
@@ -944,7 +1023,9 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
 
             addToHistory();
             clearOverlay();
-            videoFull.stopPlayback();
+            if (mediaPlayer != null) {
+                mediaPlayer.stop();
+            }
 
             // TODO: Improve where this logic is handled in click timeline
             if (link.getNumComments() == 0) {
@@ -1110,10 +1191,14 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                                     new WebViewFixed.OnFinishedListener() {
                                         @Override
                                         public void onFinished() {
+                                            webFull.setVisibility(View.GONE);
+                                            webFull.setVisibility(View.VISIBLE);
                                             recyclerCallback.scrollTo(getAdapterPosition());
+                                            Log.d(TAG, "onFinished");
                                         }
                                     });
-                            webFull.setOnTouchListener(new OnTouchListenerDisallow(disallowListener));
+                            webFull.setOnTouchListener(
+                                    new OnTouchListenerDisallow(disallowListener));
                             webFull.setWebViewClient(new WebViewClient() {
 
                                 @Override
@@ -1121,35 +1206,44 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                                         String url,
                                         Bitmap favicon) {
                                     super.onPageStarted(view, url, favicon);
-//                                    progressImage.setVisibility(View.VISIBLE);
-//                                    recyclerCallback.scrollTo(getAdapterPosition());
+                                    progressImage.setVisibility(View.VISIBLE);
+                                    Log.d(TAG, "onPageStarted");
                                 }
 
                                 @Override
                                 public void onPageFinished(WebView view, String url) {
                                     super.onPageFinished(view, url);
-//                                    progressImage.setVisibility(View.GONE);
+                                    progressImage.setVisibility(View.GONE);
+                                    Log.d(TAG, "onPageFinished");
                                 }
 
                                 @Override
-                                public void onScaleChanged(WebView view, float oldScale, float newScale) {
+                                public void onScaleChanged(WebView view,
+                                        float oldScale,
+                                        float newScale) {
                                     ((WebViewFixed) view).lockHeight();
                                     super.onScaleChanged(view, oldScale, newScale);
                                 }
 
                                 @Override
-                                public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
+                                public void onReceivedError(WebView view,
+                                        WebResourceRequest request,
+                                        WebResourceError error) {
                                     super.onReceivedError(view, request, error);
                                     Log.e(TAG, "WebView error: " + error);
                                 }
 
                             });
                             frameFull.addView(webFull, frameFull.getChildCount() - 1);
-
                         }
                         webFull.onResume();
-                        webFull.loadData(Reddit.getImageHtml(link.getUrl()),
-                                "text/html", "UTF-8");
+                        webFull.post(new Runnable() {
+                            @Override
+                            public void run() {
+                                webFull.loadData(Reddit.getImageHtml(link.getUrl()),
+                                        "text/html", "UTF-8");
+                            }
+                        });
                     }
                 }, 50);
             }
@@ -1383,22 +1477,18 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                             }, 0);
         }
 
-        private void loadVideo(String url, float heightRatio) {
-            Uri uri = Uri.parse(url);
-            videoFull.setVideoURI(uri);
-            videoFull.setVisibility(View.VISIBLE);
-            videoFull.getLayoutParams().height = (int) (ViewHolderBase.this.itemView
-                    .getWidth() * heightRatio);
-            videoFull.invalidate();
-            videoFull.setOnCompletionListener(
-                    new MediaPlayer.OnCompletionListener() {
-                        @Override
-                        public void onCompletion(MediaPlayer mp) {
-                            videoFull.start();
-                        }
-                    });
-            videoFull.start();
+        private void loadVideo(final String url, float heightRatio) {
+            uriVideo = Uri.parse(url);
             progressImage.setVisibility(View.GONE);
+            surfaceVideo.setVisibility(View.VISIBLE);
+
+            surfaceVideo.getLayoutParams().height = (int) (itemView.getWidth() * heightRatio);
+            surfaceVideo.requestLayout();
+            surfaceVideo.setVisibility(View.GONE);
+            surfaceVideo.setVisibility(View.VISIBLE);
+            surfaceHolder = surfaceVideo.getHolder();
+            surfaceHolder.addCallback(ViewHolderBase.this);
+            surfaceHolder.setSizeFromLayout();
             recyclerCallback.scrollTo(getAdapterPosition());
         }
 
@@ -1527,7 +1617,16 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             itemCopyText.setVisible(link.isSelf());
             itemCopyText.setEnabled(link.isSelf());
 
-            int maxNum = itemView.getWidth() / toolbarItemWidth;
+            calculateVisibleToolbarItems(itemView.getWidth());
+
+            syncSaveIcon();
+        }
+
+        public void calculateVisibleToolbarItems(int width) {
+
+            Menu menu = toolbarActions.getMenu();
+
+            int maxNum = width / toolbarItemWidth;
             int numShown = 0;
 
             for (int index = 0; index < menu.size(); index++) {
@@ -1539,16 +1638,27 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                 }
 
                 if (numShown++ < maxNum - 1) {
-                    menuItem
-                            .setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+
+                    if (menuItem instanceof MenuItemImpl) {
+                        if (!((MenuItemImpl) menuItem).requiresActionButton()) {
+                            menuItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+                        }
+                    }
+                    else {
+                        menuItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+                    }
                 }
                 else {
-                    menuItem
-                            .setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
+                    if (menuItem instanceof MenuItemImpl) {
+                        if (!((MenuItemImpl) menuItem).requestsActionButton()) {
+                            menuItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER);
+                        }
+                    }
+                    else {
+                        menuItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER);
+                    }
                 }
             }
-
-            syncSaveIcon();
         }
 
         public void onDetach() {
@@ -1568,8 +1678,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                 youTubePlayer = null;
             }
             viewYouTube.setVisibility(View.GONE);
-            videoFull.stopPlayback();
-            videoFull.setVisibility(View.GONE);
+            surfaceVideo.setVisibility(View.GONE);
             viewPagerFull.setVisibility(View.GONE);
             imagePlay.setVisibility(View.GONE);
             imageThumbnail.setVisibility(View.VISIBLE);
@@ -1678,7 +1787,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
 
         public void setVisibility(int visibility) {
             frameFull.setVisibility(visibility);
-            videoFull.setVisibility(visibility);
+            surfaceVideo.setVisibility(visibility);
             progressImage.setVisibility(visibility);
             viewPagerFull.setVisibility(visibility);
             imagePlay.setVisibility(visibility);
@@ -1696,6 +1805,60 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             buttonSendReply.setVisibility(visibility);
             viewYouTube.setVisibility(visibility);
             itemView.setVisibility(visibility);
+        }
+
+        @Override
+        public void surfaceCreated(SurfaceHolder holder) {
+            Log.d(TAG, "surfaceCreated");
+            if (uriVideo == null) {
+                return;
+            }
+
+            bufferPercentage = 0;
+            mediaPlayer = new MediaPlayer();
+            mediaPlayer.setLooping(true);
+            mediaPlayer.setOnBufferingUpdateListener(new MediaPlayer.OnBufferingUpdateListener() {
+                @Override
+                public void onBufferingUpdate(MediaPlayer mp, int percent) {
+                    bufferPercentage = percent;
+                }
+            });
+            mediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
+                @Override
+                public void onPrepared(MediaPlayer mp) {
+                    mediaController.hide();
+                    surfaceHolder.setFixedSize(mp.getVideoWidth(), mp.getVideoHeight());
+                    mp.start();
+                    Log.d(TAG, "onPrepared");
+                }
+            });
+            mediaPlayer.setDisplay(surfaceHolder);
+
+            try {
+                mediaPlayer.setDataSource(surfaceVideo.getContext(), uriVideo);
+                mediaPlayer.prepareAsync();
+            }
+            catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+        @Override
+        public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
+            Log.d(TAG, "surfaceChanged");
+        }
+
+        @Override
+        public void surfaceDestroyed(SurfaceHolder holder) {
+            Log.d(TAG, "surfaceDestroyed");
+            if (mediaPlayer != null) {
+                mediaPlayer.reset();
+                mediaPlayer.release();
+                mediaPlayer = null;
+            }
+            if (surfaceHolder != null) {
+                surfaceHolder.removeCallback(this);
+            }
         }
 
         public interface EventListener {

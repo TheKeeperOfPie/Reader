@@ -101,6 +101,7 @@ import com.winsonchiu.reader.profile.FragmentProfile;
 import com.winsonchiu.reader.search.ControllerSearch;
 import com.winsonchiu.reader.search.FragmentSearch;
 import com.winsonchiu.reader.settings.ActivitySettings;
+import com.winsonchiu.reader.utils.AnimationUtils;
 import com.winsonchiu.reader.utils.CustomColorFilter;
 import com.winsonchiu.reader.utils.TouchEventListener;
 import com.winsonchiu.reader.utils.UtilsColor;
@@ -789,7 +790,6 @@ public class MainActivity extends YouTubeBaseActivity
         }
 
         Account[] accounts = accountManager.getAccountsByType(Reddit.ACCOUNT_TYPE);
-        Log.d(TAG, "Accounts: " + Arrays.toString(accounts));
 
         Account accountUser = null;
 
@@ -948,7 +948,8 @@ public class MainActivity extends YouTubeBaseActivity
 
                     for (Thing thing : listing.getChildren()) {
                         Link link = (Link) thing;
-                        if (Reddit.checkIsImage(link.getUrl()) && !thing.getName().equals(nameCurrent)) {
+                        if (Reddit.checkIsImage(link.getUrl()) && !thing.getName()
+                                .equals(nameCurrent)) {
                             linkChosen = link;
                             break;
                         }
@@ -972,7 +973,8 @@ public class MainActivity extends YouTubeBaseActivity
     }
 
     private void loadHeaderFromFile() {
-        Reddit.loadPicasso(MainActivity.this).invalidate(getFileStreamPath(AppSettings.HEADER_FILE_NAME));
+        Reddit.loadPicasso(MainActivity.this).invalidate(
+                getFileStreamPath(AppSettings.HEADER_FILE_NAME));
 
         scrollHeaderVertical.post(new Runnable() {
             @Override
@@ -980,12 +982,14 @@ public class MainActivity extends YouTubeBaseActivity
 
                 BitmapFactory.Options options = new BitmapFactory.Options();
                 options.inJustDecodeBounds = true;
-                BitmapFactory.decodeFile(getFileStreamPath(AppSettings.HEADER_FILE_NAME).getAbsolutePath(), options);
+                BitmapFactory.decodeFile(
+                        getFileStreamPath(AppSettings.HEADER_FILE_NAME).getAbsolutePath(), options);
 
                 /*
                     Determine which length is longer and scale image appropriately
                  */
-                float ratioHeader = (float) scrollHeaderVertical.getWidth() / scrollHeaderVertical.getHeight();
+                float ratioHeader = (float) scrollHeaderVertical.getWidth() / scrollHeaderVertical
+                        .getHeight();
                 float ratioImage = (float) options.outWidth / options.outHeight;
                 int targetWidth = 0;
                 int targetHeight = 0;
@@ -997,10 +1001,9 @@ public class MainActivity extends YouTubeBaseActivity
                     targetWidth = scrollHeaderVertical.getWidth();
                 }
 
-                Log.d(TAG, "ratioHeader: " + ratioHeader);
-                Log.d(TAG, "ratioImage: " + ratioImage);
-
-                Reddit.loadPicasso(MainActivity.this).load(getFileStreamPath(AppSettings.HEADER_FILE_NAME)).noPlaceholder().resize(targetWidth, targetHeight).into(imageHeader, new Callback() {
+                Reddit.loadPicasso(MainActivity.this)
+                        .load(getFileStreamPath(AppSettings.HEADER_FILE_NAME)).noPlaceholder()
+                        .resize(targetWidth, targetHeight).into(imageHeader, new Callback() {
                     @Override
                     public void onSuccess() {
 
@@ -1014,8 +1017,12 @@ public class MainActivity extends YouTubeBaseActivity
                         imageHeader.post(new Runnable() {
                             @Override
                             public void run() {
-                                scrollHeaderVertical.scrollTo(0, imageHeader.getHeight() / 2 - scrollHeaderVertical.getHeight() / 2);
-                                scrollHeaderHorizontal.scrollTo(0, imageHeader.getWidth() / 2 - scrollHeaderHorizontal.getWidth() / 2);
+                                scrollHeaderVertical.scrollTo(0,
+                                        imageHeader.getHeight() / 2 - scrollHeaderVertical
+                                                .getHeight() / 2);
+                                scrollHeaderHorizontal.scrollTo(0,
+                                        imageHeader.getWidth() / 2 - scrollHeaderHorizontal
+                                                .getWidth() / 2);
                             }
                         });
                     }
@@ -1236,12 +1243,20 @@ public class MainActivity extends YouTubeBaseActivity
 
     private void setAccountsVisible(boolean visible) {
         if (visible) {
-            layoutAccounts.setVisibility(View.VISIBLE);
             buttonAccounts.setImageResource(R.drawable.ic_arrow_drop_up_white_24dp);
         }
         else {
-            layoutAccounts.setVisibility(View.GONE);
             buttonAccounts.setImageResource(R.drawable.ic_arrow_drop_down_white_24dp);
+        }
+
+        // Checks if layoutAccounts needs animating or to just immediately hide it
+        if ((layoutAccounts.getVisibility() == View.VISIBLE) != visible) {
+            if (layoutAccounts.isShown() || layoutAccounts.getVisibility() != View.VISIBLE) {
+                AnimationUtils.animateExpand(layoutAccounts, 1f, null, 250);
+            }
+            else {
+                layoutAccounts.setVisibility(View.GONE);
+            }
         }
     }
 

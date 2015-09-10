@@ -47,14 +47,19 @@ public class AdapterAlbum extends PagerAdapter {
     private Album album;
     private Stack<View> recycledViews;
 
-    public AdapterAlbum(ViewPager viewPager, Album album, EventListener eventListener, DisallowListener disallowListener, CustomColorFilter colorFilterIcon) {
+    public AdapterAlbum(ViewPager viewPager,
+            Album album,
+            EventListener eventListener,
+            DisallowListener disallowListener,
+            CustomColorFilter colorFilterIcon) {
         this.viewPager = viewPager;
         this.album = album;
         this.eventListener = eventListener;
         this.disallowListener = disallowListener;
         this.colorFilterIcon = colorFilterIcon;
         recycledViews = new Stack<>();
-        margin = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 8, viewPager.getContext().getResources().getDisplayMetrics());
+        margin = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 8,
+                viewPager.getContext().getResources().getDisplayMetrics());
 
     }
 
@@ -81,7 +86,7 @@ public class AdapterAlbum extends PagerAdapter {
         final ViewHolder viewHolder = (ViewHolder) view.getTag();
         viewHolder.instantiate(image, position, album.getImagesCount());
 
-        WebViewFixed webView = WebViewFixed.newInstance(
+        final WebViewFixed webView = WebViewFixed.newInstance(
                 container.getContext().getApplicationContext(),
                 false,
                 new WebViewFixed.OnFinishedListener() {
@@ -104,14 +109,17 @@ public class AdapterAlbum extends PagerAdapter {
             }
 
             @Override
-            public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
+            public void onReceivedError(WebView view,
+                    WebResourceRequest request,
+                    WebResourceError error) {
                 super.onReceivedError(view, request, error);
                 Log.e(TAG, "WebView error: " + error);
             }
 
         });
 
-        RelativeLayout.LayoutParams layoutParams = new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
+        RelativeLayout.LayoutParams layoutParams = new RelativeLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
         layoutParams.addRule(RelativeLayout.ALIGN_PARENT_START, RelativeLayout.TRUE);
         layoutParams.addRule(RelativeLayout.ALIGN_PARENT_END, RelativeLayout.TRUE);
         layoutParams.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM, RelativeLayout.TRUE);
@@ -119,12 +127,25 @@ public class AdapterAlbum extends PagerAdapter {
 
         ((RelativeLayout) view).addView(webView, 0, layoutParams);
 
-        CharSequence title = !TextUtils.isEmpty(image.getTitle()) && !"null".equals(image.getTitle()) ? Html.fromHtml(image.getTitle()) : "";
+        final CharSequence title =
+                !TextUtils.isEmpty(image.getTitle()) && !"null".equals(image.getTitle()) ?
+                        Html.fromHtml(image.getTitle()) : "";
 
-        CharSequence description = !TextUtils.isEmpty(image.getDescription()) && !"null".equals(image.getDescription()) ? Html.fromHtml(image.getDescription()) : "";
+        final CharSequence description = !TextUtils.isEmpty(image.getDescription()) && !"null"
+                .equals(image.getDescription()) ? Html.fromHtml(image.getDescription()) : "";
 
-        webView.loadData(Reddit.getImageHtmlForAlbum(image.getLink(), title, description, 0xFFFFFFFF, margin), "text/html", "UTF-8");
+        Log.d(TAG, "title: " + title);
+        Log.d(TAG, "description: " + description);
+
         webView.setVisibility(View.VISIBLE);
+        webView.post(new Runnable() {
+            @Override
+            public void run() {
+                webView.loadData(
+                        Reddit.getImageHtmlForAlbum(image.getLink(), title, description, 0xFFFFFFFF,
+                                margin), "text/html; charset=UTF-8", "UTF-8");
+            }
+        });
 
         container.addView(view);
         container.requestLayout();
@@ -192,7 +213,10 @@ public class AdapterAlbum extends PagerAdapter {
         protected TextView textAlbumIndicator;
         protected WebViewFixed webView;
 
-        public ViewHolder(View view, EventListener listener, DisallowListener disallowListener, CustomColorFilter colorFilterIcon) {
+        public ViewHolder(View view,
+                EventListener listener,
+                DisallowListener disallowListener,
+                CustomColorFilter colorFilterIcon) {
             this.eventListener = listener;
             this.disallowListener = disallowListener;
             layoutRelative = (RelativeLayout) view;

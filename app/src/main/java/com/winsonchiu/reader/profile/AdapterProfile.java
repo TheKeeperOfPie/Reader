@@ -234,7 +234,9 @@ public class AdapterProfile extends RecyclerView.Adapter<RecyclerView.ViewHolder
         for (RecyclerView.ViewHolder viewHolder : viewHolders) {
             if (viewHolder instanceof AdapterLink.ViewHolderBase) {
                 AdapterLink.ViewHolderBase viewHolderBase = (AdapterLink.ViewHolderBase) viewHolder;
-                viewHolderBase.videoFull.pause();
+                if (viewHolderBase.mediaPlayer != null) {
+                    viewHolderBase.mediaPlayer.stop();
+                }
             }
         }
     }

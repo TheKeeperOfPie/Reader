@@ -263,4 +263,6 @@
     <string name="secret_suffix">steps from the secret</string>
     <string name="secret_toggled">Secret toggled!</string>
     <string name="header_subreddit_error">Error fetching header image</string>
+    <string name="item_new_message">Send message</string>
+    <string name="message">Message</string>
 </resources>

@@ -155,6 +155,7 @@ public class FragmentNewPost extends FragmentBase implements Toolbar.OnMenuItemC
         typedArray.recycle();
 
         int colorResourcePrimary = UtilsColor.computeContrast(colorPrimary, Color.WHITE) > 3f ? R.color.darkThemeIconFilter : R.color.lightThemeIconFilter;
+        int colorResourceTextMuted = UtilsColor.computeContrast(colorPrimary, Color.WHITE) > 3f ? R.color.darkThemeTextColorMuted : R.color.lightThemeTextColorMuted;
 
         colorFilterPrimary = new PorterDuffColorFilter(getResources().getColor(colorResourcePrimary), PorterDuff.Mode.MULTIPLY);
         colorFilterIcon = new PorterDuffColorFilter(colorIcon, PorterDuff.Mode.MULTIPLY);
@@ -225,6 +226,8 @@ public class FragmentNewPost extends FragmentBase implements Toolbar.OnMenuItemC
         tabLayout = (TabLayout) view.findViewById(R.id.layout_tab);
         tabLayout.setTabMode(TabLayout.MODE_FIXED);
         tabLayout.setTabGravity(TabLayout.GRAVITY_FILL);
+        tabLayout.setTabTextColors(getResources().getColor(colorResourceTextMuted),
+                getResources().getColor(colorResourcePrimary));
 
         viewPager = (ViewPager) view.findViewById(R.id.view_pager);
         viewPager.setAdapter(new PagerAdapter() {

@@ -90,10 +90,10 @@ public class AdapterLinkList extends AdapterLink {
             buttonComments.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    if (videoFull.isPlaying()) {
-                        videoFull.stopPlayback();
-                        videoFull.setVisibility(View.GONE);
-                        imageThumbnail.setVisibility(View.VISIBLE);
+                    if (mediaPlayer != null && mediaPlayer.isPlaying()) {
+                        mediaPlayer.stop();
+                        surfaceVideo.setVisibility(View.GONE);
+                        imagePlay.setVisibility(View.VISIBLE);
                     }
                     loadComments();
                 }

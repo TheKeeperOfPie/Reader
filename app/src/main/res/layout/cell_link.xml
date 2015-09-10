@@ -48,6 +48,13 @@
                 android:minHeight="48dp"
                 />
 
+            <SurfaceView
+                android:id="@+id/surface_video"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:visibility="gone"
+                />
+
             <ImageView
                 android:id="@+id/image_play"
                 android:layout_width="match_parent"
@@ -116,8 +123,6 @@
             android:textSize="12sp"
             android:textColor="?attr/colorAccent"
             android:ellipsize="marquee"
-            android:clickable="false"
-            android:longClickable="false"
             />
 
         <TextView
@@ -131,8 +136,6 @@
             android:paddingBottom="8dp"
             android:textAppearance="@style/TextAppearance.AppCompat.Body2"
             android:ellipsize="marquee"
-            android:clickable="false"
-            android:longClickable="false"
             />
 
         <!-- TODO: Make self text selectable, fix ripple animation state-->
@@ -146,8 +149,6 @@
             android:layout_marginEnd="@dimen/activity_horizontal_margin"
             android:textAppearance="@style/TextAppearance.AppCompat.Body1"
             android:paddingBottom="8dp"
-            android:clickable="false"
-            android:longClickable="false"
             android:background="?attr/selectableItemBackgroundBorderless"
             />
 
@@ -163,8 +164,6 @@
             android:gravity="end"
             android:textAppearance="@style/TextAppearance.AppCompat.Caption"
             android:textAlignment="viewEnd"
-            android:clickable="false"
-            android:longClickable="false"
             android:textColor="?android:attr/textColorSecondary"
             />
 
@@ -194,9 +193,10 @@
 
             <android.support.v7.widget.Toolbar
                 android:id="@+id/toolbar_actions"
-                android:layout_width="match_parent"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_below="@id/text_hidden"
+                android:layout_alignParentEnd="true"
                 />
 
         </RelativeLayout>

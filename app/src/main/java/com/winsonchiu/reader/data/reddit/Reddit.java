@@ -796,6 +796,34 @@ public class Reddit {
 
     }
 
+    public void logRate() {
+
+        StringRequest getRequest = new StringRequest(Request.Method.GET,
+                "https://api.imgur.com/3/credits",
+                new Listener<String>() {
+                    @Override
+                    public void onResponse(String response) {
+                        Log.d(TAG, "rateLimit: " + response);
+                    }
+                }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                Log.d(TAG, "error: " + error);
+            }
+        }) {
+            @Override
+            public Map<String, String> getHeaders() throws AuthFailureError {
+                HashMap<String, String> headers = new HashMap<>(3);
+                headers.put(USER_AGENT, CUSTOM_USER_AGENT);
+                headers.put(AUTHORIZATION, ApiKeys.IMGUR_AUTHORIZATION);
+                headers.put(CONTENT_TYPE, CONTENT_TYPE_APP_JSON);
+                return headers;
+            }
+        };
+
+        requestQueue.add(getRequest);
+    }
+
     public Request<String> loadImgurAlbum(String id,
             @NonNull Listener<String> listener,
             @Nullable final com.android.volley.Response.ErrorListener errorListener,
@@ -933,7 +961,7 @@ public class Reddit {
         String rgbText = "rgb(" + Color.red(textColor) + ", " + Color.green(textColor) + ", " + Color.blue(textColor) + ")";
 
         String htmlTitle = TextUtils.isEmpty(title) ? "" : "<h2>" + title + "</h2>";
-        String htmlDescription = TextUtils.isEmpty(description) ? "" : "<p>" + description + "</p>";
+        String htmlDescription = TextUtils.isEmpty(description) ? "" : "<p>" + Html.escapeHtml(description) + "</p>";
 
         return "<html>" +
                 "<head>" +
