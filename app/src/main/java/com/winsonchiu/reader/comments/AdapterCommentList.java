@@ -531,14 +531,19 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                     if (!comment.isMore() && !TextUtils.isEmpty(eventListenerBase.getUser().getName())) {
                         eventListener.voteComment(ViewHolderComment.this, comment, 1);
                     }
+                    if (layoutContainerExpand.getVisibility() == View.VISIBLE) {
+                        layoutContainerExpand.clearAnimation();
+                        layoutContainerExpand.setVisibility(View.GONE);
+                    }
                     return true;
                 }
 
                 @Override
-                public boolean onSingleTapConfirmed(MotionEvent e) {
+                public boolean onSingleTapUp(MotionEvent e) {
                     expandToolbarActions();
-                    return true;
+                    return super.onSingleTapUp(e);
                 }
+
             });
 
             View.OnTouchListener onTouchListener = new View.OnTouchListener() {

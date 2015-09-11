@@ -12,7 +12,6 @@ import android.graphics.Color;
 import android.graphics.ColorFilter;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
-import android.graphics.Rect;
 import android.graphics.RectF;
 import android.net.Uri;
 import android.os.Build;
@@ -24,7 +23,6 @@ import android.support.design.widget.FloatingActionButton;
 import android.support.v4.view.GestureDetectorCompat;
 import android.support.v4.view.MotionEventCompat;
 import android.support.v4.view.ViewCompat;
-import android.support.v4.view.ViewPropertyAnimatorCompat;
 import android.support.v4.view.ViewPropertyAnimatorListener;
 import android.support.v4.view.animation.FastOutSlowInInterpolator;
 import android.support.v4.widget.SwipeRefreshLayout;
@@ -43,11 +41,9 @@ import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.animation.AlphaAnimation;
 import android.view.animation.Animation;
 import android.view.animation.Transformation;
 import android.widget.LinearLayout;
-import android.widget.MediaController;
 import android.widget.RelativeLayout;
 import android.widget.Toast;
 
@@ -67,13 +63,13 @@ import com.winsonchiu.reader.links.AdapterLink;
 import com.winsonchiu.reader.utils.AnimationUtils;
 import com.winsonchiu.reader.utils.DisallowListener;
 import com.winsonchiu.reader.utils.ItemDecorationDivider;
-import com.winsonchiu.reader.utils.OnTouchListenerDisallow;
 import com.winsonchiu.reader.utils.RecyclerCallback;
 import com.winsonchiu.reader.utils.ScrollAwareFloatingActionButtonBehavior;
 import com.winsonchiu.reader.utils.TouchEventListener;
 import com.winsonchiu.reader.utils.UtilsColor;
 import com.winsonchiu.reader.views.CustomRelativeLayout;
 
+import java.util.Arrays;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -90,7 +86,7 @@ public class FragmentComments extends FragmentBase
     private static final String ARG_INITIALIZED = "initialized";
     private static final String ARG_ACTIONS_EXPANDED = "actionsExpanded";
 
-    public static final long DURATION_ENTER = 250;
+    public static final long DURATION_ENTER = 200;
     public static final long DURATION_EXIT = 150;
     private static final long DURATION_ACTIONS_FADE = 150;
     private static final float OFFSET_MODIFIER = 0.5f;
@@ -118,7 +114,7 @@ public class FragmentComments extends FragmentBase
     private int viewHolderWidth;
     private float startX;
     private float startY;
-    private int startMarginEnd;
+    private int startMarginRight;
     private View viewBackground;
     private MenuItem itemLoadFullComments;
     private MenuItem itemHideYouTube;
@@ -159,8 +155,9 @@ public class FragmentComments extends FragmentBase
                 .getLayoutParams() instanceof StaggeredGridLayoutManager.LayoutParams) {
             args.putBoolean(ARG_IS_GRID, true);
         }
-        int[] location = new int[2];
-        viewHolder.itemView.getLocationOnScreen(location);
+        int[] location = viewHolder.getScreenAnchor();
+
+        Log.d(TAG, "getScreenAnchor: " + Arrays.toString(location));
 
         args.putIntArray(ARG_LOCATION, location);
         args.putInt(ARG_COLOR_LINK, colorLink);
@@ -798,7 +795,7 @@ public class FragmentComments extends FragmentBase
                 startY -= margin;
                 viewHolderWidth += 2 * margin;
             }
-            startMarginEnd = (int) (screenWidth - startX - viewHolderWidth);
+            startMarginRight = (int) (screenWidth - startX - viewHolderWidth);
         }
 
         int[] locationRootView = new int[2];
@@ -822,8 +819,8 @@ public class FragmentComments extends FragmentBase
                         .getLayoutParams();
                 float reverseInterpolation = 1.0f - interpolatedTime;
                 layoutParams.topMargin = (int) (targetY * reverseInterpolation);
-                layoutParams.setMarginStart((int) (startX * reverseInterpolation));
-                layoutParams.setMarginEnd((int) (startMarginEnd * reverseInterpolation));
+                layoutParams.leftMargin = (int) (startX * reverseInterpolation);
+                layoutParams.rightMargin = (int) (startMarginRight * reverseInterpolation);
                 layoutRelative.setLayoutParams(layoutParams);
                 layoutAppBar.setTranslationY(-toolbarHeight * reverseInterpolation);
                 RelativeLayout.LayoutParams layoutParamsBackground = (RelativeLayout.LayoutParams) viewBackground
@@ -895,8 +892,8 @@ public class FragmentComments extends FragmentBase
         CoordinatorLayout.LayoutParams layoutParams = (CoordinatorLayout.LayoutParams) layoutRelative
                 .getLayoutParams();
         layoutParams.topMargin = (int) targetY;
-        layoutParams.setMarginStart((int) startX);
-        layoutParams.setMarginEnd(startMarginEnd);
+        layoutParams.leftMargin = (int) startX;
+        layoutParams.rightMargin = startMarginRight;
         layoutRelative.setLayoutParams(layoutParams);
 
         layoutRelative.startAnimation(animation);
@@ -1120,11 +1117,10 @@ public class FragmentComments extends FragmentBase
 
     private void calculateExit() {
         isFinished = true;
-        Log.d(TAG, "recyclerCommentList scrollY: " + recyclerCommentList.getScrollY());
-        if (linearLayoutManager.findFirstCompletelyVisibleItemPosition() == 0) {
+        if (linearLayoutManager.findFirstCompletelyVisibleItemPosition() <= 0) {
             animateExit();
         }
-        else if (linearLayoutManager.findFirstVisibleItemPosition() < 15) {
+        else if (linearLayoutManager.findFirstVisibleItemPosition() < 10) {
             recyclerCommentList.addOnScrollListener(new RecyclerView.OnScrollListener() {
                 @Override
                 public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
@@ -1161,8 +1157,7 @@ public class FragmentComments extends FragmentBase
 
                         int[] locationSwipeRefresh = new int[2];
                         layoutRelative.getLocationOnScreen(locationSwipeRefresh);
-                        final float screenWidth = getResources().getDisplayMetrics().widthPixels;
-                        final float screenHeight = getResources().getDisplayMetrics().heightPixels;
+                        final float viewHeight = layoutRelative.getHeight();
                         final float targetY = startY - locationSwipeRefresh[1];
 
                         long duration = ScrollAwareFloatingActionButtonBehavior.DURATION;
@@ -1188,15 +1183,14 @@ public class FragmentComments extends FragmentBase
                                 CoordinatorLayout.LayoutParams layoutParams = (CoordinatorLayout.LayoutParams) layoutRelative
                                         .getLayoutParams();
                                 layoutParams.topMargin = (int) (targetY * interpolatedTime);
-                                layoutParams.setMarginStart((int) (startX * interpolatedTime));
-                                layoutParams.setMarginEnd(
-                                        (int) (startMarginEnd * interpolatedTime));
+                                layoutParams.leftMargin = (int) (startX * interpolatedTime);
+                                layoutParams.rightMargin = (int) (startMarginRight * interpolatedTime);
                                 layoutRelative.setLayoutParams(layoutParams);
                                 layoutAppBar.setTranslationY(-toolbarHeight * interpolatedTime);
 
                                 RelativeLayout.LayoutParams layoutParamsBackground = (RelativeLayout.LayoutParams) viewBackground
                                         .getLayoutParams();
-                                layoutParamsBackground.height = (int) ((1f - interpolatedTime) * screenHeight);
+                                layoutParamsBackground.height = (int) ((1f - interpolatedTime) * viewHeight - targetY * interpolatedTime);
                                 viewBackground.setLayoutParams(layoutParamsBackground);
                             }
                         };

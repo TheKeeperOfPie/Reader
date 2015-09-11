@@ -150,6 +150,13 @@ public class AdapterLinkList extends AdapterLink {
             super.expandFull(expand);
             recyclerCallback.scrollTo(getAdapterPosition());
         }
+
+        @Override
+        public int[] getScreenAnchor() {
+            int[] location = new int[2];
+            imageThumbnail.getLocationOnScreen(location);
+            return location;
+        }
     }
 
 }

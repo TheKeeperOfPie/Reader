@@ -664,6 +664,23 @@ public class AdapterLinkGrid extends AdapterLink {
             setTextColors(link.getBackgroundColor());
             viewOverlay.setVisibility(View.GONE);
         }
+
+        @Override
+        public int[] getScreenAnchor() {
+            int[] location = new int[2];
+            if (imageFull.isShown()) {
+                imageFull.getLocationOnScreen(location);
+            }
+            else {
+                frameFull.getLocationOnScreen(location);
+                location[1] += frameFull.getHeight();
+                if (!imageThumbnail.isShown()) {
+                    location[1] -= itemView.getWidth();
+                }
+            }
+
+            return location;
+        }
     }
 
 }

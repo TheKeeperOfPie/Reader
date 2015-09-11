@@ -660,16 +660,19 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                     if (!TextUtils.isEmpty(eventListener.getUser().getName())) {
                         eventListener.voteLink(ViewHolderBase.this, link, 1);
                     }
-                    clearOverlay();
+                    if (layoutContainerExpand.getVisibility() == View.VISIBLE) {
+                        layoutContainerExpand.clearAnimation();
+                        layoutContainerExpand.setVisibility(View.GONE);
+                    }
                     return true;
                 }
 
                 @Override
-                public boolean onSingleTapConfirmed(MotionEvent e) {
-                    Log.d(TAG, "onSingleTapConfirmed");
+                public boolean onSingleTapUp(MotionEvent e) {
                     expandToolbarActions();
-                    return true;
+                    return super.onSingleTapUp(e);
                 }
+
             });
 
             View.OnTouchListener onTouchListener = new View.OnTouchListener() {
@@ -1864,6 +1867,12 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             if (surfaceHolder != null) {
                 surfaceHolder.removeCallback(this);
             }
+        }
+
+        public int[] getScreenAnchor() {
+            int[] location = new int[2];
+            itemView.getLocationOnScreen(location);
+            return location;
         }
 
         public interface EventListener {

@@ -136,6 +136,7 @@ public class MainActivity extends YouTubeBaseActivity
 
     private static final String TAG = MainActivity.class.getCanonicalName();
     private static final int REQUEST_SETTINGS = 0;
+    private static final long DURATION_CHECK_INBOX_ACTIVE = 120000;
 
     private FragmentData fragmentData;
 
@@ -163,7 +164,7 @@ public class MainActivity extends YouTubeBaseActivity
         @Override
         public void run() {
             Receiver.checkInbox(MainActivity.this, null);
-            handler.postDelayed(this, 60000);
+            handler.postDelayed(this, DURATION_CHECK_INBOX_ACTIVE);
         }
     };
     private CustomColorFilter colorFilterPrimary;
