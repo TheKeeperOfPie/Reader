@@ -9,7 +9,6 @@
     android:layout_height="wrap_content"
     android:minHeight="72dp"
     >
-    <!--android:background="?attr/colorRowBackground"-->
 
     <RelativeLayout
         android:id="@+id/layout"
@@ -37,6 +36,13 @@
                 android:layout_height="wrap_content"
                 android:visibility="gone"
                 android:minHeight="48dp"
+                />
+
+            <SurfaceView
+                android:id="@+id/surface_video"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:visibility="gone"
                 />
 
         </FrameLayout>

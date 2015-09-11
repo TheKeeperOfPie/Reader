@@ -278,7 +278,8 @@ public class FragmentNewMessage extends FragmentBase implements Toolbar.OnMenuIt
         });
 
         tabLayout.setupWithViewPager(viewPager);
-        viewPager.addOnPageChangeListener(new TabLayout.TabLayoutOnPageChangeListener(tabLayout));
+        viewPager.addOnPageChangeListener(
+                new TabLayout.TabLayoutOnPageChangeListener(tabLayout));
 
         layoutCaptcha = (RelativeLayout) view.findViewById(R.id.layout_captcha);
         imageCaptcha = (ImageView) view.findViewById(R.id.image_captcha);

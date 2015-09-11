@@ -265,4 +265,5 @@
     <string name="header_subreddit_error">Error fetching header image</string>
     <string name="item_new_message">Send message</string>
     <string name="message">Message</string>
+    <string name="item_hide_youtube">Hide YouTube view</string>
 </resources>

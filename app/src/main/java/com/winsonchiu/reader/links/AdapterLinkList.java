@@ -144,6 +144,12 @@ public class AdapterLinkList extends AdapterLink {
             textHidden.setText(getTimestamp() + ", " + link.getNumComments() + " comments");
 
         }
+
+        @Override
+        public void expandFull(boolean expand) {
+            super.expandFull(expand);
+            recyclerCallback.scrollTo(getAdapterPosition());
+        }
     }
 
 }

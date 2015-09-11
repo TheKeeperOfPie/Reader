@@ -28,4 +28,8 @@ public abstract class FragmentBase extends Fragment {
     public void setVisibilityOfThing(int visibility, Thing thing) {
 
     }
+
+    public boolean shouldOverrideUrl(String urlString) {
+        return false;
+    }
 }

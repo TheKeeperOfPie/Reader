@@ -758,18 +758,10 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
         tabLayout.setTabTextColors(getResources().getColor(colorResourceTextMuted),
                 getResources().getColor(colorResourcePrimary));
         tabLayout.setBackgroundColor(getResources().getColor(android.R.color.transparent));
-        tabLayout.setupWithViewPager(viewPager);
-        viewPager.addOnPageChangeListener(new TabLayout.TabLayoutOnPageChangeListener(tabLayout));
 
-        tabLayout.getViewTreeObserver().addOnGlobalLayoutListener(
-                new ViewTreeObserver.OnGlobalLayoutListener() {
-                    @Override
-                    public void onGlobalLayout() {
-                        tabLayout.setVisibility(View.GONE);
-                        tabLayout.setVisibility(View.VISIBLE);
-                        tabLayout.getViewTreeObserver().removeOnGlobalLayoutListener(this);
-                    }
-                });
+        tabLayout.setupWithViewPager(viewPager);
+        viewPager.addOnPageChangeListener(
+                new TabLayout.TabLayoutOnPageChangeListener(tabLayout));
 
         return view;
     }

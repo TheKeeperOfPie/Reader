@@ -212,7 +212,8 @@ public class FragmentNewPost extends FragmentBase implements Toolbar.OnMenuItemC
         editTextTitle.setOnFocusChangeListener(onFocusChangeListener);
         editTextBody.setOnFocusChangeListener(onFocusChangeListener);
 
-        editMarginDefault = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 8, getResources().getDisplayMetrics());
+        editMarginDefault = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 8,
+                getResources().getDisplayMetrics());
         editMarginWithActions = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 56,
                 getResources().getDisplayMetrics());
 
@@ -310,7 +311,8 @@ public class FragmentNewPost extends FragmentBase implements Toolbar.OnMenuItemC
         });
 
         tabLayout.setupWithViewPager(viewPager);
-        viewPager.addOnPageChangeListener(new TabLayout.TabLayoutOnPageChangeListener(tabLayout));
+        viewPager.addOnPageChangeListener(
+                new TabLayout.TabLayoutOnPageChangeListener(tabLayout));
 
         layoutCaptcha = (RelativeLayout) view.findViewById(R.id.layout_captcha);
         imageCaptcha = (ImageView) view.findViewById(R.id.image_captcha);

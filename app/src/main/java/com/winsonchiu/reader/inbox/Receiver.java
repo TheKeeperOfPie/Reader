@@ -70,10 +70,8 @@ public class Receiver extends BroadcastReceiver {
         long interval = Long.parseLong(
                 preferences.getString(AppSettings.PREF_INBOX_CHECK_INTERVAL, "1800000"));
 
-        alarmManager.cancel(pendingIntent);
         if (interval > 0) {
-            alarmManager
-                    .setInexactRepeating(AlarmManager.RTC_WAKEUP, System.currentTimeMillis() + 1000,
+            alarmManager.setInexactRepeating(AlarmManager.RTC_WAKEUP, System.currentTimeMillis() + 1000,
                             interval, pendingIntent);
         }
 

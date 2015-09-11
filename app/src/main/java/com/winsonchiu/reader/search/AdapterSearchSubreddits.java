@@ -69,6 +69,7 @@ public class AdapterSearchSubreddits extends RecyclerView.Adapter<AdapterSearchS
 
         protected EventListener eventListener;
         protected ImageButton buttonReorder;
+        protected ImageButton buttonOpen;
         protected TextView textName;
         protected TextView textTitle;
         protected TextView textDescription;
@@ -82,6 +83,7 @@ public class AdapterSearchSubreddits extends RecyclerView.Adapter<AdapterSearchS
             this.eventListener = eventListener;
 
             buttonReorder = (ImageButton) itemView.findViewById(R.id.button_reorder);
+            buttonOpen = (ImageButton) itemView.findViewById(R.id.button_open);
             textName = (TextView) itemView.findViewById(R.id.text_name);
             textTitle = (TextView) itemView.findViewById(R.id.text_title);
             textDescription = (TextView) itemView.findViewById(R.id.text_description);
@@ -90,15 +92,6 @@ public class AdapterSearchSubreddits extends RecyclerView.Adapter<AdapterSearchS
             layoutContainerExpand = (RelativeLayout) itemView.findViewById(R.id.layout_container_expand);
 
             final GestureDetectorCompat gestureDetector = new GestureDetectorCompat(itemView.getContext(), new GestureDetector.SimpleOnGestureListener() {
-
-                @Override
-                public boolean onSingleTapConfirmed(MotionEvent e) {
-                    if (!eventListener.isSubscriptionListShown()) {
-                        eventListener.onClickSubreddit(subreddit);
-                        return true;
-                    }
-                    return super.onSingleTapConfirmed(e);
-                }
 
                 @Override
                 public boolean onDoubleTap(MotionEvent e) {
@@ -159,14 +152,19 @@ public class AdapterSearchSubreddits extends RecyclerView.Adapter<AdapterSearchS
                 }
             });
 
-            if (eventListener.supportsDrag()) {
-                TypedArray typedArray = itemView.getContext().getTheme().obtainStyledAttributes(
-                        new int[] {R.attr.colorIconFilter});
-                colorFilterIcon = new CustomColorFilter(typedArray.getColor(0, 0xFFFFFFFF), PorterDuff.Mode.MULTIPLY);
-                typedArray.recycle();
-                buttonReorder.setColorFilter(colorFilterIcon);
-                buttonReorder.setVisibility(View.VISIBLE);
-            }
+            buttonOpen.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    eventListener.onClickSubreddit(subreddit);
+                }
+            });
+
+            TypedArray typedArray = itemView.getContext().getTheme().obtainStyledAttributes(
+                    new int[] {R.attr.colorIconFilter});
+            colorFilterIcon = new CustomColorFilter(typedArray.getColor(0, 0xFFFFFFFF), PorterDuff.Mode.MULTIPLY);
+            typedArray.recycle();
+            buttonReorder.setColorFilter(colorFilterIcon);
+            buttonOpen.setColorFilter(colorFilterIcon);
 
         }
 
@@ -182,19 +180,14 @@ public class AdapterSearchSubreddits extends RecyclerView.Adapter<AdapterSearchS
                 textDescription.setVisibility(View.GONE);
             }
             else {
-                textDescription.setText(Reddit.getFormattedHtml(subreddit.getPublicDescriptionHtml()));
+                textDescription
+                        .setText(Reddit.getFormattedHtml(subreddit.getPublicDescriptionHtml()));
             }
+
+            // TODO: Move to String resource
 
             textInfo.setText(subreddit.getSubscribers() + " subscribers\n" +
                     "created " + new Date(subreddit.getCreatedUtc()));
-
-            if (eventListener.isSubscriptionListShown()) {
-                buttonReorder.setImageResource(R.drawable.ic_reorder_white_24dp);
-            }
-            else {
-                buttonReorder.setImageResource(R.drawable.ic_open_in_new_white_24dp);
-            }
-            buttonReorder.setColorFilter(colorFilterIcon);
 
         }
 

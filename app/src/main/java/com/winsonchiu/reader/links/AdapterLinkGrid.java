@@ -244,13 +244,13 @@ public class AdapterLinkGrid extends AdapterLink {
             if (itemView.getLayoutParams() instanceof StaggeredGridLayoutManager.LayoutParams) {
                 ((StaggeredGridLayoutManager.LayoutParams) itemView.getLayoutParams())
                         .setFullSpan(expand);
-                if (expand) {
-                    if (recyclerCallback.getLayoutManager() instanceof StaggeredGridLayoutManager) {
-                        ((StaggeredGridLayoutManager) recyclerCallback.getLayoutManager())
-                                .invalidateSpanAssignments();
-                    }
-                    recyclerCallback.scrollTo(getAdapterPosition());
+            }
+            if (expand) {
+                if (recyclerCallback.getLayoutManager() instanceof StaggeredGridLayoutManager) {
+                    ((StaggeredGridLayoutManager) recyclerCallback.getLayoutManager())
+                            .invalidateSpanAssignments();
                 }
+                recyclerCallback.scrollTo(getAdapterPosition());
             }
         }
 

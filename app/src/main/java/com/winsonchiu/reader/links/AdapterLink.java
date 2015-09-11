@@ -1041,6 +1041,11 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                 }
             }
 
+            // Hide YouTubePlayerView to prevent GPU drawing overlaps
+            if (viewYouTube.isShown()) {
+                hideYouTube();
+            }
+
             eventListener.onClickComments(link, this);
         }
 

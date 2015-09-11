@@ -14,6 +14,7 @@ import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
 import android.graphics.Rect;
 import android.graphics.RectF;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
@@ -23,12 +24,15 @@ import android.support.design.widget.FloatingActionButton;
 import android.support.v4.view.GestureDetectorCompat;
 import android.support.v4.view.MotionEventCompat;
 import android.support.v4.view.ViewCompat;
+import android.support.v4.view.ViewPropertyAnimatorCompat;
+import android.support.v4.view.ViewPropertyAnimatorListener;
 import android.support.v4.view.animation.FastOutSlowInInterpolator;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.StaggeredGridLayoutManager;
 import android.support.v7.widget.Toolbar;
+import android.text.TextUtils;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.util.TypedValue;
@@ -43,6 +47,7 @@ import android.view.animation.AlphaAnimation;
 import android.view.animation.Animation;
 import android.view.animation.Transformation;
 import android.widget.LinearLayout;
+import android.widget.MediaController;
 import android.widget.RelativeLayout;
 import android.widget.Toast;
 
@@ -62,13 +67,18 @@ import com.winsonchiu.reader.links.AdapterLink;
 import com.winsonchiu.reader.utils.AnimationUtils;
 import com.winsonchiu.reader.utils.DisallowListener;
 import com.winsonchiu.reader.utils.ItemDecorationDivider;
+import com.winsonchiu.reader.utils.OnTouchListenerDisallow;
 import com.winsonchiu.reader.utils.RecyclerCallback;
 import com.winsonchiu.reader.utils.ScrollAwareFloatingActionButtonBehavior;
 import com.winsonchiu.reader.utils.TouchEventListener;
 import com.winsonchiu.reader.utils.UtilsColor;
 import com.winsonchiu.reader.views.CustomRelativeLayout;
 
-public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItemClickListener, TouchEventListener {
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+public class FragmentComments extends FragmentBase
+        implements Toolbar.OnMenuItemClickListener, TouchEventListener {
 
     public static final String TAG = FragmentComments.class.getCanonicalName();
 
@@ -83,7 +93,7 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
     public static final long DURATION_ENTER = 250;
     public static final long DURATION_EXIT = 150;
     private static final long DURATION_ACTIONS_FADE = 150;
-    private static final float OFFSET_MODIFIER = 0.25f;
+    private static final float OFFSET_MODIFIER = 0.5f;
 
     private FragmentListenerBase mListener;
     private RecyclerView recyclerCommentList;
@@ -111,6 +121,7 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
     private int startMarginEnd;
     private View viewBackground;
     private MenuItem itemLoadFullComments;
+    private MenuItem itemHideYouTube;
     private View viewHolderView;
     private float toolbarHeight;
     private GestureDetectorCompat gestureDetector;
@@ -127,6 +138,7 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
     private float swipeRightDistance;
     private int scrollToPaddingTop;
     private int scrollToPaddingBottom;
+    private String currentYouTubeId;
 
     public static FragmentComments newInstance() {
         FragmentComments fragment = new FragmentComments();
@@ -197,6 +209,7 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
 
         toolbar.inflateMenu(R.menu.menu_comments);
         itemLoadFullComments = toolbar.getMenu().findItem(R.id.item_load_full_comments);
+        itemHideYouTube = toolbar.getMenu().findItem(R.id.item_hide_youtube);
         toolbar.setOnMenuItemClickListener(this);
 
         toolbar.getMenu().findItem(mListener.getControllerComments().getSort().getMenuId())
@@ -213,10 +226,13 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
             Bundle savedInstanceState) {
 
-        scrollToPaddingTop = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 8, getResources().getDisplayMetrics());
-        scrollToPaddingBottom = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 56, getResources().getDisplayMetrics());
+        scrollToPaddingTop = (int) TypedValue
+                .applyDimension(TypedValue.COMPLEX_UNIT_DIP, 8, getResources().getDisplayMetrics());
+        scrollToPaddingBottom = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 56,
+                getResources().getDisplayMetrics());
 
-        layoutRoot = (CustomRelativeLayout) inflater.inflate(R.layout.fragment_comments, container, false);
+        layoutRoot = (CustomRelativeLayout) inflater
+                .inflate(R.layout.fragment_comments, container, false);
 
         listener = new ControllerComments.Listener() {
             @Override
@@ -233,25 +249,6 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
             @Override
             public void scrollTo(final int position) {
                 linearLayoutManager.scrollToPositionWithOffset(position, 0);
-//                linearLayoutManager.scrollToPositionWithOffset(position,
-//                        recyclerCommentList.getHeight() / 2 - toolbar.getHeight());
-//                recyclerCommentList.postDelayed(new Runnable() {
-//                    @Override
-//                    public void run() {
-//                        final RecyclerView.ViewHolder viewHolder = recyclerCommentList
-//                                .findViewHolderForAdapterPosition(position);
-//                        if (viewHolder != null) {
-//                            viewHolder.itemView.getBackground().setState(
-//                                    new int[]{android.R.attr.state_pressed, android.R.attr.state_enabled});
-//                            recyclerCommentList.postDelayed(new Runnable() {
-//                                @Override
-//                                public void run() {
-//                                    viewHolder.itemView.getBackground().setState(new int[0]);
-//                                }
-//                            }, 150);
-//                        }
-//                    }
-//                }, 200);
             }
 
             @Override
@@ -321,65 +318,7 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
             @Override
             public void loadYouTube(Link link, final String id, final int timeInMillis) {
 
-                if (youTubePlayer != null) {
-                    viewYouTube.setVisibility(View.VISIBLE);
-                    return;
-                }
-
-                viewYouTube.initialize(ApiKeys.YOUTUBE_API_KEY,
-                        new YouTubePlayer.OnInitializedListener() {
-                            @Override
-                            public void onInitializationSuccess(YouTubePlayer.Provider provider,
-                                    YouTubePlayer player,
-                                    boolean b) {
-                                FragmentComments.this.youTubePlayer = player;
-                                youTubePlayer.setManageAudioFocus(false);
-                                youTubePlayer.setFullscreenControlFlags(
-                                        YouTubePlayer.FULLSCREEN_FLAG_CONTROL_SYSTEM_UI);
-
-                                DisplayMetrics displayMetrics = getActivity().getResources()
-                                        .getDisplayMetrics();
-
-                                boolean isLandscape = displayMetrics.widthPixels > displayMetrics.heightPixels;
-
-                                if (isLandscape) {
-                                    youTubePlayer.setOnFullscreenListener(
-                                            new YouTubePlayer.OnFullscreenListener() {
-                                                @Override
-                                                public void onFullscreen(boolean fullscreen) {
-                                                    isFullscreen = fullscreen;
-                                                    if (!fullscreen) {
-                                                        if (youTubePlayer != null) {
-                                                            youTubePlayer.pause();
-                                                            youTubePlayer.release();
-                                                            youTubePlayer = null;
-                                                        }
-                                                        viewYouTube.setVisibility(View.GONE);
-                                                    }
-                                                }
-                                            });
-                                }
-                                else {
-                                    youTubePlayer.setOnFullscreenListener(
-                                            new YouTubePlayer.OnFullscreenListener() {
-                                                @Override
-                                                public void onFullscreen(boolean fullscreen) {
-                                                    isFullscreen = fullscreen;
-                                                }
-                                            });
-                                }
-                                youTubePlayer.setPlayerStateChangeListener(
-                                        new YouTubePlayerStateListener(youTubePlayer, timeInMillis,
-                                                isLandscape));
-                                viewYouTube.setVisibility(View.VISIBLE);
-                                youTubePlayer.loadVideo(id);
-                            }
-
-                            @Override
-                            public void onInitializationFailure(YouTubePlayer.Provider provider,
-                                    YouTubeInitializationResult youTubeInitializationResult) {
-                            }
-                        });
+                loadYoutubeVideo(id, timeInMillis);
             }
 
             @Override
@@ -388,7 +327,7 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
                     if (youTubePlayer != null) {
                         youTubePlayer.pause();
                     }
-                    viewYouTube.setVisibility(View.GONE);
+                    toggleYouTubeVisibility(View.GONE);
                     return false;
                 }
 
@@ -397,19 +336,25 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
         };
 
         TypedArray typedArray = getActivity().getTheme().obtainStyledAttributes(
-                new int[] {R.attr.colorPrimary, R.attr.colorAccent});
-        final int colorPrimary = typedArray.getColor(0, getResources().getColor(R.color.colorPrimary));
+                new int[]{R.attr.colorPrimary, R.attr.colorAccent});
+        final int colorPrimary = typedArray
+                .getColor(0, getResources().getColor(R.color.colorPrimary));
         int colorAccent = typedArray.getColor(1, getResources().getColor(R.color.colorAccent));
         typedArray.recycle();
 
-        int colorResourcePrimary = UtilsColor.computeContrast(colorPrimary, Color.WHITE) > 3f ? R.color.darkThemeIconFilter : R.color.lightThemeIconFilter;
-        int colorResourceAccent = UtilsColor.computeContrast(colorAccent, Color.WHITE) > 3f ? R.color.darkThemeIconFilter : R.color.lightThemeIconFilter;
+        int colorResourcePrimary = UtilsColor.computeContrast(colorPrimary, Color.WHITE) > 3f ?
+                R.color.darkThemeIconFilter : R.color.lightThemeIconFilter;
+        int colorResourceAccent = UtilsColor.computeContrast(colorAccent, Color.WHITE) > 3f ?
+                R.color.darkThemeIconFilter : R.color.lightThemeIconFilter;
 
-        colorFilterPrimary = new PorterDuffColorFilter(getResources().getColor(colorResourcePrimary), PorterDuff.Mode.MULTIPLY);
-        colorFilterAccent = new PorterDuffColorFilter(getResources().getColor(colorResourceAccent), PorterDuff.Mode.MULTIPLY);
+        colorFilterPrimary = new PorterDuffColorFilter(
+                getResources().getColor(colorResourcePrimary), PorterDuff.Mode.MULTIPLY);
+        colorFilterAccent = new PorterDuffColorFilter(getResources().getColor(colorResourceAccent),
+                PorterDuff.Mode.MULTIPLY);
 
         toolbar = (Toolbar) layoutRoot.findViewById(R.id.toolbar);
         toolbar.setTitleTextColor(getResources().getColor(colorResourcePrimary));
+        toolbar.setBackgroundColor(colorPrimary);
         setUpToolbar();
 
         behaviorFloatingActionButton = new ScrollAwareFloatingActionButtonBehavior(getActivity(),
@@ -430,7 +375,8 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
 
         layoutActions = (LinearLayout) layoutRoot.findViewById(R.id.layout_actions);
 
-        buttonExpandActions = (FloatingActionButton) layoutRoot.findViewById(R.id.button_expand_actions);
+        buttonExpandActions = (FloatingActionButton) layoutRoot
+                .findViewById(R.id.button_expand_actions);
         buttonExpandActions.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -471,8 +417,9 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
                     position = 0;
                 }
 
-                final int newPosition = mListener.getControllerComments().getPreviousCommentPosition(
-                        position - 1) + 1;
+                final int newPosition = mListener.getControllerComments()
+                        .getPreviousCommentPosition(
+                                position - 1) + 1;
 
                 Log.d(TAG, "newPosition: " + newPosition);
 
@@ -484,7 +431,9 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
                         int offset = scrollToPaddingTop;
                         if (viewHolder != null) {
                             viewHolder.itemView.setPressed(true);
-                            int difference = recyclerCommentList.getHeight() - scrollToPaddingBottom - viewHolder.itemView.getHeight();
+                            int difference = recyclerCommentList
+                                    .getHeight() - scrollToPaddingBottom - viewHolder.itemView
+                                    .getHeight();
                             if (difference > 0) {
                                 offset = difference / 2;
                             }
@@ -519,7 +468,8 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
             }
         });
 
-        buttonCommentNext = (FloatingActionButton) layoutRoot.findViewById(R.id.button_comment_next);
+        buttonCommentNext = (FloatingActionButton) layoutRoot
+                .findViewById(R.id.button_comment_next);
         buttonCommentNext.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -538,7 +488,8 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
                         position = 1;
                         break;
                     default:
-                        position = mListener.getControllerComments().getNextCommentPosition(position - 1) + 1;
+                        position = mListener.getControllerComments()
+                                .getNextCommentPosition(position - 1) + 1;
                         break;
                 }
 
@@ -552,7 +503,9 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
                         int offset = scrollToPaddingTop;
                         if (viewHolder != null) {
                             viewHolder.itemView.setPressed(true);
-                            int difference = recyclerCommentList.getHeight() - scrollToPaddingBottom - viewHolder.itemView.getHeight();
+                            int difference = recyclerCommentList
+                                    .getHeight() - scrollToPaddingBottom - viewHolder.itemView
+                                    .getHeight();
                             if (difference > 0) {
                                 offset = difference / 2;
                             }
@@ -642,7 +595,8 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
         recyclerCommentList = (RecyclerView) layoutRoot.findViewById(R.id.recycler_comment_list);
         recyclerCommentList.setLayoutManager(linearLayoutManager);
         recyclerCommentList.setItemAnimator(null);
-        recyclerCommentList.addItemDecoration(new ItemDecorationDivider(getActivity(), ItemDecorationDivider.VERTICAL_LIST));
+        recyclerCommentList.addItemDecoration(
+                new ItemDecorationDivider(getActivity(), ItemDecorationDivider.VERTICAL_LIST));
 
         final float screenWidth = getResources().getDisplayMetrics().widthPixels;
         swipeRightDistance = screenWidth * 0.4f;
@@ -670,7 +624,8 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
                                 FragmentBase fragment = (FragmentBase) getFragmentManager()
                                         .findFragmentByTag(fragmentParentTag);
                                 if (fragment != null) {
-                                    fragment.setVisibilityOfThing(View.VISIBLE, mListener.getControllerComments().getLink());
+                                    fragment.setVisibilityOfThing(View.VISIBLE,
+                                            mListener.getControllerComments().getLink());
                                     fragment.onHiddenChanged(false);
                                 }
                                 viewBackground.setVisibility(View.VISIBLE);
@@ -726,7 +681,7 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
             toolbar.setVisibility(View.GONE);
             layoutAppBar.setTranslationY(-100);
 
-            layoutRoot.post(new Runnable() {
+            layoutRelative.post(new Runnable() {
                 @Override
                 public void run() {
                     animateEnter(layoutRoot);
@@ -738,6 +693,83 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
         }
 
         return layoutRoot;
+    }
+
+    private void loadYoutubeVideo(final String id, final int timeInMillis) {
+
+        if (youTubePlayer != null) {
+            toggleYouTubeVisibility(View.VISIBLE);
+            if (!id.equals(currentYouTubeId)) {
+                youTubePlayer.loadVideo(id);
+                currentYouTubeId = id;
+            }
+            return;
+        }
+
+        viewYouTube.initialize(ApiKeys.YOUTUBE_API_KEY,
+                new YouTubePlayer.OnInitializedListener() {
+                    @Override
+                    public void onInitializationSuccess(YouTubePlayer.Provider provider,
+                            YouTubePlayer player,
+                            boolean b) {
+                        FragmentComments.this.youTubePlayer = player;
+
+                        youTubePlayer.setManageAudioFocus(false);
+                        youTubePlayer.setFullscreenControlFlags(
+                                YouTubePlayer.FULLSCREEN_FLAG_CONTROL_SYSTEM_UI);
+
+                        DisplayMetrics displayMetrics = getActivity().getResources()
+                                .getDisplayMetrics();
+
+                        boolean isLandscape = displayMetrics.widthPixels > displayMetrics.heightPixels;
+
+                        if (isLandscape) {
+                            youTubePlayer.setOnFullscreenListener(
+                                    new YouTubePlayer.OnFullscreenListener() {
+                                        @Override
+                                        public void onFullscreen(boolean fullscreen) {
+                                            isFullscreen = fullscreen;
+                                            if (!fullscreen) {
+                                                if (youTubePlayer != null) {
+                                                    youTubePlayer.pause();
+                                                    youTubePlayer.release();
+                                                    youTubePlayer = null;
+                                                }
+                                                toggleYouTubeVisibility(View.GONE);
+                                            }
+                                        }
+                                    });
+                        }
+                        else {
+                            youTubePlayer.setOnFullscreenListener(
+                                    new YouTubePlayer.OnFullscreenListener() {
+                                        @Override
+                                        public void onFullscreen(boolean fullscreen) {
+                                            isFullscreen = fullscreen;
+                                        }
+                                    });
+                        }
+                        youTubePlayer.setPlayerStateChangeListener(
+                                new YouTubePlayerStateListener(youTubePlayer, timeInMillis,
+                                        isLandscape));
+                        toggleYouTubeVisibility(View.VISIBLE);
+                        youTubePlayer.loadVideo(id);
+                        currentYouTubeId = id;
+                    }
+
+                    @Override
+                    public void onInitializationFailure(YouTubePlayer.Provider provider,
+                            YouTubeInitializationResult youTubeInitializationResult) {
+                    }
+                });
+    }
+
+    private void toggleYouTubeVisibility(int visibility) {
+        viewYouTube.setVisibility(visibility);
+        boolean visible = visibility == View.VISIBLE;
+        recyclerCommentList.scrollBy(0, visible ? viewYouTube.getHeight() : -viewYouTube.getHeight());
+        itemHideYouTube.setVisible(visible);
+        itemHideYouTube.setEnabled(visible);
     }
 
     private void animateEnter(final View view) {
@@ -752,7 +784,7 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
             }
 
             final TypedArray styledAttributes = getActivity().getTheme().obtainStyledAttributes(
-                    new int[] {android.R.attr.actionBarSize});
+                    new int[]{android.R.attr.actionBarSize});
             toolbarHeight = styledAttributes.getDimension(0, 0);
             styledAttributes.recycle();
 
@@ -879,7 +911,8 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
         int start = linearLayoutManager.findFirstVisibleItemPosition();
         int end = linearLayoutManager.findLastVisibleItemPosition();
 
-        int centerY = 10 + (recyclerCommentList.getHeight() - scrollToPaddingBottom + scrollToPaddingTop) / 2;
+        int centerY = 10 + (recyclerCommentList
+                .getHeight() - scrollToPaddingBottom + scrollToPaddingTop) / 2;
 
         for (int index = start; index <= end; index++) {
 
@@ -914,29 +947,38 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
 
         for (int index = layoutActions.getChildCount() - 1; index >= 0; index--) {
             final View view = layoutActions.getChildAt(index);
+            view.setScaleX(0f);
+            view.setScaleY(0f);
+            view.setAlpha(0f);
             view.setVisibility(View.VISIBLE);
-            AlphaAnimation alphaAnimation = new AlphaAnimation(0f, 1f);
-            alphaAnimation.setAnimationListener(new Animation.AnimationListener() {
-                @Override
-                public void onAnimationStart(Animation animation) {
-                    buttonExpandActions.setImageResource(android.R.color.transparent);
-                }
+            final int finalIndex = index;
+            ViewCompat.animate(view)
+                    .alpha(1f)
+                    .scaleX(1f)
+                    .scaleY(1f)
+                    .setInterpolator(fastOutSlowInInterpolator)
+                    .setDuration(DURATION_ACTIONS_FADE)
+                    .setStartDelay((long) ((layoutActions
+                            .getChildCount() - 1 - index) * DURATION_ACTIONS_FADE * OFFSET_MODIFIER))
+                    .setListener(new ViewPropertyAnimatorListener() {
+                        @Override
+                        public void onAnimationStart(View view) {
+                            if (finalIndex == 0) {
+                                buttonExpandActions.setImageResource(android.R.color.transparent);
+                            }
+                        }
 
-                @Override
-                public void onAnimationEnd(Animation animation) {
-                }
+                        @Override
+                        public void onAnimationEnd(View view) {
 
-                @Override
-                public void onAnimationRepeat(Animation animation) {
+                        }
 
-                }
-            });
-            alphaAnimation.setInterpolator(fastOutSlowInInterpolator);
-            alphaAnimation.setDuration(DURATION_ACTIONS_FADE);
-            alphaAnimation.setStartOffset(
-                    (long) ((layoutActions
-                            .getChildCount() - 1 - index) * DURATION_ACTIONS_FADE * OFFSET_MODIFIER));
-            view.startAnimation(alphaAnimation);
+                        @Override
+                        public void onAnimationCancel(View view) {
+
+                        }
+                    })
+                    .start();
         }
 
     }
@@ -944,28 +986,39 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
     private void hideLayoutActions(long offset) {
         for (int index = 0; index < layoutActions.getChildCount(); index++) {
             final View view = layoutActions.getChildAt(index);
-            AlphaAnimation alphaAnimation = new AlphaAnimation(1f, 0f);
-            alphaAnimation.setAnimationListener(new Animation.AnimationListener() {
-                @Override
-                public void onAnimationStart(Animation animation) {
-                }
+            view.setScaleX(1f);
+            view.setScaleY(1f);
+            view.setAlpha(1f);
+            final int finalIndex = index;
+            ViewCompat.animate(view)
+                    .alpha(0f)
+                    .scaleX(0f)
+                    .scaleY(0f)
+                    .setInterpolator(fastOutSlowInInterpolator)
+                    .setDuration(DURATION_ACTIONS_FADE)
+                    .setStartDelay((long) (index * offset * OFFSET_MODIFIER))
+                    .setListener(new ViewPropertyAnimatorListener() {
+                        @Override
+                        public void onAnimationStart(View view) {
 
-                @Override
-                public void onAnimationEnd(Animation animation) {
-                    view.setVisibility(View.GONE);
-                    buttonExpandActions.setImageResource(R.drawable.ic_unfold_more_white_24dp);
-                    buttonExpandActions.setColorFilter(colorFilterAccent);
-                }
+                        }
 
-                @Override
-                public void onAnimationRepeat(Animation animation) {
+                        @Override
+                        public void onAnimationEnd(View view) {
+                            view.setVisibility(View.GONE);
+                            if (finalIndex == layoutActions.getChildCount() - 1) {
+                                buttonExpandActions
+                                        .setImageResource(R.drawable.ic_unfold_more_white_24dp);
+                                buttonExpandActions.setColorFilter(colorFilterAccent);
+                            }
+                        }
 
-                }
-            });
-            alphaAnimation.setInterpolator(fastOutSlowInInterpolator);
-            alphaAnimation.setDuration(DURATION_ACTIONS_FADE);
-            alphaAnimation.setStartOffset((long) (index * offset * OFFSET_MODIFIER));
-            view.startAnimation(alphaAnimation);
+                        @Override
+                        public void onAnimationCancel(View view) {
+
+                        }
+                    })
+                    .start();
         }
     }
 
@@ -1067,10 +1120,11 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
 
     private void calculateExit() {
         isFinished = true;
-        if (recyclerCommentList.getScrollY() == 0 || linearLayoutManager.findFirstCompletelyVisibleItemPosition() == 0) {
+        Log.d(TAG, "recyclerCommentList scrollY: " + recyclerCommentList.getScrollY());
+        if (linearLayoutManager.findFirstCompletelyVisibleItemPosition() == 0) {
             animateExit();
         }
-        else if (linearLayoutManager.findFirstVisibleItemPosition() < 20) {
+        else if (linearLayoutManager.findFirstVisibleItemPosition() < 15) {
             recyclerCommentList.addOnScrollListener(new RecyclerView.OnScrollListener() {
                 @Override
                 public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
@@ -1185,7 +1239,8 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
                         });
 
                         if (viewYouTube.isShown()) {
-                            viewYouTube.animate().translationY(-viewYouTube.getHeight());
+                            viewYouTube.animate().translationYBy(
+                                    -(viewYouTube.getHeight() + toolbar.getHeight()));
                         }
 
                         recyclerCommentList.startAnimation(animation);
@@ -1200,54 +1255,60 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
         FragmentBase fragment = (FragmentBase) getFragmentManager()
                 .findFragmentByTag(fragmentParentTag);
         if (fragment != null) {
-            fragment.setVisibilityOfThing(View.VISIBLE, mListener.getControllerComments().getLink());
+            fragment.setVisibilityOfThing(View.VISIBLE,
+                    mListener.getControllerComments().getLink());
             fragment.onHiddenChanged(false);
         }
         float screenWidth = getResources().getDisplayMetrics().widthPixels;
         behaviorFloatingActionButton.animateOut(buttonExpandActions);
         layoutAppBar.animate().translationX(screenWidth);
-        layoutRelative.animate().translationX(screenWidth).setListener(new Animator.AnimatorListener() {
-            @Override
-            public void onAnimationStart(Animator animation) {
+        layoutRelative.animate().translationX(screenWidth)
+                .setListener(new Animator.AnimatorListener() {
+                    @Override
+                    public void onAnimationStart(Animator animation) {
 
-            }
+                    }
 
-            @Override
-            public void onAnimationEnd(Animator animation) {
-                adapterCommentList.destroyViewHolderLink();
-                FragmentBase fragment = (FragmentBase) getFragmentManager()
-                        .findFragmentByTag(fragmentParentTag);
-                if (fragment != null) {
-                    fragment.onShown();
-                    fragment.onHiddenChanged(false);
-                    getFragmentManager().beginTransaction()
-                            .show(fragment)
-                            .commit();
-                }
-                if (getFragmentManager().getBackStackEntryCount() == 0) {
-                    Log.d(TAG, "Back stack count: " + getFragmentManager().getBackStackEntryCount());
-                    getActivity().finish();
-                }
-                else {
-                    getFragmentManager().popBackStackImmediate();
-                }
-            }
+                    @Override
+                    public void onAnimationEnd(Animator animation) {
+                        adapterCommentList.destroyViewHolderLink();
+                        FragmentBase fragment = (FragmentBase) getFragmentManager()
+                                .findFragmentByTag(fragmentParentTag);
+                        if (fragment != null) {
+                            fragment.onShown();
+                            fragment.onHiddenChanged(false);
+                            getFragmentManager().beginTransaction()
+                                    .show(fragment)
+                                    .commit();
+                        }
+                        if (getFragmentManager().getBackStackEntryCount() == 0) {
+                            Log.d(TAG, "Back stack count: " + getFragmentManager()
+                                    .getBackStackEntryCount());
+                            getActivity().finish();
+                        }
+                        else {
+                            getFragmentManager().popBackStackImmediate();
+                        }
+                    }
 
-            @Override
-            public void onAnimationCancel(Animator animation) {
+                    @Override
+                    public void onAnimationCancel(Animator animation) {
 
-            }
+                    }
 
-            @Override
-            public void onAnimationRepeat(Animator animation) {
+                    @Override
+                    public void onAnimationRepeat(Animator animation) {
 
-            }
-        });
+                    }
+                });
     }
 
     @Override
     public boolean onMenuItemClick(MenuItem item) {
         switch (item.getItemId()) {
+            case R.id.item_hide_youtube:
+                toggleYouTubeVisibility(View.GONE);
+                break;
             case R.id.item_load_full_comments:
                 mListener.getControllerComments().loadLinkComments();
                 break;
@@ -1271,7 +1332,8 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
 
         boolean value = gestureDetector.onTouchEvent(event);
 
-        if (isFinished || MotionEventCompat.getActionMasked(event) != MotionEvent.ACTION_UP || !hasSwipedRight) {
+        if (isFinished || MotionEventCompat
+                .getActionMasked(event) != MotionEvent.ACTION_UP || !hasSwipedRight) {
             return false;
         }
 
@@ -1284,39 +1346,73 @@ public class FragmentComments extends FragmentBase implements Toolbar.OnMenuItem
             if (!value) {
                 behaviorFloatingActionButton.animateIn(buttonExpandActions);
                 layoutAppBar.animate().translationX(0);
-                layoutRelative.animate().translationX(0).setListener(new Animator.AnimatorListener() {
-                    @Override
-                    public void onAnimationStart(Animator animation) {
+                layoutRelative.animate().translationX(0)
+                        .setListener(new Animator.AnimatorListener() {
+                            @Override
+                            public void onAnimationStart(Animator animation) {
 
-                    }
-
-                    @Override
-                    public void onAnimationEnd(Animator animation) {
-                        if (!isFinished) {
-                            FragmentBase fragment = (FragmentBase) getFragmentManager()
-                                    .findFragmentByTag(fragmentParentTag);
-                            if (fragment != null) {
-                                fragment.setVisibilityOfThing(View.INVISIBLE, mListener.getControllerComments().getLink());
-                                fragment.onHiddenChanged(true);
                             }
-                            viewBackground.setVisibility(View.GONE);
-                        }
-                    }
 
-                    @Override
-                    public void onAnimationCancel(Animator animation) {
+                            @Override
+                            public void onAnimationEnd(Animator animation) {
+                                if (!isFinished) {
+                                    FragmentBase fragment = (FragmentBase) getFragmentManager()
+                                            .findFragmentByTag(fragmentParentTag);
+                                    if (fragment != null) {
+                                        fragment.setVisibilityOfThing(View.INVISIBLE,
+                                                mListener.getControllerComments().getLink());
+                                        fragment.onHiddenChanged(true);
+                                    }
+                                    viewBackground.setVisibility(View.GONE);
+                                }
+                            }
 
-                    }
+                            @Override
+                            public void onAnimationCancel(Animator animation) {
 
-                    @Override
-                    public void onAnimationRepeat(Animator animation) {
+                            }
 
-                    }
-                });
+                            @Override
+                            public void onAnimationRepeat(Animator animation) {
+
+                            }
+                        });
             }
         }
 
         return false;
+    }
+
+    @Override
+    public boolean shouldOverrideUrl(String urlString) {
+
+        Pattern pattern = Pattern.compile(
+                ".*(?:youtu.be/|v/|u/\\w/|embed/|watch\\?v=)([^#&\\?]*).*");
+        final Matcher matcher = pattern.matcher(urlString);
+        if (matcher.matches()) {
+            int time = 0;
+            Uri uri = Uri.parse(urlString);
+            String timeQuery = uri.getQueryParameter("t");
+            if (!TextUtils.isEmpty(timeQuery)) {
+                try {
+                    // YouTube query provides time in seconds, but we need milliseconds
+                    time = Integer.parseInt(timeQuery) * 1000;
+                }
+                catch (NumberFormatException e) {
+                    time = 0;
+                }
+            }
+            String id = matcher.group(1);
+
+            if (id.equals(currentYouTubeId)) {
+                return false;
+            }
+
+            loadYoutubeVideo(id, time);
+            return true;
+        }
+
+        return super.shouldOverrideUrl(urlString);
     }
 
     public interface YouTubeListener {

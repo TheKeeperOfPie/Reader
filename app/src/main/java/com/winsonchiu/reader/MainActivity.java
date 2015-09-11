@@ -174,24 +174,38 @@ public class MainActivity extends YouTubeBaseActivity
         public void onBitmapLoaded(final Bitmap bitmap, Picasso.LoadedFrom from) {
             Log.d(TAG, "downloadHeaderImage onBitmapLoaded");
             sharedPreferences.edit().putString(AppSettings.HEADER_NAME, linkHeader.getName()).apply();
-            sharedPreferences.edit().putString(AppSettings.HEADER_PERMALINK, linkHeader.getPermalink()).apply();
-            sharedPreferences.edit().putLong(AppSettings.HEADER_EXPIRATION, System.currentTimeMillis() + sharedPreferences.getLong(AppSettings.HEADER_INTERVAL, AlarmManager.INTERVAL_HALF_DAY)).apply();
+            sharedPreferences.edit().putString(AppSettings.HEADER_PERMALINK,
+                    linkHeader.getPermalink()).apply();
+            sharedPreferences.edit().putLong(AppSettings.HEADER_EXPIRATION,
+                    System.currentTimeMillis() + sharedPreferences
+                            .getLong(AppSettings.HEADER_INTERVAL, AlarmManager.INTERVAL_HALF_DAY)).apply();
             isDownloadingHeaderImage = false;
-            try {
-                FileOutputStream fileOutputStream = openFileOutput(AppSettings.HEADER_FILE_NAME, Context.MODE_PRIVATE);
-                bitmap.compress(Bitmap.CompressFormat.PNG, 100, fileOutputStream);
-                fileOutputStream.close();
-            }
-            catch (IOException e) {
-                e.printStackTrace();
-            }
-            loadHeaderFromFile();
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        FileOutputStream fileOutputStream = openFileOutput(AppSettings.HEADER_FILE_NAME, Context.MODE_PRIVATE);
+                        bitmap.compress(Bitmap.CompressFormat.PNG, 100, fileOutputStream);
+                        fileOutputStream.close();
+                    }
+                    catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                    handler.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            loadHeaderFromFile();
+                        }
+                    });
+                }
+            }).start();
         }
 
         @Override
         public void onBitmapFailed(Drawable errorDrawable) {
             Log.d(TAG, "downloadHeaderImage onBitmapFailed");
             isDownloadingHeaderImage = false;
+            imageHeader.setAlpha(1f);
         }
 
         @Override
@@ -914,6 +928,7 @@ public class MainActivity extends YouTubeBaseActivity
     private void loadHeaderImage(boolean force) {
 
         // TODO: Implement expiration enabled history
+        imageHeader.setAlpha(0.5f);
 
         if (!force && getFileStreamPath(AppSettings.HEADER_FILE_NAME).exists() && System.currentTimeMillis() < sharedPreferences.getLong(AppSettings.HEADER_EXPIRATION, 0)) {
             loadHeaderFromFile();
@@ -958,6 +973,9 @@ public class MainActivity extends YouTubeBaseActivity
                     if (linkChosen != null) {
                         downloadHeaderImage(linkChosen);
                     }
+                    else {
+                        imageHeader.setAlpha(1f);
+                    }
 
                 }
                 catch (IOException e) {
@@ -967,6 +985,7 @@ public class MainActivity extends YouTubeBaseActivity
         }, new Response.ErrorListener() {
             @Override
             public void onErrorResponse(VolleyError error) {
+                imageHeader.setAlpha(1f);
             }
         }, 0);
 
@@ -1009,6 +1028,7 @@ public class MainActivity extends YouTubeBaseActivity
 
                         Log.d(TAG, "loadHeaderFromFile onSuccess");
 
+                        imageHeader.setAlpha(1f);
                         textAccountName.setTextColor(Color.WHITE);
                         textAccountName.setShadowLayer(3, 0, 0, Color.BLACK);
                         textAccountInfo.setTextColor(Color.WHITE);
@@ -1029,7 +1049,7 @@ public class MainActivity extends YouTubeBaseActivity
 
                     @Override
                     public void onError() {
-
+                        imageHeader.setAlpha(1f);
                     }
                 });
             }
@@ -1048,7 +1068,6 @@ public class MainActivity extends YouTubeBaseActivity
         isDownloadingHeaderImage = true;
         linkHeader = link;
         Reddit.loadPicasso(MainActivity.this).load(link.getUrl()).into(target);
-        loadHeaderImage(false);
     }
 
     private String loadAndParseHeaderSubreddit() {
@@ -1592,7 +1611,6 @@ public class MainActivity extends YouTubeBaseActivity
                 intentActivity.putExtra(REDDIT_PAGE, Reddit.BASE_URL + urlString);
                 Log.d(TAG, "startActivity with REDDIT_PAGE");
                 super.startActivity(intentActivity);
-
             }
             else {
                 if (urlString.indexOf("reddit.com") > 0 && urlString.indexOf("reddit.com") < 20) {
@@ -1602,11 +1620,15 @@ public class MainActivity extends YouTubeBaseActivity
                 }
                 else {
                     if (URLUtil.isValidUrl(urlString)) {
+
                         FragmentTransaction fragmentTransaction = getFragmentManager().beginTransaction();
 
-                        Fragment fragment = getFragmentManager().findFragmentById(R.id.frame_fragment);
+                        FragmentBase fragment = (FragmentBase) getFragmentManager().findFragmentById(R.id.frame_fragment);
                         if (fragment != null) {
                             fragmentTransaction.hide(fragment);
+                            if (fragment.shouldOverrideUrl(urlString)) {
+                                return;
+                            }
                         }
                         Log.d(TAG, "FragmentWeb added");
 

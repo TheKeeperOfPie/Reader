@@ -26,14 +26,6 @@
             app:layout_behavior="@string/appbar_scrolling_view_behavior"
             >
 
-            <com.google.android.youtube.player.YouTubePlayerView
-                android:id="@+id/youtube"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:visibility="gone"
-                android:layout_alignParentTop="true"
-                />
-
             <View
                 android:id="@+id/view_background"
                 android:layout_width="match_parent"
@@ -47,6 +39,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:layout_below="@id/youtube"
+                app:layout_behavior="@string/appbar_scrolling_view_behavior"
                 >
 
                 <android.support.v7.widget.RecyclerView
@@ -67,6 +60,7 @@
             android:id="@+id/layout_app_bar"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:background="@android:color/transparent"
             >
 
             <include
@@ -74,7 +68,16 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_alignParentTop="true"
+                android:background="?attr/colorPrimary"
                 app:layout_scrollFlags="scroll|enterAlways"
+                />
+
+            <com.google.android.youtube.player.YouTubePlayerView
+                android:id="@+id/youtube"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:visibility="gone"
+                android:layout_alignParentTop="true"
                 />
 
         </android.support.design.widget.AppBarLayout>

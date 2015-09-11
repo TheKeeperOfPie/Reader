@@ -19,6 +19,7 @@ import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.view.ViewCompat;
+import android.support.v4.view.ViewPropertyAnimatorListener;
 import android.support.v4.view.animation.FastOutSlowInInterpolator;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v4.widget.SwipeRefreshLayout;
@@ -77,7 +78,7 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
     public static final String TAG = FragmentThreadList.class.getCanonicalName();
     private static final long DURATION_TRANSITION = 150;
     private static final long DURATION_ACTIONS_FADE = 150;
-    private static final float OFFSET_MODIFIER = 0.25f;
+    private static final float OFFSET_MODIFIER = 0.5f;
     private Activity activity;
     private FragmentListenerBase mListener;
 
@@ -699,6 +700,7 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
     }
 
     private void toggleLayoutActions() {
+        // TODO: Move to a Utils class
         if (buttonJumpTop.isShown()) {
             hideLayoutActions(DURATION_ACTIONS_FADE);
         }
@@ -711,29 +713,38 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
 
         for (int index = layoutActions.getChildCount() - 1; index >= 0; index--) {
             final View view = layoutActions.getChildAt(index);
+            view.setScaleX(0f);
+            view.setScaleY(0f);
+            view.setAlpha(0f);
             view.setVisibility(View.VISIBLE);
-            AlphaAnimation alphaAnimation = new AlphaAnimation(0f, 1f);
-            alphaAnimation.setAnimationListener(new Animation.AnimationListener() {
-                @Override
-                public void onAnimationStart(Animation animation) {
-                    buttonExpandActions.setImageResource(android.R.color.transparent);
-                }
+            final int finalIndex = index;
+            ViewCompat.animate(view)
+                    .alpha(1f)
+                    .scaleX(1f)
+                    .scaleY(1f)
+                    .setInterpolator(fastOutSlowInInterpolator)
+                    .setDuration(DURATION_ACTIONS_FADE)
+                    .setStartDelay((long) ((layoutActions
+                            .getChildCount() - 1 - index) * DURATION_ACTIONS_FADE * OFFSET_MODIFIER))
+                    .setListener(new ViewPropertyAnimatorListener() {
+                        @Override
+                        public void onAnimationStart(View view) {
+                            if (finalIndex == 0) {
+                                buttonExpandActions.setImageResource(android.R.color.transparent);
+                            }
+                        }
 
-                @Override
-                public void onAnimationEnd(Animation animation) {
-                }
+                        @Override
+                        public void onAnimationEnd(View view) {
 
-                @Override
-                public void onAnimationRepeat(Animation animation) {
+                        }
 
-                }
-            });
-            alphaAnimation.setInterpolator(fastOutSlowInInterpolator);
-            alphaAnimation.setDuration(DURATION_ACTIONS_FADE);
-            alphaAnimation.setStartOffset(
-                    (long) ((layoutActions
-                            .getChildCount() - 1 - index) * DURATION_ACTIONS_FADE * OFFSET_MODIFIER));
-            view.startAnimation(alphaAnimation);
+                        @Override
+                        public void onAnimationCancel(View view) {
+
+                        }
+                    })
+                    .start();
         }
 
     }
@@ -741,28 +752,39 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
     private void hideLayoutActions(long offset) {
         for (int index = 0; index < layoutActions.getChildCount(); index++) {
             final View view = layoutActions.getChildAt(index);
-            AlphaAnimation alphaAnimation = new AlphaAnimation(1f, 0f);
-            alphaAnimation.setAnimationListener(new Animation.AnimationListener() {
-                @Override
-                public void onAnimationStart(Animation animation) {
-                }
+            view.setScaleX(1f);
+            view.setScaleY(1f);
+            view.setAlpha(1f);
+            final int finalIndex = index;
+            ViewCompat.animate(view)
+                    .alpha(0f)
+                    .scaleX(0f)
+                    .scaleY(0f)
+                    .setInterpolator(fastOutSlowInInterpolator)
+                    .setDuration(DURATION_ACTIONS_FADE)
+                    .setStartDelay((long) (index * offset * OFFSET_MODIFIER))
+                    .setListener(new ViewPropertyAnimatorListener() {
+                        @Override
+                        public void onAnimationStart(View view) {
 
-                @Override
-                public void onAnimationEnd(Animation animation) {
-                    view.setVisibility(View.GONE);
-                    buttonExpandActions.setImageResource(R.drawable.ic_unfold_more_white_24dp);
-                    buttonExpandActions.setColorFilter(colorFilterAccent);
-                }
+                        }
 
-                @Override
-                public void onAnimationRepeat(Animation animation) {
+                        @Override
+                        public void onAnimationEnd(View view) {
+                            view.setVisibility(View.GONE);
+                            if (finalIndex == layoutActions.getChildCount() - 1) {
+                                buttonExpandActions
+                                        .setImageResource(R.drawable.ic_unfold_more_white_24dp);
+                                buttonExpandActions.setColorFilter(colorFilterAccent);
+                            }
+                        }
 
-                }
-            });
-            alphaAnimation.setInterpolator(fastOutSlowInInterpolator);
-            alphaAnimation.setDuration(DURATION_ACTIONS_FADE);
-            alphaAnimation.setStartOffset((long) (index * offset * OFFSET_MODIFIER));
-            view.startAnimation(alphaAnimation);
+                        @Override
+                        public void onAnimationCancel(View view) {
+
+                        }
+                    })
+                    .start();
         }
     }
 
