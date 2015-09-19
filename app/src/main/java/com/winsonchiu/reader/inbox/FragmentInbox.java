@@ -12,7 +12,6 @@ import android.graphics.ColorFilter;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
 import android.os.Bundle;
-import android.preference.PreferenceManager;
 import android.support.design.widget.AppBarLayout;
 import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.FloatingActionButton;
@@ -40,7 +39,6 @@ import com.winsonchiu.reader.FragmentListenerBase;
 import com.winsonchiu.reader.FragmentNewMessage;
 import com.winsonchiu.reader.MainActivity;
 import com.winsonchiu.reader.R;
-import com.winsonchiu.reader.Theme;
 import com.winsonchiu.reader.comments.AdapterCommentList;
 import com.winsonchiu.reader.data.Page;
 import com.winsonchiu.reader.data.reddit.Comment;
@@ -48,7 +46,7 @@ import com.winsonchiu.reader.data.reddit.Reddit;
 import com.winsonchiu.reader.data.reddit.Sort;
 import com.winsonchiu.reader.data.reddit.Time;
 import com.winsonchiu.reader.profile.ControllerProfile;
-import com.winsonchiu.reader.utils.AnimationUtils;
+import com.winsonchiu.reader.utils.UtilsAnimation;
 import com.winsonchiu.reader.utils.DisallowListener;
 import com.winsonchiu.reader.utils.ItemDecorationDivider;
 import com.winsonchiu.reader.utils.RecyclerCallback;
@@ -230,7 +228,7 @@ public class FragmentInbox extends FragmentBase implements Toolbar.OnMenuItemCli
         recyclerInbox.setHasFixedSize(true);
         recyclerInbox.setItemAnimator(new DefaultItemAnimator());
         recyclerInbox.getItemAnimator()
-                .setRemoveDuration(AnimationUtils.EXPAND_ACTION_DURATION);
+                .setRemoveDuration(UtilsAnimation.EXPAND_ACTION_DURATION);
         recyclerInbox.setLayoutManager(linearLayoutManager);
         recyclerInbox.addItemDecoration(new ItemDecorationDivider(activity, ItemDecorationDivider.VERTICAL_LIST));
 

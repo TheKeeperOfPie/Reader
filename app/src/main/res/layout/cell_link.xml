@@ -122,7 +122,7 @@
             android:layout_marginEnd="@dimen/activity_horizontal_margin"
             android:textSize="12sp"
             android:textColor="?attr/colorAccent"
-            android:ellipsize="marquee"
+            android:textAlignment="viewStart"
             />
 
         <TextView
@@ -135,7 +135,7 @@
             android:layout_marginEnd="@dimen/activity_horizontal_margin"
             android:paddingBottom="8dp"
             android:textAppearance="@style/TextAppearance.AppCompat.Body2"
-            android:ellipsize="marquee"
+            android:textAlignment="viewStart"
             />
 
         <!-- TODO: Make self text selectable, fix ripple animation state-->

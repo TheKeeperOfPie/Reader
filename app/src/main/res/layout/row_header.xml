@@ -15,11 +15,12 @@
         android:layout_height="wrap_content"
         android:layout_alignParentTop="true"
         android:layout_alignParentStart="true"
-        android:textAppearance="?android:textAppearanceLarge"
         android:layout_marginStart="@dimen/activity_horizontal_margin"
         android:layout_marginEnd="@dimen/activity_horizontal_margin"
         android:layout_marginTop="8dp"
         android:layout_marginBottom="8dp"
+        android:textAlignment="viewStart"
+        android:textAppearance="@style/TextAppearance.AppCompat.Title"
         />
 
     <TextView
@@ -31,6 +32,8 @@
         android:layout_marginEnd="@dimen/activity_horizontal_margin"
         android:layout_marginTop="8dp"
         android:layout_marginBottom="8dp"
+        android:textAlignment="viewStart"
+        android:textAppearance="@style/TextAppearance.AppCompat.Body2"
         />
 
 </RelativeLayout>

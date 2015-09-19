@@ -15,7 +15,6 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import com.winsonchiu.reader.AppSettings;
-import com.winsonchiu.reader.BuildConfig;
 import com.winsonchiu.reader.R;
 import com.winsonchiu.reader.data.reddit.Link;
 import com.winsonchiu.reader.data.reddit.Reddit;
@@ -50,7 +49,7 @@ public class AdapterLinkList extends AdapterLink {
     public RecyclerView.ViewHolder  onCreateViewHolder(ViewGroup viewGroup, int viewType) {
 
         if (viewType == VIEW_LINK_HEADER) {
-            return new ViewHolderHeader(LayoutInflater.from(viewGroup.getContext()).inflate(R.layout.header_link, viewGroup, false), eventListenerHeader);
+            return new ViewHolderHeader(LayoutInflater.from(viewGroup.getContext()).inflate(R.layout.header_subreddit, viewGroup, false), eventListenerHeader);
         }
 
         return new ViewHolder(LayoutInflater.from(viewGroup.getContext())
@@ -154,7 +153,8 @@ public class AdapterLinkList extends AdapterLink {
         @Override
         public int[] getScreenAnchor() {
             int[] location = new int[2];
-            imageThumbnail.getLocationOnScreen(location);
+            frameFull.getLocationOnScreen(location);
+            location[1] += frameFull.getHeight();
             return location;
         }
     }

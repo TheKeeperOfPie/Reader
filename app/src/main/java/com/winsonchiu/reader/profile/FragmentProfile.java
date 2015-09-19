@@ -8,11 +8,8 @@ import android.app.Activity;
 import android.content.Intent;
 import android.content.res.TypedArray;
 import android.graphics.Color;
-import android.graphics.ColorFilter;
 import android.graphics.PorterDuff;
-import android.graphics.PorterDuffColorFilter;
 import android.os.Bundle;
-import android.preference.PreferenceManager;
 import android.support.design.widget.AppBarLayout;
 import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.Snackbar;
@@ -46,7 +43,6 @@ import com.winsonchiu.reader.FragmentListenerBase;
 import com.winsonchiu.reader.FragmentNewMessage;
 import com.winsonchiu.reader.MainActivity;
 import com.winsonchiu.reader.R;
-import com.winsonchiu.reader.Theme;
 import com.winsonchiu.reader.comments.AdapterCommentList;
 import com.winsonchiu.reader.data.Page;
 import com.winsonchiu.reader.data.reddit.Comment;
@@ -55,7 +51,7 @@ import com.winsonchiu.reader.data.reddit.Reddit;
 import com.winsonchiu.reader.data.reddit.Sort;
 import com.winsonchiu.reader.data.reddit.Thing;
 import com.winsonchiu.reader.data.reddit.Time;
-import com.winsonchiu.reader.utils.AnimationUtils;
+import com.winsonchiu.reader.utils.UtilsAnimation;
 import com.winsonchiu.reader.utils.CustomColorFilter;
 import com.winsonchiu.reader.utils.DisallowListener;
 import com.winsonchiu.reader.utils.ItemDecorationDivider;
@@ -381,21 +377,7 @@ public class FragmentProfile extends FragmentBase implements Toolbar.OnMenuItemC
                     }, new RecyclerCallback() {
                 @Override
                 public void scrollTo(final int position) {
-                    recyclerProfile.requestLayout();
-                    recyclerProfile.post(new Runnable() {
-                        @Override
-                        public void run() {
-                            RecyclerView.ViewHolder viewHolder = recyclerProfile.findViewHolderForAdapterPosition(position);
-                            int offset = 0;
-                            if (viewHolder != null) {
-                                int difference = recyclerProfile.getHeight() - viewHolder.itemView.getHeight();
-                                if (difference > 0) {
-                                    offset = difference / 2;
-                                }
-                            }
-                            linearLayoutManager.scrollToPositionWithOffset(position, offset);
-                        }
-                    });
+                    UtilsAnimation.scrollToPositionWithCentering(position, recyclerProfile, linearLayoutManager, false);
                 }
 
                 @Override
@@ -473,7 +455,7 @@ public class FragmentProfile extends FragmentBase implements Toolbar.OnMenuItemC
 
                 //noinspection ResourceType
                 snackbar = Snackbar.make(recyclerProfile, text,
-                        AnimationUtils.SNACKBAR_DURATION)
+                        UtilsAnimation.SNACKBAR_DURATION)
                         .setActionTextColor(colorFilterPrimary.getColor())
                         .setAction(
                                 R.string.undo, new View.OnClickListener() {

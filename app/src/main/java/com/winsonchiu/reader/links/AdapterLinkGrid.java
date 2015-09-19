@@ -10,7 +10,6 @@ import android.graphics.Color;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
-import android.os.Build;
 import android.support.v4.graphics.ColorUtils;
 import android.support.v7.graphics.Palette;
 import android.support.v7.internal.widget.TintImageView;
@@ -19,7 +18,6 @@ import android.support.v7.widget.StaggeredGridLayoutManager;
 import android.text.TextUtils;
 import android.text.util.Linkify;
 import android.util.DisplayMetrics;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.View;
@@ -29,18 +27,16 @@ import android.widget.RelativeLayout;
 
 import com.squareup.picasso.Callback;
 import com.winsonchiu.reader.AppSettings;
-import com.winsonchiu.reader.BuildConfig;
 import com.winsonchiu.reader.R;
 import com.winsonchiu.reader.data.imgur.Album;
 import com.winsonchiu.reader.data.reddit.Link;
 import com.winsonchiu.reader.data.reddit.Reddit;
-import com.winsonchiu.reader.utils.AnimationUtils;
+import com.winsonchiu.reader.utils.UtilsAnimation;
 import com.winsonchiu.reader.utils.DisallowListener;
 import com.winsonchiu.reader.utils.RecyclerCallback;
 import com.winsonchiu.reader.utils.UtilsColor;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 
 /**
  * Created by TheKeeperOfPie on 3/7/2015.
@@ -87,7 +83,7 @@ public class AdapterLinkGrid extends AdapterLink {
 
         if (viewType == VIEW_LINK_HEADER) {
             return new ViewHolderHeader(LayoutInflater.from(viewGroup.getContext())
-                    .inflate(R.layout.header_link, viewGroup, false), eventListenerHeader);
+                    .inflate(R.layout.header_subreddit, viewGroup, false), eventListenerHeader);
         }
 
         return new ViewHolder(LayoutInflater.from(viewGroup.getContext())
@@ -534,7 +530,7 @@ public class AdapterLinkGrid extends AdapterLink {
             link.setBackgroundColor(color);
 
             if (viewOverlay.getVisibility() == View.GONE) {
-                AnimationUtils.animateBackgroundColor(
+                UtilsAnimation.animateBackgroundColor(
                         itemView,
                         ((ColorDrawable) itemView.getBackground())
                                 .getColor(), color);
@@ -546,7 +542,7 @@ public class AdapterLinkGrid extends AdapterLink {
                 color = ColorUtils.setAlphaComponent(color, ALPHA_OVERLAY_IMAGE);
 
                 itemView.setBackgroundColor(0x00000000);
-                AnimationUtils.animateBackgroundColor(
+                UtilsAnimation.animateBackgroundColor(
                         viewOverlay,
                         ((ColorDrawable) viewOverlay.getBackground())
                                 .getColor(), color);

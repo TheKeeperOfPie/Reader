@@ -4,7 +4,6 @@
 
 package com.winsonchiu.reader.links;
 
-import android.animation.Animator;
 import android.app.Activity;
 import android.content.SharedPreferences;
 import android.content.res.TypedArray;
@@ -41,8 +40,6 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.animation.AlphaAnimation;
-import android.view.animation.Animation;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
@@ -55,7 +52,6 @@ import com.winsonchiu.reader.FragmentBase;
 import com.winsonchiu.reader.FragmentListenerBase;
 import com.winsonchiu.reader.FragmentNewPost;
 import com.winsonchiu.reader.R;
-import com.winsonchiu.reader.comments.FragmentComments;
 import com.winsonchiu.reader.data.reddit.Link;
 import com.winsonchiu.reader.data.reddit.Reddit;
 import com.winsonchiu.reader.data.reddit.Sort;
@@ -64,7 +60,7 @@ import com.winsonchiu.reader.data.reddit.Thing;
 import com.winsonchiu.reader.data.reddit.Time;
 import com.winsonchiu.reader.history.Historian;
 import com.winsonchiu.reader.search.FragmentSearch;
-import com.winsonchiu.reader.utils.AnimationUtils;
+import com.winsonchiu.reader.utils.UtilsAnimation;
 import com.winsonchiu.reader.utils.CustomColorFilter;
 import com.winsonchiu.reader.utils.CustomItemTouchHelper;
 import com.winsonchiu.reader.utils.DisallowListener;
@@ -183,20 +179,7 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
             @Override
             public void scrollTo(final int position) {
                 recyclerThreadList.requestLayout();
-                recyclerThreadList.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        RecyclerView.ViewHolder viewHolder = recyclerThreadList.findViewHolderForAdapterPosition(position);
-                        int offset = 0;
-                        if (viewHolder != null) {
-                            int difference = recyclerThreadList.getHeight() - viewHolder.itemView.getHeight();
-                            if (difference > 0) {
-                                offset = difference / 2;
-                            }
-                        }
-                        scrollToPositionWithOffset(position, offset);
-                    }
-                });
+                UtilsAnimation.scrollToPositionWithCentering(position, recyclerThreadList, layoutManager, false);
             }
 
             @Override
@@ -648,7 +631,7 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
 
                         //noinspection ResourceType
                         snackbar = Snackbar.make(recyclerThreadList, text,
-                                AnimationUtils.SNACKBAR_DURATION)
+                                UtilsAnimation.SNACKBAR_DURATION)
                                 .setActionTextColor(colorFilterPrimary.getColor())
                                 .setAction(
                                         R.string.undo, new View.OnClickListener() {

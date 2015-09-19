@@ -11,8 +11,10 @@ import android.graphics.Point;
 import android.support.v4.graphics.ColorUtils;
 import android.support.v4.view.ViewCompat;
 import android.support.v4.view.ViewPropertyAnimatorCompat;
-import android.support.v4.view.ViewPropertyAnimatorListener;
 import android.support.v4.view.animation.FastOutSlowInInterpolator;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.StaggeredGridLayoutManager;
 import android.util.Log;
 import android.util.TypedValue;
 import android.view.Display;
@@ -28,13 +30,13 @@ import java.util.List;
 /**
  * Created by TheKeeperOfPie on 3/21/2015.
  */
-public class AnimationUtils {
+public class UtilsAnimation {
 
     public static final int SNACKBAR_DURATION = 2000;
     public static final long EXPAND_ACTION_DURATION = 150;
     public static final long ALPHA_DURATION = 500;
     public static final long BACKGROUND_DURATION = 500;
-    private static final String TAG = AnimationUtils.class.getCanonicalName();
+    private static final String TAG = UtilsAnimation.class.getCanonicalName();
 
     public static void animateBackgroundColor(final View view, final int start, final int end) {
 
@@ -235,6 +237,65 @@ public class AnimationUtils {
                 .setInterpolator(new FastOutSlowInInterpolator())
                 .setListener(null)
                 ;
+    }
+
+    public static void scrollToPositionWithCentering(final int position,
+            final RecyclerView recyclerView,
+            final RecyclerView.LayoutManager layoutManager,
+            boolean animateRipple) {
+        scrollToPositionWithCentering(position, recyclerView, layoutManager, 0, 0, animateRipple);
+    }
+
+    public static void scrollToPositionWithCentering(final int position,
+            final RecyclerView recyclerView,
+            final RecyclerView.LayoutManager layoutManager,
+            final int paddingTop,
+            final int paddingBottom,
+            final boolean animateRipple) {
+        recyclerView.requestLayout();
+
+        Runnable runnable = new Runnable() {
+            @Override
+            public void run() {
+                final RecyclerView.ViewHolder viewHolder = recyclerView
+                        .findViewHolderForAdapterPosition(position);
+                int offset = paddingTop;
+                if (viewHolder != null) {
+                    int difference = recyclerView
+                            .getHeight() - paddingBottom - viewHolder.itemView
+                            .getHeight();
+                    if (difference > 0) {
+                        offset = difference / 2;
+                    }
+                    if (animateRipple) {
+                        viewHolder.itemView.setPressed(true);
+                        recyclerView.postDelayed(new Runnable() {
+                            @Override
+                            public void run() {
+                                viewHolder.itemView.setPressed(false);
+                            }
+                        }, 150);
+                    }
+                }
+                if (layoutManager instanceof LinearLayoutManager) {
+                    ((LinearLayoutManager) layoutManager).scrollToPositionWithOffset(position, offset);
+                }
+                else {
+                    if (layoutManager instanceof StaggeredGridLayoutManager) {
+                        ((StaggeredGridLayoutManager) layoutManager).scrollToPositionWithOffset(position, offset);
+                    }
+                    else {
+                        layoutManager.scrollToPosition(position);
+                    }
+                }
+            }
+        };
+
+        if (recyclerView.findViewHolderForAdapterPosition(position) == null) {
+            layoutManager.scrollToPosition(position);
+        }
+
+        recyclerView.post(runnable);
     }
 
     public interface OnAnimationEndListener {

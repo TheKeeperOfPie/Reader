@@ -60,7 +60,7 @@ import com.winsonchiu.reader.YouTubePlayerStateListener;
 import com.winsonchiu.reader.data.reddit.Link;
 import com.winsonchiu.reader.data.reddit.Sort;
 import com.winsonchiu.reader.links.AdapterLink;
-import com.winsonchiu.reader.utils.AnimationUtils;
+import com.winsonchiu.reader.utils.UtilsAnimation;
 import com.winsonchiu.reader.utils.DisallowListener;
 import com.winsonchiu.reader.utils.ItemDecorationDivider;
 import com.winsonchiu.reader.utils.RecyclerCallback;
@@ -124,17 +124,18 @@ public class FragmentComments extends FragmentBase
     private SharedPreferences preferences;
     private CoordinatorLayout layoutCoordinator;
     private AppBarLayout layoutAppBar;
-    private boolean hasSwipedRight;
+    private boolean hasSwipedEnd;
     private RelativeLayout layoutRelative;
     private CustomRelativeLayout layoutRoot;
     private boolean isFinished;
     private float swipeDifferenceX;
     private ColorFilter colorFilterPrimary;
     private ColorFilter colorFilterAccent;
-    private float swipeRightDistance;
+    private float swipeEndDistance;
     private int scrollToPaddingTop;
     private int scrollToPaddingBottom;
     private String currentYouTubeId;
+    private boolean isStartOnLeft;
 
     public static FragmentComments newInstance() {
         FragmentComments fragment = new FragmentComments();
@@ -245,7 +246,7 @@ public class FragmentComments extends FragmentBase
 
             @Override
             public void scrollTo(final int position) {
-                linearLayoutManager.scrollToPositionWithOffset(position, 0);
+                UtilsAnimation.scrollToPositionWithCentering(position, recyclerCommentList, linearLayoutManager, scrollToPaddingTop, scrollToPaddingBottom, true);
             }
 
             @Override
@@ -418,41 +419,8 @@ public class FragmentComments extends FragmentBase
                         .getPreviousCommentPosition(
                                 position - 1) + 1;
 
-                Log.d(TAG, "newPosition: " + newPosition);
+                UtilsAnimation.scrollToPositionWithCentering(newPosition, recyclerCommentList, linearLayoutManager, scrollToPaddingTop, scrollToPaddingBottom, true);
 
-                Runnable runnable = new Runnable() {
-                    @Override
-                    public void run() {
-                        final RecyclerView.ViewHolder viewHolder = recyclerCommentList
-                                .findViewHolderForAdapterPosition(newPosition);
-                        int offset = scrollToPaddingTop;
-                        if (viewHolder != null) {
-                            viewHolder.itemView.setPressed(true);
-                            int difference = recyclerCommentList
-                                    .getHeight() - scrollToPaddingBottom - viewHolder.itemView
-                                    .getHeight();
-                            if (difference > 0) {
-                                offset = difference / 2;
-                            }
-                            recyclerCommentList.postDelayed(new Runnable() {
-                                @Override
-                                public void run() {
-                                    viewHolder.itemView.setPressed(false);
-                                }
-                            }, 150);
-                        }
-                        linearLayoutManager.scrollToPositionWithOffset(newPosition, offset);
-                    }
-                };
-
-                if (recyclerCommentList.findViewHolderForAdapterPosition(newPosition) != null) {
-                    // Previous comment is rendered already
-                    runnable.run();
-                }
-                else {
-                    linearLayoutManager.scrollToPosition(newPosition);
-                    recyclerCommentList.post(runnable);
-                }
             }
         });
         buttonCommentPrevious.setOnLongClickListener(new View.OnLongClickListener() {
@@ -490,41 +458,7 @@ public class FragmentComments extends FragmentBase
                         break;
                 }
 
-                final int newPosition = position;
-
-                Runnable runnable = new Runnable() {
-                    @Override
-                    public void run() {
-                        final RecyclerView.ViewHolder viewHolder = recyclerCommentList
-                                .findViewHolderForAdapterPosition(newPosition);
-                        int offset = scrollToPaddingTop;
-                        if (viewHolder != null) {
-                            viewHolder.itemView.setPressed(true);
-                            int difference = recyclerCommentList
-                                    .getHeight() - scrollToPaddingBottom - viewHolder.itemView
-                                    .getHeight();
-                            if (difference > 0) {
-                                offset = difference / 2;
-                            }
-                            recyclerCommentList.postDelayed(new Runnable() {
-                                @Override
-                                public void run() {
-                                    viewHolder.itemView.setPressed(false);
-                                }
-                            }, 150);
-                        }
-                        linearLayoutManager.scrollToPositionWithOffset(newPosition, offset);
-                    }
-                };
-
-                if (recyclerCommentList.findViewHolderForAdapterPosition(newPosition) != null) {
-                    // Previous comment is rendered already
-                    runnable.run();
-                }
-                else {
-                    linearLayoutManager.scrollToPosition(newPosition);
-                    recyclerCommentList.post(runnable);
-                }
+                UtilsAnimation.scrollToPositionWithCentering(position, recyclerCommentList, linearLayoutManager, scrollToPaddingTop, scrollToPaddingBottom, true);
 
             }
         });
@@ -595,8 +529,9 @@ public class FragmentComments extends FragmentBase
         recyclerCommentList.addItemDecoration(
                 new ItemDecorationDivider(getActivity(), ItemDecorationDivider.VERTICAL_LIST));
 
+        isStartOnLeft = getResources().getConfiguration().getLayoutDirection() == View.LAYOUT_DIRECTION_LTR;
         final float screenWidth = getResources().getDisplayMetrics().widthPixels;
-        swipeRightDistance = screenWidth * 0.4f;
+        swipeEndDistance = screenWidth * 0.4f;
 
         gestureDetector = new GestureDetectorCompat(getActivity(),
                 new GestureDetector.SimpleOnGestureListener() {
@@ -608,7 +543,6 @@ public class FragmentComments extends FragmentBase
                             float distanceY) {
 
                         // TODO: Implement a fling gesture based on distance-based velocity
-                        // TODO: Support RTL (make sure to change preference label)
 
                         if (isFinished) {
                             return true;
@@ -616,25 +550,34 @@ public class FragmentComments extends FragmentBase
 
                         swipeDifferenceX = e2.getX() - e1.getX();
 
-                        if (swipeDifferenceX > 0 && e1.getX() < screenWidth * 0.2f) {
-                            if (!hasSwipedRight) {
-                                FragmentBase fragment = (FragmentBase) getFragmentManager()
-                                        .findFragmentByTag(fragmentParentTag);
-                                if (fragment != null) {
-                                    fragment.setVisibilityOfThing(View.VISIBLE,
-                                            mListener.getControllerComments().getLink());
-                                    fragment.onHiddenChanged(false);
-                                }
-                                viewBackground.setVisibility(View.VISIBLE);
-                                hasSwipedRight = true;
+                        if (isStartOnLeft) {
+                            if (e1.getX() > screenWidth * 0.2f || swipeDifferenceX < 0) {
+                                return super.onScroll(e1, e2, distanceX, distanceY);
                             }
-                            float ratio = 1f - swipeDifferenceX / screenWidth;
-                            buttonExpandActions.setAlpha(ratio);
-                            buttonExpandActions.setScaleX(ratio);
-                            buttonExpandActions.setScaleY(ratio);
-                            layoutAppBar.setTranslationX(swipeDifferenceX);
-                            layoutRelative.setTranslationX(swipeDifferenceX);
                         }
+                        else {
+                            if (e1.getX() < screenWidth * 0.8f || swipeDifferenceX > 0) {
+                                return super.onScroll(e1, e2, distanceX, distanceY);
+                            }
+                        }
+
+                        if (!hasSwipedEnd) {
+                            FragmentBase fragment = (FragmentBase) getFragmentManager()
+                                    .findFragmentByTag(fragmentParentTag);
+                            if (fragment != null) {
+                                fragment.setVisibilityOfThing(View.VISIBLE,
+                                        mListener.getControllerComments().getLink());
+                                fragment.onHiddenChanged(false);
+                            }
+                            viewBackground.setVisibility(View.VISIBLE);
+                            hasSwipedEnd = true;
+                        }
+                        float ratio = 1f - swipeDifferenceX / screenWidth;
+                        buttonExpandActions.setAlpha(ratio);
+                        buttonExpandActions.setScaleX(ratio);
+                        buttonExpandActions.setScaleY(ratio);
+                        layoutAppBar.setTranslationX(swipeDifferenceX);
+                        layoutRelative.setTranslationX(swipeDifferenceX);
 
                         return super.onScroll(e1, e2, distanceX, distanceY);
                     }
@@ -691,6 +634,7 @@ public class FragmentComments extends FragmentBase
 
         return layoutRoot;
     }
+
 
     private void loadYoutubeVideo(final String id, final int timeInMillis) {
 
@@ -1162,12 +1106,12 @@ public class FragmentComments extends FragmentBase
 
                         long duration = ScrollAwareFloatingActionButtonBehavior.DURATION;
 
-                        AnimationUtils.shrinkAndFadeOut(buttonExpandActions, duration);
+                        UtilsAnimation.shrinkAndFadeOut(buttonExpandActions, duration);
 
                         if (buttonJumpTop.isShown()) {
-                            AnimationUtils.shrinkAndFadeOut(buttonJumpTop, duration);
-                            AnimationUtils.shrinkAndFadeOut(buttonCommentNext, duration);
-                            AnimationUtils.shrinkAndFadeOut(buttonCommentPrevious, duration);
+                            UtilsAnimation.shrinkAndFadeOut(buttonJumpTop, duration);
+                            UtilsAnimation.shrinkAndFadeOut(buttonCommentNext, duration);
+                            UtilsAnimation.shrinkAndFadeOut(buttonCommentPrevious, duration);
                         }
 
                         final Animation animation = new Animation() {
@@ -1254,9 +1198,10 @@ public class FragmentComments extends FragmentBase
             fragment.onHiddenChanged(false);
         }
         float screenWidth = getResources().getDisplayMetrics().widthPixels;
+        float translationX = isStartOnLeft ? screenWidth : -screenWidth;
         behaviorFloatingActionButton.animateOut(buttonExpandActions);
-        layoutAppBar.animate().translationX(screenWidth);
-        layoutRelative.animate().translationX(screenWidth)
+        layoutAppBar.animate().translationX(translationX);
+        layoutRelative.animate().translationX(translationX)
                 .setListener(new Animator.AnimatorListener() {
                     @Override
                     public void onAnimationStart(Animator animation) {
@@ -1327,17 +1272,22 @@ public class FragmentComments extends FragmentBase
         boolean value = gestureDetector.onTouchEvent(event);
 
         if (isFinished || MotionEventCompat
-                .getActionMasked(event) != MotionEvent.ACTION_UP || !hasSwipedRight) {
+                .getActionMasked(event) != MotionEvent.ACTION_UP || !hasSwipedEnd) {
             return false;
         }
 
-        if (swipeDifferenceX > swipeRightDistance) {
+        if (isStartOnLeft && swipeDifferenceX > swipeEndDistance) {
+            slideExit();
+            return false;
+        }
+        else if (!isStartOnLeft && swipeDifferenceX < -swipeEndDistance) {
             slideExit();
             return false;
         }
         else {
-            hasSwipedRight = false;
+            hasSwipedEnd = false;
             if (!value) {
+
                 behaviorFloatingActionButton.animateIn(buttonExpandActions);
                 layoutAppBar.animate().translationX(0);
                 layoutRelative.animate().translationX(0)

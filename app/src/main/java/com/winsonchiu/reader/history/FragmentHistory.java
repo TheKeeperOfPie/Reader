@@ -10,9 +10,7 @@ import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.content.res.TypedArray;
 import android.graphics.Color;
-import android.graphics.ColorFilter;
 import android.graphics.PorterDuff;
-import android.graphics.PorterDuffColorFilter;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.design.widget.AppBarLayout;
@@ -54,7 +52,7 @@ import com.winsonchiu.reader.data.reddit.Thing;
 import com.winsonchiu.reader.links.AdapterLink;
 import com.winsonchiu.reader.links.AdapterLinkGrid;
 import com.winsonchiu.reader.links.AdapterLinkList;
-import com.winsonchiu.reader.utils.AnimationUtils;
+import com.winsonchiu.reader.utils.UtilsAnimation;
 import com.winsonchiu.reader.utils.CustomColorFilter;
 import com.winsonchiu.reader.utils.DisallowListener;
 import com.winsonchiu.reader.utils.ItemDecorationDivider;
@@ -287,21 +285,7 @@ public class FragmentHistory extends FragmentBase implements Toolbar.OnMenuItemC
         RecyclerCallback recyclerCallback = new RecyclerCallback() {
             @Override
             public void scrollTo(final int position) {
-                recyclerHistory.requestLayout();
-                recyclerHistory.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        RecyclerView.ViewHolder viewHolder = recyclerHistory.findViewHolderForAdapterPosition(position);
-                        int offset = 0;
-                        if (viewHolder != null) {
-                            int difference = recyclerHistory.getHeight() - viewHolder.itemView.getHeight();
-                            if (difference > 0) {
-                                offset = difference / 2;
-                            }
-                        }
-                        scrollToPositionWithOffset(position, offset);
-                    }
-                });
+                UtilsAnimation.scrollToPositionWithCentering(position, recyclerHistory, layoutManager, false);
             }
 
             @Override
@@ -430,7 +414,7 @@ public class FragmentHistory extends FragmentBase implements Toolbar.OnMenuItemC
 
                         //noinspection ResourceType
                         snackbar = Snackbar.make(recyclerHistory, text,
-                                AnimationUtils.SNACKBAR_DURATION)
+                                UtilsAnimation.SNACKBAR_DURATION)
                                 .setActionTextColor(colorFilterPrimary.getColor())
                                 .setAction(
                                         R.string.undo, new View.OnClickListener() {

@@ -61,6 +61,7 @@
             android:textStyle="bold"
             android:clickable="false"
             android:textColor="@android:color/white"
+            android:textAlignment="viewStart"
             android:background="?attr/selectableItemBackgroundBorderless"
             />
 
@@ -77,6 +78,7 @@
             android:textSize="14sp"
             android:clickable="false"
             android:textColor="@android:color/white"
+            android:textAlignment="viewStart"
             android:background="?attr/selectableItemBackgroundBorderless"
             />
 

@@ -38,14 +38,13 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.winsonchiu.reader.AppSettings;
-import com.winsonchiu.reader.ControllerUser;
 import com.winsonchiu.reader.MainActivity;
 import com.winsonchiu.reader.R;
 import com.winsonchiu.reader.comments.AdapterCommentList;
 import com.winsonchiu.reader.data.reddit.Message;
 import com.winsonchiu.reader.links.AdapterLink;
 import com.winsonchiu.reader.profile.ControllerProfile;
-import com.winsonchiu.reader.utils.AnimationUtils;
+import com.winsonchiu.reader.utils.UtilsAnimation;
 import com.winsonchiu.reader.utils.DisallowListener;
 import com.winsonchiu.reader.utils.RecyclerCallback;
 
@@ -246,7 +245,7 @@ public class AdapterInbox extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
                         onBind(message);
                     }
 
-                    AnimationUtils.animateExpand(toolbarActions, 1f, null);
+                    UtilsAnimation.animateExpand(toolbarActions, 1f, null);
                 }
             };
             textSubject.setOnClickListener(clickListenerLink);

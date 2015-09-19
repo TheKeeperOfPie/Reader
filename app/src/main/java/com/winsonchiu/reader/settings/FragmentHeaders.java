@@ -17,6 +17,7 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import com.winsonchiu.reader.R;
+import com.winsonchiu.reader.utils.ItemDecorationDivider;
 
 public class FragmentHeaders extends Fragment {
 
@@ -80,6 +81,7 @@ public class FragmentHeaders extends Fragment {
         recyclerHeaders.setHasFixedSize(true);
         recyclerHeaders.setAdapter(adapterHeaders);
         recyclerHeaders.setItemAnimator(null);
+        recyclerHeaders.addItemDecoration(new ItemDecorationDivider(activity, ItemDecorationDivider.VERTICAL_LIST));
 
         return view;
     }

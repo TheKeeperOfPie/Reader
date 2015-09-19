@@ -13,7 +13,6 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.text.Html;
 import android.text.method.LinkMovementMethod;
-import android.util.Log;
 import android.util.TypedValue;
 import android.view.GestureDetector;
 import android.view.LayoutInflater;
@@ -27,7 +26,7 @@ import android.widget.TextView;
 import com.winsonchiu.reader.R;
 import com.winsonchiu.reader.data.reddit.Reddit;
 import com.winsonchiu.reader.data.reddit.Subreddit;
-import com.winsonchiu.reader.utils.AnimationUtils;
+import com.winsonchiu.reader.utils.UtilsAnimation;
 import com.winsonchiu.reader.utils.CustomColorFilter;
 
 import java.util.Date;
@@ -148,7 +147,7 @@ public class AdapterSearchSubreddits extends RecyclerView.Adapter<AdapterSearchS
             itemView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    AnimationUtils.animateExpand(layoutContainerExpand, 1f, null);
+                    UtilsAnimation.animateExpand(layoutContainerExpand, 1f, null);
                 }
             });
 

@@ -53,6 +53,7 @@ import com.winsonchiu.reader.utils.DisallowListener;
 import com.winsonchiu.reader.utils.ItemDecorationDivider;
 import com.winsonchiu.reader.utils.RecyclerCallback;
 import com.winsonchiu.reader.utils.SimpleCallbackBackground;
+import com.winsonchiu.reader.utils.UtilsAnimation;
 import com.winsonchiu.reader.utils.UtilsColor;
 
 public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemClickListener {
@@ -411,6 +412,11 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
             public void onSwiped(RecyclerView.ViewHolder viewHolder, int direction) {
 
             }
+
+            @Override
+            public boolean isLongPressDragEnabled() {
+                return false;
+            }
         });
         itemTouchHelperSubreddits.attachToRecyclerView(recyclerSearchSubreddits);
 
@@ -473,21 +479,7 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
                 new RecyclerCallback() {
                     @Override
                     public void scrollTo(final int position) {
-                        recyclerSearchLinks.requestLayout();
-                        recyclerSearchLinks.post(new Runnable() {
-                            @Override
-                            public void run() {
-                                RecyclerView.ViewHolder viewHolder = recyclerSearchLinks.findViewHolderForAdapterPosition(position);
-                                int offset = 0;
-                                if (viewHolder != null) {
-                                    int difference = recyclerSearchLinks.getHeight() - viewHolder.itemView.getHeight();
-                                    if (difference > 0) {
-                                        offset = difference / 2;
-                                    }
-                                }
-                                layoutManagerLinks.scrollToPositionWithOffset(position, offset);
-                            }
-                        });
+                        UtilsAnimation.scrollToPositionWithCentering(position, recyclerSearchLinks, layoutManagerLinks, false);
                     }
 
                     @Override
@@ -574,21 +566,7 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
                 new RecyclerCallback() {
                     @Override
                     public void scrollTo(final int position) {
-                        recyclerSearchLinksSubreddit.requestLayout();
-                        recyclerSearchLinksSubreddit.post(new Runnable() {
-                            @Override
-                            public void run() {
-                                RecyclerView.ViewHolder viewHolder = recyclerSearchLinksSubreddit.findViewHolderForAdapterPosition(position);
-                                int offset = 0;
-                                if (viewHolder != null) {
-                                    int difference = recyclerSearchLinksSubreddit.getHeight() - viewHolder.itemView.getHeight();
-                                    if (difference > 0) {
-                                        offset = difference / 2;
-                                    }
-                                }
-                                layoutManagerLinksSubreddit.scrollToPositionWithOffset(position, offset);
-                            }
-                        });
+                        UtilsAnimation.scrollToPositionWithCentering(position, recyclerSearchLinksSubreddit, layoutManagerLinksSubreddit, false);
                     }
 
                     @Override

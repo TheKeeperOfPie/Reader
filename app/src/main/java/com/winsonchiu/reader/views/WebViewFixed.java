@@ -10,7 +10,6 @@ import android.content.Context;
 import android.graphics.Rect;
 import android.os.Build;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.util.TypedValue;
 import android.view.ViewGroup;
 import android.webkit.WebView;
@@ -18,7 +17,7 @@ import android.widget.FrameLayout;
 import android.widget.RelativeLayout;
 
 import com.winsonchiu.reader.data.reddit.Reddit;
-import com.winsonchiu.reader.utils.AnimationUtils;
+import com.winsonchiu.reader.utils.UtilsAnimation;
 
 /**
  * Created by TheKeeperOfPie on 3/17/2015.
@@ -127,7 +126,7 @@ public class WebViewFixed extends WebView {
 
     public void lockHeight() {
         if (maxHeight == Integer.MAX_VALUE) {
-            maxHeight = AnimationUtils.getMeasuredHeight(this, 1.0f);
+            maxHeight = UtilsAnimation.getMeasuredHeight(this, 1.0f);
         }
         getLayoutParams().height = maxHeight;
         requestLayout();

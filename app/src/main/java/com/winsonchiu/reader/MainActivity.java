@@ -13,7 +13,6 @@ import android.accounts.OperationCanceledException;
 import android.app.Activity;
 import android.app.ActivityManager;
 import android.app.AlarmManager;
-import android.app.Fragment;
 import android.app.FragmentTransaction;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -59,7 +58,6 @@ import android.widget.HorizontalScrollView;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -101,7 +99,7 @@ import com.winsonchiu.reader.profile.FragmentProfile;
 import com.winsonchiu.reader.search.ControllerSearch;
 import com.winsonchiu.reader.search.FragmentSearch;
 import com.winsonchiu.reader.settings.ActivitySettings;
-import com.winsonchiu.reader.utils.AnimationUtils;
+import com.winsonchiu.reader.utils.UtilsAnimation;
 import com.winsonchiu.reader.utils.CustomColorFilter;
 import com.winsonchiu.reader.utils.TouchEventListener;
 import com.winsonchiu.reader.utils.UtilsColor;
@@ -118,7 +116,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -1272,7 +1269,7 @@ public class MainActivity extends YouTubeBaseActivity
         // Checks if layoutAccounts needs animating or to just immediately hide it
         if ((layoutAccounts.getVisibility() == View.VISIBLE) != visible) {
             if (layoutAccounts.isShown() || layoutAccounts.getVisibility() != View.VISIBLE) {
-                AnimationUtils.animateExpand(layoutAccounts, 1f, null, 250);
+                UtilsAnimation.animateExpand(layoutAccounts, 1f, null, 250);
             }
             else {
                 layoutAccounts.setVisibility(View.GONE);

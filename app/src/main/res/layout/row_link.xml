@@ -49,11 +49,12 @@
 
         <ImageView
             android:id="@+id/image_thumbnail"
-            android:layout_width="72dp"
-            android:layout_height="72dp"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
             android:layout_below="@id/frame_full"
             android:layout_alignParentStart="true"
-            android:padding="16dp"
+            android:padding="8dp"
+            android:layout_margin="16dp"
             android:contentDescription="@string/content_description_thread_preview"
             android:scaleType="centerCrop"
             />
@@ -99,8 +100,7 @@
             android:layout_marginStart="@dimen/activity_horizontal_margin"
             android:textSize="12sp"
             android:textColor="?attr/colorAccent"
-            android:clickable="false"
-            android:longClickable="false"
+            android:textAlignment="viewStart"
             />
 
         <TextView
@@ -112,8 +112,7 @@
             android:layout_toStartOf="@+id/button_comments"
             android:layout_marginStart="@dimen/activity_horizontal_margin"
             android:textAppearance="@style/TextAppearance.AppCompat.Body2"
-            android:clickable="false"
-            android:longClickable="false"
+            android:textAlignment="viewStart"
             />
 
         <TextView

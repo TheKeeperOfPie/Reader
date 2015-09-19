@@ -14,7 +14,6 @@ import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.content.res.TypedArray;
 import android.graphics.Bitmap;
-import android.graphics.Canvas;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
 import android.graphics.drawable.Drawable;
@@ -70,7 +69,6 @@ import android.widget.MediaController;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
-import android.widget.VideoView;
 
 import com.android.volley.Request;
 import com.android.volley.Response;
@@ -94,12 +92,11 @@ import com.winsonchiu.reader.data.reddit.Subreddit;
 import com.winsonchiu.reader.data.reddit.Thing;
 import com.winsonchiu.reader.data.reddit.User;
 import com.winsonchiu.reader.history.Historian;
-import com.winsonchiu.reader.utils.AnimationUtils;
+import com.winsonchiu.reader.utils.UtilsAnimation;
 import com.winsonchiu.reader.utils.CustomColorFilter;
 import com.winsonchiu.reader.utils.DisallowListener;
 import com.winsonchiu.reader.utils.OnTouchListenerDisallow;
 import com.winsonchiu.reader.utils.RecyclerCallback;
-import com.winsonchiu.reader.utils.VideoViewContextWrapper;
 import com.winsonchiu.reader.views.WebViewFixed;
 
 import org.json.JSONException;
@@ -107,7 +104,6 @@ import org.json.JSONObject;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -379,7 +375,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                     eventListener.onClickSubmit(Reddit.POST_TYPE_SELF);
                     break;
                 default:
-                    AnimationUtils.animateExpand(layoutContainerExpand, 1f, null);
+                    UtilsAnimation.animateExpand(layoutContainerExpand, 1f, null);
                     break;
             }
         }
@@ -500,7 +496,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             toolbarActions.post(new Runnable() {
                 @Override
                 public void run() {
-                    AnimationUtils.animateExpand(layoutContainerExpand,
+                    UtilsAnimation.animateExpand(layoutContainerExpand,
                             getRatio(), null);
                 }
             });
@@ -513,7 +509,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             }
 
             layoutContainerExpand.setVisibility(View.VISIBLE);
-            layoutContainerExpand.getLayoutParams().height = AnimationUtils.getMeasuredHeight(layoutContainerExpand, getRatio());
+            layoutContainerExpand.getLayoutParams().height = UtilsAnimation.getMeasuredHeight(layoutContainerExpand, getRatio());
             layoutContainerExpand.requestLayout();
         }
 
@@ -1065,7 +1061,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             if (textThreadSelf.isShown()) {
                 textThreadSelf.setVisibility(View.GONE);
                 // TODO: Check if textThreadSelf is taller than view and optimize animation
-//                AnimationUtils.animateExpand(textThreadSelf, 1f, null);
+//                UtilsAnimation.animateExpand(textThreadSelf, 1f, null);
             }
             else if (TextUtils.isEmpty(link.getSelfText())) {
                 loadComments();
@@ -1625,9 +1621,16 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             itemCopyText.setVisible(link.isSelf());
             itemCopyText.setEnabled(link.isSelf());
 
-            calculateVisibleToolbarItems(itemView.getWidth());
-
             syncSaveIcon();
+
+            toolbarActions.post(new Runnable() {
+                @Override
+                public void run() {
+
+                    calculateVisibleToolbarItems(itemView.getWidth());
+
+                }
+            });
         }
 
         public void calculateVisibleToolbarItems(int width) {
@@ -1646,7 +1649,6 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                 }
 
                 if (numShown++ < maxNum - 1) {
-
                     if (menuItem instanceof MenuItemImpl) {
                         if (!((MenuItemImpl) menuItem).requiresActionButton()) {
                             menuItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
@@ -1762,6 +1764,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
 
             if (webFull != null) {
                 frameFull.removeView(webFull);
+                webFull.setOnTouchListener(null);
                 webFull.setWebChromeClient(null);
                 webFull.setWebViewClient(null);
                 webFull.destroy();
