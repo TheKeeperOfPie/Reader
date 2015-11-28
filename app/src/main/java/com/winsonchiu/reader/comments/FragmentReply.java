@@ -4,7 +4,6 @@
 
 package com.winsonchiu.reader.comments;
 
-import android.animation.Animator;
 import android.app.Activity;
 import android.content.Context;
 import android.content.res.TypedArray;
@@ -16,7 +15,6 @@ import android.os.Bundle;
 import android.support.design.widget.AppBarLayout;
 import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.TabLayout;
-import android.support.v4.app.Fragment;
 import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.support.v4.widget.NestedScrollView;
@@ -86,6 +84,7 @@ public class FragmentReply extends FragmentBase implements Toolbar.OnMenuItemCli
     private boolean collapsed;
     private ColorFilter colorFilterPrimary;
     private ColorFilter colorFilterIcon;
+    private boolean isFinished;
 
     public static FragmentReply newInstance(Replyable replyable) {
         FragmentReply fragment = new FragmentReply();
@@ -419,7 +418,7 @@ public class FragmentReply extends FragmentBase implements Toolbar.OnMenuItemCli
     }
 
     @Override
-    public boolean navigateBack() {
+    public void navigateBack() {
         String text = editReply.getText().toString();
 
         // TODO: This is far too expensive to set the reply text
@@ -443,7 +442,12 @@ public class FragmentReply extends FragmentBase implements Toolbar.OnMenuItemCli
             mListener.getControllerSearch().setReplyTextLinksSubreddit(nameParent, text, collapsed);
         }
 
-        return true;
+        isFinished = true;
+    }
+
+    @Override
+    public boolean isFinished() {
+        return isFinished;
     }
 
     @Override

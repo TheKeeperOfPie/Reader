@@ -65,6 +65,7 @@ public class FragmentWeb extends FragmentBase implements Toolbar.OnMenuItemClick
     private View viewWebFullscreen;
     private RelativeLayout layoutRoot;
     private boolean isFinished;
+    private boolean hasExited;
     private WebChromeClient.CustomViewCallback customViewCallback;
     private ColorFilter colorFilterPrimary;
     private ColorFilter colorFilterIcon;
@@ -178,7 +179,7 @@ public class FragmentWeb extends FragmentBase implements Toolbar.OnMenuItemClick
         toolbar.setNavigationOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                isFinished = true;
+                hasExited = true;
                 mListener.onNavigationBackClick();
             }
         });
@@ -394,12 +395,12 @@ public class FragmentWeb extends FragmentBase implements Toolbar.OnMenuItemClick
         webView.saveState(outState);
     }
 
-    public boolean navigateBack() {
-        if (isFinished) {
+    public void navigateBack() {
+        if (hasExited) {
             destroyWebView();
-            webView = null;
-            Log.d(TAG, "navigateBack finished");
-            return true;
+            isFinished = true;
+            getActivity().onBackPressed();
+            return;
         }
 
         if (webView.canGoBack()) {
@@ -413,10 +414,14 @@ public class FragmentWeb extends FragmentBase implements Toolbar.OnMenuItemClick
         }
         else {
             destroyWebView();
-            webView = null;
-            return true;
+            isFinished = true;
+            getActivity().onBackPressed();
         }
-        return false;
+    }
+
+    @Override
+    public boolean isFinished() {
+        return isFinished;
     }
 
     public void destroyWebView() {

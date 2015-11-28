@@ -128,7 +128,7 @@ public class FragmentData extends FragmentBase {
     }
 
     @Override
-    public boolean navigateBack() {
+    public void navigateBack() {
         throw new IllegalStateException("FragmentData should never be in the back stack");
     }
 

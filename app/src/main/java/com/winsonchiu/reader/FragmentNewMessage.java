@@ -477,11 +477,6 @@ public class FragmentNewMessage extends FragmentBase implements Toolbar.OnMenuIt
     }
 
     @Override
-    public boolean navigateBack() {
-        return true;
-    }
-
-    @Override
     public boolean onMenuItemClick(MenuItem item) {
 
 

@@ -91,7 +91,7 @@
             android:layout_marginEnd="@dimen/activity_horizontal_margin"
             android:padding="16dp"
             android:background="@drawable/circular_shadow"
-            android:src="@drawable/ic_arrow_drop_down_white_24dp"
+            android:src="@drawable/ic_arrow_drop_up_white_24dp"
             />
 
         <LinearLayout

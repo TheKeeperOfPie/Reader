@@ -12,7 +12,6 @@ import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.support.v4.graphics.ColorUtils;
 import android.support.v7.graphics.Palette;
-import android.support.v7.internal.widget.TintImageView;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.StaggeredGridLayoutManager;
 import android.text.TextUtils;
@@ -601,7 +600,7 @@ public class AdapterLinkGrid extends AdapterLink {
                     View.FIND_VIEWS_WITH_CONTENT_DESCRIPTION);
 
             if (!views.isEmpty()) {
-                TintImageView imageOverflow = (TintImageView) views.get(0);
+                ImageView imageOverflow = (ImageView) views.get(0);
                 imageOverflow.setColorFilter(colorFilterMenuItem);
             }
         }

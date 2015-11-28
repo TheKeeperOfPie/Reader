@@ -5,11 +5,12 @@
 package com.winsonchiu.reader;
 
 import com.google.android.youtube.player.YouTubePlayer;
+import com.winsonchiu.reader.utils.SimplePlayerStateChangeListener;
 
 /**
  * Created by TheKeeperOfPie on 7/7/2015.
  */
-public class YouTubePlayerStateListener implements YouTubePlayer.PlayerStateChangeListener {
+public class YouTubePlayerStateListener extends SimplePlayerStateChangeListener {
 
     private YouTubePlayer youTubePlayer;
     private boolean setFullscreen;
@@ -23,21 +24,6 @@ public class YouTubePlayerStateListener implements YouTubePlayer.PlayerStateChan
     }
 
     @Override
-    public void onLoading() {
-
-    }
-
-    @Override
-    public void onLoaded(String s) {
-
-    }
-
-    @Override
-    public void onAdStarted() {
-
-    }
-
-    @Override
     public void onVideoStarted() {
         if (seekToMillis > 0) {
             youTubePlayer.seekToMillis(seekToMillis);
@@ -47,15 +33,5 @@ public class YouTubePlayerStateListener implements YouTubePlayer.PlayerStateChan
             youTubePlayer.setFullscreen(true);
             setFullscreen = false;
         }
-    }
-
-    @Override
-    public void onVideoEnded() {
-
-    }
-
-    @Override
-    public void onError(YouTubePlayer.ErrorReason errorReason) {
-
     }
 }

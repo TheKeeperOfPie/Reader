@@ -641,9 +641,4 @@ public class FragmentNewPost extends FragmentBase implements Toolbar.OnMenuItemC
         mListener = null;
     }
 
-    @Override
-    public boolean navigateBack() {
-        return true;
-    }
-
 }

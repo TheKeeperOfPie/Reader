@@ -818,11 +818,6 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
     }
 
     @Override
-    public boolean navigateBack() {
-        return true;
-    }
-
-    @Override
     public void onHiddenChanged(boolean hidden) {
         super.onHiddenChanged(hidden);
         if (hidden) {

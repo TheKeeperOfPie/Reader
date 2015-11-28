@@ -415,11 +415,6 @@ public class FragmentInbox extends FragmentBase implements Toolbar.OnMenuItemCli
     }
 
     @Override
-    public boolean navigateBack() {
-        return true;
-    }
-
-    @Override
     public void onShown() {
         adapterInbox.setVisibility(View.VISIBLE);
     }

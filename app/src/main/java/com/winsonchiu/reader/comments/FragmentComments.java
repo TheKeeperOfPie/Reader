@@ -60,12 +60,12 @@ import com.winsonchiu.reader.YouTubePlayerStateListener;
 import com.winsonchiu.reader.data.reddit.Link;
 import com.winsonchiu.reader.data.reddit.Sort;
 import com.winsonchiu.reader.links.AdapterLink;
-import com.winsonchiu.reader.utils.UtilsAnimation;
 import com.winsonchiu.reader.utils.DisallowListener;
 import com.winsonchiu.reader.utils.ItemDecorationDivider;
 import com.winsonchiu.reader.utils.RecyclerCallback;
 import com.winsonchiu.reader.utils.ScrollAwareFloatingActionButtonBehavior;
 import com.winsonchiu.reader.utils.TouchEventListener;
+import com.winsonchiu.reader.utils.UtilsAnimation;
 import com.winsonchiu.reader.utils.UtilsColor;
 import com.winsonchiu.reader.views.CustomRelativeLayout;
 
@@ -1035,7 +1035,7 @@ public class FragmentComments extends FragmentBase
     }
 
     @Override
-    public boolean navigateBack() {
+    public void navigateBack() {
         Log.d(TAG, "navigateBack");
 
         if (youTubePlayer != null && isFullscreen) {
@@ -1049,13 +1049,14 @@ public class FragmentComments extends FragmentBase
         }
         else {
             if (!isAdded()) {
-                return true;
+                isFinished = true;
+                getActivity().onBackPressed();
+                return;
             }
 
             calculateExit();
 
         }
-        return false;
 
     }
 
@@ -1162,12 +1163,8 @@ public class FragmentComments extends FragmentBase
                                     getFragmentManager().beginTransaction().show(fragment).commit();
                                     fragment.onShown();
                                 }
-                                try {
-                                    getFragmentManager().popBackStackImmediate();
-                                }
-                                catch (IllegalStateException e) {
-                                    e.printStackTrace();
-                                }
+
+                                getActivity().onBackPressed();
                             }
 
                             @Override
@@ -1220,14 +1217,8 @@ public class FragmentComments extends FragmentBase
                                     .show(fragment)
                                     .commit();
                         }
-                        if (getFragmentManager().getBackStackEntryCount() == 0) {
-                            Log.d(TAG, "Back stack count: " + getFragmentManager()
-                                    .getBackStackEntryCount());
-                            getActivity().finish();
-                        }
-                        else {
-                            getFragmentManager().popBackStackImmediate();
-                        }
+
+                        getActivity().onBackPressed();
                     }
 
                     @Override
@@ -1240,6 +1231,11 @@ public class FragmentComments extends FragmentBase
 
                     }
                 });
+    }
+
+    @Override
+    public boolean isFinished() {
+        return isFinished;
     }
 
     @Override

@@ -506,11 +506,6 @@ public class FragmentHistory extends FragmentBase implements Toolbar.OnMenuItemC
     }
 
     @Override
-    public boolean navigateBack() {
-        return true;
-    }
-
-    @Override
     public void onShown() {
         adapterLink.setVisibility(View.VISIBLE);
     }

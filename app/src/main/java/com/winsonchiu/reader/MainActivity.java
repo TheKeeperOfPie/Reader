@@ -1260,10 +1260,10 @@ public class MainActivity extends YouTubeBaseActivity
 
     private void setAccountsVisible(boolean visible) {
         if (visible) {
-            buttonAccounts.setImageResource(R.drawable.ic_arrow_drop_up_white_24dp);
+            buttonAccounts.setImageResource(R.drawable.ic_arrow_drop_down_white_24dp);
         }
         else {
-            buttonAccounts.setImageResource(R.drawable.ic_arrow_drop_down_white_24dp);
+            buttonAccounts.setImageResource(R.drawable.ic_arrow_drop_up_white_24dp);
         }
 
         // Checks if layoutAccounts needs animating or to just immediately hide it
@@ -1379,9 +1379,8 @@ public class MainActivity extends YouTubeBaseActivity
                                     try {
                                         JSONObject jsonObject = new JSONObject(response);
                                         textAccountName.setText(jsonObject.getString("name"));
-                                        textAccountInfo.setText(jsonObject.getString(
-                                                "link_karma") + " " + getString(R.string.link) + " " + jsonObject.getString(
-                                                "comment_karma") + " " + getString(R.string.comment));
+                                        textAccountInfo.setText(getString(R.string.account_info, jsonObject.getString(
+                                                "link_karma"), jsonObject.getString("comment_karma")));
                                     }
                                     catch (JSONException e) {
                                         e.printStackTrace();
@@ -1727,21 +1726,40 @@ public class MainActivity extends YouTubeBaseActivity
 
     @Override
     public void onNavigationBackClick() {
-        if (getFragmentManager().getBackStackEntryCount() > 0) {
-            FragmentBase fragment = (FragmentBase) getFragmentManager().findFragmentById(R.id.frame_fragment);
+        FragmentBase fragment = (FragmentBase) getFragmentManager().findFragmentById(R.id.frame_fragment);
 
-            if (fragment != null && !fragment.navigateBack()) {
+        // TODO: Remove this and use a better system
+        if (fragment != null) {
+            if (!fragment.isFinished()) {
+                fragment.navigateBack();
                 return;
+            } else {
+                if (getFragmentManager().getBackStackEntryCount() == 0) {
+                    if (isTaskRoot()) {
+                        new AlertDialog.Builder(this)
+                                .setMessage(R.string.exit_reader)
+                                .setPositiveButton(R.string.yes,
+                                        new DialogInterface.OnClickListener() {
+                                            @Override
+                                            public void onClick(
+                                                    DialogInterface dialog,
+                                                    int which) {
+                                                MainActivity.super.onBackPressed();
+                                            }
+                                        })
+                                .setNegativeButton(R.string.no, null)
+                                .show();
+
+                    } else {
+                        super.onBackPressed();
+                    }
+                }
             }
 
             /*
                 If this is the only fragment in the stack, close out the Activity,
                 otherwise show the fragment
              */
-//            if (getFragmentManager().getBackStackEntryCount() == 1) {
-//                finish();
-//                return;
-//            }
             getFragmentManager().popBackStackImmediate();
 
             fragment = (FragmentBase) getFragmentManager().findFragmentById(R.id.frame_fragment);
@@ -1753,27 +1771,6 @@ public class MainActivity extends YouTubeBaseActivity
             }
             else {
                 finish();
-            }
-        }
-        else {
-            if (isTaskRoot()) {
-                new AlertDialog.Builder(this)
-                        .setMessage("Exit Reader?")
-                        .setPositiveButton("Yes",
-                                new DialogInterface.OnClickListener() {
-                                    @Override
-                                    public void onClick(
-                                            DialogInterface dialog,
-                                            int which) {
-                                        MainActivity.super.onBackPressed();
-                                    }
-                                })
-                        .setNegativeButton("No", null)
-                        .show();
-
-            }
-            else {
-                super.onBackPressed();
             }
         }
     }

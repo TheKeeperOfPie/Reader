@@ -113,6 +113,7 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
     private CustomColorFilter colorFilterPrimary;
     private CustomColorFilter colorFilterAccent;
     private ItemDecorationDivider itemDecorationDivider;
+    private boolean isFinished;
 
     public static FragmentThreadList newInstance() {
         FragmentThreadList fragment = new FragmentThreadList();
@@ -923,8 +924,18 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
     }
 
     @Override
-    public boolean navigateBack() {
-        return adapterLink.navigateBack();
+    public void navigateBack() {
+        if (drawerLayout.isDrawerOpen(GravityCompat.END)) {
+            drawerLayout.closeDrawer(GravityCompat.END);
+            return;
+        }
+
+        isFinished = adapterLink.navigateBack();
+    }
+
+    @Override
+    public boolean isFinished() {
+        return isFinished;
     }
 
     @Override

@@ -592,11 +592,6 @@ public class FragmentProfile extends FragmentBase implements Toolbar.OnMenuItemC
     }
 
     @Override
-    public boolean navigateBack() {
-        return true;
-    }
-
-    @Override
     public void onShown() {
         adapterProfile.setVisibility(View.VISIBLE);
     }

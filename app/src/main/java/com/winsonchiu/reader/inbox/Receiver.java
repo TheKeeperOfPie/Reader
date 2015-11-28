@@ -231,7 +231,7 @@ public class Receiver extends BroadcastReceiver {
                                 pendingIntentRecheckInbox))
                         .setDeleteIntent(pendingIntentRecheckInbox)
                         .setAutoCancel(true)
-                        .setCategory(NotificationCompat.CATEGORY_MESSAGE)
+                        .setCategory(NotificationCompat.CATEGORY_EMAIL)
                         .setColor(colorPrimary)
                         .setLights(colorPrimary, LED_MS_ON, LED_MS_OFF);
 

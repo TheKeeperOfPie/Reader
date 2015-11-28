@@ -9,8 +9,14 @@
     <string name="title_section2">Section 2</string>
     <string name="title_section3">Section 3</string>
 
+    <string name="exit_reader">Exit Reader?</string>
+    <string name="yes">Yes</string>
+    <string name="no">No</string>
+
     <string name="navigation_drawer_open">Open navigation drawer</string>
     <string name="navigation_drawer_close">Close navigation drawer</string>
+
+    <string name="account_info">%1$s Link %2$s Comment</string>
 
     <string name="action_example">Example action</string>
     <string name="item_search">Search</string>

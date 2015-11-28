@@ -26,7 +26,6 @@ import android.support.v4.view.MenuItemCompat;
 import android.support.v4.view.MotionEventCompat;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AlertDialog;
-import android.support.v7.internal.view.menu.MenuItemImpl;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.RecyclerView.LayoutManager;
 import android.support.v7.widget.ShareActionProvider;
@@ -92,6 +91,7 @@ import com.winsonchiu.reader.data.reddit.Subreddit;
 import com.winsonchiu.reader.data.reddit.Thing;
 import com.winsonchiu.reader.data.reddit.User;
 import com.winsonchiu.reader.history.Historian;
+import com.winsonchiu.reader.utils.SimplePlayerStateChangeListener;
 import com.winsonchiu.reader.utils.UtilsAnimation;
 import com.winsonchiu.reader.utils.CustomColorFilter;
 import com.winsonchiu.reader.utils.DisallowListener;
@@ -1516,70 +1516,13 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                                             youTubePlayer.setFullscreen(fullscreen);
                                         }
                                     });
-                            youTubePlayer.setPlayerStateChangeListener(
-                                    new YouTubePlayer.PlayerStateChangeListener() {
-                                        @Override
-                                        public void onLoading() {
-
-                                        }
-
-                                        @Override
-                                        public void onLoaded(String s) {
-
-                                        }
-
-                                        @Override
-                                        public void onAdStarted() {
-
-                                        }
-
-                                        @Override
-                                        public void onVideoStarted() {
-                                            youTubePlayer.seekToMillis(timeInMillis);
-                                            youTubePlayer.setPlayerStateChangeListener(
-                                                    new YouTubePlayer.PlayerStateChangeListener() {
-                                                        @Override
-                                                        public void onLoading() {
-
-                                                        }
-
-                                                        @Override
-                                                        public void onLoaded(String s) {
-
-                                                        }
-
-                                                        @Override
-                                                        public void onAdStarted() {
-
-                                                        }
-
-                                                        @Override
-                                                        public void onVideoStarted() {
-
-                                                        }
-
-                                                        @Override
-                                                        public void onVideoEnded() {
-
-                                                        }
-
-                                                        @Override
-                                                        public void onError(YouTubePlayer.ErrorReason errorReason) {
-
-                                                        }
-                                                    });
-                                        }
-
-                                        @Override
-                                        public void onVideoEnded() {
-
-                                        }
-
-                                        @Override
-                                        public void onError(YouTubePlayer.ErrorReason errorReason) {
-
-                                        }
-                                    });
+                            youTubePlayer.setPlayerStateChangeListener(new SimplePlayerStateChangeListener() {
+                                @Override
+                                public void onVideoStarted() {
+                                    youTubePlayer.seekToMillis(timeInMillis);
+                                    youTubePlayer.setPlayerStateChangeListener(new SimplePlayerStateChangeListener());
+                                }
+                            });
                             youTubePlayer.loadVideo(id);
                             viewYouTube.setVisibility(View.VISIBLE);
                             recyclerCallback.scrollTo(getAdapterPosition());
@@ -1649,24 +1592,10 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                 }
 
                 if (numShown++ < maxNum - 1) {
-                    if (menuItem instanceof MenuItemImpl) {
-                        if (!((MenuItemImpl) menuItem).requiresActionButton()) {
-                            menuItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
-                        }
-                    }
-                    else {
-                        menuItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
-                    }
+                    menuItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
                 }
                 else {
-                    if (menuItem instanceof MenuItemImpl) {
-                        if (!((MenuItemImpl) menuItem).requestsActionButton()) {
-                            menuItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER);
-                        }
-                    }
-                    else {
-                        menuItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER);
-                    }
+                    menuItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER);
                 }
             }
         }
@@ -1736,6 +1665,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                         isInHistory() && !link.isReplyExpanded() ? View.VISIBLE : View.GONE);
             }
 
+            itemView.setVisibility(View.VISIBLE);
         }
 
         public void syncSaveIcon() {
@@ -1796,6 +1726,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             viewOverlay.setVisibility(View.GONE);
         }
 
+        // TODO: Calculate which Views are visible
         public void setVisibility(int visibility) {
             frameFull.setVisibility(visibility);
             surfaceVideo.setVisibility(visibility);

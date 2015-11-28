@@ -13,11 +13,13 @@ import com.winsonchiu.reader.data.reddit.Thing;
  */
 public abstract class FragmentBase extends Fragment {
 
-    /**
-     * Calculate whether or not to handle back action from Activity
-     * @return true if back action should continue, false otherwise
-     */
-    public abstract boolean navigateBack();
+    public void navigateBack() {
+
+    }
+
+    public boolean isFinished() {
+        return true;
+    }
 
     public void onShown() {
 
