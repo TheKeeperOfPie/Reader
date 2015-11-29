@@ -13,6 +13,7 @@ import com.android.volley.Response;
 import com.android.volley.Response.ErrorListener;
 import com.android.volley.VolleyError;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.squareup.okhttp.ResponseBody;
 import com.winsonchiu.reader.R;
 import com.winsonchiu.reader.data.reddit.Link;
 import com.winsonchiu.reader.data.reddit.Listing;
@@ -33,12 +34,23 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import retrofit.Call;
+import retrofit.Callback;
+import retrofit.Retrofit;
+import rx.Observable;
+import rx.Observer;
+import rx.Subscriber;
+import rx.android.schedulers.AndroidSchedulers;
+import rx.functions.Func1;
+import rx.schedulers.Schedulers;
+
 /**
  * Created by TheKeeperOfPie on 3/14/2015.
  */
 public class ControllerLinks implements ControllerLinksBase {
 
     private static final String TAG = ControllerLinks.class.getCanonicalName();
+    public static final int LIMIT = 25;
 
     private Activity activity;
     private Listing listingLinks;
@@ -105,27 +117,42 @@ public class ControllerLinks implements ControllerLinksBase {
     public void reloadSubreddit() {
         setLoading(true);
 
-        reddit.loadGet(
-                Reddit.OAUTH_URL + subreddit.getUrl() + "about",
-                new Response.Listener<String>() {
+        reddit.about(subreddit.getUrl())
+                .subscribeOn(Schedulers.computation())
+                .flatMap(new Func1<String, Observable<Subreddit>>() {
                     @Override
-                    public void onResponse(String response) {
+                    public Observable<Subreddit> call(String response) {
                         try {
-                            subreddit = Subreddit.fromJson(Reddit.getObjectMapper().readValue(
-                                    response, JsonNode.class));
-                            Log.d(TAG, "subreddit: " + response);
+                            return Observable.just(Subreddit.fromJson(Reddit.getObjectMapper().readValue(
+                                    response, JsonNode.class)));
+                        } catch (IOException e) {
+                            return Observable.error(e);
                         }
-                        catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                        reloadAllLinks(true);
                     }
-                }, new Response.ErrorListener() {
+                })
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new Subscriber<Subreddit>() {
                     @Override
-                    public void onErrorResponse(VolleyError error) {
+                    public void onStart() {
+                        setLoading(true);
+                    }
+
+                    @Override
+                    public void onCompleted() {
                         reloadAllLinks(true);
                     }
-                }, 0);
+
+                    @Override
+                    public void onError(Throwable e) {
+                        e.printStackTrace();
+                    }
+
+                    @Override
+                    public void onNext(Subreddit subreddit) {
+                        ControllerLinks.this.subreddit = subreddit;
+
+                    }
+                });
     }
 
     public void loadFrontPage(Sort sort, boolean force) {
@@ -194,74 +221,62 @@ public class ControllerLinks implements ControllerLinksBase {
     public void reloadAllLinks(final boolean scroll) {
         setLoading(true);
 
-        String url = Reddit.OAUTH_URL + subreddit.getUrl() + sort.toString() + "?t=" + time.toString() + "&limit=25&showAll=true";
-
-        reddit.loadGet(url, new Response.Listener<String>() {
-            @Override
-            public void onResponse(final String response) {
-                // TODO: Catch null errors in parent method call
-                if (response == null) {
-                    setLoading(false);
-                    return;
-                }
-
-                Log.d(TAG, "Response: " + response);
-
-                new Thread(new Runnable() {
+        reddit.links(subreddit.getUrl(), sort.toString(), time.toString(), LIMIT, null)
+                .subscribeOn(Schedulers.computation())
+                .observeOn(AndroidSchedulers.mainThread())
+                .flatMap(new Func1<String, Observable<Listing>>() {
                     @Override
-                    public void run() {
+                    public Observable<Listing> call(String s) {
                         try {
                             Listing listing = Listing.fromJson(Reddit.getObjectMapper().readValue(
-                                    response, JsonNode.class));
-                            if (listing.getChildren()
-                                    .isEmpty() || !(listing.getChildren()
-                                    .get(0) instanceof Link)) {
-                                listingLinks = new Listing();
+                                    s, JsonNode.class));
+                            if (!listing.getChildren()
+                                    .isEmpty() && listing.getChildren()
+                                    .get(0) instanceof Link) {
+                                return Observable.just(listing);
                             }
-                            else {
-                                listingLinks = listing;
-                            }
+
+                            return Observable.empty();
                         }
                         catch (IOException e) {
-                            e.printStackTrace();
+                            return Observable.error(e);
                         }
+                    }
+                })
+                .subscribe(new Observer<Listing>() {
+                    @Override
+                    public void onCompleted() {
+                        setLoading(false);
 
                         for (final Listener listener : listeners) {
-                            listener.post(new Runnable() {
-                                @Override
-                                public void run() {
-                                    listener.getAdapter().notifyDataSetChanged();
-                                    listener.loadSideBar(subreddit);
-                                    listener.showEmptyView(listingLinks.getChildren()
-                                            .isEmpty());
-                                    if (scroll) {
-                                        listener.scrollTo(0);
-                                    }
-                                }
-                            });
+                            listener.getAdapter().notifyDataSetChanged();
+                            listener.loadSideBar(subreddit);
+                            listener.showEmptyView(listingLinks.getChildren()
+                                    .isEmpty());
+                            if (scroll) {
+                                listener.scrollTo(0);
+                            }
                         }
                         setTitle();
-                        setLoading(false);
                     }
-                }).start();
-            }
-        }, new ErrorListener() {
-            @Override
-            public void onErrorResponse(VolleyError error) {
-                setLoading(false);
-                Toast.makeText(activity, activity.getString(R.string.error_loading_links), Toast.LENGTH_SHORT)
-                        .show();
-                for (final Listener listener : listeners) {
-                    listener.post(new Runnable() {
-                        @Override
-                        public void run() {
+
+                    @Override
+                    public void onError(Throwable e) {
+                        e.printStackTrace();
+                        Toast.makeText(activity, activity.getString(R.string.error_loading_links), Toast.LENGTH_SHORT)
+                                .show();
+                        for (final Listener listener : listeners) {
                             listener.showEmptyView(listingLinks.getChildren()
                                     .isEmpty());
                         }
-                    });
-                }
-            }
-        }, 0);
+                    }
+
+                    @Override
+                    public void onNext(final Listing next) {
+                        listingLinks = next;
+                    }
+                });
+
         Log.d(TAG, "reloadAllLinks");
     }
 
@@ -277,50 +292,38 @@ public class ControllerLinks implements ControllerLinksBase {
         setLoading(true);
         String url = Reddit.OAUTH_URL + subreddit.getUrl() + sort.toString() + "?t=" + time.toString() + "&limit=25&showAll=true&after=" + listingLinks.getAfter();
 
-        reddit.loadGet(url,
-                new Response.Listener<String>() {
+        reddit.links(subreddit.getUrl(), sort.toString(), time.toString(), LIMIT, listingLinks.getAfter())
+                .subscribeOn(Schedulers.computation())
+                .observeOn(AndroidSchedulers.mainThread())
+                .flatMap(Listing.FLAT_MAP)
+                .subscribe(new Observer<Listing>() {
                     @Override
-                    public void onResponse(final String response) {
-                        new Thread(new Runnable() {
-                            @Override
-                            public void run() {
-                                try {
-                                    final int positionStart = listingLinks.getChildren()
-                                            .size();
-                                    Listing listing = Listing.fromJson(Reddit.getObjectMapper().readValue(
-                                            response, JsonNode.class));
-                                    listingLinks.addChildren(listing.getChildren());
-                                    listingLinks.setAfter(listing.getAfter());
-                                    for (final Listener listener : listeners) {
-                                        listener.post(new Runnable() {
-                                            @Override
-                                            public void run() {
-                                                listener.getAdapter()
-                                                        .notifyItemRangeInserted(positionStart + 1,
-                                                                listingLinks.getChildren()
-                                                                        .size() - positionStart);
-                                            }
-                                        });
-                                    }
-                                }
-                                catch (IOException e) {
-                                    e.printStackTrace();
-                                }
-                                finally {
-                                    setLoading(false);
-                                }
-                            }
-                        }).start();
-                    }
-                }, new ErrorListener() {
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
+                    public void onCompleted() {
                         setLoading(false);
+                    }
+
+                    @Override
+                    public void onError(Throwable e) {
+                        e.printStackTrace();
                         Toast.makeText(activity, activity.getString(R.string.error_loading_links),
                                 Toast.LENGTH_SHORT)
                                 .show();
                     }
-                }, 0);
+
+                    @Override
+                    public void onNext(Listing listing) {
+                        final int positionStart = listingLinks.getChildren()
+                                .size();
+                        listingLinks.addChildren(listing.getChildren());
+                        listingLinks.setAfter(listing.getAfter());
+                        for (final Listener listener : listeners) {
+                            listener.getAdapter()
+                                    .notifyItemRangeInserted(positionStart + 1,
+                                            listingLinks.getChildren()
+                                                    .size() - positionStart);
+                        }
+                    }
+                });
     }
 
     @Override

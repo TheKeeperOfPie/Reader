@@ -76,16 +76,8 @@ public class Authenticator extends AbstractAccountAuthenticator {
         Log.d(TAG, "timeExpire: " + timeExpire);
 
         if (TextUtils.isEmpty(tokenAuth)|| System.currentTimeMillis() > timeExpire) {
-            RequestFuture<String> requestFuture = RequestFuture.newFuture();
-            final ArrayMap<String, String> params = new ArrayMap<>(2);
-            params.put(Reddit.QUERY_GRANT_TYPE, Reddit.QUERY_REFRESH_TOKEN);
-            params.put(Reddit.QUERY_REFRESH_TOKEN, accountManager.getPassword(account));
-
-            Reddit.getInstance(context).loadPostDefault(Reddit.ACCESS_URL, requestFuture, requestFuture, params, 0);
             try {
-                String responseNetwork = requestFuture.get();
-
-                Log.d(TAG, "responseNetwork: " + responseNetwork);
+                String responseNetwork = Reddit.getInstance(context).tokenAuth();
 
                 JSONObject jsonObject = new JSONObject(responseNetwork);
                 tokenAuth = jsonObject.getString(Reddit.QUERY_ACCESS_TOKEN);

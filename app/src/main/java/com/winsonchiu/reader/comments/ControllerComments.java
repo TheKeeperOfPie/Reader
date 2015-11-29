@@ -32,6 +32,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import rx.Observable;
+import rx.Observer;
+import rx.Subscriber;
+import rx.android.schedulers.AndroidSchedulers;
+import rx.functions.Func1;
+import rx.schedulers.Schedulers;
+
 /**
  * Created by TheKeeperOfPie on 3/20/2015.
  */
@@ -149,34 +156,43 @@ public class ControllerComments {
     }
 
     public void loadLinkComments() {
-        setRefreshing(true);
-
-        reddit.loadGet(
-                Reddit.OAUTH_URL + "/r/" + link.getSubreddit() + "/comments/" + link
-                        .getId() + "?depth=10&showmore=true&showedits=true&limit=100&sort=" + sort
-                        .toString(),
-                new Response.Listener<String>() {
+        reddit.comments(link.getSubreddit(), link.getId(), null, sort.toString(), true, true, null, 10, 100)
+                .subscribeOn(Schedulers.computation())
+                .flatMap(new Func1<String, Observable<Link>>() {
                     @Override
-                    public void onResponse(String response) {
-
+                    public Observable<Link> call(String response) {
                         try {
-                            setLinkWithComments(Link.fromJsonWithComments(
+                            return Observable.just(Link.fromJsonWithComments(
                                     Reddit.getObjectMapper().readValue(response,
                                             JsonNode.class)));
+                        } catch (IOException e) {
+                            return Observable.error(e);
                         }
-                        catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                        setIsCommentThread(false);
-                        setRefreshing(false);
                     }
-                }, new ErrorListener() {
+                })
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new Subscriber<Link>() {
                     @Override
-                    public void onErrorResponse(VolleyError error) {
-                        Log.d(TAG, "reloadAllComments onErrorResponse: " + error);
+                    public void onStart() {
+                        setRefreshing(true);
+                    }
+
+                    @Override
+                    public void onCompleted() {
                         setRefreshing(false);
                     }
-                }, 0);
+
+                    @Override
+                    public void onError(Throwable e) {
+                        e.printStackTrace();
+                    }
+
+                    @Override
+                    public void onNext(Link link) {
+                        setLinkWithComments(link);
+                        setIsCommentThread(false);
+                    }
+                });
     }
 
     public void loadCommentThread(String commentId) {
@@ -185,32 +201,38 @@ public class ControllerComments {
 
         setRefreshing(true);
 
-        reddit.loadGet(
-                Reddit.OAUTH_URL + "/r/" + link.getSubreddit() + "/comments/" + link
-                        .getId() + "?depth=10&showmore=true&showedits=true&limit=100&context=" + contextNumber + "&comment=" + commentId + "&sort=" + sort
-                        .toString(),
-                new Response.Listener<String>() {
+        reddit.comments(link.getSubreddit(), link.getId(), commentId, sort.toString(), true, true, contextNumber,  10, 100)
+                .subscribeOn(Schedulers.computation())
+                .flatMap(new Func1<String, Observable<Link>>() {
                     @Override
-                    public void onResponse(String response) {
-
+                    public Observable<Link> call(String response) {
                         try {
-                            setLinkWithComments(Link.fromJsonWithComments(
+                            return Observable.just(Link.fromJsonWithComments(
                                     Reddit.getObjectMapper().readValue(response,
                                             JsonNode.class)));
+                        } catch (IOException e) {
+                            return Observable.error(e);
                         }
-                        catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                        setIsCommentThread(true);
-                        setRefreshing(false);
                     }
-                }, new ErrorListener() {
+                })
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new Observer<Link>() {
                     @Override
-                    public void onErrorResponse(VolleyError error) {
-                        Log.d(TAG, "onErrorResponse: " + error);
+                    public void onCompleted() {
                         setRefreshing(false);
                     }
-                }, 0);
+
+                    @Override
+                    public void onError(Throwable e) {
+                        e.printStackTrace();
+                    }
+
+                    @Override
+                    public void onNext(Link link) {
+                        setLinkWithComments(link);
+                        setIsCommentThread(true);
+                    }
+                });
     }
 
     private void setRefreshing(boolean refreshing) {
@@ -264,17 +286,24 @@ public class ControllerComments {
             children += id + ",";
         }
 
-        HashMap<String, String> params = new HashMap<>();
-        params.put("link_id", link.getName());
-        params.put("children", children.substring(0, children.length() - 1));
-        params.put("api_type", "json");
-
-        reddit.loadPost(url,
-                new Response.Listener<String>() {
+        reddit.moreChildren(link.getName(), children.substring(0, children.length() - 1))
+                .subscribeOn(Schedulers.computation())
+                .unsubscribeOn(Schedulers.computation())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new Observer<String>() {
                     @Override
-                    public void onResponse(String response) {
-                        try {
+                    public void onCompleted() {
+                        setRefreshing(false);
+                    }
 
+                    @Override
+                    public void onError(Throwable e) {
+                        e.printStackTrace();
+                    }
+
+                    @Override
+                    public void onNext(String response) {
+                        try {
                             JsonNode nodeThings = Reddit.getObjectMapper().readValue(
                                     response, JsonNode.class).get("json").get("data").get("things");
 
@@ -341,16 +370,8 @@ public class ControllerComments {
                         catch (IOException e1) {
                             e1.printStackTrace();
                         }
-
-                        setRefreshing(false);
                     }
-                }, new ErrorListener() {
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
-                        setRefreshing(false);
-                        Log.d(TAG, "error" + error);
-                    }
-                }, params, 0);
+                });
     }
 
     public void insertComments(Comment moreComment, Listing listing) {

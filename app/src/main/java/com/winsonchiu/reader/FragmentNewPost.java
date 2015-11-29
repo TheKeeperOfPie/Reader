@@ -56,6 +56,12 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
+import rx.Observable;
+import rx.Observer;
+import rx.android.schedulers.AndroidSchedulers;
+import rx.functions.Func1;
+import rx.schedulers.Schedulers;
+
 public class FragmentNewPost extends FragmentBase implements Toolbar.OnMenuItemClickListener {
 
     public static final String USER = "User";
@@ -329,21 +335,27 @@ public class FragmentNewPost extends FragmentBase implements Toolbar.OnMenuItemC
             loadEditValues();
         }
         else {
-            reddit.loadGet(Reddit.OAUTH_URL + "/api/needs_captcha",
-                    new Response.Listener<String>() {
+            reddit.needsCaptcha()
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .subscribe(new Observer<String>() {
                         @Override
-                        public void onResponse(String response) {
+                        public void onCompleted() {
+
+                        }
+
+                        @Override
+                        public void onError(Throwable e) {
+                            e.printStackTrace();
+                        }
+
+                        @Override
+                        public void onNext(String response) {
                             if ("true".equalsIgnoreCase(response)) {
                                 layoutCaptcha.setVisibility(View.VISIBLE);
                                 loadCaptcha();
                             }
                         }
-                    }, new Response.ErrorListener() {
-                        @Override
-                        public void onErrorResponse(VolleyError error) {
-
-                        }
-                    }, 0);
+                    });
         }
 
         view.getViewTreeObserver().addOnGlobalLayoutListener(
@@ -394,62 +406,73 @@ public class FragmentNewPost extends FragmentBase implements Toolbar.OnMenuItemC
     }
 
     private void loadCaptcha() {
-
-        Map<String, String> params = new HashMap<>();
-        params.put("api_type", "json");
-
-        reddit.loadPost(Reddit.OAUTH_URL + "/api/new_captcha", new Response.Listener<String>() {
-            @Override
-            public void onResponse(String response) {
-                try {
-                    JSONObject jsonObject = new JSONObject(response);
-                    captchaId = jsonObject.getJSONObject("json").getJSONObject("data").getString(
-                            "iden");
-                    Log.d(TAG, "captchaId: " + captchaId);
-                    Reddit.loadPicasso(activity)
-                            .load(Reddit.BASE_URL + "/captcha/" + captchaId + ".png")
-                            .resize(getResources().getDisplayMetrics().widthPixels, 0).into(
-                            imageCaptcha);
-                }
-                catch (JSONException e) {
-                    e.printStackTrace();
-                }
-            }
-        }, new Response.ErrorListener() {
-            @Override
-            public void onErrorResponse(VolleyError error) {
-
-            }
-        }, params, 0);
-    }
-
-    private void loadEditValues() {
-        reddit.loadGet(Reddit.OAUTH_URL + "/api/info?id=" + getArguments().getString(EDIT_ID),
-                new Response.Listener<String>() {
+        reddit.newCaptcha()
+                .subscribeOn(Schedulers.computation())
+                .unsubscribeOn(Schedulers.computation())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new Observer<String>() {
                     @Override
-                    public void onResponse(String response) {
-                        try {
-                            Listing listing = Listing.fromJson(Reddit.getObjectMapper().readValue(
-                                    response, JsonNode.class));
-                            Link link = (Link) listing.getChildren().get(0);
-                            editTextTitle.setText(link.getTitle());
-                            editTextTitle.setClickable(false);
-                            editTextTitle.setFocusable(false);
-                            editTextTitle.setFocusableInTouchMode(false);
-                            editTextTitle.setEnabled(false);
+                    public void onCompleted() {
 
-                            editTextBody.setText(link.getSelfText());
+                    }
+
+                    @Override
+                    public void onError(Throwable e) {
+                        e.printStackTrace();
+                    }
+
+                    @Override
+                    public void onNext(String response) {
+                        if (!isAdded()) {
+                            return;
                         }
-                        catch (IOException e) {
+
+                        try {
+                            JSONObject jsonObject = new JSONObject(response);
+                            captchaId = jsonObject.getJSONObject("json").getJSONObject("data").getString(
+                                    "iden");
+                            Log.d(TAG, "captchaId: " + captchaId);
+                            Reddit.loadPicasso(activity)
+                                    .load(Reddit.BASE_URL + "/captcha/" + captchaId + ".png")
+                                    .resize(getResources().getDisplayMetrics().widthPixels, 0).into(
+                                    imageCaptcha);
+                        }
+                        catch (JSONException e) {
                             e.printStackTrace();
                         }
                     }
-                }, new Response.ErrorListener() {
+                });
+    }
+
+    private void loadEditValues() {
+        reddit.info(getArguments().getString(EDIT_ID))
+                .subscribeOn(Schedulers.computation())
+                .flatMap(Listing.FLAT_MAP)
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new Observer<Listing>() {
                     @Override
-                    public void onErrorResponse(VolleyError error) {
+                    public void onCompleted() {
 
                     }
-                }, 0);
+
+                    @Override
+                    public void onError(Throwable e) {
+                        e.printStackTrace();
+                        Toast.makeText(getContext(), R.string.error_loading, Toast.LENGTH_LONG);
+                    }
+
+                    @Override
+                    public void onNext(Listing listing) {
+                        Link link = (Link) listing.getChildren().get(0);
+                        editTextTitle.setText(link.getTitle());
+                        editTextTitle.setClickable(false);
+                        editTextTitle.setFocusable(false);
+                        editTextTitle.setFocusableInTouchMode(false);
+                        editTextTitle.setEnabled(false);
+
+                        editTextBody.setText(link.getSelfText());
+                    }
+                });
     }
 
     private void submitEdit() {

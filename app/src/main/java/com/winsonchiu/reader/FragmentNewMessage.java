@@ -13,6 +13,7 @@ import android.graphics.ColorFilter;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.design.widget.AppBarLayout;
 import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.TabLayout;
@@ -50,6 +51,12 @@ import org.json.JSONObject;
 
 import java.util.HashMap;
 import java.util.Map;
+
+import rx.Observer;
+import rx.android.schedulers.AndroidSchedulers;
+import rx.android.schedulers.HandlerScheduler;
+import rx.functions.Action1;
+import rx.schedulers.Schedulers;
 
 public class FragmentNewMessage extends FragmentBase implements Toolbar.OnMenuItemClickListener {
 
@@ -292,21 +299,29 @@ public class FragmentNewMessage extends FragmentBase implements Toolbar.OnMenuIt
             }
         });
 
-        reddit.loadGet(Reddit.OAUTH_URL + "/api/needs_captcha",
-                new Response.Listener<String>() {
+        reddit.needsCaptcha()
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new Observer<String>() {
                     @Override
-                    public void onResponse(String response) {
+                    public void onCompleted() {
+
+                    }
+
+                    @Override
+                    public void onError(Throwable e) {
+                        e.printStackTrace();
+                    }
+
+                    @Override
+                    public void onNext(String response) {
+                        Log.d(TAG, "needsCaptcha onNext: " + response);
+
                         if ("true".equalsIgnoreCase(response)) {
                             layoutCaptcha.setVisibility(View.VISIBLE);
                             loadCaptcha();
                         }
                     }
-                }, new Response.ErrorListener() {
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
-
-                    }
-                }, 0);
+                });
 
         view.getViewTreeObserver().addOnGlobalLayoutListener(
                 new ViewTreeObserver.OnGlobalLayoutListener() {
@@ -425,35 +440,40 @@ public class FragmentNewMessage extends FragmentBase implements Toolbar.OnMenuIt
     }
 
     private void loadCaptcha() {
+        reddit.newCaptcha()
+                .subscribeOn(Schedulers.computation())
+                .unsubscribeOn(Schedulers.computation())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new Observer<String>() {
+                    @Override
+                    public void onCompleted() {
 
-        Map<String, String> params = new HashMap<>();
-        params.put("api_type", "json");
+                    }
 
-        reddit.loadPost(Reddit.OAUTH_URL + "/api/new_captcha", new Response.Listener<String>() {
-            @Override
-            public void onResponse(String response) {
-                if (!isAdded()) {
-                    return;
-                }
-                try {
-                    JSONObject jsonObject = new JSONObject(response);
-                    captchaId = jsonObject.getJSONObject("json").getJSONObject("data").getString(
-                            "iden");
-                    Log.d(TAG, "captchaId: " + captchaId);
-                    Reddit.loadPicasso(activity).load(Reddit.BASE_URL + "/captcha/" + captchaId + ".png")
-                            .resize(imageCaptcha.getWidth(), 0).into(
-                            imageCaptcha);
-                }
-                catch (JSONException e) {
-                    e.printStackTrace();
-                }
-            }
-        }, new Response.ErrorListener() {
-            @Override
-            public void onErrorResponse(VolleyError error) {
+                    @Override
+                    public void onError(Throwable e) {
+                        e.printStackTrace();
+                    }
 
-            }
-        }, params, 0);
+                    @Override
+                    public void onNext(String response) {
+                        if (!isAdded()) {
+                            return;
+                        }
+                        try {
+                            JSONObject jsonObject = new JSONObject(response);
+                            captchaId = jsonObject.getJSONObject("json").getJSONObject("data").getString(
+                                    "iden");
+                            Log.d(TAG, "captchaId: " + captchaId);
+                            Reddit.loadPicasso(activity).load(Reddit.BASE_URL + "/captcha/" + captchaId + ".png")
+                                    .resize(imageCaptcha.getWidth(), 0).into(
+                                    imageCaptcha);
+                        }
+                        catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                });
     }
 
     @Override

@@ -36,6 +36,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import rx.Observable;
+import rx.Subscriber;
+import rx.android.schedulers.AndroidSchedulers;
+import rx.functions.Func1;
+import rx.schedulers.Schedulers;
+
 /**
  * Created by TheKeeperOfPie on 5/16/2015.
  */
@@ -56,6 +62,7 @@ public class ControllerProfile implements ControllerLinksBase {
     public static final String PAGE_SAVED = "Saved";
 
     private static final String TAG = ControllerProfile.class.getCanonicalName();
+    public static final int LIMIT = 15;
 
     private Activity activity;
     private ControllerUser controllerUser;
@@ -111,8 +118,7 @@ public class ControllerProfile implements ControllerLinksBase {
 
         if (thing instanceof Link) {
             return VIEW_TYPE_LINK;
-        }
-        else if (thing instanceof Comment) {
+        } else if (thing instanceof Comment) {
             return VIEW_TYPE_COMMENT;
         }
 
@@ -165,93 +171,87 @@ public class ControllerProfile implements ControllerLinksBase {
     }
 
     public void reload() {
-
-        setLoading(true);
-
-        String url = Reddit.OAUTH_URL + "/user/" + user.getName() + "/" + page.getPage().toLowerCase() + "?limit=15&sort=" + sort.toString() + "&t=" + time.toString();
-
-        reddit.loadGet(url,
-                new Response.Listener<String>() {
+        reddit.user(user.getName(), page.getPage().toLowerCase(), sort.toString(), time.toString(), null, LIMIT)
+                .subscribeOn(Schedulers.computation())
+                .flatMap(Listing.FLAT_MAP)
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new Subscriber<Listing>() {
                     @Override
-                    public void onResponse(String response) {
-                        Log.d(TAG, "onResponse: " + response);
-                        try {
-                            setData(Listing.fromJson(Reddit.getObjectMapper().readValue(
-                                    response, JsonNode.class)));
-                            for (Listener listener : listeners) {
-                                listener.setPage(page);
-                                listener.getAdapter().notifyDataSetChanged();
-                            }
-                            setLoading(false);
-                            if (!TextUtils.isEmpty(user.getName()) && page.getPage().equalsIgnoreCase(
-                                    PAGE_OVERVIEW)) {
-                                loadTopEntries();
-                            }
-                        }
-                        catch (IOException e1) {
-                            e1.printStackTrace();
-                        }
+                    public void onStart() {
+                        setLoading(true);
                     }
-                }, new Response.ErrorListener() {
+
                     @Override
-                    public void onErrorResponse(VolleyError error) {
+                    public void onCompleted() {
                         setLoading(false);
+                    }
+
+                    @Override
+                    public void onError(Throwable e) {
+                        e.printStackTrace();
                         Toast.makeText(activity, activity.getString(R.string.error_loading),
                                 Toast.LENGTH_SHORT)
                                 .show();
                     }
-                }, 0);
+
+                    @Override
+                    public void onNext(Listing listing) {
+                        setData(listing);
+                        for (Listener listener : listeners) {
+                            listener.setPage(page);
+                            listener.getAdapter().notifyDataSetChanged();
+                        }
+                        if (!TextUtils.isEmpty(user.getName()) && page.getPage().equalsIgnoreCase(
+                                PAGE_OVERVIEW)) {
+                            loadTopEntries();
+                        }
+                    }
+                });
     }
 
     public void loadMore() {
-
         if (isLoading()) {
             return;
         }
 
-        setLoading(true);
-
-        String url = Reddit.OAUTH_URL + "/user/" + user.getName() + "/" + page.getPage().toLowerCase() + "?limit=15&sort=" + sort.toString() + "&t=" + time.toString() + "&after=" + data.getAfter();
-
-        reddit.loadGet(url,
-                new Response.Listener<String>() {
+        reddit.user(user.getName(), page.getPage().toLowerCase(), sort.toString(), time.toString(), data.getAfter(), 15)
+                .subscribeOn(Schedulers.computation())
+                .flatMap(Listing.FLAT_MAP)
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new Subscriber<Listing>() {
                     @Override
-                    public void onResponse(String response) {
-                        Log.d(TAG, "onResponse: " + response);
-                        try {
-                            int startSize = data.getChildren().size();
-                            int positionStart = startSize + 5;
-
-                            Listing listing = Listing.fromJson(Reddit.getObjectMapper().readValue(
-                                    response, JsonNode.class));
-
-                            data.addChildren(listing.getChildren());
-                            data.setAfter(listing.getAfter());
-
-                            for (Listener listener : listeners) {
-
-                                listener.getAdapter()
-                                        .notifyItemRangeInserted(positionStart,
-                                                data.getChildren().size() - positionStart);
-                                listener.setPage(page);
-                            }
-                            setLoading(false);
-                        }
-                        catch (IOException e1) {
-                            e1.printStackTrace();
-                        }
+                    public void onStart() {
+                        setLoading(true);
                     }
-                }, new Response.ErrorListener() {
+
                     @Override
-                    public void onErrorResponse(VolleyError error) {
-                        setData(new Listing());
+                    public void onCompleted() {
+                        setLoading(false);
+                    }
+
+                    @Override
+                    public void onError(Throwable e) {
+                        e.printStackTrace();
+                    }
+
+                    @Override
+                    public void onNext(Listing listing) {
+                        int startSize = data.getChildren().size();
+                        int positionStart = startSize + 5;
+
+                        data.addChildren(listing.getChildren());
+                        data.setAfter(listing.getAfter());
+
                         for (Listener listener : listeners) {
-                            listener.setRefreshing(
-                                    false);
-                            listener.getAdapter().notifyDataSetChanged();
+
+                            listener.getAdapter()
+                                    .notifyItemRangeInserted(positionStart,
+                                            data.getChildren().size() - positionStart);
+                            listener.setPage(page);
                         }
+                        setLoading(false);
                     }
-                }, 0);
+                });
     }
 
     private void loadTopEntries() {
@@ -270,75 +270,81 @@ public class ControllerProfile implements ControllerLinksBase {
 //                    }
 //                }, 0);
 
-        reddit.loadGet(
-                Reddit.OAUTH_URL + "/user/" + user.getName() + "/submitted?sort=top&limit=10&",
-                new Response.Listener<String>() {
+        reddit.user(user.getName(), PAGE_SUBMITTED.toLowerCase(), Sort.TOP.toString(), Time.ALL.toString(), null, 10)
+                .subscribeOn(Schedulers.computation())
+                .flatMap(Listing.FLAT_MAP)
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new Subscriber<Listing>() {
                     @Override
-                    public void onResponse(String response) {
-                        Log.d(TAG, "Submitted onResponse: " + response);
-                        try {
-                            Listing listingLink = Listing.fromJson(
-                                    Reddit.getObjectMapper().readValue(
-                                            response, JsonNode.class));
-                            if (!listingLink.getChildren().isEmpty()) {
-                                topLink = null;
-                                for (Thing thing : listingLink.getChildren()) {
-                                    Link link = (Link) thing;
-                                    if (!link.isHidden()) {
-                                        topLink = link;
-                                        break;
-                                    }
-                                }
-
-                                for (Listener listener : listeners) {
-                                    listener.setRefreshing(false);
-                                    listener.getAdapter().notifyItemRangeChanged(1, 2);
-                                }
-                            }
-                        }
-                        catch (IOException e1) {
-                            e1.printStackTrace();
-                        }
+                    public void onStart() {
+                        setLoading(true);
                     }
-                }, new Response.ErrorListener() {
+
                     @Override
-                    public void onErrorResponse(VolleyError error) {
+                    public void onCompleted() {
+                        setLoading(false);
+                    }
+
+                    @Override
+                    public void onError(Throwable e) {
 
                     }
-                }, 0);
 
-        reddit.loadGet(
-                Reddit.OAUTH_URL + "/user/" + user.getName() + "/comments?sort=top&limit=10&",
-                new Response.Listener<String>() {
                     @Override
-                    public void onResponse(String response) {
-                        Log.d(TAG,
-                                "onResponse: " + response);
-                        try {
-                            Listing listingComment = Listing.fromJson(Reddit.getObjectMapper().readValue(
-                                    response, JsonNode.class));
-                            if (!listingComment.getChildren().isEmpty()) {
-                                topComment = (Comment) listingComment.getChildren()
-                                        .get(0);
-                                topComment.setLevel(0);
-                                for (Listener listener : listeners) {
-                                    listener.setRefreshing(
-                                            false);
-                                    listener.getAdapter().notifyItemRangeChanged(
-                                            3, 2);
+                    public void onNext(Listing listing) {
+                        if (!listing.getChildren().isEmpty()) {
+                            topLink = null;
+                            for (Thing thing : listing.getChildren()) {
+                                Link link = (Link) thing;
+                                if (!link.isHidden()) {
+                                    topLink = link;
+                                    break;
                                 }
                             }
-                        }
-                        catch (IOException e1) {
-                            e1.printStackTrace();
+
+                            for (Listener listener : listeners) {
+                                listener.setRefreshing(false);
+                                listener.getAdapter().notifyItemRangeChanged(1, 2);
+                            }
                         }
                     }
-                }, new Response.ErrorListener() {
+                });
+
+        reddit.user(user.getName(), PAGE_COMMENTS.toLowerCase(), Sort.TOP.toString(), Time.ALL.toString(), null, 10)
+                .subscribeOn(Schedulers.computation())
+                .flatMap(Listing.FLAT_MAP)
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new Subscriber<Listing>() {
                     @Override
-                    public void onErrorResponse(VolleyError error) {
+                    public void onStart() {
+                        setLoading(true);
+                    }
+
+                    @Override
+                    public void onCompleted() {
+                        setLoading(false);
+                    }
+
+                    @Override
+                    public void onError(Throwable e) {
 
                     }
-                }, 0);
+
+                    @Override
+                    public void onNext(Listing listing) {
+                        if (!listing.getChildren().isEmpty()) {
+                            topComment = (Comment) listing.getChildren()
+                                    .get(0);
+                            topComment.setLevel(0);
+                            for (Listener listener : listeners) {
+                                listener.setRefreshing(
+                                        false);
+                                listener.getAdapter().notifyItemRangeChanged(
+                                        3, 2);
+                            }
+                        }
+                    }
+                });
     }
 
     @Override
@@ -441,8 +447,7 @@ public class ControllerProfile implements ControllerLinksBase {
             for (Listener listener : listeners) {
                 listener.getAdapter().notifyItemChanged(2);
             }
-        }
-        else {
+        } else {
             link = (Link) data.getChildren().remove(position);
             for (Listener listener : listeners) {
                 listener.getAdapter().notifyItemRemoved(position + 6);
@@ -458,7 +463,7 @@ public class ControllerProfile implements ControllerLinksBase {
         parentComment.setId(comment.getParentId());
 
         int commentIndex = data.getChildren()
-                    .indexOf(parentComment);
+                .indexOf(parentComment);
         if (commentIndex > -1) {
             // Level and context are set as they are not provided by the send API
             parentComment = (Comment) data.getChildren().get(commentIndex);
@@ -514,8 +519,8 @@ public class ControllerProfile implements ControllerLinksBase {
     }
 
     public void voteComment(final AdapterCommentList.ViewHolderComment viewHolder,
-            final Comment comment,
-            int vote) {
+                            final Comment comment,
+                            int vote) {
 
         reddit.voteComment(viewHolder, comment, vote, new Reddit.VoteResponseListener() {
             @Override
@@ -559,8 +564,7 @@ public class ControllerProfile implements ControllerLinksBase {
                         for (Listener listener : listeners) {
                             listener.getAdapter().notifyItemChanged(2);
                         }
-                    }
-                    else {
+                    } else {
                         int commentIndex = data.getChildren()
                                 .indexOf(newComment);
 
@@ -574,8 +578,7 @@ public class ControllerProfile implements ControllerLinksBase {
                         }
                     }
 
-                }
-                catch (IOException e) {
+                } catch (IOException e) {
                     e.printStackTrace();
                 }
             }
@@ -598,28 +601,43 @@ public class ControllerProfile implements ControllerLinksBase {
 
         setLoading(true);
 
-        reddit.loadGet(Reddit.OAUTH_URL + "/user/" + query + "/about",
-                        new Response.Listener<String>() {
-                            @Override
-                            public void onResponse(String response) {
-                                try {
-                                    user = User.fromJson(Reddit.getObjectMapper().readValue(
-                                            response, JsonNode.class).get("data"));
-                                }
-                                catch (IOException e) {
-                                    e.printStackTrace();
-                                }
-                                setUser(user);
-                                setLoading(false);
-                            }
-                        }, new Response.ErrorListener() {
-                            @Override
-                            public void onErrorResponse(VolleyError error) {
-                                setLoading(false);
-                                Toast.makeText(activity, activity.getString(R.string.error_loading), Toast.LENGTH_SHORT)
-                                        .show();
-                            }
-                        }, 0);
+        reddit.user(query, "about", null, null, null, null)
+                .subscribeOn(Schedulers.computation())
+                .flatMap(new Func1<String, Observable<User>>() {
+                    @Override
+                    public Observable<User> call(String response) {
+                        try {
+                            return Observable.just(User.fromJson(Reddit.getObjectMapper().readValue(
+                                    response, JsonNode.class).get("data")));
+                        } catch (IOException e) {
+                            return Observable.error(e);
+                        }
+                    }
+                })
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new Subscriber<User>() {
+                    @Override
+                    public void onStart() {
+                        setLoading(true);
+                    }
+
+                    @Override
+                    public void onCompleted() {
+                        setLoading(false);
+                    }
+
+                    @Override
+                    public void onError(Throwable e) {
+                        e.printStackTrace();
+                        Toast.makeText(activity, activity.getString(R.string.error_loading), Toast.LENGTH_SHORT)
+                                .show();
+                    }
+
+                    @Override
+                    public void onNext(User user) {
+                        setUser(user);
+                    }
+                });
     }
 
     public Sort getSort() {
@@ -670,8 +688,7 @@ public class ControllerProfile implements ControllerLinksBase {
                                     .get("things")
                                     .get(0), 0);
                     insertComment(newComment);
-                }
-                catch (IOException e) {
+                } catch (IOException e) {
                     e.printStackTrace();
                 }
             }
@@ -692,8 +709,11 @@ public class ControllerProfile implements ControllerLinksBase {
     public interface Listener
             extends ControllerListener {
         void setSortAndTime(Sort sort, Time time);
+
         void setPage(Page page);
+
         void setIsUser(boolean isUser);
+
         void loadLink(Comment comment);
     }
 

@@ -19,6 +19,9 @@ import com.winsonchiu.reader.data.reddit.User;
 
 import java.io.IOException;
 
+import rx.Subscriber;
+import rx.android.schedulers.AndroidSchedulers;
+
 /**
  * Created by TheKeeperOfPie on 6/24/2015.
  */
@@ -47,15 +50,22 @@ public class ControllerUser {
         accountManager = AccountManager.get(activity.getApplicationContext());
     }
 
-    public void addUser(String tokenAccess, String tokenRefresh, long timeExpire) {
-    }
-
     public void reloadUser() {
-        reddit.loadGet(Reddit.OAUTH_URL + "/api/v1/me",
-                new Response.Listener<String>() {
+        reddit.me()
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new Subscriber<String>() {
                     @Override
-                    public void onResponse(String response) {
-                        Log.d(TAG, "User onResponse: " + response);
+                    public void onCompleted() {
+
+                    }
+
+                    @Override
+                    public void onError(Throwable e) {
+                        e.printStackTrace();
+                    }
+
+                    @Override
+                    public void onNext(String response) {
                         try {
                             user = User.fromJson(Reddit.getObjectMapper().readValue(response, JsonNode.class));
 
@@ -64,12 +74,7 @@ public class ControllerUser {
                             e.printStackTrace();
                         }
                     }
-                }, new Response.ErrorListener() {
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
-                        // TODO: Check user info error
-                    }
-                }, 0);
+                });
     }
 
     public boolean hasUser() {

@@ -30,6 +30,12 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import rx.Observable;
+import rx.Subscriber;
+import rx.android.schedulers.AndroidSchedulers;
+import rx.functions.Func1;
+import rx.schedulers.Schedulers;
+
 /**
  * Created by TheKeeperOfPie on 5/17/2015.
  */
@@ -129,35 +135,37 @@ public class ControllerInbox {
     }
 
     public void reload() {
-
         Log.d(TAG, "Page: " + page.getPage());
 
-        setLoading(true);
-
-        reddit.loadGet(Reddit.OAUTH_URL + "/message/" + page.getPage(),
-                new Response.Listener<String>() {
+        reddit.message(page.getPage(), null)
+                .subscribeOn(Schedulers.computation())
+                .flatMap(Listing.FLAT_MAP)
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new Subscriber<Listing>() {
                     @Override
-                    public void onResponse(String response) {
-                        Log.d(TAG, "onResponse: " + response);
-                        try {
-                            setData(Listing.fromJson(Reddit.getObjectMapper().readValue(
-                                    response, JsonNode.class)));
-                            for (Listener listener : listeners) {
-                                listener.setPage(page);
-                                listener.getAdapter().notifyDataSetChanged();
-                            }
-                            setLoading(false);
-                        }
-                        catch (IOException e1) {
-                            e1.printStackTrace();
-                        }
+                    public void onStart() {
+                        setLoading(true);
                     }
-                }, new Response.ErrorListener() {
+
                     @Override
-                    public void onErrorResponse(VolleyError error) {
+                    public void onCompleted() {
                         setLoading(false);
                     }
-                }, 0);
+
+                    @Override
+                    public void onError(Throwable e) {
+
+                    }
+
+                    @Override
+                    public void onNext(Listing listing) {
+                        setData(listing);
+                        for (Listener listener : listeners) {
+                            listener.setPage(page);
+                            listener.getAdapter().notifyDataSetChanged();
+                        }
+                    }
+                });
     }
 
     public void setData(Listing data) {
@@ -323,37 +331,37 @@ public class ControllerInbox {
 
     public void loadMore() {
 
-        setLoading(true);
-
-        reddit.loadGet(
-                Reddit.OAUTH_URL + "/message/" + page.getPage() + "?after=" + data
-                        .getAfter(),
-                new Response.Listener<String>() {
+        reddit.message(page.getPage(), data.getAfter())
+                .subscribeOn(Schedulers.computation())
+                .flatMap(Listing.FLAT_MAP)
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new Subscriber<Listing>() {
                     @Override
-                    public void onResponse(String response) {
-                        Log.d(TAG, "onResponse: " + response);
-                        try {
-                            int startSize = data.getChildren().size();
-                            Listing listing = Listing.fromJson(Reddit.getObjectMapper().readValue(
-                                    response, JsonNode.class));
-                            data.addChildren(listing.getChildren());
-                            data.setAfter(listing.getAfter());
-                            for (Listener listener : listeners) {
-                                listener.getAdapter().notifyItemRangeInserted(startSize,
-                                        data.getChildren().size() - startSize);
-                            }
-                            setLoading(false);
-                        }
-                        catch (IOException e1) {
-                            e1.printStackTrace();
-                        }
+                    public void onStart() {
+                        setLoading(true);
                     }
-                }, new Response.ErrorListener() {
+
                     @Override
-                    public void onErrorResponse(VolleyError error) {
+                    public void onCompleted() {
                         setLoading(false);
                     }
-                }, 0);
+
+                    @Override
+                    public void onError(Throwable e) {
+                        e.printStackTrace();
+                    }
+
+                    @Override
+                    public void onNext(Listing listing) {
+                        int startSize = data.getChildren().size();
+                        data.addChildren(listing.getChildren());
+                        data.setAfter(listing.getAfter());
+                        for (Listener listener : listeners) {
+                            listener.getAdapter().notifyItemRangeInserted(startSize,
+                                    data.getChildren().size() - startSize);
+                        }
+                    }
+                });
     }
 
     public void setLoading(boolean loading) {

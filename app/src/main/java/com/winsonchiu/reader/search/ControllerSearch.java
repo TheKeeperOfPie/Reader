@@ -49,6 +49,14 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.Set;
 
+import rx.Observable;
+import rx.Observer;
+import rx.Subscriber;
+import rx.Subscription;
+import rx.android.schedulers.AndroidSchedulers;
+import rx.functions.Func1;
+import rx.schedulers.Schedulers;
+
 /**
  * Created by TheKeeperOfPie on 6/3/2015.
  */
@@ -79,9 +87,9 @@ public class ControllerSearch {
     private Sort sortSubreddits;
     private Time time;
     private volatile int currentPage;
-    private Request<String> requestSubreddits;
-    private Request<String> requestLinks;
-    private Request<String> requestLinksSubreddit;
+    private Subscription subscriptionSubreddits;
+    private Subscription subscriptionLinks;
+    private Subscription subscriptionLinksSubreddit;
     private boolean isLoadingLinks;
     private boolean isLoadingLinksSubreddit;
 
@@ -126,8 +134,9 @@ public class ControllerSearch {
         this.query = query;
         setTitle();
         if ((TextUtils.isEmpty(query) || query.length() < 2) && currentPage == PAGE_SUBREDDITS) {
-            if (requestSubreddits != null) {
-                requestSubreddits.cancel();
+            if (subscriptionSubreddits != null && !subscriptionSubreddits.isUnsubscribed()) {
+                subscriptionSubreddits.unsubscribe();
+                subscriptionSubreddits = null;
             }
             subreddits = subredditsSubscribed;
             for (Listener listener : listeners) {
@@ -177,80 +186,81 @@ public class ControllerSearch {
             }
         }
 
-        String url;
+        String page;
 
         if (controllerUser.hasUser()) {
-            url = Reddit.OAUTH_URL + "/subreddits/mine/subscriber?show=all&limit=100";
+            page = "mine/subscriber";
         }
         else {
-            url = Reddit.OAUTH_URL + "/subreddits/default?show=all&limit=100";
+            page = "default";
         }
 
-        reddit.loadGet(url,
-                new Response.Listener<String>() {
+        reddit.subreddits(page, null, 100)
+                .subscribeOn(Schedulers.computation())
+                .flatMap(Listing.FLAT_MAP)
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new Observer<Listing>() {
                     @Override
-                    public void onResponse(String response) {
-                        try {
-                            Log.d(TAG, "reloadSubscriptionList response: " + response);
-                            Listing listing = Listing.fromJson(Reddit.getObjectMapper().readValue(
-                                    response, JsonNode.class));
-                            subredditsLoaded.addChildren(listing.getChildren());
-                            if (listing.getChildren().size() == 100) {
-                                loadMoreSubscriptions();
-                            }
-                            else {
-                                loadContributorSubreddits();
-                            }
-
-                        }
-                        catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                }, new Response.ErrorListener() {
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
+                    public void onCompleted() {
 
                     }
-                }, 0);
+
+                    @Override
+                    public void onError(Throwable e) {
+                        e.printStackTrace();
+                    }
+
+                    @Override
+                    public void onNext(Listing listing) {
+                        subredditsLoaded.addChildren(listing.getChildren());
+                        subredditsLoaded.setAfter(listing.getAfter());
+                        if (listing.getChildren().size() == 100) {
+                            loadMoreSubscriptions();
+                        }
+                        else {
+                            loadContributorSubreddits();
+                        }
+                    }
+                });
     }
 
     private void loadMoreSubscriptions() {
-        String url;
+        String page;
 
         if (TextUtils.isEmpty(controllerUser.getUser().getName())) {
-            url = Reddit.OAUTH_URL + "/subreddits/default?show=all&limit=100&after=" + subredditsSubscribed.getAfter();
+            page = "default";
         }
         else {
-            url = Reddit.OAUTH_URL + "/subreddits/mine/subscriber?show=all&limit=100&after=" + subredditsSubscribed.getAfter();
+            page = "mine/subscriber";
         }
 
-        reddit.loadGet(url,
-                new Response.Listener<String>() {
+        reddit.subreddits(page, subredditsLoaded.getAfter(), 100)
+                .subscribeOn(Schedulers.computation())
+                .flatMap(Listing.FLAT_MAP)
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new Observer<Listing>() {
                     @Override
-                    public void onResponse(String response) {
-                        try {
-                            Listing listing = Listing.fromJson(Reddit.getObjectMapper().readValue(
-                                    response, JsonNode.class));
-                            subredditsLoaded.addChildren(listing.getChildren());
-                            if (listing.getChildren().size() == 100) {
-                                loadMoreSubscriptions();
-                            }
-                            else {
-                                loadContributorSubreddits();
-                            }
-
-                        }
-                        catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                }, new Response.ErrorListener() {
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
+                    public void onCompleted() {
 
                     }
-                }, 0);
+
+                    @Override
+                    public void onError(Throwable e) {
+
+                    }
+
+                    @Override
+                    public void onNext(Listing listing) {
+                        subredditsLoaded.addChildren(listing.getChildren());
+                        subredditsLoaded.setAfter(listing.getAfter());
+                        if (listing.getChildren().size() == 100) {
+                            loadMoreSubscriptions();
+                        }
+                        else {
+                            loadContributorSubreddits();
+                        }
+                    }
+                });
     }
 
     private void saveSubscriptions(Listing listing) {
@@ -291,7 +301,7 @@ public class ControllerSearch {
 
     public void saveSubscriptions() {
 
-        String data = null;
+        String data;
 
         try {
             data = Reddit.getObjectMapper().writeValueAsString(subredditsSubscribed.getChildren());
@@ -314,68 +324,68 @@ public class ControllerSearch {
     }
 
     private void loadContributorSubreddits() {
-
         if (TextUtils.isEmpty(controllerUser.getUser().getName())) {
             saveSubscriptions(subredditsLoaded);
             return;
         }
 
-        reddit.loadGet(Reddit.OAUTH_URL + "/subreddits/mine/contributor?show=all&limit=100&after=" + subredditsSubscribed.getAfter(),
-                new Response.Listener<String>() {
+        reddit.subreddits("mine/contributor", null, 100)
+                .subscribeOn(Schedulers.computation())
+                .flatMap(Listing.FLAT_MAP)
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new Observer<Listing>() {
                     @Override
-                    public void onResponse(String response) {
-                        try {
-                            Listing listing = Listing.fromJson(Reddit.getObjectMapper().readValue(
-                                    response, JsonNode.class));
-                            subredditsLoaded.addChildren(listing.getChildren());
-                            if (listing.getChildren().size() == 100) {
-                                loadMoreContributorSubreddits();
-                            }
-                            else {
-                                saveSubscriptions(subredditsLoaded);
-                            }
-
-                        }
-                        catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                }, new Response.ErrorListener() {
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
+                    public void onCompleted() {
 
                     }
-                }, 0);
+
+                    @Override
+                    public void onError(Throwable e) {
+                        e.printStackTrace();
+                    }
+
+                    @Override
+                    public void onNext(Listing listing) {
+                        subredditsLoaded.addChildren(listing.getChildren());
+                        subredditsLoaded.setAfter(listing.getAfter());
+                        if (listing.getChildren().size() == 100) {
+                            loadMoreContributorSubreddits();
+                        }
+                        else {
+                            saveSubscriptions(subredditsLoaded);
+                        }
+                    }
+                });
     }
 
     private void loadMoreContributorSubreddits() {
-
-        reddit.loadGet(Reddit.OAUTH_URL + "/subreddits/mine/contributor?show=all&limit=100",
-                new Response.Listener<String>() {
+        reddit.subreddits("mine/contributor", subredditsLoaded.getAfter(), 100)
+                .subscribeOn(Schedulers.computation())
+                .flatMap(Listing.FLAT_MAP)
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new Observer<Listing>() {
                     @Override
-                    public void onResponse(String response) {
-                        try {
-                            Listing listing = Listing.fromJson(Reddit.getObjectMapper().readValue(
-                                    response, JsonNode.class));
-                            subredditsLoaded.addChildren(listing.getChildren());
-                            if (listing.getChildren().size() == 100) {
-                                loadMoreContributorSubreddits();
-                            }
-                            else {
-                                saveSubscriptions(subredditsLoaded);
-                            }
-
-                        }
-                        catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                }, new Response.ErrorListener() {
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
+                    public void onCompleted() {
 
                     }
-                }, 0);
+
+                    @Override
+                    public void onError(Throwable e) {
+                        e.printStackTrace();
+                    }
+
+                    @Override
+                    public void onNext(Listing listing) {
+                        subredditsLoaded.addChildren(listing.getChildren());
+                        subredditsLoaded.setAfter(listing.getAfter());
+                        if (listing.getChildren().size() == 100) {
+                            loadMoreContributorSubreddits();
+                        }
+                        else {
+                            saveSubscriptions(subredditsLoaded);
+                        }
+                    }
+                });
     }
 
     public void reloadCurrentPage() {
@@ -411,9 +421,9 @@ public class ControllerSearch {
     }
 
     public void reloadSubreddits() {
-
-        if (requestSubreddits != null) {
-            requestSubreddits.cancel();
+        if (subscriptionSubreddits != null && !subscriptionSubreddits.isUnsubscribed()) {
+            subscriptionSubreddits.unsubscribe();
+            subscriptionSubreddits = null;
         }
 
         // TODO: Move this to asynchronous with Thread cancelling
@@ -446,50 +456,39 @@ public class ControllerSearch {
         }
 
         try {
-            requestSubreddits = reddit.loadGet(Reddit.OAUTH_URL + "/subreddits/search?show=all&q=" + URLEncoder.encode(query, Reddit.UTF_8).replaceAll("\\s", "") + "&sort=" + sort.toString(),
-                    new Response.Listener<String>() {
+            subscriptionSubreddits = reddit.subredditsSearch(URLEncoder.encode(query, Reddit.UTF_8).replaceAll("\\s", ""), sort.toString())
+                    .subscribeOn(Schedulers.computation())
+                    .unsubscribeOn(Schedulers.computation())
+                    .flatMap(Listing.FLAT_MAP)
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .subscribe(new Observer<Listing>() {
                         @Override
-                        public void onResponse(final String response) {
-                            new Thread(new Runnable() {
-                                @Override
-                                public void run() {
+                        public void onCompleted() {
 
-                                    try {
-                                        Listing listing = Listing.fromJson(Reddit.getObjectMapper().readValue(
-                                    response, JsonNode.class));
-                                        Iterator<Thing> iterator = listing.getChildren().iterator();
-                                        while (iterator.hasNext()) {
-                                            Subreddit subreddit = (Subreddit) iterator.next();
-                                            if (subreddit.getSubredditType()
-                                                    .equalsIgnoreCase(Subreddit.PRIVATE) && !subreddit.isUserIsContributor()) {
-                                                iterator.remove();
-                                            }
-                                        }
+                        }
 
-                                        subreddits.addChildren(listing.getChildren());
-                                        for (final Listener listener : listeners) {
-                                            listener.post(new Runnable() {
-                                                @Override
-                                                public void run() {
-                                                    listener.getAdapterSearchSubreddits().notifyDataSetChanged();
-                                                }
-                                            });
-                                        }
-                                    }
-                                    catch (IOException e) {
-                                        e.printStackTrace();
-                                    }
+                        @Override
+                        public void onError(Throwable e) {
+                            e.printStackTrace();
+                        }
 
+                        @Override
+                        public void onNext(Listing listing) {
+                            Iterator<Thing> iterator = listing.getChildren().iterator();
+                            while (iterator.hasNext()) {
+                                Subreddit subreddit = (Subreddit) iterator.next();
+                                if (subreddit.getSubredditType()
+                                        .equalsIgnoreCase(Subreddit.PRIVATE) && !subreddit.isUserIsContributor()) {
+                                    iterator.remove();
                                 }
-                            }).start();
+                            }
 
+                            subreddits.addChildren(listing.getChildren());
+                            for (final Listener listener : listeners) {
+                                listener.getAdapterSearchSubreddits().notifyDataSetChanged();
+                            }
                         }
-                    }, new Response.ErrorListener() {
-                        @Override
-                        public void onErrorResponse(VolleyError error) {
-
-                        }
-                    }, 0);
+                    });
         }
         catch (UnsupportedEncodingException e) {
             e.printStackTrace();
@@ -594,10 +593,9 @@ public class ControllerSearch {
     }
 
     public void reloadLinks() {
-        setLoadingLinks(true);
-
-        if (requestLinks != null) {
-            requestLinks.cancel();
+        if (subscriptionLinks != null && !subscriptionLinks.isUnsubscribed()) {
+            subscriptionLinks.unsubscribe();
+            subscriptionLinks = null;
         }
 
         try {
@@ -605,84 +603,93 @@ public class ControllerSearch {
             if (sort == Sort.ACTIVITY) {
                 sortString = Sort.HOT.name();
             }
-            requestLinks = reddit.loadGet(Reddit.OAUTH_URL + "/search?q=" + URLEncoder.encode(query,
-                            Reddit.UTF_8) + "&sort=" + sortString + "&t=" + time.toString(),
-                    new Response.Listener<String>() {
+
+            subscriptionLinks = reddit.search("", URLEncoder.encode(query, Reddit.UTF_8), sortString, time.toString(), null, false)
+                    .subscribeOn(Schedulers.computation())
+                    .unsubscribeOn(Schedulers.computation())
+                    .flatMap(Listing.FLAT_MAP)
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .subscribe(new Subscriber<Listing>() {
                         @Override
-                        public void onResponse(String response) {
-                            Log.d(TAG, "Response: " + response);
-                            try {
-                                links = Listing.fromJson(Reddit.getObjectMapper().readValue(
-                                    response, JsonNode.class));
-                                for (Listener listener : listeners) {
-                                    listener.getAdapterLinks().notifyDataSetChanged();
-                                    listener.scrollToLinks(0);
-                                }
-                                setLoadingLinks(false);
-                            }
-                            catch (IOException e) {
-                                e.printStackTrace();
-                                setLoadingLinks(false);
-                            }
+                        public void onStart() {
+                            setLoadingLinks(true);
                         }
-                    }, new Response.ErrorListener() {
+
                         @Override
-                        public void onErrorResponse(VolleyError error) {
+                        public void onCompleted() {
                             setLoadingLinks(false);
+                        }
+
+                        @Override
+                        public void onError(Throwable e) {
+                            e.printStackTrace();
                             Toast.makeText(activity, activity.getString(R.string.error_loading_links), Toast.LENGTH_SHORT)
                                     .show();
                         }
-                    }, 0);
+
+                        @Override
+                        public void onNext(Listing listing) {
+                            links = listing;
+                            for (Listener listener : listeners) {
+                                listener.getAdapterLinks().notifyDataSetChanged();
+                                listener.scrollToLinks(0);
+                            }
+                            setLoadingLinks(false);
+                        }
+                    });
         }
         catch (UnsupportedEncodingException e) {
             e.printStackTrace();
-            setLoadingLinks(false);
         }
     }
 
     public void reloadLinksSubreddit() {
-        setLoadingLinksSubreddit(true);
+        if (subscriptionLinksSubreddit != null && !subscriptionSubreddits.isUnsubscribed()) {
+            subscriptionLinksSubreddit.unsubscribe();
+            subscriptionLinksSubreddit = null;
+        }
 
         Subreddit subreddit = controllerLinks.getSubreddit();
-        String url = Reddit.OAUTH_URL;
-        if (TextUtils.isEmpty(subreddit.getUrl())) {
-            url += "/";
-        }
-        else {
-            url += subreddit.getUrl();
-        }
 
-        if (requestLinksSubreddit != null) {
-            requestLinksSubreddit.cancel();
+        String pathSubreddit = subreddit.getUrl();
+        if (pathSubreddit.length() < 2) {
+            pathSubreddit = "";
         }
 
         try {
-            requestLinksSubreddit = reddit.loadGet(url + "search?restrict_sr=on&q=" + URLEncoder.encode(query, Reddit.UTF_8) + "&sort=" + sort.toString() + "&t=" + time.toString(),
-                    new Response.Listener<String>() {
+            subscriptionSubreddits = reddit.search(pathSubreddit, URLEncoder.encode(query, Reddit.UTF_8), sort.toString(), time.toString(), null, true)
+                    .subscribeOn(Schedulers.computation())
+                    .unsubscribeOn(Schedulers.computation())
+                    .flatMap(Listing.FLAT_MAP)
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .subscribe(new Subscriber<Listing>() {
                         @Override
-                        public void onResponse(String response) {
-                            try {
-                                linksSubreddit = Listing.fromJson(Reddit.getObjectMapper().readValue(
-                                    response, JsonNode.class));
-                                for (Listener listener : listeners) {
-                                    listener.getAdapterLinksSubreddit().notifyDataSetChanged();
-                                    listener.scrollToLinksSubreddit(0);
-                                }
-                                setLoadingLinksSubreddit(false);
-                            }
-                            catch (IOException e) {
-                                e.printStackTrace();
-                                setLoadingLinksSubreddit(false);
-                            }
+                        public void onStart() {
+                            setLoadingLinksSubreddit(true);
                         }
-                    }, new Response.ErrorListener() {
+
                         @Override
-                        public void onErrorResponse(VolleyError error) {
+                        public void onCompleted() {
                             setLoadingLinksSubreddit(false);
+                        }
+
+                        @Override
+                        public void onError(Throwable e) {
+                            e.printStackTrace();
                             Toast.makeText(activity, activity.getString(R.string.error_loading_links), Toast.LENGTH_SHORT)
                                     .show();
                         }
-                    }, 0);
+
+                        @Override
+                        public void onNext(Listing listing) {
+                            linksSubreddit = listing;
+                            for (Listener listener : listeners) {
+                                listener.getAdapterLinksSubreddit().notifyDataSetChanged();
+                                listener.scrollToLinksSubreddit(0);
+                            }
+                            setLoadingLinksSubreddit(false);
+                        }
+                    });
         }
         catch (UnsupportedEncodingException e) {
             e.printStackTrace();
@@ -726,10 +733,10 @@ public class ControllerSearch {
         if (isLoadingLinks()) {
             return;
         }
-        setLoadingLinks(true);
 
-        if (requestLinks != null) {
-            requestLinks.cancel();
+        if (subscriptionLinks != null && !subscriptionLinks.isUnsubscribed()) {
+            subscriptionLinks.unsubscribe();
+            subscriptionLinks = null;
         }
 
         try {
@@ -737,37 +744,42 @@ public class ControllerSearch {
             if (sort == Sort.ACTIVITY) {
                 sortString = Sort.HOT.name();
             }
-            requestLinks = reddit.loadGet(Reddit.OAUTH_URL + "/search?q=" + URLEncoder.encode(query, Reddit.UTF_8) + "&sort=" + sortString + "&t=" + time.toString() + "&after=" + links.getAfter(),
-                    new Response.Listener<String>() {
-                        @Override
-                        public void onResponse(String response) {
-                            try {
 
-                                int positionStart = links.getChildren()
-                                        .size() + 1;
-                                int startSize = links.getChildren().size();
-                                Listing listing = Listing.fromJson(Reddit.getObjectMapper().readValue(
-                                    response, JsonNode.class));
-                                links.addChildren(listing.getChildren());
-                                links.setAfter(listing.getAfter());
-                                for (Listener listener : listeners) {
-                                    listener.getAdapterLinks().notifyItemRangeInserted(positionStart, links.getChildren().size() - startSize);
-                                }
-                                setLoadingLinks(false);
-                            }
-                            catch (IOException e) {
-                                e.printStackTrace();
-                                setLoadingLinks(false);
-                            }
-                        }
-                    }, new Response.ErrorListener() {
+            subscriptionLinks = reddit.search("", URLEncoder.encode(query, Reddit.UTF_8), sortString, time.toString(), links.getAfter(), false)
+                    .subscribeOn(Schedulers.computation())
+                    .unsubscribeOn(Schedulers.computation())
+                    .flatMap(Listing.FLAT_MAP)
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .subscribe(new Subscriber<Listing>() {
                         @Override
-                        public void onErrorResponse(VolleyError error) {
+                        public void onStart() {
+                            setLoadingLinks(true);
+                        }
+
+                        @Override
+                        public void onCompleted() {
                             setLoadingLinks(false);
+                        }
+
+                        @Override
+                        public void onError(Throwable e) {
+                            e.printStackTrace();
                             Toast.makeText(activity, activity.getString(R.string.error_loading_links), Toast.LENGTH_SHORT)
                                     .show();
                         }
-                    }, 0);
+
+                        @Override
+                        public void onNext(Listing listing) {
+                            int positionStart = links.getChildren()
+                                    .size() + 1;
+                            int startSize = links.getChildren().size();
+                            links.addChildren(listing.getChildren());
+                            links.setAfter(listing.getAfter());
+                            for (Listener listener : listeners) {
+                                listener.getAdapterLinks().notifyItemRangeInserted(positionStart, links.getChildren().size() - startSize);
+                            }
+                        }
+                    });
         }
         catch (UnsupportedEncodingException e) {
             e.printStackTrace();
@@ -792,60 +804,62 @@ public class ControllerSearch {
     }
 
     public void loadMoreLinksSubreddit() {
-
         if (isLoadingLinksSubreddit()) {
             return;
         }
         setLoadingLinksSubreddit(true);
 
         Subreddit subreddit = controllerLinks.getSubreddit();
-        String url = Reddit.OAUTH_URL;
-        if (TextUtils.isEmpty(subreddit.getUrl())) {
-            url += "/";
-        }
-        else {
-            url += subreddit.getUrl();
+
+        if (subscriptionLinksSubreddit != null && !subscriptionSubreddits.isUnsubscribed()) {
+            subscriptionLinksSubreddit.unsubscribe();
+            subscriptionLinksSubreddit = null;
         }
 
-        if (requestLinksSubreddit != null) {
-            requestLinksSubreddit.cancel();
+        String pathSubreddit = subreddit.getUrl();
+        if (pathSubreddit.length() < 2) {
+            pathSubreddit = "";
         }
 
         try {
-            requestLinksSubreddit = reddit.loadGet(url + "search?restrict_sr=on&q=" + URLEncoder.encode(query, Reddit.UTF_8) + "&sort=" + sort.toString() + "&t=" + time.toString() + "&after=" + linksSubreddit.getAfter(),
-                    new Response.Listener<String>() {
+            subscriptionLinksSubreddit = reddit.search(pathSubreddit, URLEncoder.encode(query, Reddit.UTF_8), sort.toString(), time.toString(), linksSubreddit.getAfter(), true)
+                    .subscribeOn(Schedulers.computation())
+                    .unsubscribeOn(Schedulers.computation())
+                    .flatMap(Listing.FLAT_MAP)
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .subscribe(new Subscriber<Listing>() {
                         @Override
-                        public void onResponse(String response) {
-                            try {
-                                Listing listing = Listing.fromJson(Reddit.getObjectMapper().readValue(
-                                    response, JsonNode.class));
-                                if (listing.getChildren().isEmpty() || listing.getChildren().get(0) instanceof Subreddit) {
-                                    setLoadingLinksSubreddit(false);
-                                    return;
-                                }
-                                int startSize = linksSubreddit.getChildren().size();
-                                int positionStart = startSize + 1;
-
-                                linksSubreddit.addChildren(listing.getChildren());
-                                linksSubreddit.setAfter(listing.getAfter());
-                                for (Listener listener : listeners) {
-                                    listener.getAdapterLinksSubreddit().notifyItemRangeInserted(positionStart, linksSubreddit.getChildren().size() - startSize);
-                                }
-                                setLoadingLinksSubreddit(false);
-                            }
-                            catch (IOException e) {
-                                e.printStackTrace();
-                                setLoadingLinksSubreddit(false);
-                            }
+                        public void onStart() {
+                            setLoadingLinksSubreddit(true);
                         }
-                    }, new Response.ErrorListener() {
+
                         @Override
-                        public void onErrorResponse(VolleyError error) {
+                        public void onCompleted() {
                             setLoadingLinksSubreddit(false);
+                        }
+
+                        @Override
+                        public void onError(Throwable e) {
+                            e.printStackTrace();
                             Toast.makeText(activity, activity.getString(R.string.error_loading_links), Toast.LENGTH_SHORT)
                                     .show();
                         }
-                    }, 0);
+
+                        @Override
+                        public void onNext(Listing listing) {
+                            if (listing.getChildren().isEmpty() || listing.getChildren().get(0) instanceof Subreddit) {
+                                return;
+                            }
+                            int startSize = linksSubreddit.getChildren().size();
+                            int positionStart = startSize + 1;
+
+                            linksSubreddit.addChildren(listing.getChildren());
+                            linksSubreddit.setAfter(listing.getAfter());
+                            for (Listener listener : listeners) {
+                                listener.getAdapterLinksSubreddit().notifyItemRangeInserted(positionStart, linksSubreddit.getChildren().size() - startSize);
+                            }
+                        }
+                    });
         }
         catch (UnsupportedEncodingException e) {
             e.printStackTrace();

@@ -25,6 +25,13 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import rx.Observable;
+import rx.Observer;
+import rx.Subscriber;
+import rx.android.schedulers.AndroidSchedulers;
+import rx.functions.Func1;
+import rx.schedulers.Schedulers;
+
 /**
  * Created by TheKeeperOfPie on 7/8/2015.
  */
@@ -119,33 +126,34 @@ public class ControllerHistory implements ControllerLinksBase {
             lastIndex++;
         }
 
-        Log.d(TAG, "reload");
-
-        reddit.loadGet(Reddit.OAUTH_URL + "/api/info?id=" + builder.toString(),
-                new Response.Listener<String>() {
+        reddit.info(builder.toString())
+                .subscribeOn(Schedulers.computation())
+                .flatMap(Listing.FLAT_MAP)
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new Subscriber<Listing>() {
                     @Override
-                    public void onResponse(String response) {
-
-                        try {
-                            history = Listing.fromJson(Reddit.getObjectMapper().readValue(
-                                    response, JsonNode.class));
-                            for (Listener listener : listeners) {
-                                listener.getAdapter().notifyDataSetChanged();
-                            }
-                        }
-                        catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                        setIsLoading(false);
-
+                    public void onStart() {
+                        setIsLoading(true);
                     }
-                }, new Response.ErrorListener() {
+
                     @Override
-                    public void onErrorResponse(VolleyError error) {
+                    public void onCompleted() {
                         setIsLoading(false);
                     }
-                }, 0);
 
+                    @Override
+                    public void onError(Throwable e) {
+                        e.printStackTrace();
+                    }
+
+                    @Override
+                    public void onNext(Listing listing) {
+                        history = listing;
+                        for (Listener listener : listeners) {
+                            listener.getAdapter().notifyDataSetChanged();
+                        }
+                    }
+                });
     }
 
     @Override
@@ -182,8 +190,6 @@ public class ControllerHistory implements ControllerLinksBase {
             return;
         }
 
-        setIsLoading(true);
-
         StringBuilder builder = new StringBuilder();
 
         while (lastIndex < finalIndex) {
@@ -192,35 +198,37 @@ public class ControllerHistory implements ControllerLinksBase {
             lastIndex++;
         }
 
-        reddit.loadGet(Reddit.OAUTH_URL + "/api/info?id=" + builder.toString(),
-                new Response.Listener<String>() {
+        reddit.info(builder.toString())
+                .subscribeOn(Schedulers.computation())
+                .flatMap(Listing.FLAT_MAP)
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new Subscriber<Listing>() {
                     @Override
-                    public void onResponse(String response) {
-
-                        try {
-                            int startPosition = history.getChildren().size();
-
-                            Listing listing = Listing.fromJson(Reddit.getObjectMapper().readValue(
-                                    response, JsonNode.class));
-                            history.addChildren(listing.getChildren());
-                            for (Listener listener : listeners) {
-                                listener.getAdapter()
-                                        .notifyItemRangeInserted(startPosition + 1, history
-                                                .getChildren().size() - startPosition);
-                            }
-                        }
-                        catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                        setIsLoading(false);
-
+                    public void onStart() {
+                        setIsLoading(true);
                     }
-                }, new Response.ErrorListener() {
+
                     @Override
-                    public void onErrorResponse(VolleyError error) {
+                    public void onCompleted() {
                         setIsLoading(false);
                     }
-                }, 0);
+
+                    @Override
+                    public void onError(Throwable e) {
+                        e.printStackTrace();
+                    }
+
+                    @Override
+                    public void onNext(Listing listing) {
+                        int startPosition = history.getChildren().size();
+                        history.addChildren(listing.getChildren());
+                        for (Listener listener : listeners) {
+                            listener.getAdapter()
+                                    .notifyItemRangeInserted(startPosition + 1, history
+                                            .getChildren().size() - startPosition);
+                        }
+                    }
+                });
 
     }
 

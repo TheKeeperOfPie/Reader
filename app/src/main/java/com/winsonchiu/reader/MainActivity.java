@@ -121,6 +121,11 @@ import java.util.HashMap;
 import java.util.Map;
 
 import io.fabric.sdk.android.Fabric;
+import rx.Observable;
+import rx.Observer;
+import rx.android.schedulers.AndroidSchedulers;
+import rx.functions.Func1;
+import rx.schedulers.Schedulers;
 
 
 public class MainActivity extends YouTubeBaseActivity
@@ -941,51 +946,53 @@ public class MainActivity extends YouTubeBaseActivity
             return;
         }
 
-        String url = Reddit.OAUTH_URL + subreddit + Sort.HOT.toString() + "?t=" + Time.ALL.toString() + "&limit=100&showAll=true";
+        reddit.links(subreddit, Sort.HOT.toString(), Time.ALL.toString(), 100, null)
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new Observer<String>() {
+                    @Override
+                    public void onCompleted() {
 
-        reddit.loadGet(url, new Response.Listener<String>() {
-            @Override
-            public void onResponse(final String response) {
-                // TODO: Catch null errors in parent method call
-                if (response == null) {
-                    return;
-                }
+                    }
 
-                try {
-                    Listing listing = Listing.fromJson(Reddit.getObjectMapper().readValue(
-                            response, JsonNode.class));
-                    Collections.shuffle(listing.getChildren());
+                    @Override
+                    public void onError(Throwable e) {
+                        imageHeader.setAlpha(1f);
+                        e.printStackTrace();
+                    }
 
-                    Link linkChosen = null;
-                    String nameCurrent = sharedPreferences.getString(AppSettings.HEADER_NAME, "");
+                    @Override
+                    public void onNext(String response) {
+                        try {
+                            Listing listing = Listing.fromJson(Reddit.getObjectMapper().readValue(
+                                    response, JsonNode.class));
+                            Collections.shuffle(listing.getChildren());
 
-                    for (Thing thing : listing.getChildren()) {
-                        Link link = (Link) thing;
-                        if (Reddit.checkIsImage(link.getUrl()) && !thing.getName()
-                                .equals(nameCurrent)) {
-                            linkChosen = link;
-                            break;
+                            Link linkChosen = null;
+                            String nameCurrent = sharedPreferences.getString(AppSettings.HEADER_NAME, "");
+
+                            for (Thing thing : listing.getChildren()) {
+                                Link link = (Link) thing;
+                                if (Reddit.checkIsImage(link.getUrl()) && !thing.getName()
+                                        .equals(nameCurrent)) {
+                                    linkChosen = link;
+                                    break;
+                                }
+                            }
+
+                            if (linkChosen != null) {
+                                downloadHeaderImage(linkChosen);
+                            }
+                            else {
+                                imageHeader.setAlpha(1f);
+                            }
+
+                        }
+                        catch (IOException e) {
+                            e.printStackTrace();
+                            onError(e);
                         }
                     }
-
-                    if (linkChosen != null) {
-                        downloadHeaderImage(linkChosen);
-                    }
-                    else {
-                        imageHeader.setAlpha(1f);
-                    }
-
-                }
-                catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        }, new Response.ErrorListener() {
-            @Override
-            public void onErrorResponse(VolleyError error) {
-                imageHeader.setAlpha(1f);
-            }
-        }, 0);
+                });
 
     }
 
@@ -1153,38 +1160,51 @@ public class MainActivity extends YouTubeBaseActivity
     private void clearAccount() {
         accountUser = null;
         sharedPreferences.edit().putString(AppSettings.ACCOUNT_NAME, "").apply();
-        reddit.clearAccount(new Reddit.ErrorListener() {
-            @Override
-            public void onErrorHandled() {
-                handler.post(new Runnable() {
+        reddit.clearAccount()
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new Observer() {
                     @Override
-                    public void run() {
+                    public void onCompleted() {
                         getControllerUser().clearAccount();
                         getControllerSearch().reloadSubscriptionList();
                         loadAccountInfo();
                     }
+
+                    @Override
+                    public void onError(Throwable e) {
+                        e.printStackTrace();
+                    }
+
+                    @Override
+                    public void onNext(Object o) {
+
+                    }
                 });
-            }
-        });
     }
 
     private void setAccount(final Account account) {
         accountUser = account;
         sharedPreferences.edit().putString(AppSettings.ACCOUNT_NAME, account.name).apply();
-        reddit.setAccount(account, new Reddit.ErrorListener() {
-            @Override
-            public void onErrorHandled() {
-                handler.post(new Runnable() {
+        reddit.setAccount(account)
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new Observer() {
                     @Override
-                    public void run() {
+                    public void onCompleted() {
                         getControllerUser().setAccount(account);
                         getControllerSearch().reloadSubscriptionList();
                         loadAccountInfo();
                     }
-                });
-            }
-        });
 
+                    @Override
+                    public void onError(Throwable e) {
+                        e.printStackTrace();
+                    }
+
+                    @Override
+                    public void onNext(Object o) {
+
+                    }
+                });
     }
 
     private void deleteAccount(final Account account) {
@@ -1196,21 +1216,13 @@ public class MainActivity extends YouTubeBaseActivity
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
 
-
                         String tokenRefresh = accountManager.getPassword(account);
 
-                        Map<String, String> params = new ArrayMap<>(2);
-                        params.put("token_type_hint", "refresh_token");
-                        params.put("token", tokenRefresh);
-
-                        reddit.loadPostDefault(Reddit.REVOKE_URL, new Response.Listener<String>() {
-                            @Override
-                            public void onResponse(String response) {
-                                Log.d(TAG, "revoke_token response: " + response);
-
-                                new Thread(new Runnable() {
+                        reddit.tokenRevoke(Reddit.QUERY_REFRESH_TOKEN, tokenRefresh)
+                                .observeOn(Schedulers.computation())
+                                .flatMap(new Func1<String, Observable<?>>() {
                                     @Override
-                                    public void run() {
+                                    public Observable<?> call(String s) {
                                         final AccountManagerFuture future;
                                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
                                             future = accountManager.removeAccount(account, null, null, null);
@@ -1223,35 +1235,32 @@ public class MainActivity extends YouTubeBaseActivity
 
                                         try {
                                             // Force changes in AccountManager
-                                            future.getResult();
+                                            return Observable.just(future.getResult());
                                         }
                                         catch (OperationCanceledException | IOException | AuthenticatorException e) {
-                                            e.printStackTrace();
+                                            return Observable.error(e);
                                         }
-
-                                        handler.post(new Runnable() {
-                                            @Override
-                                            public void run() {
-                                                resetAccountList();
-                                                if (account.equals(accountUser)) {
-                                                    clearAccount();
-                                                }
-                                            }
-                                        });
                                     }
-                                }).start();
-                            }
-                        }, new Response.ErrorListener() {
-                            @Override
-                            public void onErrorResponse(VolleyError error) {
-                                handler.post(new Runnable() {
+                                })
+                                .observeOn(AndroidSchedulers.mainThread())
+                                .subscribe(new Observer<Object>() {
                                     @Override
-                                    public void run() {
+                                    public void onCompleted() {
+                                        resetAccountList();
+                                    }
+
+                                    @Override
+                                    public void onError(Throwable e) {
                                         Toast.makeText(MainActivity.this, R.string.error_delete_account_securely, Toast.LENGTH_LONG).show();
                                     }
+
+                                    @Override
+                                    public void onNext(Object s) {
+                                        if (account.equals(accountUser)) {
+                                            clearAccount();
+                                        }
+                                    }
                                 });
-                            }
-                        }, params, 0);
                     }
                 })
                 .setNegativeButton(R.string.cancel, null)
@@ -1371,27 +1380,32 @@ public class MainActivity extends YouTubeBaseActivity
         boolean visible = getControllerUser().hasUser();
 
         if (visible) {
-            Reddit.getInstance(this)
-                    .loadGet(Reddit.OAUTH_URL + "/api/v1/me",
-                            new Response.Listener<String>() {
-                                @Override
-                                public void onResponse(String response) {
-                                    try {
-                                        JSONObject jsonObject = new JSONObject(response);
-                                        textAccountName.setText(jsonObject.getString("name"));
-                                        textAccountInfo.setText(getString(R.string.account_info, jsonObject.getString(
-                                                "link_karma"), jsonObject.getString("comment_karma")));
-                                    }
-                                    catch (JSONException e) {
-                                        e.printStackTrace();
-                                    }
-                                }
-                            }, new Response.ErrorListener() {
-                                @Override
-                                public void onErrorResponse(VolleyError error) {
-                                    Log.d(TAG, "loadAccountInfo error: " + error);
-                                }
-                            }, 0);
+            reddit.me()
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .subscribe(new Observer<String>() {
+                        @Override
+                        public void onCompleted() {
+
+                        }
+
+                        @Override
+                        public void onError(Throwable e) {
+                            e.printStackTrace();
+                        }
+
+                        @Override
+                        public void onNext(String response) {
+                            try {
+                                JSONObject jsonObject = new JSONObject(response);
+                                textAccountName.setText(jsonObject.getString("name"));
+                                textAccountInfo.setText(getString(R.string.account_info, jsonObject.getString(
+                                        "link_karma"), jsonObject.getString("comment_karma")));
+                            }
+                            catch (JSONException e) {
+                                e.printStackTrace();
+                            }
+                        }
+                    });
         }
         else {
             textAccountName.setText(R.string.login);

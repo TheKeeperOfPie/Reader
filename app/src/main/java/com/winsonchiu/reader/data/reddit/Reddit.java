@@ -14,12 +14,12 @@ import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
+import android.os.Build;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Looper;
 import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.v4.util.ArrayMap;
 import android.support.v7.widget.RecyclerView;
 import android.text.Html;
 import android.text.SpannedString;
@@ -36,11 +36,15 @@ import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.Response.Listener;
 import com.android.volley.VolleyError;
+import com.android.volley.toolbox.RequestFuture;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.squareup.okhttp.Interceptor;
 import com.squareup.okhttp.OkHttpClient;
+import com.squareup.okhttp.ResponseBody;
+import com.squareup.okhttp.logging.HttpLoggingInterceptor;
 import com.squareup.picasso.OkHttpDownloader;
 import com.squareup.picasso.Picasso;
 import com.winsonchiu.reader.ApiKeys;
@@ -49,8 +53,10 @@ import com.winsonchiu.reader.BuildConfig;
 import com.winsonchiu.reader.R;
 import com.winsonchiu.reader.auth.ActivityLogin;
 import com.winsonchiu.reader.comments.AdapterCommentList;
+import com.winsonchiu.reader.data.api.ApiRedditAuthorized;
+import com.winsonchiu.reader.data.api.ApiRedditDefault;
+import com.winsonchiu.reader.data.retrofit.ConverterFactory;
 import com.winsonchiu.reader.links.AdapterLink;
-import com.winsonchiu.reader.utils.OkHttpStack;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -59,7 +65,20 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import retrofit.Callback;
+import retrofit.Retrofit;
+import retrofit.RxJavaCallAdapterFactory;
+import retrofit.http.Path;
+import rx.Observable;
+import rx.Observer;
+import rx.Subscriber;
+import rx.android.schedulers.AndroidSchedulers;
+import rx.observables.BlockingObservable;
+import rx.schedulers.Schedulers;
 
 /**
  * Created by TheKeeperOfPie on 3/7/2015.
@@ -164,7 +183,7 @@ public class Reddit {
     private static final String AUTH_SCOPES = "account,creddits,edit,flair,history,identity,livemanage,modconfig,modflair,modlog,modothers,modposts,modself,modwiki,mysubreddits,privatemessages,read,report,save,submit,subscribe,vote,wikiedit,wikiread";
 
     // Query fields
-    public static final String INSTALLED_CLIENT_GRANT = Reddit.OAUTH_URL + "/grants/installed_client";
+    public static final String INSTALLED_CLIENT_GRANT = Html.escapeHtml(Reddit.OAUTH_URL + "/grants/installed_client");
     public static final String CODE_GRANT = "authorization_code";
     public static final String QUERY_CODE = "code";
     public static final String QUERY_CLIENT_ID = "client_id";
@@ -180,6 +199,8 @@ public class Reddit {
     public static final String QUERY_CATEGORY = "category";
 
     private static Reddit reddit;
+    private ApiRedditAuthorized apiRedditAuthorized;
+    private ApiRedditDefault apiRedditDefault;
     private RequestQueue requestQueue;
     private SharedPreferences preferences;
     private AccountManager accountManager;
@@ -222,77 +243,87 @@ public class Reddit {
     }
 
     private Reddit(Context context) {
-        requestQueue = Volley.newRequestQueue(context.getApplicationContext(), new OkHttpStack());
+        requestQueue = Volley.newRequestQueue(context.getApplicationContext());
         preferences = PreferenceManager.getDefaultSharedPreferences(
                 context.getApplicationContext());
         accountManager = AccountManager.get(context.getApplicationContext());
-    }
 
-    private Request<String> fetchApplicationWideToken(final ErrorListener listener) {
+        OkHttpClient okHttpClientAuthorized = new OkHttpClient();
+        okHttpClientAuthorized.interceptors().add(new Interceptor() {
+            @Override
+            public com.squareup.okhttp.Response intercept(Chain chain) throws IOException {
+                com.squareup.okhttp.Request requestOriginal = chain.request();
 
-        final HashMap<String, String> params = new HashMap<>(2);
+                com.squareup.okhttp.Request requestModified = requestOriginal.newBuilder()
+                        .header(USER_AGENT, CUSTOM_USER_AGENT)
+                        .header(AUTHORIZATION, getAuthorizationHeader())
+                        .header(CONTENT_TYPE, CONTENT_TYPE_APP_JSON)
+                        .build();
 
-        if ("".equals(preferences.getString(AppSettings.DEVICE_ID, ""))) {
-            preferences.edit()
-                    .putString(AppSettings.DEVICE_ID, UUID.randomUUID()
-                            .toString())
-                    .apply();
+                return chain.proceed(requestModified);
+            }
+        });
+
+        OkHttpClient okHttpClientDefault = new OkHttpClient();
+        okHttpClientDefault.interceptors().add(new Interceptor() {
+            @Override
+            public com.squareup.okhttp.Response intercept(Chain chain) throws IOException {
+                com.squareup.okhttp.Request requestOriginal = chain.request();
+
+                String credentials = ApiKeys.REDDIT_CLIENT_ID + ":";
+                String authorization = "Basic " + Base64.encodeToString(credentials.getBytes(),
+                        Base64.NO_WRAP);
+
+                com.squareup.okhttp.Request requestModified = requestOriginal.newBuilder()
+                        .header(USER_AGENT, CUSTOM_USER_AGENT)
+                        .header(AUTHORIZATION, authorization)
+                        .header(CONTENT_TYPE, CONTENT_TYPE_APP_JSON)
+                        .build();
+
+                return chain.proceed(requestModified);
+            }
+        });
+
+        if (BuildConfig.DEBUG) {
+            HttpLoggingInterceptor httpLoggingInterceptor = new HttpLoggingInterceptor();
+            httpLoggingInterceptor.setLevel(HttpLoggingInterceptor.Level.BODY);
+            okHttpClientAuthorized.interceptors().add(httpLoggingInterceptor);
+            okHttpClientDefault.interceptors().add(httpLoggingInterceptor);
         }
 
-        params.put(QUERY_GRANT_TYPE, INSTALLED_CLIENT_GRANT);
-        params.put(QUERY_DEVICE_ID, preferences.getString(AppSettings.DEVICE_ID, UUID.randomUUID()
-                .toString()));
+        apiRedditAuthorized = new Retrofit.Builder()
+                .baseUrl(OAUTH_URL)
+                .client(okHttpClientAuthorized)
+                .addCallAdapterFactory(RxJavaCallAdapterFactory.create())
+                .addConverterFactory(new ConverterFactory())
+                .build()
+                .create(ApiRedditAuthorized.class);
 
-        return loadPostDefault(ACCESS_URL, new Listener<String>() {
-            @Override
-            public void onResponse(String response) {
-
-                try {
-                    // Check if an account was set while fetching a token
-                    if (account == null) {
-                        JSONObject jsonObject = new JSONObject(response);
-                        tokenAuth = jsonObject.getString(QUERY_ACCESS_TOKEN);
-                        timeExpire = System.currentTimeMillis() + jsonObject.getLong(
-                                QUERY_EXPIRES_IN) * SEC_TO_MS;
-                    }
-
-                    if (listener != null) {
-                        listener.onErrorHandled();
-                    }
-                }
-                catch (JSONException e) {
-                    e.printStackTrace();
-                }
-            }
-        }, new com.android.volley.Response.ErrorListener() {
-            @Override
-            public void onErrorResponse(VolleyError error) {
-
-            }
-        }, params, 0);
+        apiRedditDefault = new Retrofit.Builder()
+                .baseUrl(BASE_URL)
+                .client(okHttpClientDefault)
+                .addCallAdapterFactory(RxJavaCallAdapterFactory.create())
+                .addConverterFactory(new ConverterFactory())
+                .build()
+                .create(ApiRedditDefault.class);
     }
 
-    public void clearAccount(ErrorListener errorListener) {
+    public Observable clearAccount() {
         account = null;
-        fetchToken(errorListener);
+        return fetchToken();
     }
 
-    public void setAccount(Account accountUser, ErrorListener errorListener) {
-        boolean accountFound = false;
+    public Observable setAccount(Account accountUser) {
+        account = null;
         Account[] accounts = accountManager.getAccountsByType(Reddit.ACCOUNT_TYPE);
         for (Account account : accounts) {
             if (account.name.equals(accountUser.name)) {
                 this.account = account;
-                accountFound = true;
-                fetchToken(errorListener);
                 break;
             }
         }
 
-        if (!accountFound) {
-            account = null;
-            fetchToken(errorListener);
-        }
+        return fetchToken();
     }
 
     public RequestQueue getRequestQueue() {
@@ -300,10 +331,8 @@ public class Reddit {
     }
 
     public boolean needsToken() {
-
-        Log.d(TAG, "needsToken: " + (System.currentTimeMillis() > timeExpire || TextUtils.isEmpty(tokenAuth)));
-
-        return System.currentTimeMillis() > timeExpire || TextUtils.isEmpty(tokenAuth);
+        return true;
+//        return System.currentTimeMillis() > timeExpire || TextUtils.isEmpty(tokenAuth);
     }
 
     public static String getUserAuthUrl(String state) {
@@ -311,43 +340,99 @@ public class Reddit {
         return USER_AUTHENTICATION_URL + QUERY_CLIENT_ID + "=" + ApiKeys.REDDIT_CLIENT_ID + "&response_type=code&state=" + state + "&" + QUERY_REDIRECT_URI + "=" + REDIRECT_URI + "&" + QUERY_DURATION + "=permanent&scope=" + AUTH_SCOPES;
     }
 
-    public void fetchToken(final ErrorListener listener) {
+    public Observable fetchToken() {
 
         if (account == null) {
-            fetchApplicationWideToken(listener);
-            return;
+            return fetchApplicationWideToken();
         }
+
+        Log.d(TAG, "fetchToken() called with: " + "");
 
         accountManager.invalidateAuthToken(Reddit.ACCOUNT_TYPE, tokenAuth);
         final AccountManagerFuture<Bundle> future = accountManager.getAuthToken(account, Reddit.AUTH_TOKEN_FULL_ACCESS, null, true, null, null);
 
-        new Thread(new Runnable() {
+        return Observable.fromCallable(new Callable<Bundle>() {
             @Override
-            public void run() {
+            public Bundle call() throws Exception {
+                Bundle bundle = future.getResult();
+                tokenAuth = bundle.getString(AccountManager.KEY_AUTHTOKEN);
+
                 try {
-                    Bundle bundle = future.getResult();
-                    tokenAuth = bundle.getString(AccountManager.KEY_AUTHTOKEN);
-                    Log.d(TAG, "getAuthToken: " + tokenAuth);
-
-                    try {
-                        timeExpire = Long.parseLong(accountManager.getUserData(account, ActivityLogin.KEY_TIME_EXPIRATION));
-                    }
-                    catch (NumberFormatException e) {
-                        e.printStackTrace();
-                    }
-
-                    Log.d(TAG, "time: " + System.currentTimeMillis());
-                    Log.d(TAG, "timeExpire: " + timeExpire);
-
-                    if (listener != null) {
-                        listener.onErrorHandled();
-                    }
+                    timeExpire = Long.parseLong(accountManager.getUserData(account, ActivityLogin.KEY_TIME_EXPIRATION));
                 }
-                catch (OperationCanceledException | IOException | AuthenticatorException e) {
+                catch (NumberFormatException e) {
                     e.printStackTrace();
                 }
+
+                Log.d(TAG, "tokenAuth: " + tokenAuth);
+
+                return bundle;
             }
-        }).start();
+        })
+                .subscribeOn(Schedulers.computation())
+                .observeOn(Schedulers.computation());
+    }
+
+    public Observable fetchApplicationWideToken() {
+        if ("".equals(preferences.getString(AppSettings.DEVICE_ID, ""))) {
+            preferences.edit()
+                    .putString(AppSettings.DEVICE_ID, UUID.randomUUID()
+                            .toString())
+                    .apply();
+        }
+
+        return Observable.create(new Observable.OnSubscribe<String>() {
+            @Override
+            public void call(final Subscriber<? super String> subscriber) {
+
+                final HashMap<String, String> params = new HashMap<>(2);
+
+                if ("".equals(preferences.getString(AppSettings.DEVICE_ID, ""))) {
+                    preferences.edit()
+                            .putString(AppSettings.DEVICE_ID, UUID.randomUUID()
+                                    .toString())
+                            .apply();
+                }
+
+                params.put(QUERY_GRANT_TYPE, INSTALLED_CLIENT_GRANT);
+                params.put(QUERY_DEVICE_ID, preferences.getString(AppSettings.DEVICE_ID, UUID.randomUUID()
+                        .toString()));
+
+                RequestFuture<String> future = RequestFuture.newFuture();
+
+                loadPostDefault(ACCESS_URL, new Listener<String>() {
+                    @Override
+                    public void onResponse(String response) {
+
+
+                        try {
+                            // Check if an account was set while fetching a token
+                            if (account == null) {
+                                JSONObject jsonObject = new JSONObject(response);
+                                tokenAuth = jsonObject.getString(QUERY_ACCESS_TOKEN);
+                                timeExpire = System.currentTimeMillis() + jsonObject.getLong(
+                                        QUERY_EXPIRES_IN) * SEC_TO_MS;
+
+                                Log.d(TAG, "tokenAuth: " + tokenAuth);
+                            }
+                            subscriber.onNext(response);
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                            subscriber.onError(e);
+                        }
+
+                        subscriber.onCompleted();
+                        Log.d(TAG, "fetchApplicationWideToken() finished");
+                    }
+                }, new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        subscriber.onError(error);
+                    }
+                }, params, 0);
+            }
+        })
+                .observeOn(Schedulers.computation());
     }
 
     public Request<String> loadPostDefault(final String url,
@@ -435,12 +520,24 @@ public class Reddit {
         }
 
         if (needsToken()) {
-            fetchToken(new ErrorListener() {
-                @Override
-                public void onErrorHandled() {
-                    loadPost(url, listenerFinal, errorListener, params, iteration + 1);
-                }
-            });
+            fetchToken().subscribeOn(Schedulers.computation())
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .subscribe(new Observer() {
+                        @Override
+                        public void onCompleted() {
+                            loadPost(url, listenerFinal, errorListener, params, iteration + 1);
+                        }
+
+                        @Override
+                        public void onError(Throwable e) {
+                            e.printStackTrace();
+                        }
+
+                        @Override
+                        public void onNext(Object o) {
+
+                        }
+                    });
             return null;
         }
 
@@ -510,17 +607,24 @@ public class Reddit {
         }
 
         if (needsToken()) {
-            fetchToken(new ErrorListener() {
-                @Override
-                public void onErrorHandled() {
-                    new Handler(Looper.getMainLooper()).post(new Runnable() {
+            fetchToken().subscribeOn(Schedulers.computation())
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .subscribe(new Observer() {
                         @Override
-                        public void run() {
+                        public void onCompleted() {
                             loadGet(url, listenerFinal, errorListener, iteration + 1);
                         }
+
+                        @Override
+                        public void onError(Throwable e) {
+                            e.printStackTrace();
+                        }
+
+                        @Override
+                        public void onNext(Object o) {
+
+                        }
                     });
-                }
-            });
             return null;
         }
 
@@ -550,6 +654,98 @@ public class Reddit {
         };
 
         return requestQueue.add(getRequest);
+    }
+
+    public Observable<String> about(String pathSubreddit) {
+        return apiRedditAuthorized.about(pathSubreddit);
+    }
+
+    public Observable<String> info(String id) {
+        return apiRedditAuthorized.info(id);
+    }
+
+    public Observable<String> links(final String pathSubreddit,
+                                          String sort,
+                                          final String time,
+                                          final Integer limit,
+                                          final String after) {
+        if (!pathSubreddit.endsWith("/")) {
+            sort = "/" + sort;
+        }
+
+        final String sortFinal = sort;
+
+        if (needsToken()) {
+            return Observable.create(new Observable.OnSubscribe<String>() {
+                @Override
+                public void call(final Subscriber<? super String> subscriber) {
+                    fetchToken().subscribe(new Subscriber() {
+                        @Override
+                        public void onCompleted() {
+                            Log.d(TAG, "fetchToken onCompleted");
+                            apiRedditAuthorized.links(pathSubreddit, sortFinal, time, limit, after)
+                                    .subscribe(subscriber);
+                        }
+
+                        @Override
+                        public void onError(Throwable e) {
+                            e.printStackTrace();
+                        }
+
+                        @Override
+                        public void onNext(Object o) {
+
+                        }
+                    });
+                }
+            });
+        }
+
+        return apiRedditAuthorized.links(pathSubreddit, sort, time, limit, after);
+    }
+
+    public Observable<String> comments(String subreddit,
+                                       String id,
+                                       String comment,
+                                       String sort,
+                                       Boolean showMore,
+                                       Boolean showEdits,
+                                       Integer context,
+                                       Integer depth,
+                                       Integer limit) {
+        return apiRedditAuthorized.comments(subreddit,
+                id,
+                comment,
+                sort,
+                showMore,
+                showEdits,
+                context,
+                depth,
+                limit);
+    }
+
+    public Observable<String> moreChildren(String idLink, String children) {
+        return apiRedditAuthorized.moreChildren(idLink, children);
+    }
+
+    public Observable<String> message(String page, String after) {
+        return apiRedditAuthorized.message(page, after);
+    }
+
+    public Observable<String> user(String user, String page, String sort, String time, String after, Integer limit) {
+        return apiRedditAuthorized.user(user, page, sort, time, after, limit);
+    }
+
+    public Observable<String> subreddits(String page, String after, Integer limit) {
+        return apiRedditAuthorized.subreddits(page, after, limit);
+    }
+
+    public Observable<String> subredditsSearch(String query, String sort) {
+        return apiRedditAuthorized.subredditsSearch(query, sort);
+    }
+
+    public Observable<String> search(String pathSubreddit, String query, String sort, String time, String after, Boolean restrictSubreddit) {
+        return apiRedditAuthorized.search(pathSubreddit, query, sort, time, after, restrictSubreddit);
     }
 
     public void voteLink(final RecyclerView.ViewHolder viewHolder,
@@ -878,6 +1074,56 @@ public class Reddit {
 
     private String getAuthorizationHeader() {
         return Reddit.BEARER + tokenAuth;//preferences.getString(AppSettings.ACCESS_TOKEN, "");
+    }
+
+    public String tokenAuth() throws ExecutionException, InterruptedException {
+
+        RequestFuture<String> future = RequestFuture.newFuture();
+        final ArrayMap<String, String> params = new ArrayMap<>(2);
+        params.put(Reddit.QUERY_GRANT_TYPE, Reddit.QUERY_REFRESH_TOKEN);
+        params.put(Reddit.QUERY_REFRESH_TOKEN, accountManager.getPassword(account));
+
+        loadPostDefault(Reddit.ACCESS_URL, future, future, params, 0);
+
+        return future.get();
+    }
+
+    public Observable<String> tokenRevoke(String tokenType, String token) {
+        final Map<String, String> params = new ArrayMap<>(2);
+        params.put("token_type_hint", tokenType);
+        params.put("token", token);
+
+        return Observable.create(new Observable.OnSubscribe<String>() {
+            @Override
+            public void call(final Subscriber<? super String> subscriber) {
+                loadPostDefault(Reddit.REVOKE_URL, new Response.Listener<String>() {
+                    @Override
+                    public void onResponse(String response) {
+                        subscriber.onNext(response);
+                        subscriber.onCompleted();
+                    }
+                }, new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        subscriber.onError(error);
+                    }
+                }, params, 0);
+            }
+        })
+                .subscribeOn(Schedulers.computation())
+                .observeOn(AndroidSchedulers.mainThread());
+    }
+
+    public Observable<String> me() {
+        return apiRedditAuthorized.me();
+    }
+
+    public Observable<String> needsCaptcha() {
+        return apiRedditAuthorized.needsCaptcha();
+    }
+
+    public Observable<String> newCaptcha() {
+        return apiRedditAuthorized.newCaptcha();
     }
 
     public static boolean checkIsImage(String url) {
