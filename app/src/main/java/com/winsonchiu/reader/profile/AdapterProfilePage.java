@@ -16,7 +16,6 @@ import android.widget.TextView;
 import com.winsonchiu.reader.R;
 import com.winsonchiu.reader.data.Page;
 import com.winsonchiu.reader.utils.UtilsColor;
-import com.winsonchiu.reader.utils.UtilsJson;
 
 import java.util.ArrayList;
 import java.util.List;

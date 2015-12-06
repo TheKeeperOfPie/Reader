@@ -4,7 +4,6 @@
 
 package com.winsonchiu.reader;
 
-import android.animation.Animator;
 import android.app.Activity;
 import android.content.Context;
 import android.content.res.TypedArray;
@@ -42,7 +41,6 @@ import android.widget.Toast;
 
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.github.rjeschke.txtmark.Processor;
 import com.winsonchiu.reader.data.reddit.Link;
 import com.winsonchiu.reader.data.reddit.Listing;
@@ -52,15 +50,10 @@ import com.winsonchiu.reader.utils.UtilsColor;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-import rx.Observable;
 import rx.Observer;
-import rx.android.schedulers.AndroidSchedulers;
-import rx.functions.Func1;
-import rx.schedulers.Schedulers;
 
 public class FragmentNewPost extends FragmentBase implements Toolbar.OnMenuItemClickListener {
 
@@ -336,7 +329,6 @@ public class FragmentNewPost extends FragmentBase implements Toolbar.OnMenuItemC
         }
         else {
             reddit.needsCaptcha()
-                    .observeOn(AndroidSchedulers.mainThread())
                     .subscribe(new Observer<String>() {
                         @Override
                         public void onCompleted() {
@@ -407,9 +399,6 @@ public class FragmentNewPost extends FragmentBase implements Toolbar.OnMenuItemC
 
     private void loadCaptcha() {
         reddit.newCaptcha()
-                .subscribeOn(Schedulers.computation())
-                .unsubscribeOn(Schedulers.computation())
-                .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(new Observer<String>() {
                     @Override
                     public void onCompleted() {
@@ -446,9 +435,7 @@ public class FragmentNewPost extends FragmentBase implements Toolbar.OnMenuItemC
 
     private void loadEditValues() {
         reddit.info(getArguments().getString(EDIT_ID))
-                .subscribeOn(Schedulers.computation())
                 .flatMap(Listing.FLAT_MAP)
-                .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(new Observer<Listing>() {
                     @Override
                     public void onCompleted() {
@@ -458,7 +445,7 @@ public class FragmentNewPost extends FragmentBase implements Toolbar.OnMenuItemC
                     @Override
                     public void onError(Throwable e) {
                         e.printStackTrace();
-                        Toast.makeText(getContext(), R.string.error_loading, Toast.LENGTH_LONG);
+                        Toast.makeText(activity, R.string.error_loading, Toast.LENGTH_LONG);
                     }
 
                     @Override

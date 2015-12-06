@@ -9,10 +9,7 @@ import android.accounts.AccountManager;
 import android.app.Activity;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
-import android.util.Log;
 
-import com.android.volley.Response;
-import com.android.volley.VolleyError;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.winsonchiu.reader.data.reddit.Reddit;
 import com.winsonchiu.reader.data.reddit.User;
@@ -20,7 +17,6 @@ import com.winsonchiu.reader.data.reddit.User;
 import java.io.IOException;
 
 import rx.Subscriber;
-import rx.android.schedulers.AndroidSchedulers;
 
 /**
  * Created by TheKeeperOfPie on 6/24/2015.
@@ -52,7 +48,6 @@ public class ControllerUser {
 
     public void reloadUser() {
         reddit.me()
-                .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(new Subscriber<String>() {
                     @Override
                     public void onCompleted() {

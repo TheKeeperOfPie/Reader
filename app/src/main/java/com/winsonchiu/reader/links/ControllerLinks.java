@@ -13,7 +13,6 @@ import com.android.volley.Response;
 import com.android.volley.Response.ErrorListener;
 import com.android.volley.VolleyError;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.squareup.okhttp.ResponseBody;
 import com.winsonchiu.reader.R;
 import com.winsonchiu.reader.data.reddit.Link;
 import com.winsonchiu.reader.data.reddit.Listing;
@@ -34,15 +33,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import retrofit.Call;
-import retrofit.Callback;
-import retrofit.Retrofit;
 import rx.Observable;
 import rx.Observer;
 import rx.Subscriber;
-import rx.android.schedulers.AndroidSchedulers;
 import rx.functions.Func1;
-import rx.schedulers.Schedulers;
 
 /**
  * Created by TheKeeperOfPie on 3/14/2015.
@@ -118,7 +112,6 @@ public class ControllerLinks implements ControllerLinksBase {
         setLoading(true);
 
         reddit.about(subreddit.getUrl())
-                .subscribeOn(Schedulers.computation())
                 .flatMap(new Func1<String, Observable<Subreddit>>() {
                     @Override
                     public Observable<Subreddit> call(String response) {
@@ -130,7 +123,6 @@ public class ControllerLinks implements ControllerLinksBase {
                         }
                     }
                 })
-                .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(new Subscriber<Subreddit>() {
                     @Override
                     public void onStart() {
@@ -150,7 +142,6 @@ public class ControllerLinks implements ControllerLinksBase {
                     @Override
                     public void onNext(Subreddit subreddit) {
                         ControllerLinks.this.subreddit = subreddit;
-
                     }
                 });
     }
@@ -222,8 +213,6 @@ public class ControllerLinks implements ControllerLinksBase {
         setLoading(true);
 
         reddit.links(subreddit.getUrl(), sort.toString(), time.toString(), LIMIT, null)
-                .subscribeOn(Schedulers.computation())
-                .observeOn(AndroidSchedulers.mainThread())
                 .flatMap(new Func1<String, Observable<Listing>>() {
                     @Override
                     public Observable<Listing> call(String s) {
@@ -293,8 +282,6 @@ public class ControllerLinks implements ControllerLinksBase {
         String url = Reddit.OAUTH_URL + subreddit.getUrl() + sort.toString() + "?t=" + time.toString() + "&limit=25&showAll=true&after=" + listingLinks.getAfter();
 
         reddit.links(subreddit.getUrl(), sort.toString(), time.toString(), LIMIT, listingLinks.getAfter())
-                .subscribeOn(Schedulers.computation())
-                .observeOn(AndroidSchedulers.mainThread())
                 .flatMap(Listing.FLAT_MAP)
                 .subscribe(new Observer<Listing>() {
                     @Override

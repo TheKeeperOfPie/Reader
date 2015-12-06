@@ -4,7 +4,6 @@
 
 package com.winsonchiu.reader.search;
 
-import android.accounts.Account;
 import android.accounts.AccountManager;
 import android.app.Activity;
 import android.content.SharedPreferences;
@@ -49,13 +48,9 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.Set;
 
-import rx.Observable;
 import rx.Observer;
 import rx.Subscriber;
 import rx.Subscription;
-import rx.android.schedulers.AndroidSchedulers;
-import rx.functions.Func1;
-import rx.schedulers.Schedulers;
 
 /**
  * Created by TheKeeperOfPie on 6/3/2015.
@@ -196,9 +191,7 @@ public class ControllerSearch {
         }
 
         reddit.subreddits(page, null, 100)
-                .subscribeOn(Schedulers.computation())
                 .flatMap(Listing.FLAT_MAP)
-                .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(new Observer<Listing>() {
                     @Override
                     public void onCompleted() {
@@ -235,9 +228,7 @@ public class ControllerSearch {
         }
 
         reddit.subreddits(page, subredditsLoaded.getAfter(), 100)
-                .subscribeOn(Schedulers.computation())
                 .flatMap(Listing.FLAT_MAP)
-                .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(new Observer<Listing>() {
                     @Override
                     public void onCompleted() {
@@ -330,9 +321,7 @@ public class ControllerSearch {
         }
 
         reddit.subreddits("mine/contributor", null, 100)
-                .subscribeOn(Schedulers.computation())
                 .flatMap(Listing.FLAT_MAP)
-                .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(new Observer<Listing>() {
                     @Override
                     public void onCompleted() {
@@ -360,9 +349,7 @@ public class ControllerSearch {
 
     private void loadMoreContributorSubreddits() {
         reddit.subreddits("mine/contributor", subredditsLoaded.getAfter(), 100)
-                .subscribeOn(Schedulers.computation())
                 .flatMap(Listing.FLAT_MAP)
-                .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(new Observer<Listing>() {
                     @Override
                     public void onCompleted() {
@@ -457,10 +444,7 @@ public class ControllerSearch {
 
         try {
             subscriptionSubreddits = reddit.subredditsSearch(URLEncoder.encode(query, Reddit.UTF_8).replaceAll("\\s", ""), sort.toString())
-                    .subscribeOn(Schedulers.computation())
-                    .unsubscribeOn(Schedulers.computation())
                     .flatMap(Listing.FLAT_MAP)
-                    .observeOn(AndroidSchedulers.mainThread())
                     .subscribe(new Observer<Listing>() {
                         @Override
                         public void onCompleted() {
@@ -605,10 +589,7 @@ public class ControllerSearch {
             }
 
             subscriptionLinks = reddit.search("", URLEncoder.encode(query, Reddit.UTF_8), sortString, time.toString(), null, false)
-                    .subscribeOn(Schedulers.computation())
-                    .unsubscribeOn(Schedulers.computation())
                     .flatMap(Listing.FLAT_MAP)
-                    .observeOn(AndroidSchedulers.mainThread())
                     .subscribe(new Subscriber<Listing>() {
                         @Override
                         public void onStart() {
@@ -658,10 +639,7 @@ public class ControllerSearch {
 
         try {
             subscriptionSubreddits = reddit.search(pathSubreddit, URLEncoder.encode(query, Reddit.UTF_8), sort.toString(), time.toString(), null, true)
-                    .subscribeOn(Schedulers.computation())
-                    .unsubscribeOn(Schedulers.computation())
                     .flatMap(Listing.FLAT_MAP)
-                    .observeOn(AndroidSchedulers.mainThread())
                     .subscribe(new Subscriber<Listing>() {
                         @Override
                         public void onStart() {
@@ -746,10 +724,7 @@ public class ControllerSearch {
             }
 
             subscriptionLinks = reddit.search("", URLEncoder.encode(query, Reddit.UTF_8), sortString, time.toString(), links.getAfter(), false)
-                    .subscribeOn(Schedulers.computation())
-                    .unsubscribeOn(Schedulers.computation())
                     .flatMap(Listing.FLAT_MAP)
-                    .observeOn(AndroidSchedulers.mainThread())
                     .subscribe(new Subscriber<Listing>() {
                         @Override
                         public void onStart() {
@@ -823,10 +798,7 @@ public class ControllerSearch {
 
         try {
             subscriptionLinksSubreddit = reddit.search(pathSubreddit, URLEncoder.encode(query, Reddit.UTF_8), sort.toString(), time.toString(), linksSubreddit.getAfter(), true)
-                    .subscribeOn(Schedulers.computation())
-                    .unsubscribeOn(Schedulers.computation())
                     .flatMap(Listing.FLAT_MAP)
-                    .observeOn(AndroidSchedulers.mainThread())
                     .subscribe(new Subscriber<Listing>() {
                         @Override
                         public void onStart() {

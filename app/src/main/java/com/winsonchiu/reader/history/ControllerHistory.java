@@ -6,11 +6,7 @@ package com.winsonchiu.reader.history;
 
 import android.app.Activity;
 import android.text.TextUtils;
-import android.util.Log;
 
-import com.android.volley.Response;
-import com.android.volley.VolleyError;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.winsonchiu.reader.R;
 import com.winsonchiu.reader.data.reddit.Link;
 import com.winsonchiu.reader.data.reddit.Listing;
@@ -21,16 +17,10 @@ import com.winsonchiu.reader.data.reddit.Thing;
 import com.winsonchiu.reader.links.ControllerLinksBase;
 import com.winsonchiu.reader.utils.ControllerListener;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import rx.Observable;
-import rx.Observer;
 import rx.Subscriber;
-import rx.android.schedulers.AndroidSchedulers;
-import rx.functions.Func1;
-import rx.schedulers.Schedulers;
 
 /**
  * Created by TheKeeperOfPie on 7/8/2015.
@@ -127,9 +117,7 @@ public class ControllerHistory implements ControllerLinksBase {
         }
 
         reddit.info(builder.toString())
-                .subscribeOn(Schedulers.computation())
                 .flatMap(Listing.FLAT_MAP)
-                .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(new Subscriber<Listing>() {
                     @Override
                     public void onStart() {
@@ -199,9 +187,7 @@ public class ControllerHistory implements ControllerLinksBase {
         }
 
         reddit.info(builder.toString())
-                .subscribeOn(Schedulers.computation())
                 .flatMap(Listing.FLAT_MAP)
-                .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(new Subscriber<Listing>() {
                     @Override
                     public void onStart() {

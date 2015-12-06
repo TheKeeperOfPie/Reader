@@ -8,7 +8,6 @@ import com.squareup.okhttp.ResponseBody;
 import com.winsonchiu.reader.data.reddit.Reddit;
 
 import retrofit.Call;
-import retrofit.Response;
 import retrofit.http.GET;
 import retrofit.http.POST;
 import retrofit.http.Path;

@@ -4,7 +4,6 @@
 
 package com.winsonchiu.reader;
 
-import android.animation.Animator;
 import android.app.Activity;
 import android.content.Context;
 import android.content.res.TypedArray;
@@ -13,11 +12,9 @@ import android.graphics.ColorFilter;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
 import android.os.Bundle;
-import android.os.Handler;
 import android.support.design.widget.AppBarLayout;
 import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.TabLayout;
-import android.support.v4.content.ContextCompat;
 import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.support.v4.widget.NestedScrollView;
@@ -53,10 +50,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 import rx.Observer;
-import rx.android.schedulers.AndroidSchedulers;
-import rx.android.schedulers.HandlerScheduler;
-import rx.functions.Action1;
-import rx.schedulers.Schedulers;
 
 public class FragmentNewMessage extends FragmentBase implements Toolbar.OnMenuItemClickListener {
 
@@ -300,7 +293,6 @@ public class FragmentNewMessage extends FragmentBase implements Toolbar.OnMenuIt
         });
 
         reddit.needsCaptcha()
-                .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(new Observer<String>() {
                     @Override
                     public void onCompleted() {
@@ -441,9 +433,6 @@ public class FragmentNewMessage extends FragmentBase implements Toolbar.OnMenuIt
 
     private void loadCaptcha() {
         reddit.newCaptcha()
-                .subscribeOn(Schedulers.computation())
-                .unsubscribeOn(Schedulers.computation())
-                .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(new Observer<String>() {
                     @Override
                     public void onCompleted() {

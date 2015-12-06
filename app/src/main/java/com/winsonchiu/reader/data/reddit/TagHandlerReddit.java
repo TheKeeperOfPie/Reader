@@ -11,7 +11,6 @@ import android.text.Spanned;
 import android.text.style.BulletSpan;
 import android.text.style.LeadingMarginSpan;
 import android.text.style.StrikethroughSpan;
-import android.util.Log;
 
 import org.xml.sax.XMLReader;
 

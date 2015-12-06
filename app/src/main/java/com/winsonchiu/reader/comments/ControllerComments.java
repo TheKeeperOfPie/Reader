@@ -35,9 +35,7 @@ import java.util.Set;
 import rx.Observable;
 import rx.Observer;
 import rx.Subscriber;
-import rx.android.schedulers.AndroidSchedulers;
 import rx.functions.Func1;
-import rx.schedulers.Schedulers;
 
 /**
  * Created by TheKeeperOfPie on 3/20/2015.
@@ -157,7 +155,6 @@ public class ControllerComments {
 
     public void loadLinkComments() {
         reddit.comments(link.getSubreddit(), link.getId(), null, sort.toString(), true, true, null, 10, 100)
-                .subscribeOn(Schedulers.computation())
                 .flatMap(new Func1<String, Observable<Link>>() {
                     @Override
                     public Observable<Link> call(String response) {
@@ -170,7 +167,6 @@ public class ControllerComments {
                         }
                     }
                 })
-                .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(new Subscriber<Link>() {
                     @Override
                     public void onStart() {
@@ -202,7 +198,6 @@ public class ControllerComments {
         setRefreshing(true);
 
         reddit.comments(link.getSubreddit(), link.getId(), commentId, sort.toString(), true, true, contextNumber,  10, 100)
-                .subscribeOn(Schedulers.computation())
                 .flatMap(new Func1<String, Observable<Link>>() {
                     @Override
                     public Observable<Link> call(String response) {
@@ -215,7 +210,6 @@ public class ControllerComments {
                         }
                     }
                 })
-                .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(new Observer<Link>() {
                     @Override
                     public void onCompleted() {
@@ -287,9 +281,6 @@ public class ControllerComments {
         }
 
         reddit.moreChildren(link.getName(), children.substring(0, children.length() - 1))
-                .subscribeOn(Schedulers.computation())
-                .unsubscribeOn(Schedulers.computation())
-                .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(new Observer<String>() {
                     @Override
                     public void onCompleted() {

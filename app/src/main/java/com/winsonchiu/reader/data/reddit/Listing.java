@@ -4,14 +4,11 @@
 
 package com.winsonchiu.reader.data.reddit;
 
-import android.util.Log;
-
 import com.fasterxml.jackson.databind.JsonNode;
 import com.winsonchiu.reader.utils.UtilsJson;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.List;
 

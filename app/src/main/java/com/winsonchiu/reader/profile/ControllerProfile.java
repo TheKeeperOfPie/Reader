@@ -6,7 +6,6 @@ package com.winsonchiu.reader.profile;
 
 import android.app.Activity;
 import android.text.TextUtils;
-import android.util.Log;
 import android.widget.Toast;
 
 import com.android.volley.Response;
@@ -38,9 +37,7 @@ import java.util.Set;
 
 import rx.Observable;
 import rx.Subscriber;
-import rx.android.schedulers.AndroidSchedulers;
 import rx.functions.Func1;
-import rx.schedulers.Schedulers;
 
 /**
  * Created by TheKeeperOfPie on 5/16/2015.
@@ -172,9 +169,7 @@ public class ControllerProfile implements ControllerLinksBase {
 
     public void reload() {
         reddit.user(user.getName(), page.getPage().toLowerCase(), sort.toString(), time.toString(), null, LIMIT)
-                .subscribeOn(Schedulers.computation())
                 .flatMap(Listing.FLAT_MAP)
-                .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(new Subscriber<Listing>() {
                     @Override
                     public void onStart() {
@@ -215,9 +210,7 @@ public class ControllerProfile implements ControllerLinksBase {
         }
 
         reddit.user(user.getName(), page.getPage().toLowerCase(), sort.toString(), time.toString(), data.getAfter(), 15)
-                .subscribeOn(Schedulers.computation())
                 .flatMap(Listing.FLAT_MAP)
-                .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(new Subscriber<Listing>() {
                     @Override
                     public void onStart() {
@@ -271,9 +264,7 @@ public class ControllerProfile implements ControllerLinksBase {
 //                }, 0);
 
         reddit.user(user.getName(), PAGE_SUBMITTED.toLowerCase(), Sort.TOP.toString(), Time.ALL.toString(), null, 10)
-                .subscribeOn(Schedulers.computation())
                 .flatMap(Listing.FLAT_MAP)
-                .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(new Subscriber<Listing>() {
                     @Override
                     public void onStart() {
@@ -311,9 +302,7 @@ public class ControllerProfile implements ControllerLinksBase {
                 });
 
         reddit.user(user.getName(), PAGE_COMMENTS.toLowerCase(), Sort.TOP.toString(), Time.ALL.toString(), null, 10)
-                .subscribeOn(Schedulers.computation())
                 .flatMap(Listing.FLAT_MAP)
-                .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(new Subscriber<Listing>() {
                     @Override
                     public void onStart() {
@@ -602,7 +591,6 @@ public class ControllerProfile implements ControllerLinksBase {
         setLoading(true);
 
         reddit.user(query, "about", null, null, null, null)
-                .subscribeOn(Schedulers.computation())
                 .flatMap(new Func1<String, Observable<User>>() {
                     @Override
                     public Observable<User> call(String response) {
@@ -614,7 +602,6 @@ public class ControllerProfile implements ControllerLinksBase {
                         }
                     }
                 })
-                .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(new Subscriber<User>() {
                     @Override
                     public void onStart() {

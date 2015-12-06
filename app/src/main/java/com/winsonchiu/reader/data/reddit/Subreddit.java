@@ -5,12 +5,8 @@
 package com.winsonchiu.reader.data.reddit;
 
 import android.support.annotation.Nullable;
-import android.text.Html;
-import android.util.Log;
 
-import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.JsonSerializable;
 import com.fasterxml.jackson.databind.SerializerProvider;

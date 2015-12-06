@@ -42,8 +42,6 @@ import android.widget.Toast;
 import com.winsonchiu.reader.utils.UtilsColor;
 
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 
 public class FragmentWeb extends FragmentBase implements Toolbar.OnMenuItemClickListener,

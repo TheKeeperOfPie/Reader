@@ -91,12 +91,12 @@ import com.winsonchiu.reader.data.reddit.Subreddit;
 import com.winsonchiu.reader.data.reddit.Thing;
 import com.winsonchiu.reader.data.reddit.User;
 import com.winsonchiu.reader.history.Historian;
-import com.winsonchiu.reader.utils.SimplePlayerStateChangeListener;
-import com.winsonchiu.reader.utils.UtilsAnimation;
 import com.winsonchiu.reader.utils.CustomColorFilter;
 import com.winsonchiu.reader.utils.DisallowListener;
 import com.winsonchiu.reader.utils.OnTouchListenerDisallow;
 import com.winsonchiu.reader.utils.RecyclerCallback;
+import com.winsonchiu.reader.utils.SimplePlayerStateChangeListener;
+import com.winsonchiu.reader.utils.UtilsAnimation;
 import com.winsonchiu.reader.views.WebViewFixed;
 
 import org.json.JSONException;

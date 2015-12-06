@@ -30,11 +30,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import rx.Observable;
 import rx.Subscriber;
-import rx.android.schedulers.AndroidSchedulers;
-import rx.functions.Func1;
-import rx.schedulers.Schedulers;
 
 /**
  * Created by TheKeeperOfPie on 5/17/2015.
@@ -138,9 +134,7 @@ public class ControllerInbox {
         Log.d(TAG, "Page: " + page.getPage());
 
         reddit.message(page.getPage(), null)
-                .subscribeOn(Schedulers.computation())
                 .flatMap(Listing.FLAT_MAP)
-                .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(new Subscriber<Listing>() {
                     @Override
                     public void onStart() {
@@ -332,9 +326,7 @@ public class ControllerInbox {
     public void loadMore() {
 
         reddit.message(page.getPage(), data.getAfter())
-                .subscribeOn(Schedulers.computation())
                 .flatMap(Listing.FLAT_MAP)
-                .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(new Subscriber<Listing>() {
                     @Override
                     public void onStart() {
