@@ -69,10 +69,6 @@ import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
-import com.android.volley.Request;
-import com.android.volley.Response;
-import com.android.volley.Response.Listener;
-import com.android.volley.VolleyError;
 import com.google.android.youtube.player.YouTubeInitializationResult;
 import com.google.android.youtube.player.YouTubePlayer;
 import com.google.android.youtube.player.YouTubePlayerView;
@@ -93,6 +89,7 @@ import com.winsonchiu.reader.data.reddit.User;
 import com.winsonchiu.reader.history.Historian;
 import com.winsonchiu.reader.utils.CustomColorFilter;
 import com.winsonchiu.reader.utils.DisallowListener;
+import com.winsonchiu.reader.utils.FinalizingSubscriber;
 import com.winsonchiu.reader.utils.OnTouchListenerDisallow;
 import com.winsonchiu.reader.utils.RecyclerCallback;
 import com.winsonchiu.reader.utils.SimplePlayerStateChangeListener;
@@ -108,6 +105,10 @@ import java.util.Date;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import rx.Observable;
+import rx.Subscription;
+import rx.functions.Func1;
 
 /**
  * Created by TheKeeperOfPie on 3/14/2015.
@@ -353,10 +354,10 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                 buttomSubmitSelf.setText(subreddit.getSubmitTextLabel());
             }
 
-            if (Reddit.POST_TYPE_LINK.equalsIgnoreCase(subreddit.getSubmissionType())) {
+            if (Reddit.PostType.fromString(subreddit.getSubmissionType()) == Reddit.PostType.LINK) {
                 buttomSubmitSelf.setVisibility(View.GONE);
             }
-            else if (Reddit.POST_TYPE_SELF.equalsIgnoreCase(subreddit.getSubmissionType())) {
+            else {
                 buttonSubmitLink.setVisibility(View.GONE);
             }
 
@@ -369,10 +370,10 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                     eventListener.showSidebar();
                     break;
                 case R.id.button_submit_link:
-                    eventListener.onClickSubmit(Reddit.POST_TYPE_LINK);
+                    eventListener.onClickSubmit(Reddit.PostType.LINK);
                     break;
                 case R.id.button_submit_self:
-                    eventListener.onClickSubmit(Reddit.POST_TYPE_SELF);
+                    eventListener.onClickSubmit(Reddit.PostType.SELF);
                     break;
                 default:
                     UtilsAnimation.animateExpand(layoutContainerExpand, 1f, null);
@@ -381,7 +382,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         }
 
         public interface EventListener {
-            void onClickSubmit(String postType);
+            void onClickSubmit(Reddit.PostType postType);
             void showSidebar();
         }
     }
@@ -415,7 +416,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         public YouTubePlayerView viewYouTube;
         public View viewOverlay;
 
-        public Request request;
+        public Subscription subscription;
         public MediaController mediaController;
         public AdapterAlbum adapterAlbum;
         public YouTubePlayer youTubePlayer;
@@ -1333,28 +1334,42 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         private boolean loadGfycat() {
             String gfycatId = Reddit.parseUrlId(link.getUrl(), Reddit.GFYCAT_PREFIX, ".");
             progressImage.setVisibility(View.VISIBLE);
-            request = eventListener.getReddit().loadGet(Reddit.GFYCAT_URL + gfycatId,
-                    new Listener<String>() {
+
+            subscription = eventListener.getReddit()
+                    .loadGfycat(gfycatId)
+                    .flatMap(new Func1<String, Observable<JSONObject>>() {
                         @Override
-                        public void onResponse(String response) {
+                        public Observable<JSONObject> call(String response) {
                             try {
                                 JSONObject jsonObject = new JSONObject(
                                         response).getJSONObject(Reddit.GFYCAT_ITEM);
+
+                                return Observable.just(jsonObject);
+                            }
+                            catch (JSONException e) {
+                                return Observable.error(e);
+                            }
+                        }
+                    })
+                    .subscribe(new FinalizingSubscriber<JSONObject>() {
+                        @Override
+                        public void error(Throwable e) {
+                            progressImage.setVisibility(View.GONE);
+                        }
+
+                        @Override
+                        public void next(JSONObject jsonObject) {
+                            try {
                                 loadVideo(jsonObject.getString(Reddit.GFYCAT_MP4),
                                         (float) jsonObject.getInt(
                                                 "height") / jsonObject.getInt(
                                                 "width"));
                             }
                             catch (JSONException e) {
-                                e.printStackTrace();
+                                error(e);
                             }
                         }
-                    }, new Response.ErrorListener() {
-                        @Override
-                        public void onErrorResponse(VolleyError error) {
-                            progressImage.setVisibility(View.GONE);
-                        }
-                    }, 0);
+                    });
             return true;
         }
 
@@ -1393,92 +1408,110 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         }
 
         private void loadGallery(String id, final Link link) {
-            progressImage.setVisibility(View.VISIBLE);
-            request = eventListener.getReddit()
-                    .loadImgurGallery(id,
-                            new Listener<String>() {
-                                @Override
-                                public void onResponse(String response) {
-                                    try {
-                                        setAlbum(link, Album.fromJson(
-                                                new JSONObject(response).getJSONObject("data")));
-                                    }
-                                    catch (JSONException e) {
-                                        e.printStackTrace();
-                                    }
-                                    finally {
-                                        progressImage.setVisibility(View.GONE);
-                                    }
-                                }
-                            }, new Response.ErrorListener() {
-                                @Override
-                                public void onErrorResponse(VolleyError error) {
-                                    progressImage.setVisibility(View.GONE);
-                                    Log.d(TAG, "loadGallery error: " + error);
-                                }
-                            }, 0);
+            subscription = eventListener.getReddit()
+                    .loadImgurGallery(id)
+                    .flatMap(new Func1<String, Observable<Album>>() {
+                        @Override
+                        public Observable<Album> call(String response) {
+                            try {
+                                return Observable.just(Album.fromJson(new JSONObject(response)
+                                        .getJSONObject("data")));
+                            }
+                            catch (JSONException e) {
+                                return Observable.error(e);
+                            }
+                        }
+                    })
+                    .subscribe(new FinalizingSubscriber<Album>() {
+                        @Override
+                        public void start() {
+                            progressImage.setVisibility(View.VISIBLE);
+                        }
+
+                        @Override
+                        public void next(Album next) {
+                            setAlbum(link, next);
+                        }
+
+                        @Override
+                        public void finish() {
+                            progressImage.setVisibility(View.GONE);
+                        }
+                    });
         }
 
         private void loadAlbum(String id, final Link link) {
-            progressImage.setVisibility(View.VISIBLE);
-            request = eventListener.getReddit()
-                    .loadImgurAlbum(id,
-                            new Listener<String>() {
-                                @Override
-                                public void onResponse(String response) {
-                                    try {
-                                        Album album = Album.fromJson(
-                                                new JSONObject(response).getJSONObject("data"));
-                                        setAlbum(link, album);
-                                    }
-                                    catch (JSONException e) {
-                                        e.printStackTrace();
-                                    }
-                                    finally {
-                                        progressImage.setVisibility(View.GONE);
-                                    }
-                                }
-                            }, new Response.ErrorListener() {
-                                @Override
-                                public void onErrorResponse(VolleyError error) {
-                                    progressImage.setVisibility(View.GONE);
-                                }
-                            }, 0);
+            subscription = eventListener.getReddit().loadImgurAlbum(id)
+                    .flatMap(new Func1<String, Observable<Album>>() {
+                        @Override
+                        public Observable<Album> call(String response) {
+                            try {
+                                return Observable.just(Album.fromJson(new JSONObject(response)
+                                        .getJSONObject("data")));
+                            }
+                            catch (JSONException e) {
+                                return Observable.error(e);
+                            }
+                        }
+                    })
+                    .subscribe(new FinalizingSubscriber<Album>() {
+                        @Override
+                        public void start() {
+                            progressImage.setVisibility(View.VISIBLE);
+                        }
+
+                        @Override
+                        public void next(Album next) {
+                            setAlbum(link, next);
+                        }
+
+                        @Override
+                        public void finish() {
+                            progressImage.setVisibility(View.GONE);
+                        }
+                    });
         }
 
         private void loadGifv(String id) {
-            Log.d(TAG, "loadGifv: " + id);
-            request = eventListener.getReddit()
-                    .loadImgurImage(id,
-                            new Listener<String>() {
-                                @Override
-                                public void onResponse(String response) {
-                                    try {
-                                        Image image = Image.fromJson(
-                                                new JSONObject(
-                                                        response).getJSONObject(
-                                                        "data"));
+            eventListener.getReddit()
+                    .loadImgurImage(id)
+                    .flatMap(new Func1<String, Observable<Image>>() {
+                        @Override
+                        public Observable<Image> call(String response) {
+                            try {
+                                return Observable.just(Image.fromJson(
+                                        new JSONObject(
+                                                response).getJSONObject(
+                                                "data")));
+                            }
+                            catch (JSONException e) {
+                                return Observable.error(e);
+                            }
+                        }
+                    })
+                    .subscribe(new FinalizingSubscriber<Image>() {
+                        @Override
+                        public void start() {
+                            progressImage.setVisibility(View.VISIBLE);
+                        }
 
-                                        if (!TextUtils.isEmpty(image.getMp4())) {
-                                            loadVideo(image.getMp4(),
-                                                    (float) image.getHeight() / image.getWidth());
-                                        }
-                                        else if (!TextUtils.isEmpty(image.getWebm())) {
-                                            loadVideo(image.getWebm(),
-                                                    (float) image.getHeight() / image.getWidth());
-                                        }
-                                    }
-                                    catch (JSONException e) {
-                                        e.printStackTrace();
-                                    }
-                                }
-                            }, new Response.ErrorListener() {
-                                @Override
-                                public void onErrorResponse(VolleyError error) {
-                                    Log.d(TAG, "error on loadGifv: " + error);
-                                    progressImage.setVisibility(View.GONE);
-                                }
-                            }, 0);
+                        @Override
+                        public void next(Image image) {
+                            if (!TextUtils.isEmpty(image.getMp4())) {
+                                loadVideo(image.getMp4(),
+                                        (float) image.getHeight() / image.getWidth());
+                            }
+                            else if (!TextUtils.isEmpty(image.getWebm())) {
+                                loadVideo(image.getWebm(),
+                                        (float) image.getHeight() / image.getWidth());
+                            }
+                        }
+
+                        @Override
+                        public void finish() {
+                            progressImage.setVisibility(View.GONE);
+                        }
+                    });
         }
 
         private void loadVideo(final String url, float heightRatio) {
@@ -1605,11 +1638,11 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         }
 
         public void onRecycle() {
-
             destroyWebViews();
-
-            if (request != null) {
-                request.cancel();
+            
+            if (subscription != null && !subscription.isUnsubscribed()) {
+                subscription.unsubscribe();
+                subscription = null;
             }
 
             if (youTubePlayer != null) {

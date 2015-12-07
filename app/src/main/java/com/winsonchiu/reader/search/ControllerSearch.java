@@ -12,9 +12,6 @@ import android.text.TextUtils;
 import android.util.Log;
 import android.widget.Toast;
 
-import com.android.volley.Request;
-import com.android.volley.Response;
-import com.android.volley.VolleyError;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.winsonchiu.reader.AppSettings;
@@ -31,6 +28,7 @@ import com.winsonchiu.reader.data.reddit.Time;
 import com.winsonchiu.reader.links.AdapterLink;
 import com.winsonchiu.reader.links.ControllerLinks;
 import com.winsonchiu.reader.utils.ControllerListener;
+import com.winsonchiu.reader.utils.FinalizingSubscriber;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -48,9 +46,10 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.Set;
 
+import rx.Observable;
 import rx.Observer;
-import rx.Subscriber;
 import rx.Subscription;
+import rx.functions.Func1;
 
 /**
  * Created by TheKeeperOfPie on 6/3/2015.
@@ -66,21 +65,21 @@ public class ControllerSearch {
 
     private ControllerLinks controllerLinks;
     private ControllerUser controllerUser;
-    private Set<Listener> listeners;
+    private Set<Listener> listeners = new HashSet<>();
     private Activity activity;
     private SharedPreferences preferences;
     private Reddit reddit;
     private AccountManager accountManager;
-    private Listing subredditsLoaded;
-    private Listing subredditsSubscribed;
-    private Listing subreddits;
-    private Listing subredditsRecommended;
-    private Listing links;
-    private Listing linksSubreddit;
-    private String query;
-    private Sort sort;
-    private Sort sortSubreddits;
-    private Time time;
+    private Listing subredditsLoaded = new Listing();
+    private Listing subredditsSubscribed = new Listing();
+    private Listing subreddits = new Listing();
+    private Listing subredditsRecommended = new Listing();
+    private Listing links = new Listing();
+    private Listing linksSubreddit = new Listing();
+    private String query = "";
+    private Sort sort = Sort.RELEVANCE;
+    private Sort sortSubreddits = Sort.RELEVANCE;
+    private Time time = Time.ALL;
     private volatile int currentPage;
     private Subscription subscriptionSubreddits;
     private Subscription subscriptionLinks;
@@ -88,22 +87,11 @@ public class ControllerSearch {
     private boolean isLoadingLinks;
     private boolean isLoadingLinksSubreddit;
 
-    private List<Request> requestsSubredditsRecommended;
+    private List<Subscription> subscriptionsSubredditsRecommended = new ArrayList<>();
     private String currentSubreddit;
 
     public ControllerSearch(Activity activity) {
         setActivity(activity);
-        sort = Sort.RELEVANCE;
-        time = Time.ALL;
-        listeners = new HashSet<>();
-        query = "";
-        subredditsLoaded = new Listing();
-        subredditsSubscribed = new Listing();
-        subreddits = new Listing();
-        subredditsRecommended = new Listing();
-        links = new Listing();
-        linksSubreddit = new Listing();
-        requestsSubredditsRecommended = new ArrayList<>();
     }
 
     public void setActivity(Activity activity) {
@@ -482,10 +470,11 @@ public class ControllerSearch {
 
     public void reloadSubredditsRecommended() {
 
-        for (Request request : requestsSubredditsRecommended) {
-            request.cancel();
+        for (Subscription subscription : subscriptionsSubredditsRecommended) {
+            subscription.unsubscribe();
         }
-        requestsSubredditsRecommended.clear();
+
+        subscriptionsSubredditsRecommended.clear();
 
         subredditsRecommended.getChildren().clear();
         for (Listener listener : listeners) {
@@ -501,79 +490,79 @@ public class ControllerSearch {
 
         currentSubreddit = controllerLinks.getSubreddit().getDisplayName();
 
-        reddit.loadGet(Reddit.OAUTH_URL + "/api/recommend/sr/" + currentSubreddit + "?omit=" + builderOmit, new Response.Listener<String>() {
-            @Override
-            public void onResponse(String response) {
+        reddit.recommend(currentSubreddit, builderOmit.toString())
+                .flatMap(new Func1<String, Observable<String>>() {
+                    @Override
+                    public Observable<String> call(String response) {
+                        try {
+                            final JSONArray jsonArray = new JSONArray(response);
+                            List<String> names = new ArrayList<>(jsonArray.length());
+                            for (int index = 0; index < jsonArray.length(); index++) {
+                                /*
+                                    No idea why the API returns a {"sr_name": "subreddit"} rather than an
+                                    array of Strings, but we'll convert it.
+                                 */
+                                JSONObject dataSubreddit = jsonArray.getJSONObject(index);
+                                names.add(dataSubreddit.optString("sr_name"));
+                            }
 
-                try {
-                    final JSONArray jsonArray = new JSONArray(response);
-
-                    for (int index = 0; index < jsonArray.length(); index++) {
-
-                        /*
-                            No idea why the API returns a {"sr_name": "subreddit"} rather than an
-                            array of Strings, but we'll convert it.
-                         */
-                        JSONObject dataSubreddit = jsonArray.getJSONObject(index);
-                        String name = dataSubreddit.optString("sr_name");
-
-                        requestsSubredditsRecommended.add(reddit.loadGet(
-                                Reddit.OAUTH_URL + "/r/" + name + "/about",
-                                new Response.Listener<String>() {
+                            return Observable.from(names);
+                        }
+                        catch (JSONException e) {
+                            return Observable.error(e);
+                        }
+                    }
+                })
+                .flatMap(new Func1<String, Observable<Subreddit>>() {
+                    @Override
+                    public Observable<Subreddit> call(String next) {
+                        return reddit.about("/r/" + next + "/")
+                                .flatMap(new Func1<String, Observable<Subreddit>>() {
                                     @Override
-                                    public void onResponse(String response) {
+                                    public Observable<Subreddit> call(String response) {
                                         try {
-                                            Subreddit subreddit = Subreddit
+                                            return Observable.just(Subreddit
                                                     .fromJson(Reddit.getObjectMapper().readValue(
-                                    response, JsonNode.class));
-                                            subredditsRecommended.getChildren().add(subreddit);
-
-                                            if (subredditsRecommended.getChildren()
-                                                    .size() == jsonArray.length()) {
-                                                Collections
-                                                        .sort(subredditsRecommended.getChildren(),
-                                                                new Comparator<Thing>() {
-                                                                    @Override
-                                                                    public int compare(Thing lhs,
-                                                                            Thing rhs) {
-                                                                        return ((Subreddit) lhs)
-                                                                                .getDisplayName()
-                                                                                .compareToIgnoreCase(
-                                                                                        ((Subreddit) rhs)
-                                                                                                .getDisplayName());
-                                                                    }
-                                                                });
-
-                                                for (Listener listener : listeners) {
-                                                    listener.getAdapterSearchSubredditsRecommended()
-                                                            .notifyDataSetChanged();
-                                                }
-
-                                            }
+                                                            response, JsonNode.class)));
                                         }
                                         catch (IOException e) {
-                                            e.printStackTrace();
+                                            return Observable.error(e);
                                         }
                                     }
-                                }, new Response.ErrorListener() {
-                                    @Override
-                                    public void onErrorResponse(VolleyError error) {
-
-                                    }
-                                }, 0));
+                                });
                     }
-                }
-                catch (JSONException e) {
-                    e.printStackTrace();
-                }
+                })
+                .subscribe(new FinalizingSubscriber<Subreddit>() {
+                    @Override
+                    public void start() {
+                        subredditsRecommended.getChildren().clear();
+                    }
 
-            }
-        }, new Response.ErrorListener() {
-            @Override
-            public void onErrorResponse(VolleyError error) {
+                    @Override
+                    public void next(Subreddit next) {
+                        subredditsRecommended.getChildren().add(next);
+                    }
 
-            }
-        }, 0);
+                    @Override
+                    public void finish() {
+                        Collections.sort(subredditsRecommended.getChildren(),
+                                new Comparator<Thing>() {
+                                    @Override
+                                    public int compare(Thing lhs,
+                                                       Thing rhs) {
+                                        return ((Subreddit) lhs)
+                                                .getDisplayName()
+                                                .compareToIgnoreCase(
+                                                        ((Subreddit) rhs)
+                                                                .getDisplayName());
+                                    }
+                                });
+                        for (Listener listener : listeners) {
+                            listener.getAdapterSearchSubredditsRecommended()
+                                    .notifyDataSetChanged();
+                        }
+                    }
+                });
     }
 
     public void reloadLinks() {
@@ -590,31 +579,30 @@ public class ControllerSearch {
 
             subscriptionLinks = reddit.search("", URLEncoder.encode(query, Reddit.UTF_8), sortString, time.toString(), null, false)
                     .flatMap(Listing.FLAT_MAP)
-                    .subscribe(new Subscriber<Listing>() {
+                    .subscribe(new FinalizingSubscriber<Listing>() {
                         @Override
-                        public void onStart() {
+                        public void start() {
                             setLoadingLinks(true);
                         }
 
                         @Override
-                        public void onCompleted() {
-                            setLoadingLinks(false);
-                        }
-
-                        @Override
-                        public void onError(Throwable e) {
-                            e.printStackTrace();
+                        public void error(Throwable e) {
                             Toast.makeText(activity, activity.getString(R.string.error_loading_links), Toast.LENGTH_SHORT)
                                     .show();
                         }
 
                         @Override
-                        public void onNext(Listing listing) {
+                        public void next(Listing listing) {
                             links = listing;
                             for (Listener listener : listeners) {
                                 listener.getAdapterLinks().notifyDataSetChanged();
                                 listener.scrollToLinks(0);
                             }
+                            setLoadingLinks(false);
+                        }
+
+                        @Override
+                        public void finish() {
                             setLoadingLinks(false);
                         }
                     });
@@ -640,31 +628,30 @@ public class ControllerSearch {
         try {
             subscriptionSubreddits = reddit.search(pathSubreddit, URLEncoder.encode(query, Reddit.UTF_8), sort.toString(), time.toString(), null, true)
                     .flatMap(Listing.FLAT_MAP)
-                    .subscribe(new Subscriber<Listing>() {
+                    .subscribe(new FinalizingSubscriber<Listing>() {
                         @Override
-                        public void onStart() {
+                        public void start() {
                             setLoadingLinksSubreddit(true);
                         }
 
                         @Override
-                        public void onCompleted() {
-                            setLoadingLinksSubreddit(false);
-                        }
-
-                        @Override
-                        public void onError(Throwable e) {
-                            e.printStackTrace();
+                        public void error(Throwable e) {
                             Toast.makeText(activity, activity.getString(R.string.error_loading_links), Toast.LENGTH_SHORT)
                                     .show();
                         }
 
                         @Override
-                        public void onNext(Listing listing) {
+                        public void next(Listing listing) {
                             linksSubreddit = listing;
                             for (Listener listener : listeners) {
                                 listener.getAdapterLinksSubreddit().notifyDataSetChanged();
                                 listener.scrollToLinksSubreddit(0);
                             }
+                            setLoadingLinksSubreddit(false);
+                        }
+
+                        @Override
+                        public void finish() {
                             setLoadingLinksSubreddit(false);
                         }
                     });
@@ -725,26 +712,20 @@ public class ControllerSearch {
 
             subscriptionLinks = reddit.search("", URLEncoder.encode(query, Reddit.UTF_8), sortString, time.toString(), links.getAfter(), false)
                     .flatMap(Listing.FLAT_MAP)
-                    .subscribe(new Subscriber<Listing>() {
+                    .subscribe(new FinalizingSubscriber<Listing>() {
                         @Override
-                        public void onStart() {
+                        public void start() {
                             setLoadingLinks(true);
                         }
 
                         @Override
-                        public void onCompleted() {
-                            setLoadingLinks(false);
-                        }
-
-                        @Override
-                        public void onError(Throwable e) {
-                            e.printStackTrace();
+                        public void error(Throwable e) {
                             Toast.makeText(activity, activity.getString(R.string.error_loading_links), Toast.LENGTH_SHORT)
                                     .show();
                         }
 
                         @Override
-                        public void onNext(Listing listing) {
+                        public void next(Listing listing) {
                             int positionStart = links.getChildren()
                                     .size() + 1;
                             int startSize = links.getChildren().size();
@@ -753,6 +734,11 @@ public class ControllerSearch {
                             for (Listener listener : listeners) {
                                 listener.getAdapterLinks().notifyItemRangeInserted(positionStart, links.getChildren().size() - startSize);
                             }
+                        }
+
+                        @Override
+                        public void finish() {
+                            setLoadingLinks(false);
                         }
                     });
         }
@@ -799,26 +785,20 @@ public class ControllerSearch {
         try {
             subscriptionLinksSubreddit = reddit.search(pathSubreddit, URLEncoder.encode(query, Reddit.UTF_8), sort.toString(), time.toString(), linksSubreddit.getAfter(), true)
                     .flatMap(Listing.FLAT_MAP)
-                    .subscribe(new Subscriber<Listing>() {
+                    .subscribe(new FinalizingSubscriber<Listing>() {
                         @Override
-                        public void onStart() {
+                        public void start() {
                             setLoadingLinksSubreddit(true);
                         }
 
                         @Override
-                        public void onCompleted() {
-                            setLoadingLinksSubreddit(false);
-                        }
-
-                        @Override
-                        public void onError(Throwable e) {
-                            e.printStackTrace();
+                        public void error(Throwable e) {
                             Toast.makeText(activity, activity.getString(R.string.error_loading_links), Toast.LENGTH_SHORT)
                                     .show();
                         }
 
                         @Override
-                        public void onNext(Listing listing) {
+                        public void next(Listing listing) {
                             if (listing.getChildren().isEmpty() || listing.getChildren().get(0) instanceof Subreddit) {
                                 return;
                             }
@@ -830,6 +810,11 @@ public class ControllerSearch {
                             for (Listener listener : listeners) {
                                 listener.getAdapterLinksSubreddit().notifyItemRangeInserted(positionStart, linksSubreddit.getChildren().size() - startSize);
                             }
+                        }
+
+                        @Override
+                        public void finish() {
+                            setLoadingLinksSubreddit(false);
                         }
                     });
         }

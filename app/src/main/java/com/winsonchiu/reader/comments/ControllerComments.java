@@ -6,12 +6,8 @@ package com.winsonchiu.reader.comments;
 
 import android.app.Activity;
 import android.text.TextUtils;
-import android.util.Log;
 import android.widget.Toast;
 
-import com.android.volley.Response;
-import com.android.volley.Response.ErrorListener;
-import com.android.volley.VolleyError;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.winsonchiu.reader.R;
 import com.winsonchiu.reader.data.reddit.Comment;
@@ -22,19 +18,17 @@ import com.winsonchiu.reader.data.reddit.Replyable;
 import com.winsonchiu.reader.data.reddit.Sort;
 import com.winsonchiu.reader.data.reddit.Thing;
 import com.winsonchiu.reader.utils.ControllerListener;
+import com.winsonchiu.reader.utils.FinalizingSubscriber;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import rx.Observable;
 import rx.Observer;
-import rx.Subscriber;
 import rx.functions.Func1;
 
 /**
@@ -167,36 +161,27 @@ public class ControllerComments {
                         }
                     }
                 })
-                .subscribe(new Subscriber<Link>() {
+                .subscribe(new FinalizingSubscriber<Link>() {
+
                     @Override
-                    public void onStart() {
+                    public void start() {
                         setRefreshing(true);
                     }
 
                     @Override
-                    public void onCompleted() {
-                        setRefreshing(false);
-                    }
-
-                    @Override
-                    public void onError(Throwable e) {
-                        e.printStackTrace();
-                    }
-
-                    @Override
-                    public void onNext(Link link) {
+                    public void next(Link link) {
                         setLinkWithComments(link);
                         setIsCommentThread(false);
+                    }
+
+                    @Override
+                    public void finish() {
+                        setRefreshing(false);
                     }
                 });
     }
 
     public void loadCommentThread(String commentId) {
-
-        Log.d(TAG, "loadCommentThread: " + commentId);
-
-        setRefreshing(true);
-
         reddit.comments(link.getSubreddit(), link.getId(), commentId, sort.toString(), true, true, contextNumber,  10, 100)
                 .flatMap(new Func1<String, Observable<Link>>() {
                     @Override
@@ -210,21 +195,21 @@ public class ControllerComments {
                         }
                     }
                 })
-                .subscribe(new Observer<Link>() {
+                .subscribe(new FinalizingSubscriber<Link>() {
                     @Override
-                    public void onCompleted() {
-                        setRefreshing(false);
+                    public void start() {
+                        setRefreshing(true);
                     }
 
                     @Override
-                    public void onError(Throwable e) {
-                        e.printStackTrace();
-                    }
-
-                    @Override
-                    public void onNext(Link link) {
+                    public void next(Link link) {
                         setLinkWithComments(link);
                         setIsCommentThread(true);
+                    }
+
+                    @Override
+                    public void finish() {
+                        setRefreshing(false);
                     }
                 });
     }
@@ -460,12 +445,13 @@ public class ControllerComments {
             }
         }
 
-        reddit.delete(comment, null, new ErrorListener() {
-            @Override
-            public void onErrorResponse(VolleyError error) {
-                Toast.makeText(activity, R.string.error_deleting_comment, Toast.LENGTH_LONG).show();
-            }
-        });
+        reddit.delete(comment)
+                .subscribe(new FinalizingSubscriber<String>() {
+                    @Override
+                    public void error(Throwable e) {
+                        Toast.makeText(activity, R.string.error_deleting_comment, Toast.LENGTH_LONG).show();
+                    }
+                });
     }
 
 
@@ -573,15 +559,39 @@ public class ControllerComments {
 
     public void voteComment(final AdapterCommentList.ViewHolderComment viewHolder,
             final Comment comment, final int vote) {
+        // TODO: Combine these instances into utility
+        final int position = viewHolder.getAdapterPosition();
 
-        reddit.voteComment(viewHolder, comment, vote, new Reddit.VoteResponseListener() {
-            @Override
-            public void onVoteFailed() {
-                Toast.makeText(activity, activity.getString(R.string.error_voting),
-                        Toast.LENGTH_SHORT)
-                        .show();
-            }
-        });
+        final int oldVote = comment.getLikes();
+        int newVote = 0;
+
+        if (comment.getLikes() != vote) {
+            newVote = vote;
+        }
+
+        comment.setScore(comment.getScore() + newVote - comment.getLikes());
+        comment.setLikes(newVote);
+
+        if (position == viewHolder.getAdapterPosition()) {
+            viewHolder.setVoteColors();
+        }
+
+        final int finalNewVote = newVote;
+
+        reddit.voteComment(comment, newVote)
+                .subscribe(new FinalizingSubscriber<String>() {
+                    @Override
+                    public void error(Throwable e) {
+                        comment.setScore(comment.getScore() - finalNewVote);
+                        comment.setLikes(oldVote);
+                        if (position == viewHolder.getAdapterPosition()) {
+                            viewHolder.setVoteColors();
+                        }
+                        Toast.makeText(activity, activity.getString(R.string.error_voting),
+                                Toast.LENGTH_SHORT)
+                                .show();
+                    }
+                });
     }
 
     public Reddit getReddit() {
@@ -589,7 +599,6 @@ public class ControllerComments {
     }
 
     public int getItemCount() {
-
         if (TextUtils.isEmpty(link.getId())) {
             return 0;
         }
@@ -664,50 +673,59 @@ public class ControllerComments {
     }
 
     public void editComment(String name, final int level, String text) {
-        Map<String, String> params = new HashMap<>();
-        params.put("api_type", "json");
-        params.put("text", text);
-        params.put("thing_id", name);
+        reddit.editUserText(name, text)
+                .flatMap(new Func1<String, Observable<Comment>>() {
+                    @Override
+                    public Observable<Comment> call(String response) {
+                        try {
+                            Comment comment = Comment.fromJson(Reddit.getObjectMapper()
+                                    .readValue(response, JsonNode.class)
+                                    .get("json")
+                                    .get("data")
+                                    .get("things")
+                                    .get(0), level);
 
-        reddit.loadPost(Reddit.OAUTH_URL + "/api/editusertext", new Response.Listener<String>() {
-            @Override
-            public void onResponse(String response) {
-                try {
-                    Log.d(TAG, "response: " + response);
-                    Comment newComment = Comment.fromJson(
-                            Reddit.getObjectMapper().readValue(response, JsonNode.class).get("json")
-                                    .get("data").get("things").get(0), level);
-
-                    int commentIndex = link.getComments().getChildren().indexOf(newComment);
-
-                    if (commentIndex > -1) {
-                        Comment comment = (Comment) link.getComments().getChildren().get(commentIndex);
-                        comment.setBodyHtml(newComment.getBodyHtml());
-                        comment.setEdited(newComment.getEdited());
-                    }
-
-                    commentIndex = listingComments.getChildren()
-                            .indexOf(newComment);
-
-                    if (commentIndex > -1) {
-                        Comment comment = (Comment) listingComments.getChildren().get(commentIndex);
-                        comment.setBodyHtml(newComment.getBodyHtml());
-                        comment.setEdited(newComment.getEdited());
-                        for (Listener listener : listeners) {
-                            listener.getAdapter().notifyItemChanged(commentIndex + 1);
+                            return Observable.just(comment);
+                        }
+                        catch (IOException e) {
+                            return Observable.error(e);
                         }
                     }
+                })
+                .subscribe(new Observer<Comment>() {
+                    @Override
+                    public void onCompleted() {
 
-                }
-                catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        }, new Response.ErrorListener() {
-            @Override
-            public void onErrorResponse(VolleyError error) {
-            }
-        }, params, 0);
+                    }
+
+                    @Override
+                    public void onError(Throwable e) {
+
+                    }
+
+                    @Override
+                    public void onNext(Comment newComment) {
+                        int commentIndex = link.getComments().getChildren().indexOf(newComment);
+
+                        if (commentIndex > -1) {
+                            Comment comment = (Comment) link.getComments().getChildren().get(commentIndex);
+                            comment.setBodyHtml(newComment.getBodyHtml());
+                            comment.setEdited(newComment.getEdited());
+                        }
+
+                        commentIndex = listingComments.getChildren()
+                                .indexOf(newComment);
+
+                        if (commentIndex > -1) {
+                            Comment comment = (Comment) listingComments.getChildren().get(commentIndex);
+                            comment.setBodyHtml(newComment.getBodyHtml());
+                            comment.setEdited(newComment.getEdited());
+                            for (Listener listener : listeners) {
+                                listener.getAdapter().notifyItemChanged(commentIndex + 1);
+                            }
+                        }
+                    }
+                });
     }
 
     public int getPreviousCommentPosition(int commentIndex) {

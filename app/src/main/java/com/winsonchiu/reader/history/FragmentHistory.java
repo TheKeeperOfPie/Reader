@@ -48,6 +48,7 @@ import com.winsonchiu.reader.FragmentBase;
 import com.winsonchiu.reader.FragmentListenerBase;
 import com.winsonchiu.reader.R;
 import com.winsonchiu.reader.data.reddit.Link;
+import com.winsonchiu.reader.data.reddit.Reddit;
 import com.winsonchiu.reader.data.reddit.Thing;
 import com.winsonchiu.reader.links.AdapterLink;
 import com.winsonchiu.reader.links.AdapterLinkGrid;
@@ -258,7 +259,7 @@ public class FragmentHistory extends FragmentBase implements Toolbar.OnMenuItemC
 
         AdapterLink.ViewHolderHeader.EventListener eventListenerHeader = new AdapterLink.ViewHolderHeader.EventListener() {
             @Override
-            public void onClickSubmit(String postType) {
+            public void onClickSubmit(Reddit.PostType postType) {
 
             }
 

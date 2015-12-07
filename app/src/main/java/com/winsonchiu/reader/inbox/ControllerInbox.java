@@ -8,8 +8,6 @@ import android.app.Activity;
 import android.util.Log;
 import android.widget.Toast;
 
-import com.android.volley.Response;
-import com.android.volley.VolleyError;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.winsonchiu.reader.R;
 import com.winsonchiu.reader.comments.AdapterCommentList;
@@ -23,14 +21,15 @@ import com.winsonchiu.reader.data.reddit.Replyable;
 import com.winsonchiu.reader.data.reddit.Subreddit;
 import com.winsonchiu.reader.data.reddit.Thing;
 import com.winsonchiu.reader.utils.ControllerListener;
+import com.winsonchiu.reader.utils.FinalizingSubscriber;
 
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 
-import rx.Subscriber;
+import rx.Observable;
+import rx.Observer;
+import rx.functions.Func1;
 
 /**
  * Created by TheKeeperOfPie on 5/17/2015.
@@ -135,29 +134,24 @@ public class ControllerInbox {
 
         reddit.message(page.getPage(), null)
                 .flatMap(Listing.FLAT_MAP)
-                .subscribe(new Subscriber<Listing>() {
+                .subscribe(new FinalizingSubscriber<Listing>() {
                     @Override
-                    public void onStart() {
+                    public void start() {
                         setLoading(true);
                     }
 
                     @Override
-                    public void onCompleted() {
-                        setLoading(false);
-                    }
-
-                    @Override
-                    public void onError(Throwable e) {
-
-                    }
-
-                    @Override
-                    public void onNext(Listing listing) {
+                    public void next(Listing listing) {
                         setData(listing);
                         for (Listener listener : listeners) {
                             listener.setPage(page);
                             listener.getAdapter().notifyDataSetChanged();
                         }
+                    }
+
+                    @Override
+                    public void finish() {
+                        setLoading(false);
                     }
                 });
     }
@@ -172,40 +166,51 @@ public class ControllerInbox {
 
     public void editComment(String name, final int level, String text) {
 
-        Map<String, String> params = new HashMap<>();
-        params.put("api_type", "json");
-        params.put("text", text);
-        params.put("thing_id", name);
+        reddit.editUserText(name, text)
+                .flatMap(new Func1<String, Observable<Comment>>() {
+                    @Override
+                    public Observable<Comment> call(String response) {
+                        try {
+                            Comment comment = Comment.fromJson(Reddit.getObjectMapper()
+                                    .readValue(response, JsonNode.class)
+                                    .get("json")
+                                    .get("data")
+                                    .get("things")
+                                    .get(0), level);
 
-        reddit.loadPost(Reddit.OAUTH_URL + "/api/editusertext", new Response.Listener<String>() {
-            @Override
-            public void onResponse(String response) {
-                try {
-                    Comment newComment = Comment.fromJson(Reddit.getObjectMapper().readValue(
-                            response, JsonNode.class).get("json").get("data").get("things").get(0), level);
-
-                    int commentIndex = data.getChildren()
-                            .indexOf(newComment);
-
-                    if (commentIndex > -1) {
-                        Comment comment = (Comment) data.getChildren().get(commentIndex);
-                        comment.setBodyHtml(newComment.getBodyHtml());
-                        comment.setEdited(newComment.getEdited());
-                        for (Listener listener : listeners) {
-                            listener.getAdapter().notifyItemChanged(commentIndex);
+                            return Observable.just(comment);
+                        }
+                        catch (IOException e) {
+                            return Observable.error(e);
                         }
                     }
+                })
+                .subscribe(new Observer<Comment>() {
+                    @Override
+                    public void onCompleted() {
 
-                }
-                catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        }, new Response.ErrorListener() {
-            @Override
-            public void onErrorResponse(VolleyError error) {
-            }
-        }, params, 0);
+                    }
+
+                    @Override
+                    public void onError(Throwable e) {
+
+                    }
+
+                    @Override
+                    public void onNext(Comment newComment) {
+                        int commentIndex = data.getChildren()
+                                .indexOf(newComment);
+
+                        if (commentIndex > -1) {
+                            Comment comment = (Comment) data.getChildren().get(commentIndex);
+                            comment.setBodyHtml(newComment.getBodyHtml());
+                            comment.setEdited(newComment.getEdited());
+                            for (Listener listener : listeners) {
+                                listener.getAdapter().notifyItemChanged(commentIndex);
+                            }
+                        }
+                    }
+                });
     }
 
     public Reddit getReddit() {
@@ -272,7 +277,13 @@ public class ControllerInbox {
             listener.getAdapter().notifyItemRemoved(commentIndex);
         }
 
-        reddit.delete(comment, null, null);
+        reddit.delete(comment)
+                .subscribe(new FinalizingSubscriber<String>() {
+                    @Override
+                    public void error(Throwable e) {
+                        Toast.makeText(activity, R.string.error_deleting_comment, Toast.LENGTH_LONG).show();
+                    }
+                });
     }
 
     public boolean toggleComment(int position) {
@@ -283,14 +294,38 @@ public class ControllerInbox {
     public void voteComment(final AdapterCommentList.ViewHolderComment viewHolder,
             final Comment comment,
             int vote) {
+        final int position = viewHolder.getAdapterPosition();
 
-        reddit.voteComment(viewHolder, comment, vote, new Reddit.VoteResponseListener() {
-            @Override
-            public void onVoteFailed() {
-                Toast.makeText(activity, activity.getString(R.string.error_voting), Toast.LENGTH_SHORT)
-                        .show();
-            }
-        });
+        final int oldVote = comment.getLikes();
+        int newVote = 0;
+
+        if (comment.getLikes() != vote) {
+            newVote = vote;
+        }
+
+        comment.setScore(comment.getScore() + newVote - comment.getLikes());
+        comment.setLikes(newVote);
+
+        if (position == viewHolder.getAdapterPosition()) {
+            viewHolder.setVoteColors();
+        }
+
+        final int finalNewVote = newVote;
+
+        reddit.voteComment(comment, newVote)
+                .subscribe(new FinalizingSubscriber<String>() {
+                    @Override
+                    public void error(Throwable e) {
+                        comment.setScore(comment.getScore() - finalNewVote);
+                        comment.setLikes(oldVote);
+                        if (position == viewHolder.getAdapterPosition()) {
+                            viewHolder.setVoteColors();
+                        }
+                        Toast.makeText(activity, activity.getString(R.string.error_voting),
+                                Toast.LENGTH_SHORT)
+                                .show();
+                    }
+                });
     }
 
     public void loadNestedComments(Comment moreComment) {
@@ -303,48 +338,44 @@ public class ControllerInbox {
     }
 
     public void sendComment(String name, String text) {
-
-        reddit.sendComment(name, text, new Response.Listener<String>() {
-            @Override
-            public void onResponse(String response) {
-                try {
-                    Comment newComment = Comment.fromJson(
-                            Reddit.getObjectMapper().readValue(
-                                    response, JsonNode.class).get("json")
+        reddit.sendComment(name, text)
+                .flatMap(new Func1<String, Observable<Comment>>() {
+                    @Override
+                    public Observable<Comment> call(String response) {
+                        try {
+                            Comment comment = Comment.fromJson(Reddit.getObjectMapper()
+                                    .readValue(response, JsonNode.class).get("json")
                                     .get("data")
                                     .get("things")
                                     .get(0), 0);
-                    insertComment(newComment);
-                }
-                catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        }, null);
+
+                            return Observable.just(comment);
+                        }
+                        catch (IOException e) {
+                            return Observable.error(e);
+                        }
+                    }
+                })
+                .subscribe(new FinalizingSubscriber<Comment>() {
+                    @Override
+                    public void next(Comment next) {
+                        insertComment(next);
+                    }
+                });
     }
 
     public void loadMore() {
 
         reddit.message(page.getPage(), data.getAfter())
                 .flatMap(Listing.FLAT_MAP)
-                .subscribe(new Subscriber<Listing>() {
+                .subscribe(new FinalizingSubscriber<Listing>() {
                     @Override
-                    public void onStart() {
+                    public void start() {
                         setLoading(true);
                     }
 
                     @Override
-                    public void onCompleted() {
-                        setLoading(false);
-                    }
-
-                    @Override
-                    public void onError(Throwable e) {
-                        e.printStackTrace();
-                    }
-
-                    @Override
-                    public void onNext(Listing listing) {
+                    public void next(Listing listing) {
                         int startSize = data.getChildren().size();
                         data.addChildren(listing.getChildren());
                         data.setAfter(listing.getAfter());
@@ -352,6 +383,11 @@ public class ControllerInbox {
                             listener.getAdapter().notifyItemRangeInserted(startSize,
                                     data.getChildren().size() - startSize);
                         }
+                    }
+
+                    @Override
+                    public void finish() {
+                        setLoading(false);
                     }
                 });
     }
@@ -380,19 +416,23 @@ public class ControllerInbox {
     }
 
     public void markAllRead() {
-        reddit.loadPost(Reddit.OAUTH_URL + "/api/read_all_messages",
-                new Response.Listener<String>() {
+        reddit.readAllMessages()
+                .subscribe(new Observer<String>() {
                     @Override
-                    public void onResponse(String response) {
-                        Log.d(TAG, "markAllRead response: " + response);
-                        Toast.makeText(activity, R.string.marked_read, Toast.LENGTH_LONG).show();
-                    }
-                }, new Response.ErrorListener() {
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
+                    public void onCompleted() {
 
                     }
-                }, null, 0);
+
+                    @Override
+                    public void onError(Throwable e) {
+
+                    }
+
+                    @Override
+                    public void onNext(String s) {
+                        Toast.makeText(activity, R.string.marked_read, Toast.LENGTH_LONG).show();
+                    }
+                });
     }
 
     public interface Listener extends ControllerListener {

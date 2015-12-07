@@ -16,11 +16,10 @@ import com.winsonchiu.reader.data.reddit.Subreddit;
 import com.winsonchiu.reader.data.reddit.Thing;
 import com.winsonchiu.reader.links.ControllerLinksBase;
 import com.winsonchiu.reader.utils.ControllerListener;
+import com.winsonchiu.reader.utils.FinalizingSubscriber;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import rx.Subscriber;
 
 /**
  * Created by TheKeeperOfPie on 7/8/2015.
@@ -118,28 +117,23 @@ public class ControllerHistory implements ControllerLinksBase {
 
         reddit.info(builder.toString())
                 .flatMap(Listing.FLAT_MAP)
-                .subscribe(new Subscriber<Listing>() {
+                .subscribe(new FinalizingSubscriber<Listing>() {
                     @Override
-                    public void onStart() {
+                    public void start() {
                         setIsLoading(true);
                     }
 
                     @Override
-                    public void onCompleted() {
-                        setIsLoading(false);
-                    }
-
-                    @Override
-                    public void onError(Throwable e) {
-                        e.printStackTrace();
-                    }
-
-                    @Override
-                    public void onNext(Listing listing) {
+                    public void next(Listing listing) {
                         history = listing;
                         for (Listener listener : listeners) {
                             listener.getAdapter().notifyDataSetChanged();
                         }
+                    }
+
+                    @Override
+                    public void finish() {
+                        setIsLoading(false);
                     }
                 });
     }
@@ -188,24 +182,14 @@ public class ControllerHistory implements ControllerLinksBase {
 
         reddit.info(builder.toString())
                 .flatMap(Listing.FLAT_MAP)
-                .subscribe(new Subscriber<Listing>() {
+                .subscribe(new FinalizingSubscriber<Listing>() {
                     @Override
-                    public void onStart() {
+                    public void start() {
                         setIsLoading(true);
                     }
 
                     @Override
-                    public void onCompleted() {
-                        setIsLoading(false);
-                    }
-
-                    @Override
-                    public void onError(Throwable e) {
-                        e.printStackTrace();
-                    }
-
-                    @Override
-                    public void onNext(Listing listing) {
+                    public void next(Listing listing) {
                         int startPosition = history.getChildren().size();
                         history.addChildren(listing.getChildren());
                         for (Listener listener : listeners) {
@@ -213,6 +197,11 @@ public class ControllerHistory implements ControllerLinksBase {
                                     .notifyItemRangeInserted(startPosition + 1, history
                                             .getChildren().size() - startPosition);
                         }
+                    }
+
+                    @Override
+                    public void finish() {
+                        setIsLoading(false);
                     }
                 });
 

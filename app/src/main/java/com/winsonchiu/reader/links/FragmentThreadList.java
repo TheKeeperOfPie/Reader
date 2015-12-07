@@ -135,7 +135,7 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
 
         eventListenerHeader = new AdapterLink.ViewHolderHeader.EventListener() {
             @Override
-            public void onClickSubmit(String postType) {
+            public void onClickSubmit(Reddit.PostType postType) {
 
                 if (TextUtils.isEmpty(mListener.getControllerUser().getUser().getName())) {
                     Toast.makeText(activity, getString(R.string.must_be_logged_in),

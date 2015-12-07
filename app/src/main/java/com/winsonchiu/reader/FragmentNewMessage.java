@@ -37,17 +37,12 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.android.volley.Response;
-import com.android.volley.VolleyError;
 import com.github.rjeschke.txtmark.Processor;
 import com.winsonchiu.reader.data.reddit.Reddit;
 import com.winsonchiu.reader.utils.UtilsColor;
 
 import org.json.JSONException;
 import org.json.JSONObject;
-
-import java.util.HashMap;
-import java.util.Map;
 
 import rx.Observer;
 
@@ -80,7 +75,7 @@ public class FragmentNewMessage extends FragmentBase implements Toolbar.OnMenuIt
     private int editMarginWithActions;
 
     private RelativeLayout layoutCaptcha;
-    private String captchaId;
+    private String captcha;
     private ImageView imageCaptcha;
     private EditText editCaptcha;
     private ImageButton buttonCaptchaRefresh;
@@ -364,8 +359,11 @@ public class FragmentNewMessage extends FragmentBase implements Toolbar.OnMenuIt
 
 
     private void submitMessage() {
-
+        String subject = editTextSubject.getText().toString();
+        String text = editTextMessage.getText().toString();
         String recipient = editTextRecipient.getText().toString().replaceAll("\\s", "");
+        String captchaId = TextUtils.isEmpty(captcha) ? null : captcha;
+        String captchaText = TextUtils.isEmpty(captcha) ? null : editCaptcha.getText().toString();
 
         if (TextUtils.isEmpty(recipient)) {
             Toast.makeText(activity, getString(R.string.empty_recipient), Toast.LENGTH_SHORT).show();
@@ -376,59 +374,57 @@ public class FragmentNewMessage extends FragmentBase implements Toolbar.OnMenuIt
             recipient = recipient.substring(3);
         }
 
-        Map<String, String> params = new HashMap<>();
-        params.put("api_type", "json");
-        params.put("subject", editTextSubject.getText().toString());
-        params.put("text", editTextMessage.getText().toString());
-        params.put("to", recipient);
-        if (!TextUtils.isEmpty(captchaId)) {
-            params.put("iden", captchaId);
-            params.put("captcha", editCaptcha.getText().toString());
-        }
+        reddit.compose(subject,
+                text,
+                recipient,
+                captchaId,
+                captchaText)
+                .subscribe(new Observer<String>() {
+                    @Override
+                    public void onCompleted() {
 
-        reddit.loadPost(Reddit.OAUTH_URL + "/api/compose", new Response.Listener<String>() {
-            @Override
-            public void onResponse(String response) {
-                Log.d(TAG, "Submit new response: " + response);
+                    }
 
-                try {
-                    JSONObject jsonObject = new JSONObject(response).getJSONObject("json");
-                    String error = jsonObject.getJSONArray("errors").optString(
-                            0);
-                    if (!TextUtils.isEmpty(error)) {
+                    @Override
+                    public void onError(Throwable e) {
+                        Toast.makeText(activity, getString(R.string.error_sending_message), Toast.LENGTH_LONG)
+                                .show();
+                    }
 
-                        String captcha = jsonObject.optString("captcha");
+                    @Override
+                    public void onNext(String response) {
+                        try {
+                            JSONObject jsonObject = new JSONObject(response).getJSONObject("json");
+                            String error = jsonObject.getJSONArray("errors").optString(
+                                    0);
+                            if (!TextUtils.isEmpty(error)) {
+                                String captcha = jsonObject.optString("captcha");
 
-                        if (!TextUtils.isEmpty(captcha)) {
-                            captchaId = captcha;
-                            editCaptcha.setText("");
-                            Reddit.loadPicasso(activity)
-                                    .load(Reddit.BASE_URL + "/captcha/" + captchaId + ".png")
-                                    .resize(getResources().getDisplayMetrics().widthPixels, 0).into(
-                                    imageCaptcha);
+                                if (!TextUtils.isEmpty(captcha)) {
+                                    FragmentNewMessage.this.captcha = captcha;
+                                    editCaptcha.setText("");
+                                    Reddit.loadPicasso(activity)
+                                            .load(Reddit.BASE_URL + "/captcha/" + captcha + ".png")
+                                            .resize(getResources().getDisplayMetrics().widthPixels, 0).into(
+                                            imageCaptcha);
+                                }
+
+                                Toast.makeText(activity, getString(R.string.error) + ": " + error, Toast.LENGTH_LONG)
+                                        .show();
+                                return;
+                            }
+                        }
+                        catch (JSONException e) {
+                            onError(e);
+                            return;
                         }
 
-                        Toast.makeText(activity, getString(R.string.error) + ": " + error, Toast.LENGTH_LONG)
-                                .show();
-                        return;
+                        InputMethodManager inputManager = (InputMethodManager) activity.getSystemService(
+                                Context.INPUT_METHOD_SERVICE);
+                        inputManager.hideSoftInputFromWindow(editTextMessage.getWindowToken(), 0);
+                        mListener.onNavigationBackClick();
                     }
-                }
-                catch (JSONException e) {
-                    e.printStackTrace();
-                }
-                InputMethodManager inputManager = (InputMethodManager) activity.getSystemService(
-                        Context.INPUT_METHOD_SERVICE);
-                inputManager.hideSoftInputFromWindow(editTextMessage.getWindowToken(), 0);
-                mListener.onNavigationBackClick();
-
-            }
-        }, new Response.ErrorListener() {
-            @Override
-            public void onErrorResponse(VolleyError error) {
-                Toast.makeText(activity, getString(R.string.error_sending_message), Toast.LENGTH_LONG)
-                        .show();
-            }
-        }, params, 0);
+                });
     }
 
     private void loadCaptcha() {
@@ -451,10 +447,10 @@ public class FragmentNewMessage extends FragmentBase implements Toolbar.OnMenuIt
                         }
                         try {
                             JSONObject jsonObject = new JSONObject(response);
-                            captchaId = jsonObject.getJSONObject("json").getJSONObject("data").getString(
+                            captcha = jsonObject.getJSONObject("json").getJSONObject("data").getString(
                                     "iden");
-                            Log.d(TAG, "captchaId: " + captchaId);
-                            Reddit.loadPicasso(activity).load(Reddit.BASE_URL + "/captcha/" + captchaId + ".png")
+                            Log.d(TAG, "captcha: " + captcha);
+                            Reddit.loadPicasso(activity).load(Reddit.BASE_URL + "/captcha/" + captcha + ".png")
                                     .resize(imageCaptcha.getWidth(), 0).into(
                                     imageCaptcha);
                         }

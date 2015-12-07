@@ -29,26 +29,23 @@ import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.Toast;
 
-import com.android.volley.AuthFailureError;
-import com.android.volley.Request;
-import com.android.volley.Response;
-import com.android.volley.VolleyError;
-import com.android.volley.toolbox.StringRequest;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.winsonchiu.reader.AppSettings;
 import com.winsonchiu.reader.R;
 import com.winsonchiu.reader.Theme;
 import com.winsonchiu.reader.data.reddit.Reddit;
 import com.winsonchiu.reader.data.reddit.User;
+import com.winsonchiu.reader.utils.FinalizingSubscriber;
 import com.winsonchiu.reader.utils.UtilsColor;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.UUID;
+
+import rx.Observable;
+import rx.functions.Func1;
 
 public class ActivityLogin extends AccountAuthenticatorActivity {
 
@@ -161,92 +158,78 @@ public class ActivityLogin extends AccountAuthenticatorActivity {
     }
 
     private void fetchTokens(String code) {
+        Reddit.getInstance(this)
+                .tokenAuth()
+                .flatMap(new Func1<String, Observable<JSONObject>>() {
+                    @Override
+                    public Observable<JSONObject> call(String response) {
+                        try {
+                            return Observable.just(new JSONObject(response));
+                        }
+                        catch (JSONException e) {
+                            return Observable.error(e);
+                        }
+                    }
+                })
+                .subscribe(new FinalizingSubscriber<JSONObject>() {
+                    @Override
+                    public void next(JSONObject jsonObject) {
+                        try {
+                            String tokenAccess = jsonObject.getString(Reddit.QUERY_ACCESS_TOKEN);
+                            String tokenRefresh = jsonObject.getString(Reddit.QUERY_REFRESH_TOKEN);
+                            long timeExpire = System.currentTimeMillis() + jsonObject.getLong(
+                                    Reddit.QUERY_EXPIRES_IN) * Reddit.SEC_TO_MS;
 
-        HashMap<String, String> params = new HashMap<>(3);
-        params.put(Reddit.QUERY_GRANT_TYPE, Reddit.CODE_GRANT);
-        params.put(Reddit.QUERY_CODE, code);
-        params.put(Reddit.QUERY_REDIRECT_URI, Reddit.REDIRECT_URI);
+                            Log.d(TAG, "timeExpire in: " + jsonObject.getLong(Reddit.QUERY_EXPIRES_IN));
 
-        reddit.loadPostDefault(Reddit.ACCESS_URL, new Response.Listener<String>() {
-            @Override
-            public void onResponse(String response) {
-                try {
-                    JSONObject jsonObject = new JSONObject(response);
-                    String tokenAccess = jsonObject.getString(Reddit.QUERY_ACCESS_TOKEN);
-                    String tokenRefresh = jsonObject.getString(Reddit.QUERY_REFRESH_TOKEN);
-                    long timeExpire = System.currentTimeMillis() + jsonObject.getLong(
-                            Reddit.QUERY_EXPIRES_IN) * Reddit.SEC_TO_MS;
-
-                    Log.d(TAG, "timeExpire in: " + jsonObject.getLong(Reddit.QUERY_EXPIRES_IN));
-
-                    loadAccountInfo(tokenAccess, tokenRefresh, timeExpire);
-                }
-                catch (JSONException e1) {
-                    e1.printStackTrace();
-                }
-            }
-        }, new Response.ErrorListener() {
-            @Override
-            public void onErrorResponse(VolleyError error) {
-                Log.d(TAG, "onErrorResponse: " + error);
-            }
-        }, params, 0);
+                            loadAccountInfo(tokenAccess, tokenRefresh, timeExpire);
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                });
     }
 
     private void loadAccountInfo(final String tokenAuth, final String tokenRefresh, final long timeExpire) {
 
-        StringRequest getRequest = new StringRequest(Request.Method.GET, Reddit.OAUTH_URL + "/api/v1/me",
-                new Response.Listener<String>() {
+        reddit.me()
+                .flatMap(new Func1<String, Observable<User>>() {
                     @Override
-                    public void onResponse(String response) {
-
-                        Log.d(TAG, "User onResponse: " + response);
+                    public Observable<User> call(String response) {
                         try {
-                            User user = User.fromJson(Reddit.getObjectMapper().readValue(response, JsonNode.class));
-
-                            AccountManager accountManager = AccountManager.get(ActivityLogin.this);
-
-                            Account account = new Account(user.getName(), Reddit.ACCOUNT_TYPE);
-                            Intent result = new Intent();
-
-                            result.putExtra(AccountManager.KEY_ACCOUNT_NAME, user.getName());
-                            result.putExtra(AccountManager.KEY_ACCOUNT_TYPE, Reddit.ACCOUNT_TYPE);
-                            result.putExtra(AccountManager.KEY_AUTHTOKEN, tokenAuth);
-
-                            if (getIntent().getBooleanExtra(KEY_IS_NEW_ACCOUNT, false)) {
-                                Bundle extras = new Bundle();
-                                extras.putString(KEY_TIME_EXPIRATION, String.valueOf(timeExpire));
-                                accountManager.addAccountExplicitly(account, tokenRefresh, extras);
-                                accountManager.setAuthToken(account, Reddit.AUTH_TOKEN_FULL_ACCESS, tokenAuth);
-                            }
-
-                            destroyWebView();
-
-                            setAccountAuthenticatorResult(result.getExtras());
-                            setResult(RESULT_OK, result);
-                            finish();
+                            return Observable.just(User.fromJson(Reddit.getObjectMapper().readValue(response, JsonNode.class)));
                         }
                         catch (IOException e) {
-                            e.printStackTrace();
+                            return Observable.error(e);
                         }
                     }
-                }, new Response.ErrorListener() {
-            @Override
-            public void onErrorResponse(VolleyError error) {
-                Log.d(TAG, "loadGet error: " + error);
-            }
-        }) {
-            @Override
-            public Map<String, String> getHeaders() throws AuthFailureError {
-                HashMap<String, String> headers = new HashMap<>(3);
-                headers.put(Reddit.USER_AGENT, Reddit.CUSTOM_USER_AGENT);
-                headers.put(Reddit.AUTHORIZATION, Reddit.BEARER + tokenAuth);
-                headers.put(Reddit.CONTENT_TYPE, Reddit.CONTENT_TYPE_APP_JSON);
-                return headers;
-            }
-        };
+                })
+                .subscribe(new FinalizingSubscriber<User>() {
+                    @Override
+                    public void next(User user) {
+                        AccountManager accountManager = AccountManager.get(ActivityLogin.this);
 
-        reddit.getRequestQueue().add(getRequest);
+                        Account account = new Account(user.getName(), Reddit.ACCOUNT_TYPE);
+                        Intent result = new Intent();
+
+                        result.putExtra(AccountManager.KEY_ACCOUNT_NAME, user.getName());
+                        result.putExtra(AccountManager.KEY_ACCOUNT_TYPE, Reddit.ACCOUNT_TYPE);
+                        result.putExtra(AccountManager.KEY_AUTHTOKEN, tokenAuth);
+
+                        if (getIntent().getBooleanExtra(KEY_IS_NEW_ACCOUNT, false)) {
+                            Bundle extras = new Bundle();
+                            extras.putString(KEY_TIME_EXPIRATION, String.valueOf(timeExpire));
+                            accountManager.addAccountExplicitly(account, tokenRefresh, extras);
+                            accountManager.setAuthToken(account, Reddit.AUTH_TOKEN_FULL_ACCESS, tokenAuth);
+                        }
+
+                        destroyWebView();
+
+                        setAccountAuthenticatorResult(result.getExtras());
+                        setResult(RESULT_OK, result);
+                        finish();
+                    }
+                });
     }
 
     @Override

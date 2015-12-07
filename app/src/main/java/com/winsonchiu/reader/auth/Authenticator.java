@@ -75,7 +75,7 @@ public class Authenticator extends AbstractAccountAuthenticator {
 
         if (TextUtils.isEmpty(tokenAuth)|| System.currentTimeMillis() > timeExpire) {
             try {
-                String responseNetwork = Reddit.getInstance(context).tokenAuth();
+                String responseNetwork = Reddit.getInstance(context).tokenAuthBlocking();
 
                 JSONObject jsonObject = new JSONObject(responseNetwork);
                 tokenAuth = jsonObject.getString(Reddit.QUERY_ACCESS_TOKEN);

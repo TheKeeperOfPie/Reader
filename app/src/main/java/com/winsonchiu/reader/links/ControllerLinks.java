@@ -9,9 +9,6 @@ import android.text.TextUtils;
 import android.util.Log;
 import android.widget.Toast;
 
-import com.android.volley.Response;
-import com.android.volley.Response.ErrorListener;
-import com.android.volley.VolleyError;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.winsonchiu.reader.R;
 import com.winsonchiu.reader.data.reddit.Link;
@@ -24,18 +21,16 @@ import com.winsonchiu.reader.data.reddit.Thing;
 import com.winsonchiu.reader.data.reddit.Time;
 import com.winsonchiu.reader.history.Historian;
 import com.winsonchiu.reader.utils.ControllerListener;
+import com.winsonchiu.reader.utils.FinalizingSubscriber;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import rx.Observable;
 import rx.Observer;
-import rx.Subscriber;
 import rx.functions.Func1;
 
 /**
@@ -109,8 +104,6 @@ public class ControllerLinks implements ControllerLinksBase {
     }
 
     public void reloadSubreddit() {
-        setLoading(true);
-
         reddit.about(subreddit.getUrl())
                 .flatMap(new Func1<String, Observable<Subreddit>>() {
                     @Override
@@ -123,25 +116,25 @@ public class ControllerLinks implements ControllerLinksBase {
                         }
                     }
                 })
-                .subscribe(new Subscriber<Subreddit>() {
+                .subscribe(new FinalizingSubscriber<Subreddit>() {
                     @Override
-                    public void onStart() {
+                    public void start() {
                         setLoading(true);
                     }
 
                     @Override
-                    public void onCompleted() {
-                        reloadAllLinks(true);
-                    }
-
-                    @Override
-                    public void onError(Throwable e) {
+                    public void error(Throwable e) {
                         e.printStackTrace();
                     }
 
                     @Override
-                    public void onNext(Subreddit subreddit) {
-                        ControllerLinks.this.subreddit = subreddit;
+                    public void next(Subreddit next) {
+                        ControllerLinks.this.subreddit = next;
+                    }
+
+                    @Override
+                    public void finish() {
+                        reloadAllLinks(true);
                     }
                 });
     }
@@ -210,8 +203,6 @@ public class ControllerLinks implements ControllerLinksBase {
     }
 
     public void reloadAllLinks(final boolean scroll) {
-        setLoading(true);
-
         reddit.links(subreddit.getUrl(), sort.toString(), time.toString(), LIMIT, null)
                 .flatMap(new Func1<String, Observable<Listing>>() {
                     @Override
@@ -232,9 +223,25 @@ public class ControllerLinks implements ControllerLinksBase {
                         }
                     }
                 })
-                .subscribe(new Observer<Listing>() {
+                .subscribe(new FinalizingSubscriber<Listing>() {
                     @Override
-                    public void onCompleted() {
+                    public void start() {
+                        setLoading(true);
+                    }
+
+                    @Override
+                    public void error(Throwable e) {
+                        Toast.makeText(activity, activity.getString(R.string.error_loading_links), Toast.LENGTH_SHORT)
+                                .show();
+                    }
+
+                    @Override
+                    public void next(Listing next) {
+                        listingLinks = next;
+                    }
+
+                    @Override
+                    public void finish() {
                         setLoading(false);
 
                         for (final Listener listener : listeners) {
@@ -247,22 +254,6 @@ public class ControllerLinks implements ControllerLinksBase {
                             }
                         }
                         setTitle();
-                    }
-
-                    @Override
-                    public void onError(Throwable e) {
-                        e.printStackTrace();
-                        Toast.makeText(activity, activity.getString(R.string.error_loading_links), Toast.LENGTH_SHORT)
-                                .show();
-                        for (final Listener listener : listeners) {
-                            listener.showEmptyView(listingLinks.getChildren()
-                                    .isEmpty());
-                        }
-                    }
-
-                    @Override
-                    public void onNext(final Listing next) {
-                        listingLinks = next;
                     }
                 });
 
@@ -279,7 +270,6 @@ public class ControllerLinks implements ControllerLinksBase {
         }
 
         setLoading(true);
-        String url = Reddit.OAUTH_URL + subreddit.getUrl() + sort.toString() + "?t=" + time.toString() + "&limit=25&showAll=true&after=" + listingLinks.getAfter();
 
         reddit.links(subreddit.getUrl(), sort.toString(), time.toString(), LIMIT, listingLinks.getAfter())
                 .flatMap(Listing.FLAT_MAP)
@@ -333,7 +323,14 @@ public class ControllerLinks implements ControllerLinksBase {
                     .notifyItemRemoved(index + 1);
         }
 
-        reddit.delete(link, null, null);
+
+        reddit.delete(link)
+                .subscribe(new FinalizingSubscriber<String>() {
+                    @Override
+                    public void error(Throwable e) {
+                        Toast.makeText(activity, R.string.error_deleting_post, Toast.LENGTH_LONG).show();
+                    }
+                });
 
         return true;
     }
@@ -426,25 +423,24 @@ public class ControllerLinks implements ControllerLinksBase {
     }
 
     public void subscribe() {
-        String action = subreddit.isUserIsSubscriber() ? "unsub" : "sub";
         subreddit.setUserIsSubscriber(!subreddit.isUserIsSubscriber());
-
-        Map<String, String> params = new HashMap<>();
-        params.put("action", action);
-        params.put("sr", subreddit.getName());
-
-        reddit.loadPost(Reddit.OAUTH_URL + "/api/subscribe",
-                new Response.Listener<String>() {
+        reddit.subscribe(subreddit.isUserIsSubscriber(), subreddit.getName())
+                .subscribe(new Observer<String>() {
                     @Override
-                    public void onResponse(String response) {
-                        Log.d(TAG, "subscribe response: " + response);
-                    }
-                }, new ErrorListener() {
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
+                    public void onCompleted() {
 
                     }
-                }, params, 0);
+
+                    @Override
+                    public void onError(Throwable e) {
+
+                    }
+
+                    @Override
+                    public void onNext(String response) {
+                        Log.d(TAG, "subscribe onNext: " + response);
+                    }
+                });
     }
 
     public void add(int position, Link link) {

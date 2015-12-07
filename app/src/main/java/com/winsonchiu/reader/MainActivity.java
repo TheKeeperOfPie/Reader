@@ -18,6 +18,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.content.res.TypedArray;
 import android.graphics.Bitmap;
@@ -33,8 +34,10 @@ import android.os.Environment;
 import android.os.Handler;
 import android.os.PersistableBundle;
 import android.preference.PreferenceManager;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.design.widget.NavigationView;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.TaskStackBuilder;
 import android.support.v4.view.GestureDetectorCompat;
 import android.support.v4.view.GravityCompat;
@@ -60,9 +63,6 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.android.volley.Response;
-import com.android.volley.VolleyError;
-import com.android.volley.toolbox.ImageRequest;
 import com.crashlytics.android.Crashlytics;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.android.youtube.player.YouTubeBaseActivity;
@@ -99,6 +99,9 @@ import com.winsonchiu.reader.search.ControllerSearch;
 import com.winsonchiu.reader.search.FragmentSearch;
 import com.winsonchiu.reader.settings.ActivitySettings;
 import com.winsonchiu.reader.utils.CustomColorFilter;
+import com.winsonchiu.reader.utils.FinalizingSubscriber;
+import com.winsonchiu.reader.utils.ObserverEmpty;
+import com.winsonchiu.reader.utils.TargetImageDownload;
 import com.winsonchiu.reader.utils.TouchEventListener;
 import com.winsonchiu.reader.utils.UtilsAnimation;
 import com.winsonchiu.reader.utils.UtilsColor;
@@ -117,7 +120,6 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.Map;
 
 import io.fabric.sdk.android.Fabric;
 import rx.Observable;
@@ -138,6 +140,8 @@ public class MainActivity extends YouTubeBaseActivity
     private static final String TAG = MainActivity.class.getCanonicalName();
     private static final int REQUEST_SETTINGS = 0;
     private static final long DURATION_CHECK_INBOX_ACTIVE = 120000;
+
+    private static final int REQUEST_PERMISSION_WRITE_EXTERNAL_STORAGE = 61;
 
     private FragmentData fragmentData;
 
@@ -171,7 +175,8 @@ public class MainActivity extends YouTubeBaseActivity
     private CustomColorFilter colorFilterPrimary;
     private AppCompatDelegate appCompatDelegate;
     private boolean isDownloadingHeaderImage;
-    private Target target = new Target() {
+    private TargetImageDownload targetDownload;
+    private Target targetHeader = new Target() {
         @Override
         public void onBitmapLoaded(final Bitmap bitmap, Picasso.LoadedFrom from) {
             Log.d(TAG, "downloadHeaderImage onBitmapLoaded");
@@ -316,60 +321,75 @@ public class MainActivity extends YouTubeBaseActivity
 
             @Override
             public void sendComment(String name, String text) {
-                reddit.sendComment(name, text, new Response.Listener<String>() {
-                    @Override
-                    public void onResponse(String response) {
-                        try {
-                            Comment newComment = Comment.fromJson(Reddit.getObjectMapper().readValue(response, JsonNode.class).get("json")
-                                    .get("data")
-                                    .get("things")
-                                    .get(0), 0);
-                            if (getFragmentManager().findFragmentByTag(FragmentComments.TAG) != null) {
-                                getControllerComments().insertComment(newComment);
+                reddit.sendComment(name, text)
+                        .flatMap(new Func1<String, Observable<Comment>>() {
+                            @Override
+                            public Observable<Comment> call(String response) {
+                                try {
+                                    Comment comment = Comment.fromJson(Reddit.getObjectMapper()
+                                            .readValue(response, JsonNode.class).get("json")
+                                            .get("data")
+                                            .get("things")
+                                            .get(0), 0);
+
+                                    return Observable.just(comment);
+                                }
+                                catch (IOException e) {
+                                    return Observable.error(e);
+                                }
                             }
-                            if (getFragmentManager().findFragmentByTag(FragmentProfile.TAG) != null) {
-                                getControllerProfile().insertComment(newComment);
+                        })
+                        .subscribe(new FinalizingSubscriber<Comment>() {
+                            @Override
+                            public void error(Throwable e) {
+                                Toast.makeText(MainActivity.this, R.string.failed_reply, Toast.LENGTH_LONG).show();
                             }
-                            if (getFragmentManager().findFragmentByTag(FragmentInbox.TAG) != null) {
-                                getControllerInbox().insertComment(newComment);
+
+                            @Override
+                            public void next(Comment comment) {
+                                if (getFragmentManager().findFragmentByTag(FragmentComments.TAG) != null) {
+                                    getControllerComments().insertComment(comment);
+                                }
+                                if (getFragmentManager().findFragmentByTag(FragmentProfile.TAG) != null) {
+                                    getControllerProfile().insertComment(comment);
+                                }
+                                if (getFragmentManager().findFragmentByTag(FragmentInbox.TAG) != null) {
+                                    getControllerInbox().insertComment(comment);
+                                }
                             }
-                        }
-                        catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                }, new Response.ErrorListener() {
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
-                        Toast.makeText(MainActivity.this, R.string.failed_reply, Toast.LENGTH_LONG).show();
-                    }
-                });
+                        });
             }
 
             @Override
             public void sendMessage(String name, String text) {
+                reddit.sendComment(name, text)
+                        .flatMap(new Func1<String, Observable<Message>>() {
+                            @Override
+                            public Observable<Message> call(String response) {
+                                try {
+                                    Message message = Message.fromJson(Reddit.getObjectMapper().readValue(response, JsonNode.class).get("json")
+                                            .get("data")
+                                            .get("things")
+                                            .get(0));
 
-                getReddit().sendComment(name, text, new Response.Listener<String>() {
-                    @Override
-                    public void onResponse(String response) {
-                        try {
-                            Message newMessage = Message.fromJson(Reddit.getObjectMapper().readValue(response, JsonNode.class).get("json")
-                                    .get("data")
-                                    .get("things")
-                                    .get(0));
-                            getControllerInbox()
-                                    .insertMessage(newMessage);
-                        }
-                        catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                }, new Response.ErrorListener() {
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
-                        Toast.makeText(MainActivity.this, R.string.failed_message, Toast.LENGTH_LONG).show();
-                    }
-                });
+                                    return Observable.just(message);
+                                }
+                                catch (IOException e) {
+                                    return Observable.error(e);
+                                }
+                            }
+                        })
+                        .subscribe(new FinalizingSubscriber<Message>() {
+                            @Override
+                            public void error(Throwable e) {
+                                Toast.makeText(MainActivity.this, R.string.failed_message, Toast.LENGTH_LONG).show();
+                            }
+
+                            @Override
+                            public void next(Message next) {
+                                getControllerInbox().insertMessage(next);
+                            }
+                        });
             }
 
             @Override
@@ -400,15 +420,17 @@ public class MainActivity extends YouTubeBaseActivity
             public void save(Link link) {
                 link.setSaved(!link.isSaved());
                 if (link.isSaved()) {
-                    reddit.save(link, "", new Response.ErrorListener() {
-                        @Override
-                        public void onErrorResponse(VolleyError error) {
-
-                        }
-                    });
+                    reddit.save(link, null)
+                            .subscribe(new FinalizingSubscriber<String>() {
+                                @Override
+                                public void error(Throwable e) {
+                                    Toast.makeText(MainActivity.this, R.string.error_saving_post, Toast.LENGTH_SHORT).show();
+                                }
+                            });
                 }
                 else {
-                    reddit.unsave(link);
+                    reddit.unsave(link)
+                            .subscribe(new ObserverEmpty<>());
                 }
             }
 
@@ -416,15 +438,17 @@ public class MainActivity extends YouTubeBaseActivity
             public void save(Comment comment) {
                 comment.setSaved(!comment.isSaved());
                 if (comment.isSaved()) {
-                    reddit.save(comment, "", new Response.ErrorListener() {
-                        @Override
-                        public void onErrorResponse(VolleyError error) {
-
-                        }
-                    });
+                    reddit.save(comment, null)
+                            .subscribe(new FinalizingSubscriber<String>() {
+                                @Override
+                                public void error(Throwable e) {
+                                    Toast.makeText(MainActivity.this, R.string.error_saving_comment, Toast.LENGTH_SHORT).show();
+                                }
+                            });
                 }
                 else {
-                    reddit.unsave(comment);
+                    reddit.unsave(comment)
+                            .subscribe(new ObserverEmpty<>());
                 }
             }
 
@@ -463,72 +487,72 @@ public class MainActivity extends YouTubeBaseActivity
 
             @Override
             public void downloadImage(final String fileName, final String url) {
+                targetDownload = new TargetImageDownload(fileName, url) {
+                    @Override
+                    public void onBitmapLoaded(Bitmap bitmap, Picasso.LoadedFrom from) {
+                        boolean created = false;
+                        String path = Environment.getExternalStoragePublicDirectory(
+                                Environment.DIRECTORY_PICTURES)
+                                .getAbsolutePath() + "/ReaderForReddit/" + fileName;
 
-                Toast.makeText(MainActivity.this, getString(R.string.image_downloading), Toast.LENGTH_SHORT).show();
+                        int index = url.lastIndexOf(".");
+                        if (index > -1) {
+                            String extension = url.substring(index, index + 4);
+                            path += extension;
+                        }
+                        else {
+                            path += ".png";
+                        }
 
-                ImageRequest imageRequest = new ImageRequest(url,
-                        new Response.Listener<Bitmap>() {
-                            @Override
-                            public void onResponse(Bitmap response) {
+                        File file = new File(path);
 
-                                boolean created = false;
-                                String path = Environment.getExternalStoragePublicDirectory(
-                                        Environment.DIRECTORY_PICTURES)
-                                        .getAbsolutePath() + "/ReaderForReddit/" + fileName;
+                        file.getParentFile()
+                                .mkdirs();
 
-                                int index = url.lastIndexOf(".");
-                                if (index > -1) {
-                                    String extension = url.substring(index, index + 4);
-                                    path += extension;
+                        FileOutputStream out = null;
+                        try {
+                            out = new FileOutputStream(file);
+                            bitmap.compress(Bitmap.CompressFormat.PNG, 90, out);
+                            created = true;
+                        }
+                        catch (FileNotFoundException e) {
+                            e.printStackTrace();
+                        }
+                        finally {
+                            try {
+                                if (out != null) {
+                                    out.close();
                                 }
-                                else {
-                                    path += ".png";
-                                }
-
-                                File file = new File(path);
-
-                                file.getParentFile()
-                                        .mkdirs();
-
-                                FileOutputStream out = null;
-                                try {
-                                    out = new FileOutputStream(file);
-                                    response.compress(Bitmap.CompressFormat.PNG, 90, out);
-                                    created = true;
-                                }
-                                catch (FileNotFoundException e) {
-                                    e.printStackTrace();
-                                }
-                                finally {
-                                    try {
-                                        if (out != null) {
-                                            out.close();
-                                        }
-                                    }
-                                    catch (Throwable e) {
-                                        e.printStackTrace();
-                                    }
-                                }
-
-                                if (created) {
-                                    MediaScannerConnection.scanFile(MainActivity.this,
-                                            new String[]{file.toString()}, null, null);
-                                }
-
-                                Toast.makeText(MainActivity.this, getString(R.string.image_downloaded),
-                                        Toast.LENGTH_SHORT)
-                                        .show();
                             }
-                        }, 0, 0, ImageView.ScaleType.CENTER, Bitmap.Config.ARGB_8888,
-                        new Response.ErrorListener() {
-                            @Override
-                            public void onErrorResponse(VolleyError error) {
-                                Toast.makeText(MainActivity.this, getString(R.string.error_downloading), Toast.LENGTH_SHORT).show();
+                            catch (Throwable e) {
+                                e.printStackTrace();
                             }
-                        });
+                        }
 
-                reddit.getRequestQueue().add(imageRequest);
+                        if (created) {
+                            MediaScannerConnection.scanFile(MainActivity.this,
+                                    new String[]{file.toString()}, null, null);
+                        }
 
+                        Toast.makeText(MainActivity.this, getString(R.string.image_downloaded),
+                                Toast.LENGTH_SHORT)
+                                .show();
+
+                        targetDownload = null;
+                    }
+
+                    @Override
+                    public void onBitmapFailed(Drawable errorDrawable) {
+                        Toast.makeText(MainActivity.this, getString(R.string.error_downloading), Toast.LENGTH_SHORT).show();
+                    }
+
+                    @Override
+                    public void onPrepareLoad(Drawable placeHolderDrawable) {
+                        Toast.makeText(MainActivity.this, getString(R.string.image_downloading), Toast.LENGTH_SHORT).show();
+                    }
+                };
+
+                ActivityCompat.requestPermissions(MainActivity.this, new String[] {android.Manifest.permission.WRITE_EXTERNAL_STORAGE}, REQUEST_PERMISSION_WRITE_EXTERNAL_STORAGE);
             }
 
             @Override
@@ -552,11 +576,36 @@ public class MainActivity extends YouTubeBaseActivity
             }
 
             @Override
-            public void voteLink(AdapterLink.ViewHolderBase viewHolderBase, Link link, int vote) {
-                reddit.voteLink(viewHolderBase, link, vote,
-                        new Reddit.VoteResponseListener() {
+            public void voteLink(final AdapterLink.ViewHolderBase viewHolderBase, final Link link, int vote) {
+                final int position = viewHolderBase.getAdapterPosition();
+
+                final int oldVote = link.getLikes();
+                int newVote = 0;
+
+                if (link.getLikes() != vote) {
+                    newVote = vote;
+                }
+
+                HashMap<String, String> params = new HashMap<>(2);
+                params.put(Reddit.QUERY_ID, link.getName());
+                params.put(Reddit.QUERY_VOTE, String.valueOf(newVote));
+
+                link.setScore(link.getScore() + newVote - link.getLikes());
+                link.setLikes(newVote);
+                if (position == viewHolderBase.getAdapterPosition()) {
+                    viewHolderBase.setVoteColors();
+                }
+                final int finalNewVote = newVote;
+
+                reddit.voteLink(link, newVote)
+                        .subscribe(new FinalizingSubscriber<String>() {
                             @Override
-                            public void onVoteFailed() {
+                            public void error(Throwable e) {
+                                link.setScore(link.getScore() - finalNewVote);
+                                link.setLikes(oldVote);
+                                if (position == viewHolderBase.getAdapterPosition()) {
+                                    viewHolderBase.setVoteColors();
+                                }
                                 Toast.makeText(MainActivity.this, getString(R.string.error_voting), Toast.LENGTH_SHORT)
                                         .show();
                             }
@@ -576,35 +625,36 @@ public class MainActivity extends YouTubeBaseActivity
 
             @Override
             public void report(Thing thing, String reason, String otherReason) {
-                Map<String, String> params = new HashMap<>();
-                params.put("api_type", "json");
-                params.put("thing_id", thing.getName());
-                params.put("reason", reason);
-                if (!TextUtils.isEmpty(otherReason)) {
-                    params.put("other_reason", otherReason);
-                }
+                reddit.report(thing.getName(),
+                        reason, otherReason)
+                        .subscribe(new Observer<String>() {
+                            @Override
+                            public void onCompleted() {
 
-                reddit.loadPost(Reddit.OAUTH_URL + "/api/report", new Response.Listener<String>() {
-                    @Override
-                    public void onResponse(String response) {
+                            }
 
-                    }
-                }, new Response.ErrorListener() {
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
+                            @Override
+                            public void onError(Throwable e) {
 
-                    }
-                }, params, 0);
+                            }
+
+                            @Override
+                            public void onNext(String s) {
+
+                            }
+                        });
             }
 
             @Override
             public void hide(Link link) {
                 link.setHidden(!link.isHidden());
                 if (link.isHidden()) {
-                    reddit.hide(link);
+                    reddit.hide(link)
+                            .subscribe(new ObserverEmpty<>());
                 }
                 else {
-                    reddit.unhide(link);
+                    reddit.unhide(link)
+                            .subscribe(new ObserverEmpty<>());
                 }
 
             }
@@ -633,30 +683,33 @@ public class MainActivity extends YouTubeBaseActivity
 
             @Override
             public void markRead(Thing thing) {
-                reddit.markRead(thing.getName());
+                reddit.markRead(thing.getName())
+                        .subscribe(new ObserverEmpty<>());
             }
 
             @Override
             public void markNsfw(final Link link) {
                 link.setOver18(!link.isOver18());
                 if (link.isOver18()) {
-                    getReddit().markNsfw(link, new Response.ErrorListener() {
-                        @Override
-                        public void onErrorResponse(VolleyError error) {
-                            link.setOver18(false);
-                            Toast.makeText(MainActivity.this, R.string.error_marking_nsfw,
-                                    Toast.LENGTH_LONG).show();
-                        }
-                    });
+                    reddit.markNsfw(link)
+                            .subscribe(new FinalizingSubscriber<String>() {
+                                @Override
+                                public void error(Throwable e) {
+                                    link.setOver18(false);
+                                    Toast.makeText(MainActivity.this, R.string.error_marking_nsfw,
+                                            Toast.LENGTH_LONG).show();
+                                }
+                            });
                 }
                 else {
-                    getReddit().unmarkNsfw(link, new Response.ErrorListener() {
-                        @Override
-                        public void onErrorResponse(VolleyError error) {
-                            link.setOver18(true);
-                            Toast.makeText(MainActivity.this, R.string.error_unmarking_nsfw, Toast.LENGTH_LONG).show();
-                        }
-                    });
+                    reddit.unmarkNsfw(link)
+                            .subscribe(new FinalizingSubscriber<String>() {
+                                @Override
+                                public void error(Throwable e) {
+                                    link.setOver18(true);
+                                    Toast.makeText(MainActivity.this, R.string.error_unmarking_nsfw, Toast.LENGTH_LONG).show();
+                                }
+                            });
                 }
 
                 if (getFragmentManager().findFragmentByTag(FragmentThreadList.TAG) != null) {
@@ -823,6 +876,21 @@ public class MainActivity extends YouTubeBaseActivity
             setAccount(accountUser);
         }
 
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        switch (requestCode) {
+            case REQUEST_PERMISSION_WRITE_EXTERNAL_STORAGE:
+                if (grantResults.length == 0 || grantResults[0] != PackageManager.PERMISSION_GRANTED) {
+                    Toast.makeText(this, R.string.need_permission_download_image, Toast.LENGTH_LONG).show();
+                }
+                else if (targetDownload != null){
+                    Reddit.loadPicasso(MainActivity.this)
+                            .load(targetDownload.getUrl())
+                            .into(targetDownload);
+                }
+        }
     }
 
     private void inflateNavigationDrawer() {
@@ -1070,7 +1138,7 @@ public class MainActivity extends YouTubeBaseActivity
 
         isDownloadingHeaderImage = true;
         linkHeader = link;
-        Reddit.loadPicasso(MainActivity.this).load(link.getUrl()).into(target);
+        Reddit.loadPicasso(MainActivity.this).load(link.getUrl()).into(targetHeader);
     }
 
     private String loadAndParseHeaderSubreddit() {
@@ -1158,51 +1226,19 @@ public class MainActivity extends YouTubeBaseActivity
     private void clearAccount() {
         accountUser = null;
         sharedPreferences.edit().putString(AppSettings.ACCOUNT_NAME, "").apply();
-        reddit.clearAccount()
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(new Observer() {
-                    @Override
-                    public void onCompleted() {
-                        getControllerUser().clearAccount();
-                        getControllerSearch().reloadSubscriptionList();
-                        loadAccountInfo();
-                    }
-
-                    @Override
-                    public void onError(Throwable e) {
-                        e.printStackTrace();
-                    }
-
-                    @Override
-                    public void onNext(Object o) {
-
-                    }
-                });
+        reddit.clearAccount();
+        getControllerUser().clearAccount();
+        getControllerSearch().reloadSubscriptionList();
+        loadAccountInfo();
     }
 
     private void setAccount(final Account account) {
         accountUser = account;
         sharedPreferences.edit().putString(AppSettings.ACCOUNT_NAME, account.name).apply();
-        reddit.setAccount(account)
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(new Observer() {
-                    @Override
-                    public void onCompleted() {
-                        getControllerUser().setAccount(account);
-                        getControllerSearch().reloadSubscriptionList();
-                        loadAccountInfo();
-                    }
-
-                    @Override
-                    public void onError(Throwable e) {
-                        e.printStackTrace();
-                    }
-
-                    @Override
-                    public void onNext(Object o) {
-
-                    }
-                });
+        reddit.setAccount(account);
+        getControllerUser().setAccount(account);
+        getControllerSearch().reloadSubscriptionList();
+        loadAccountInfo();
     }
 
     private void deleteAccount(final Account account) {

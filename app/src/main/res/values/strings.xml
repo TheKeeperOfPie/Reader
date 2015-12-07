@@ -238,7 +238,10 @@
     <string name="item_submit_post">Submit post</string>
     <string name="marked_read">All marked as read, may take time to update</string>
     <string name="recommended">Recommended</string>
+    <string name="error_deleting_post">Error deleting post</string>
     <string name="error_deleting_comment">Error deleting comment</string>
+    <string name="error_saving_post">Error saving post</string>
+    <string name="error_saving_comment">Error saving comment</string>
     <string name="item_mark_nsfw">Mark NSFW</string>
     <string name="error_marking_nsfw">Error marking NSFW</string>
     <string name="error_unmarking_nsfw">Error unmarking NSFW</string>
@@ -272,4 +275,5 @@
     <string name="item_new_message">Send message</string>
     <string name="message">Message</string>
     <string name="item_hide_youtube">Hide YouTube view</string>
+    <string name="need_permission_download_image">Need storage permission to download image</string>
 </resources>

@@ -463,7 +463,7 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
 
         }, new AdapterLink.ViewHolderHeader.EventListener() {
             @Override
-            public void onClickSubmit(String postType) {
+            public void onClickSubmit(Reddit.PostType postType) {
 
             }
 
@@ -550,7 +550,7 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
 
         }, new AdapterLink.ViewHolderHeader.EventListener() {
             @Override
-            public void onClickSubmit(String postType) {
+            public void onClickSubmit(Reddit.PostType postType) {
 
             }
 

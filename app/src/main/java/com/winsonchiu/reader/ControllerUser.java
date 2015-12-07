@@ -16,7 +16,7 @@ import com.winsonchiu.reader.data.reddit.User;
 
 import java.io.IOException;
 
-import rx.Subscriber;
+import rx.Observer;
 
 /**
  * Created by TheKeeperOfPie on 6/24/2015.
@@ -48,7 +48,7 @@ public class ControllerUser {
 
     public void reloadUser() {
         reddit.me()
-                .subscribe(new Subscriber<String>() {
+                .subscribe(new Observer<String>() {
                     @Override
                     public void onCompleted() {
 

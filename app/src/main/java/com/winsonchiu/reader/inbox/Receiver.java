@@ -23,11 +23,8 @@ import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.NotificationManagerCompat;
 import android.util.Log;
 
-import com.android.volley.AuthFailureError;
-import com.android.volley.Request;
-import com.android.volley.toolbox.RequestFuture;
-import com.android.volley.toolbox.StringRequest;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.squareup.okhttp.OkHttpClient;
 import com.winsonchiu.reader.AppSettings;
 import com.winsonchiu.reader.MainActivity;
 import com.winsonchiu.reader.R;
@@ -36,12 +33,10 @@ import com.winsonchiu.reader.data.reddit.Listing;
 import com.winsonchiu.reader.data.reddit.Message;
 import com.winsonchiu.reader.data.reddit.Reddit;
 import com.winsonchiu.reader.data.reddit.Thing;
+import com.winsonchiu.reader.utils.ObserverEmpty;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.ExecutionException;
 
 /**
  * Created by TheKeeperOfPie on 6/30/2015.
@@ -112,8 +107,9 @@ public class Receiver extends BroadcastReceiver {
             @Override
             public void run() {
 
+                OkHttpClient okHttpClient = new OkHttpClient();
                 Reddit reddit = Reddit.getInstance(context);
-                Listing messages = new Listing();
+                final Listing messages = new Listing();
                 AccountManager accountManager = AccountManager.get(context);
 
                 Account[] accounts = accountManager.getAccountsByType(Reddit.ACCOUNT_TYPE);
@@ -126,31 +122,23 @@ public class Receiver extends BroadcastReceiver {
                         Bundle bundle = futureAuth.getResult();
                         final String tokenAuth = bundle.getString(AccountManager.KEY_AUTHTOKEN);
 
-                        RequestFuture<String> requestFuture = RequestFuture.newFuture();
+                        com.squareup.okhttp.Request request = new com.squareup.okhttp.Request.Builder()
+                                .url(Reddit.OAUTH_URL + "/message/unread")
+                                .header(Reddit.USER_AGENT, Reddit.CUSTOM_USER_AGENT)
+                                .header(Reddit.AUTHORIZATION, Reddit.BEARER + tokenAuth)
+                                .header(Reddit.CONTENT_TYPE, Reddit.CONTENT_TYPE_APP_JSON)
+                                .get()
+                                .build();
 
-                        StringRequest getRequest = new StringRequest(Request.Method.GET, Reddit.OAUTH_URL + "/message/unread", requestFuture, requestFuture) {
-                            @Override
-                            public Map<String, String> getHeaders() throws AuthFailureError {
-                                HashMap<String, String> headers = new HashMap<>(3);
-                                headers.put(Reddit.USER_AGENT, Reddit.CUSTOM_USER_AGENT);
-                                headers.put(Reddit.AUTHORIZATION, Reddit.BEARER + tokenAuth);
-                                headers.put(Reddit.CONTENT_TYPE, Reddit.CONTENT_TYPE_APP_JSON);
-                                return headers;
-                            }
-                        };
-
-                        reddit.getRequestQueue().add(getRequest);
-
-                        String response = requestFuture.get();
-
-                        Log.d(TAG, account.name + " checkInbox response: " + response);
-
+                        String response = okHttpClient.newCall(request).execute().body().string();
                         Listing listing = Listing.fromJson(Reddit.getObjectMapper().readValue(response, JsonNode.class));
 
                         messages.addChildren(listing.getChildren());
 
+                        Log.d(TAG, account.name + " checkInbox response: " + response);
+
                     }
-                    catch (OperationCanceledException | AuthenticatorException | IOException | InterruptedException | ExecutionException e) {
+                    catch (OperationCanceledException | AuthenticatorException | IOException e) {
                         e.printStackTrace();
                     }
 
@@ -163,7 +151,8 @@ public class Receiver extends BroadcastReceiver {
                 for (int index = 0; index < messages.getChildren().size(); index++) {
                     thing = messages.getChildren().get(index);
                     if (readNames.contains(thing.getName())) {
-                        reddit.markRead(thing.getName());
+                        reddit.markRead(thing.getName())
+                                .subscribe(new ObserverEmpty<>());
                         thing = null;
                     }
                     else {

@@ -8,8 +8,6 @@ import android.app.Activity;
 import android.text.TextUtils;
 import android.widget.Toast;
 
-import com.android.volley.Response;
-import com.android.volley.VolleyError;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.winsonchiu.reader.ControllerUser;
 import com.winsonchiu.reader.R;
@@ -27,16 +25,15 @@ import com.winsonchiu.reader.data.reddit.Time;
 import com.winsonchiu.reader.data.reddit.User;
 import com.winsonchiu.reader.links.ControllerLinksBase;
 import com.winsonchiu.reader.utils.ControllerListener;
+import com.winsonchiu.reader.utils.FinalizingSubscriber;
 
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import rx.Observable;
-import rx.Subscriber;
+import rx.Observer;
 import rx.functions.Func1;
 
 /**
@@ -170,27 +167,21 @@ public class ControllerProfile implements ControllerLinksBase {
     public void reload() {
         reddit.user(user.getName(), page.getPage().toLowerCase(), sort.toString(), time.toString(), null, LIMIT)
                 .flatMap(Listing.FLAT_MAP)
-                .subscribe(new Subscriber<Listing>() {
+                .subscribe(new FinalizingSubscriber<Listing>() {
                     @Override
-                    public void onStart() {
+                    public void start() {
                         setLoading(true);
                     }
 
                     @Override
-                    public void onCompleted() {
-                        setLoading(false);
-                    }
-
-                    @Override
-                    public void onError(Throwable e) {
-                        e.printStackTrace();
+                    public void error(Throwable e) {
                         Toast.makeText(activity, activity.getString(R.string.error_loading),
                                 Toast.LENGTH_SHORT)
                                 .show();
                     }
 
                     @Override
-                    public void onNext(Listing listing) {
+                    public void next(Listing listing) {
                         setData(listing);
                         for (Listener listener : listeners) {
                             listener.setPage(page);
@@ -200,6 +191,11 @@ public class ControllerProfile implements ControllerLinksBase {
                                 PAGE_OVERVIEW)) {
                             loadTopEntries();
                         }
+                    }
+
+                    @Override
+                    public void finish() {
+                        setLoading(false);
                     }
                 });
     }
@@ -211,24 +207,14 @@ public class ControllerProfile implements ControllerLinksBase {
 
         reddit.user(user.getName(), page.getPage().toLowerCase(), sort.toString(), time.toString(), data.getAfter(), 15)
                 .flatMap(Listing.FLAT_MAP)
-                .subscribe(new Subscriber<Listing>() {
+                .subscribe(new FinalizingSubscriber<Listing>() {
                     @Override
-                    public void onStart() {
+                    public void start() {
                         setLoading(true);
                     }
 
                     @Override
-                    public void onCompleted() {
-                        setLoading(false);
-                    }
-
-                    @Override
-                    public void onError(Throwable e) {
-                        e.printStackTrace();
-                    }
-
-                    @Override
-                    public void onNext(Listing listing) {
+                    public void next(Listing listing) {
                         int startSize = data.getChildren().size();
                         int positionStart = startSize + 5;
 
@@ -242,6 +228,10 @@ public class ControllerProfile implements ControllerLinksBase {
                                             data.getChildren().size() - positionStart);
                             listener.setPage(page);
                         }
+                    }
+
+                    @Override
+                    public void finish() {
                         setLoading(false);
                     }
                 });
@@ -265,24 +255,14 @@ public class ControllerProfile implements ControllerLinksBase {
 
         reddit.user(user.getName(), PAGE_SUBMITTED.toLowerCase(), Sort.TOP.toString(), Time.ALL.toString(), null, 10)
                 .flatMap(Listing.FLAT_MAP)
-                .subscribe(new Subscriber<Listing>() {
+                .subscribe(new FinalizingSubscriber<Listing>() {
                     @Override
-                    public void onStart() {
+                    public void start() {
                         setLoading(true);
                     }
 
                     @Override
-                    public void onCompleted() {
-                        setLoading(false);
-                    }
-
-                    @Override
-                    public void onError(Throwable e) {
-
-                    }
-
-                    @Override
-                    public void onNext(Listing listing) {
+                    public void next(Listing listing) {
                         if (!listing.getChildren().isEmpty()) {
                             topLink = null;
                             for (Thing thing : listing.getChildren()) {
@@ -299,28 +279,23 @@ public class ControllerProfile implements ControllerLinksBase {
                             }
                         }
                     }
+
+                    @Override
+                    public void finish() {
+                        setLoading(false);
+                    }
                 });
 
         reddit.user(user.getName(), PAGE_COMMENTS.toLowerCase(), Sort.TOP.toString(), Time.ALL.toString(), null, 10)
                 .flatMap(Listing.FLAT_MAP)
-                .subscribe(new Subscriber<Listing>() {
+                .subscribe(new FinalizingSubscriber<Listing>() {
                     @Override
-                    public void onStart() {
+                    public void start() {
                         setLoading(true);
                     }
 
                     @Override
-                    public void onCompleted() {
-                        setLoading(false);
-                    }
-
-                    @Override
-                    public void onError(Throwable e) {
-
-                    }
-
-                    @Override
-                    public void onNext(Listing listing) {
+                    public void next(Listing listing) {
                         if (!listing.getChildren().isEmpty()) {
                             topComment = (Comment) listing.getChildren()
                                     .get(0);
@@ -332,6 +307,11 @@ public class ControllerProfile implements ControllerLinksBase {
                                         3, 2);
                             }
                         }
+                    }
+
+                    @Override
+                    public void finish() {
+                        setLoading(false);
                     }
                 });
     }
@@ -485,7 +465,13 @@ public class ControllerProfile implements ControllerLinksBase {
                     .notifyItemRemoved(index + 6);
         }
 
-        reddit.delete(link, null, null);
+        reddit.delete(link)
+                .subscribe(new FinalizingSubscriber<String>() {
+                    @Override
+                    public void error(Throwable e) {
+                        Toast.makeText(activity, R.string.error_deleting_post, Toast.LENGTH_LONG).show();
+                    }
+                });
 
         return true;
     }
@@ -499,7 +485,13 @@ public class ControllerProfile implements ControllerLinksBase {
 
         }
 
-        reddit.delete(comment, null, null);
+        reddit.delete(comment)
+                .subscribe(new FinalizingSubscriber<String>() {
+                    @Override
+                    public void error(Throwable e) {
+                        Toast.makeText(activity, R.string.error_deleting_comment, Toast.LENGTH_LONG).show();
+                    }
+                });
     }
 
     public boolean toggleComment(int position) {
@@ -510,14 +502,38 @@ public class ControllerProfile implements ControllerLinksBase {
     public void voteComment(final AdapterCommentList.ViewHolderComment viewHolder,
                             final Comment comment,
                             int vote) {
+        final int position = viewHolder.getAdapterPosition();
 
-        reddit.voteComment(viewHolder, comment, vote, new Reddit.VoteResponseListener() {
-            @Override
-            public void onVoteFailed() {
-                Toast.makeText(activity, activity.getString(R.string.error_voting), Toast.LENGTH_SHORT)
-                        .show();
-            }
-        });
+        final int oldVote = comment.getLikes();
+        int newVote = 0;
+
+        if (comment.getLikes() != vote) {
+            newVote = vote;
+        }
+
+        comment.setScore(comment.getScore() + newVote - comment.getLikes());
+        comment.setLikes(newVote);
+
+        if (position == viewHolder.getAdapterPosition()) {
+            viewHolder.setVoteColors();
+        }
+
+        final int finalNewVote = newVote;
+
+        reddit.voteComment(comment, newVote)
+                .subscribe(new FinalizingSubscriber<String>() {
+                    @Override
+                    public void error(Throwable e) {
+                        comment.setScore(comment.getScore() - finalNewVote);
+                        comment.setLikes(oldVote);
+                        if (position == viewHolder.getAdapterPosition()) {
+                            viewHolder.setVoteColors();
+                        }
+                        Toast.makeText(activity, activity.getString(R.string.error_voting),
+                                Toast.LENGTH_SHORT)
+                                .show();
+                    }
+                });
     }
 
     public void loadNestedComments(Comment moreComment) {
@@ -534,48 +550,59 @@ public class ControllerProfile implements ControllerLinksBase {
     }
 
     public void editComment(String name, final int level, String text) {
+        reddit.editUserText(name, text)
+                .flatMap(new Func1<String, Observable<Comment>>() {
+                    @Override
+                    public Observable<Comment> call(String response) {
+                        try {
+                            Comment comment = Comment.fromJson(Reddit.getObjectMapper()
+                                    .readValue(response, JsonNode.class)
+                                    .get("json")
+                                    .get("data")
+                                    .get("things")
+                                    .get(0), level);
 
-        Map<String, String> params = new HashMap<>();
-        params.put("api_type", "json");
-        params.put("text", text);
-        params.put("thing_id", name);
-
-        reddit.loadPost(Reddit.OAUTH_URL + "/api/editusertext", new Response.Listener<String>() {
-            @Override
-            public void onResponse(String response) {
-                try {
-                    Comment newComment = Comment.fromJson(Reddit.getObjectMapper().readValue(
-                            response, JsonNode.class).get("json").get("data").get("things").get(0), level);
-
-                    if (newComment.getName().equals(topComment.getName())) {
-                        topComment.setBodyHtml(newComment.getBodyHtml());
-                        topComment.setEdited(newComment.getEdited());
-                        for (Listener listener : listeners) {
-                            listener.getAdapter().notifyItemChanged(2);
+                            return Observable.just(comment);
                         }
-                    } else {
-                        int commentIndex = data.getChildren()
-                                .indexOf(newComment);
+                        catch (IOException e) {
+                            return Observable.error(e);
+                        }
+                    }
+                })
+                .subscribe(new Observer<Comment>() {
+                    @Override
+                    public void onCompleted() {
 
-                        if (commentIndex > -1) {
-                            Comment comment = (Comment) data.getChildren().get(commentIndex);
-                            comment.setBodyHtml(newComment.getBodyHtml());
-                            comment.setEdited(newComment.getEdited());
+                    }
+
+                    @Override
+                    public void onError(Throwable e) {
+
+                    }
+
+                    @Override
+                    public void onNext(Comment newComment) {
+                        if (newComment.getName().equals(topComment.getName())) {
+                            topComment.setBodyHtml(newComment.getBodyHtml());
+                            topComment.setEdited(newComment.getEdited());
                             for (Listener listener : listeners) {
-                                listener.getAdapter().notifyItemChanged(commentIndex + 6);
+                                listener.getAdapter().notifyItemChanged(2);
+                            }
+                        } else {
+                            int commentIndex = data.getChildren()
+                                    .indexOf(newComment);
+
+                            if (commentIndex > -1) {
+                                Comment comment = (Comment) data.getChildren().get(commentIndex);
+                                comment.setBodyHtml(newComment.getBodyHtml());
+                                comment.setEdited(newComment.getEdited());
+                                for (Listener listener : listeners) {
+                                    listener.getAdapter().notifyItemChanged(commentIndex + 6);
+                                }
                             }
                         }
                     }
-
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        }, new Response.ErrorListener() {
-            @Override
-            public void onErrorResponse(VolleyError error) {
-            }
-        }, params, 0);
+                });
     }
 
     public void setData(Listing data) {
@@ -602,27 +629,26 @@ public class ControllerProfile implements ControllerLinksBase {
                         }
                     }
                 })
-                .subscribe(new Subscriber<User>() {
+                .subscribe(new FinalizingSubscriber<User>() {
                     @Override
-                    public void onStart() {
+                    public void start() {
                         setLoading(true);
                     }
 
                     @Override
-                    public void onCompleted() {
-                        setLoading(false);
-                    }
-
-                    @Override
-                    public void onError(Throwable e) {
-                        e.printStackTrace();
+                    public void error(Throwable e) {
                         Toast.makeText(activity, activity.getString(R.string.error_loading), Toast.LENGTH_SHORT)
                                 .show();
                     }
 
                     @Override
-                    public void onNext(User user) {
+                    public void next(User user) {
                         setUser(user);
+                    }
+
+                    @Override
+                    public void finish() {
+                        setLoading(false);
                     }
                 });
     }
@@ -664,22 +690,30 @@ public class ControllerProfile implements ControllerLinksBase {
     }
 
     public void sendComment(String name, String text) {
-        reddit.sendComment(name, text, new Response.Listener<String>() {
-            @Override
-            public void onResponse(String response) {
-                try {
-                    Comment newComment = Comment.fromJson(
-                            Reddit.getObjectMapper().readValue(
-                                    response, JsonNode.class).get("json")
+        reddit.sendComment(name, text)
+                .flatMap(new Func1<String, Observable<Comment>>() {
+                    @Override
+                    public Observable<Comment> call(String response) {
+                        try {
+                            Comment comment = Comment.fromJson(Reddit.getObjectMapper()
+                                    .readValue(response, JsonNode.class).get("json")
                                     .get("data")
                                     .get("things")
                                     .get(0), 0);
-                    insertComment(newComment);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        }, null);
+
+                            return Observable.just(comment);
+                        }
+                        catch (IOException e) {
+                            return Observable.error(e);
+                        }
+                    }
+                })
+                .subscribe(new FinalizingSubscriber<Comment>() {
+                    @Override
+                    public void next(Comment next) {
+                        insertComment(next);
+                    }
+                });
     }
 
     public void add(int position, Link link) {

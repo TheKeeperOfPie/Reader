@@ -4,14 +4,13 @@
 
 package com.winsonchiu.reader.data.api;
 
-import com.squareup.okhttp.ResponseBody;
 import com.winsonchiu.reader.data.reddit.Reddit;
 
-import retrofit.Call;
 import retrofit.http.GET;
 import retrofit.http.POST;
 import retrofit.http.Path;
 import retrofit.http.Query;
+import retrofit.http.Url;
 import rx.Observable;
 
 /**
@@ -19,18 +18,18 @@ import rx.Observable;
  */
 public interface ApiRedditAuthorized {
 
-    @GET("{subreddit}about")
-    Observable<String> about(@Path(value = "subreddit", encoded = true) String pathSubreddit);
+    @GET
+    Observable<String> about(@Url String url);
 
     @GET("/api/info")
     Observable<String> info(@Query("id") String id);
 
-    @GET("{subreddit}{sort}?showAll=true")
-    Observable<String> links(@Path(value = "subreddit", encoded = true) String pathSubreddit,
-                               @Path(value = "sort", encoded = true) String sort,
-                               @Query("t") String time,
-                               @Query("limit") Integer limit,
-                               @Query("after") String after);
+    @GET
+    Observable<String> links(@Url String url,
+                             @Query("t") String time,
+                             @Query("limit") Integer limit,
+                             @Query("after") String after,
+                             @Query("show") String show);
 
     @GET("/r/{subreddit}/comments/{id}")
     Observable<String> comments(@Path("subreddit") String subreddit,
@@ -43,7 +42,8 @@ public interface ApiRedditAuthorized {
                                 @Query("depth") Integer depth,
                                 @Query("limit") Integer limit);
 
-    @POST("/api/morechildren?api_type=json")
+    @POST("/api/morechildren" +
+            "?api_type=json")
     Observable<String> moreChildren(@Query("link_id") String idLink,
                                     @Query("children") String children);
 
@@ -59,12 +59,14 @@ public interface ApiRedditAuthorized {
                             @Query("after") String after,
                             @Query("limit") Integer limit);
 
-    @GET("/subreddits/{page}?show=all")
+    @GET("/subreddits/{page}" +
+            "?show=all")
     Observable<String> subreddits(@Path("page") String page,
                                   @Query("after") String after,
                                   @Query("limit") Integer limit);
 
-    @GET("/subreddits/search?show=all")
+    @GET("/subreddits/search" +
+            "?show=all")
     Observable<String> subredditsSearch(@Query("q") String query,
                                         @Query("sort") String sort);
 
@@ -76,38 +78,39 @@ public interface ApiRedditAuthorized {
                               @Query("after") String after,
                               @Query("restrict_sr") Boolean restrictSubreddit);
 
-    @POST("/api/comment?api_type=json")
-    Call<ResponseBody> comment(@Query("thing_id") String id,
+    @POST("/api/comment" +
+            "?api_type=json")
+    Observable<String> comment(@Query("thing_id") String id,
                                @Query("text") String text);
 
     @POST("/api/vote")
-    Call vote(@Query(Reddit.QUERY_ID) String id,
+    Observable<String> vote(@Query("id") String id,
               @Query(Reddit.QUERY_VOTE) Integer vote);
 
     @POST("/api/del")
-    Call delete(@Query(Reddit.QUERY_ID) String id);
+    Observable<String> delete(@Query("id") String id);
 
     @POST("/api/save")
-    Call save(@Query(Reddit.QUERY_ID) String id,
+    Observable<String> save(@Query("id") String id,
               @Query(Reddit.QUERY_CATEGORY) String category);
 
     @POST("/api/unsave")
-    Call unsave(@Query(Reddit.QUERY_ID) String id);
+    Observable<String> unsave(@Query("id") String id);
 
     @POST("/api/hide")
-    Call hide(@Query(Reddit.QUERY_ID) String id);
+    Observable<String> hide(@Query("id") String id);
 
     @POST("/api/unhide")
-    Call unhide(@Query(Reddit.QUERY_ID) String id);
+    Observable<String> unhide(@Query("id") String id);
 
     @POST("/api/marknsfw")
-    Call markNsfw(@Query(Reddit.QUERY_ID) String id);
+    Observable<String> markNsfw(@Query("id") String id);
 
     @POST("/api/unmarknsfw")
-    Call unmarkNsfw(@Query(Reddit.QUERY_ID) String id);
+    Observable<String> unmarkNsfw(@Query("id") String id);
 
     @POST("/api/read_message")
-    Call markRead(@Query(Reddit.QUERY_ID) String id);
+    Observable<String> markRead(@Query("id") String id);
 
     @GET("/api/v1/me")
     Observable<String> me();
@@ -115,7 +118,51 @@ public interface ApiRedditAuthorized {
     @GET("/api/needs_captcha")
     Observable<String> needsCaptcha();
 
-    @POST("/api/new_captcha?api_type=json")
+    @POST("/api/new_captcha" +
+            "?api_type=json")
     Observable<String> newCaptcha();
+
+    @POST("/api/subscribe")
+    Observable<String> subscribe(@Query("action") String action,
+                                 @Query("sr") String subreddit);
+
+    @POST("/api/editusertext" +
+            "?api_type=json")
+    Observable<String> editUserText(@Query("thing_id") String id,
+                                   @Query("text") String text);
+
+    @POST("/api/read_all_messages")
+    Observable<String> readAllMessages();
+
+    @POST("/api/compose" +
+            "?api_type=json")
+    Observable<String> compose(@Query("subject") String subject,
+                               @Query("text") String text,
+                               @Query("to") String recipient,
+                               @Query("iden") String captchaId,
+                               @Query("captcha") String captchaText);
+
+    @POST("/api/submit" +
+            "?api_type=json&" +
+            "resubmit=true&" +
+            "sendreplies=true&" +
+            "then=comments&" +
+            "extension=json")
+    Observable<String> submit(@Query("kind") String kind,
+                              @Query("sr") String subreddit,
+                              @Query("title") String title,
+                              @Query("url") String url,
+                              @Query("text") String text,
+                              @Query("iden") String captchaId,
+                              @Query("captcha") String captchaText);
+
+    @POST("/api/report?api_type=json")
+    Observable<String> report(@Query("thing_id") String id,
+                              @Query("reason") String reason,
+                              @Query("other_reason") String otherReason);
+
+    @GET("/api/recommend/sr/{subreddit}")
+    Observable<String> recommend(@Path("subreddit") String subreddit,
+                                 @Query("omit") String omit);
 
 }

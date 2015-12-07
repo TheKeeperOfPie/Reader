@@ -39,8 +39,6 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.android.volley.Response;
-import com.android.volley.VolleyError;
 import com.github.rjeschke.txtmark.Processor;
 import com.winsonchiu.reader.data.reddit.Link;
 import com.winsonchiu.reader.data.reddit.Listing;
@@ -49,9 +47,6 @@ import com.winsonchiu.reader.utils.UtilsColor;
 
 import org.json.JSONException;
 import org.json.JSONObject;
-
-import java.util.HashMap;
-import java.util.Map;
 
 import rx.Observer;
 
@@ -86,11 +81,11 @@ public class FragmentNewPost extends FragmentBase implements Toolbar.OnMenuItemC
     private int editMarginWithActions;
 
     private RelativeLayout layoutCaptcha;
-    private String captchaId;
+    private String captcha;
     private ImageView imageCaptcha;
     private EditText editCaptcha;
     private ImageButton buttonCaptchaRefresh;
-    private String postType;
+    private Reddit.PostType postType;
 
     private FragmentListenerBase mListener;
     private Activity activity;
@@ -99,13 +94,13 @@ public class FragmentNewPost extends FragmentBase implements Toolbar.OnMenuItemC
     private ColorFilter colorFilterPrimary;
     private ColorFilter colorFilterIcon;
 
-    public static FragmentNewPost newInstance(String user, String subredditUrl, String postType, String submitTextHtml) {
+    public static FragmentNewPost newInstance(String user, String subredditUrl, Reddit.PostType postType, String submitTextHtml) {
         FragmentNewPost fragment = new FragmentNewPost();
         Bundle args = new Bundle();
         args.putString(USER, user);
         args.putString(SUBREDDIT, subredditUrl);
-        args.putString(POST_TYPE, postType);
         args.putString(SUBMIT_TEXT_HTML, submitTextHtml);
+        args.putSerializable(POST_TYPE, postType);
         fragment.setArguments(args);
         return fragment;
     }
@@ -128,7 +123,7 @@ public class FragmentNewPost extends FragmentBase implements Toolbar.OnMenuItemC
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        postType = getArguments().getString(POST_TYPE);
+        postType = (Reddit.PostType) getArguments().getSerializable(POST_TYPE);
     }
 
     @Override
@@ -189,7 +184,7 @@ public class FragmentNewPost extends FragmentBase implements Toolbar.OnMenuItemC
         }
         textSubmit.setMovementMethod(LinkMovementMethod.getInstance());
 
-        if (Reddit.POST_TYPE_LINK.equals(postType)) {
+        if (Reddit.PostType.LINK == postType) {
             editTextBody.setHint("URL");
         }
         else {
@@ -257,7 +252,7 @@ public class FragmentNewPost extends FragmentBase implements Toolbar.OnMenuItemC
 
             @Override
             public int getCount() {
-                if (Reddit.POST_TYPE_LINK.equals(postType)) {
+                if (Reddit.PostType.LINK == postType) {
                     tabLayout.setVisibility(View.GONE);
                     toolbarActions.setVisibility(View.GONE);
                     viewDivider.setVisibility(View.GONE);
@@ -298,7 +293,7 @@ public class FragmentNewPost extends FragmentBase implements Toolbar.OnMenuItemC
                                         Processor.process(editTextBody.getText().toString())));
                     }
                 }
-                if (Reddit.POST_TYPE_SELF.equals(postType)) {
+                if (Reddit.PostType.SELF == postType) {
                     itemHideActions.setVisible(position == PAGE_POST);
                 }
             }
@@ -418,11 +413,11 @@ public class FragmentNewPost extends FragmentBase implements Toolbar.OnMenuItemC
 
                         try {
                             JSONObject jsonObject = new JSONObject(response);
-                            captchaId = jsonObject.getJSONObject("json").getJSONObject("data").getString(
+                            captcha = jsonObject.getJSONObject("json").getJSONObject("data").getString(
                                     "iden");
-                            Log.d(TAG, "captchaId: " + captchaId);
+                            Log.d(TAG, "captcha: " + captcha);
                             Reddit.loadPicasso(activity)
-                                    .load(Reddit.BASE_URL + "/captcha/" + captchaId + ".png")
+                                    .load(Reddit.BASE_URL + "/captcha/" + captcha + ".png")
                                     .resize(getResources().getDisplayMetrics().widthPixels, 0).into(
                                     imageCaptcha);
                         }
@@ -463,41 +458,47 @@ public class FragmentNewPost extends FragmentBase implements Toolbar.OnMenuItemC
     }
 
     private void submitEdit() {
+        String id = getArguments().getString(EDIT_ID);
+        String text = editTextBody.getText().toString();
 
-        Map<String, String> params = new HashMap<>();
-        params.put("api_type", "json");
-        params.put("text", editTextBody.getText().toString());
-        params.put("thing_id", getArguments().getString(EDIT_ID));
+        reddit.editUserText(id, text)
+                .subscribe(new Observer<String>() {
+                    @Override
+                    public void onCompleted() {
 
-        reddit.loadPost(Reddit.OAUTH_URL + "/api/editusertext", new Response.Listener<String>() {
-            @Override
-            public void onResponse(String response) {
+                    }
 
-                InputMethodManager inputManager = (InputMethodManager) activity.getSystemService(
-                        Context.INPUT_METHOD_SERVICE);
-                inputManager.hideSoftInputFromWindow(editTextBody.getWindowToken(), 0);
-                mListener.getControllerLinks().reloadAllLinks(false);
-                mListener.onNavigationBackClick();
-            }
-        }, new Response.ErrorListener() {
-            @Override
-            public void onErrorResponse(VolleyError error) {
-                Toast.makeText(activity, getString(R.string.error_submitting_post),
-                        Toast.LENGTH_LONG)
-                        .show();
-            }
-        }, params, 0);
+                    @Override
+                    public void onError(Throwable e) {
+                        Toast.makeText(activity, getString(R.string.error_submitting_post),
+                                Toast.LENGTH_LONG)
+                                .show();
+                    }
+
+                    @Override
+                    public void onNext(String s) {
+                        InputMethodManager inputManager = (InputMethodManager) activity.getSystemService(
+                                Context.INPUT_METHOD_SERVICE);
+                        inputManager.hideSoftInputFromWindow(editTextBody.getWindowToken(), 0);
+                        mListener.getControllerLinks().reloadAllLinks(false);
+                        mListener.onNavigationBackClick();
+                    }
+                });
     }
 
     private void submitNew() {
+        String subreddit = getArguments().getString(SUBREDDIT);
+        String title = editTextTitle.getText().toString();
         String text = editTextBody.getText().toString();
+        String captchaId = TextUtils.isEmpty(captcha) ? null : captcha;
+        String captchaText = TextUtils.isEmpty(captcha) ? null : editCaptcha.getText().toString();
 
         if (TextUtils.isEmpty(editTextTitle.getText().toString())) {
             Toast.makeText(activity, getString(R.string.empty_title), Toast.LENGTH_LONG)
                     .show();
             return;
         }
-        else if (Reddit.POST_TYPE_LINK.equals(postType) && !URLUtil
+        else if (Reddit.PostType.LINK == postType && !URLUtil
                 .isValidUrl(text)) {
 
             text = "http://" + text;
@@ -509,71 +510,60 @@ public class FragmentNewPost extends FragmentBase implements Toolbar.OnMenuItemC
             }
         }
 
-        Map<String, String> params = new HashMap<>();
-        params.put("kind", postType.toLowerCase());
-        params.put("api_type", "json");
-        params.put("resubmit", "true");
-        params.put("sendreplies", "true");
-        params.put("then", "comments");
-        params.put("extension", "json");
-        params.put("sr", getArguments().getString(SUBREDDIT));
-        params.put("title", editTextTitle.getText().toString());
-        if (Reddit.POST_TYPE_LINK.equalsIgnoreCase(postType)) {
-            params.put("url", text);
-        }
-        else {
-            params.put("text", text);
-        }
-        if (layoutCaptcha.isShown()) {
-            params.put("iden", captchaId);
-            params.put("captcha", editCaptcha.getText().toString());
-        }
+        reddit.submit(postType,
+                subreddit,
+                title,
+                text,
+                captchaId,
+                captchaText)
+                .subscribe(new Observer<String>() {
+                    @Override
+                    public void onCompleted() {
 
-        reddit.loadPost(Reddit.OAUTH_URL + "/api/submit", new Response.Listener<String>() {
-            @Override
-            public void onResponse(String response) {
-                Log.d(TAG, "Submit new response: " + response);
+                    }
 
-                try {
-                    JSONObject jsonObject = new JSONObject(response).getJSONObject("json");
-                    String error = jsonObject.getJSONArray("errors").optString(
-                            0);
-                    if (!TextUtils.isEmpty(error)) {
+                    @Override
+                    public void onError(Throwable e) {
+                        Toast.makeText(activity, getString(R.string.error_submitting_post), Toast.LENGTH_LONG)
+                                .show();
+                    }
 
-                        String captcha = jsonObject.optString("captcha");
+                    @Override
+                    public void onNext(String response) {
+                        try {
+                            JSONObject jsonObject = new JSONObject(response).getJSONObject("json");
+                            String error = jsonObject.getJSONArray("errors").optString(
+                                    0);
+                            if (!TextUtils.isEmpty(error)) {
 
-                        if (!TextUtils.isEmpty(captcha)) {
-                            captchaId = captcha;
-                            editCaptcha.setText("");
-                            Reddit.loadPicasso(activity)
-                                    .load(Reddit.BASE_URL + "/captcha/" + captchaId + ".png")
-                                    .resize(getResources().getDisplayMetrics().widthPixels, 0).into(
-                                    imageCaptcha);
+                                String captcha = jsonObject.optString("captcha");
+
+                                if (!TextUtils.isEmpty(captcha)) {
+                                    FragmentNewPost.this.captcha = captcha;
+                                    editCaptcha.setText("");
+                                    Reddit.loadPicasso(activity)
+                                            .load(Reddit.BASE_URL + "/captcha/" + FragmentNewPost.this.captcha + ".png")
+                                            .resize(getResources().getDisplayMetrics().widthPixels, 0).into(
+                                            imageCaptcha);
+                                }
+
+                                Toast.makeText(activity, getString(R.string.error) + ": " + error, Toast.LENGTH_LONG)
+                                        .show();
+                                return;
+                            }
+                        }
+                        catch (JSONException e) {
+                            onError(e);
+                            return;
                         }
 
-                        Toast.makeText(activity, getString(R.string.error) + ": " + error, Toast.LENGTH_LONG)
-                                .show();
-                        return;
+                        InputMethodManager inputManager = (InputMethodManager) activity.getSystemService(
+                                Context.INPUT_METHOD_SERVICE);
+                        inputManager.hideSoftInputFromWindow(editTextBody.getWindowToken(), 0);
+                        mListener.getControllerLinks().reloadAllLinks(false);
+                        mListener.onNavigationBackClick();
                     }
-                }
-                catch (JSONException e) {
-                    e.printStackTrace();
-                }
-
-                InputMethodManager inputManager = (InputMethodManager) activity.getSystemService(
-                        Context.INPUT_METHOD_SERVICE);
-                inputManager.hideSoftInputFromWindow(editTextBody.getWindowToken(), 0);
-                mListener.getControllerLinks().reloadAllLinks(false);
-                mListener.onNavigationBackClick();
-
-            }
-        }, new Response.ErrorListener() {
-            @Override
-            public void onErrorResponse(VolleyError error) {
-                Toast.makeText(activity, getString(R.string.error_submitting_post), Toast.LENGTH_LONG)
-                        .show();
-            }
-        }, params, 0);
+                });
     }
 
     @Override
@@ -616,7 +606,7 @@ public class FragmentNewPost extends FragmentBase implements Toolbar.OnMenuItemC
                 }
             });
         }
-        else if (Reddit.POST_TYPE_SELF.equals(postType)) {
+        else if (Reddit.PostType.SELF == postType) {
             margin = editMarginWithActions;
             toolbarActions.setVisibility(View.VISIBLE);
             viewDivider.setVisibility(View.VISIBLE);
