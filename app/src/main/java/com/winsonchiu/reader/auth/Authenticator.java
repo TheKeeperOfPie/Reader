@@ -9,14 +9,21 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.util.Base64;
 import android.util.Log;
 
+import com.squareup.okhttp.FormEncodingBuilder;
+import com.squareup.okhttp.OkHttpClient;
+import com.squareup.okhttp.Request;
+import com.squareup.okhttp.RequestBody;
+import com.winsonchiu.reader.ApiKeys;
 import com.winsonchiu.reader.R;
 import com.winsonchiu.reader.data.reddit.Reddit;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.IOException;
 import java.util.concurrent.ExecutionException;
 
 /**
@@ -59,8 +66,6 @@ public class Authenticator extends AbstractAccountAuthenticator {
     @Override
     public Bundle getAuthToken(AccountAuthenticatorResponse response, Account account, String authTokenType, Bundle options) throws NetworkErrorException {
 
-        Log.d(TAG, "getAuthToken");
-
         AccountManager accountManager = AccountManager.get(context);
         String tokenAuth = accountManager.peekAuthToken(account, authTokenType);
         long timeExpire;
@@ -75,7 +80,24 @@ public class Authenticator extends AbstractAccountAuthenticator {
 
         if (TextUtils.isEmpty(tokenAuth)|| System.currentTimeMillis() > timeExpire) {
             try {
-                String responseNetwork = Reddit.getInstance(context).tokenAuthBlocking();
+                RequestBody requestBody = new FormEncodingBuilder()
+                        .add(Reddit.QUERY_GRANT_TYPE, Reddit.QUERY_REFRESH_TOKEN)
+                        .add(Reddit.QUERY_REFRESH_TOKEN, accountManager.getPassword(account))
+                        .build();
+
+                String credentials = ApiKeys.REDDIT_CLIENT_ID + ":";
+                String authorization = "Basic " + Base64.encodeToString(credentials.getBytes(),
+                        Base64.NO_WRAP);
+
+                Request request = new Request.Builder()
+                        .url(Reddit.ACCESS_URL)
+                        .header(Reddit.USER_AGENT, Reddit.CUSTOM_USER_AGENT)
+                        .header(Reddit.AUTHORIZATION, authorization)
+                        .header(Reddit.CONTENT_TYPE, Reddit.CONTENT_TYPE_APP_JSON)
+                        .post(requestBody)
+                        .build();
+                
+                String responseNetwork = new OkHttpClient().newCall(request).execute().body().string();
 
                 JSONObject jsonObject = new JSONObject(responseNetwork);
                 tokenAuth = jsonObject.getString(Reddit.QUERY_ACCESS_TOKEN);
@@ -87,11 +109,7 @@ public class Authenticator extends AbstractAccountAuthenticator {
                 }
                 accountManager.setUserData(account, ActivityLogin.KEY_TIME_EXPIRATION, String.valueOf(timeExpire));
             }
-            catch (InterruptedException | ExecutionException e) {
-                e.printStackTrace();
-                return null;
-            }
-            catch (JSONException e) {
+            catch (JSONException | IOException e) {
                 e.printStackTrace();
             }
 
@@ -103,6 +121,7 @@ public class Authenticator extends AbstractAccountAuthenticator {
             result.putString(AccountManager.KEY_ACCOUNT_TYPE, account.type);
             result.putString(AccountManager.KEY_AUTHTOKEN, tokenAuth);
             result.putLong(ActivityLogin.KEY_TIME_EXPIRATION, timeExpire);
+            Log.d(TAG, "getAuthToken() called with: " + "response = [" + response + "], account = [" + account + "], authTokenType = [" + authTokenType + "], options = [" + options + "]");
             return result;
         }
 
@@ -113,6 +132,7 @@ public class Authenticator extends AbstractAccountAuthenticator {
         Bundle bundle = new Bundle();
         bundle.putParcelable(AccountManager.KEY_INTENT, intent);
 
+        Log.d(TAG, "getAuthToken() called with: " + "response = [" + response + "], account = [" + account + "], authTokenType = [" + authTokenType + "], options = [" + options + "]");
         return bundle;
     }
 

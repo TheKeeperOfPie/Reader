@@ -116,6 +116,7 @@
     <string name="profile_page_saved">Saved</string>
     <string name="profile_page_gilded">Gilded</string>
     <string name="error_loading">Error loading</string>
+    <string name="error_logging_in">Error logging in</string>
     <string name="content_description_button_show_sidebar">Show sidebar</string>
     <string name="subscribe">Subscribe</string>
     <string name="unsubscribe">Unsubscribe</string>

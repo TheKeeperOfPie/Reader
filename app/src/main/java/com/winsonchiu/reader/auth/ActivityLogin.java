@@ -14,6 +14,7 @@ import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.v7.widget.Toolbar;
 import android.text.TextUtils;
+import android.util.Base64;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -30,6 +31,11 @@ import android.widget.RelativeLayout;
 import android.widget.Toast;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.squareup.okhttp.FormEncodingBuilder;
+import com.squareup.okhttp.OkHttpClient;
+import com.squareup.okhttp.Request;
+import com.squareup.okhttp.RequestBody;
+import com.winsonchiu.reader.ApiKeys;
 import com.winsonchiu.reader.AppSettings;
 import com.winsonchiu.reader.R;
 import com.winsonchiu.reader.Theme;
@@ -158,23 +164,32 @@ public class ActivityLogin extends AccountAuthenticatorActivity {
     }
 
     private void fetchTokens(String code) {
+        RequestBody requestBody = new FormEncodingBuilder()
+                .add(Reddit.QUERY_GRANT_TYPE, Reddit.CODE_GRANT)
+                .add(Reddit.QUERY_CODE, code)
+                .add(Reddit.QUERY_REDIRECT_URI, Reddit.REDIRECT_URI)
+                .build();
+
+        String credentials = ApiKeys.REDDIT_CLIENT_ID + ":";
+        String authorization = "Basic " + Base64.encodeToString(credentials.getBytes(),
+                Base64.NO_WRAP);
+
+        Request request = new Request.Builder()
+                .url(Reddit.ACCESS_URL)
+                .header(Reddit.USER_AGENT, Reddit.CUSTOM_USER_AGENT)
+                .header(Reddit.AUTHORIZATION, authorization)
+                .header(Reddit.CONTENT_TYPE, Reddit.CONTENT_TYPE_APP_JSON)
+                .post(requestBody)
+                .build();
+
         Reddit.getInstance(this)
-                .tokenAuth()
-                .flatMap(new Func1<String, Observable<JSONObject>>() {
+                .load(request)
+                .subscribe(new FinalizingSubscriber<String>() {
                     @Override
-                    public Observable<JSONObject> call(String response) {
+                    public void next(String response) {
                         try {
-                            return Observable.just(new JSONObject(response));
-                        }
-                        catch (JSONException e) {
-                            return Observable.error(e);
-                        }
-                    }
-                })
-                .subscribe(new FinalizingSubscriber<JSONObject>() {
-                    @Override
-                    public void next(JSONObject jsonObject) {
-                        try {
+                            JSONObject jsonObject = new JSONObject(response);
+
                             String tokenAccess = jsonObject.getString(Reddit.QUERY_ACCESS_TOKEN);
                             String tokenRefresh = jsonObject.getString(Reddit.QUERY_REFRESH_TOKEN);
                             long timeExpire = System.currentTimeMillis() + jsonObject.getLong(
@@ -183,16 +198,29 @@ public class ActivityLogin extends AccountAuthenticatorActivity {
                             Log.d(TAG, "timeExpire in: " + jsonObject.getLong(Reddit.QUERY_EXPIRES_IN));
 
                             loadAccountInfo(tokenAccess, tokenRefresh, timeExpire);
-                        } catch (JSONException e) {
-                            e.printStackTrace();
                         }
+                        catch (JSONException e) {
+                            onError(e);
+                        }
+                    }
+
+                    @Override
+                    public void error(Throwable e) {
+                        Toast.makeText(ActivityLogin.this, R.string.error_logging_in, Toast.LENGTH_LONG).show();
                     }
                 });
     }
 
     private void loadAccountInfo(final String tokenAuth, final String tokenRefresh, final long timeExpire) {
+        Request request = new Request.Builder()
+                .url(Reddit.OAUTH_URL + "/api/v1/me")
+                .header(Reddit.USER_AGENT, Reddit.CUSTOM_USER_AGENT)
+                .header(Reddit.AUTHORIZATION, Reddit.BEARER + tokenAuth)
+                .header(Reddit.CONTENT_TYPE, Reddit.CONTENT_TYPE_APP_JSON)
+                .get()
+                .build();
 
-        reddit.me()
+        reddit.load(request)
                 .flatMap(new Func1<String, Observable<User>>() {
                     @Override
                     public Observable<User> call(String response) {

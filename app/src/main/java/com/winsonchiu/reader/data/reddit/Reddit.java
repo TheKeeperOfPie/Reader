@@ -552,7 +552,7 @@ public class Reddit {
         return null;
     }
 
-    private Observable<String> load(final com.squareup.okhttp.Request request) {
+    public Observable<String> load(final com.squareup.okhttp.Request request) {
         return Observable.create(new Observable.OnSubscribe<String>() {
             @Override
             public void call(final Subscriber<? super String> subscriber) {
