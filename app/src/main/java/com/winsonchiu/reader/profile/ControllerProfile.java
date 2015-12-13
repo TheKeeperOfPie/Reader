@@ -10,8 +10,10 @@ import android.widget.Toast;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.winsonchiu.reader.ControllerUser;
+import com.winsonchiu.reader.CustomApplication;
 import com.winsonchiu.reader.R;
 import com.winsonchiu.reader.comments.AdapterCommentList;
+import com.winsonchiu.reader.dagger.components.ComponentStatic;
 import com.winsonchiu.reader.data.Page;
 import com.winsonchiu.reader.data.reddit.Comment;
 import com.winsonchiu.reader.data.reddit.Link;
@@ -31,6 +33,8 @@ import java.io.IOException;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
+import javax.inject.Inject;
 
 import rx.Observable;
 import rx.Observer;
@@ -62,7 +66,6 @@ public class ControllerProfile implements ControllerLinksBase {
     private ControllerUser controllerUser;
     private Set<Listener> listeners;
     private Listing data;
-    private Reddit reddit;
     private Link topLink;
     private Comment topComment;
     private User user;
@@ -71,7 +74,10 @@ public class ControllerProfile implements ControllerLinksBase {
     private Time time;
     private boolean isLoading;
 
+    @Inject Reddit reddit;
+
     public ControllerProfile(Activity activity) {
+        CustomApplication.getComponentMain().inject(this);
         setActivity(activity);
         data = new Listing();
         listeners = new HashSet<>();
@@ -85,7 +91,6 @@ public class ControllerProfile implements ControllerLinksBase {
 
     public void setActivity(Activity activity) {
         this.activity = activity;
-        this.reddit = Reddit.getInstance(activity);
     }
 
     public void addListener(Listener listener) {
@@ -334,8 +339,9 @@ public class ControllerProfile implements ControllerLinksBase {
     }
 
     @Override
-    public void loadMoreLinks() {
+    public Observable<Listing> loadMoreLinks() {
         // Not implemented
+        return Observable.empty();
     }
 
     @Override
@@ -450,12 +456,12 @@ public class ControllerProfile implements ControllerLinksBase {
     }
 
 
-    public boolean deletePost(Link link) {
+    public Observable<String> deletePost(Link link) {
         int index = data.getChildren()
                 .indexOf(link);
 
         if (index < 0) {
-            return false;
+            return Observable.empty();
         }
 
         data.getChildren()
@@ -465,15 +471,7 @@ public class ControllerProfile implements ControllerLinksBase {
                     .notifyItemRemoved(index + 6);
         }
 
-        reddit.delete(link)
-                .subscribe(new FinalizingSubscriber<String>() {
-                    @Override
-                    public void error(Throwable e) {
-                        Toast.makeText(activity, R.string.error_deleting_post, Toast.LENGTH_LONG).show();
-                    }
-                });
-
-        return true;
+        return reddit.delete(link);
     }
 
     public void deleteComment(Comment comment) {
@@ -555,7 +553,7 @@ public class ControllerProfile implements ControllerLinksBase {
                     @Override
                     public Observable<Comment> call(String response) {
                         try {
-                            Comment comment = Comment.fromJson(Reddit.getObjectMapper()
+                            Comment comment = Comment.fromJson(ComponentStatic.getObjectMapper()
                                     .readValue(response, JsonNode.class)
                                     .get("json")
                                     .get("data")
@@ -622,7 +620,7 @@ public class ControllerProfile implements ControllerLinksBase {
                     @Override
                     public Observable<User> call(String response) {
                         try {
-                            return Observable.just(User.fromJson(Reddit.getObjectMapper().readValue(
+                            return Observable.just(User.fromJson(ComponentStatic.getObjectMapper().readValue(
                                     response, JsonNode.class).get("data")));
                         } catch (IOException e) {
                             return Observable.error(e);
@@ -695,7 +693,7 @@ public class ControllerProfile implements ControllerLinksBase {
                     @Override
                     public Observable<Comment> call(String response) {
                         try {
-                            Comment comment = Comment.fromJson(Reddit.getObjectMapper()
+                            Comment comment = Comment.fromJson(ComponentStatic.getObjectMapper()
                                     .readValue(response, JsonNode.class).get("json")
                                     .get("data")
                                     .get("things")

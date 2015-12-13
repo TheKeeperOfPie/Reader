@@ -3,107 +3,100 @@
   ~ Copyright 2015 Winson Chiu
   -->
 
-<com.winsonchiu.reader.views.CustomRelativeLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<com.winsonchiu.reader.views.CustomRelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/layout_header_navigation"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:background="?attr/colorPrimary"
+    tools:background="@color/colorPrimary"
     >
 
-    <RelativeLayout
-        xmlns:android="http://schemas.android.com/apk/res/android"
+    <com.winsonchiu.reader.views.ScrollViewHeader
+        android:id="@+id/scroll_header_vertical"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="?attr/selectableItemBackgroundBorderless"
+        android:layout_height="match_parent"
+        android:scrollbars="vertical"
+        android:scrollbarSize="4dp"
         >
 
-        <com.winsonchiu.reader.views.ScrollViewHeader
-            android:id="@+id/scroll_header_vertical"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:scrollbars="vertical"
+        <HorizontalScrollView
+            android:id="@+id/scroll_header_horizontal"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:scrollbars="horizontal"
             android:scrollbarSize="4dp"
             >
 
-            <HorizontalScrollView
-                android:id="@+id/scroll_header_horizontal"
+            <ImageView
+                android:id="@+id/image_nav_header"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:scrollbars="horizontal"
-                android:scrollbarSize="4dp"
-                >
+                android:contentDescription="@string/content_description_image_navigation_header"
+                android:adjustViewBounds="true"
+                android:clickable="true"
+                android:background="?attr/colorPrimary"
+                />
 
-                <ImageView
-                    android:id="@+id/image_nav_header"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:contentDescription="@string/content_description_image_navigation_header"
-                    android:adjustViewBounds="true"
-                    android:clickable="true"
-                    android:background="?attr/colorPrimary"
-                    />
+        </HorizontalScrollView>
 
-            </HorizontalScrollView>
+    </com.winsonchiu.reader.views.ScrollViewHeader>
 
-        </com.winsonchiu.reader.views.ScrollViewHeader>
+    <TextView
+        android:id="@+id/text_account_name"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_above="@+id/text_account_info"
+        android:layout_alignParentStart="true"
+        android:layout_toStartOf="@+id/button_accounts"
+        android:paddingStart="@dimen/activity_horizontal_margin"
+        android:paddingEnd="@dimen/activity_horizontal_margin"
+        android:textSize="14sp"
+        android:textStyle="bold"
+        android:textColor="@android:color/white"
+        android:textAlignment="viewStart"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        />
 
-        <TextView
-            android:id="@+id/text_account_name"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_above="@+id/text_account_info"
-            android:layout_alignParentStart="true"
-            android:layout_toStartOf="@+id/button_accounts"
-            android:paddingStart="@dimen/activity_horizontal_margin"
-            android:paddingEnd="@dimen/activity_horizontal_margin"
-            android:textSize="14sp"
-            android:textStyle="bold"
-            android:clickable="false"
-            android:textColor="@android:color/white"
-            android:textAlignment="viewStart"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            />
+    <TextView
+        android:id="@+id/text_account_info"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentStart="true"
+        android:layout_alignBottom="@id/scroll_header_vertical"
+        android:paddingStart="@dimen/activity_horizontal_margin"
+        android:paddingEnd="@dimen/activity_horizontal_margin"
+        android:paddingBottom="16dp"
+        android:layout_toStartOf="@+id/button_accounts"
+        android:textSize="14sp"
+        android:textColor="@android:color/white"
+        android:textAlignment="viewStart"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        />
 
-        <TextView
-            android:id="@+id/text_account_info"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_alignBottom="@id/scroll_header_vertical"
-            android:layout_alignParentStart="true"
-            android:paddingStart="@dimen/activity_horizontal_margin"
-            android:paddingEnd="@dimen/activity_horizontal_margin"
-            android:paddingBottom="16dp"
-            android:layout_toStartOf="@+id/button_accounts"
-            android:textSize="14sp"
-            android:clickable="false"
-            android:textColor="@android:color/white"
-            android:textAlignment="viewStart"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            />
+    <ImageButton
+        android:id="@+id/button_accounts"
+        android:layout_width="56dp"
+        android:layout_height="56dp"
+        android:layout_alignParentEnd="true"
+        android:layout_alignBottom="@id/scroll_header_vertical"
+        android:layout_marginEnd="@dimen/activity_horizontal_margin"
+        android:padding="16dp"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:src="@drawable/ic_arrow_drop_up_white_24dp"
+        />
 
-        <ImageButton
-            android:id="@+id/button_accounts"
-            android:layout_width="56dp"
-            android:layout_height="56dp"
-            android:layout_alignBottom="@id/scroll_header_vertical"
-            android:layout_alignParentEnd="true"
-            android:layout_marginEnd="@dimen/activity_horizontal_margin"
-            android:padding="16dp"
-            android:background="@drawable/circular_shadow"
-            android:src="@drawable/ic_arrow_drop_up_white_24dp"
-            />
-
-        <LinearLayout
-            android:id="@+id/layout_accounts"
-            android:orientation="vertical"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_below="@id/text_account_info"
-            android:animateLayoutChanges="true"
-            android:visibility="gone"
-            />
-
-    </RelativeLayout>
+    <LinearLayout
+        android:id="@+id/layout_accounts"
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/text_account_info"
+        android:animateLayoutChanges="true"
+        android:visibility="gone"
+        tools:visibility="visible"
+        tools:layout_height="320dp"
+        tools:background="@color/colorPrimaryDark"
+        />
 
 </com.winsonchiu.reader.views.CustomRelativeLayout>

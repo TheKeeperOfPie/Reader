@@ -16,7 +16,9 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.winsonchiu.reader.AppSettings;
 import com.winsonchiu.reader.ControllerUser;
+import com.winsonchiu.reader.CustomApplication;
 import com.winsonchiu.reader.R;
+import com.winsonchiu.reader.dagger.components.ComponentStatic;
 import com.winsonchiu.reader.data.reddit.Link;
 import com.winsonchiu.reader.data.reddit.Listing;
 import com.winsonchiu.reader.data.reddit.Reddit;
@@ -46,6 +48,8 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.Set;
 
+import javax.inject.Inject;
+
 import rx.Observable;
 import rx.Observer;
 import rx.Subscription;
@@ -68,7 +72,6 @@ public class ControllerSearch {
     private Set<Listener> listeners = new HashSet<>();
     private Activity activity;
     private SharedPreferences preferences;
-    private Reddit reddit;
     private AccountManager accountManager;
     private Listing subredditsLoaded = new Listing();
     private Listing subredditsSubscribed = new Listing();
@@ -90,13 +93,15 @@ public class ControllerSearch {
     private List<Subscription> subscriptionsSubredditsRecommended = new ArrayList<>();
     private String currentSubreddit;
 
+    @Inject Reddit reddit;
+
     public ControllerSearch(Activity activity) {
+        CustomApplication.getComponentMain().inject(this);
         setActivity(activity);
     }
 
     public void setActivity(Activity activity) {
         this.activity = activity;
-        this.reddit = Reddit.getInstance(activity);
         this.preferences = PreferenceManager.getDefaultSharedPreferences(
                 activity.getApplicationContext());
         this.accountManager = AccountManager.get(activity.getApplicationContext());
@@ -148,7 +153,7 @@ public class ControllerSearch {
         if (!TextUtils.isEmpty(subscriptionsJson)) {
 
             try {
-                JsonNode jsonNode = Reddit.getObjectMapper().readValue(subscriptionsJson, JsonNode.class);
+                JsonNode jsonNode = ComponentStatic.getObjectMapper().readValue(subscriptionsJson, JsonNode.class);
 
                 for (JsonNode node : jsonNode) {
                     listing.getChildren().add(Subreddit.fromJson(node));
@@ -169,16 +174,16 @@ public class ControllerSearch {
             }
         }
 
-        String page;
+        String url;
 
         if (controllerUser.hasUser()) {
-            page = "mine/subscriber";
+            url = Reddit.OAUTH_URL + "/subreddits/mine/subscriber";
         }
         else {
-            page = "default";
+            url = Reddit.OAUTH_URL + "/subreddits/default";
         }
 
-        reddit.subreddits(page, null, 100)
+        reddit.subreddits(url, null, 100)
                 .flatMap(Listing.FLAT_MAP)
                 .subscribe(new Observer<Listing>() {
                     @Override
@@ -206,16 +211,16 @@ public class ControllerSearch {
     }
 
     private void loadMoreSubscriptions() {
-        String page;
+        String url;
 
-        if (TextUtils.isEmpty(controllerUser.getUser().getName())) {
-            page = "default";
+        if (controllerUser.hasUser()) {
+            url = Reddit.OAUTH_URL + "/subreddits/mine/subscriber";
         }
         else {
-            page = "mine/subscriber";
+            url = Reddit.OAUTH_URL + "/subreddits/default";
         }
 
-        reddit.subreddits(page, subredditsLoaded.getAfter(), 100)
+        reddit.subreddits(url, subredditsLoaded.getAfter(), 100)
                 .flatMap(Listing.FLAT_MAP)
                 .subscribe(new Observer<Listing>() {
                     @Override
@@ -283,7 +288,7 @@ public class ControllerSearch {
         String data;
 
         try {
-            data = Reddit.getObjectMapper().writeValueAsString(subredditsSubscribed.getChildren());
+            data = ComponentStatic.getObjectMapper().writeValueAsString(subredditsSubscribed.getChildren());
 
         }
         catch (JsonProcessingException e) {
@@ -308,7 +313,9 @@ public class ControllerSearch {
             return;
         }
 
-        reddit.subreddits("mine/contributor", null, 100)
+        String url = Reddit.OAUTH_URL + "/subreddits/mine/contributor";
+
+        reddit.subreddits(url, null, 100)
                 .flatMap(Listing.FLAT_MAP)
                 .subscribe(new Observer<Listing>() {
                     @Override
@@ -336,7 +343,9 @@ public class ControllerSearch {
     }
 
     private void loadMoreContributorSubreddits() {
-        reddit.subreddits("mine/contributor", subredditsLoaded.getAfter(), 100)
+        String url = Reddit.OAUTH_URL + "/subreddits/mine/contributor";
+
+        reddit.subreddits(url, subredditsLoaded.getAfter(), 100)
                 .flatMap(Listing.FLAT_MAP)
                 .subscribe(new Observer<Listing>() {
                     @Override
@@ -522,7 +531,7 @@ public class ControllerSearch {
                                     public Observable<Subreddit> call(String response) {
                                         try {
                                             return Observable.just(Subreddit
-                                                    .fromJson(Reddit.getObjectMapper().readValue(
+                                                    .fromJson(ComponentStatic.getObjectMapper().readValue(
                                                             response, JsonNode.class)));
                                         }
                                         catch (IOException e) {
@@ -694,9 +703,9 @@ public class ControllerSearch {
         return isLoadingLinks;
     }
 
-    public void loadMoreLinks() {
+    public Observable<Listing> loadMoreLinks() {
         if (isLoadingLinks()) {
-            return;
+            return Observable.empty();
         }
 
         if (subscriptionLinks != null && !subscriptionLinks.isUnsubscribed()) {
@@ -710,9 +719,10 @@ public class ControllerSearch {
                 sortString = Sort.HOT.name();
             }
 
-            subscriptionLinks = reddit.search("", URLEncoder.encode(query, Reddit.UTF_8), sortString, time.toString(), links.getAfter(), false)
-                    .flatMap(Listing.FLAT_MAP)
-                    .subscribe(new FinalizingSubscriber<Listing>() {
+            Observable<Listing> observable = reddit.search("", URLEncoder.encode(query, Reddit.UTF_8), sortString, time.toString(), links.getAfter(), false)
+                    .flatMap(Listing.FLAT_MAP);
+
+            subscriptionLinks = observable.subscribe(new FinalizingSubscriber<Listing>() {
                         @Override
                         public void start() {
                             setLoadingLinks(true);
@@ -741,10 +751,13 @@ public class ControllerSearch {
                             setLoadingLinks(false);
                         }
                     });
+
+            return observable;
         }
         catch (UnsupportedEncodingException e) {
             e.printStackTrace();
             setLoadingLinks(false);
+            return Observable.error(e);
         }
     }
 
@@ -764,9 +777,9 @@ public class ControllerSearch {
         return isLoadingLinksSubreddit;
     }
 
-    public void loadMoreLinksSubreddit() {
+    public Observable<Listing> loadMoreLinksSubreddit() {
         if (isLoadingLinksSubreddit()) {
-            return;
+            return Observable.empty();
         }
         setLoadingLinksSubreddit(true);
 
@@ -783,9 +796,10 @@ public class ControllerSearch {
         }
 
         try {
-            subscriptionLinksSubreddit = reddit.search(pathSubreddit, URLEncoder.encode(query, Reddit.UTF_8), sort.toString(), time.toString(), linksSubreddit.getAfter(), true)
-                    .flatMap(Listing.FLAT_MAP)
-                    .subscribe(new FinalizingSubscriber<Listing>() {
+            Observable<Listing> observable = reddit.search(pathSubreddit, URLEncoder.encode(query, Reddit.UTF_8), sort.toString(), time.toString(), linksSubreddit.getAfter(), true)
+                    .flatMap(Listing.FLAT_MAP);
+
+            subscriptionLinksSubreddit = observable.subscribe(new FinalizingSubscriber<Listing>() {
                         @Override
                         public void start() {
                             setLoadingLinksSubreddit(true);
@@ -817,10 +831,13 @@ public class ControllerSearch {
                             setLoadingLinksSubreddit(false);
                         }
                     });
+
+            return observable;
         }
         catch (UnsupportedEncodingException e) {
             e.printStackTrace();
             setLoadingLinksSubreddit(false);
+            return Observable.error(e);
         }
     }
 

@@ -35,6 +35,7 @@ import android.widget.TextView;
 import com.github.rjeschke.txtmark.Processor;
 import com.winsonchiu.reader.FragmentBase;
 import com.winsonchiu.reader.FragmentListenerBase;
+import com.winsonchiu.reader.MainActivity;
 import com.winsonchiu.reader.R;
 import com.winsonchiu.reader.data.reddit.Comment;
 import com.winsonchiu.reader.data.reddit.Reddit;
@@ -42,10 +43,13 @@ import com.winsonchiu.reader.data.reddit.Replyable;
 import com.winsonchiu.reader.data.reddit.Thing;
 import com.winsonchiu.reader.history.FragmentHistory;
 import com.winsonchiu.reader.inbox.FragmentInbox;
+import com.winsonchiu.reader.links.ControllerLinks;
 import com.winsonchiu.reader.links.FragmentThreadList;
 import com.winsonchiu.reader.profile.FragmentProfile;
 import com.winsonchiu.reader.search.FragmentSearch;
 import com.winsonchiu.reader.utils.UtilsColor;
+
+import javax.inject.Inject;
 
 public class FragmentReply extends FragmentBase implements Toolbar.OnMenuItemClickListener {
 
@@ -86,6 +90,8 @@ public class FragmentReply extends FragmentBase implements Toolbar.OnMenuItemCli
     private ColorFilter colorFilterIcon;
     private boolean isFinished;
 
+    @Inject ControllerLinks controllerLinks;
+
     public static FragmentReply newInstance(Replyable replyable) {
         FragmentReply fragment = new FragmentReply();
         Bundle args = new Bundle();
@@ -115,6 +121,8 @@ public class FragmentReply extends FragmentBase implements Toolbar.OnMenuItemCli
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
             Bundle savedInstanceState) {
+        ((MainActivity) activity).getComponentActivity().inject(this);
+
         final View view =  inflater.inflate(R.layout.fragment_reply, container, false);
 
         layoutCoordinator = (CoordinatorLayout) view.findViewById(R.id.layout_coordinator);
@@ -137,7 +145,7 @@ public class FragmentReply extends FragmentBase implements Toolbar.OnMenuItemCli
         setUpToolbar();
 
         textAuthor = (TextView) view.findViewById(R.id.text_author);
-        textAuthor.setText(getString(R.string.replying_from) + " " + mListener.getControllerUser().getUser().getName());
+        textAuthor.setText(getString(R.string.replying_from, mListener.getControllerUser().getUser().getName()));
 
         scrollText = (NestedScrollView) view.findViewById(R.id.scroll_text);
 
@@ -423,7 +431,7 @@ public class FragmentReply extends FragmentBase implements Toolbar.OnMenuItemCli
 
         // TODO: This is far too expensive to set the reply text
         if (getFragmentManager().findFragmentByTag(FragmentThreadList.TAG) != null) {
-            mListener.getControllerLinks().setReplyText(nameParent, text, collapsed);
+            controllerLinks.setReplyText(nameParent, text, collapsed);
         }
         if (getFragmentManager().findFragmentByTag(FragmentComments.TAG) != null) {
             mListener.getControllerComments().setReplyText(nameParent, text, collapsed);

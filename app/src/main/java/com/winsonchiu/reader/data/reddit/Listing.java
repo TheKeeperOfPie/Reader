@@ -5,6 +5,7 @@
 package com.winsonchiu.reader.data.reddit;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.winsonchiu.reader.dagger.components.ComponentStatic;
 import com.winsonchiu.reader.utils.UtilsJson;
 
 import java.io.IOException;
@@ -127,7 +128,7 @@ public class Listing {
         @Override
         public Observable<Listing> call(String response) {
             try {
-                return Observable.just(Listing.fromJson(Reddit.getObjectMapper().readValue(
+                return Observable.just(Listing.fromJson(ComponentStatic.getObjectMapper().readValue(
                         response, JsonNode.class)));
             }
             catch (IOException e) {

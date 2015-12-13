@@ -10,7 +10,6 @@ import com.winsonchiu.reader.data.reddit.Reddit;
 import com.winsonchiu.reader.history.ControllerHistory;
 import com.winsonchiu.reader.inbox.ControllerInbox;
 import com.winsonchiu.reader.links.AdapterLink;
-import com.winsonchiu.reader.links.ControllerLinks;
 import com.winsonchiu.reader.profile.ControllerProfile;
 import com.winsonchiu.reader.search.ControllerSearch;
 
@@ -20,7 +19,6 @@ import com.winsonchiu.reader.search.ControllerSearch;
 public interface FragmentListenerBase {
     void onNavigationBackClick();
     void openDrawer();
-    ControllerLinks getControllerLinks();
     ControllerInbox getControllerInbox();
     ControllerComments getControllerComments();
     ControllerProfile getControllerProfile();

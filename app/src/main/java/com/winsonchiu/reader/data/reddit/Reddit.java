@@ -25,13 +25,13 @@ import android.view.MenuItem;
 import android.webkit.URLUtil;
 import android.widget.EditText;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.squareup.okhttp.Authenticator;
 import com.squareup.okhttp.Callback;
 import com.squareup.okhttp.FormEncodingBuilder;
 import com.squareup.okhttp.Interceptor;
 import com.squareup.okhttp.OkHttpClient;
+import com.squareup.okhttp.Request;
 import com.squareup.okhttp.RequestBody;
 import com.squareup.okhttp.logging.HttpLoggingInterceptor;
 import com.squareup.picasso.OkHttpDownloader;
@@ -59,6 +59,7 @@ import retrofit.RxJavaCallAdapterFactory;
 import rx.Observable;
 import rx.Subscriber;
 import rx.android.schedulers.AndroidSchedulers;
+import rx.functions.Action1;
 import rx.schedulers.Schedulers;
 
 /**
@@ -181,7 +182,6 @@ public class Reddit {
 
     public static final Transformer TRANSFORMER = new Transformer();
 
-    private static Reddit reddit;
     private final OkHttpClient okHttpClientAuthorized;
     private final OkHttpClient okHttpClientDefault;
     private ApiRedditAuthorized apiRedditAuthorized;
@@ -211,22 +211,19 @@ public class Reddit {
 //        return Glide.with(context);
 //    }
 
-    public static ObjectMapper getObjectMapper() {
-        if (objectMapper == null) {
-            objectMapper = new ObjectMapper();
-            objectMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
-        }
+//    public static ObjectMapper getObjectMapper() {
+//        if (objectMapper == null) {
+//            objectMapper = new ObjectMapper();
+//            objectMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
+//        }
+//        return objectMapper;
+//    }
+
+    public ObjectMapper getObjectMapper() {
         return objectMapper;
     }
 
-    public static Reddit getInstance(Context context) {
-        if (reddit == null) {
-            reddit = new Reddit(context);
-        }
-        return reddit;
-    }
-
-    private Reddit(Context context) {
+    public Reddit(Context context) {
         preferences = PreferenceManager.getDefaultSharedPreferences(
                 context.getApplicationContext());
         accountManager = AccountManager.get(context.getApplicationContext());
@@ -250,6 +247,9 @@ public class Reddit {
             @Override
             public com.squareup.okhttp.Request authenticate(Proxy proxy, com.squareup.okhttp.Response response) throws IOException {
                 getTokenBlocking();
+
+                Log.d(TAG, "authenticate() called with: " + "proxy = [" + proxy + "], response = [" + response + "]");
+                Log.d(TAG, "authenticate() auth: " + getAuthorizationHeader());
 
                 return response.request().newBuilder()
                         .header(AUTHORIZATION, getAuthorizationHeader())
@@ -308,10 +308,11 @@ public class Reddit {
 
     public void clearAccount() {
         account = null;
+        tokenAuth = null;
     }
 
     public void setAccount(Account accountUser) {
-        account = null;
+        clearAccount();
         Account[] accounts = accountManager.getAccountsByType(Reddit.ACCOUNT_TYPE);
         for (Account account : accounts) {
             if (account.name.equals(accountUser.name)) {
@@ -321,9 +322,19 @@ public class Reddit {
         }
     }
 
+    public static Request.Builder withRequestBasicAuth() {
+        String credentials = ApiKeys.REDDIT_CLIENT_ID + ":";
+        String authorization = "Basic " + Base64.encodeToString(credentials.getBytes(),
+                Base64.NO_WRAP);
+
+        return new Request.Builder()
+                .header(Reddit.USER_AGENT, Reddit.CUSTOM_USER_AGENT)
+                .header(Reddit.AUTHORIZATION, authorization)
+                .header(Reddit.CONTENT_TYPE, Reddit.CONTENT_TYPE_APP_JSON);
+    }
+
     public boolean needsToken() {
-        return true;
-//        return System.currentTimeMillis() > timeExpire || TextUtils.isEmpty(tokenAuth);
+        return System.currentTimeMillis() > timeExpire || TextUtils.isEmpty(tokenAuth);
     }
 
     public static String getUserAuthUrl(String state) {
@@ -337,6 +348,8 @@ public class Reddit {
             return;
         }
 
+        String token = accountManager.peekAuthToken(account, Reddit.AUTH_TOKEN_FULL_ACCESS);
+        accountManager.invalidateAuthToken(Reddit.ACCOUNT_TYPE, token);
         accountManager.invalidateAuthToken(Reddit.ACCOUNT_TYPE, tokenAuth);
         final AccountManagerFuture<Bundle> future = accountManager.getAuthToken(account, Reddit.AUTH_TOKEN_FULL_ACCESS, null, true, null, null);
 
@@ -455,8 +468,16 @@ public class Reddit {
                 .compose(TRANSFORMER);
     }
 
-    public Observable<String> subreddits(String page, String after, Integer limit) {
-        return apiRedditAuthorized.subreddits(page, after, limit)
+    public Observable<String> subreddits(final String url, final String after, final Integer limit) {
+        return apiRedditAuthorized.subreddits(url, after, limit, "all")
+                .doOnNext(new Action1<String>() {
+                    @Override
+                    public void call(String s) {
+                        Log.d(TAG, "subreddits() call tokenAuth: " + tokenAuth);
+                        Log.d(TAG, "subreddits() called with: " + "url = [" + url + "], after = [" + after + "], limit = [" + limit + "]");;
+                        Log.d(TAG, "subreddits() call() called with: " + "s = [" + s + "]");
+                    }
+                })
                 .compose(TRANSFORMER);
     }
 
@@ -626,14 +647,8 @@ public class Reddit {
                 .add(QUERY_REFRESH_TOKEN, accountManager.getPassword(account))
                 .build();
 
-        String credentials = ApiKeys.REDDIT_CLIENT_ID + ":";
-        String auth = "Basic " + Base64.encodeToString(credentials.getBytes(),
-                Base64.DEFAULT);
-        com.squareup.okhttp.Request request = new com.squareup.okhttp.Request.Builder()
-                .url(ACCESS_URL)
-                .header(USER_AGENT, CUSTOM_USER_AGENT)
-                .header(AUTHORIZATION, auth)
-                .header(CONTENT_TYPE, CONTENT_TYPE_APP_JSON)
+        Request request = Reddit.withRequestBasicAuth()
+                .url(Reddit.ACCESS_URL)
                 .post(requestBody)
                 .build();
 
@@ -650,15 +665,8 @@ public class Reddit {
                 .add(QUERY_REFRESH_TOKEN, accountManager.getPassword(account))
                 .build();
 
-        String credentials = ApiKeys.REDDIT_CLIENT_ID + ":";
-        String auth = "Basic " + Base64.encodeToString(credentials.getBytes(),
-                Base64.DEFAULT);
-
-        com.squareup.okhttp.Request request = new com.squareup.okhttp.Request.Builder()
-                .url(ACCESS_URL)
-                .header(USER_AGENT, CUSTOM_USER_AGENT)
-                .header(AUTHORIZATION, auth)
-                .header(CONTENT_TYPE, CONTENT_TYPE_APP_JSON)
+        Request request = Reddit.withRequestBasicAuth()
+                .url(Reddit.ACCESS_URL)
                 .post(requestBody)
                 .build();
 
@@ -671,15 +679,8 @@ public class Reddit {
                 .add("token", token)
                 .build();
 
-        String credentials = ApiKeys.REDDIT_CLIENT_ID + ":";
-        String auth = "Basic " + Base64.encodeToString(credentials.getBytes(),
-                Base64.DEFAULT);
-
-        com.squareup.okhttp.Request request = new com.squareup.okhttp.Request.Builder()
-                .url(ACCESS_URL)
-                .header(USER_AGENT, CUSTOM_USER_AGENT)
-                .header(AUTHORIZATION, auth)
-                .header(CONTENT_TYPE, CONTENT_TYPE_APP_JSON)
+        Request request = Reddit.withRequestBasicAuth()
+                .url(Reddit.ACCESS_URL)
                 .post(requestBody)
                 .build();
 
@@ -1049,14 +1050,6 @@ public class Reddit {
 
             return null;
         }
-    }
-
-    public interface ErrorListener {
-        void onErrorHandled();
-    }
-
-    public interface VoteResponseListener {
-        void onVoteFailed();
     }
 
     public static class Transformer implements Observable.Transformer<String, String> {

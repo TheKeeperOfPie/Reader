@@ -9,8 +9,10 @@ import android.util.Log;
 import android.widget.Toast;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.winsonchiu.reader.CustomApplication;
 import com.winsonchiu.reader.R;
 import com.winsonchiu.reader.comments.AdapterCommentList;
+import com.winsonchiu.reader.dagger.components.ComponentStatic;
 import com.winsonchiu.reader.data.Page;
 import com.winsonchiu.reader.data.reddit.Comment;
 import com.winsonchiu.reader.data.reddit.Link;
@@ -26,6 +28,8 @@ import com.winsonchiu.reader.utils.FinalizingSubscriber;
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
+
+import javax.inject.Inject;
 
 import rx.Observable;
 import rx.Observer;
@@ -52,12 +56,14 @@ public class ControllerInbox {
     private Activity activity;
     private Set<Listener> listeners;
     private Listing data;
-    private Reddit reddit;
     private Link link;
     private Page page;
     private boolean isLoading;
 
+    @Inject Reddit reddit;
+
     public ControllerInbox(Activity activity) {
+        CustomApplication.getComponentMain().inject(this);
         setActivity(activity);
         data = new Listing();
         listeners = new HashSet<>();
@@ -67,7 +73,6 @@ public class ControllerInbox {
 
     public void setActivity(Activity activity) {
         this.activity = activity;
-        this.reddit = Reddit.getInstance(activity);
     }
 
     public void addListener(Listener listener) {
@@ -171,7 +176,7 @@ public class ControllerInbox {
                     @Override
                     public Observable<Comment> call(String response) {
                         try {
-                            Comment comment = Comment.fromJson(Reddit.getObjectMapper()
+                            Comment comment = Comment.fromJson(ComponentStatic.getObjectMapper()
                                     .readValue(response, JsonNode.class)
                                     .get("json")
                                     .get("data")
@@ -343,7 +348,7 @@ public class ControllerInbox {
                     @Override
                     public Observable<Comment> call(String response) {
                         try {
-                            Comment comment = Comment.fromJson(Reddit.getObjectMapper()
+                            Comment comment = Comment.fromJson(ComponentStatic.getObjectMapper()
                                     .readValue(response, JsonNode.class).get("json")
                                     .get("data")
                                     .get("things")

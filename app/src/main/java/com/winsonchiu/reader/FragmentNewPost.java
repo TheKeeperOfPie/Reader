@@ -43,10 +43,14 @@ import com.github.rjeschke.txtmark.Processor;
 import com.winsonchiu.reader.data.reddit.Link;
 import com.winsonchiu.reader.data.reddit.Listing;
 import com.winsonchiu.reader.data.reddit.Reddit;
+import com.winsonchiu.reader.links.ControllerLinks;
+import com.winsonchiu.reader.utils.FinalizingSubscriber;
 import com.winsonchiu.reader.utils.UtilsColor;
 
 import org.json.JSONException;
 import org.json.JSONObject;
+
+import javax.inject.Inject;
 
 import rx.Observer;
 
@@ -75,7 +79,9 @@ public class FragmentNewPost extends FragmentBase implements Toolbar.OnMenuItemC
     private ViewPager viewPager;
     private Toolbar toolbarActions;
     private View viewDivider;
-    private Reddit reddit;
+
+    @Inject Reddit reddit;
+    @Inject ControllerLinks controllerLinks;
 
     private int editMarginDefault;
     private int editMarginWithActions;
@@ -129,9 +135,9 @@ public class FragmentNewPost extends FragmentBase implements Toolbar.OnMenuItemC
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
             Bundle savedInstanceState) {
-        final View view = inflater.inflate(R.layout.fragment_new_post, container, false);
+        ((MainActivity) activity).getComponentActivity().inject(this);
 
-        reddit = Reddit.getInstance(activity);
+        final View view = inflater.inflate(R.layout.fragment_new_post, container, false);
 
         layoutCoordinator = (CoordinatorLayout) view.findViewById(R.id.layout_coordinator);
         layoutAppBar = (AppBarLayout) view.findViewById(R.id.layout_app_bar);
@@ -480,7 +486,14 @@ public class FragmentNewPost extends FragmentBase implements Toolbar.OnMenuItemC
                         InputMethodManager inputManager = (InputMethodManager) activity.getSystemService(
                                 Context.INPUT_METHOD_SERVICE);
                         inputManager.hideSoftInputFromWindow(editTextBody.getWindowToken(), 0);
-                        mListener.getControllerLinks().reloadAllLinks(false);
+                        controllerLinks.reloadAllLinks(false)
+                                .subscribe(new FinalizingSubscriber<Listing>() {
+                                    @Override
+                                    public void error(Throwable e) {
+                                        Toast.makeText(activity, activity.getString(R.string.error_loading_links), Toast.LENGTH_SHORT)
+                                                .show();
+                                    }
+                                });
                         mListener.onNavigationBackClick();
                     }
                 });
@@ -560,7 +573,14 @@ public class FragmentNewPost extends FragmentBase implements Toolbar.OnMenuItemC
                         InputMethodManager inputManager = (InputMethodManager) activity.getSystemService(
                                 Context.INPUT_METHOD_SERVICE);
                         inputManager.hideSoftInputFromWindow(editTextBody.getWindowToken(), 0);
-                        mListener.getControllerLinks().reloadAllLinks(false);
+                        controllerLinks.reloadAllLinks(false)
+                                .subscribe(new FinalizingSubscriber<Listing>() {
+                                    @Override
+                                    public void error(Throwable e) {
+                                        Toast.makeText(activity, activity.getString(R.string.error_loading_links), Toast.LENGTH_SHORT)
+                                                .show();
+                                    }
+                                });
                         mListener.onNavigationBackClick();
                     }
                 });

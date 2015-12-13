@@ -85,18 +85,11 @@ public class Authenticator extends AbstractAccountAuthenticator {
                         .add(Reddit.QUERY_REFRESH_TOKEN, accountManager.getPassword(account))
                         .build();
 
-                String credentials = ApiKeys.REDDIT_CLIENT_ID + ":";
-                String authorization = "Basic " + Base64.encodeToString(credentials.getBytes(),
-                        Base64.NO_WRAP);
-
-                Request request = new Request.Builder()
+                Request request = Reddit.withRequestBasicAuth()
                         .url(Reddit.ACCESS_URL)
-                        .header(Reddit.USER_AGENT, Reddit.CUSTOM_USER_AGENT)
-                        .header(Reddit.AUTHORIZATION, authorization)
-                        .header(Reddit.CONTENT_TYPE, Reddit.CONTENT_TYPE_APP_JSON)
                         .post(requestBody)
                         .build();
-                
+
                 String responseNetwork = new OkHttpClient().newCall(request).execute().body().string();
 
                 JSONObject jsonObject = new JSONObject(responseNetwork);

@@ -26,8 +26,10 @@ import android.util.Log;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.squareup.okhttp.OkHttpClient;
 import com.winsonchiu.reader.AppSettings;
+import com.winsonchiu.reader.CustomApplication;
 import com.winsonchiu.reader.MainActivity;
 import com.winsonchiu.reader.R;
+import com.winsonchiu.reader.dagger.components.ComponentStatic;
 import com.winsonchiu.reader.data.reddit.Comment;
 import com.winsonchiu.reader.data.reddit.Listing;
 import com.winsonchiu.reader.data.reddit.Message;
@@ -37,6 +39,8 @@ import com.winsonchiu.reader.utils.ObserverEmpty;
 
 import java.io.IOException;
 import java.util.ArrayList;
+
+import javax.inject.Inject;
 
 /**
  * Created by TheKeeperOfPie on 6/30/2015.
@@ -50,6 +54,12 @@ public class Receiver extends BroadcastReceiver {
     private static final String TAG = Receiver.class.getCanonicalName();
     private static final int LED_MS_ON = 250;
     private static final int LED_MS_OFF = 250;
+
+    @Inject Reddit reddit;
+
+    public Receiver() {
+        CustomApplication.getComponentMain().inject(this);
+    }
 
     public static void setAlarm(Context context) {
 
@@ -92,7 +102,7 @@ public class Receiver extends BroadcastReceiver {
 
     }
 
-    public static void checkInbox(final Context context, @Nullable final ArrayList<String> names) {
+    public void checkInbox(final Context context, @Nullable final ArrayList<String> names) {
 
         final ArrayList<String> readNames;
 
@@ -108,7 +118,6 @@ public class Receiver extends BroadcastReceiver {
             public void run() {
 
                 OkHttpClient okHttpClient = new OkHttpClient();
-                Reddit reddit = Reddit.getInstance(context);
                 final Listing messages = new Listing();
                 AccountManager accountManager = AccountManager.get(context);
 
@@ -131,7 +140,7 @@ public class Receiver extends BroadcastReceiver {
                                 .build();
 
                         String response = okHttpClient.newCall(request).execute().body().string();
-                        Listing listing = Listing.fromJson(Reddit.getObjectMapper().readValue(response, JsonNode.class));
+                        Listing listing = Listing.fromJson(ComponentStatic.getObjectMapper().readValue(response, JsonNode.class));
 
                         messages.addChildren(listing.getChildren());
 

@@ -7,14 +7,15 @@ package com.winsonchiu.reader;
 import android.accounts.Account;
 import android.accounts.AccountManager;
 import android.app.Activity;
-import android.content.SharedPreferences;
-import android.preference.PreferenceManager;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.winsonchiu.reader.dagger.components.ComponentStatic;
 import com.winsonchiu.reader.data.reddit.Reddit;
 import com.winsonchiu.reader.data.reddit.User;
 
 import java.io.IOException;
+
+import javax.inject.Inject;
 
 import rx.Observer;
 
@@ -24,16 +25,15 @@ import rx.Observer;
 public class ControllerUser {
 
     private static final String TAG = ControllerUser.class.getCanonicalName();
-    private SharedPreferences preferences;
     private User user;
-    private Reddit reddit;
     private AccountManager accountManager;
     private Account account;
 
+    @Inject Reddit reddit;
+
     public ControllerUser(Activity activity) {
-        super();
+        CustomApplication.getComponentMain().inject(this);
         setActivity(activity);
-        preferences = PreferenceManager.getDefaultSharedPreferences(activity);
         user = new User();
     }
 
@@ -42,7 +42,6 @@ public class ControllerUser {
     }
 
     public void setActivity(Activity activity) {
-        reddit = Reddit.getInstance(activity);
         accountManager = AccountManager.get(activity.getApplicationContext());
     }
 
@@ -62,7 +61,7 @@ public class ControllerUser {
                     @Override
                     public void onNext(String response) {
                         try {
-                            user = User.fromJson(Reddit.getObjectMapper().readValue(response, JsonNode.class));
+                            user = User.fromJson(ComponentStatic.getObjectMapper().readValue(response, JsonNode.class));
 
                         }
                         catch (IOException e) {
@@ -73,7 +72,7 @@ public class ControllerUser {
     }
 
     public boolean hasUser() {
-        return account != null;//user != null && !TextUtils.isEmpty(user.getName());
+        return account != null;
     }
 
     public void clearAccount() {

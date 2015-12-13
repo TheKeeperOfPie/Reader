@@ -7,6 +7,7 @@ package com.winsonchiu.reader.history;
 import android.app.Activity;
 import android.text.TextUtils;
 
+import com.winsonchiu.reader.CustomApplication;
 import com.winsonchiu.reader.R;
 import com.winsonchiu.reader.data.reddit.Link;
 import com.winsonchiu.reader.data.reddit.Listing;
@@ -21,6 +22,10 @@ import com.winsonchiu.reader.utils.FinalizingSubscriber;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.inject.Inject;
+
+import rx.Observable;
+
 /**
  * Created by TheKeeperOfPie on 7/8/2015.
  */
@@ -29,9 +34,10 @@ public class ControllerHistory implements ControllerLinksBase {
     private static final String SEPARATOR = ",";
     private static final String TAG = ControllerHistory.class.getCanonicalName();
 
-    private Reddit reddit;
+    @Inject Reddit reddit;
+    @Inject Historian historian;
+
     private ArrayList<Listener> listeners;
-    private Historian historian;
     private boolean isLoading;
     private Subreddit subreddit;
     private Listing history;
@@ -44,6 +50,7 @@ public class ControllerHistory implements ControllerLinksBase {
     private long timeEnd;
 
     public ControllerHistory(Activity activity) {
+        CustomApplication.getComponentMain().inject(this);
         setActivity(activity);
         subreddit = new Subreddit();
         listeners = new ArrayList<>();
@@ -55,8 +62,6 @@ public class ControllerHistory implements ControllerLinksBase {
 
     public void setActivity(Activity activity) {
         this.activity = activity;
-        this.reddit = Reddit.getInstance(activity);
-        this.historian = Historian.getInstance(activity);
     }
 
     public void addListener(Listener listener) {
@@ -71,7 +76,7 @@ public class ControllerHistory implements ControllerLinksBase {
 
     public void removeListener(Listener listener) {
         listeners.remove(listener);
-        Historian.saveToFile(activity);
+        historian.saveToFile(activity);
     }
 
     public int getSize() {
@@ -161,15 +166,15 @@ public class ControllerHistory implements ControllerLinksBase {
     }
 
     @Override
-    public void loadMoreLinks() {
+    public Observable<Listing> loadMoreLinks() {
         if (isLoading || namesToFetch.isEmpty()) {
-            return;
+            return Observable.empty();
         }
 
         int finalIndex = lastIndex + 25 < namesToFetch.size() ? lastIndex + 25 : namesToFetch.size();
 
         if (finalIndex == lastIndex) {
-            return;
+            return Observable.empty();
         }
 
         StringBuilder builder = new StringBuilder();
@@ -180,9 +185,10 @@ public class ControllerHistory implements ControllerLinksBase {
             lastIndex++;
         }
 
-        reddit.info(builder.toString())
-                .flatMap(Listing.FLAT_MAP)
-                .subscribe(new FinalizingSubscriber<Listing>() {
+        Observable<Listing> observable = reddit.info(builder.toString())
+                .flatMap(Listing.FLAT_MAP);
+
+        observable.subscribe(new FinalizingSubscriber<Listing>() {
                     @Override
                     public void start() {
                         setIsLoading(true);
@@ -205,6 +211,7 @@ public class ControllerHistory implements ControllerLinksBase {
                     }
                 });
 
+        return observable;
     }
 
     @Override

@@ -7,16 +7,16 @@ package com.winsonchiu.reader;
 import android.app.Activity;
 import android.app.Fragment;
 import android.os.Bundle;
-import android.util.Log;
 import android.widget.Toast;
 
 import com.winsonchiu.reader.comments.ControllerComments;
-import com.winsonchiu.reader.data.reddit.Sort;
 import com.winsonchiu.reader.history.ControllerHistory;
 import com.winsonchiu.reader.inbox.ControllerInbox;
 import com.winsonchiu.reader.links.ControllerLinks;
 import com.winsonchiu.reader.profile.ControllerProfile;
 import com.winsonchiu.reader.search.ControllerSearch;
+
+import javax.inject.Inject;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -25,13 +25,14 @@ public class FragmentData extends FragmentBase {
 
     public static final String TAG = FragmentData.class.getCanonicalName();
 
-    private ControllerLinks controllerLinks;
     private ControllerComments controllerComments;
     private ControllerProfile controllerProfile;
     private ControllerInbox controllerInbox;
     private ControllerSearch controllerSearch;
     private ControllerHistory controllerHistory;
     private ControllerUser controllerUser;
+
+    @Inject ControllerLinks controllerLinks;
 
     public FragmentData() {
         // Required empty public constructor
@@ -44,9 +45,8 @@ public class FragmentData extends FragmentBase {
     }
 
     public void initializeControllers(Activity activity) {
-        Log.d(TAG, "initializeControllers");
+        ((MainActivity) activity).getComponentActivity().inject(this);
 
-        controllerLinks = new ControllerLinks(activity, "", Sort.HOT);
         controllerComments = new ControllerComments(activity);
         controllerProfile = new ControllerProfile(activity);
         controllerInbox = new ControllerInbox(activity);
@@ -63,7 +63,6 @@ public class FragmentData extends FragmentBase {
             initializeControllers(activity);
         }
         else {
-            controllerLinks.setActivity(activity);
             controllerComments.setActivity(activity);
             controllerProfile.setActivity(activity);
             controllerInbox.setActivity(activity);
@@ -71,14 +70,6 @@ public class FragmentData extends FragmentBase {
             controllerHistory.setActivity(activity);
             controllerUser.setActivity(activity);
         }
-    }
-
-    public ControllerLinks getControllerLinks() {
-        return controllerLinks;
-    }
-
-    public void setControllerLinks(ControllerLinks controllerLinks) {
-        this.controllerLinks = controllerLinks;
     }
 
     public ControllerComments getControllerComments() {

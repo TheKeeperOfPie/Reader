@@ -68,6 +68,7 @@ import android.widget.MediaController;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.android.youtube.player.YouTubeInitializationResult;
 import com.google.android.youtube.player.YouTubePlayer;
@@ -75,6 +76,7 @@ import com.google.android.youtube.player.YouTubePlayerView;
 import com.winsonchiu.reader.ApiKeys;
 import com.winsonchiu.reader.AppSettings;
 import com.winsonchiu.reader.ControllerUser;
+import com.winsonchiu.reader.CustomApplication;
 import com.winsonchiu.reader.MainActivity;
 import com.winsonchiu.reader.R;
 import com.winsonchiu.reader.data.imgur.Album;
@@ -106,8 +108,11 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import javax.inject.Inject;
+
 import rx.Observable;
 import rx.Subscription;
+import rx.functions.Action1;
 import rx.functions.Func1;
 
 /**
@@ -171,7 +176,15 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
     @Override
     public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
         if (!controllerLinks.isLoading() && position > controllerLinks.sizeLinks() - 5) {
-            controllerLinks.loadMoreLinks();
+            controllerLinks.loadMoreLinks()
+                    .doOnError(new Action1<Throwable>() {
+                        @Override
+                        public void call(Throwable throwable) {
+                            Toast.makeText(activity, activity.getString(R.string.error_loading_links),
+                                    Toast.LENGTH_SHORT)
+                                    .show();
+                        }
+                    });
         }
         Reddit.incrementBind();
         viewHolders.add(holder);
@@ -467,11 +480,14 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         public Uri uriVideo;
         public int bufferPercentage;
 
+        @Inject Historian historian;
+
         public ViewHolderBase(View itemView,
                 EventListener eventListener,
                 DisallowListener disallowListener,
                 RecyclerCallback recyclerCallback) {
             super(itemView);
+            CustomApplication.getComponentMain().inject(this);
             this.eventListener = eventListener;
             this.disallowListener = disallowListener;
             this.recyclerCallback = recyclerCallback;
@@ -1078,7 +1094,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
 
         public void addToHistory() {
             if (preferences.getBoolean(AppSettings.PREF_SAVE_HISTORY, true)) {
-                Historian.getInstance(itemView.getContext()).add(link);
+                historian.add(link);
             }
         }
 
@@ -1179,7 +1195,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         }
 
         public boolean isInHistory() {
-            return Historian.getInstance(itemView.getContext()).contains(link.getName());
+            return historian.contains(link.getName());
         }
 
         public void attemptLoadImage() {

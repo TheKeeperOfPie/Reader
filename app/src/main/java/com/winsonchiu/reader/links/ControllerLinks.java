@@ -4,13 +4,12 @@
 
 package com.winsonchiu.reader.links;
 
-import android.app.Activity;
 import android.text.TextUtils;
 import android.util.Log;
-import android.widget.Toast;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.winsonchiu.reader.R;
+import com.winsonchiu.reader.CustomApplication;
+import com.winsonchiu.reader.dagger.components.ComponentStatic;
 import com.winsonchiu.reader.data.reddit.Link;
 import com.winsonchiu.reader.data.reddit.Listing;
 import com.winsonchiu.reader.data.reddit.Reddit;
@@ -29,6 +28,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import javax.inject.Inject;
+
 import rx.Observable;
 import rx.Observer;
 import rx.functions.Func1;
@@ -41,17 +42,17 @@ public class ControllerLinks implements ControllerLinksBase {
     private static final String TAG = ControllerLinks.class.getCanonicalName();
     public static final int LIMIT = 25;
 
-    private Activity activity;
     private Listing listingLinks;
     private Subreddit subreddit;
     private boolean isLoading;
     private Sort sort;
     private Time time;
-    private Reddit reddit;
     private Set<Listener> listeners;
 
-    public ControllerLinks(Activity activity, String subredditName, Sort sort) {
-        setActivity(activity);
+    @Inject Reddit reddit;
+
+    public ControllerLinks(String subredditName, Sort sort) {
+        CustomApplication.getComponentMain().inject(this);
         this.listeners = new HashSet<>();
         listingLinks = new Listing();
         this.sort = sort;
@@ -109,7 +110,7 @@ public class ControllerLinks implements ControllerLinksBase {
                     @Override
                     public Observable<Subreddit> call(String response) {
                         try {
-                            return Observable.just(Subreddit.fromJson(Reddit.getObjectMapper().readValue(
+                            return Observable.just(Subreddit.fromJson(ComponentStatic.getObjectMapper().readValue(
                                     response, JsonNode.class)));
                         } catch (IOException e) {
                             return Observable.error(e);
@@ -202,37 +203,26 @@ public class ControllerLinks implements ControllerLinksBase {
                 .size();
     }
 
-    public void reloadAllLinks(final boolean scroll) {
-        reddit.links(subreddit.getUrl(), sort.toString(), time.toString(), LIMIT, null)
-                .flatMap(new Func1<String, Observable<Listing>>() {
+    public Observable<Listing> reloadAllLinks(final boolean scroll) {
+        Observable<Listing> observable = reddit.links(subreddit.getUrl(), sort.toString(), time.toString(), LIMIT, null)
+                .flatMap(Listing.FLAT_MAP)
+                .flatMap(new Func1<Listing, Observable<Listing>>() {
                     @Override
-                    public Observable<Listing> call(String s) {
-                        try {
-                            Listing listing = Listing.fromJson(Reddit.getObjectMapper().readValue(
-                                    s, JsonNode.class));
-                            if (!listing.getChildren()
-                                    .isEmpty() && listing.getChildren()
-                                    .get(0) instanceof Link) {
-                                return Observable.just(listing);
-                            }
+                    public Observable<Listing> call(Listing listing) {
+                        if (!listing.getChildren()
+                                .isEmpty() && listing.getChildren()
+                                .get(0) instanceof Link) {
+                            return Observable.just(listing);
+                        }
 
-                            return Observable.empty();
-                        }
-                        catch (IOException e) {
-                            return Observable.error(e);
-                        }
+                        return Observable.error(new Exception());
                     }
-                })
-                .subscribe(new FinalizingSubscriber<Listing>() {
+                });
+
+        observable.subscribe(new FinalizingSubscriber<Listing>() {
                     @Override
                     public void start() {
                         setLoading(true);
-                    }
-
-                    @Override
-                    public void error(Throwable e) {
-                        Toast.makeText(activity, activity.getString(R.string.error_loading_links), Toast.LENGTH_SHORT)
-                                .show();
                     }
 
                     @Override
@@ -258,37 +248,32 @@ public class ControllerLinks implements ControllerLinksBase {
                 });
 
         Log.d(TAG, "reloadAllLinks");
+
+        return observable;
     }
 
-    public void loadMoreLinks() {
+    public Observable<Listing> loadMoreLinks() {
         if (isLoading) {
-            return;
+            return Observable.empty();
         }
 
         if (TextUtils.isEmpty(listingLinks.getAfter())) {
-            return;
+            return Observable.empty();
         }
 
         setLoading(true);
 
-        reddit.links(subreddit.getUrl(), sort.toString(), time.toString(), LIMIT, listingLinks.getAfter())
-                .flatMap(Listing.FLAT_MAP)
-                .subscribe(new Observer<Listing>() {
+        Observable<Listing> observable = reddit.links(subreddit.getUrl(), sort.toString(), time.toString(), LIMIT, listingLinks.getAfter())
+                .flatMap(Listing.FLAT_MAP);
+
+        observable.subscribe(new FinalizingSubscriber<Listing>() {
                     @Override
-                    public void onCompleted() {
+                    public void completed() {
                         setLoading(false);
                     }
 
                     @Override
-                    public void onError(Throwable e) {
-                        e.printStackTrace();
-                        Toast.makeText(activity, activity.getString(R.string.error_loading_links),
-                                Toast.LENGTH_SHORT)
-                                .show();
-                    }
-
-                    @Override
-                    public void onNext(Listing listing) {
+                    public void next(Listing listing) {
                         final int positionStart = listingLinks.getChildren()
                                 .size();
                         listingLinks.addChildren(listing.getChildren());
@@ -301,6 +286,8 @@ public class ControllerLinks implements ControllerLinksBase {
                         }
                     }
                 });
+
+        return observable;
     }
 
     @Override
@@ -308,12 +295,12 @@ public class ControllerLinks implements ControllerLinksBase {
         return subreddit;
     }
 
-    public boolean deletePost(Link link) {
+    public Observable<String> deletePost(Link link) {
         int index = listingLinks.getChildren()
                 .indexOf(link);
 
         if (index < 0) {
-            return false;
+            return Observable.empty();
         }
 
         listingLinks.getChildren()
@@ -324,15 +311,7 @@ public class ControllerLinks implements ControllerLinksBase {
         }
 
 
-        reddit.delete(link)
-                .subscribe(new FinalizingSubscriber<String>() {
-                    @Override
-                    public void error(Throwable e) {
-                        Toast.makeText(activity, R.string.error_deleting_post, Toast.LENGTH_LONG).show();
-                    }
-                });
-
-        return true;
+        return reddit.delete(link);
     }
 
     public Reddit getReddit() {
@@ -353,11 +332,6 @@ public class ControllerLinks implements ControllerLinksBase {
 
     public boolean isLoading() {
         return isLoading;
-    }
-
-    public void setActivity(Activity activity) {
-        this.activity = activity;
-        this.reddit = Reddit.getInstance(activity);
     }
 
     public String getSubredditName() {

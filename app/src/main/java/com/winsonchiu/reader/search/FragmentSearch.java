@@ -35,14 +35,17 @@ import com.winsonchiu.reader.AppSettings;
 import com.winsonchiu.reader.CustomApplication;
 import com.winsonchiu.reader.FragmentBase;
 import com.winsonchiu.reader.FragmentListenerBase;
+import com.winsonchiu.reader.MainActivity;
 import com.winsonchiu.reader.R;
 import com.winsonchiu.reader.data.reddit.Link;
+import com.winsonchiu.reader.data.reddit.Listing;
 import com.winsonchiu.reader.data.reddit.Reddit;
 import com.winsonchiu.reader.data.reddit.Sort;
 import com.winsonchiu.reader.data.reddit.Subreddit;
 import com.winsonchiu.reader.data.reddit.Thing;
 import com.winsonchiu.reader.data.reddit.Time;
 import com.winsonchiu.reader.links.AdapterLink;
+import com.winsonchiu.reader.links.ControllerLinks;
 import com.winsonchiu.reader.links.ControllerLinksBase;
 import com.winsonchiu.reader.utils.CustomColorFilter;
 import com.winsonchiu.reader.utils.DisallowListener;
@@ -51,6 +54,10 @@ import com.winsonchiu.reader.utils.RecyclerCallback;
 import com.winsonchiu.reader.utils.SimpleCallbackBackground;
 import com.winsonchiu.reader.utils.UtilsAnimation;
 import com.winsonchiu.reader.utils.UtilsColor;
+
+import javax.inject.Inject;
+
+import rx.Observable;
 
 public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemClickListener {
 
@@ -85,6 +92,8 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
     private View view;
     private CustomColorFilter colorFilterPrimary;
     private ItemTouchHelper itemTouchHelperSubreddits;
+
+    @Inject ControllerLinks controllerLinks;
 
     public static FragmentSearch newInstance(boolean hideKeyboard) {
         FragmentSearch fragment = new FragmentSearch();
@@ -150,8 +159,7 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
             @Override
             public boolean onQueryTextSubmit(String query) {
                 if (viewPager.getCurrentItem() == ControllerSearch.PAGE_SUBREDDITS) {
-                    mListener.getControllerLinks()
-                            .setParameters(query.replaceAll("\\s", ""), Sort.HOT, Time.ALL);
+                    controllerLinks.setParameters(query.replaceAll("\\s", ""), Sort.HOT, Time.ALL);
                     closeKeyboard();
                     mListener.onNavigationBackClick();
                 }
@@ -222,6 +230,8 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
+        ((MainActivity) activity).getComponentActivity().inject(this);
+
         view = inflater.inflate(R.layout.fragment_search, container, false);
 
         listenerSearch = new ControllerSearch.Listener() {
@@ -343,8 +353,7 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
                     @Override
                     public void onClickSubreddit(Subreddit subreddit) {
                         mListener.getControllerSearch().addViewedSubreddit(subreddit);
-                        mListener.getControllerLinks()
-                                .setParameters(subreddit.getDisplayName(), Sort.HOT, Time.ALL);
+                        controllerLinks.setParameters(subreddit.getDisplayName(), Sort.HOT, Time.ALL);
                         closeKeyboard();
                         mListener.onNavigationBackClick();
                     }
@@ -436,8 +445,8 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
             }
 
             @Override
-            public void loadMoreLinks() {
-                mListener.getControllerSearch()
+            public Observable<Listing> loadMoreLinks() {
+                return mListener.getControllerSearch()
                         .loadMoreLinks();
             }
 
@@ -522,8 +531,8 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
             }
 
             @Override
-            public void loadMoreLinks() {
-                mListener.getControllerSearch()
+            public Observable<Listing> loadMoreLinks() {
+                return mListener.getControllerSearch()
                         .loadMoreLinksSubreddit();
             }
 
@@ -618,8 +627,7 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
                 new AdapterSearchSubreddits.ViewHolder.EventListener() {
                     @Override
                     public void onClickSubreddit(Subreddit subreddit) {
-                        mListener.getControllerLinks()
-                                .setParameters(subreddit.getDisplayName(), Sort.HOT, Time.ALL);
+                        controllerLinks.setParameters(subreddit.getDisplayName(), Sort.HOT, Time.ALL);
                         closeKeyboard();
                         mListener.onNavigationBackClick();
                     }
@@ -684,7 +692,7 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
         });
 
 
-        final int count = mListener.getControllerLinks().isOnSpecificSubreddit() ? viewPager.getChildCount() : viewPager.getChildCount() - 1;
+        final int count = controllerLinks.isOnSpecificSubreddit() ? viewPager.getChildCount() : viewPager.getChildCount() - 1;
 
         pagerAdapter = new PagerAdapter() {
             @Override
@@ -705,8 +713,7 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
                     case ControllerSearch.PAGE_LINKS:
                         return getString(R.string.all);
                     case ControllerSearch.PAGE_LINKS_SUBREDDIT:
-                        return mListener.getControllerLinks()
-                                .getSubredditName();
+                        return controllerLinks.getSubredditName();
                     case ControllerSearch.PAGE_SUBREDDITS_RECOMMENDED:
                         return getString(R.string.recommended);
                 }
@@ -777,8 +784,7 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
 
     @Override
     public void onDetach() {
-        mListener.getControllerLinks()
-                .setTitle();
+        controllerLinks.setTitle();
         activity = null;
         mListener = null;
         super.onDetach();

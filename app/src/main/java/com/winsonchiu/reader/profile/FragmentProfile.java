@@ -51,6 +51,7 @@ import com.winsonchiu.reader.data.reddit.Reddit;
 import com.winsonchiu.reader.data.reddit.Sort;
 import com.winsonchiu.reader.data.reddit.Thing;
 import com.winsonchiu.reader.data.reddit.Time;
+import com.winsonchiu.reader.links.ControllerLinks;
 import com.winsonchiu.reader.utils.CustomColorFilter;
 import com.winsonchiu.reader.utils.CustomItemTouchHelper;
 import com.winsonchiu.reader.utils.DisallowListener;
@@ -58,6 +59,8 @@ import com.winsonchiu.reader.utils.ItemDecorationDivider;
 import com.winsonchiu.reader.utils.RecyclerCallback;
 import com.winsonchiu.reader.utils.UtilsAnimation;
 import com.winsonchiu.reader.utils.UtilsColor;
+
+import javax.inject.Inject;
 
 public class FragmentProfile extends FragmentBase implements Toolbar.OnMenuItemClickListener {
 
@@ -83,6 +86,8 @@ public class FragmentProfile extends FragmentBase implements Toolbar.OnMenuItemC
     private CustomItemTouchHelper.SimpleCallback callback;
     private View view;
     private CustomColorFilter colorFilterPrimary;
+
+    @Inject ControllerLinks controllerLinks;
 
     public static FragmentProfile newInstance() {
         FragmentProfile fragment = new FragmentProfile();
@@ -180,6 +185,7 @@ public class FragmentProfile extends FragmentBase implements Toolbar.OnMenuItemC
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
             Bundle savedInstanceState) {
+        ((MainActivity) activity).getComponentActivity().inject(this);
 
         view = inflater.inflate(R.layout.fragment_profile, container, false);
 
@@ -193,7 +199,7 @@ public class FragmentProfile extends FragmentBase implements Toolbar.OnMenuItemC
                 menu.findItem(time.getMenuId()).setChecked(true);
                 itemSortTime.setTitle(
                         getString(R.string.time) + Reddit.TIME_SEPARATOR + menu
-                                .findItem(mListener.getControllerLinks()
+                                .findItem(controllerLinks
                                         .getTime().getMenuId()).toString());
             }
 
@@ -325,7 +331,7 @@ public class FragmentProfile extends FragmentBase implements Toolbar.OnMenuItemC
 
         if (adapterProfile == null) {
             adapterProfile = new AdapterProfile(mListener.getControllerProfile(),
-                    mListener.getControllerLinks(),
+                    controllerLinks,
                     mListener.getEventListenerBase(),
                     new AdapterCommentList.ViewHolderComment.EventListener() {
                         @Override

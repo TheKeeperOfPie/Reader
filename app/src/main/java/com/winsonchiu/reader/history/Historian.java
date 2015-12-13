@@ -33,46 +33,29 @@ public class Historian {
 
     private static final String FILE_NAME = "history";
     private static final String TAG = Historian.class.getCanonicalName();
-    private static Historian historian;
     private Map<String, HistoryEntry> mapHistory;
     private HistoryEntry first;
     private int size;
 
-    public static Historian getInstance(Context context) {
-        if (historian == null) {
-            historian = new Historian();
-            try {
-                FileInputStream fileInputStream = context.openFileInput(FILE_NAME);
-                BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(fileInputStream));
-                StringBuilder builder = new StringBuilder();
-                String line;
-                while ((line = bufferedReader.readLine()) != null) {
-                    builder.append(line);
-                }
-                bufferedReader.close();
-                fileInputStream.close();
-
-                historian.fromJsonArray(new JSONArray(builder.toString()));
-
-                Log.d(TAG, "Create Historian: " + historian.toString());
-            }
-            catch (FileNotFoundException e) {
-                e.printStackTrace();
-            }
-            catch (IOException e) {
-                e.printStackTrace();
-            }
-            catch (JSONException e) {
-                e.printStackTrace();
-            }
-
-        }
-
-        return historian;
-    }
-
-    public Historian() {
+    public Historian(Context context) {
         this.mapHistory = new HashMap<>();
+        try {
+            FileInputStream fileInputStream = context.openFileInput(FILE_NAME);
+            BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(fileInputStream));
+            StringBuilder builder = new StringBuilder();
+            String line;
+            while ((line = bufferedReader.readLine()) != null) {
+                builder.append(line);
+            }
+            bufferedReader.close();
+            fileInputStream.close();
+
+            fromJsonArray(new JSONArray(builder.toString()));
+
+            Log.d(TAG, "Create Historian: " + this);
+        } catch (IOException | JSONException e) {
+            e.printStackTrace();
+        }
     }
 
     /**
@@ -200,7 +183,7 @@ public class Historian {
         return first;
     }
 
-    public static void saveToFile(Context context) {
+    public void saveToFile(Context context) {
         SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
         int max;
         try {
@@ -212,16 +195,12 @@ public class Historian {
         }
 
         try {
-            String data = getInstance(context).toJsonArray(max).toString();
+            String data = toJsonArray(max).toString();
 
             OutputStreamWriter outputStreamWriter = new OutputStreamWriter(context.openFileOutput(FILE_NAME, Context.MODE_PRIVATE));
             outputStreamWriter.write(data);
             outputStreamWriter.close();
-        }
-        catch (FileNotFoundException e) {
-            e.printStackTrace();
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             e.printStackTrace();
         }
     }
@@ -230,9 +209,9 @@ public class Historian {
         return mapHistory.keySet().contains(name);
     }
 
-    public static void clear(Context context) {
-        getInstance(context).mapHistory.clear();
-        HistoryEntry currentEntry = historian.first;
+    public void clear(Context context) {
+        mapHistory.clear();
+        HistoryEntry currentEntry = first;
 
         while (currentEntry != null) {
             if (currentEntry.getPrevious() != null) {
@@ -242,7 +221,7 @@ public class Historian {
             currentEntry = currentEntry.getNext();
         }
 
-        historian.first = null;
+        first = null;
 
         System.gc();
 

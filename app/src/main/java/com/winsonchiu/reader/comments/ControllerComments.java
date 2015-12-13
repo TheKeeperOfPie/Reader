@@ -9,7 +9,9 @@ import android.text.TextUtils;
 import android.widget.Toast;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.winsonchiu.reader.CustomApplication;
 import com.winsonchiu.reader.R;
+import com.winsonchiu.reader.dagger.components.ComponentStatic;
 import com.winsonchiu.reader.data.reddit.Comment;
 import com.winsonchiu.reader.data.reddit.Link;
 import com.winsonchiu.reader.data.reddit.Listing;
@@ -27,6 +29,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
+import javax.inject.Inject;
+
 import rx.Observable;
 import rx.Observer;
 import rx.functions.Func1;
@@ -43,19 +47,20 @@ public class ControllerComments {
     private Sort sort = Sort.CONFIDENCE;
     private Listing listingComments = new Listing();
 
+    @Inject Reddit reddit;
+
     private Activity activity;
-    private Reddit reddit;
     private boolean isRefreshing;
     private boolean isCommentThread;
     private int contextNumber;
 
     public ControllerComments(Activity activity) {
         setActivity(activity);
+        CustomApplication.getComponentMain().inject(this);
     }
 
     public void setActivity(Activity activity) {
         this.activity = activity;
-        this.reddit = Reddit.getInstance(activity);
     }
 
     public void addListener(Listener listener) {
@@ -154,7 +159,7 @@ public class ControllerComments {
                     public Observable<Link> call(String response) {
                         try {
                             return Observable.just(Link.fromJsonWithComments(
-                                    Reddit.getObjectMapper().readValue(response,
+                                    ComponentStatic.getObjectMapper().readValue(response,
                                             JsonNode.class)));
                         } catch (IOException e) {
                             return Observable.error(e);
@@ -188,7 +193,7 @@ public class ControllerComments {
                     public Observable<Link> call(String response) {
                         try {
                             return Observable.just(Link.fromJsonWithComments(
-                                    Reddit.getObjectMapper().readValue(response,
+                                    ComponentStatic.getObjectMapper().readValue(response,
                                             JsonNode.class)));
                         } catch (IOException e) {
                             return Observable.error(e);
@@ -280,7 +285,7 @@ public class ControllerComments {
                     @Override
                     public void onNext(String response) {
                         try {
-                            JsonNode nodeThings = Reddit.getObjectMapper().readValue(
+                            JsonNode nodeThings = ComponentStatic.getObjectMapper().readValue(
                                     response, JsonNode.class).get("json").get("data").get("things");
 
                             Listing listing = new Listing();
@@ -678,7 +683,7 @@ public class ControllerComments {
                     @Override
                     public Observable<Comment> call(String response) {
                         try {
-                            Comment comment = Comment.fromJson(Reddit.getObjectMapper()
+                            Comment comment = Comment.fromJson(ComponentStatic.getObjectMapper()
                                     .readValue(response, JsonNode.class)
                                     .get("json")
                                     .get("data")

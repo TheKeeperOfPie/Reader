@@ -55,6 +55,7 @@ import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewGroup;
 import android.webkit.URLUtil;
 import android.widget.HorizontalScrollView;
 import android.widget.ImageButton;
@@ -73,6 +74,9 @@ import com.winsonchiu.reader.comments.AdapterCommentList;
 import com.winsonchiu.reader.comments.ControllerComments;
 import com.winsonchiu.reader.comments.FragmentComments;
 import com.winsonchiu.reader.comments.FragmentReply;
+import com.winsonchiu.reader.dagger.components.ComponentActivity;
+import com.winsonchiu.reader.dagger.components.ComponentStatic;
+import com.winsonchiu.reader.dagger.modules.ModuleReddit;
 import com.winsonchiu.reader.data.Page;
 import com.winsonchiu.reader.data.reddit.Comment;
 import com.winsonchiu.reader.data.reddit.Link;
@@ -105,7 +109,6 @@ import com.winsonchiu.reader.utils.TargetImageDownload;
 import com.winsonchiu.reader.utils.TouchEventListener;
 import com.winsonchiu.reader.utils.UtilsAnimation;
 import com.winsonchiu.reader.utils.UtilsColor;
-import com.winsonchiu.reader.views.CustomRelativeLayout;
 import com.winsonchiu.reader.views.ScrollViewHeader;
 import com.winsonchiu.reader.views.WebViewFixed;
 
@@ -120,6 +123,8 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Collections;
 import java.util.HashMap;
+
+import javax.inject.Inject;
 
 import io.fabric.sdk.android.Fabric;
 import rx.Observable;
@@ -159,7 +164,10 @@ public class MainActivity extends YouTubeBaseActivity
     private ImageButton buttonAccounts;
     private LinearLayout layoutAccounts;
 
-    private Reddit reddit;
+    @Inject Reddit reddit;
+    @Inject Historian historian;
+    @Inject ControllerLinks controllerLinks;
+
     private Handler handler;
     private AccountManager accountManager;
     private Account accountUser;
@@ -168,7 +176,7 @@ public class MainActivity extends YouTubeBaseActivity
     private final Runnable runnableInbox = new Runnable() {
         @Override
         public void run() {
-            Receiver.checkInbox(MainActivity.this, null);
+            new Receiver().checkInbox(MainActivity.this, null);
             handler.postDelayed(this, DURATION_CHECK_INBOX_ACTIVE);
         }
     };
@@ -226,9 +234,13 @@ public class MainActivity extends YouTubeBaseActivity
     private String themeBackground;
     private String themePrimary;
     private String themeAccent;
+    private ComponentActivity componentActivity;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        componentActivity = CustomApplication.getComponentMain()
+                .plus(new ModuleReddit());
+        componentActivity.inject(this);
         sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
 
         style = R.style.AppDarkTheme;
@@ -270,7 +282,6 @@ public class MainActivity extends YouTubeBaseActivity
         appCompatDelegate = AppCompatDelegate.create(this, this);
         appCompatDelegate.onCreate(savedInstanceState);
 
-        reddit = Reddit.getInstance(this);
         handler = new Handler();
         accountManager = AccountManager.get(getApplicationContext());
 
@@ -326,7 +337,7 @@ public class MainActivity extends YouTubeBaseActivity
                             @Override
                             public Observable<Comment> call(String response) {
                                 try {
-                                    Comment comment = Comment.fromJson(Reddit.getObjectMapper()
+                                    Comment comment = Comment.fromJson(ComponentStatic.getObjectMapper()
                                             .readValue(response, JsonNode.class).get("json")
                                             .get("data")
                                             .get("things")
@@ -367,7 +378,7 @@ public class MainActivity extends YouTubeBaseActivity
                             @Override
                             public Observable<Message> call(String response) {
                                 try {
-                                    Message message = Message.fromJson(Reddit.getObjectMapper().readValue(response, JsonNode.class).get("json")
+                                    Message message = Message.fromJson(ComponentStatic.getObjectMapper().readValue(response, JsonNode.class).get("json")
                                             .get("data")
                                             .get("things")
                                             .get(0));
@@ -619,8 +630,13 @@ public class MainActivity extends YouTubeBaseActivity
 
             @Override
             public void deletePost(Link link) {
-                getControllerLinks().deletePost(link);
-                getControllerProfile().deletePost(link);
+                Observable.merge(controllerLinks.deletePost(link), getControllerProfile().deletePost(link))
+                        .subscribe(new FinalizingSubscriber<String>() {
+                            @Override
+                            public void error(Throwable e) {
+                                Toast.makeText(MainActivity.this, R.string.error_deleting_post, Toast.LENGTH_LONG).show();
+                            }
+                        });
             }
 
             @Override
@@ -713,7 +729,7 @@ public class MainActivity extends YouTubeBaseActivity
                 }
 
                 if (getFragmentManager().findFragmentByTag(FragmentThreadList.TAG) != null) {
-                    getControllerLinks().setNsfw(link.getName(), link.isOver18());
+                    controllerLinks.setNsfw(link.getName(), link.isOver18());
                 }
                 if (getFragmentManager().findFragmentByTag(FragmentComments.TAG) != null) {
                     getControllerComments().setNsfw(link.getName(), link.isOver18());
@@ -818,13 +834,6 @@ public class MainActivity extends YouTubeBaseActivity
             }
         }
 
-        Reddit.ErrorListener redditErrorListener = new Reddit.ErrorListener() {
-            @Override
-            public void onErrorHandled() {
-
-            }
-        };
-
         if (savedInstanceState == null) {
             if (Intent.ACTION_VIEW.equals(getIntent().getAction())) {
                 Log.d(TAG, "load intent: " + getIntent().toString());
@@ -838,13 +847,13 @@ public class MainActivity extends YouTubeBaseActivity
                 }
                 else {
                     Log.d(TAG, "Not valid URL: " + urlString);
-                    getControllerLinks().loadFrontPage(Sort.HOT, true);
+                    controllerLinks.loadFrontPage(Sort.HOT, true);
                     selectNavigationItem(getIntent().getIntExtra(NAV_ID, R.id.item_home), getIntent().getStringExtra(
                             NAV_PAGE), false);
                 }
             }
             else {
-                getControllerLinks().loadFrontPage(Sort.HOT, true);
+                controllerLinks.loadFrontPage(Sort.HOT, true);
                 selectNavigationItem(getIntent().getIntExtra(NAV_ID, R.id.item_home), getIntent().getStringExtra(
                         NAV_PAGE), false);
             }
@@ -894,7 +903,7 @@ public class MainActivity extends YouTubeBaseActivity
     }
 
     private void inflateNavigationDrawer() {
-        CustomRelativeLayout viewHeader = (CustomRelativeLayout) findViewById(R.id.layout_header_navigation);
+        ViewGroup viewHeader = (ViewGroup) findViewById(R.id.layout_header_navigation);
         viewNavigation = (NavigationView) findViewById(R.id.navigation);
 
         // TODO: Adhere to guidelines by making the increment 56dp on mobile and 64dp on tablet
@@ -1029,7 +1038,7 @@ public class MainActivity extends YouTubeBaseActivity
                     @Override
                     public void onNext(String response) {
                         try {
-                            Listing listing = Listing.fromJson(Reddit.getObjectMapper().readValue(
+                            Listing listing = Listing.fromJson(ComponentStatic.getObjectMapper().readValue(
                                     response, JsonNode.class));
                             Collections.shuffle(listing.getChildren());
 
@@ -1233,12 +1242,19 @@ public class MainActivity extends YouTubeBaseActivity
     }
 
     private void setAccount(final Account account) {
+        Log.d(TAG, "setAccount() called with: " + "account = [" + account + "]");
         accountUser = account;
         sharedPreferences.edit().putString(AppSettings.ACCOUNT_NAME, account.name).apply();
         reddit.setAccount(account);
-        getControllerUser().setAccount(account);
-        getControllerSearch().reloadSubscriptionList();
-        loadAccountInfo();
+        reddit.tokenAuth()
+                .subscribe(new FinalizingSubscriber<String>() {
+                    @Override
+                    public void completed() {
+                        getControllerUser().setAccount(account);
+                        getControllerSearch().reloadSubscriptionList();
+                        loadAccountInfo();
+                    }
+                });
     }
 
     private void deleteAccount(final Account account) {
@@ -1351,7 +1367,7 @@ public class MainActivity extends YouTubeBaseActivity
             case R.id.item_home:
                 FragmentBase fragmentThreadList = (FragmentBase) getFragmentManager().findFragmentByTag(FragmentThreadList.TAG);
                 if (fragmentThreadList != null) {
-                    getControllerLinks().loadFrontPage(Sort.HOT, false);
+                    controllerLinks.loadFrontPage(Sort.HOT, false);
                     fragmentThreadList.onHiddenChanged(false);
                 }
                 else {
@@ -1429,6 +1445,7 @@ public class MainActivity extends YouTubeBaseActivity
                         @Override
                         public void onNext(String response) {
                             try {
+                                Log.d(TAG, "setAccount: onNext() called with: " + "response = [" + response + "]");
                                 JSONObject jsonObject = new JSONObject(response);
                                 textAccountName.setText(jsonObject.getString("name"));
                                 textAccountInfo.setText(getString(R.string.account_info, jsonObject.getString(
@@ -1514,7 +1531,7 @@ public class MainActivity extends YouTubeBaseActivity
             int indexFirstSlash = path.indexOf("/", 1);
             int indexSecondSlash = path.indexOf("/", indexFirstSlash + 1);
             if (indexFirstSlash < 0) {
-                getControllerLinks().setParameters("", Sort.HOT, Time.ALL);
+                controllerLinks.setParameters("", Sort.HOT, Time.ALL);
                 return;
             }
             String subreddit = path.substring(indexFirstSlash + 1,
@@ -1596,7 +1613,7 @@ public class MainActivity extends YouTubeBaseActivity
                                         "hot";
                         Log.d(TAG, "Sort: " + sort);
                         // TODO: Parse time
-                        getControllerLinks().setParameters(subreddit, Sort.HOT, Time.ALL);
+                        controllerLinks.setParameters(subreddit, Sort.HOT, Time.ALL);
                     }
                 }
             }
@@ -1699,11 +1716,6 @@ public class MainActivity extends YouTubeBaseActivity
                     .addNextIntent(this.getIntent())
                     .startActivities();
         }
-    }
-
-    @Override
-    public ControllerLinks getControllerLinks() {
-        return fragmentData.getControllerLinks();
     }
 
     @Override
@@ -1860,7 +1872,7 @@ public class MainActivity extends YouTubeBaseActivity
     @Override
     protected void onStop() {
         if (isTaskRoot()) {
-            Historian.saveToFile(this);
+            historian.saveToFile(this);
         }
         appCompatDelegate.onStop();
         super.onStop();
@@ -1886,5 +1898,9 @@ public class MainActivity extends YouTubeBaseActivity
     @Override
     public ActionMode onWindowStartingSupportActionMode(ActionMode.Callback callback) {
         return null;
+    }
+
+    public ComponentActivity getComponentActivity() {
+        return componentActivity;
     }
 }

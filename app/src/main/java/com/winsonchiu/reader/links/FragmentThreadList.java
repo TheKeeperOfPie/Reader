@@ -51,6 +51,7 @@ import com.winsonchiu.reader.CustomApplication;
 import com.winsonchiu.reader.FragmentBase;
 import com.winsonchiu.reader.FragmentListenerBase;
 import com.winsonchiu.reader.FragmentNewPost;
+import com.winsonchiu.reader.MainActivity;
 import com.winsonchiu.reader.R;
 import com.winsonchiu.reader.data.reddit.Link;
 import com.winsonchiu.reader.data.reddit.Reddit;
@@ -68,6 +69,8 @@ import com.winsonchiu.reader.utils.RecyclerCallback;
 import com.winsonchiu.reader.utils.ScrollAwareFloatingActionButtonBehavior;
 import com.winsonchiu.reader.utils.UtilsAnimation;
 import com.winsonchiu.reader.utils.UtilsColor;
+
+import javax.inject.Inject;
 
 public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuItemClickListener {
 
@@ -104,7 +107,7 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
     private Snackbar snackbar;
     private CustomItemTouchHelper itemTouchHelper;
     private FloatingActionButton buttonExpandActions;
-    private FastOutSlowInInterpolator fastOutSlowInInterpolator;
+    private FastOutSlowInInterpolator fastOutSlowInInterpolator = new FastOutSlowInInterpolator();
     private LinearLayout layoutActions;
     private FloatingActionButton buttonClearViewed;
     private FloatingActionButton buttonJumpTop;
@@ -114,6 +117,9 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
     private CustomColorFilter colorFilterAccent;
     private ItemDecorationDivider itemDecorationDivider;
     private boolean isFinished;
+
+    @Inject Historian historian;
+    @Inject ControllerLinks controllerLinks;
 
     public static FragmentThreadList newInstance() {
         FragmentThreadList fragment = new FragmentThreadList();
@@ -130,9 +136,423 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setHasOptionsMenu(true);
+    }
 
-        fastOutSlowInInterpolator = new FastOutSlowInInterpolator();
+    private void setUpToolbar() {
 
+        if (getFragmentManager().getBackStackEntryCount() <= 1) {
+            toolbar.setNavigationIcon(R.drawable.ic_menu_white_24dp);
+            toolbar.setNavigationOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    mListener.openDrawer();
+                }
+            });
+        }
+        else {
+            toolbar.setNavigationIcon(R.drawable.ic_arrow_back_white_24dp);
+            toolbar.setNavigationOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    mListener.onNavigationBackClick();
+                }
+            });
+        }
+        toolbar.getNavigationIcon().mutate().setColorFilter(colorFilterPrimary);
+        toolbar.inflateMenu(R.menu.menu_thread_list);
+        toolbar.setOnMenuItemClickListener(this);
+        menu = toolbar.getMenu();
+
+        itemInterface = menu.findItem(R.id.item_interface);
+        switch (preferences.getString(AppSettings.INTERFACE_MODE, AppSettings.MODE_GRID)) {
+            case AppSettings.MODE_LIST:
+                itemInterface.setIcon(R.drawable.ic_view_module_white_24dp);
+                break;
+            case AppSettings.MODE_GRID:
+                itemInterface.setIcon(R.drawable.ic_view_list_white_24dp);
+                break;
+        }
+
+        itemSortTime = menu.findItem(R.id.item_sort_time);
+        itemSearch = menu.findItem(R.id.item_search);
+
+        menu.findItem(controllerLinks.getSort().getMenuId()).setChecked(true);
+        menu.findItem(controllerLinks.getTime().getMenuId()).setChecked(true);
+        itemSortTime.setTitle(
+                getString(R.string.time) + Reddit.TIME_SEPARATOR + menu
+                        .findItem(controllerLinks.getTime().getMenuId()).toString());
+
+        for (int index = 0; index < menu.size(); index++) {
+            menu.getItem(index).getIcon().mutate().setColorFilter(colorFilterPrimary);
+        }
+
+    }
+
+    private void resetAdapter(AdapterLink newAdapter) {
+
+        RecyclerView.LayoutManager layoutManagerCurrent = recyclerThreadList.getLayoutManager();
+
+        int size = layoutManagerCurrent instanceof StaggeredGridLayoutManager ? ((StaggeredGridLayoutManager) layoutManagerCurrent).getSpanCount() : 1;
+
+        int[] currentPosition = new int[size];
+        if (layoutManagerCurrent instanceof LinearLayoutManager) {
+            currentPosition[0] = ((LinearLayoutManager) layoutManagerCurrent)
+                    .findFirstVisibleItemPosition();
+        }
+        else if (layoutManagerCurrent instanceof StaggeredGridLayoutManager) {
+            ((StaggeredGridLayoutManager) layoutManagerCurrent).findFirstCompletelyVisibleItemPositions(
+                    currentPosition);
+        }
+
+        adapterLink = newAdapter;
+        layoutManager = adapterLink.getLayoutManager();
+
+        if (layoutManager instanceof LinearLayoutManager) {
+            recyclerThreadList.setPadding(0, 0, 0, 0);
+        }
+        else {
+            int padding = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 2,
+                    getResources().getDisplayMetrics());
+            recyclerThreadList.setPadding(padding, 0, padding, 0);
+        }
+
+        /*
+            Note that we must call setAdapter before setLayoutManager or the ViewHolders
+            will not be properly recycled, leading to memory leaks.
+         */
+        recyclerThreadList.setAdapter(adapterLink);
+        recyclerThreadList.setLayoutManager(layoutManager);
+        recyclerThreadList.scrollToPosition(currentPosition[0]);
+        if (layoutManager instanceof LinearLayoutManager) {
+            recyclerThreadList.addItemDecoration(itemDecorationDivider);
+        }
+        else {
+            recyclerThreadList.removeItemDecoration(itemDecorationDivider);
+        }
+    }
+
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+            final Bundle savedInstanceState) {
+        ((MainActivity) activity).getComponentActivity().inject(this);
+
+        initialize();
+
+        Log.d(TAG, "onCreateView");
+
+        view = inflater.inflate(R.layout.fragment_thread_list, container, false);
+
+        layoutCoordinator = (CoordinatorLayout) view.findViewById(R.id.layout_coordinator);
+        layoutAppBar = (AppBarLayout) view.findViewById(R.id.layout_app_bar);
+
+        TypedArray typedArray = activity.getTheme().obtainStyledAttributes(
+                new int[] {R.attr.colorPrimary, R.attr.colorAccent});
+        final int colorPrimary = typedArray.getColor(0, getResources().getColor(R.color.colorPrimary));
+        int colorAccent = typedArray.getColor(1, getResources().getColor(R.color.colorAccent));
+        typedArray.recycle();
+
+        int colorResourcePrimary = UtilsColor.computeContrast(colorPrimary, Color.WHITE) > 3f ? R.color.darkThemeIconFilter : R.color.lightThemeIconFilter;
+        int colorResourceAccent = UtilsColor.computeContrast(colorAccent, Color.WHITE) > 3f ? R.color.darkThemeIconFilter : R.color.lightThemeIconFilter;
+
+        colorFilterPrimary = new CustomColorFilter(getResources().getColor(colorResourcePrimary), PorterDuff.Mode.MULTIPLY);
+        colorFilterAccent = new CustomColorFilter(getResources().getColor(colorResourceAccent), PorterDuff.Mode.MULTIPLY);
+
+        int styleToolbar = UtilsColor.computeContrast(colorPrimary, Color.WHITE) > 3f ? mListener.getAppColorTheme().getStyle(AppSettings.THEME_DARK, mListener.getThemeAccentPrefString()) : mListener.getAppColorTheme().getStyle(AppSettings.THEME_LIGHT, mListener.getThemeAccentPrefString());
+
+        int styleColorBackground = AppSettings.THEME_DARK.equals(mListener.getThemeBackgroundPrefString()) ? R.style.MenuDark : R.style.MenuLight;
+
+        ContextThemeWrapper contextThemeWrapper = new ContextThemeWrapper(new ContextThemeWrapper(activity, styleToolbar), styleColorBackground);
+
+        toolbar = (Toolbar) activity.getLayoutInflater().cloneInContext(contextThemeWrapper).inflate(R.layout.toolbar, layoutAppBar, false);
+        layoutAppBar.addView(toolbar);
+        ((AppBarLayout.LayoutParams) toolbar.getLayoutParams()).setScrollFlags(AppBarLayout.LayoutParams.SCROLL_FLAG_SCROLL | AppBarLayout.LayoutParams.SCROLL_FLAG_ENTER_ALWAYS);
+        toolbar.setTitleTextColor(getResources().getColor(colorResourcePrimary));
+        toolbar.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                getFragmentManager().beginTransaction()
+                        .hide(FragmentThreadList.this)
+                        .add(R.id.frame_fragment, FragmentSearch.newInstance(true),
+                                FragmentSearch.TAG)
+                        .addToBackStack(null)
+                        .commit();
+            }
+        });
+        setUpToolbar();
+
+        layoutActions = (LinearLayout) view.findViewById(R.id.layout_actions);
+
+        buttonExpandActions = (FloatingActionButton) view.findViewById(R.id.button_expand_actions);
+        buttonExpandActions.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                toggleLayoutActions();
+            }
+        });
+
+        behaviorButtonExpandActions = new ScrollAwareFloatingActionButtonBehavior(
+                activity, null,
+                new ScrollAwareFloatingActionButtonBehavior.OnVisibilityChangeListener() {
+                    @Override
+                    public void onStartHideFromScroll() {
+                        hideLayoutActions(0);
+                    }
+
+                    @Override
+                    public void onEndHideFromScroll() {
+                        buttonExpandActions.setImageResource(R.drawable.ic_unfold_more_white_24dp);
+                        buttonExpandActions.setColorFilter(colorFilterAccent);
+                    }
+
+                });
+        ((CoordinatorLayout.LayoutParams) buttonExpandActions.getLayoutParams())
+                .setBehavior(behaviorButtonExpandActions);
+
+
+        buttonJumpTop = (FloatingActionButton) view.findViewById(R.id.button_jump_top);
+        buttonJumpTop.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                scrollToPositionWithOffset(0, 0);
+            }
+        });
+        buttonJumpTop.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View v) {
+                Toast.makeText(activity, getString(R.string.content_description_button_jump_top),
+                        Toast.LENGTH_SHORT).show();
+                return false;
+            }
+        });
+
+        buttonClearViewed = (FloatingActionButton) view.findViewById(R.id.button_clear_viewed);
+        buttonClearViewed.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                controllerLinks.clearViewed(historian);
+            }
+        });
+        buttonClearViewed.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View v) {
+                Toast.makeText(activity,
+                        getString(R.string.content_description_button_clear_viewed),
+                        Toast.LENGTH_SHORT).show();
+                return false;
+            }
+        });
+
+        // Margin is included within shadow margin on pre-Lollipop, so remove all regular margin
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
+            ((CoordinatorLayout.LayoutParams) buttonExpandActions.getLayoutParams())
+                    .setMargins(0, 0, 0, 0);
+
+            int margin = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 8,
+                    getResources().getDisplayMetrics());
+
+            LinearLayout.LayoutParams layoutParamsJumpTop = (LinearLayout.LayoutParams) buttonJumpTop
+                    .getLayoutParams();
+            layoutParamsJumpTop.setMargins(0, 0, 0, 0);
+            buttonJumpTop.setLayoutParams(layoutParamsJumpTop);
+
+            LinearLayout.LayoutParams layoutParamsClearViewed = (LinearLayout.LayoutParams) buttonClearViewed
+                    .getLayoutParams();
+            layoutParamsClearViewed.setMargins(0, 0, 0, 0);
+            buttonClearViewed.setLayoutParams(layoutParamsClearViewed);
+
+            RelativeLayout.LayoutParams layoutParamsActions = (RelativeLayout.LayoutParams) layoutActions
+                    .getLayoutParams();
+            layoutParamsActions.setMarginStart(margin);
+            layoutParamsActions.setMarginEnd(margin);
+            layoutActions.setLayoutParams(layoutParamsActions);
+        }
+
+        buttonExpandActions.setColorFilter(colorFilterAccent);
+        buttonJumpTop.setColorFilter(colorFilterAccent);
+        buttonClearViewed.setColorFilter(colorFilterAccent);
+
+        swipeRefreshThreadList = (SwipeRefreshLayout) view.findViewById(
+                R.id.swipe_refresh_thread_list);
+        swipeRefreshThreadList.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+            @Override
+            public void onRefresh() {
+                controllerLinks.reloadSubreddit();
+            }
+        });
+        if (adapterLinkList == null) {
+            adapterLinkList = new AdapterLinkList(activity, controllerLinks,
+                    eventListenerHeader,
+                    mListener.getEventListenerBase(),
+                    disallowListener,
+                    recyclerCallback);
+        }
+        if (adapterLinkGrid == null) {
+            adapterLinkGrid = new AdapterLinkGrid(activity, controllerLinks,
+                    eventListenerHeader,
+                    mListener.getEventListenerBase(),
+                    disallowListener,
+                    recyclerCallback);
+        }
+
+        if (AppSettings.MODE_LIST.equals(preferences.getString(AppSettings.INTERFACE_MODE,
+                AppSettings.MODE_GRID))) {
+            adapterLink = adapterLinkList;
+        }
+        else {
+            adapterLink = adapterLinkGrid;
+        }
+
+        adapterLinkList.setActivity(activity);
+        adapterLinkGrid.setActivity(activity);
+
+        itemDecorationDivider = new ItemDecorationDivider(activity, ItemDecorationDivider.VERTICAL_LIST);
+
+        recyclerThreadList = (RecyclerView) view.findViewById(R.id.recycler_thread_list);
+        recyclerThreadList.setItemAnimator(null);
+        resetAdapter(adapterLink);
+
+        recyclerThreadList.addOnScrollListener(new RecyclerView.OnScrollListener() {
+            @Override
+            public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
+                super.onScrollStateChanged(recyclerView, newState);
+                switch (newState) {
+                    case RecyclerView.SCROLL_STATE_IDLE:
+                    case RecyclerView.SCROLL_STATE_DRAGGING:
+                        Reddit.loadPicasso(activity).resumeTag(AdapterLink.TAG_PICASSO);
+                        break;
+                    case RecyclerView.SCROLL_STATE_SETTLING:
+                        Reddit.loadPicasso(activity).pauseTag(AdapterLink.TAG_PICASSO);
+                        break;
+                }
+            }
+        });
+
+        itemTouchHelper = new CustomItemTouchHelper(
+                new CustomItemTouchHelper.SimpleCallback(activity,
+                        R.drawable.ic_visibility_off_white_24dp,
+                        ItemTouchHelper.START | ItemTouchHelper.END,
+                        ItemTouchHelper.START | ItemTouchHelper.END) {
+
+                    @Override
+                    public float getSwipeThreshold(RecyclerView.ViewHolder viewHolder) {
+
+                        if (layoutManager instanceof StaggeredGridLayoutManager) {
+                            return 1f / ((StaggeredGridLayoutManager) layoutManager).getSpanCount();
+                        }
+
+                        return 0.5f;
+                    }
+
+                    @Override
+                    public int getSwipeDirs(RecyclerView recyclerView,
+                            RecyclerView.ViewHolder viewHolder) {
+
+                        if (viewHolder.getAdapterPosition() == 0) {
+                            return 0;
+                        }
+
+                        ViewGroup.LayoutParams layoutParams = viewHolder.itemView.getLayoutParams();
+
+                        if (layoutParams instanceof StaggeredGridLayoutManager.LayoutParams &&
+                                !((StaggeredGridLayoutManager.LayoutParams) layoutParams)
+                                        .isFullSpan()) {
+
+                            int spanCount = layoutManager instanceof StaggeredGridLayoutManager ?
+                                    ((StaggeredGridLayoutManager) layoutManager).getSpanCount() : 2;
+                            int spanIndex = ((StaggeredGridLayoutManager.LayoutParams) layoutParams)
+                                    .getSpanIndex() % spanCount;
+                            if (spanIndex == 0) {
+                                return ItemTouchHelper.END;
+                            }
+                            else if (spanIndex == spanCount - 1) {
+                                return ItemTouchHelper.START;
+                            }
+
+                        }
+
+                        return super.getSwipeDirs(recyclerView, viewHolder);
+                    }
+
+                    @Override
+                    public boolean isLongPressDragEnabled() {
+                        return false;
+                    }
+
+                    @Override
+                    public boolean onMove(RecyclerView recyclerView,
+                            RecyclerView.ViewHolder viewHolder,
+                            RecyclerView.ViewHolder target) {
+                        return false;
+                    }
+
+                    @Override
+                    public void onSwiped(final RecyclerView.ViewHolder viewHolder, int direction) {
+                        // Offset by 1 due to subreddit header
+                        final int position = viewHolder.getAdapterPosition() - 1;
+                        final Link link = controllerLinks.remove(position);
+                        mListener.getEventListenerBase().hide(link);
+
+                        if (snackbar != null) {
+                            snackbar.dismiss();
+                        }
+
+                        SpannableString text = new SpannableString(link.isHidden() ? getString(R.string.link_hidden) : getString(R.string.link_shown));
+                        text.setSpan(new ForegroundColorSpan(colorFilterPrimary.getColor()), 0, text.length(), Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
+
+                        //noinspection ResourceType
+                        snackbar = Snackbar.make(recyclerThreadList, text,
+                                UtilsAnimation.SNACKBAR_DURATION)
+                                .setActionTextColor(colorFilterPrimary.getColor())
+                                .setAction(
+                                        R.string.undo, new View.OnClickListener() {
+                                            @Override
+                                            public void onClick(View v) {
+                                                mListener.getEventListenerBase().hide(link);
+                                                controllerLinks.add(position, link);
+                                                recyclerThreadList.invalidate();
+                                            }
+                                        });
+                        snackbar.getView().setBackgroundColor(colorPrimary);
+                        snackbar.show();
+                    }
+                });
+        itemTouchHelper.attachToRecyclerView(recyclerThreadList);
+
+        if (layoutManager instanceof LinearLayoutManager) {
+            recyclerThreadList.setPadding(0, 0, 0, 0);
+        }
+        else {
+            int padding = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 2,
+                    getResources().getDisplayMetrics());
+            recyclerThreadList.setPadding(padding, 0, padding, 0);
+        }
+
+        drawerLayout = (DrawerLayout) view.findViewById(R.id.drawer_layout);
+
+        textSidebar = (TextView) view.findViewById(R.id.text_sidebar);
+        textSidebar.setMovementMethod(LinkMovementMethod.getInstance());
+
+        buttonSubscribe = (Button) view.findViewById(R.id.button_subscribe);
+        buttonSubscribe.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                buttonSubscribe.setText(
+                        controllerLinks.getSubreddit().isUserIsSubscriber() ?
+                                R.string.subscribe : R.string.unsubscribe);
+                controllerLinks.subscribe();
+                if (controllerLinks.getSubreddit().isUserIsSubscriber()) {
+                    mListener.getControllerSearch()
+                            .addSubreddit(controllerLinks.getSubreddit());
+                }
+            }
+        });
+
+        textEmpty = (TextView) view.findViewById(R.id.text_empty);
+
+        return view;
+    }
+
+    private void initialize() {
         eventListenerHeader = new AdapterLink.ViewHolderHeader.EventListener() {
             @Override
             public void onClickSubmit(Reddit.PostType postType) {
@@ -145,9 +565,9 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
 
                 FragmentNewPost fragmentNewPost = FragmentNewPost.newInstance(
                         mListener.getControllerUser().getUser().getName(),
-                        mListener.getControllerLinks().getSubreddit().getUrl(),
+                        controllerLinks.getSubreddit().getUrl(),
                         postType,
-                        mListener.getControllerLinks().getSubreddit().getSubmitTextHtml());
+                        controllerLinks.getSubreddit().getSubmitTextHtml());
 
                 getFragmentManager().beginTransaction()
                         .hide(FragmentThreadList.this)
@@ -269,418 +689,6 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
                 swipeRefreshThreadList.setRefreshing(refreshing);
             }
         };
-    }
-
-    private void setUpToolbar() {
-
-        if (getFragmentManager().getBackStackEntryCount() <= 1) {
-            toolbar.setNavigationIcon(R.drawable.ic_menu_white_24dp);
-            toolbar.setNavigationOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    mListener.openDrawer();
-                }
-            });
-        }
-        else {
-            toolbar.setNavigationIcon(R.drawable.ic_arrow_back_white_24dp);
-            toolbar.setNavigationOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    mListener.onNavigationBackClick();
-                }
-            });
-        }
-        toolbar.getNavigationIcon().mutate().setColorFilter(colorFilterPrimary);
-        toolbar.inflateMenu(R.menu.menu_thread_list);
-        toolbar.setOnMenuItemClickListener(this);
-        menu = toolbar.getMenu();
-
-        itemInterface = menu.findItem(R.id.item_interface);
-        switch (preferences.getString(AppSettings.INTERFACE_MODE, AppSettings.MODE_GRID)) {
-            case AppSettings.MODE_LIST:
-                itemInterface.setIcon(R.drawable.ic_view_module_white_24dp);
-                break;
-            case AppSettings.MODE_GRID:
-                itemInterface.setIcon(R.drawable.ic_view_list_white_24dp);
-                break;
-        }
-
-        itemSortTime = menu.findItem(R.id.item_sort_time);
-        itemSearch = menu.findItem(R.id.item_search);
-
-        menu.findItem(mListener.getControllerLinks().getSort().getMenuId()).setChecked(true);
-        menu.findItem(mListener.getControllerLinks().getTime().getMenuId()).setChecked(true);
-        itemSortTime.setTitle(
-                getString(R.string.time) + Reddit.TIME_SEPARATOR + menu
-                        .findItem(mListener.getControllerLinks()
-                                .getTime().getMenuId()).toString());
-
-        for (int index = 0; index < menu.size(); index++) {
-            menu.getItem(index).getIcon().mutate().setColorFilter(colorFilterPrimary);
-        }
-
-    }
-
-    private void resetAdapter(AdapterLink newAdapter) {
-
-        RecyclerView.LayoutManager layoutManagerCurrent = recyclerThreadList.getLayoutManager();
-
-        int size = layoutManagerCurrent instanceof StaggeredGridLayoutManager ? ((StaggeredGridLayoutManager) layoutManagerCurrent).getSpanCount() : 1;
-
-        int[] currentPosition = new int[size];
-        if (layoutManagerCurrent instanceof LinearLayoutManager) {
-            currentPosition[0] = ((LinearLayoutManager) layoutManagerCurrent)
-                    .findFirstVisibleItemPosition();
-        }
-        else if (layoutManagerCurrent instanceof StaggeredGridLayoutManager) {
-            ((StaggeredGridLayoutManager) layoutManagerCurrent).findFirstCompletelyVisibleItemPositions(
-                    currentPosition);
-        }
-
-        adapterLink = newAdapter;
-        layoutManager = adapterLink.getLayoutManager();
-
-        if (layoutManager instanceof LinearLayoutManager) {
-            recyclerThreadList.setPadding(0, 0, 0, 0);
-        }
-        else {
-            int padding = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 2,
-                    getResources().getDisplayMetrics());
-            recyclerThreadList.setPadding(padding, 0, padding, 0);
-        }
-
-        /*
-            Note that we must call setAdapter before setLayoutManager or the ViewHolders
-            will not be properly recycled, leading to memory leaks.
-         */
-        recyclerThreadList.setAdapter(adapterLink);
-        recyclerThreadList.setLayoutManager(layoutManager);
-        recyclerThreadList.scrollToPosition(currentPosition[0]);
-        if (layoutManager instanceof LinearLayoutManager) {
-            recyclerThreadList.addItemDecoration(itemDecorationDivider);
-        }
-        else {
-            recyclerThreadList.removeItemDecoration(itemDecorationDivider);
-        }
-    }
-
-    @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
-            final Bundle savedInstanceState) {
-
-        Log.d(TAG, "onCreateView");
-
-        view = inflater.inflate(R.layout.fragment_thread_list, container, false);
-
-        layoutCoordinator = (CoordinatorLayout) view.findViewById(R.id.layout_coordinator);
-        layoutAppBar = (AppBarLayout) view.findViewById(R.id.layout_app_bar);
-
-        TypedArray typedArray = activity.getTheme().obtainStyledAttributes(
-                new int[] {R.attr.colorPrimary, R.attr.colorAccent});
-        final int colorPrimary = typedArray.getColor(0, getResources().getColor(R.color.colorPrimary));
-        int colorAccent = typedArray.getColor(1, getResources().getColor(R.color.colorAccent));
-        typedArray.recycle();
-
-        int colorResourcePrimary = UtilsColor.computeContrast(colorPrimary, Color.WHITE) > 3f ? R.color.darkThemeIconFilter : R.color.lightThemeIconFilter;
-        int colorResourceAccent = UtilsColor.computeContrast(colorAccent, Color.WHITE) > 3f ? R.color.darkThemeIconFilter : R.color.lightThemeIconFilter;
-
-        colorFilterPrimary = new CustomColorFilter(getResources().getColor(colorResourcePrimary), PorterDuff.Mode.MULTIPLY);
-        colorFilterAccent = new CustomColorFilter(getResources().getColor(colorResourceAccent), PorterDuff.Mode.MULTIPLY);
-
-        int styleToolbar = UtilsColor.computeContrast(colorPrimary, Color.WHITE) > 3f ? mListener.getAppColorTheme().getStyle(AppSettings.THEME_DARK, mListener.getThemeAccentPrefString()) : mListener.getAppColorTheme().getStyle(AppSettings.THEME_LIGHT, mListener.getThemeAccentPrefString());
-
-        int styleColorBackground = AppSettings.THEME_DARK.equals(mListener.getThemeBackgroundPrefString()) ? R.style.MenuDark : R.style.MenuLight;
-
-        ContextThemeWrapper contextThemeWrapper = new ContextThemeWrapper(new ContextThemeWrapper(activity, styleToolbar), styleColorBackground);
-
-        toolbar = (Toolbar) activity.getLayoutInflater().cloneInContext(contextThemeWrapper).inflate(R.layout.toolbar, layoutAppBar, false);
-        layoutAppBar.addView(toolbar);
-        ((AppBarLayout.LayoutParams) toolbar.getLayoutParams()).setScrollFlags(AppBarLayout.LayoutParams.SCROLL_FLAG_SCROLL | AppBarLayout.LayoutParams.SCROLL_FLAG_ENTER_ALWAYS);
-        toolbar.setTitleTextColor(getResources().getColor(colorResourcePrimary));
-        toolbar.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                getFragmentManager().beginTransaction()
-                        .hide(FragmentThreadList.this)
-                        .add(R.id.frame_fragment, FragmentSearch.newInstance(true),
-                                FragmentSearch.TAG)
-                        .addToBackStack(null)
-                        .commit();
-            }
-        });
-        setUpToolbar();
-
-        layoutActions = (LinearLayout) view.findViewById(R.id.layout_actions);
-
-        buttonExpandActions = (FloatingActionButton) view.findViewById(R.id.button_expand_actions);
-        buttonExpandActions.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                toggleLayoutActions();
-            }
-        });
-
-        behaviorButtonExpandActions = new ScrollAwareFloatingActionButtonBehavior(
-                activity, null,
-                new ScrollAwareFloatingActionButtonBehavior.OnVisibilityChangeListener() {
-                    @Override
-                    public void onStartHideFromScroll() {
-                        hideLayoutActions(0);
-                    }
-
-                    @Override
-                    public void onEndHideFromScroll() {
-                        buttonExpandActions.setImageResource(R.drawable.ic_unfold_more_white_24dp);
-                        buttonExpandActions.setColorFilter(colorFilterAccent);
-                    }
-
-                });
-        ((CoordinatorLayout.LayoutParams) buttonExpandActions.getLayoutParams())
-                .setBehavior(behaviorButtonExpandActions);
-
-
-        buttonJumpTop = (FloatingActionButton) view.findViewById(R.id.button_jump_top);
-        buttonJumpTop.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                scrollToPositionWithOffset(0, 0);
-            }
-        });
-        buttonJumpTop.setOnLongClickListener(new View.OnLongClickListener() {
-            @Override
-            public boolean onLongClick(View v) {
-                Toast.makeText(activity, getString(R.string.content_description_button_jump_top),
-                        Toast.LENGTH_SHORT).show();
-                return false;
-            }
-        });
-
-        buttonClearViewed = (FloatingActionButton) view.findViewById(R.id.button_clear_viewed);
-        buttonClearViewed.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                mListener.getControllerLinks().clearViewed(Historian.getInstance(activity));
-            }
-        });
-        buttonClearViewed.setOnLongClickListener(new View.OnLongClickListener() {
-            @Override
-            public boolean onLongClick(View v) {
-                Toast.makeText(activity,
-                        getString(R.string.content_description_button_clear_viewed),
-                        Toast.LENGTH_SHORT).show();
-                return false;
-            }
-        });
-
-        // Margin is included within shadow margin on pre-Lollipop, so remove all regular margin
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
-            ((CoordinatorLayout.LayoutParams) buttonExpandActions.getLayoutParams())
-                    .setMargins(0, 0, 0, 0);
-
-            int margin = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 8,
-                    getResources().getDisplayMetrics());
-
-            LinearLayout.LayoutParams layoutParamsJumpTop = (LinearLayout.LayoutParams) buttonJumpTop
-                    .getLayoutParams();
-            layoutParamsJumpTop.setMargins(0, 0, 0, 0);
-            buttonJumpTop.setLayoutParams(layoutParamsJumpTop);
-
-            LinearLayout.LayoutParams layoutParamsClearViewed = (LinearLayout.LayoutParams) buttonClearViewed
-                    .getLayoutParams();
-            layoutParamsClearViewed.setMargins(0, 0, 0, 0);
-            buttonClearViewed.setLayoutParams(layoutParamsClearViewed);
-
-            RelativeLayout.LayoutParams layoutParamsActions = (RelativeLayout.LayoutParams) layoutActions
-                    .getLayoutParams();
-            layoutParamsActions.setMarginStart(margin);
-            layoutParamsActions.setMarginEnd(margin);
-            layoutActions.setLayoutParams(layoutParamsActions);
-        }
-
-        buttonExpandActions.setColorFilter(colorFilterAccent);
-        buttonJumpTop.setColorFilter(colorFilterAccent);
-        buttonClearViewed.setColorFilter(colorFilterAccent);
-
-        swipeRefreshThreadList = (SwipeRefreshLayout) view.findViewById(
-                R.id.swipe_refresh_thread_list);
-        swipeRefreshThreadList.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
-            @Override
-            public void onRefresh() {
-                mListener.getControllerLinks().reloadSubreddit();
-            }
-        });
-        if (adapterLinkList == null) {
-            adapterLinkList = new AdapterLinkList(activity, mListener.getControllerLinks(),
-                    eventListenerHeader,
-                    mListener.getEventListenerBase(),
-                    disallowListener,
-                    recyclerCallback);
-        }
-        if (adapterLinkGrid == null) {
-            adapterLinkGrid = new AdapterLinkGrid(activity, mListener.getControllerLinks(),
-                    eventListenerHeader,
-                    mListener.getEventListenerBase(),
-                    disallowListener,
-                    recyclerCallback);
-        }
-
-        if (AppSettings.MODE_LIST.equals(preferences.getString(AppSettings.INTERFACE_MODE,
-                AppSettings.MODE_GRID))) {
-            adapterLink = adapterLinkList;
-        }
-        else {
-            adapterLink = adapterLinkGrid;
-        }
-
-        adapterLinkList.setActivity(activity);
-        adapterLinkGrid.setActivity(activity);
-
-        itemDecorationDivider = new ItemDecorationDivider(activity, ItemDecorationDivider.VERTICAL_LIST);
-
-        recyclerThreadList = (RecyclerView) view.findViewById(R.id.recycler_thread_list);
-        recyclerThreadList.setItemAnimator(null);
-        resetAdapter(adapterLink);
-
-        recyclerThreadList.addOnScrollListener(new RecyclerView.OnScrollListener() {
-            @Override
-            public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
-                super.onScrollStateChanged(recyclerView, newState);
-                switch (newState) {
-                    case RecyclerView.SCROLL_STATE_IDLE:
-                    case RecyclerView.SCROLL_STATE_DRAGGING:
-                        Reddit.loadPicasso(activity).resumeTag(AdapterLink.TAG_PICASSO);
-                        break;
-                    case RecyclerView.SCROLL_STATE_SETTLING:
-                        Reddit.loadPicasso(activity).pauseTag(AdapterLink.TAG_PICASSO);
-                        break;
-                }
-            }
-        });
-
-        itemTouchHelper = new CustomItemTouchHelper(
-                new CustomItemTouchHelper.SimpleCallback(activity,
-                        R.drawable.ic_visibility_off_white_24dp,
-                        ItemTouchHelper.START | ItemTouchHelper.END,
-                        ItemTouchHelper.START | ItemTouchHelper.END) {
-
-                    @Override
-                    public float getSwipeThreshold(RecyclerView.ViewHolder viewHolder) {
-
-                        if (layoutManager instanceof StaggeredGridLayoutManager) {
-                            return 1f / ((StaggeredGridLayoutManager) layoutManager).getSpanCount();
-                        }
-
-                        return 0.5f;
-                    }
-
-                    @Override
-                    public int getSwipeDirs(RecyclerView recyclerView,
-                            RecyclerView.ViewHolder viewHolder) {
-
-                        if (viewHolder.getAdapterPosition() == 0) {
-                            return 0;
-                        }
-
-                        ViewGroup.LayoutParams layoutParams = viewHolder.itemView.getLayoutParams();
-
-                        if (layoutParams instanceof StaggeredGridLayoutManager.LayoutParams &&
-                                !((StaggeredGridLayoutManager.LayoutParams) layoutParams)
-                                        .isFullSpan()) {
-
-                            int spanCount = layoutManager instanceof StaggeredGridLayoutManager ?
-                                    ((StaggeredGridLayoutManager) layoutManager).getSpanCount() : 2;
-                            int spanIndex = ((StaggeredGridLayoutManager.LayoutParams) layoutParams)
-                                    .getSpanIndex() % spanCount;
-                            if (spanIndex == 0) {
-                                return ItemTouchHelper.END;
-                            }
-                            else if (spanIndex == spanCount - 1) {
-                                return ItemTouchHelper.START;
-                            }
-
-                        }
-
-                        return super.getSwipeDirs(recyclerView, viewHolder);
-                    }
-
-                    @Override
-                    public boolean isLongPressDragEnabled() {
-                        return false;
-                    }
-
-                    @Override
-                    public boolean onMove(RecyclerView recyclerView,
-                            RecyclerView.ViewHolder viewHolder,
-                            RecyclerView.ViewHolder target) {
-                        return false;
-                    }
-
-                    @Override
-                    public void onSwiped(final RecyclerView.ViewHolder viewHolder, int direction) {
-                        // Offset by 1 due to subreddit header
-                        final int position = viewHolder.getAdapterPosition() - 1;
-                        final Link link = mListener.getControllerLinks().remove(position);
-                        mListener.getEventListenerBase().hide(link);
-
-                        if (snackbar != null) {
-                            snackbar.dismiss();
-                        }
-
-                        SpannableString text = new SpannableString(link.isHidden() ? getString(R.string.link_hidden) : getString(R.string.link_shown));
-                        text.setSpan(new ForegroundColorSpan(colorFilterPrimary.getColor()), 0, text.length(), Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
-
-                        //noinspection ResourceType
-                        snackbar = Snackbar.make(recyclerThreadList, text,
-                                UtilsAnimation.SNACKBAR_DURATION)
-                                .setActionTextColor(colorFilterPrimary.getColor())
-                                .setAction(
-                                        R.string.undo, new View.OnClickListener() {
-                                            @Override
-                                            public void onClick(View v) {
-                                                mListener.getEventListenerBase().hide(link);
-                                                mListener.getControllerLinks().add(position, link);
-                                                recyclerThreadList.invalidate();
-                                            }
-                                        });
-                        snackbar.getView().setBackgroundColor(colorPrimary);
-                        snackbar.show();
-                    }
-                });
-        itemTouchHelper.attachToRecyclerView(recyclerThreadList);
-
-        if (layoutManager instanceof LinearLayoutManager) {
-            recyclerThreadList.setPadding(0, 0, 0, 0);
-        }
-        else {
-            int padding = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 2,
-                    getResources().getDisplayMetrics());
-            recyclerThreadList.setPadding(padding, 0, padding, 0);
-        }
-
-        drawerLayout = (DrawerLayout) view.findViewById(R.id.drawer_layout);
-
-        textSidebar = (TextView) view.findViewById(R.id.text_sidebar);
-        textSidebar.setMovementMethod(LinkMovementMethod.getInstance());
-
-        buttonSubscribe = (Button) view.findViewById(R.id.button_subscribe);
-        buttonSubscribe.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                buttonSubscribe.setText(
-                        mListener.getControllerLinks().getSubreddit().isUserIsSubscriber() ?
-                                R.string.subscribe : R.string.unsubscribe);
-                mListener.getControllerLinks().subscribe();
-                if (mListener.getControllerLinks().getSubreddit().isUserIsSubscriber()) {
-                    mListener.getControllerSearch()
-                            .addSubreddit(mListener.getControllerLinks().getSubreddit());
-                }
-            }
-        });
-
-        textEmpty = (TextView) view.findViewById(R.id.text_empty);
-
-        return view;
     }
 
     private void toggleLayoutActions() {
@@ -808,14 +816,12 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
     @Override
     public void onResume() {
         super.onResume();
-        mListener.getControllerLinks()
-                .addListener(listener);
+        controllerLinks.addListener(listener);
     }
 
     @Override
     public void onPause() {
-        mListener.getControllerLinks()
-                .removeListener(listener);
+        controllerLinks.removeListener(listener);
         super.onPause();
     }
 
@@ -868,16 +874,14 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
 
         Sort sort = Sort.fromMenuId(item.getItemId());
         if (sort != null) {
-            mListener.getControllerLinks()
-                    .setSort(sort);
+            controllerLinks.setSort(sort);
             scrollToPositionWithOffset(0, 0);
             return true;
         }
 
         Time time = Time.fromMenuId(item.getItemId());
         if (time != null) {
-            mListener.getControllerLinks()
-                    .setTime(time);
+            controllerLinks.setTime(time);
             itemSortTime.setTitle(
                     getString(R.string.time) + Reddit.TIME_SEPARATOR + item.toString());
             scrollToPositionWithOffset(0, 0);

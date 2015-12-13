@@ -5,7 +5,10 @@
 package com.winsonchiu.reader.links;
 
 import com.winsonchiu.reader.data.reddit.Link;
+import com.winsonchiu.reader.data.reddit.Listing;
 import com.winsonchiu.reader.data.reddit.Subreddit;
+
+import rx.Observable;
 
 /**
  * Created by TheKeeperOfPie on 3/21/2015.
@@ -17,7 +20,7 @@ public interface ControllerLinksBase {
     Link getLink(int position);
     int sizeLinks();
     boolean isLoading();
-    void loadMoreLinks();
+    Observable<Listing> loadMoreLinks();
     Subreddit getSubreddit();
     boolean showSubreddit();
     boolean setReplyText(String name, String text, boolean collapsed);

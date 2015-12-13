@@ -59,11 +59,11 @@ public interface ApiRedditAuthorized {
                             @Query("after") String after,
                             @Query("limit") Integer limit);
 
-    @GET("/subreddits/{page}" +
-            "?show=all")
-    Observable<String> subreddits(@Path("page") String page,
+    @GET
+    Observable<String> subreddits(@Url String url,
                                   @Query("after") String after,
-                                  @Query("limit") Integer limit);
+                                  @Query("limit") Integer limit,
+                                  @Query("show") String show);
 
     @GET("/subreddits/search" +
             "?show=all")

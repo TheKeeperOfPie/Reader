@@ -14,7 +14,6 @@ import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.v7.widget.Toolbar;
 import android.text.TextUtils;
-import android.util.Base64;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -32,13 +31,13 @@ import android.widget.Toast;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.squareup.okhttp.FormEncodingBuilder;
-import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.RequestBody;
-import com.winsonchiu.reader.ApiKeys;
 import com.winsonchiu.reader.AppSettings;
+import com.winsonchiu.reader.CustomApplication;
 import com.winsonchiu.reader.R;
 import com.winsonchiu.reader.Theme;
+import com.winsonchiu.reader.dagger.components.ComponentStatic;
 import com.winsonchiu.reader.data.reddit.Reddit;
 import com.winsonchiu.reader.data.reddit.User;
 import com.winsonchiu.reader.utils.FinalizingSubscriber;
@@ -50,6 +49,8 @@ import org.json.JSONObject;
 import java.io.IOException;
 import java.util.UUID;
 
+import javax.inject.Inject;
+
 import rx.Observable;
 import rx.functions.Func1;
 
@@ -58,7 +59,9 @@ public class ActivityLogin extends AccountAuthenticatorActivity {
     private static final String TAG = ActivityLogin.class.getCanonicalName();
     public static final String KEY_IS_NEW_ACCOUNT = "isNewAccount";
     public static final String KEY_TIME_EXPIRATION = "timeExpiration";
-    private Reddit reddit;
+
+    @Inject Reddit reddit;
+
     private SharedPreferences preferences;
     private Toolbar toolbar;
     private ProgressBar progressAuth;
@@ -68,6 +71,7 @@ public class ActivityLogin extends AccountAuthenticatorActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        CustomApplication.getComponentMain().inject(this);
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
 
         Theme theme;
@@ -95,7 +99,6 @@ public class ActivityLogin extends AccountAuthenticatorActivity {
             getWindow().clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
         }
 
-        reddit = Reddit.getInstance(this);
         preferences = PreferenceManager.getDefaultSharedPreferences(this);
         state = UUID.randomUUID().toString();
 
@@ -170,20 +173,12 @@ public class ActivityLogin extends AccountAuthenticatorActivity {
                 .add(Reddit.QUERY_REDIRECT_URI, Reddit.REDIRECT_URI)
                 .build();
 
-        String credentials = ApiKeys.REDDIT_CLIENT_ID + ":";
-        String authorization = "Basic " + Base64.encodeToString(credentials.getBytes(),
-                Base64.NO_WRAP);
-
-        Request request = new Request.Builder()
+        Request request = Reddit.withRequestBasicAuth()
                 .url(Reddit.ACCESS_URL)
-                .header(Reddit.USER_AGENT, Reddit.CUSTOM_USER_AGENT)
-                .header(Reddit.AUTHORIZATION, authorization)
-                .header(Reddit.CONTENT_TYPE, Reddit.CONTENT_TYPE_APP_JSON)
                 .post(requestBody)
                 .build();
 
-        Reddit.getInstance(this)
-                .load(request)
+        reddit.load(request)
                 .subscribe(new FinalizingSubscriber<String>() {
                     @Override
                     public void next(String response) {
@@ -225,7 +220,7 @@ public class ActivityLogin extends AccountAuthenticatorActivity {
                     @Override
                     public Observable<User> call(String response) {
                         try {
-                            return Observable.just(User.fromJson(Reddit.getObjectMapper().readValue(response, JsonNode.class)));
+                            return Observable.just(User.fromJson(ComponentStatic.getObjectMapper().readValue(response, JsonNode.class)));
                         }
                         catch (IOException e) {
                             return Observable.error(e);
@@ -255,7 +250,7 @@ public class ActivityLogin extends AccountAuthenticatorActivity {
 
                         setAccountAuthenticatorResult(result.getExtras());
                         setResult(RESULT_OK, result);
-                        finish();
+                        ActivityLogin.this.finish();
                     }
                 });
     }

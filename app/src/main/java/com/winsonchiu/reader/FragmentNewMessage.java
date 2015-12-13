@@ -44,6 +44,8 @@ import com.winsonchiu.reader.utils.UtilsColor;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import javax.inject.Inject;
+
 import rx.Observer;
 
 public class FragmentNewMessage extends FragmentBase implements Toolbar.OnMenuItemClickListener {
@@ -53,7 +55,7 @@ public class FragmentNewMessage extends FragmentBase implements Toolbar.OnMenuIt
     public static final String ARG_SUBJECT = "subject";
     public static final String ARG_MESSAGE = "message";
 
-    private Reddit reddit;
+    @Inject Reddit reddit;
 
     private Toolbar toolbar;
     private TextView textAuthor;
@@ -112,14 +114,13 @@ public class FragmentNewMessage extends FragmentBase implements Toolbar.OnMenuIt
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        CustomApplication.getComponentMain().inject(this);
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
             Bundle savedInstanceState) {
         final View view =  inflater.inflate(R.layout.fragment_new_message, container, false);
-
-        reddit = Reddit.getInstance(activity);
 
         layoutCoordinator = (CoordinatorLayout) view.findViewById(R.id.layout_coordinator);
         layoutAppBar = (AppBarLayout) view.findViewById(R.id.layout_app_bar);

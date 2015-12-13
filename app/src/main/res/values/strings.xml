@@ -267,7 +267,7 @@
     <string name="error_account">Error loading account</string>
     <string name="delete_account">Delete account?</string>
     <string name="error_delete_account_securely">Cannot securely delete account right now</string>
-    <string name="replying_from">Replying from</string>
+    <string name="replying_from">Replying from %1$s</string>
     <string name="sending_from">Sending from</string>
     <string name="secret_prefix">You are</string>
     <string name="secret_suffix">steps from the secret</string>
