@@ -2,10 +2,9 @@
  * Copyright 2015 Winson Chiu
  */
 
-package com.winsonchiu.reader;
+package com.winsonchiu.reader.utils;
 
 import com.google.android.youtube.player.YouTubePlayer;
-import com.winsonchiu.reader.utils.SimplePlayerStateChangeListener;
 
 /**
  * Created by TheKeeperOfPie on 7/7/2015.

@@ -40,6 +40,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.github.rjeschke.txtmark.Processor;
+import com.squareup.picasso.Picasso;
 import com.winsonchiu.reader.data.reddit.Link;
 import com.winsonchiu.reader.data.reddit.Listing;
 import com.winsonchiu.reader.data.reddit.Reddit;
@@ -81,6 +82,7 @@ public class FragmentNewPost extends FragmentBase implements Toolbar.OnMenuItemC
     private View viewDivider;
 
     @Inject Reddit reddit;
+    @Inject Picasso picasso;
     @Inject ControllerLinks controllerLinks;
 
     private int editMarginDefault;
@@ -422,8 +424,7 @@ public class FragmentNewPost extends FragmentBase implements Toolbar.OnMenuItemC
                             captcha = jsonObject.getJSONObject("json").getJSONObject("data").getString(
                                     "iden");
                             Log.d(TAG, "captcha: " + captcha);
-                            Reddit.loadPicasso(activity)
-                                    .load(Reddit.BASE_URL + "/captcha/" + captcha + ".png")
+                            picasso.load(Reddit.BASE_URL + "/captcha/" + captcha + ".png")
                                     .resize(getResources().getDisplayMetrics().widthPixels, 0).into(
                                     imageCaptcha);
                         }
@@ -554,8 +555,7 @@ public class FragmentNewPost extends FragmentBase implements Toolbar.OnMenuItemC
                                 if (!TextUtils.isEmpty(captcha)) {
                                     FragmentNewPost.this.captcha = captcha;
                                     editCaptcha.setText("");
-                                    Reddit.loadPicasso(activity)
-                                            .load(Reddit.BASE_URL + "/captcha/" + FragmentNewPost.this.captcha + ".png")
+                                    picasso.load(Reddit.BASE_URL + "/captcha/" + FragmentNewPost.this.captcha + ".png")
                                             .resize(getResources().getDisplayMetrics().widthPixels, 0).into(
                                             imageCaptcha);
                                 }

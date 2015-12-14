@@ -74,6 +74,7 @@ import com.winsonchiu.reader.comments.AdapterCommentList;
 import com.winsonchiu.reader.comments.ControllerComments;
 import com.winsonchiu.reader.comments.FragmentComments;
 import com.winsonchiu.reader.comments.FragmentReply;
+import com.winsonchiu.reader.dagger.FragmentPersist;
 import com.winsonchiu.reader.dagger.components.ComponentActivity;
 import com.winsonchiu.reader.dagger.components.ComponentStatic;
 import com.winsonchiu.reader.dagger.modules.ModuleReddit;
@@ -148,8 +149,6 @@ public class MainActivity extends YouTubeBaseActivity
 
     private static final int REQUEST_PERMISSION_WRITE_EXTERNAL_STORAGE = 61;
 
-    private FragmentData fragmentData;
-
     private int loadId = -1;
 
     private SharedPreferences sharedPreferences;
@@ -164,12 +163,7 @@ public class MainActivity extends YouTubeBaseActivity
     private ImageButton buttonAccounts;
     private LinearLayout layoutAccounts;
 
-    @Inject Reddit reddit;
-    @Inject Historian historian;
-    @Inject ControllerLinks controllerLinks;
-
     private Handler handler;
-    private AccountManager accountManager;
     private Account accountUser;
     private AdapterLink.ViewHolderBase.EventListener eventListenerBase;
     private AdapterCommentList.ViewHolderComment.EventListener eventListenerComment;
@@ -236,11 +230,20 @@ public class MainActivity extends YouTubeBaseActivity
     private String themeAccent;
     private ComponentActivity componentActivity;
 
+    @Inject AccountManager accountManager;
+    @Inject Reddit reddit;
+    @Inject Picasso picasso;
+    @Inject Historian historian;
+    @Inject ControllerLinks controllerLinks;
+    @Inject ControllerUser controllerUser;
+    @Inject ControllerComments controllerComments;
+    @Inject ControllerProfile controllerProfile;
+    @Inject ControllerInbox controllerInbox;
+    @Inject ControllerSearch controllerSearch;
+    @Inject ControllerHistory controllerHistory;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        componentActivity = CustomApplication.getComponentMain()
-                .plus(new ModuleReddit());
-        componentActivity.inject(this);
         sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
 
         style = R.style.AppDarkTheme;
@@ -283,19 +286,22 @@ public class MainActivity extends YouTubeBaseActivity
         appCompatDelegate.onCreate(savedInstanceState);
 
         handler = new Handler();
-        accountManager = AccountManager.get(getApplicationContext());
 
-        fragmentData = (FragmentData) getFragmentManager().findFragmentByTag(FragmentData.TAG);
-        if (fragmentData == null) {
-            fragmentData = new FragmentData();
-            getFragmentManager().beginTransaction().add(fragmentData, FragmentData.TAG).commit();
-            fragmentData.initializeControllers(this);
-            Log.d(TAG, "FragmentData not found, initialized");
+        FragmentPersist fragmentPersist = (FragmentPersist) getFragmentManager().findFragmentByTag(FragmentPersist.TAG);
+        if (fragmentPersist == null) {
+            fragmentPersist = new FragmentPersist();
+            getFragmentManager().beginTransaction().add(fragmentPersist, FragmentPersist.TAG).commit();
+            fragmentPersist.initialize();
         }
-        else {
-            Log.d(TAG, "FragmentData found, resetting Activity");
-            fragmentData.resetActivity(this);
+
+        componentActivity = fragmentPersist.getComponentActivity();
+
+        if (componentActivity == null) {
+            componentActivity = CustomApplication.getComponentMain()
+                    .plus(new ModuleReddit());
         }
+
+        componentActivity.inject(this);
 
         appCompatDelegate.setContentView(R.layout.activity_main);
 
@@ -359,13 +365,13 @@ public class MainActivity extends YouTubeBaseActivity
                             @Override
                             public void next(Comment comment) {
                                 if (getFragmentManager().findFragmentByTag(FragmentComments.TAG) != null) {
-                                    getControllerComments().insertComment(comment);
+                                    controllerComments.insertComment(comment);
                                 }
                                 if (getFragmentManager().findFragmentByTag(FragmentProfile.TAG) != null) {
-                                    getControllerProfile().insertComment(comment);
+                                    controllerProfile.insertComment(comment);
                                 }
                                 if (getFragmentManager().findFragmentByTag(FragmentInbox.TAG) != null) {
-                                    getControllerInbox().insertComment(comment);
+                                    controllerInbox.insertComment(comment);
                                 }
                             }
                         });
@@ -398,7 +404,7 @@ public class MainActivity extends YouTubeBaseActivity
 
                             @Override
                             public void next(Message next) {
-                                getControllerInbox().insertMessage(next);
+                                controllerInbox.insertMessage(next);
                             }
                         });
             }
@@ -408,7 +414,7 @@ public class MainActivity extends YouTubeBaseActivity
 
                 Log.d(TAG, "onClickComments: " + link);
 
-                getControllerComments()
+                controllerComments
                         .setLink(link);
 
                 int color = viewHolderBase.getBackgroundColor();
@@ -583,7 +589,7 @@ public class MainActivity extends YouTubeBaseActivity
 
             @Override
             public boolean isUserLoggedIn() {
-                return getControllerUser().hasUser();
+                return controllerUser.hasUser();
             }
 
             @Override
@@ -630,7 +636,7 @@ public class MainActivity extends YouTubeBaseActivity
 
             @Override
             public void deletePost(Link link) {
-                Observable.merge(controllerLinks.deletePost(link), getControllerProfile().deletePost(link))
+                Observable.merge(controllerLinks.deletePost(link), controllerProfile.deletePost(link))
                         .subscribe(new FinalizingSubscriber<String>() {
                             @Override
                             public void error(Throwable e) {
@@ -677,7 +683,7 @@ public class MainActivity extends YouTubeBaseActivity
 
             @Override
             public void editLink(Link link) {
-                FragmentNewPost fragmentNewPost = FragmentNewPost.newInstanceEdit(getControllerUser().getUser().getName(), link);
+                FragmentNewPost fragmentNewPost = FragmentNewPost.newInstanceEdit(controllerUser.getUser().getName(), link);
 
                 getFragmentManager().beginTransaction()
                         .hide(getFragmentManager().findFragmentById(R.id.frame_fragment))
@@ -732,17 +738,17 @@ public class MainActivity extends YouTubeBaseActivity
                     controllerLinks.setNsfw(link.getName(), link.isOver18());
                 }
                 if (getFragmentManager().findFragmentByTag(FragmentComments.TAG) != null) {
-                    getControllerComments().setNsfw(link.getName(), link.isOver18());
+                    controllerComments.setNsfw(link.getName(), link.isOver18());
                 }
                 if (getFragmentManager().findFragmentByTag(FragmentProfile.TAG) != null) {
-                    getControllerProfile().setNsfw(link.getName(), link.isOver18());
+                    controllerProfile.setNsfw(link.getName(), link.isOver18());
                 }
                 if (getFragmentManager().findFragmentByTag(FragmentHistory.TAG) != null) {
-                    getControllerHistory().setNsfw(link.getName(), link.isOver18());
+                    controllerHistory.setNsfw(link.getName(), link.isOver18());
                 }
                 if (getFragmentManager().findFragmentByTag(FragmentSearch.TAG) != null) {
-                    getControllerSearch().setNsfwLinks(link.getName(), link.isOver18());
-                    getControllerSearch().setNsfwLinksSubreddit(link.getName(), link.isOver18());
+                    controllerSearch.setNsfwLinks(link.getName(), link.isOver18());
+                    controllerSearch.setNsfwLinksSubreddit(link.getName(), link.isOver18());
                 }
 
             }
@@ -759,7 +765,7 @@ public class MainActivity extends YouTubeBaseActivity
 
             @Override
             public User getUser() {
-                return getControllerUser().getUser();
+                return controllerUser.getUser();
             }
 
         };
@@ -772,11 +778,11 @@ public class MainActivity extends YouTubeBaseActivity
                     Intent intentCommentThread = new Intent(MainActivity.this, MainActivity.class);
                     intentCommentThread.setAction(Intent.ACTION_VIEW);
                     // Double slashes used to trigger parseUrl correctly
-                    intentCommentThread.putExtra(REDDIT_PAGE, Reddit.BASE_URL + "/r/" + getControllerComments().getSubredditName() + "/comments/" + getControllerComments().getLink().getId() + "//" + comment.getParentId() + "/");
+                    intentCommentThread.putExtra(REDDIT_PAGE, Reddit.BASE_URL + "/r/" + controllerComments.getSubredditName() + "/comments/" + controllerComments.getLink().getId() + "//" + comment.getParentId() + "/");
                     startActivity(intentCommentThread);
                 }
                 else {
-                    getControllerComments().loadNestedComments(comment);
+                    controllerComments.loadNestedComments(comment);
                 }
             }
 
@@ -784,27 +790,41 @@ public class MainActivity extends YouTubeBaseActivity
             public void voteComment(AdapterCommentList.ViewHolderComment viewHolderComment,
                     Comment comment,
                     int vote) {
-                getControllerComments().voteComment(viewHolderComment, comment, vote);
+                controllerComments.voteComment(viewHolderComment, comment, vote)
+                        .subscribe(new FinalizingSubscriber<String>() {
+                            @Override
+                            public void error(Throwable e) {
+                                Toast.makeText(MainActivity.this, getString(R.string.error_voting),
+                                        Toast.LENGTH_SHORT)
+                                        .show();
+                            }
+                        });
             }
 
             @Override
             public boolean toggleComment(int position) {
-                return getControllerComments().toggleComment(position);
+                return controllerComments.toggleComment(position);
             }
 
             @Override
             public void deleteComment(Comment comment) {
-                getControllerComments().deleteComment(comment);
+                controllerComments.deleteComment(comment)
+                        .subscribe(new FinalizingSubscriber<String>() {
+                            @Override
+                            public void error(Throwable e) {
+                                Toast.makeText(MainActivity.this, R.string.error_deleting_comment, Toast.LENGTH_LONG).show();
+                            }
+                        });
             }
 
             @Override
             public void editComment(String name, int level, String text) {
-                getControllerComments().editComment(name, level, text);
+                controllerComments.editComment(name, level, text);
             }
 
             @Override
             public void jumpToParent(Comment comment) {
-                getControllerComments().jumpToParent(comment);
+                controllerComments.jumpToParent(comment);
             }
 
         };
@@ -895,8 +915,7 @@ public class MainActivity extends YouTubeBaseActivity
                     Toast.makeText(this, R.string.need_permission_download_image, Toast.LENGTH_LONG).show();
                 }
                 else if (targetDownload != null){
-                    Reddit.loadPicasso(MainActivity.this)
-                            .load(targetDownload.getUrl())
+                    picasso.load(targetDownload.getUrl())
                             .into(targetDownload);
                 }
         }
@@ -1018,7 +1037,7 @@ public class MainActivity extends YouTubeBaseActivity
 
         if (TextUtils.isEmpty(subreddit)) {
             Toast.makeText(this, R.string.header_subreddit_error, Toast.LENGTH_LONG).show();
-            Reddit.loadPicasso(this).load(android.R.color.transparent).into(imageHeader);
+            picasso.load(android.R.color.transparent).into(imageHeader);
             return;
         }
 
@@ -1072,8 +1091,7 @@ public class MainActivity extends YouTubeBaseActivity
     }
 
     private void loadHeaderFromFile() {
-        Reddit.loadPicasso(MainActivity.this).invalidate(
-                getFileStreamPath(AppSettings.HEADER_FILE_NAME));
+        picasso.invalidate(getFileStreamPath(AppSettings.HEADER_FILE_NAME));
 
         scrollHeaderVertical.post(new Runnable() {
             @Override
@@ -1100,8 +1118,7 @@ public class MainActivity extends YouTubeBaseActivity
                     targetWidth = scrollHeaderVertical.getWidth();
                 }
 
-                Reddit.loadPicasso(MainActivity.this)
-                        .load(getFileStreamPath(AppSettings.HEADER_FILE_NAME)).noPlaceholder()
+                picasso.load(getFileStreamPath(AppSettings.HEADER_FILE_NAME)).noPlaceholder()
                         .resize(targetWidth, targetHeight).into(imageHeader, new Callback() {
                     @Override
                     public void onSuccess() {
@@ -1147,7 +1164,7 @@ public class MainActivity extends YouTubeBaseActivity
 
         isDownloadingHeaderImage = true;
         linkHeader = link;
-        Reddit.loadPicasso(MainActivity.this).load(link.getUrl()).into(targetHeader);
+        picasso.load(link.getUrl()).into(targetHeader);
     }
 
     private String loadAndParseHeaderSubreddit() {
@@ -1236,8 +1253,8 @@ public class MainActivity extends YouTubeBaseActivity
         accountUser = null;
         sharedPreferences.edit().putString(AppSettings.ACCOUNT_NAME, "").apply();
         reddit.clearAccount();
-        getControllerUser().clearAccount();
-        getControllerSearch().reloadSubscriptionList();
+        controllerUser.clearAccount();
+        controllerSearch.reloadSubscriptionList();
         loadAccountInfo();
     }
 
@@ -1250,8 +1267,8 @@ public class MainActivity extends YouTubeBaseActivity
                 .subscribe(new FinalizingSubscriber<String>() {
                     @Override
                     public void completed() {
-                        getControllerUser().setAccount(account);
-                        getControllerSearch().reloadSubscriptionList();
+                        controllerUser.setAccount(account);
+                        controllerSearch.reloadSubscriptionList();
                         loadAccountInfo();
                     }
                 });
@@ -1377,7 +1394,7 @@ public class MainActivity extends YouTubeBaseActivity
                 }
                 break;
             case R.id.item_history:
-                getControllerHistory().reload();
+                controllerHistory.reload();
                 if (getFragmentManager().findFragmentByTag(FragmentHistory.TAG) == null) {
                     fragmentTransaction.replace(R.id.frame_fragment,
                             FragmentHistory.newInstance(),
@@ -1386,8 +1403,8 @@ public class MainActivity extends YouTubeBaseActivity
                 break;
             case R.id.item_profile:
 
-                if (getControllerUser().hasUser()) {
-                    getControllerProfile().setUser(getControllerUser().getUser());
+                if (controllerUser.hasUser()) {
+                    controllerProfile.setUser(controllerUser.getUser());
                 }
 
                 fragmentTransaction.replace(R.id.frame_fragment,
@@ -1402,21 +1419,18 @@ public class MainActivity extends YouTubeBaseActivity
                     // TODO: Add other cases
                     switch (page) {
                         case ControllerInbox.INBOX:
-                            getControllerInbox()
-                                    .setPage(new Page(page, getString(R.string.inbox_page_inbox)));
+                            controllerInbox.setPage(new Page(page, getString(R.string.inbox_page_inbox)));
                             break;
                         case ControllerInbox.UNREAD:
-                            getControllerInbox()
-                                    .setPage(new Page(page, getString(R.string.inbox_page_unread)));
+                            controllerInbox.setPage(new Page(page, getString(R.string.inbox_page_unread)));
                             break;
                         case ControllerInbox.SENT:
-                            getControllerInbox()
-                                    .setPage(new Page(page, getString(R.string.inbox_page_sent)));
+                            controllerInbox.setPage(new Page(page, getString(R.string.inbox_page_sent)));
                             break;
                     }
                 }
 
-                getControllerInbox().reload();
+                controllerInbox.reload();
                 fragmentTransaction.replace(R.id.frame_fragment,
                         FragmentInbox.newInstance(),
                         FragmentInbox.TAG);
@@ -1427,7 +1441,7 @@ public class MainActivity extends YouTubeBaseActivity
     }
 
     public void loadAccountInfo() {
-        boolean visible = getControllerUser().hasUser();
+        boolean visible = controllerUser.hasUser();
 
         if (visible) {
             reddit.me()
@@ -1560,7 +1574,7 @@ public class MainActivity extends YouTubeBaseActivity
                                         FragmentComments.newInstance(),
                                         FragmentComments.TAG)
                                 .commit();
-                        getControllerComments().setLinkId(subreddit, id, commentId, 1);
+                        controllerComments.setLinkId(subreddit, id, commentId, 1);
                         return;
                     }
                 }
@@ -1570,13 +1584,20 @@ public class MainActivity extends YouTubeBaseActivity
                                 FragmentComments.newInstance(),
                                 FragmentComments.TAG)
                         .commit();
-                getControllerComments().setLinkId(subreddit, id);
+                controllerComments.setLinkId(subreddit, id);
             }
             else {
                 if (path.contains("/u/")) {
                     int indexUser = path.indexOf("u/") + 2;
-                    getControllerProfile().loadUser(
-                            path.substring(indexUser, path.indexOf("/", indexUser)));
+                    controllerProfile.loadUser(
+                            path.substring(indexUser, path.indexOf("/", indexUser)))
+                            .subscribe(new FinalizingSubscriber<User>() {
+                                @Override
+                                public void error(Throwable e) {
+                                    Toast.makeText(MainActivity.this, getString(R.string.error_loading), Toast.LENGTH_SHORT)
+                                            .show();
+                                }
+                            });
                     getFragmentManager().beginTransaction()
                             .replace(R.id.frame_fragment, FragmentProfile.newInstance(),
                                     FragmentProfile.TAG)
@@ -1587,14 +1608,24 @@ public class MainActivity extends YouTubeBaseActivity
                         int indexUser = path.indexOf("user/") + 5;
                         int endIndex = path.indexOf("/", indexUser);
                         if (endIndex > -1) {
-                            getControllerProfile()
-                                    .loadUser(
-                                            path.substring(indexUser, endIndex));
+                            controllerProfile.loadUser(path.substring(indexUser, endIndex))
+                                    .subscribe(new FinalizingSubscriber<User>() {
+                                        @Override
+                                        public void error(Throwable e) {
+                                            Toast.makeText(MainActivity.this, getString(R.string.error_loading), Toast.LENGTH_SHORT)
+                                                    .show();
+                                        }
+                                    });
                         }
                         else {
-                            getControllerProfile()
-                                    .loadUser(
-                                            path.substring(indexUser));
+                            controllerProfile.loadUser(path.substring(indexUser))
+                                    .subscribe(new FinalizingSubscriber<User>() {
+                                        @Override
+                                        public void error(Throwable e) {
+                                            Toast.makeText(MainActivity.this, getString(R.string.error_loading), Toast.LENGTH_SHORT)
+                                                    .show();
+                                        }
+                                    });
                         }
                         getFragmentManager().beginTransaction()
                                 .replace(R.id.frame_fragment, FragmentProfile.newInstance(),
@@ -1716,36 +1747,6 @@ public class MainActivity extends YouTubeBaseActivity
                     .addNextIntent(this.getIntent())
                     .startActivities();
         }
-    }
-
-    @Override
-    public ControllerInbox getControllerInbox() {
-        return fragmentData.getControllerInbox();
-    }
-
-    @Override
-    public ControllerComments getControllerComments() {
-        return fragmentData.getControllerComments();
-    }
-
-    @Override
-    public ControllerProfile getControllerProfile() {
-        return fragmentData.getControllerProfile();
-    }
-
-    @Override
-    public ControllerSearch getControllerSearch() {
-        return fragmentData.getControllerSearch();
-    }
-
-    @Override
-    public ControllerHistory getControllerHistory() {
-        return fragmentData.getControllerHistory();
-    }
-
-    @Override
-    public ControllerUser getControllerUser() {
-        return fragmentData.getControllerUser();
     }
 
     @Override

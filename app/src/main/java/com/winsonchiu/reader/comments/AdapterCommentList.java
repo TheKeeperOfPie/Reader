@@ -69,6 +69,8 @@ import com.winsonchiu.reader.utils.UtilsAnimation;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.inject.Inject;
+
 /**
  * Created by TheKeeperOfPie on 3/12/2015.
  */
@@ -95,11 +97,12 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
     private FragmentComments.YouTubeListener youTubeListener;
     protected List<RecyclerView.ViewHolder> viewHolders;
 
-    private ControllerComments controllerComments;
     private AdapterLink.ViewHolderBase viewHolderLink;
     private int thumbnailSize;
     private boolean isGrid;
     private boolean animationFinished;
+
+    @Inject ControllerComments controllerComments;
 
     public AdapterCommentList(Activity activity,
             ControllerComments controllerComments,
@@ -123,6 +126,8 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
         DisplayMetrics displayMetrics = activity.getResources().getDisplayMetrics();
         this.thumbnailSize = displayMetrics.widthPixels / 2;
         viewHolders = new ArrayList<>();
+
+        ((MainActivity) activity).getComponentActivity().inject(this);
     }
 
     @Override

@@ -4,9 +4,8 @@
 
 package com.winsonchiu.reader.profile;
 
-import android.app.Activity;
+import android.content.Context;
 import android.text.TextUtils;
-import android.widget.Toast;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.winsonchiu.reader.ControllerUser;
@@ -28,6 +27,7 @@ import com.winsonchiu.reader.data.reddit.User;
 import com.winsonchiu.reader.links.ControllerLinksBase;
 import com.winsonchiu.reader.utils.ControllerListener;
 import com.winsonchiu.reader.utils.FinalizingSubscriber;
+import com.winsonchiu.reader.utils.ObserverEmpty;
 
 import java.io.IOException;
 import java.util.HashSet;
@@ -62,7 +62,6 @@ public class ControllerProfile implements ControllerLinksBase {
     private static final String TAG = ControllerProfile.class.getCanonicalName();
     public static final int LIMIT = 15;
 
-    private Activity activity;
     private ControllerUser controllerUser;
     private Set<Listener> listeners;
     private Listing data;
@@ -74,23 +73,22 @@ public class ControllerProfile implements ControllerLinksBase {
     private Time time;
     private boolean isLoading;
 
+    private Page pageDefault;
+
     @Inject Reddit reddit;
 
-    public ControllerProfile(Activity activity) {
+    public ControllerProfile(Context context, ControllerUser controllerUser) {
+        this.controllerUser = controllerUser;
         CustomApplication.getComponentMain().inject(this);
-        setActivity(activity);
         data = new Listing();
         listeners = new HashSet<>();
         topLink = new Link();
         topComment = new Comment();
         user = new User();
-        page = new Page(PAGE_OVERVIEW, activity.getString(R.string.profile_page_overview));
+        pageDefault = new Page(PAGE_OVERVIEW, context.getString(R.string.profile_page_overview));
+        page = pageDefault;
         sort = Sort.NEW;
         time = Time.ALL;
-    }
-
-    public void setActivity(Activity activity) {
-        this.activity = activity;
     }
 
     public void addListener(Listener listener) {
@@ -146,43 +144,37 @@ public class ControllerProfile implements ControllerLinksBase {
         return (Comment) data.getChildren().get(position - 6);
     }
 
-    public void setPage(Page page) {
+    public Observable<Listing> setPage(Page page) {
         if (!this.page.equals(page)) {
             this.page = page;
-            reload();
+            return reload();
         }
+        return Observable.empty();
     }
 
     public Page getPage() {
         return page;
     }
 
-    public void setUser(User user) {
+    public Observable<Listing> setUser(User user) {
         this.user = user;
         sort = Sort.NEW;
-        page = new Page(PAGE_OVERVIEW, activity.getString(R.string.profile_page_overview));
+        page = pageDefault;
         for (Listener listener : listeners) {
             listener.setSortAndTime(sort, time);
             listener.setIsUser(user.getName()
                     .equals(controllerUser.getUser().getName()));
         }
-        reload();
+        return reload();
     }
 
-    public void reload() {
-        reddit.user(user.getName(), page.getPage().toLowerCase(), sort.toString(), time.toString(), null, LIMIT)
-                .flatMap(Listing.FLAT_MAP)
-                .subscribe(new FinalizingSubscriber<Listing>() {
+    public Observable<Listing> reload() {
+        Observable<Listing> observable = reddit.user(user.getName(), page.getPage().toLowerCase(), sort.toString(), time.toString(), null, LIMIT)
+                .flatMap(Listing.FLAT_MAP);
+        observable.subscribe(new FinalizingSubscriber<Listing>() {
                     @Override
                     public void start() {
                         setLoading(true);
-                    }
-
-                    @Override
-                    public void error(Throwable e) {
-                        Toast.makeText(activity, activity.getString(R.string.error_loading),
-                                Toast.LENGTH_SHORT)
-                                .show();
                     }
 
                     @Override
@@ -203,6 +195,7 @@ public class ControllerProfile implements ControllerLinksBase {
                         setLoading(false);
                     }
                 });
+        return observable;
     }
 
     public void loadMore() {
@@ -474,7 +467,7 @@ public class ControllerProfile implements ControllerLinksBase {
         return reddit.delete(link);
     }
 
-    public void deleteComment(Comment comment) {
+    public Observable<String> deleteComment(Comment comment) {
         int commentIndex = data.getChildren().indexOf(comment);
         data.getChildren().remove(commentIndex);
 
@@ -483,13 +476,9 @@ public class ControllerProfile implements ControllerLinksBase {
 
         }
 
-        reddit.delete(comment)
-                .subscribe(new FinalizingSubscriber<String>() {
-                    @Override
-                    public void error(Throwable e) {
-                        Toast.makeText(activity, R.string.error_deleting_comment, Toast.LENGTH_LONG).show();
-                    }
-                });
+        Observable<String> observable = reddit.delete(comment);
+        observable.subscribe(new ObserverEmpty<String>());
+        return observable;
     }
 
     public boolean toggleComment(int position) {
@@ -497,9 +486,9 @@ public class ControllerProfile implements ControllerLinksBase {
         return true;
     }
 
-    public void voteComment(final AdapterCommentList.ViewHolderComment viewHolder,
-                            final Comment comment,
-                            int vote) {
+    public Observable<String> voteComment(final AdapterCommentList.ViewHolderComment viewHolder,
+                                          final Comment comment,
+                                          int vote) {
         final int position = viewHolder.getAdapterPosition();
 
         final int oldVote = comment.getLikes();
@@ -518,8 +507,8 @@ public class ControllerProfile implements ControllerLinksBase {
 
         final int finalNewVote = newVote;
 
-        reddit.voteComment(comment, newVote)
-                .subscribe(new FinalizingSubscriber<String>() {
+        Observable<String> observable = reddit.voteComment(comment, newVote);
+        observable.subscribe(new FinalizingSubscriber<String>() {
                     @Override
                     public void error(Throwable e) {
                         comment.setScore(comment.getScore() - finalNewVote);
@@ -527,11 +516,9 @@ public class ControllerProfile implements ControllerLinksBase {
                         if (position == viewHolder.getAdapterPosition()) {
                             viewHolder.setVoteColors();
                         }
-                        Toast.makeText(activity, activity.getString(R.string.error_voting),
-                                Toast.LENGTH_SHORT)
-                                .show();
                     }
                 });
+        return observable;
     }
 
     public void loadNestedComments(Comment moreComment) {
@@ -611,11 +598,8 @@ public class ControllerProfile implements ControllerLinksBase {
         return user;
     }
 
-    public void loadUser(String query) {
-
-        setLoading(true);
-
-        reddit.user(query, "about", null, null, null, null)
+    public Observable<User> loadUser(String query) {
+        Observable<User> observable = reddit.user(query, "about", null, null, null, null)
                 .flatMap(new Func1<String, Observable<User>>() {
                     @Override
                     public Observable<User> call(String response) {
@@ -626,17 +610,11 @@ public class ControllerProfile implements ControllerLinksBase {
                             return Observable.error(e);
                         }
                     }
-                })
-                .subscribe(new FinalizingSubscriber<User>() {
+                });
+        observable.subscribe(new FinalizingSubscriber<User>() {
                     @Override
                     public void start() {
                         setLoading(true);
-                    }
-
-                    @Override
-                    public void error(Throwable e) {
-                        Toast.makeText(activity, activity.getString(R.string.error_loading), Toast.LENGTH_SHORT)
-                                .show();
                     }
 
                     @Override
@@ -649,42 +627,41 @@ public class ControllerProfile implements ControllerLinksBase {
                         setLoading(false);
                     }
                 });
+        return observable;
     }
 
     public Sort getSort() {
         return sort;
     }
 
-    public void setSort(Sort sort) {
+    public Observable<Listing> setSort(Sort sort) {
         if (this.sort != sort) {
             this.sort = sort;
             for (Listener listener : listeners) {
                 listener.setSortAndTime(sort, time);
             }
-            reload();
+            return reload();
         }
+        return Observable.empty();
     }
 
     public Time getTime() {
         return time;
     }
 
-    public void setTime(Time time) {
+    public Observable<Listing> setTime(Time time) {
         if (this.time != time) {
             this.time = time;
             for (Listener listener : listeners) {
                 listener.setSortAndTime(sort, time);
             }
-            reload();
+            return reload();
         }
+        return Observable.empty();
     }
 
     public Comment getTopComment() {
         return page.getPage().equalsIgnoreCase(PAGE_OVERVIEW) ? topComment : null;
-    }
-
-    public void setControllerUser(ControllerUser controllerUser) {
-        this.controllerUser = controllerUser;
     }
 
     public void sendComment(String name, String text) {

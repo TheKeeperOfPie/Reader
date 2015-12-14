@@ -55,8 +55,9 @@ import com.winsonchiu.reader.AppSettings;
 import com.winsonchiu.reader.CustomApplication;
 import com.winsonchiu.reader.FragmentBase;
 import com.winsonchiu.reader.FragmentListenerBase;
+import com.winsonchiu.reader.MainActivity;
 import com.winsonchiu.reader.R;
-import com.winsonchiu.reader.YouTubePlayerStateListener;
+import com.winsonchiu.reader.utils.YouTubePlayerStateListener;
 import com.winsonchiu.reader.data.reddit.Link;
 import com.winsonchiu.reader.data.reddit.Sort;
 import com.winsonchiu.reader.links.AdapterLink;
@@ -72,6 +73,8 @@ import com.winsonchiu.reader.views.CustomRelativeLayout;
 import java.util.Arrays;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import javax.inject.Inject;
 
 public class FragmentComments extends FragmentBase
         implements Toolbar.OnMenuItemClickListener, TouchEventListener {
@@ -137,6 +140,8 @@ public class FragmentComments extends FragmentBase
     private String currentYouTubeId;
     private boolean isStartOnLeft;
 
+    @Inject ControllerComments controllerComments;
+
     public static FragmentComments newInstance() {
         FragmentComments fragment = new FragmentComments();
         Bundle args = new Bundle();
@@ -181,7 +186,6 @@ public class FragmentComments extends FragmentBase
     }
 
     private void setUpToolbar() {
-
         if (getFragmentManager().getBackStackEntryCount() == 0 && getActivity()
                 .isTaskRoot() && getFragmentManager()
                 .findFragmentByTag(fragmentParentTag) == null) {
@@ -210,7 +214,7 @@ public class FragmentComments extends FragmentBase
         itemHideYouTube = toolbar.getMenu().findItem(R.id.item_hide_youtube);
         toolbar.setOnMenuItemClickListener(this);
 
-        toolbar.getMenu().findItem(mListener.getControllerComments().getSort().getMenuId())
+        toolbar.getMenu().findItem(controllerComments.getSort().getMenuId())
                 .setChecked(true);
 
         Menu menu = toolbar.getMenu();
@@ -223,6 +227,8 @@ public class FragmentComments extends FragmentBase
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
             Bundle savedInstanceState) {
+
+        ((MainActivity) getActivity()).getComponentActivity().inject(this);
 
         scrollToPaddingTop = (int) TypedValue
                 .applyDimension(TypedValue.COMPLEX_UNIT_DIP, 8, getResources().getDisplayMetrics());
@@ -415,7 +421,7 @@ public class FragmentComments extends FragmentBase
                     position = 0;
                 }
 
-                final int newPosition = mListener.getControllerComments()
+                final int newPosition = controllerComments
                         .getPreviousCommentPosition(
                                 position - 1) + 1;
 
@@ -453,7 +459,7 @@ public class FragmentComments extends FragmentBase
                         position = 1;
                         break;
                     default:
-                        position = mListener.getControllerComments()
+                        position = controllerComments
                                 .getNextCommentPosition(position - 1) + 1;
                         break;
                 }
@@ -514,7 +520,7 @@ public class FragmentComments extends FragmentBase
         swipeRefreshCommentList.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
-                mListener.getControllerComments().reloadAllComments();
+                controllerComments.reloadAllComments();
             }
         });
 
@@ -566,7 +572,7 @@ public class FragmentComments extends FragmentBase
                                     .findFragmentByTag(fragmentParentTag);
                             if (fragment != null) {
                                 fragment.setVisibilityOfThing(View.VISIBLE,
-                                        mListener.getControllerComments().getLink());
+                                        controllerComments.getLink());
                                 fragment.onHiddenChanged(false);
                             }
                             viewBackground.setVisibility(View.VISIBLE);
@@ -588,7 +594,7 @@ public class FragmentComments extends FragmentBase
         }
 
         adapterCommentList = new AdapterCommentList(getActivity(),
-                mListener.getControllerComments(),
+                controllerComments,
                 mListener.getEventListenerBase(),
                 mListener.getEventListenerComment(),
                 disallowListener,
@@ -971,18 +977,18 @@ public class FragmentComments extends FragmentBase
     @Override
     public void onStart() {
         super.onStart();
-        mListener.getControllerComments().addListener(listener);
+        controllerComments.addListener(listener);
     }
 
     @Override
     public void onResume() {
         super.onResume();
-        mListener.getControllerComments().addListener(listener);
+        controllerComments.addListener(listener);
     }
 
     @Override
     public void onPause() {
-        mListener.getControllerComments().removeListener(listener);
+        controllerComments.removeListener(listener);
         super.onPause();
     }
 
@@ -1191,7 +1197,7 @@ public class FragmentComments extends FragmentBase
                 .findFragmentByTag(fragmentParentTag);
         if (fragment != null) {
             fragment.setVisibilityOfThing(View.VISIBLE,
-                    mListener.getControllerComments().getLink());
+                    controllerComments.getLink());
             fragment.onHiddenChanged(false);
         }
         float screenWidth = getResources().getDisplayMetrics().widthPixels;
@@ -1245,7 +1251,7 @@ public class FragmentComments extends FragmentBase
                 toggleYouTubeVisibility(View.GONE);
                 break;
             case R.id.item_load_full_comments:
-                mListener.getControllerComments().loadLinkComments();
+                controllerComments.loadLinkComments();
                 break;
         }
 
@@ -1253,7 +1259,7 @@ public class FragmentComments extends FragmentBase
 
         Sort sort = Sort.fromMenuId(item.getItemId());
         if (sort != null) {
-            mListener.getControllerComments()
+            controllerComments
                     .setSort(sort);
             linearLayoutManager.scrollToPositionWithOffset(1, 0);
             return true;
@@ -1300,7 +1306,7 @@ public class FragmentComments extends FragmentBase
                                             .findFragmentByTag(fragmentParentTag);
                                     if (fragment != null) {
                                         fragment.setVisibilityOfThing(View.INVISIBLE,
-                                                mListener.getControllerComments().getLink());
+                                                controllerComments.getLink());
                                         fragment.onHiddenChanged(true);
                                     }
                                     viewBackground.setVisibility(View.GONE);

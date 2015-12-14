@@ -73,6 +73,7 @@ import android.widget.Toast;
 import com.google.android.youtube.player.YouTubeInitializationResult;
 import com.google.android.youtube.player.YouTubePlayer;
 import com.google.android.youtube.player.YouTubePlayerView;
+import com.squareup.picasso.Picasso;
 import com.winsonchiu.reader.ApiKeys;
 import com.winsonchiu.reader.AppSettings;
 import com.winsonchiu.reader.ControllerUser;
@@ -137,17 +138,19 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
     protected ViewHolderBase.EventListener eventListenerBase;
     protected DisallowListener disallowListener;
     protected RecyclerCallback recyclerCallback;
-    protected ControllerUser controllerUser;
 
-    public AdapterLink(ViewHolderHeader.EventListener eventListenerHeader,
+    @Inject ControllerUser controllerUser;
+
+    public AdapterLink(Activity activity, ViewHolderHeader.EventListener eventListenerHeader,
             ViewHolderBase.EventListener eventListenerBase,
             DisallowListener disallowListener, RecyclerCallback recyclerCallback) {
-        super();
         this.eventListenerHeader = eventListenerHeader;
         this.eventListenerBase = eventListenerBase;
         this.disallowListener = disallowListener;
         this.recyclerCallback = recyclerCallback;
         viewHolders = new ArrayList<>();
+
+        ((MainActivity) activity).getComponentActivity().inject(this);
     }
 
     public void setActivity(Activity activity) {
@@ -481,6 +484,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         public int bufferPercentage;
 
         @Inject Historian historian;
+        @Inject Picasso picasso;
 
         public ViewHolderBase(View itemView,
                 EventListener eventListener,

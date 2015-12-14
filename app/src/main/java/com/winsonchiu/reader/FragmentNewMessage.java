@@ -38,6 +38,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.github.rjeschke.txtmark.Processor;
+import com.squareup.picasso.Picasso;
 import com.winsonchiu.reader.data.reddit.Reddit;
 import com.winsonchiu.reader.utils.UtilsColor;
 
@@ -56,6 +57,8 @@ public class FragmentNewMessage extends FragmentBase implements Toolbar.OnMenuIt
     public static final String ARG_MESSAGE = "message";
 
     @Inject Reddit reddit;
+    @Inject Picasso picasso;
+    @Inject ControllerUser controllerUser;
 
     private Toolbar toolbar;
     private TextView textAuthor;
@@ -114,12 +117,13 @@ public class FragmentNewMessage extends FragmentBase implements Toolbar.OnMenuIt
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        CustomApplication.getComponentMain().inject(this);
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
             Bundle savedInstanceState) {
+        ((MainActivity) getActivity()).getComponentActivity().inject(this);
+
         final View view =  inflater.inflate(R.layout.fragment_new_message, container, false);
 
         layoutCoordinator = (CoordinatorLayout) view.findViewById(R.id.layout_coordinator);
@@ -127,7 +131,7 @@ public class FragmentNewMessage extends FragmentBase implements Toolbar.OnMenuIt
         scrollText = (NestedScrollView) view.findViewById(R.id.scroll_text);
 
         textAuthor = (TextView) view.findViewById(R.id.text_author);
-        textAuthor.setText(getString(R.string.sending_from) + " " + mListener.getControllerUser().getUser().getName());
+        textAuthor.setText(getString(R.string.sending_from) + " " + controllerUser.getUser().getName());
 
         editTextRecipient = (EditText) view.findViewById(R.id.edit_recipient);
         editTextSubject = (EditText) view.findViewById(R.id.edit_subject);
@@ -404,8 +408,7 @@ public class FragmentNewMessage extends FragmentBase implements Toolbar.OnMenuIt
                                 if (!TextUtils.isEmpty(captcha)) {
                                     FragmentNewMessage.this.captcha = captcha;
                                     editCaptcha.setText("");
-                                    Reddit.loadPicasso(activity)
-                                            .load(Reddit.BASE_URL + "/captcha/" + captcha + ".png")
+                                    picasso.load(Reddit.BASE_URL + "/captcha/" + captcha + ".png")
                                             .resize(getResources().getDisplayMetrics().widthPixels, 0).into(
                                             imageCaptcha);
                                 }
@@ -451,7 +454,7 @@ public class FragmentNewMessage extends FragmentBase implements Toolbar.OnMenuIt
                             captcha = jsonObject.getJSONObject("json").getJSONObject("data").getString(
                                     "iden");
                             Log.d(TAG, "captcha: " + captcha);
-                            Reddit.loadPicasso(activity).load(Reddit.BASE_URL + "/captcha/" + captcha + ".png")
+                            picasso.load(Reddit.BASE_URL + "/captcha/" + captcha + ".png")
                                     .resize(imageCaptcha.getWidth(), 0).into(
                                     imageCaptcha);
                         }

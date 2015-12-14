@@ -34,7 +34,7 @@ public class AdapterLinkList extends AdapterLink {
             ViewHolderBase.EventListener eventListenerBase,
             DisallowListener disallowListener,
             RecyclerCallback recyclerCallback) {
-        super(eventListenerHeader, eventListenerBase, disallowListener, recyclerCallback);
+        super(activity, eventListenerHeader, eventListenerBase, disallowListener, recyclerCallback);
         setController(controllerLinks);
         setActivity(activity);
     }
@@ -118,8 +118,7 @@ public class AdapterLinkList extends AdapterLink {
                 }
                 else {
                     imageThumbnail.clearColorFilter();
-                    Reddit.loadPicasso(itemView.getContext())
-                            .load(link.getThumbnail())
+                    picasso.load(link.getThumbnail())
                             .into(imageThumbnail);
                 }
             }

@@ -4,13 +4,10 @@
 
 package com.winsonchiu.reader.comments;
 
-import android.app.Activity;
 import android.text.TextUtils;
-import android.widget.Toast;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.winsonchiu.reader.CustomApplication;
-import com.winsonchiu.reader.R;
 import com.winsonchiu.reader.dagger.components.ComponentStatic;
 import com.winsonchiu.reader.data.reddit.Comment;
 import com.winsonchiu.reader.data.reddit.Link;
@@ -21,6 +18,7 @@ import com.winsonchiu.reader.data.reddit.Sort;
 import com.winsonchiu.reader.data.reddit.Thing;
 import com.winsonchiu.reader.utils.ControllerListener;
 import com.winsonchiu.reader.utils.FinalizingSubscriber;
+import com.winsonchiu.reader.utils.ObserverEmpty;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -49,19 +47,14 @@ public class ControllerComments {
 
     @Inject Reddit reddit;
 
-    private Activity activity;
     private boolean isRefreshing;
     private boolean isCommentThread;
     private int contextNumber;
 
-    public ControllerComments(Activity activity) {
-        setActivity(activity);
+    public ControllerComments() {
         CustomApplication.getComponentMain().inject(this);
     }
 
-    public void setActivity(Activity activity) {
-        this.activity = activity;
-    }
 
     public void addListener(Listener listener) {
         if (listeners.add(listener)) {
@@ -439,7 +432,7 @@ public class ControllerComments {
         }
     }
 
-    public void deleteComment(Comment comment) {
+    public Observable<String> deleteComment(Comment comment) {
 
         deleteComment(comment, link.getComments());
         int commentIndex = deleteComment(comment, listingComments);
@@ -450,13 +443,9 @@ public class ControllerComments {
             }
         }
 
-        reddit.delete(comment)
-                .subscribe(new FinalizingSubscriber<String>() {
-                    @Override
-                    public void error(Throwable e) {
-                        Toast.makeText(activity, R.string.error_deleting_comment, Toast.LENGTH_LONG).show();
-                    }
-                });
+        Observable<String> observable = reddit.delete(comment);
+        observable.subscribe(new ObserverEmpty<String>());
+        return observable;
     }
 
 
@@ -562,7 +551,7 @@ public class ControllerComments {
         }
     }
 
-    public void voteComment(final AdapterCommentList.ViewHolderComment viewHolder,
+    public Observable<String> voteComment(final AdapterCommentList.ViewHolderComment viewHolder,
             final Comment comment, final int vote) {
         // TODO: Combine these instances into utility
         final int position = viewHolder.getAdapterPosition();
@@ -583,8 +572,8 @@ public class ControllerComments {
 
         final int finalNewVote = newVote;
 
-        reddit.voteComment(comment, newVote)
-                .subscribe(new FinalizingSubscriber<String>() {
+        Observable<String> observable = reddit.voteComment(comment, newVote);
+        observable.subscribe(new FinalizingSubscriber<String>() {
                     @Override
                     public void error(Throwable e) {
                         comment.setScore(comment.getScore() - finalNewVote);
@@ -592,11 +581,10 @@ public class ControllerComments {
                         if (position == viewHolder.getAdapterPosition()) {
                             viewHolder.setVoteColors();
                         }
-                        Toast.makeText(activity, activity.getString(R.string.error_voting),
-                                Toast.LENGTH_SHORT)
-                                .show();
                     }
                 });
+
+        return observable;
     }
 
     public Reddit getReddit() {

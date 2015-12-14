@@ -31,6 +31,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.Spinner;
+import android.widget.Toast;
 
 import com.winsonchiu.reader.AppSettings;
 import com.winsonchiu.reader.CustomApplication;
@@ -47,11 +48,14 @@ import com.winsonchiu.reader.data.reddit.Sort;
 import com.winsonchiu.reader.data.reddit.Time;
 import com.winsonchiu.reader.profile.ControllerProfile;
 import com.winsonchiu.reader.utils.DisallowListener;
+import com.winsonchiu.reader.utils.FinalizingSubscriber;
 import com.winsonchiu.reader.utils.ItemDecorationDivider;
 import com.winsonchiu.reader.utils.RecyclerCallback;
 import com.winsonchiu.reader.utils.ScrollAwareFloatingActionButtonBehavior;
 import com.winsonchiu.reader.utils.UtilsAnimation;
 import com.winsonchiu.reader.utils.UtilsColor;
+
+import javax.inject.Inject;
 
 public class FragmentInbox extends FragmentBase implements Toolbar.OnMenuItemClickListener {
 
@@ -74,6 +78,8 @@ public class FragmentInbox extends FragmentBase implements Toolbar.OnMenuItemCli
     private AppBarLayout layoutAppBar;
     private ColorFilter colorFilterPrimary;
     private ColorFilter colorFilterAccent;
+
+    @Inject ControllerInbox controllerInbox;
 
     public static FragmentInbox newInstance() {
         FragmentInbox fragment = new FragmentInbox();
@@ -101,6 +107,7 @@ public class FragmentInbox extends FragmentBase implements Toolbar.OnMenuItemCli
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
             Bundle savedInstanceState) {
+        ((MainActivity) getActivity()).getComponentActivity().inject(this);
 
         View view = inflater.inflate(R.layout.fragment_inbox, container, false);
 
@@ -201,11 +208,11 @@ public class FragmentInbox extends FragmentBase implements Toolbar.OnMenuItemCli
         ((Toolbar.LayoutParams) spinnerPage.getLayoutParams()).setMarginEnd((int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 8, getResources().getDisplayMetrics()));
         spinnerPage.setAdapter(adapterInboxPage);
         spinnerPage.setSelection(
-                adapterInboxPage.getPages().indexOf(mListener.getControllerInbox().getPage()));
+                adapterInboxPage.getPages().indexOf(controllerInbox.getPage()));
         spinnerPage.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                mListener.getControllerInbox().setPage(adapterInboxPage.getItem(position));
+                controllerInbox.setPage(adapterInboxPage.getItem(position));
             }
 
             @Override
@@ -218,8 +225,7 @@ public class FragmentInbox extends FragmentBase implements Toolbar.OnMenuItemCli
         swipeRefreshInbox.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
-                mListener.getControllerInbox()
-                        .reload();
+                controllerInbox.reload();
             }
         });
 
@@ -233,35 +239,48 @@ public class FragmentInbox extends FragmentBase implements Toolbar.OnMenuItemCli
         recyclerInbox.addItemDecoration(new ItemDecorationDivider(activity, ItemDecorationDivider.VERTICAL_LIST));
 
         if (adapterInbox == null) {
-            adapterInbox = new AdapterInbox(mListener.getControllerInbox(),
+            adapterInbox = new AdapterInbox(controllerInbox,
                     mListener.getEventListenerBase(),
                     new AdapterCommentList.ViewHolderComment.EventListener() {
                         @Override
                         public void loadNestedComments(Comment comment) {
-                            mListener.getControllerInbox().loadNestedComments(comment);
+                            controllerInbox.loadNestedComments(comment);
                         }
 
                         @Override
                         public void voteComment(AdapterCommentList.ViewHolderComment viewHolderComment,
                                 Comment comment,
                                 int vote) {
-                            mListener.getControllerInbox()
-                                    .voteComment(viewHolderComment, comment, vote);
+                            controllerInbox.voteComment(viewHolderComment, comment, vote)
+                                    .subscribe(new FinalizingSubscriber<String>() {
+                                        @Override
+                                        public void error(Throwable e) {
+                                            Toast.makeText(activity, activity.getString(R.string.error_voting),
+                                                    Toast.LENGTH_SHORT)
+                                                    .show();
+                                        }
+                                    });
                         }
 
                         @Override
                         public boolean toggleComment(int position) {
-                            return mListener.getControllerInbox().toggleComment(position);
+                            return controllerInbox.toggleComment(position);
                         }
 
                         @Override
                         public void deleteComment(Comment comment) {
-                            mListener.getControllerInbox().deleteComment(comment);
+                            controllerInbox.deleteComment(comment)
+                                    .subscribe(new FinalizingSubscriber<String>() {
+                                        @Override
+                                        public void error(Throwable e) {
+                                            Toast.makeText(activity, R.string.error_deleting_comment, Toast.LENGTH_LONG).show();
+                                        }
+                                    });
                         }
 
                         @Override
                         public void editComment(String name, int level, String text) {
-                            mListener.getControllerInbox().editComment(name, level, text);
+                            controllerInbox.editComment(name, level, text);
                         }
 
                         @Override
@@ -377,14 +396,12 @@ public class FragmentInbox extends FragmentBase implements Toolbar.OnMenuItemCli
     @Override
     public void onResume() {
         super.onResume();
-        mListener.getControllerInbox()
-                .addListener(listener);
+        controllerInbox.addListener(listener);
     }
 
     @Override
     public void onPause() {
-        mListener.getControllerInbox()
-                .removeListener(listener);
+        controllerInbox.removeListener(listener);
         super.onPause();
     }
 
@@ -424,7 +441,18 @@ public class FragmentInbox extends FragmentBase implements Toolbar.OnMenuItemCli
 
         switch (item.getItemId()) {
             case R.id.item_mark_all_read:
-                mListener.getControllerInbox().markAllRead();
+                controllerInbox.markAllRead()
+                        .subscribe(new FinalizingSubscriber<String>() {
+                            @Override
+                            public void next(String next) {
+                                Toast.makeText(activity, R.string.marked_read, Toast.LENGTH_LONG).show();
+                            }
+
+                            @Override
+                            public void error(Throwable e) {
+                                Toast.makeText(activity, R.string.error_marking_read, Toast.LENGTH_LONG).show();
+                            }
+                        });
                 return true;
         }
 

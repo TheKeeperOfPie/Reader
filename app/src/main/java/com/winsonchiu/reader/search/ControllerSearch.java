@@ -5,19 +5,17 @@
 package com.winsonchiu.reader.search;
 
 import android.accounts.AccountManager;
-import android.app.Activity;
+import android.content.Context;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
 import android.text.TextUtils;
 import android.util.Log;
-import android.widget.Toast;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.winsonchiu.reader.AppSettings;
 import com.winsonchiu.reader.ControllerUser;
 import com.winsonchiu.reader.CustomApplication;
-import com.winsonchiu.reader.R;
 import com.winsonchiu.reader.dagger.components.ComponentStatic;
 import com.winsonchiu.reader.data.reddit.Link;
 import com.winsonchiu.reader.data.reddit.Listing;
@@ -70,9 +68,7 @@ public class ControllerSearch {
     private ControllerLinks controllerLinks;
     private ControllerUser controllerUser;
     private Set<Listener> listeners = new HashSet<>();
-    private Activity activity;
     private SharedPreferences preferences;
-    private AccountManager accountManager;
     private Listing subredditsLoaded = new Listing();
     private Listing subredditsSubscribed = new Listing();
     private Listing subreddits = new Listing();
@@ -93,18 +89,15 @@ public class ControllerSearch {
     private List<Subscription> subscriptionsSubredditsRecommended = new ArrayList<>();
     private String currentSubreddit;
 
+    @Inject AccountManager accountManager;
     @Inject Reddit reddit;
 
-    public ControllerSearch(Activity activity) {
+    public ControllerSearch(Context context, ControllerLinks controllerLinks, ControllerUser controllerUser) {
         CustomApplication.getComponentMain().inject(this);
-        setActivity(activity);
-    }
-
-    public void setActivity(Activity activity) {
-        this.activity = activity;
+        this.controllerLinks = controllerLinks;
+        this.controllerUser = controllerUser;
         this.preferences = PreferenceManager.getDefaultSharedPreferences(
-                activity.getApplicationContext());
-        this.accountManager = AccountManager.get(activity.getApplicationContext());
+                context.getApplicationContext());
     }
 
     public void addListener(Listener listener) {
@@ -118,7 +111,7 @@ public class ControllerSearch {
         listeners.remove(listener);
     }
 
-    public void setQuery(String query) {
+    public Observable<Listing> setQuery(String query) {
         this.query = query;
         setTitle();
         if ((TextUtils.isEmpty(query) || query.length() < 2) && currentPage == PAGE_SUBREDDITS) {
@@ -133,8 +126,9 @@ public class ControllerSearch {
             }
         }
         else {
-            reloadCurrentPage();
+            return reloadCurrentPage();
         }
+        return Observable.empty();
     }
 
     public void setTitle() {
@@ -372,7 +366,7 @@ public class ControllerSearch {
                 });
     }
 
-    public void reloadCurrentPage() {
+    public Observable<Listing> reloadCurrentPage() {
         Log.d(TAG, "reloadCurrentPage");
         switch (currentPage) {
             case PAGE_SUBREDDITS:
@@ -388,12 +382,12 @@ public class ControllerSearch {
                 break;
             case PAGE_LINKS:
                 if (!TextUtils.isEmpty(query)) {
-                    reloadLinks();
+                    return reloadLinks();
                 }
                 break;
             case PAGE_LINKS_SUBREDDIT:
                 if (!TextUtils.isEmpty(query)) {
-                    reloadLinksSubreddit();
+                    return reloadLinksSubreddit();
                 }
                 break;
             case PAGE_SUBREDDITS_RECOMMENDED:
@@ -402,6 +396,8 @@ public class ControllerSearch {
                 }
                 break;
         }
+
+        return Observable.empty();
     }
 
     public void reloadSubreddits() {
@@ -574,7 +570,7 @@ public class ControllerSearch {
                 });
     }
 
-    public void reloadLinks() {
+    public Observable<Listing> reloadLinks() {
         if (subscriptionLinks != null && !subscriptionLinks.isUnsubscribed()) {
             subscriptionLinks.unsubscribe();
             subscriptionLinks = null;
@@ -586,8 +582,9 @@ public class ControllerSearch {
                 sortString = Sort.HOT.name();
             }
 
-            subscriptionLinks = reddit.search("", URLEncoder.encode(query, Reddit.UTF_8), sortString, time.toString(), null, false)
-                    .flatMap(Listing.FLAT_MAP)
+            Observable<Listing> observable = reddit.search("", URLEncoder.encode(query, Reddit.UTF_8), sortString, time.toString(), null, false)
+                    .flatMap(Listing.FLAT_MAP);
+            subscriptionLinks = observable
                     .subscribe(new FinalizingSubscriber<Listing>() {
                         @Override
                         public void start() {
@@ -596,8 +593,6 @@ public class ControllerSearch {
 
                         @Override
                         public void error(Throwable e) {
-                            Toast.makeText(activity, activity.getString(R.string.error_loading_links), Toast.LENGTH_SHORT)
-                                    .show();
                         }
 
                         @Override
@@ -615,13 +610,16 @@ public class ControllerSearch {
                             setLoadingLinks(false);
                         }
                     });
+
+            return observable;
         }
         catch (UnsupportedEncodingException e) {
             e.printStackTrace();
+            return Observable.error(e);
         }
     }
 
-    public void reloadLinksSubreddit() {
+    public Observable<Listing> reloadLinksSubreddit() {
         if (subscriptionLinksSubreddit != null && !subscriptionSubreddits.isUnsubscribed()) {
             subscriptionLinksSubreddit.unsubscribe();
             subscriptionLinksSubreddit = null;
@@ -635,18 +633,13 @@ public class ControllerSearch {
         }
 
         try {
-            subscriptionSubreddits = reddit.search(pathSubreddit, URLEncoder.encode(query, Reddit.UTF_8), sort.toString(), time.toString(), null, true)
-                    .flatMap(Listing.FLAT_MAP)
+            Observable<Listing> observable = reddit.search(pathSubreddit, URLEncoder.encode(query, Reddit.UTF_8), sort.toString(), time.toString(), null, true)
+                    .flatMap(Listing.FLAT_MAP);
+            subscriptionSubreddits = observable
                     .subscribe(new FinalizingSubscriber<Listing>() {
                         @Override
                         public void start() {
                             setLoadingLinksSubreddit(true);
-                        }
-
-                        @Override
-                        public void error(Throwable e) {
-                            Toast.makeText(activity, activity.getString(R.string.error_loading_links), Toast.LENGTH_SHORT)
-                                    .show();
                         }
 
                         @Override
@@ -656,7 +649,6 @@ public class ControllerSearch {
                                 listener.getAdapterLinksSubreddit().notifyDataSetChanged();
                                 listener.scrollToLinksSubreddit(0);
                             }
-                            setLoadingLinksSubreddit(false);
                         }
 
                         @Override
@@ -664,10 +656,11 @@ public class ControllerSearch {
                             setLoadingLinksSubreddit(false);
                         }
                     });
+            return observable;
         }
         catch (UnsupportedEncodingException e) {
             e.printStackTrace();
-            setLoadingLinksSubreddit(false);
+            return Observable.error(e);
         }
     }
 
@@ -729,12 +722,6 @@ public class ControllerSearch {
                         }
 
                         @Override
-                        public void error(Throwable e) {
-                            Toast.makeText(activity, activity.getString(R.string.error_loading_links), Toast.LENGTH_SHORT)
-                                    .show();
-                        }
-
-                        @Override
                         public void next(Listing listing) {
                             int positionStart = links.getChildren()
                                     .size() + 1;
@@ -781,7 +768,6 @@ public class ControllerSearch {
         if (isLoadingLinksSubreddit()) {
             return Observable.empty();
         }
-        setLoadingLinksSubreddit(true);
 
         Subreddit subreddit = controllerLinks.getSubreddit();
 
@@ -803,12 +789,6 @@ public class ControllerSearch {
                         @Override
                         public void start() {
                             setLoadingLinksSubreddit(true);
-                        }
-
-                        @Override
-                        public void error(Throwable e) {
-                            Toast.makeText(activity, activity.getString(R.string.error_loading_links), Toast.LENGTH_SHORT)
-                                    .show();
                         }
 
                         @Override
@@ -836,7 +816,6 @@ public class ControllerSearch {
         }
         catch (UnsupportedEncodingException e) {
             e.printStackTrace();
-            setLoadingLinksSubreddit(false);
             return Observable.error(e);
         }
     }
@@ -845,7 +824,7 @@ public class ControllerSearch {
         isLoadingLinksSubreddit = loading;
     }
 
-    public void setSort(Sort sort) {
+    public Observable<Listing> setSort(Sort sort) {
 
         Listing listingSort = getCurrentPage() == PAGE_SUBREDDITS_RECOMMENDED ? subredditsRecommended : subreddits;
 
@@ -932,33 +911,30 @@ public class ControllerSearch {
             for (Listener listener : listeners) {
                 listener.setSortAndTime(sort, time);
             }
-            reloadCurrentPage();
+            return reloadCurrentPage();
         }
+        return Observable.empty();
     }
 
-    public void setTime(Time time) {
+    public Observable<Listing> setTime(Time time) {
         if (this.time != time) {
             this.time = time;
-            reloadCurrentPage();
+            return reloadCurrentPage();
         }
+        return Observable.empty();
     }
 
     public String getQuery() {
         return query;
     }
 
-    public void setCurrentPage(int currentPage) {
+    public Observable<Listing> setCurrentPage(int currentPage) {
         this.currentPage = currentPage;
-        reloadCurrentPage();
+        return reloadCurrentPage();
     }
 
     public int getCurrentPage() {
         return currentPage;
-    }
-
-    public void setControllers(ControllerLinks controllerLinks, ControllerUser controllerUser) {
-        this.controllerLinks = controllerLinks;
-        this.controllerUser = controllerUser;
     }
 
     public void addSubreddit(Subreddit subreddit) {

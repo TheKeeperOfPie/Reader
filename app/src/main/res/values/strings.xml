@@ -277,4 +277,5 @@
     <string name="message">Message</string>
     <string name="item_hide_youtube">Hide YouTube view</string>
     <string name="need_permission_download_image">Need storage permission to download image</string>
+    <string name="error_marking_read">Error marking all read</string>
 </resources>

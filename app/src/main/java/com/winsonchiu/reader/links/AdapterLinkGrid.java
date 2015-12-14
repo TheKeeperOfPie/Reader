@@ -53,7 +53,7 @@ public class AdapterLinkGrid extends AdapterLink {
             ViewHolderBase.EventListener eventListenerBase,
             DisallowListener disallowListener,
             RecyclerCallback recyclerCallback) {
-        super(eventListenerHeader, eventListenerBase, disallowListener, recyclerCallback);
+        super(activity, eventListenerHeader, eventListenerBase, disallowListener, recyclerCallback);
         setController(controllerLinks);
         setActivity(activity);
     }
@@ -210,8 +210,7 @@ public class AdapterLinkGrid extends AdapterLink {
                 imageFull.setVisibility(View.GONE);
                 imageThumbnail.clearColorFilter();
                 imageThumbnail.setVisibility(View.VISIBLE);
-                Reddit.loadPicasso(itemView.getContext())
-                        .load(link.getThumbnail())
+                picasso.load(link.getThumbnail())
                         .tag(TAG_PICASSO)
                         .into(imageThumbnail);
 
@@ -276,8 +275,7 @@ public class AdapterLinkGrid extends AdapterLink {
                     RelativeLayout.START_OF, buttonComments.getId());
             ((RelativeLayout.LayoutParams) textThreadTitle.getLayoutParams()).setMarginEnd(0);
 
-            Reddit.loadPicasso(itemView.getContext())
-                    .load(android.R.color.transparent)
+            picasso.load(android.R.color.transparent)
                     .into(imageFull);
 
 //            Reddit.loadGlide(itemView.getContext())
@@ -289,8 +287,7 @@ public class AdapterLinkGrid extends AdapterLink {
                         link) && position == getAdapterPosition()) {
                     int size = getAdjustedThumbnailSize();
 
-                    Reddit.loadPicasso(itemView.getContext())
-                            .load(link.getUrl())
+                    picasso.load(link.getUrl())
                             .tag(TAG_PICASSO)
                             .resize(size, size)
                             .centerCrop()
@@ -344,8 +341,7 @@ public class AdapterLinkGrid extends AdapterLink {
                 }
             }
             else {
-                Reddit.loadPicasso(itemView.getContext())
-                        .load(link.getThumbnail())
+                picasso.load(link.getThumbnail())
                         .tag(TAG_PICASSO)
                         .into(imageFull,
                                 new Callback() {
@@ -356,8 +352,7 @@ public class AdapterLinkGrid extends AdapterLink {
                                         if (position == getAdapterPosition()) {
                                             if (Reddit.placeImageUrl(link)) {
                                                 int size = getAdjustedThumbnailSize();
-                                                Reddit.loadPicasso(itemView.getContext())
-                                                        .load(link.getUrl())
+                                                picasso.load(link.getUrl())
                                                         .tag(TAG_PICASSO)
                                                         .resize(size, size)
                                                         .centerCrop()

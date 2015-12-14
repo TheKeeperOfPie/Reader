@@ -46,6 +46,7 @@ import android.widget.ImageView;
 import com.winsonchiu.reader.AppSettings;
 import com.winsonchiu.reader.FragmentBase;
 import com.winsonchiu.reader.FragmentListenerBase;
+import com.winsonchiu.reader.MainActivity;
 import com.winsonchiu.reader.R;
 import com.winsonchiu.reader.data.reddit.Link;
 import com.winsonchiu.reader.data.reddit.Reddit;
@@ -63,6 +64,8 @@ import com.winsonchiu.reader.utils.UtilsColor;
 
 import java.util.Calendar;
 import java.util.TimeZone;
+
+import javax.inject.Inject;
 
 import static android.support.v7.widget.RecyclerView.Adapter;
 import static android.support.v7.widget.RecyclerView.LayoutManager;
@@ -93,6 +96,8 @@ public class FragmentHistory extends FragmentBase implements Toolbar.OnMenuItemC
     private CustomColorFilter colorFilterPrimary;
     private ItemDecorationDivider itemDecorationDivider;
 
+    @Inject ControllerHistory controllerHistory;
+
     public static FragmentHistory newInstance() {
         FragmentHistory fragment = new FragmentHistory();
         Bundle args = new Bundle();
@@ -110,7 +115,6 @@ public class FragmentHistory extends FragmentBase implements Toolbar.OnMenuItemC
     }
 
     private void setUpOptionsMenu() {
-
         toolbar.inflateMenu(R.menu.menu_history);
         toolbar.setOnMenuItemClickListener(this);
         menu = toolbar.getMenu();
@@ -143,7 +147,7 @@ public class FragmentHistory extends FragmentBase implements Toolbar.OnMenuItemC
 
                     @Override
                     public boolean onMenuItemActionCollapse(MenuItem item) {
-                        mListener.getControllerHistory().setQuery("");
+                        controllerHistory.setQuery("");
                         Log.d(TAG, "collapse");
                         return true;
                     }
@@ -153,13 +157,13 @@ public class FragmentHistory extends FragmentBase implements Toolbar.OnMenuItemC
         searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
             @Override
             public boolean onQueryTextSubmit(String query) {
-                mListener.getControllerHistory().setQuery(query);
+                controllerHistory.setQuery(query);
                 return true;
             }
 
             @Override
             public boolean onQueryTextChange(String newText) {
-                mListener.getControllerHistory().setQuery(newText);
+                controllerHistory.setQuery(newText);
                 return true;
             }
         });
@@ -182,6 +186,7 @@ public class FragmentHistory extends FragmentBase implements Toolbar.OnMenuItemC
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
             Bundle savedInstanceState) {
+        ((MainActivity) getActivity()).getComponentActivity().inject(this);
 
         view = inflater.inflate(R.layout.fragment_history, container, false);
 
@@ -253,7 +258,7 @@ public class FragmentHistory extends FragmentBase implements Toolbar.OnMenuItemC
         swipeRefreshHistory.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
-                mListener.getControllerHistory().reload();
+                controllerHistory.reload();
             }
         });
 
@@ -313,14 +318,14 @@ public class FragmentHistory extends FragmentBase implements Toolbar.OnMenuItemC
 
 
         if (adapterLinkList == null) {
-            adapterLinkList = new AdapterHistoryLinkList(activity, mListener.getControllerHistory(),
+            adapterLinkList = new AdapterHistoryLinkList(activity, controllerHistory,
                     eventListenerHeader,
                     mListener.getEventListenerBase(),
                     disallowListener,
                     recyclerCallback);
         }
         if (adapterLinkGrid == null) {
-            adapterLinkGrid = new AdapterHistoryLinkGrid(activity, mListener.getControllerHistory(),
+            adapterLinkGrid = new AdapterHistoryLinkGrid(activity, controllerHistory,
                     eventListenerHeader,
                     mListener.getEventListenerBase(),
                     disallowListener,
@@ -405,7 +410,7 @@ public class FragmentHistory extends FragmentBase implements Toolbar.OnMenuItemC
                     @Override
                     public void onSwiped(final RecyclerView.ViewHolder viewHolder, int direction) {
                         final int position = viewHolder.getAdapterPosition();
-                        final Link link = mListener.getControllerHistory().remove(position);
+                        final Link link = controllerHistory.remove(position);
 
                         if (snackbar != null) {
                             snackbar.dismiss();
@@ -421,8 +426,7 @@ public class FragmentHistory extends FragmentBase implements Toolbar.OnMenuItemC
                                         R.string.undo, new View.OnClickListener() {
                                             @Override
                                             public void onClick(View v) {
-                                                mListener.getControllerHistory()
-                                                        .add(position, link);
+                                                controllerHistory.add(position, link);
                                                 recyclerHistory.invalidate();
                                             }
                                         });
@@ -457,12 +461,12 @@ public class FragmentHistory extends FragmentBase implements Toolbar.OnMenuItemC
     @Override
     public void onResume() {
         super.onResume();
-        mListener.getControllerHistory().addListener(listener);
+        controllerHistory.addListener(listener);
     }
 
     @Override
     public void onPause() {
-        mListener.getControllerHistory().removeListener(listener);
+        controllerHistory.removeListener(listener);
         super.onPause();
     }
 
@@ -599,7 +603,7 @@ public class FragmentHistory extends FragmentBase implements Toolbar.OnMenuItemC
                                         FORMAT_DATE));
                     }
                 });
-        long timeStart = mListener.getControllerHistory().getTimeStart();
+        long timeStart = controllerHistory.getTimeStart();
         if (timeStart > 0) {
             calendarStart.setTimeInMillis(timeStart);
             datePickerStart.updateDate(calendarStart.get(Calendar.YEAR), calendarStart.get(Calendar.MONTH), calendarStart.get(Calendar.DAY_OF_MONTH));
@@ -622,7 +626,7 @@ public class FragmentHistory extends FragmentBase implements Toolbar.OnMenuItemC
                 });
         datePickerEnd.setMaxDate(System.currentTimeMillis() + AlarmManager.INTERVAL_DAY);
 
-        long timeEnd = mListener.getControllerHistory().getTimeEnd();
+        long timeEnd = controllerHistory.getTimeEnd();
         if (timeEnd < Long.MAX_VALUE) {
             calendarEnd.setTimeInMillis(timeEnd);
             calendarEnd.add(Calendar.DAY_OF_MONTH, -1);
@@ -649,21 +653,21 @@ public class FragmentHistory extends FragmentBase implements Toolbar.OnMenuItemC
                                 TimeZone.getTimeZone("UTC"));
                         calendarEnd.add(Calendar.DAY_OF_MONTH, 1);
 
-                        mListener.getControllerHistory().setTimeStart(
+                        controllerHistory.setTimeStart(
                                 calendarStart.getTimeInMillis());
 
-                        mListener.getControllerHistory().setTimeEnd(
+                        controllerHistory.setTimeEnd(
                                 calendarEnd.getTimeInMillis());
 
-                        mListener.getControllerHistory().reload();
+                        controllerHistory.reload();
                     }
                 })
                 .setNeutralButton(R.string.reset, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        mListener.getControllerHistory().setTimeStart(0);
-                        mListener.getControllerHistory().setTimeEnd(Long.MAX_VALUE);
-                        mListener.getControllerHistory().reload();
+                        controllerHistory.setTimeStart(0);
+                        controllerHistory.setTimeEnd(Long.MAX_VALUE);
+                        controllerHistory.reload();
                     }
                 })
                 .setNegativeButton(R.string.cancel, null)

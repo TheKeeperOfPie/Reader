@@ -5,13 +5,14 @@
 package com.winsonchiu.reader.dagger.components;
 
 import com.winsonchiu.reader.ControllerUser;
-import com.winsonchiu.reader.FragmentNewMessage;
 import com.winsonchiu.reader.auth.ActivityLogin;
+import com.winsonchiu.reader.auth.Authenticator;
 import com.winsonchiu.reader.comments.ControllerComments;
 import com.winsonchiu.reader.dagger.modules.ModuleApi;
 import com.winsonchiu.reader.dagger.modules.ModuleContext;
 import com.winsonchiu.reader.dagger.modules.ModuleHistory;
 import com.winsonchiu.reader.dagger.modules.ModuleReddit;
+import com.winsonchiu.reader.data.reddit.Reddit;
 import com.winsonchiu.reader.history.ControllerHistory;
 import com.winsonchiu.reader.inbox.ControllerInbox;
 import com.winsonchiu.reader.inbox.Receiver;
@@ -40,7 +41,6 @@ public interface ComponentMain {
     void inject(ActivityLogin target);
     void inject(AdapterLink.ViewHolderBase target);
     void inject(FragmentBehavior target);
-    void inject(FragmentNewMessage target);
     void inject(ControllerComments target);
     void inject(ControllerHistory target);
     void inject(ControllerInbox target);
@@ -49,6 +49,8 @@ public interface ComponentMain {
     void inject(ControllerSearch target);
     void inject(ControllerUser target);
     void inject(Receiver target);
+    void inject(Authenticator target);
+    void inject(Reddit target);
 
     ComponentActivity plus(ModuleReddit module);
 }

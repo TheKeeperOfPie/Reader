@@ -4,9 +4,8 @@
 
 package com.winsonchiu.reader.inbox;
 
-import android.app.Activity;
+import android.content.Context;
 import android.util.Log;
-import android.widget.Toast;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.winsonchiu.reader.CustomApplication;
@@ -24,6 +23,7 @@ import com.winsonchiu.reader.data.reddit.Subreddit;
 import com.winsonchiu.reader.data.reddit.Thing;
 import com.winsonchiu.reader.utils.ControllerListener;
 import com.winsonchiu.reader.utils.FinalizingSubscriber;
+import com.winsonchiu.reader.utils.ObserverEmpty;
 
 import java.io.IOException;
 import java.util.HashSet;
@@ -53,7 +53,6 @@ public class ControllerInbox {
 
     private static final String TAG = ControllerInbox.class.getCanonicalName();
 
-    private Activity activity;
     private Set<Listener> listeners;
     private Listing data;
     private Link link;
@@ -62,17 +61,12 @@ public class ControllerInbox {
 
     @Inject Reddit reddit;
 
-    public ControllerInbox(Activity activity) {
+    public ControllerInbox(Context context) {
         CustomApplication.getComponentMain().inject(this);
-        setActivity(activity);
         data = new Listing();
         listeners = new HashSet<>();
         link = new Link();
-        page = new Page(INBOX, activity.getString(R.string.inbox_page_inbox));
-    }
-
-    public void setActivity(Activity activity) {
-        this.activity = activity;
+        page = new Page(INBOX, context.getString(R.string.inbox_page_inbox));
     }
 
     public void addListener(Listener listener) {
@@ -271,7 +265,7 @@ public class ControllerInbox {
         }
     }
 
-    public void deleteComment(Comment comment) {
+    public Observable<String> deleteComment(Comment comment) {
         int commentIndex = data.getChildren().indexOf(comment);
         if (commentIndex > -1) {
             data.getChildren()
@@ -282,13 +276,9 @@ public class ControllerInbox {
             listener.getAdapter().notifyItemRemoved(commentIndex);
         }
 
-        reddit.delete(comment)
-                .subscribe(new FinalizingSubscriber<String>() {
-                    @Override
-                    public void error(Throwable e) {
-                        Toast.makeText(activity, R.string.error_deleting_comment, Toast.LENGTH_LONG).show();
-                    }
-                });
+        Observable<String> observable = reddit.delete(comment);
+        observable.subscribe(new ObserverEmpty<>());
+        return observable;
     }
 
     public boolean toggleComment(int position) {
@@ -296,9 +286,9 @@ public class ControllerInbox {
         return true;
     }
 
-    public void voteComment(final AdapterCommentList.ViewHolderComment viewHolder,
-            final Comment comment,
-            int vote) {
+    public Observable<String> voteComment(final AdapterCommentList.ViewHolderComment viewHolder,
+                                          final Comment comment,
+                                          int vote) {
         final int position = viewHolder.getAdapterPosition();
 
         final int oldVote = comment.getLikes();
@@ -317,8 +307,8 @@ public class ControllerInbox {
 
         final int finalNewVote = newVote;
 
-        reddit.voteComment(comment, newVote)
-                .subscribe(new FinalizingSubscriber<String>() {
+        Observable<String> observable = reddit.voteComment(comment, newVote);
+        observable.subscribe(new FinalizingSubscriber<String>() {
                     @Override
                     public void error(Throwable e) {
                         comment.setScore(comment.getScore() - finalNewVote);
@@ -326,11 +316,9 @@ public class ControllerInbox {
                         if (position == viewHolder.getAdapterPosition()) {
                             viewHolder.setVoteColors();
                         }
-                        Toast.makeText(activity, activity.getString(R.string.error_voting),
-                                Toast.LENGTH_SHORT)
-                                .show();
                     }
                 });
+        return observable;
     }
 
     public void loadNestedComments(Comment moreComment) {
@@ -420,24 +408,10 @@ public class ControllerInbox {
         return false;
     }
 
-    public void markAllRead() {
-        reddit.readAllMessages()
-                .subscribe(new Observer<String>() {
-                    @Override
-                    public void onCompleted() {
-
-                    }
-
-                    @Override
-                    public void onError(Throwable e) {
-
-                    }
-
-                    @Override
-                    public void onNext(String s) {
-                        Toast.makeText(activity, R.string.marked_read, Toast.LENGTH_LONG).show();
-                    }
-                });
+    public Observable<String> markAllRead() {
+        Observable<String> observable = reddit.readAllMessages();
+        observable.subscribe(new ObserverEmpty<String>());
+        return observable;
     }
 
     public interface Listener extends ControllerListener {

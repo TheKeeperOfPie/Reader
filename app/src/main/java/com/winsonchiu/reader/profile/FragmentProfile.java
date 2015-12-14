@@ -35,8 +35,10 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ImageView;
 import android.widget.Spinner;
+import android.widget.Toast;
 
 import com.winsonchiu.reader.AppSettings;
+import com.winsonchiu.reader.ControllerUser;
 import com.winsonchiu.reader.CustomApplication;
 import com.winsonchiu.reader.FragmentBase;
 import com.winsonchiu.reader.FragmentListenerBase;
@@ -47,20 +49,25 @@ import com.winsonchiu.reader.comments.AdapterCommentList;
 import com.winsonchiu.reader.data.Page;
 import com.winsonchiu.reader.data.reddit.Comment;
 import com.winsonchiu.reader.data.reddit.Link;
+import com.winsonchiu.reader.data.reddit.Listing;
 import com.winsonchiu.reader.data.reddit.Reddit;
 import com.winsonchiu.reader.data.reddit.Sort;
 import com.winsonchiu.reader.data.reddit.Thing;
 import com.winsonchiu.reader.data.reddit.Time;
+import com.winsonchiu.reader.data.reddit.User;
 import com.winsonchiu.reader.links.ControllerLinks;
 import com.winsonchiu.reader.utils.CustomColorFilter;
 import com.winsonchiu.reader.utils.CustomItemTouchHelper;
 import com.winsonchiu.reader.utils.DisallowListener;
+import com.winsonchiu.reader.utils.FinalizingSubscriber;
 import com.winsonchiu.reader.utils.ItemDecorationDivider;
 import com.winsonchiu.reader.utils.RecyclerCallback;
 import com.winsonchiu.reader.utils.UtilsAnimation;
 import com.winsonchiu.reader.utils.UtilsColor;
 
 import javax.inject.Inject;
+
+import rx.Observer;
 
 public class FragmentProfile extends FragmentBase implements Toolbar.OnMenuItemClickListener {
 
@@ -88,6 +95,8 @@ public class FragmentProfile extends FragmentBase implements Toolbar.OnMenuItemC
     private CustomColorFilter colorFilterPrimary;
 
     @Inject ControllerLinks controllerLinks;
+    @Inject ControllerUser controllerUser;
+    @Inject ControllerProfile controllerProfile;
 
     public static FragmentProfile newInstance() {
         FragmentProfile fragment = new FragmentProfile();
@@ -132,8 +141,14 @@ public class FragmentProfile extends FragmentBase implements Toolbar.OnMenuItemC
         searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
             @Override
             public boolean onQueryTextSubmit(String query) {
-                mListener.getControllerProfile()
-                        .loadUser(query.replaceAll("\\s", ""));
+                controllerProfile.loadUser(query.replaceAll("\\s", ""))
+                        .subscribe(new FinalizingSubscriber<User>() {
+                            @Override
+                            public void error(Throwable e) {
+                                Toast.makeText(activity, getString(R.string.error_loading), Toast.LENGTH_SHORT)
+                                        .show();
+                            }
+                        });
                 itemSearch.collapseActionView();
                 return false;
             }
@@ -150,8 +165,7 @@ public class FragmentProfile extends FragmentBase implements Toolbar.OnMenuItemC
                 getString(R.string.time) + Reddit.TIME_SEPARATOR + getString(
                         R.string.item_sort_all));
 
-        if (TextUtils.isEmpty(mListener.getControllerUser().getUser().getName()) && !mListener
-                .getControllerProfile().isLoading()) {
+        if (TextUtils.isEmpty(controllerUser.getUser().getName()) && !controllerProfile.isLoading()) {
             itemSearch.expandActionView();
         }
 
@@ -304,7 +318,8 @@ public class FragmentProfile extends FragmentBase implements Toolbar.OnMenuItemC
         spinnerPage.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                mListener.getControllerProfile().setPage(adapterProfilePage.getItem(position));
+                controllerProfile.setPage(adapterProfilePage.getItem(position))
+                        .subscribe(getReloadObserver());
             }
 
             @Override
@@ -317,8 +332,7 @@ public class FragmentProfile extends FragmentBase implements Toolbar.OnMenuItemC
         swipeRefreshProfile.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
-                mListener.getControllerProfile()
-                        .reload();
+                controllerProfile.reload().subscribe(getReloadObserver());
             }
         });
 
@@ -330,36 +344,49 @@ public class FragmentProfile extends FragmentBase implements Toolbar.OnMenuItemC
         recyclerProfile.addItemDecoration(new ItemDecorationDivider(activity, ItemDecorationDivider.VERTICAL_LIST));
 
         if (adapterProfile == null) {
-            adapterProfile = new AdapterProfile(mListener.getControllerProfile(),
+            adapterProfile = new AdapterProfile(controllerProfile,
                     controllerLinks,
                     mListener.getEventListenerBase(),
                     new AdapterCommentList.ViewHolderComment.EventListener() {
                         @Override
                         public void loadNestedComments(Comment comment) {
-                            mListener.getControllerProfile().loadNestedComments(comment);
+                            controllerProfile.loadNestedComments(comment);
                         }
 
                         @Override
                         public void voteComment(AdapterCommentList.ViewHolderComment viewHolderComment,
                                 Comment comment,
                                 int vote) {
-                            mListener.getControllerProfile()
-                                    .voteComment(viewHolderComment, comment, vote);
+                            controllerProfile.voteComment(viewHolderComment, comment, vote)
+                                    .subscribe(new FinalizingSubscriber<String>() {
+                                        @Override
+                                        public void error(Throwable e) {
+                                            Toast.makeText(activity, activity.getString(R.string.error_voting),
+                                                    Toast.LENGTH_SHORT)
+                                                    .show();
+                                        }
+                                    });
                         }
 
                         @Override
                         public boolean toggleComment(int position) {
-                            return mListener.getControllerProfile().toggleComment(position);
+                            return controllerProfile.toggleComment(position);
                         }
 
                         @Override
                         public void deleteComment(Comment comment) {
-                            mListener.getControllerProfile().deleteComment(comment);
+                            controllerProfile.deleteComment(comment)
+                                    .subscribe(new FinalizingSubscriber<String>() {
+                                        @Override
+                                        public void error(Throwable e) {
+                                            Toast.makeText(activity, R.string.error_deleting_comment, Toast.LENGTH_LONG).show();
+                                        }
+                                    });
                         }
 
                         @Override
                         public void editComment(String name, int level, String text) {
-                            mListener.getControllerProfile().editComment(name, level, text);
+                            controllerProfile.editComment(name, level, text);
                         }
 
                         @Override
@@ -421,7 +448,7 @@ public class FragmentProfile extends FragmentBase implements Toolbar.OnMenuItemC
             public int getSwipeDirs(RecyclerView recyclerView,
                     RecyclerView.ViewHolder viewHolder) {
                 int position = viewHolder.getAdapterPosition();
-                if (position == 2 || (position >= 6 && mListener.getControllerProfile()
+                if (position == 2 || (position >= 6 && controllerProfile
                         .getViewType(position - 6) == ControllerProfile.VIEW_TYPE_LINK)) {
                     return super.getSwipeDirs(recyclerView, viewHolder);
                 }
@@ -448,8 +475,8 @@ public class FragmentProfile extends FragmentBase implements Toolbar.OnMenuItemC
                 final int adapterPosition = viewHolder.getAdapterPosition();
                 final int position = adapterPosition == 2 ? -1 : adapterPosition - 6;
                 final Link link =
-                        adapterPosition == 2 ? mListener.getControllerProfile().remove(
-                                -1) : mListener.getControllerProfile().remove(position);
+                        adapterPosition == 2 ? controllerProfile.remove(
+                                -1) : controllerProfile.remove(position);
                 mListener.getEventListenerBase().hide(link);
 
                 if (snackbar != null) {
@@ -469,13 +496,11 @@ public class FragmentProfile extends FragmentBase implements Toolbar.OnMenuItemC
                                     public void onClick(View v) {
                                         mListener.getEventListenerBase().hide(link);
                                         if (adapterPosition == 2) {
-                                            mListener.getControllerProfile()
-                                                    .setTopLink(link);
+                                            controllerProfile.setTopLink(link);
                                             adapterProfile.notifyItemChanged(2);
                                         }
                                         else {
-                                            mListener.getControllerProfile()
-                                                    .add(position, link);
+                                            controllerProfile.add(position, link);
                                         }
                                         recyclerProfile.invalidate();
                                     }
@@ -493,6 +518,17 @@ public class FragmentProfile extends FragmentBase implements Toolbar.OnMenuItemC
 
     }
 
+    private Observer<Listing> getReloadObserver() {
+        return new FinalizingSubscriber<Listing>() {
+            @Override
+            public void error(Throwable e) {
+                Toast.makeText(activity, activity.getString(R.string.error_loading),
+                        Toast.LENGTH_SHORT)
+                        .show();
+            }
+        };
+    }
+
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
@@ -502,14 +538,12 @@ public class FragmentProfile extends FragmentBase implements Toolbar.OnMenuItemC
     @Override
     public void onResume() {
         super.onResume();
-        mListener.getControllerProfile()
-                .addListener(listener);
+        controllerProfile.addListener(listener);
     }
 
     @Override
     public void onPause() {
-        mListener.getControllerProfile()
-                .removeListener(listener);
+        controllerProfile.removeListener(listener);
         super.onPause();
     }
 
@@ -545,7 +579,7 @@ public class FragmentProfile extends FragmentBase implements Toolbar.OnMenuItemC
 
         switch (id) {
             case R.id.item_new_message:
-                FragmentNewMessage fragmentNewMessage = FragmentNewMessage.newInstance(mListener.getControllerProfile().getUser().getName(), "", "");
+                FragmentNewMessage fragmentNewMessage = FragmentNewMessage.newInstance(controllerProfile.getUser().getName(), "", "");
                 getFragmentManager().beginTransaction()
                         .hide(FragmentProfile.this)
                         .add(R.id.frame_fragment, fragmentNewMessage, FragmentNewMessage.TAG)
@@ -560,16 +594,16 @@ public class FragmentProfile extends FragmentBase implements Toolbar.OnMenuItemC
 
         Sort sort = Sort.fromMenuId(item.getItemId());
         if (sort != null) {
-            mListener.getControllerProfile()
-                    .setSort(sort);
+            controllerProfile.setSort(sort)
+                    .subscribe(getReloadObserver());
             flashSearchView();
             return true;
         }
 
         Time time = Time.fromMenuId(item.getItemId());
         if (time != null) {
-            mListener.getControllerProfile()
-                    .setTime(time);
+            controllerProfile.setTime(time)
+                    .subscribe(getReloadObserver());
             itemSortTime.setTitle(
                     getString(R.string.time) + Reddit.TIME_SEPARATOR + item.toString());
             flashSearchView();

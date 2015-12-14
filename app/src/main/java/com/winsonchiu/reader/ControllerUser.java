@@ -6,7 +6,6 @@ package com.winsonchiu.reader;
 
 import android.accounts.Account;
 import android.accounts.AccountManager;
-import android.app.Activity;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.winsonchiu.reader.dagger.components.ComponentStatic;
@@ -26,23 +25,18 @@ public class ControllerUser {
 
     private static final String TAG = ControllerUser.class.getCanonicalName();
     private User user;
-    private AccountManager accountManager;
     private Account account;
 
+    @Inject AccountManager accountManager;
     @Inject Reddit reddit;
 
-    public ControllerUser(Activity activity) {
+    public ControllerUser() {
         CustomApplication.getComponentMain().inject(this);
-        setActivity(activity);
         user = new User();
     }
 
     public User getUser() {
         return user;
-    }
-
-    public void setActivity(Activity activity) {
-        accountManager = AccountManager.get(activity.getApplicationContext());
     }
 
     public void reloadUser() {

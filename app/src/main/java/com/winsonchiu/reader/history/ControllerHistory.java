@@ -4,7 +4,7 @@
 
 package com.winsonchiu.reader.history;
 
-import android.app.Activity;
+import android.content.Context;
 import android.text.TextUtils;
 
 import com.winsonchiu.reader.CustomApplication;
@@ -37,11 +37,12 @@ public class ControllerHistory implements ControllerLinksBase {
     @Inject Reddit reddit;
     @Inject Historian historian;
 
+    private Context context;
     private ArrayList<Listener> listeners;
+    private String title;
     private boolean isLoading;
     private Subreddit subreddit;
     private Listing history;
-    private Activity activity;
     private String query;
     private List<String> namesToFetch;
     private int lastIndex;
@@ -49,24 +50,21 @@ public class ControllerHistory implements ControllerLinksBase {
     private long timeStart;
     private long timeEnd;
 
-    public ControllerHistory(Activity activity) {
+    public ControllerHistory(Context context) {
         CustomApplication.getComponentMain().inject(this);
-        setActivity(activity);
+        this.context = context.getApplicationContext();
         subreddit = new Subreddit();
         listeners = new ArrayList<>();
         history = new Listing();
         namesToFetch = new ArrayList<>();
         query = "";
         timeEnd = Long.MAX_VALUE;
-    }
-
-    public void setActivity(Activity activity) {
-        this.activity = activity;
+        title = context.getString(R.string.history);
     }
 
     public void addListener(Listener listener) {
         listeners.add(listener);
-        listener.setToolbarTitle(activity.getString(R.string.history));
+        listener.setToolbarTitle(title);
         listener.getAdapter().notifyDataSetChanged();
         listener.setRefreshing(isLoading());
         if (!isLoading() && history.getChildren().isEmpty()) {
@@ -76,7 +74,7 @@ public class ControllerHistory implements ControllerLinksBase {
 
     public void removeListener(Listener listener) {
         listeners.remove(listener);
-        historian.saveToFile(activity);
+        historian.saveToFile(context);
     }
 
     public int getSize() {

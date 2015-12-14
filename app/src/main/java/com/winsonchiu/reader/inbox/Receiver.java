@@ -55,7 +55,9 @@ public class Receiver extends BroadcastReceiver {
     private static final int LED_MS_ON = 250;
     private static final int LED_MS_OFF = 250;
 
+    @Inject OkHttpClient okHttpClient;
     @Inject Reddit reddit;
+    @Inject AccountManager accountManager;
 
     public Receiver() {
         CustomApplication.getComponentMain().inject(this);
@@ -116,10 +118,7 @@ public class Receiver extends BroadcastReceiver {
         new Thread(new Runnable() {
             @Override
             public void run() {
-
-                OkHttpClient okHttpClient = new OkHttpClient();
                 final Listing messages = new Listing();
-                AccountManager accountManager = AccountManager.get(context);
 
                 Account[] accounts = accountManager.getAccountsByType(Reddit.ACCOUNT_TYPE);
 

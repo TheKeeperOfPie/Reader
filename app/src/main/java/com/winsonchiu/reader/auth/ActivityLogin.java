@@ -60,6 +60,7 @@ public class ActivityLogin extends AccountAuthenticatorActivity {
     public static final String KEY_IS_NEW_ACCOUNT = "isNewAccount";
     public static final String KEY_TIME_EXPIRATION = "timeExpiration";
 
+    @Inject AccountManager accountManager;
     @Inject Reddit reddit;
 
     private SharedPreferences preferences;
@@ -230,8 +231,6 @@ public class ActivityLogin extends AccountAuthenticatorActivity {
                 .subscribe(new FinalizingSubscriber<User>() {
                     @Override
                     public void next(User user) {
-                        AccountManager accountManager = AccountManager.get(ActivityLogin.this);
-
                         Account account = new Account(user.getName(), Reddit.ACCOUNT_TYPE);
                         Intent result = new Intent();
 

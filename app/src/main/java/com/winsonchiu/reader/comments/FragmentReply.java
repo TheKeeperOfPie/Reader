@@ -33,6 +33,7 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.github.rjeschke.txtmark.Processor;
+import com.winsonchiu.reader.ControllerUser;
 import com.winsonchiu.reader.FragmentBase;
 import com.winsonchiu.reader.FragmentListenerBase;
 import com.winsonchiu.reader.MainActivity;
@@ -42,10 +43,12 @@ import com.winsonchiu.reader.data.reddit.Reddit;
 import com.winsonchiu.reader.data.reddit.Replyable;
 import com.winsonchiu.reader.data.reddit.Thing;
 import com.winsonchiu.reader.history.FragmentHistory;
+import com.winsonchiu.reader.inbox.ControllerInbox;
 import com.winsonchiu.reader.inbox.FragmentInbox;
 import com.winsonchiu.reader.links.ControllerLinks;
 import com.winsonchiu.reader.links.FragmentThreadList;
 import com.winsonchiu.reader.profile.FragmentProfile;
+import com.winsonchiu.reader.search.ControllerSearch;
 import com.winsonchiu.reader.search.FragmentSearch;
 import com.winsonchiu.reader.utils.UtilsColor;
 
@@ -91,6 +94,12 @@ public class FragmentReply extends FragmentBase implements Toolbar.OnMenuItemCli
     private boolean isFinished;
 
     @Inject ControllerLinks controllerLinks;
+    @Inject ControllerUser controllerUser;
+    @Inject ControllerComments controllerComments;
+    @Inject ControllerComments controllerProfile;
+    @Inject ControllerInbox controllerInbox;
+    @Inject ControllerSearch controllerSearch;
+    @Inject ControllerInbox controllerHistory;
 
     public static FragmentReply newInstance(Replyable replyable) {
         FragmentReply fragment = new FragmentReply();
@@ -145,7 +154,7 @@ public class FragmentReply extends FragmentBase implements Toolbar.OnMenuItemCli
         setUpToolbar();
 
         textAuthor = (TextView) view.findViewById(R.id.text_author);
-        textAuthor.setText(getString(R.string.replying_from, mListener.getControllerUser().getUser().getName()));
+        textAuthor.setText(getString(R.string.replying_from, controllerUser.getUser().getName()));
 
         scrollText = (NestedScrollView) view.findViewById(R.id.scroll_text);
 
@@ -434,20 +443,20 @@ public class FragmentReply extends FragmentBase implements Toolbar.OnMenuItemCli
             controllerLinks.setReplyText(nameParent, text, collapsed);
         }
         if (getFragmentManager().findFragmentByTag(FragmentComments.TAG) != null) {
-            mListener.getControllerComments().setReplyText(nameParent, text, collapsed);
+            controllerComments.setReplyText(nameParent, text, collapsed);
         }
         if (getFragmentManager().findFragmentByTag(FragmentProfile.TAG) != null) {
-            mListener.getControllerProfile().setReplyText(nameParent, text, collapsed);
+            controllerProfile.setReplyText(nameParent, text, collapsed);
         }
         if (getFragmentManager().findFragmentByTag(FragmentInbox.TAG) != null) {
-            mListener.getControllerInbox().setReplyText(nameParent, text, collapsed);
+            controllerInbox.setReplyText(nameParent, text, collapsed);
         }
         if (getFragmentManager().findFragmentByTag(FragmentHistory.TAG) != null) {
-            mListener.getControllerHistory().setReplyText(nameParent, text, collapsed);
+            controllerHistory.setReplyText(nameParent, text, collapsed);
         }
         if (getFragmentManager().findFragmentByTag(FragmentSearch.TAG) != null) {
-            mListener.getControllerSearch().setReplyTextLinks(nameParent, text, collapsed);
-            mListener.getControllerSearch().setReplyTextLinksSubreddit(nameParent, text, collapsed);
+            controllerSearch.setReplyTextLinks(nameParent, text, collapsed);
+            controllerSearch.setReplyTextLinksSubreddit(nameParent, text, collapsed);
         }
 
         isFinished = true;

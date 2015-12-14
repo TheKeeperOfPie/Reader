@@ -6,6 +6,7 @@ package com.winsonchiu.reader.dagger.modules;
 
 import android.content.Context;
 
+import com.squareup.okhttp.OkHttpClient;
 import com.winsonchiu.reader.data.reddit.Reddit;
 
 import javax.inject.Singleton;
@@ -24,4 +25,11 @@ public class ModuleApi {
     public Reddit provideReddit(Context context) {
         return new Reddit(context);
     }
+
+    @Singleton
+    @Provides
+    public OkHttpClient provideOkHttpClient() {
+        return new OkHttpClient();
+    }
+
 }

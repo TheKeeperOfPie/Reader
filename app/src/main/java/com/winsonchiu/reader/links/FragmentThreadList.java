@@ -46,7 +46,9 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.squareup.picasso.Picasso;
 import com.winsonchiu.reader.AppSettings;
+import com.winsonchiu.reader.ControllerUser;
 import com.winsonchiu.reader.CustomApplication;
 import com.winsonchiu.reader.FragmentBase;
 import com.winsonchiu.reader.FragmentListenerBase;
@@ -60,6 +62,7 @@ import com.winsonchiu.reader.data.reddit.Subreddit;
 import com.winsonchiu.reader.data.reddit.Thing;
 import com.winsonchiu.reader.data.reddit.Time;
 import com.winsonchiu.reader.history.Historian;
+import com.winsonchiu.reader.search.ControllerSearch;
 import com.winsonchiu.reader.search.FragmentSearch;
 import com.winsonchiu.reader.utils.CustomColorFilter;
 import com.winsonchiu.reader.utils.CustomItemTouchHelper;
@@ -120,6 +123,9 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
 
     @Inject Historian historian;
     @Inject ControllerLinks controllerLinks;
+    @Inject Picasso picasso;
+    @Inject ControllerUser controllerUser;
+    @Inject ControllerSearch controllerSearch;
 
     public static FragmentThreadList newInstance() {
         FragmentThreadList fragment = new FragmentThreadList();
@@ -418,10 +424,10 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
                 switch (newState) {
                     case RecyclerView.SCROLL_STATE_IDLE:
                     case RecyclerView.SCROLL_STATE_DRAGGING:
-                        Reddit.loadPicasso(activity).resumeTag(AdapterLink.TAG_PICASSO);
+                        picasso.resumeTag(AdapterLink.TAG_PICASSO);
                         break;
                     case RecyclerView.SCROLL_STATE_SETTLING:
-                        Reddit.loadPicasso(activity).pauseTag(AdapterLink.TAG_PICASSO);
+                        picasso.pauseTag(AdapterLink.TAG_PICASSO);
                         break;
                 }
             }
@@ -541,8 +547,7 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
                                 R.string.subscribe : R.string.unsubscribe);
                 controllerLinks.subscribe();
                 if (controllerLinks.getSubreddit().isUserIsSubscriber()) {
-                    mListener.getControllerSearch()
-                            .addSubreddit(controllerLinks.getSubreddit());
+                    controllerSearch.addSubreddit(controllerLinks.getSubreddit());
                 }
             }
         });
@@ -557,14 +562,14 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
             @Override
             public void onClickSubmit(Reddit.PostType postType) {
 
-                if (TextUtils.isEmpty(mListener.getControllerUser().getUser().getName())) {
+                if (TextUtils.isEmpty(controllerUser.getUser().getName())) {
                     Toast.makeText(activity, getString(R.string.must_be_logged_in),
                             Toast.LENGTH_SHORT).show();
                     return;
                 }
 
                 FragmentNewPost fragmentNewPost = FragmentNewPost.newInstance(
-                        mListener.getControllerUser().getUser().getName(),
+                        controllerUser.getUser().getName(),
                         controllerLinks.getSubreddit().getUrl(),
                         postType,
                         controllerLinks.getSubreddit().getSubmitTextHtml());
@@ -661,7 +666,7 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
                 else {
                     buttonSubscribe.setText(R.string.subscribe);
                 }
-                buttonSubscribe.setVisibility(mListener.getControllerUser().hasUser() ? View.VISIBLE : View.GONE);
+                buttonSubscribe.setVisibility(controllerUser.hasUser() ? View.VISIBLE : View.GONE);
             }
 
             @Override

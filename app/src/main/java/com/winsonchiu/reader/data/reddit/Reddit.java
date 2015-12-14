@@ -25,7 +25,6 @@ import android.view.MenuItem;
 import android.webkit.URLUtil;
 import android.widget.EditText;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.squareup.okhttp.Authenticator;
 import com.squareup.okhttp.Callback;
 import com.squareup.okhttp.FormEncodingBuilder;
@@ -34,11 +33,10 @@ import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.RequestBody;
 import com.squareup.okhttp.logging.HttpLoggingInterceptor;
-import com.squareup.picasso.OkHttpDownloader;
-import com.squareup.picasso.Picasso;
 import com.winsonchiu.reader.ApiKeys;
 import com.winsonchiu.reader.AppSettings;
 import com.winsonchiu.reader.BuildConfig;
+import com.winsonchiu.reader.CustomApplication;
 import com.winsonchiu.reader.R;
 import com.winsonchiu.reader.auth.ActivityLogin;
 import com.winsonchiu.reader.data.api.ApiRedditAuthorized;
@@ -53,6 +51,8 @@ import java.net.Proxy;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import javax.inject.Inject;
 
 import retrofit.Retrofit;
 import retrofit.RxJavaCallAdapterFactory;
@@ -187,46 +187,17 @@ public class Reddit {
     private ApiRedditAuthorized apiRedditAuthorized;
     private ApiRedditDefault apiRedditDefault;
     private SharedPreferences preferences;
-    private AccountManager accountManager;
     private String tokenAuth;
     private Account account;
     private long timeExpire;
 
-    private static Picasso picasso;
-    private static ObjectMapper objectMapper;
-
-    public static Picasso loadPicasso(Context context) {
-        if (picasso == null) {
-            Picasso.Builder builder = new Picasso.Builder(context)
-                    .downloader(new OkHttpDownloader(new OkHttpClient()));
-            if (BuildConfig.DEBUG) {
-                builder = builder.loggingEnabled(true);
-            }
-            picasso = builder.build();
-        }
-        return picasso;
-    }
-
-//    public static RequestManager loadGlide(Context context) {
-//        return Glide.with(context);
-//    }
-
-//    public static ObjectMapper getObjectMapper() {
-//        if (objectMapper == null) {
-//            objectMapper = new ObjectMapper();
-//            objectMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
-//        }
-//        return objectMapper;
-//    }
-
-    public ObjectMapper getObjectMapper() {
-        return objectMapper;
-    }
+    @Inject OkHttpClient okHttpClient;
+    @Inject AccountManager accountManager;
 
     public Reddit(Context context) {
         preferences = PreferenceManager.getDefaultSharedPreferences(
                 context.getApplicationContext());
-        accountManager = AccountManager.get(context.getApplicationContext());
+        CustomApplication.getComponentMain().inject(this);
 
         okHttpClientAuthorized = new OkHttpClient();
         okHttpClientAuthorized.interceptors().add(new Interceptor() {
@@ -577,7 +548,7 @@ public class Reddit {
         return Observable.create(new Observable.OnSubscribe<String>() {
             @Override
             public void call(final Subscriber<? super String> subscriber) {
-                new OkHttpClient().newCall(request).enqueue(new Callback() {
+                okHttpClient.newCall(request).enqueue(new Callback() {
                     @Override
                     public void onFailure(com.squareup.okhttp.Request request, IOException e) {
                         subscriber.onError(e);

@@ -16,7 +16,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
-import com.winsonchiu.reader.ControllerUser;
 import com.winsonchiu.reader.R;
 import com.winsonchiu.reader.comments.AdapterCommentList;
 import com.winsonchiu.reader.data.reddit.Thing;
@@ -39,7 +38,6 @@ public class AdapterProfile extends RecyclerView.Adapter<RecyclerView.ViewHolder
 
     protected ControllerProfile controllerProfile;
     protected ControllerLinksBase controllerLinks;
-    protected ControllerUser controllerUser;
     private AdapterLink.ViewHolderBase.EventListener eventListenerBase;
     private AdapterCommentList.ViewHolderComment.EventListener eventListenerComment;
     private DisallowListener disallowListener;
