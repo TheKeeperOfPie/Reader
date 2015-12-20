@@ -19,7 +19,7 @@ public class CustomApplication extends Application {
 
     private static final String TAG = CustomApplication.class.getCanonicalName();
 
-    private ComponentMain componentMain;
+    private static ComponentMain componentMain = DaggerComponentMain.builder().build();
     private static CustomApplication application;
 
     public static RefWatcher getRefWatcher(Context context) {
@@ -30,7 +30,7 @@ public class CustomApplication extends Application {
     private RefWatcher refWatcher;
 
     public static ComponentMain getComponentMain() {
-        return application.componentMain;
+        return componentMain;
     }
 
     public static CustomApplication getApplication() {
@@ -39,11 +39,9 @@ public class CustomApplication extends Application {
 
     @Override
     public void onCreate() {
-        super.onCreate();
         application = this;
         refWatcher = LeakCanary.install(this);
-        componentMain = DaggerComponentMain.builder()
-                .build();
+        super.onCreate();
         AppSettings.initPrefs(getApplicationContext());
     }
 }

@@ -988,8 +988,8 @@ public class MainActivity extends YouTubeBaseActivity
                 if (!TextUtils.isEmpty(permalink)) {
                     Intent intentActivity = new Intent(MainActivity.this, MainActivity.class);
                     intentActivity.setAction(Intent.ACTION_VIEW);
-                    intentActivity.putExtra(REDDIT_PAGE, Reddit.BASE_URL + permalink);
-                    MainActivity.super.startActivity(intentActivity);
+                    intentActivity.setData(Uri.parse(Reddit.BASE_URL + permalink));
+                    startActivity(intentActivity);
                     return true;
                 }
                 return super.onSingleTapConfirmed(e);
@@ -1621,7 +1621,7 @@ public class MainActivity extends YouTubeBaseActivity
                 idLink = pathSegments.get(pathSegments.size() - 2);
 
                 loadComments(idLink, null, 0);
-                break;
+                return;
             case COMMENTS_TITLED_ID:
                 try {
                     context = Integer.parseInt(uri.getQueryParameter("context"));

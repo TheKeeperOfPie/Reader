@@ -5,8 +5,8 @@
     android:id="@+id/layout_root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="com.winsonchiu.reader.auth.ActivityLogin"
     android:fitsSystemWindows="true"
+    tools:context="com.winsonchiu.reader.auth.ActivityLogin"
     >
 
     <android.support.v7.widget.Toolbar

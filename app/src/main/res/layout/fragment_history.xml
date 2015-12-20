@@ -9,6 +9,7 @@
     android:id="@+id/layout_coordinator"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="?attr/colorScreenBackground"
     tools:context="com.winsonchiu.reader.history.FragmentHistory"
     >
 

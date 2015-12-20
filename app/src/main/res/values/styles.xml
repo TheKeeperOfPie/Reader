@@ -10,6 +10,13 @@
         <item name="colorPrimaryDark">@color/darkThemeBackground</item>
         <item name="colorAccent">@color/darkThemeBackground</item>
 
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowContentOverlay">@null</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowIsFloating">true</item>
+        <item name="android:backgroundDimEnabled">false</item>
+
     </style>
 
     <style name="AppDarkTheme" parent="@style/Theme.AppCompat.NoActionBar">
@@ -22,15 +29,20 @@
         <item name="android:textColor">@color/darkThemeTextColor</item>
         <item name="android:textColorSecondary">@color/darkThemeTextColorMuted</item>
         <item name="android:shadowColor">@color/darkThemeShadowColor</item>
-        <item name="android:windowBackground">@color/darkThemeBackground</item>
         <item name="colorRowBackground">@color/darkThemeRowBackground</item>
         <item name="colorRowOverlay">@color/darkThemeRowOverlay</item>
         <item name="colorCellBackground">@color/darkThemeCellBackground</item>
         <item name="colorCellOverlay">@color/darkThemeCellOverlay</item>
         <item name="colorIconFilter">@color/darkThemeIconFilter</item>
         <item name="colorAlert">@color/textColorAlert</item>
+        <item name="colorScreenBackground">@color/darkThemeBackground</item>
 
         <item name="android:actionOverflowButtonStyle">@style/OverflowStyleDark</item>
+
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowContentOverlay">@null</item>
+        <item name="android:backgroundDimEnabled">false</item>
     </style>
 
     <style name="AppLightTheme" parent="@style/Theme.AppCompat.Light.NoActionBar">
@@ -43,24 +55,28 @@
         <item name="android:textColor">@color/lightThemeTextColor</item>
         <item name="android:textColorSecondary">@color/lightThemeTextColorMuted</item>
         <item name="android:shadowColor">@color/lightThemeShadowColor</item>
-        <item name="android:windowBackground">@color/lightThemeBackground</item>
         <item name="colorRowBackground">@color/lightThemeRowBackground</item>
         <item name="colorRowOverlay">@color/lightThemeRowOverlay</item>
         <item name="colorCellBackground">@color/lightThemeCellBackground</item>
         <item name="colorCellOverlay">@color/lightThemeCellOverlay</item>
         <item name="colorIconFilter">@color/lightThemeIconFilter</item>
         <item name="colorAlert">@color/textColorAlertMuted</item>
+        <item name="colorScreenBackground">@color/lightThemeBackground</item>
 
         <item name="android:actionOverflowButtonStyle">@style/OverflowStyleLight</item>
 
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowContentOverlay">@null</item>
+        <item name="android:backgroundDimEnabled">false</item>
     </style>
 
     <style name="AppBlackTheme" parent="AppDarkTheme">
-        <item name="android:windowBackground">@color/blackThemeBackground</item>
         <item name="colorRowBackground">@color/blackThemeBackground</item>
         <item name="colorRowOverlay">@color/blackThemeOverlay</item>
         <item name="colorCellBackground">@color/blackThemeBackground</item>
         <item name="colorCellOverlay">@color/blackThemeOverlay</item>
+        <item name="colorScreenBackground">@color/blackThemeBackground</item>
     </style>
 
     <style name="OverflowStyleDark" parent="Widget.AppCompat.ActionButton.Overflow">

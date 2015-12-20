@@ -6,6 +6,7 @@
 <resources>
 
     <declare-styleable name="ViewHolderBase">
+        <attr name="colorScreenBackground" format="color"/>
         <attr name="colorRowBackground" format="color"/>
         <attr name="colorRowOverlay" format="color"/>
         <attr name="colorCellBackground" format="color"/>

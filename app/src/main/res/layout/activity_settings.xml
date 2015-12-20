@@ -9,8 +9,8 @@
     android:id="@+id/layout_coordinator"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="com.winsonchiu.reader.settings.FragmentPreferences.ActivitySettings"
     android:fitsSystemWindows="true"
+    tools:context="com.winsonchiu.reader.settings.ActivitySettings"
     >
 
     <android.support.design.widget.AppBarLayout
