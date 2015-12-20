@@ -17,6 +17,8 @@ import com.winsonchiu.reader.dagger.components.DaggerComponentMain;
  */
 public class CustomApplication extends Application {
 
+    private static final String TAG = CustomApplication.class.getCanonicalName();
+
     private ComponentMain componentMain;
     private static CustomApplication application;
 

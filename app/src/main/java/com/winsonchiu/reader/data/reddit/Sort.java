@@ -14,8 +14,10 @@ public enum Sort {
     CONFIDENCE(R.id.item_sort_confidence),
     HOT(R.id.item_sort_hot),
     NEW(R.id.item_sort_new),
-    TOP(R.id.item_sort_top),
+    RISING(R.id.item_sort_rising),
     CONTROVERSIAL(R.id.item_sort_controversial),
+    TOP(R.id.item_sort_top),
+//    GILDED(R.id.item_sort_gilded), TODO: Add support for gilded sort, mixes comments and links
     RELEVANCE(R.id.item_sort_relevance),
     ACTIVITY(R.id.item_sort_activity),
     OLD(R.id.item_sort_old),

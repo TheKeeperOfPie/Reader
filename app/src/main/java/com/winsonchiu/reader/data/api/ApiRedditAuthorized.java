@@ -31,9 +31,8 @@ public interface ApiRedditAuthorized {
                              @Query("after") String after,
                              @Query("show") String show);
 
-    @GET("/r/{subreddit}/comments/{id}")
-    Observable<String> comments(@Path("subreddit") String subreddit,
-                                @Path("id") String id,
+    @GET("/comments/{id}")
+    Observable<String> comments(@Path("id") String id,
                                 @Query("comment") String comment,
                                 @Query("sort") String sort,
                                 @Query("showmore") Boolean showMore,
@@ -70,8 +69,8 @@ public interface ApiRedditAuthorized {
     Observable<String> subredditsSearch(@Query("q") String query,
                                         @Query("sort") String sort);
 
-    @GET("{subreddit}/search")
-    Observable<String> search(@Path("subreddit") String pathSubreddit,
+    @GET
+    Observable<String> search(@Url String url,
                               @Query("q") String query,
                               @Query("sort") String sort,
                               @Query("t") String time,

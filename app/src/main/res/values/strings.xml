@@ -27,10 +27,12 @@
     <string name="item_sort_activity">Activity</string>
     <string name="item_sort_subscribers">Subscribers</string>
     <string name="item_sort_alphabetical">Alphabetical</string>
-    <string name="item_sort_top">Top</string>
     <string name="item_sort_hot">Hot</string>
     <string name="item_sort_new">New</string>
+    <string name="item_sort_rising">Rising</string>
     <string name="item_sort_controversial">Controversial</string>
+    <string name="item_sort_top">Top</string>
+    <string name="item_sort_gilded">Gilded</string>
 
     <string name="action_settings">Settings</string>
 
@@ -194,6 +196,7 @@
     <string name="prefix_admin">[A]</string>
     <string name="prefix_moderator">[M]</string>
     <string name="prefix_special">[&#916;]</string>
+    <string name="beta_title">Reader (BETA)</string>
     <string name="beta_notice_0">Please remember that Reader is still in beta. Features are missing
         and there will be bugs. This application was built to be used with an Android Lollipop
         device.\n\nIf you have any suggestions, questions, or bug reports, please email me at\n\n\t

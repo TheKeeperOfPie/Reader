@@ -86,7 +86,9 @@ public class ControllerLinks implements ControllerLinksBase {
         listeners.remove(listener);
     }
 
-    public void setParameters(String subredditName, Sort sort, Time time) {
+    public Observable<Subreddit> setParameters(String subredditName, Sort sort, Time time) {
+        Log.d(TAG, "parseUrl setParameters() called with: " + "subredditName = [" + subredditName + "], sort = [" + sort + "], time = [" + time + "]");
+
         if (!TextUtils.equals(subredditName, subreddit.getDisplayName())) {
             this.sort = sort;
             this.time = time;
@@ -100,24 +102,28 @@ public class ControllerLinks implements ControllerLinksBase {
                 listener.getAdapter()
                         .notifyItemRangeRemoved(0, size + 1);
             }
-            reloadSubreddit();
+            return reloadSubreddit();
         }
+
+        Observable.empty();
+        return null;
     }
 
-    public void reloadSubreddit() {
-        reddit.about(subreddit.getUrl())
+    public Observable<Subreddit> reloadSubreddit() {
+        Observable<Subreddit> observable = reddit.about(subreddit.getUrl())
                 .flatMap(new Func1<String, Observable<Subreddit>>() {
                     @Override
                     public Observable<Subreddit> call(String response) {
                         try {
                             return Observable.just(Subreddit.fromJson(ComponentStatic.getObjectMapper().readValue(
                                     response, JsonNode.class)));
-                        } catch (IOException e) {
+                        }
+                        catch (IOException e) {
                             return Observable.error(e);
                         }
                     }
-                })
-                .subscribe(new FinalizingSubscriber<Subreddit>() {
+                });
+        observable.subscribe(new FinalizingSubscriber<Subreddit>() {
                     @Override
                     public void start() {
                         setLoading(true);
@@ -138,6 +144,7 @@ public class ControllerLinks implements ControllerLinksBase {
                         reloadAllLinks(true);
                     }
                 });
+        return observable;
     }
 
     public void loadFrontPage(Sort sort, boolean force) {
@@ -205,12 +212,18 @@ public class ControllerLinks implements ControllerLinksBase {
 
     public Observable<Listing> reloadAllLinks(final boolean scroll) {
         Observable<Listing> observable = reddit.links(subreddit.getUrl(), sort.toString(), time.toString(), LIMIT, null)
+                .map(new Func1<String, String>() {
+                    @Override
+                    public String call(String s) {
+                        Log.d(TAG, "reloadAllLinks call() called with: " + "s = [" + s + "]");
+                        return s;
+                    }
+                })
                 .flatMap(Listing.FLAT_MAP)
                 .flatMap(new Func1<Listing, Observable<Listing>>() {
                     @Override
                     public Observable<Listing> call(Listing listing) {
-                        if (!listing.getChildren()
-                                .isEmpty() && listing.getChildren()
+                        if (listing.getChildren()
                                 .get(0) instanceof Link) {
                             return Observable.just(listing);
                         }

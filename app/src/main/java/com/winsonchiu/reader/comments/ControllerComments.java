@@ -83,20 +83,19 @@ public class ControllerComments {
         reloadAllComments();
     }
 
-    public void setLinkId(String subreddit, String linkId) {
-        setLinkIdValues(subreddit, linkId);
+    public void setLinkId(String linkId) {
+        setLinkIdValues(linkId);
         reloadAllComments();
     }
 
-    public void setLinkId(String subreddit, String linkId, String commentId, int contextNumber) {
+    public void setLinkId(String linkId, String commentId, int contextNumber) {
         this.contextNumber = contextNumber;
-        setLinkIdValues(subreddit, linkId);
+        setLinkIdValues(linkId);
         loadCommentThread(commentId);
     }
 
-    private void setLinkIdValues(String subreddit, String linkId) {
+    private void setLinkIdValues(String linkId) {
         link = new Link();
-        link.setSubreddit(subreddit);
         link.setId(linkId);
         setSort(link.getSuggestedSort());
     }
@@ -146,7 +145,7 @@ public class ControllerComments {
     }
 
     public void loadLinkComments() {
-        reddit.comments(link.getSubreddit(), link.getId(), null, sort.toString(), true, true, null, 10, 100)
+        reddit.comments(link.getId(), null, sort.toString(), true, true, null, 10, 100)
                 .flatMap(new Func1<String, Observable<Link>>() {
                     @Override
                     public Observable<Link> call(String response) {
@@ -180,7 +179,7 @@ public class ControllerComments {
     }
 
     public void loadCommentThread(String commentId) {
-        reddit.comments(link.getSubreddit(), link.getId(), commentId, sort.toString(), true, true, contextNumber,  10, 100)
+        reddit.comments(link.getId(), commentId, sort.toString(), true, true, contextNumber,  10, 100)
                 .flatMap(new Func1<String, Observable<Link>>() {
                     @Override
                     public Observable<Link> call(String response) {

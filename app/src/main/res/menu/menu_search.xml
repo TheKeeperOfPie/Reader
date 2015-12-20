@@ -86,9 +86,15 @@
                     />
 
                 <item
+                    android:id="@+id/item_sort_rising"
+                    android:title="@string/item_sort_rising"
+                    android:orderInCategory="500"
+                    />
+
+                <item
                     android:id="@+id/item_sort_top"
                     android:title="@string/item_sort_top"
-                    android:orderInCategory="500"
+                    android:orderInCategory="600"
                     />
 
             </group>
@@ -96,7 +102,7 @@
             <item
                 android:id="@+id/item_sort_time"
                 android:title="@string/time"
-                android:orderInCategory="600"
+                android:orderInCategory="700"
                 >
 
                 <menu>

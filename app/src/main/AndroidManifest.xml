@@ -50,36 +50,250 @@
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
 
+                <!-- HTTP -->
+
                 <data
+                    android:scheme="http"
                     android:host="reddit.com"
-                    android:scheme="http" />
+                    android:pathPrefix="/r/"
+                    />
+
                 <data
+                    android:scheme="http"
                     android:host="reddit.com"
-                    android:scheme="https" />
+                    android:pathPrefix="/u/"
+                    />
+
                 <data
+                    android:scheme="http"
+                    android:host="reddit.com"
+                    android:pathPrefix="/user/"
+                    />
+
+                <data
+                    android:scheme="http"
+                    android:host="reddit.com"
+                    android:pathPrefix="/comments/"
+                    />
+
+                <data
+                    android:scheme="http"
                     android:host="m.reddit.com"
-                    android:scheme="http" />
+                    android:pathPrefix="/r/"
+                    />
+
                 <data
+                    android:scheme="http"
                     android:host="m.reddit.com"
-                    android:scheme="https" />
+                    android:pathPrefix="/u/"
+                    />
+
                 <data
-                    android:host="np.reddit.com"
-                    android:scheme="http" />
+                    android:scheme="http"
+                    android:host="m.reddit.com"
+                    android:pathPrefix="/user/"
+                    />
+
                 <data
-                    android:host="np.reddit.com"
-                    android:scheme="https" />
+                    android:scheme="http"
+                    android:host="m.reddit.com"
+                    android:pathPrefix="/comments/"
+                    />
+
                 <data
+                    android:scheme="http"
                     android:host="i.reddit.com"
-                    android:scheme="http" />
+                    android:pathPrefix="/r/"
+                    />
+
                 <data
+                    android:scheme="http"
                     android:host="i.reddit.com"
-                    android:scheme="https" />
+                    android:pathPrefix="/u/"
+                    />
+
                 <data
-                    android:host="www.reddit.com"
-                    android:scheme="http" />
+                    android:scheme="http"
+                    android:host="i.reddit.com"
+                    android:pathPrefix="/user/"
+                    />
+
                 <data
+                    android:scheme="http"
+                    android:host="i.reddit.com"
+                    android:pathPrefix="/comments/"
+                    />
+
+                <data
+                    android:scheme="http"
+                    android:host="np.reddit.com"
+                    android:pathPrefix="/r/"
+                    />
+
+                <data
+                    android:scheme="http"
+                    android:host="np.reddit.com"
+                    android:pathPrefix="/u/"
+                    />
+
+                <data
+                    android:scheme="http"
+                    android:host="np.reddit.com"
+                    android:pathPrefix="/user/"
+                    />
+
+                <data
+                    android:scheme="http"
+                    android:host="np.reddit.com"
+                    android:pathPrefix="/comments/"
+                    />
+
+                <data
+                    android:scheme="http"
                     android:host="www.reddit.com"
-                    android:scheme="https" />
+                    android:pathPrefix="/r/"
+                    />
+
+                <data
+                    android:scheme="http"
+                    android:host="www.reddit.com"
+                    android:pathPrefix="/u/"
+                    />
+
+                <data
+                    android:scheme="http"
+                    android:host="www.reddit.com"
+                    android:pathPrefix="/user/"
+                    />
+
+                <data
+                    android:scheme="http"
+                    android:host="www.reddit.com"
+                    android:pathPrefix="/comments/"
+                    />
+
+                <!-- HTTPS -->
+
+                <data
+                    android:scheme="https"
+                    android:host="reddit.com"
+                    android:pathPrefix="/r/"
+                    />
+
+                <data
+                    android:scheme="https"
+                    android:host="reddit.com"
+                    android:pathPrefix="/u/"
+                    />
+
+                <data
+                    android:scheme="https"
+                    android:host="reddit.com"
+                    android:pathPrefix="/user/"
+                    />
+
+                <data
+                    android:scheme="https"
+                    android:host="reddit.com"
+                    android:pathPrefix="/comments/"
+                    />
+
+                <data
+                    android:scheme="https"
+                    android:host="m.reddit.com"
+                    android:pathPrefix="/r/"
+                    />
+
+                <data
+                    android:scheme="https"
+                    android:host="m.reddit.com"
+                    android:pathPrefix="/u/"
+                    />
+
+                <data
+                    android:scheme="https"
+                    android:host="m.reddit.com"
+                    android:pathPrefix="/user/"
+                    />
+
+                <data
+                    android:scheme="https"
+                    android:host="m.reddit.com"
+                    android:pathPrefix="/comments/"
+                    />
+
+                <data
+                    android:scheme="https"
+                    android:host="i.reddit.com"
+                    android:pathPrefix="/r/"
+                    />
+
+                <data
+                    android:scheme="https"
+                    android:host="i.reddit.com"
+                    android:pathPrefix="/u/"
+                    />
+
+                <data
+                    android:scheme="https"
+                    android:host="i.reddit.com"
+                    android:pathPrefix="/user/"
+                    />
+
+                <data
+                    android:scheme="https"
+                    android:host="i.reddit.com"
+                    android:pathPrefix="/comments/"
+                    />
+
+                <data
+                    android:scheme="https"
+                    android:host="np.reddit.com"
+                    android:pathPrefix="/r/"
+                    />
+
+                <data
+                    android:scheme="https"
+                    android:host="np.reddit.com"
+                    android:pathPrefix="/u/"
+                    />
+
+                <data
+                    android:scheme="https"
+                    android:host="np.reddit.com"
+                    android:pathPrefix="/user/"
+                    />
+
+                <data
+                    android:scheme="https"
+                    android:host="np.reddit.com"
+                    android:pathPrefix="/comments/"
+                    />
+
+                <data
+                    android:scheme="https"
+                    android:host="www.reddit.com"
+                    android:pathPrefix="/r/"
+                    />
+
+                <data
+                    android:scheme="https"
+                    android:host="www.reddit.com"
+                    android:pathPrefix="/u/"
+                    />
+
+                <data
+                    android:scheme="https"
+                    android:host="www.reddit.com"
+                    android:pathPrefix="/user/"
+                    />
+
+                <data
+                    android:scheme="https"
+                    android:host="www.reddit.com"
+                    android:pathPrefix="/comments/"
+                    />
+
             </intent-filter>
         </activity>
 
@@ -100,6 +314,7 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.winsonchiu.reader.MainActivity" />
         </activity>
+
         <activity
             android:name=".auth.ActivityLogin"
             android:label="@string/title_activity_activity_login" >
@@ -121,6 +336,7 @@
                 />
 
         </service>
+
     </application>
 
 </manifest>

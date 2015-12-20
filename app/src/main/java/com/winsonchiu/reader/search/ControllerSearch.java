@@ -105,10 +105,18 @@ public class ControllerSearch {
         setTitle();
         listener.getAdapterSearchSubreddits().notifyDataSetChanged();
         listener.setSortAndTime(sort, time);
+        listener.setPage(getCurrentPage());
     }
 
     public void removeListener(Listener listener) {
         listeners.remove(listener);
+    }
+
+    public Observable<Listing> setData(int page, String query, Sort sort, Time time){
+        setCurrentPage(page);
+        setSort(sort);
+        setTime(time);
+        return setQuery(query);
     }
 
     public Observable<Listing> setQuery(String query) {
@@ -632,36 +640,30 @@ public class ControllerSearch {
             pathSubreddit = "";
         }
 
-        try {
-            Observable<Listing> observable = reddit.search(pathSubreddit, URLEncoder.encode(query, Reddit.UTF_8), sort.toString(), time.toString(), null, true)
-                    .flatMap(Listing.FLAT_MAP);
-            subscriptionSubreddits = observable
-                    .subscribe(new FinalizingSubscriber<Listing>() {
-                        @Override
-                        public void start() {
-                            setLoadingLinksSubreddit(true);
-                        }
+        Observable<Listing> observable = reddit.search(pathSubreddit, query, sort.toString(), time.toString(), null, true)
+                .flatMap(Listing.FLAT_MAP);
+        subscriptionSubreddits = observable
+                .subscribe(new FinalizingSubscriber<Listing>() {
+                    @Override
+                    public void start() {
+                        setLoadingLinksSubreddit(true);
+                    }
 
-                        @Override
-                        public void next(Listing listing) {
-                            linksSubreddit = listing;
-                            for (Listener listener : listeners) {
-                                listener.getAdapterLinksSubreddit().notifyDataSetChanged();
-                                listener.scrollToLinksSubreddit(0);
-                            }
+                    @Override
+                    public void next(Listing listing) {
+                        linksSubreddit = listing;
+                        for (Listener listener : listeners) {
+                            listener.getAdapterLinksSubreddit().notifyDataSetChanged();
+                            listener.scrollToLinksSubreddit(0);
                         }
+                    }
 
-                        @Override
-                        public void finish() {
-                            setLoadingLinksSubreddit(false);
-                        }
-                    });
-            return observable;
-        }
-        catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
-            return Observable.error(e);
-        }
+                    @Override
+                    public void finish() {
+                        setLoadingLinksSubreddit(false);
+                    }
+                });
+        return observable;
     }
 
     public Subreddit getSubreddit(int position) {
@@ -706,46 +708,39 @@ public class ControllerSearch {
             subscriptionLinks = null;
         }
 
-        try {
-            String sortString = sort.toString();
-            if (sort == Sort.ACTIVITY) {
-                sortString = Sort.HOT.name();
-            }
-
-            Observable<Listing> observable = reddit.search("", URLEncoder.encode(query, Reddit.UTF_8), sortString, time.toString(), links.getAfter(), false)
-                    .flatMap(Listing.FLAT_MAP);
-
-            subscriptionLinks = observable.subscribe(new FinalizingSubscriber<Listing>() {
-                        @Override
-                        public void start() {
-                            setLoadingLinks(true);
-                        }
-
-                        @Override
-                        public void next(Listing listing) {
-                            int positionStart = links.getChildren()
-                                    .size() + 1;
-                            int startSize = links.getChildren().size();
-                            links.addChildren(listing.getChildren());
-                            links.setAfter(listing.getAfter());
-                            for (Listener listener : listeners) {
-                                listener.getAdapterLinks().notifyItemRangeInserted(positionStart, links.getChildren().size() - startSize);
-                            }
-                        }
-
-                        @Override
-                        public void finish() {
-                            setLoadingLinks(false);
-                        }
-                    });
-
-            return observable;
+        String sortString = sort.toString();
+        if (sort == Sort.ACTIVITY) {
+            sortString = Sort.HOT.name();
         }
-        catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
-            setLoadingLinks(false);
-            return Observable.error(e);
-        }
+
+        Observable<Listing> observable = reddit.search("", query, sortString, time.toString(), links.getAfter(), false)
+                .flatMap(Listing.FLAT_MAP);
+
+        subscriptionLinks = observable.subscribe(new FinalizingSubscriber<Listing>() {
+                    @Override
+                    public void start() {
+                        setLoadingLinks(true);
+                    }
+
+                    @Override
+                    public void next(Listing listing) {
+                        int positionStart = links.getChildren()
+                                .size() + 1;
+                        int startSize = links.getChildren().size();
+                        links.addChildren(listing.getChildren());
+                        links.setAfter(listing.getAfter());
+                        for (Listener listener : listeners) {
+                            listener.getAdapterLinks().notifyItemRangeInserted(positionStart, links.getChildren().size() - startSize);
+                        }
+                    }
+
+                    @Override
+                    public void finish() {
+                        setLoadingLinks(false);
+                    }
+                });
+
+        return observable;
     }
 
     private void setLoadingLinks(boolean loading) {
@@ -781,43 +776,37 @@ public class ControllerSearch {
             pathSubreddit = "";
         }
 
-        try {
-            Observable<Listing> observable = reddit.search(pathSubreddit, URLEncoder.encode(query, Reddit.UTF_8), sort.toString(), time.toString(), linksSubreddit.getAfter(), true)
-                    .flatMap(Listing.FLAT_MAP);
+        Observable<Listing> observable = reddit.search(pathSubreddit, query, sort.toString(), time.toString(), linksSubreddit.getAfter(), true)
+                .flatMap(Listing.FLAT_MAP);
 
-            subscriptionLinksSubreddit = observable.subscribe(new FinalizingSubscriber<Listing>() {
-                        @Override
-                        public void start() {
-                            setLoadingLinksSubreddit(true);
+        subscriptionLinksSubreddit = observable.subscribe(new FinalizingSubscriber<Listing>() {
+                    @Override
+                    public void start() {
+                        setLoadingLinksSubreddit(true);
+                    }
+
+                    @Override
+                    public void next(Listing listing) {
+                        if (listing.getChildren().isEmpty() || listing.getChildren().get(0) instanceof Subreddit) {
+                            return;
                         }
+                        int startSize = linksSubreddit.getChildren().size();
+                        int positionStart = startSize + 1;
 
-                        @Override
-                        public void next(Listing listing) {
-                            if (listing.getChildren().isEmpty() || listing.getChildren().get(0) instanceof Subreddit) {
-                                return;
-                            }
-                            int startSize = linksSubreddit.getChildren().size();
-                            int positionStart = startSize + 1;
-
-                            linksSubreddit.addChildren(listing.getChildren());
-                            linksSubreddit.setAfter(listing.getAfter());
-                            for (Listener listener : listeners) {
-                                listener.getAdapterLinksSubreddit().notifyItemRangeInserted(positionStart, linksSubreddit.getChildren().size() - startSize);
-                            }
+                        linksSubreddit.addChildren(listing.getChildren());
+                        linksSubreddit.setAfter(listing.getAfter());
+                        for (Listener listener : listeners) {
+                            listener.getAdapterLinksSubreddit().notifyItemRangeInserted(positionStart, linksSubreddit.getChildren().size() - startSize);
                         }
+                    }
 
-                        @Override
-                        public void finish() {
-                            setLoadingLinksSubreddit(false);
-                        }
-                    });
+                    @Override
+                    public void finish() {
+                        setLoadingLinksSubreddit(false);
+                    }
+                });
 
-            return observable;
-        }
-        catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
-            return Observable.error(e);
-        }
+        return observable;
     }
 
     private void setLoadingLinksSubreddit(boolean loading) {
@@ -1049,6 +1038,7 @@ public class ControllerSearch {
         void setSortAndTime(Sort sort, Time time);
         void scrollToLinks(int position);
         void scrollToLinksSubreddit(int position);
+        void setPage(int page);
     }
 
 }

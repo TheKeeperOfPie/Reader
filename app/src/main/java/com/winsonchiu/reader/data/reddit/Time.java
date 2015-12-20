@@ -43,4 +43,14 @@ public enum Time {
     public String toString() {
         return super.toString().toLowerCase();
     }
+
+    public static Time fromString(String string) {
+        for (Time time : values()) {
+            if (time.name().equalsIgnoreCase(string)) {
+                return time;
+            }
+        }
+
+        return ALL;
+    }
 }

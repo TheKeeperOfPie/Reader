@@ -59,7 +59,6 @@ import retrofit.RxJavaCallAdapterFactory;
 import rx.Observable;
 import rx.Subscriber;
 import rx.android.schedulers.AndroidSchedulers;
-import rx.functions.Action1;
 import rx.schedulers.Schedulers;
 
 /**
@@ -218,9 +217,6 @@ public class Reddit {
             @Override
             public com.squareup.okhttp.Request authenticate(Proxy proxy, com.squareup.okhttp.Response response) throws IOException {
                 getTokenBlocking();
-
-                Log.d(TAG, "authenticate() called with: " + "proxy = [" + proxy + "], response = [" + response + "]");
-                Log.d(TAG, "authenticate() auth: " + getAuthorizationHeader());
 
                 return response.request().newBuilder()
                         .header(AUTHORIZATION, getAuthorizationHeader())
@@ -403,8 +399,7 @@ public class Reddit {
                 .compose(TRANSFORMER);
     }
 
-    public Observable<String> comments(String subreddit,
-                                       String id,
+    public Observable<String> comments(String id,
                                        String comment,
                                        String sort,
                                        Boolean showMore,
@@ -412,7 +407,7 @@ public class Reddit {
                                        Integer context,
                                        Integer depth,
                                        Integer limit) {
-        return apiRedditAuthorized.comments(subreddit,
+        return apiRedditAuthorized.comments(
                 id,
                 comment,
                 sort,
@@ -441,14 +436,6 @@ public class Reddit {
 
     public Observable<String> subreddits(final String url, final String after, final Integer limit) {
         return apiRedditAuthorized.subreddits(url, after, limit, "all")
-                .doOnNext(new Action1<String>() {
-                    @Override
-                    public void call(String s) {
-                        Log.d(TAG, "subreddits() call tokenAuth: " + tokenAuth);
-                        Log.d(TAG, "subreddits() called with: " + "url = [" + url + "], after = [" + after + "], limit = [" + limit + "]");;
-                        Log.d(TAG, "subreddits() call() called with: " + "s = [" + s + "]");
-                    }
-                })
                 .compose(TRANSFORMER);
     }
 
@@ -458,7 +445,16 @@ public class Reddit {
     }
 
     public Observable<String> search(String pathSubreddit, String query, String sort, String time, String after, Boolean restrictSubreddit) {
-        return apiRedditAuthorized.search(pathSubreddit, query, sort, time, after, restrictSubreddit)
+        String url;
+
+        if (TextUtils.isEmpty(pathSubreddit)) {
+            url = "/search";
+        }
+        else {
+            url = pathSubreddit + "search";
+        }
+
+        return apiRedditAuthorized.search(url, query, sort, time, after, restrictSubreddit)
                 .compose(TRANSFORMER);
     }
 

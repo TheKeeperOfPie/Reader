@@ -118,14 +118,26 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
     }
 
     private void setUpToolbar() {
-        toolbar.setNavigationIcon(R.drawable.ic_arrow_back_white_24dp);
+        if (getFragmentManager().getBackStackEntryCount() == 0 && getActivity()
+                .isTaskRoot()) {
+            toolbar.setNavigationIcon(R.drawable.ic_menu_white_24dp);
+            toolbar.setNavigationOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    mListener.openDrawer();
+                }
+            });
+        }
+        else {
+            toolbar.setNavigationIcon(R.drawable.ic_arrow_back_white_24dp);
+            toolbar.setNavigationOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    mListener.onNavigationBackClick();
+                }
+            });
+        }
         toolbar.getNavigationIcon().mutate().setColorFilter(colorFilterPrimary);
-        toolbar.setNavigationOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                mListener.onNavigationBackClick();
-            }
-        });
         toolbar.inflateMenu(R.menu.menu_search);
         toolbar.setOnMenuItemClickListener(this);
         menu = toolbar.getMenu();
@@ -306,6 +318,11 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
             @Override
             public void scrollToLinksSubreddit(int position) {
                 layoutManagerLinksSubreddit.scrollToPositionWithOffset(0, 0);
+            }
+
+            @Override
+            public void setPage(int page) {
+                viewPager.setCurrentItem(page);
             }
         };
 
@@ -699,7 +716,6 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
 
             }
         });
-
 
         final int count = controllerLinks.isOnSpecificSubreddit() ? viewPager.getChildCount() : viewPager.getChildCount() - 1;
 
