@@ -173,7 +173,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
 
     @Override
     public int getItemCount() {
-        return controllerLinks.sizeLinks() > 0 ? controllerLinks.sizeLinks() + 1 : 0;
+        return controllerLinks.sizeLinks() + 1;
     }
 
     @Override
@@ -331,7 +331,6 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         }
 
         public void onBind(Subreddit subreddit) {
-
             if (TextUtils.isEmpty(subreddit.getDisplayName()) || "/r/all/".equalsIgnoreCase(
                     subreddit.getUrl()) || subreddit.getUrl().contains("+")) {
                 setVisibility(View.GONE);
@@ -351,8 +350,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                 textDescription.setVisibility(View.VISIBLE);
             }
 
-            textHidden.setText(subreddit.getSubscribers() + " subscribers\n" +
-                    "created " + new Date(subreddit.getCreatedUtc()));
+            textHidden.setText(itemView.getResources().getString(R.string.subreddit_info, subreddit.getSubscribers(), new Date(subreddit.getCreatedUtc())));
 
             if (TextUtils.isEmpty(subreddit.getSubmitLinkLabel()) || "null".equals(
                     subreddit.getSubmitLinkLabel())) {

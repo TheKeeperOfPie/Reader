@@ -32,6 +32,7 @@ import javax.inject.Inject;
 
 import rx.Observable;
 import rx.Observer;
+import rx.functions.Action1;
 import rx.functions.Func1;
 
 /**
@@ -105,12 +106,17 @@ public class ControllerLinks implements ControllerLinksBase {
             return reloadSubreddit();
         }
 
-        Observable.empty();
-        return null;
+        return Observable.empty();
     }
 
     public Observable<Subreddit> reloadSubreddit() {
         Observable<Subreddit> observable = reddit.about(subreddit.getUrl())
+                .doOnNext(new Action1<String>() {
+                    @Override
+                    public void call(String s) {
+                        Log.d(TAG, "reloadSubreddit call() called with: " + "s = [" + s + "]");
+                    }
+                })
                 .flatMap(new Func1<String, Observable<Subreddit>>() {
                     @Override
                     public Observable<Subreddit> call(String response) {
@@ -212,23 +218,15 @@ public class ControllerLinks implements ControllerLinksBase {
 
     public Observable<Listing> reloadAllLinks(final boolean scroll) {
         Observable<Listing> observable = reddit.links(subreddit.getUrl(), sort.toString(), time.toString(), LIMIT, null)
-                .map(new Func1<String, String>() {
-                    @Override
-                    public String call(String s) {
-                        Log.d(TAG, "reloadAllLinks call() called with: " + "s = [" + s + "]");
-                        return s;
-                    }
-                })
                 .flatMap(Listing.FLAT_MAP)
                 .flatMap(new Func1<Listing, Observable<Listing>>() {
                     @Override
                     public Observable<Listing> call(Listing listing) {
-                        if (listing.getChildren()
-                                .get(0) instanceof Link) {
-                            return Observable.just(listing);
+                        if (!listing.getChildren().isEmpty() && !(listing.getChildren().get(0) instanceof Link)) {
+                            return Observable.error(new Exception());
                         }
 
-                        return Observable.error(new Exception());
+                        return Observable.just(listing);
                     }
                 });
 
@@ -251,7 +249,7 @@ public class ControllerLinks implements ControllerLinksBase {
                             listener.getAdapter().notifyDataSetChanged();
                             listener.loadSideBar(subreddit);
                             listener.showEmptyView(listingLinks.getChildren()
-                                    .isEmpty());
+                                    .isEmpty() && TextUtils.isEmpty(subreddit.getDisplayName()));
                             if (scroll) {
                                 listener.scrollTo(0);
                             }

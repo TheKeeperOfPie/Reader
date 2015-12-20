@@ -118,25 +118,13 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
     }
 
     private void setUpToolbar() {
-        if (getFragmentManager().getBackStackEntryCount() == 0 && getActivity()
-                .isTaskRoot()) {
-            toolbar.setNavigationIcon(R.drawable.ic_menu_white_24dp);
-            toolbar.setNavigationOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    mListener.openDrawer();
-                }
-            });
-        }
-        else {
-            toolbar.setNavigationIcon(R.drawable.ic_arrow_back_white_24dp);
-            toolbar.setNavigationOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    mListener.onNavigationBackClick();
-                }
-            });
-        }
+        toolbar.setNavigationIcon(R.drawable.ic_arrow_back_white_24dp);
+        toolbar.setNavigationOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mListener.onNavigationBackClick();
+            }
+        });
         toolbar.getNavigationIcon().mutate().setColorFilter(colorFilterPrimary);
         toolbar.inflateMenu(R.menu.menu_search);
         toolbar.setOnMenuItemClickListener(this);

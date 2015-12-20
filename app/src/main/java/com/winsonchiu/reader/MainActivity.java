@@ -55,6 +55,7 @@ import android.util.Log;
 import android.util.TypedValue;
 import android.view.GestureDetector;
 import android.view.LayoutInflater;
+import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
@@ -1369,7 +1370,13 @@ public class MainActivity extends YouTubeBaseActivity
             return;
         }
 
-        MenuItem item = viewNavigation.getMenu().findItem(id);
+        Menu menu = viewNavigation.getMenu();
+
+        for (int index = 0; index < menu.size(); index++) {
+            menu.getItem(index).setChecked(false);
+        }
+
+        MenuItem item = menu.findItem(id);
         if (item != null) {
             item.setChecked(true);
         }
@@ -1386,9 +1393,11 @@ public class MainActivity extends YouTubeBaseActivity
             getFragmentManager().popBackStackImmediate();
         }
 
+        FragmentBase fragmentThreadList;
+
         switch (id) {
             case R.id.item_home:
-                FragmentBase fragmentThreadList = (FragmentBase) getFragmentManager().findFragmentByTag(FragmentThreadList.TAG);
+                fragmentThreadList = (FragmentBase) getFragmentManager().findFragmentByTag(FragmentThreadList.TAG);
                 if (fragmentThreadList != null) {
                     controllerLinks.loadFrontPage(Sort.HOT, false);
                     fragmentThreadList.onHiddenChanged(false);
@@ -1440,6 +1449,18 @@ public class MainActivity extends YouTubeBaseActivity
                 fragmentTransaction.replace(R.id.frame_fragment,
                         FragmentInbox.newInstance(),
                         FragmentInbox.TAG);
+                break;
+            case R.id.item_subreddit:
+                fragmentThreadList = (FragmentBase) getFragmentManager().findFragmentByTag(FragmentThreadList.TAG);
+                if (fragmentThreadList != null) {
+                    controllerLinks.setParameters("ReaderForReddit", Sort.HOT, Time.ALL);
+                    fragmentThreadList.onHiddenChanged(false);
+                }
+                else {
+                    fragmentTransaction.replace(R.id.frame_fragment,
+                            FragmentThreadList.newInstance(),
+                            FragmentThreadList.TAG);
+                }
                 break;
         }
 

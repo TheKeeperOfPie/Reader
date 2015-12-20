@@ -36,7 +36,7 @@
 
     <string name="action_settings">Settings</string>
 
-    <!-- TODO: Remove or change this placeholder text -->
+    <!-- TODO: Organize this -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
     <string name="content_description_thread_preview">Thread preview image</string>
     <string name="content_description_comments_button">Comment button image</string>
@@ -281,4 +281,8 @@
     <string name="item_hide_youtube">Hide YouTube view</string>
     <string name="need_permission_download_image">Need storage permission to download image</string>
     <string name="error_marking_read">Error marking all read</string>
+
+    <string name="subreddit_info">%1$s subscribers\ncreated %2$s</string>
+    <string name="subreddit_reader">/r/ReaderForReddit</string>
+
 </resources>

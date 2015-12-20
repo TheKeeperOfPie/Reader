@@ -766,7 +766,7 @@ public class ControllerSearch {
 
         Subreddit subreddit = controllerLinks.getSubreddit();
 
-        if (subscriptionLinksSubreddit != null && !subscriptionSubreddits.isUnsubscribed()) {
+        if (subscriptionLinksSubreddit != null && !subscriptionLinksSubreddit.isUnsubscribed()) {
             subscriptionLinksSubreddit.unsubscribe();
             subscriptionLinksSubreddit = null;
         }

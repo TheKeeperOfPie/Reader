@@ -52,9 +52,17 @@
         >
 
         <item
+            android:id="@+id/item_subreddit"
+            android:title="@string/subreddit_reader"
+            android:orderInCategory="500"
+            android:icon="@drawable/ic_info_outline_white_24dp"
+            app:showAsAction="ifRoom"
+            />
+
+        <item
             android:id="@+id/item_settings"
             android:title="@string/settings"
-            android:orderInCategory="500"
+            android:orderInCategory="600"
             android:icon="@drawable/ic_settings_white_24dp"
             app:showAsAction="ifRoom"
             />
