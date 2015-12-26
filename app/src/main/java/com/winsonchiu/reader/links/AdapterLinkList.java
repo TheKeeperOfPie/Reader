@@ -91,7 +91,12 @@ public class AdapterLinkList extends AdapterLink {
                 public void onClick(View v) {
                     if (mediaPlayer != null && mediaPlayer.isPlaying()) {
                         mediaPlayer.stop();
-                        surfaceVideo.setVisibility(View.GONE);
+                        if (surfaceVideo != null) {
+                            frameFull.removeView(surfaceVideo);
+                            mediaController.setAnchorView(null);
+                            mediaController.hide();
+                            surfaceVideo = null;
+                        }
                         imagePlay.setVisibility(View.VISIBLE);
                     }
                     loadComments();

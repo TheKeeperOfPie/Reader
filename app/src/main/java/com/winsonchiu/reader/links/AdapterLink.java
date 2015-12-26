@@ -507,6 +507,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         }
 
         protected void expandToolbarActions() {
+            Log.d(TAG, "expandToolbarActions() called", new Exception());
 
             if (!toolbarActions.isShown()) {
                 setToolbarValues();
@@ -521,7 +522,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             });
         }
 
-        protected void showToolbarActionsInstant() {
+        public void showToolbarActionsInstant() {
 
             if (!toolbarActions.isShown()) {
                 setToolbarValues();
@@ -530,6 +531,10 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             layoutContainerExpand.setVisibility(View.VISIBLE);
             layoutContainerExpand.getLayoutParams().height = UtilsAnimation.getMeasuredHeight(layoutContainerExpand, getRatio());
             layoutContainerExpand.requestLayout();
+        }
+
+        public void hideToolbarActionsInstant()  {
+            layoutContainerExpand.setVisibility(View.GONE);
         }
 
         private void setToolbarValues() {
@@ -657,7 +662,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
 
             buttonComments.setColorFilter(colorFilterIconDefault);
 
-            surfaceVideo = (SurfaceView) itemView.findViewById(R.id.surface_video);
+//            surfaceVideo = (SurfaceView) itemView.findViewById(R.id.surface_video);
         }
 
         protected void initializeListeners() {
@@ -764,22 +769,6 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                     return mediaPlayer != null ? mediaPlayer.getAudioSessionId() : 0;
                 }
             });
-            surfaceVideo.setOnTouchListener(new View.OnTouchListener() {
-                @Override
-                public boolean onTouch(View v, MotionEvent event) {
-                    // TODO: Use custom MediaController
-                    if (MotionEventCompat.getActionMasked(event) == MotionEvent.ACTION_DOWN) {
-                        if (mediaController.isShowing()) {
-                            mediaController.hide();
-                        }
-                        else {
-                            mediaController.show();
-                        }
-                    }
-                    return true;
-                }
-            });
-            mediaController.setAnchorView(surfaceVideo);
 
             editTextReply.setOnTouchListener(new OnTouchListenerDisallow(disallowListener));
             editTextReply.addTextChangedListener(new TextWatcher() {
@@ -1535,6 +1524,29 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         private void loadVideo(final String url, float heightRatio) {
             uriVideo = Uri.parse(url);
             progressImage.setVisibility(View.GONE);
+
+            if (surfaceVideo == null) {
+                surfaceVideo = new SurfaceView(itemView.getContext());
+                frameFull.addView(surfaceVideo, frameFull.getChildCount() - 1);
+
+                surfaceVideo.setOnTouchListener(new View.OnTouchListener() {
+                    @Override
+                    public boolean onTouch(View v, MotionEvent event) {
+                        // TODO: Use custom MediaController
+                        if (MotionEventCompat.getActionMasked(event) == MotionEvent.ACTION_DOWN) {
+                            if (mediaController.isShowing()) {
+                                mediaController.hide();
+                            }
+                            else {
+                                mediaController.show();
+                            }
+                        }
+                        return true;
+                    }
+                });
+                mediaController.setAnchorView(surfaceVideo);
+            }
+
             surfaceVideo.setVisibility(View.VISIBLE);
 
             surfaceVideo.getLayoutParams().height = (int) (itemView.getWidth() * heightRatio);
@@ -1620,9 +1632,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             toolbarActions.post(new Runnable() {
                 @Override
                 public void run() {
-
                     calculateVisibleToolbarItems(itemView.getWidth());
-
                 }
             });
         }
@@ -1668,7 +1678,6 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                 youTubePlayer = null;
             }
             viewYouTube.setVisibility(View.GONE);
-            surfaceVideo.setVisibility(View.GONE);
             viewPagerFull.setVisibility(View.GONE);
             imagePlay.setVisibility(View.GONE);
             imageThumbnail.setVisibility(View.VISIBLE);
@@ -1752,6 +1761,14 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                 Reddit.incrementDestroy();
                 webFull = null;
             }
+
+            if (surfaceVideo != null) {
+                mediaController.setAnchorView(null);
+                mediaController.hide();
+                frameFull.removeView(surfaceVideo);
+                surfaceVideo = null;
+            }
+
             if (viewPagerFull.getChildCount() > 0) {
                 for (int index = 0; index < viewPagerFull.getChildCount(); index++) {
                     View view = viewPagerFull.getChildAt(index);
@@ -1780,7 +1797,6 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         // TODO: Calculate which Views are visible
         public void setVisibility(int visibility) {
             frameFull.setVisibility(visibility);
-            surfaceVideo.setVisibility(visibility);
             progressImage.setVisibility(visibility);
             viewPagerFull.setVisibility(visibility);
             imagePlay.setVisibility(visibility);
@@ -1802,7 +1818,8 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
 
         @Override
         public void surfaceCreated(SurfaceHolder holder) {
-            Log.d(TAG, "surfaceCreated");
+            Log.d(TAG, "surfaceCreated() called with: " + "holder = [" + holder + "]");
+            surfaceHolder = holder;
             if (uriVideo == null) {
                 return;
             }
@@ -1838,12 +1855,12 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
 
         @Override
         public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
-            Log.d(TAG, "surfaceChanged");
+            Log.d(TAG, "surfaceChanged() called with: " + "holder = [" + holder + "], format = [" + format + "], width = [" + width + "], height = [" + height + "]");
         }
 
         @Override
         public void surfaceDestroyed(SurfaceHolder holder) {
-            Log.d(TAG, "surfaceDestroyed");
+            Log.d(TAG, "surfaceDestroyed() called with: " + "holder = [" + holder + "]");
             if (mediaPlayer != null) {
                 mediaPlayer.reset();
                 mediaPlayer.release();

@@ -88,11 +88,13 @@ public class FragmentComments extends FragmentBase
     private static final String ARG_ITEM_WIDTH = "itemWidth";
     private static final String ARG_INITIALIZED = "initialized";
     private static final String ARG_ACTIONS_EXPANDED = "actionsExpanded";
+    private static final String ARG_YOUTUBE_ID = "youTubeId";
+    private static final String ARG_YOUTUBE_TIME = "youTubeTime";
 
-    public static final long DURATION_ENTER = 200;
-    public static final long DURATION_EXIT = 150;
+    public static final long DURATION_ENTER = 250;
+    public static final long DURATION_EXIT = 250;
     private static final long DURATION_ACTIONS_FADE = 150;
-    private static final float OFFSET_MODIFIER = 0.5f;
+    private static final float OFFSET_MODIFIER = 0.5f;;
 
     private FragmentListenerBase mListener;
     private RecyclerView recyclerCommentList;
@@ -321,7 +323,6 @@ public class FragmentComments extends FragmentBase
         YouTubeListener youTubeListener = new YouTubeListener() {
             @Override
             public void loadYouTube(Link link, final String id, final int timeInMillis) {
-
                 loadYoutubeVideo(id, timeInMillis);
             }
 
@@ -575,7 +576,6 @@ public class FragmentComments extends FragmentBase
                                         controllerComments.getLink());
                                 fragment.onHiddenChanged(false);
                             }
-                            viewBackground.setVisibility(View.VISIBLE);
                             hasSwipedEnd = true;
                         }
                         float ratio = 1f - swipeDifferenceX / screenWidth;
@@ -636,6 +636,16 @@ public class FragmentComments extends FragmentBase
         }
         else {
             adapterCommentList.setAnimationFinished(true);
+        }
+
+        Log.d(TAG, "onCreateView() called with: " + "savedInstanceState = [" + savedInstanceState + "]");
+
+        if (savedInstanceState != null) {
+            String youtubeId = savedInstanceState.getString(ARG_YOUTUBE_ID, null);
+
+            if (!TextUtils.isEmpty(youtubeId)) {
+                loadYoutubeVideo(youtubeId, savedInstanceState.getInt(ARG_YOUTUBE_TIME, 0));
+            }
         }
 
         return layoutRoot;
@@ -813,7 +823,6 @@ public class FragmentComments extends FragmentBase
                 layoutRelative.postDelayed(new Runnable() {
                     @Override
                     public void run() {
-                        viewBackground.setVisibility(View.GONE);
                         adapterCommentList.setAnimationFinished(true);
                     }
                 }, 150);
@@ -1089,14 +1098,23 @@ public class FragmentComments extends FragmentBase
         }
     }
 
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        if (!TextUtils.isEmpty(currentYouTubeId) && youTubePlayer != null) {
+            outState.putString(ARG_YOUTUBE_ID, currentYouTubeId);
+            outState.putInt(ARG_YOUTUBE_TIME, youTubePlayer.getCurrentTimeMillis());
+        }
+
+        super.onSaveInstanceState(outState);
+    }
+
     private void animateExit() {
 
         viewBackground.setVisibility(View.VISIBLE);
-        adapterCommentList.collapseViewHolderLink();
+        adapterCommentList.collapseViewHolderLink(getArguments().getBoolean(ARG_ACTIONS_EXPANDED));
         adapterCommentList.fadeComments(getResources(), new Runnable() {
             @Override
             public void run() {
-
                 adapterCommentList.setAnimationFinished(false);
                 recyclerCommentList.post(new Runnable() {
                     @Override
@@ -1146,7 +1164,6 @@ public class FragmentComments extends FragmentBase
                             }
                         };
                         animation.setDuration(DURATION_EXIT);
-                        animation.setStartOffset(ScrollAwareFloatingActionButtonBehavior.DURATION);
                         animation.setInterpolator(fastOutSlowInInterpolator);
                         animation.setAnimationListener(new Animation.AnimationListener() {
                             @Override
@@ -1309,7 +1326,6 @@ public class FragmentComments extends FragmentBase
                                                 controllerComments.getLink());
                                         fragment.onHiddenChanged(true);
                                     }
-                                    viewBackground.setVisibility(View.GONE);
                                 }
                             }
 

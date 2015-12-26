@@ -19,7 +19,6 @@ import android.graphics.drawable.Drawable;
 import android.preference.PreferenceManager;
 import android.support.v4.graphics.ColorUtils;
 import android.support.v4.view.GestureDetectorCompat;
-import android.support.v4.view.ViewCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
@@ -178,11 +177,21 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                     public void onBind(Link link,
                             boolean showSubreddit) {
                         super.onBind(link, showSubreddit);
+                        if (actionsExpanded) {
+                            setToolbarMenuVisibility();
+                            showToolbarActionsInstant();
+                        }
                         if (animationFinished) {
                             if (!TextUtils.isEmpty(link.getSelfText())) {
                                 loadSelfText();
                             }
                         }
+                    }
+
+                    @Override
+                    public void onRecycle() {
+                        super.onRecycle();
+                        actionsExpanded = false;
                     }
 
                     @Override
@@ -232,11 +241,21 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                     public void onBind(Link link,
                             boolean showSubreddit) {
                         super.onBind(link, showSubreddit);
+                        if (actionsExpanded) {
+                            setToolbarMenuVisibility();
+                            showToolbarActionsInstant();
+                        }
                         if (animationFinished) {
                             if (!TextUtils.isEmpty(link.getSelfText())) {
                                 loadSelfText();
                             }
                         }
+                    }
+
+                    @Override
+                    public void onRecycle() {
+                        super.onRecycle();
+                        actionsExpanded = false;
                     }
 
                     @Override
@@ -309,7 +328,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
         return count;
     }
 
-    public void collapseViewHolderLink() {
+    public void collapseViewHolderLink(boolean expandActions) {
         // TODO: Support collapsing enlarged thumbnail and self text
         if (viewHolderLink == null) {
             return;
@@ -323,6 +342,13 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
             viewHolderLink.onRecycle();
             viewHolderLink.onBind(controllerComments.getLink(),
                     controllerComments.showSubreddit());
+        }
+
+        if (expandActions) {
+            actionsExpanded = true;
+            viewHolderLink.showToolbarActionsInstant();
+        } else {
+            viewHolderLink.hideToolbarActionsInstant();
         }
     }
 
@@ -346,19 +372,19 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
         float width = resources.getDisplayMetrics().widthPixels;
         float height = resources.getDisplayMetrics().heightPixels;
         boolean listenerSet = false;
-        for (RecyclerView.ViewHolder viewHolder : viewHolders) {
-            if (getItemViewType(viewHolder.getAdapterPosition()) == VIEW_COMMENT) {
-                if (viewHolder.itemView.getWidth() < width && viewHolder.itemView.getHeight() < height) {
-                    if (listenerSet) {
-                        ViewCompat.animate(viewHolder.itemView).alpha(0).setListener(null).withLayer();
-                    }
-                    else {
-                        listenerSet = true;
-                        ViewCompat.animate(viewHolder.itemView).alpha(0).setListener(null).withLayer().withEndAction(runnable);
-                    }
-                }
-            }
-        }
+//        for (RecyclerView.ViewHolder viewHolder : viewHolders) {
+//            if (getItemViewType(viewHolder.getAdapterPosition()) == VIEW_COMMENT) {
+//                if (viewHolder.itemView.getWidth() < width && viewHolder.itemView.getHeight() < height) {
+//                    if (listenerSet) {
+//                        ViewCompat.animate(viewHolder.itemView).alpha(0).setListener(null).withLayer();
+//                    }
+//                    else {
+//                        listenerSet = true;
+//                        ViewCompat.animate(viewHolder.itemView).alpha(0).setListener(null).withLayer().withEndAction(runnable);
+//                    }
+//                }
+//            }
+//        }
         if (!listenerSet) {
             runnable.run();
         }

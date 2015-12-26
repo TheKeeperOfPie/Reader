@@ -26,6 +26,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
+import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.media.MediaScannerConnection;
 import android.net.Uri;
@@ -38,6 +39,11 @@ import android.preference.PreferenceManager;
 import android.provider.Browser;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.customtabs.CustomTabsCallback;
+import android.support.customtabs.CustomTabsClient;
+import android.support.customtabs.CustomTabsIntent;
+import android.support.customtabs.CustomTabsServiceConnection;
+import android.support.customtabs.CustomTabsSession;
 import android.support.design.widget.NavigationView;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.TaskStackBuilder;
@@ -182,6 +188,7 @@ public class MainActivity extends YouTubeBaseActivity
         }
     };
     private CustomColorFilter colorFilterPrimary;
+    private int colorPrimary;
     private AppCompatDelegate appCompatDelegate;
     private boolean isDownloadingHeaderImage;
     private TargetImageDownload targetDownload;
@@ -237,6 +244,10 @@ public class MainActivity extends YouTubeBaseActivity
     private String themeAccent;
     private ComponentActivity componentActivity;
 
+    private CustomTabsServiceConnection customTabsServiceConnection;
+    private CustomTabsClient customTabsClient;
+    private CustomTabsSession customTabsSession;
+
     @Inject AccountManager accountManager;
     @Inject Reddit reddit;
     @Inject Picasso picasso;
@@ -272,7 +283,7 @@ public class MainActivity extends YouTubeBaseActivity
         Fabric.with(this, new Crashlytics());
 
         TypedArray typedArray = obtainStyledAttributes(new int[]{R.attr.colorPrimary});
-        int colorPrimary = typedArray.getColor(0, getResources().getColor(R.color.colorPrimary));
+        colorPrimary = typedArray.getColor(0, getResources().getColor(R.color.colorPrimary));
         typedArray.recycle();
 
         int colorResourcePrimary = UtilsColor.computeContrast(colorPrimary, Color.WHITE) > 3f ? R.color.darkThemeIconFilter : R.color.lightThemeIconFilter;
@@ -311,6 +322,8 @@ public class MainActivity extends YouTubeBaseActivity
         componentActivity.inject(this);
 
         appCompatDelegate.setContentView(R.layout.activity_main);
+
+        getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
 
         inflateNavigationDrawer();
 
@@ -501,12 +514,7 @@ public class MainActivity extends YouTubeBaseActivity
                     return;
                 }
 
-                getFragmentManager().beginTransaction()
-                        .hide(getFragmentManager().findFragmentById(R.id.frame_fragment))
-                        .add(R.id.frame_fragment, FragmentWeb
-                                .newInstance(urlString), FragmentWeb.TAG)
-                        .addToBackStack(null)
-                        .commit();
+                launchUrl(urlString, false);
             }
 
             @Override
@@ -762,12 +770,7 @@ public class MainActivity extends YouTubeBaseActivity
 
             @Override
             public void loadWebFragment(String url) {
-                getFragmentManager().beginTransaction()
-                        .hide(getFragmentManager().findFragmentById(R.id.frame_fragment))
-                        .add(R.id.frame_fragment, FragmentWeb
-                                .newInstance(url), FragmentWeb.TAG)
-                        .addToBackStack(null)
-                        .commit();
+                launchUrl(url, false);
             }
 
             @Override
@@ -885,6 +888,33 @@ public class MainActivity extends YouTubeBaseActivity
                         NAV_PAGE), false);
             }
         }
+
+        customTabsServiceConnection = new CustomTabsServiceConnection() {
+            @Override
+            public void onCustomTabsServiceConnected(ComponentName componentName, CustomTabsClient customTabsClient) {
+                customTabsClient.warmup(0);
+                customTabsSession = customTabsClient.newSession(new CustomTabsCallback() {
+                    @Override
+                    public void onNavigationEvent(int navigationEvent, Bundle extras) {
+                        super.onNavigationEvent(navigationEvent, extras);
+                        Log.d(TAG, "onNavigationEvent() called with: " + "navigationEvent = [" + navigationEvent + "], extras = [" + extras + "]");
+                    }
+
+                    @Override
+                    public void extraCallback(String callbackName, Bundle args) {
+                        super.extraCallback(callbackName, args);
+                        Log.d(TAG, "extraCallback() called with: " + "callbackName = [" + callbackName + "], args = [" + args + "]");
+                    }
+                });
+
+                CustomTabsClient.bindCustomTabsService(MainActivity.this, "com.android.chrome", this);
+            }
+
+            @Override
+            public void onServiceDisconnected(ComponentName name) {
+
+            }
+        };
 
         String name;
         if (getIntent().hasExtra(ACCOUNT)) {
@@ -1660,11 +1690,7 @@ public class MainActivity extends YouTubeBaseActivity
                 return;
         }
 
-        getFragmentManager().beginTransaction()
-                .replace(R.id.frame_fragment, FragmentWeb
-                        .newInstance(urlString), FragmentWeb.TAG)
-                .addToBackStack(null)
-                .commit();
+        launchUrl(urlString, true);
     }
 
     public void onNavigationClick() {
@@ -1733,10 +1759,7 @@ public class MainActivity extends YouTubeBaseActivity
                     }
                 }
 
-                fragmentTransaction.add(R.id.frame_fragment, FragmentWeb
-                        .newInstance(urlString), FragmentWeb.TAG)
-                        .addToBackStack(null)
-                        .commit();
+                launchUrl(urlString, false);
             }
             else {
                 super.startActivity(intent);
@@ -1745,6 +1768,48 @@ public class MainActivity extends YouTubeBaseActivity
         else {
             super.startActivity(intent);
         }
+    }
+
+    private void launchUrl(String url, boolean replace) {
+        CustomTabsIntent intentCustomTabs = new CustomTabsIntent.Builder(customTabsSession)
+                .setToolbarColor(colorPrimary)
+                .build();
+
+        intentCustomTabs.intent.setData(Uri.parse(url));
+
+        Intent intentChrome = getIntentForChrome();
+
+        if (intentChrome == null) {
+            if (replace) {
+                getFragmentManager().beginTransaction()
+                        .replace(R.id.frame_fragment, FragmentWeb
+                                .newInstance(url), FragmentWeb.TAG)
+                        .addToBackStack(null)
+                        .commit();
+            } else {
+                getFragmentManager().beginTransaction()
+                        .hide(getFragmentManager().findFragmentById(R.id.frame_fragment))
+                        .add(R.id.frame_fragment, FragmentWeb
+                                .newInstance(url), FragmentWeb.TAG)
+                        .addToBackStack(null)
+                        .commit();
+            }
+        } else {
+            intentCustomTabs.intent.setComponent(intentChrome.getComponent());
+            super.startActivity(intentCustomTabs.intent, intentCustomTabs.startAnimationBundle);
+        }
+    }
+
+    private Intent getIntentForChrome() {
+        Intent intentChrome = getPackageManager().getLaunchIntentForPackage("com.chrome.dev");
+        if (intentChrome == null) {
+            intentChrome = getPackageManager().getLaunchIntentForPackage("com.chrome.beta");
+        }
+        if (intentChrome == null) {
+            intentChrome = getPackageManager().getLaunchIntentForPackage("com.android.chrome");
+        }
+
+        return getPackageManager().getLaunchIntentForPackage("com.android.chrome");
     }
 
     @Override

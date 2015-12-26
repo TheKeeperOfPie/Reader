@@ -21,7 +21,7 @@
         android:label="@string/app_name"
         android:largeHeap="true"
         android:supportsRtl="true"
-        android:theme="@style/AppDefaultTheme" >
+        >
 
         <!--<meta-data-->
             <!--android:name="com.bumptech.glide.integration.okhttp.OkHttpGlideModule"-->
@@ -34,11 +34,22 @@
         <meta-data
             android:name="io.fabric.ApiKey"
             android:value="ffde8327e4ffacbe347101a90afc33a9fec234cb" />
-        
+
         <activity
             android:name=".MainActivity"
             android:label="@string/app_name"
-            android:windowSoftInputMode="adjustResize" >
+            android:windowSoftInputMode="adjustResize"
+            android:theme="@style/AppDefaultThemeTranslucent"
+            >
+
+        </activity>
+
+        <activity
+            android:name=".MainActivityRoot"
+            android:label="@string/app_name"
+            android:windowSoftInputMode="adjustResize"
+            android:theme="@style/AppDefaultTheme"
+            >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
