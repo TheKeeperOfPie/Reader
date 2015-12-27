@@ -12,6 +12,7 @@ import android.graphics.PorterDuff;
 import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.support.annotation.Nullable;
 import android.support.design.widget.AppBarLayout;
 import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.FloatingActionButton;
@@ -61,12 +62,14 @@ import com.winsonchiu.reader.data.reddit.Sort;
 import com.winsonchiu.reader.data.reddit.Subreddit;
 import com.winsonchiu.reader.data.reddit.Thing;
 import com.winsonchiu.reader.data.reddit.Time;
+import com.winsonchiu.reader.data.reddit.User;
 import com.winsonchiu.reader.history.Historian;
 import com.winsonchiu.reader.search.ControllerSearch;
 import com.winsonchiu.reader.search.FragmentSearch;
 import com.winsonchiu.reader.utils.CustomColorFilter;
 import com.winsonchiu.reader.utils.CustomItemTouchHelper;
 import com.winsonchiu.reader.utils.DisallowListener;
+import com.winsonchiu.reader.utils.FinalizingSubscriber;
 import com.winsonchiu.reader.utils.ItemDecorationDivider;
 import com.winsonchiu.reader.utils.RecyclerCallback;
 import com.winsonchiu.reader.utils.ScrollAwareFloatingActionButtonBehavior;
@@ -106,7 +109,8 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
     private AdapterLink.ViewHolderHeader.EventListener eventListenerHeader;
     private DisallowListener disallowListener;
     private RecyclerCallback recyclerCallback;
-    private ControllerLinks.Listener listener;
+    private ControllerLinks.Listener listenerLinks;
+    private ControllerUser.Listener listenerUser;
     private Snackbar snackbar;
     private CustomItemTouchHelper itemTouchHelper;
     private FloatingActionButton buttonExpandActions;
@@ -631,7 +635,7 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
 
         };
 
-        listener = new ControllerLinks.Listener() {
+        listenerLinks = new ControllerLinks.Listener() {
 
             @Override
             public void setSortAndTime(Sort sort, Time time) {
@@ -675,6 +679,16 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
             }
 
             @Override
+            public void setSubscribed(boolean subscribed) {
+                if (subscribed) {
+                    buttonSubscribe.setText(R.string.unsubscribe);
+                }
+                else {
+                    buttonSubscribe.setText(R.string.subscribe);
+                }
+            }
+
+            @Override
             public void post(Runnable runnable) {
                 recyclerThreadList.post(runnable);
             }
@@ -692,6 +706,29 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
             @Override
             public void setRefreshing(boolean refreshing) {
                 swipeRefreshThreadList.setRefreshing(refreshing);
+            }
+        };
+
+        listenerUser = new ControllerUser.Listener() {
+            @Override
+            public void onUserLoaded(@Nullable User user) {
+                if (user == null) {
+                    buttonSubscribe.setVisibility(View.GONE);
+                }
+                else {
+                    controllerLinks.reloadSubredditOnly()
+                            .subscribe(new FinalizingSubscriber<Subreddit>() {
+                                @Override
+                                public void next(Subreddit next) {
+                                    if (next.isUserIsSubscriber()) {
+                                        buttonSubscribe.setText(R.string.unsubscribe);
+                                    } else {
+                                        buttonSubscribe.setText(R.string.subscribe);
+                                    }
+                                    buttonSubscribe.setVisibility(controllerUser.hasUser() ? View.VISIBLE : View.GONE);
+                                }
+                            });
+                }
             }
         };
     }
@@ -821,12 +858,14 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
     @Override
     public void onResume() {
         super.onResume();
-        controllerLinks.addListener(listener);
+        controllerLinks.addListener(listenerLinks);
+        controllerUser.addListener(listenerUser);
     }
 
     @Override
     public void onPause() {
-        controllerLinks.removeListener(listener);
+        controllerLinks.removeListener(listenerLinks);
+        controllerUser.removeListener(listenerUser);
         super.onPause();
     }
 

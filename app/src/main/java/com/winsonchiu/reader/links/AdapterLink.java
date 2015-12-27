@@ -930,19 +930,19 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                     break;
                 // Reporting
                 case R.id.item_report_spam:
-                    eventListener.report(link, "spam", null);
+                    requestReport("spam");
                     break;
                 case R.id.item_report_vote_manipulation:
-                    eventListener.report(link, "vote manipulation", null);
+                    requestReport("vote manipulation");
                     break;
                 case R.id.item_report_personal_information:
-                    eventListener.report(link, "personal information", null);
+                    requestReport("personal information");
                     break;
                 case R.id.item_report_sexualizing_minors:
-                    eventListener.report(link, "sexualizing minors", null);
+                    requestReport("sexualizing minors");
                     break;
                 case R.id.item_report_breaking_reddit:
-                    eventListener.report(link, "breaking reddit", null);
+                    requestReport("breaking reddit");
                     break;
                 case R.id.item_report_other:
                     View viewDialog = LayoutInflater.from(itemView.getContext())
@@ -972,6 +972,22 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                     break;
             }
             return true;
+        }
+
+        private void requestReport(final String reason) {
+            String author = link.getAuthor();
+            String title = link.getTitle();
+
+            new AlertDialog.Builder(itemView.getContext())
+                    .setMessage(resources.getString(R.string.report, title, author, reason))
+                    .setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            eventListener.report(link, reason, null);
+                        }
+                    })
+                    .setNegativeButton(R.string.cancel, null)
+                    .show();
         }
 
         private void saveLink() {
@@ -1762,13 +1778,6 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                 webFull = null;
             }
 
-            if (surfaceVideo != null) {
-                mediaController.setAnchorView(null);
-                mediaController.hide();
-                frameFull.removeView(surfaceVideo);
-                surfaceVideo = null;
-            }
-
             if (viewPagerFull.getChildCount() > 0) {
                 for (int index = 0; index < viewPagerFull.getChildCount(); index++) {
                     View view = viewPagerFull.getChildAt(index);
@@ -1784,6 +1793,20 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             adapterAlbum.setAlbum(null, null);
             viewPagerFull.removeAllViews();
             frameFull.requestLayout();
+        }
+
+        public void destroySurfaceView() {
+            if (surfaceVideo != null) {
+                if (mediaPlayer != null) {
+                    mediaPlayer.stop();
+                    mediaPlayer.release();
+                }
+                surfaceVideo.setVisibility(View.GONE);
+                mediaController.setAnchorView(frameFull);
+                mediaController.hide();
+                frameFull.removeView(surfaceVideo);
+                surfaceVideo = null;
+            }
         }
 
         public int getBackgroundColor() {

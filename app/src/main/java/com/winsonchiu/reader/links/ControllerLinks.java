@@ -32,7 +32,6 @@ import javax.inject.Inject;
 
 import rx.Observable;
 import rx.Observer;
-import rx.functions.Action1;
 import rx.functions.Func1;
 
 /**
@@ -48,13 +47,12 @@ public class ControllerLinks implements ControllerLinksBase {
     private boolean isLoading;
     private Sort sort;
     private Time time;
-    private Set<Listener> listeners;
+    private Set<Listener> listeners = new HashSet<>();
 
     @Inject Reddit reddit;
 
     public ControllerLinks(String subredditName, Sort sort) {
         CustomApplication.getComponentMain().inject(this);
-        this.listeners = new HashSet<>();
         listingLinks = new Listing();
         this.sort = sort;
         this.time = Time.ALL;
@@ -78,7 +76,6 @@ public class ControllerLinks implements ControllerLinksBase {
         listener.loadSideBar(subreddit);
         if (!isLoading() && listingLinks.getChildren().isEmpty()) {
             reloadSubreddit();
-            Log.d(TAG, "addListener reloaded");
         }
         Log.d(TAG, "addListener: " + listener);
     }
@@ -111,12 +108,6 @@ public class ControllerLinks implements ControllerLinksBase {
 
     public Observable<Subreddit> reloadSubreddit() {
         Observable<Subreddit> observable = reddit.about(subreddit.getUrl())
-                .doOnNext(new Action1<String>() {
-                    @Override
-                    public void call(String s) {
-                        Log.d(TAG, "reloadSubreddit call() called with: " + "s = [" + s + "]");
-                    }
-                })
                 .flatMap(new Func1<String, Observable<Subreddit>>() {
                     @Override
                     public Observable<Subreddit> call(String response) {
@@ -143,13 +134,66 @@ public class ControllerLinks implements ControllerLinksBase {
                     @Override
                     public void next(Subreddit next) {
                         ControllerLinks.this.subreddit = next;
+                        for (Listener listener : listeners) {
+                            listener.showEmptyView(TextUtils.isEmpty(subreddit.getUrl()));
+                        }
                     }
 
                     @Override
                     public void finish() {
+                        setLoading(false);
                         reloadAllLinks(true);
                     }
                 });
+        return observable;
+    }
+
+    public Observable<Subreddit> reloadSubredditOnly() {
+        Observable<Subreddit> observable = reddit.about(subreddit.getUrl())
+                .flatMap(new Func1<String, Observable<Subreddit>>() {
+                    @Override
+                    public Observable<Subreddit> call(String response) {
+                        try {
+                            Subreddit subreddit = Subreddit.fromJson(ComponentStatic.getObjectMapper().readValue(
+                                    response, JsonNode.class));
+
+                            if (!TextUtils.isEmpty(subreddit.getUrl())) {
+                                return Observable.just(subreddit);
+                            }
+                            else {
+                                return Observable.error(new Exception());
+                            }
+                        }
+                        catch (IOException e) {
+                            return Observable.error(e);
+                        }
+                    }
+                });
+        observable.subscribe(new FinalizingSubscriber<Subreddit>() {
+            @Override
+            public void start() {
+                setLoading(true);
+            }
+
+            @Override
+            public void error(Throwable e) {
+                e.printStackTrace();
+                for (Listener listener : listeners) {
+                    listener.showEmptyView(true);
+                }
+            }
+
+            @Override
+            public void next(Subreddit next) {
+                ControllerLinks.this.subreddit = next;
+            }
+
+            @Override
+            public void finish() {
+                setLoading(false);
+            }
+        });
+
         return observable;
     }
 
@@ -408,6 +452,7 @@ public class ControllerLinks implements ControllerLinksBase {
     }
 
     public void subscribe() {
+        final boolean subscribed = subreddit.isUserIsSubscriber();
         subreddit.setUserIsSubscriber(!subreddit.isUserIsSubscriber());
         reddit.subscribe(subreddit.isUserIsSubscriber(), subreddit.getName())
                 .subscribe(new Observer<String>() {
@@ -418,7 +463,9 @@ public class ControllerLinks implements ControllerLinksBase {
 
                     @Override
                     public void onError(Throwable e) {
-
+                        for (Listener listener : listeners) {
+                            listener.setSubscribed(subscribed);
+                        }
                     }
 
                     @Override
@@ -466,6 +513,7 @@ public class ControllerLinks implements ControllerLinksBase {
         void showEmptyView(boolean isEmpty);
         void loadSideBar(Subreddit subreddit);
         void scrollTo(int position);
+        void setSubscribed(boolean subscribed);
     }
 
 }

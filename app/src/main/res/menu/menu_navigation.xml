@@ -7,65 +7,70 @@
       xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <group
-        android:id="@+id/group_navigation"
         android:checkableBehavior="single"
         >
 
-        <item
-            android:id="@+id/item_home"
-            android:title="@string/home"
-            android:orderInCategory="100"
-            android:icon="@drawable/ic_home_white_24dp"
-            app:showAsAction="ifRoom"
-            />
+        <group
+            android:id="@+id/group_navigation"
+            >
 
-        <item
-            android:id="@+id/item_history"
-            android:title="@string/history"
-            android:orderInCategory="200"
-            android:icon="@drawable/ic_history_white_24dp"
-            app:showAsAction="ifRoom"
-            />
+            <item
+                android:id="@+id/item_home"
+                android:title="@string/home"
+                android:orderInCategory="100"
+                android:icon="@drawable/ic_home_white_24dp"
+                app:showAsAction="ifRoom"
+                />
 
-        <item
-            android:id="@+id/item_profile"
-            android:title="@string/profile"
-            android:orderInCategory="300"
-            android:icon="@drawable/ic_person_white_24dp"
-            app:showAsAction="ifRoom"
-            />
+            <item
+                android:id="@+id/item_history"
+                android:title="@string/history"
+                android:orderInCategory="200"
+                android:icon="@drawable/ic_history_white_24dp"
+                app:showAsAction="ifRoom"
+                />
 
-        <item
-            android:id="@+id/item_inbox"
-            android:title="@string/inbox"
-            android:orderInCategory="400"
-            android:icon="@drawable/ic_inbox_white_24dp"
-            app:showAsAction="ifRoom"
-            android:visible="false"
-            android:enabled="false"
-            />
+            <item
+                android:id="@+id/item_profile"
+                android:title="@string/profile"
+                android:orderInCategory="300"
+                android:icon="@drawable/ic_person_white_24dp"
+                app:showAsAction="ifRoom"
+                />
 
-    </group>
+            <item
+                android:id="@+id/item_inbox"
+                android:title="@string/inbox"
+                android:orderInCategory="400"
+                android:icon="@drawable/ic_inbox_white_24dp"
+                app:showAsAction="ifRoom"
+                android:visible="false"
+                android:enabled="false"
+                />
 
-    <group
-        android:id="@+id/group_settings"
-        >
+        </group>
 
-        <item
-            android:id="@+id/item_subreddit"
-            android:title="@string/subreddit_reader"
-            android:orderInCategory="500"
-            android:icon="@drawable/ic_info_outline_white_24dp"
-            app:showAsAction="ifRoom"
-            />
+        <group
+            android:id="@+id/group_settings"
+            >
 
-        <item
-            android:id="@+id/item_settings"
-            android:title="@string/settings"
-            android:orderInCategory="600"
-            android:icon="@drawable/ic_settings_white_24dp"
-            app:showAsAction="ifRoom"
-            />
+            <item
+                android:id="@+id/item_subreddit"
+                android:title="@string/subreddit_reader"
+                android:orderInCategory="500"
+                android:icon="@drawable/ic_info_outline_white_24dp"
+                app:showAsAction="ifRoom"
+                />
+
+            <item
+                android:id="@+id/item_settings"
+                android:title="@string/settings"
+                android:orderInCategory="600"
+                android:icon="@drawable/ic_settings_white_24dp"
+                app:showAsAction="ifRoom"
+                />
+
+        </group>
 
     </group>
 

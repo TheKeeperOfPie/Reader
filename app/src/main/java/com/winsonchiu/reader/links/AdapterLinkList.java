@@ -90,13 +90,7 @@ public class AdapterLinkList extends AdapterLink {
                 @Override
                 public void onClick(View v) {
                     if (mediaPlayer != null && mediaPlayer.isPlaying()) {
-                        mediaPlayer.stop();
-                        if (surfaceVideo != null) {
-                            frameFull.removeView(surfaceVideo);
-                            mediaController.setAnchorView(null);
-                            mediaController.hide();
-                            surfaceVideo = null;
-                        }
+                        destroySurfaceView();
                         imagePlay.setVisibility(View.VISIBLE);
                     }
                     loadComments();

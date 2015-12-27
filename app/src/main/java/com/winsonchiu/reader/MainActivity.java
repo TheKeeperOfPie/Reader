@@ -1533,8 +1533,9 @@ public class MainActivity extends YouTubeBaseActivity
             textAccountInfo.setText("");
         }
 
-        viewNavigation.getMenu().findItem(R.id.item_inbox).setVisible(visible);
-        viewNavigation.getMenu().findItem(R.id.item_inbox).setEnabled(visible);
+        MenuItem itemInbox = viewNavigation.getMenu().findItem(R.id.item_inbox);
+        itemInbox.setVisible(visible);
+        itemInbox.setEnabled(visible);
     }
 
     private void addNewAccount() {

@@ -1019,19 +1019,19 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                     break;
                 // Reporting
                 case R.id.item_report_spam:
-                    eventListenerBase.report(comment, "spam", null);
+                    requestReport("spam");
                     break;
                 case R.id.item_report_vote_manipulation:
-                    eventListenerBase.report(comment, "vote manipulation", null);
+                    requestReport("vote manipulation");
                     break;
                 case R.id.item_report_personal_information:
-                    eventListenerBase.report(comment, "personal information", null);
+                    requestReport("personal information");
                     break;
                 case R.id.item_report_sexualizing_minors:
-                    eventListenerBase.report(comment, "sexualizing minors", null);
+                    requestReport("sexualizing minors");
                     break;
                 case R.id.item_report_breaking_reddit:
-                    eventListenerBase.report(comment, "breaking reddit", null);
+                    requestReport("breaking reddit");
                     break;
                 case R.id.item_report_other:
                     View viewDialog = LayoutInflater.from(itemView.getContext())
@@ -1061,6 +1061,25 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                     break;
             }
             return true;
+        }
+
+        private void requestReport(final String reason) {
+            String author = comment.getAuthor();
+            String title = comment.getBody().toString();
+            if (title.length() > 30) {
+                title = title.substring(0, 30);
+            }
+
+            new AlertDialog.Builder(itemView.getContext())
+                    .setMessage(resources.getString(R.string.report, title, author, reason))
+                    .setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            eventListenerBase.report(comment, reason, null);
+                        }
+                    })
+                    .setNegativeButton(R.string.cancel, null)
+                    .show();
         }
 
         private void saveComment(final Comment comment) {

@@ -6,6 +6,7 @@ package com.winsonchiu.reader;
 
 import android.accounts.Account;
 import android.accounts.AccountManager;
+import android.support.annotation.Nullable;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.winsonchiu.reader.dagger.components.ComponentStatic;
@@ -13,6 +14,8 @@ import com.winsonchiu.reader.data.reddit.Reddit;
 import com.winsonchiu.reader.data.reddit.User;
 
 import java.io.IOException;
+import java.util.HashSet;
+import java.util.Set;
 
 import javax.inject.Inject;
 
@@ -26,6 +29,7 @@ public class ControllerUser {
     private static final String TAG = ControllerUser.class.getCanonicalName();
     private User user;
     private Account account;
+    private Set<Listener> listeners = new HashSet<>();
 
     @Inject AccountManager accountManager;
     @Inject Reddit reddit;
@@ -56,7 +60,9 @@ public class ControllerUser {
                     public void onNext(String response) {
                         try {
                             user = User.fromJson(ComponentStatic.getObjectMapper().readValue(response, JsonNode.class));
-
+                            for (Listener listener : listeners) {
+                                listener.onUserLoaded(user);
+                            }
                         }
                         catch (IOException e) {
                             e.printStackTrace();
@@ -72,6 +78,9 @@ public class ControllerUser {
     public void clearAccount() {
         account = null;
         user = new User();
+        for (Listener listener : listeners) {
+            listener.onUserLoaded(null);
+        }
     }
 
     public void setAccount(Account accountUser) {
@@ -94,5 +103,17 @@ public class ControllerUser {
         else {
             user.setName(account.name);
         }
+    }
+
+    public void addListener(Listener listener) {
+        listeners.add(listener);
+    }
+
+    public void removeListener(Listener listener) {
+        listeners.remove(listener);
+    }
+
+    public interface Listener {
+        void onUserLoaded(@Nullable User user);
     }
 }
