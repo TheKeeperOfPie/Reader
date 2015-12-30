@@ -37,8 +37,8 @@ import android.widget.ImageButton;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
+import com.winsonchiu.reader.ActivityMain;
 import com.winsonchiu.reader.AppSettings;
-import com.winsonchiu.reader.MainActivity;
 import com.winsonchiu.reader.R;
 import com.winsonchiu.reader.comments.AdapterCommentList;
 import com.winsonchiu.reader.data.reddit.Message;
@@ -329,9 +329,9 @@ public class AdapterInbox extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
                     toggleReply();
                     break;
                 case R.id.item_view_profile:
-                    Intent intent = new Intent(itemView.getContext(), MainActivity.class);
+                    Intent intent = new Intent(itemView.getContext(), ActivityMain.class);
                     intent.setAction(Intent.ACTION_VIEW);
-                    intent.putExtra(MainActivity.REDDIT_PAGE,
+                    intent.putExtra(ActivityMain.REDDIT_PAGE,
                             "https://reddit.com/user/" + message.getAuthor());
                     eventListener.startActivity(intent);
                     break;

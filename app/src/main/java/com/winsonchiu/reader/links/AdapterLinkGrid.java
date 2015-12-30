@@ -64,9 +64,22 @@ public class AdapterLinkGrid extends AdapterLink {
 
         Resources resources = activity.getResources();
 
-        boolean isLandscape = resources.getDisplayMetrics().widthPixels > resources
-                .getDisplayMetrics().heightPixels;
-        int spanCount = isLandscape ? 3 : 2;
+        int spanCount = 0;
+
+        try {
+            spanCount = Integer.parseInt(preferences.getString(AppSettings.PREF_GRID_COLUMNS, String.valueOf(0)));
+        }
+        catch (NumberFormatException e) {
+            e.printStackTrace();
+        }
+
+        if (spanCount <= 0) {
+            int columnThreshold = resources.getDimensionPixelSize(R.dimen.grid_column_width_threshold);
+            int width = resources.getDisplayMetrics().widthPixels;
+            int columns = width / columnThreshold;
+            spanCount = Math.max(1, columns);
+        }
+
         layoutManager = new StaggeredGridLayoutManager(spanCount,
                 StaggeredGridLayoutManager.VERTICAL);
 //        ((StaggeredGridLayoutManager) this.layoutManager).setGapStrategy(

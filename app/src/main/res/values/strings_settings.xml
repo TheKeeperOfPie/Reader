@@ -27,6 +27,10 @@
         <item>0</item>
     </string-array>
 
+    <string name="pref_grid_columns">Grid columns</string>
+    <string name="pref_grid_columns_summary">Columns in grid UI, 0 for default</string>
+    <string name="pref_grid_columns_hint">0 for default</string>
+
     <string name="pref_inbox_check_interval">Check for new messages</string>
     <string-array name="pref_inbox_check_interval_entries">
         <item>Off</item>

@@ -25,9 +25,9 @@ import android.util.Log;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.squareup.okhttp.OkHttpClient;
+import com.winsonchiu.reader.ActivityMain;
 import com.winsonchiu.reader.AppSettings;
 import com.winsonchiu.reader.CustomApplication;
-import com.winsonchiu.reader.MainActivity;
 import com.winsonchiu.reader.R;
 import com.winsonchiu.reader.dagger.components.ComponentStatic;
 import com.winsonchiu.reader.data.reddit.Comment;
@@ -193,10 +193,10 @@ public class Receiver extends BroadcastReceiver {
                     dest = ((Comment) thing).getDest();
                 }
 
-                Intent intentActivity = new Intent(context, MainActivity.class);
-                intentActivity.putExtra(MainActivity.ACCOUNT, dest);
-                intentActivity.putExtra(MainActivity.NAV_ID, R.id.item_inbox);
-                intentActivity.putExtra(MainActivity.NAV_PAGE, ControllerInbox.UNREAD);
+                Intent intentActivity = new Intent(context, ActivityMain.class);
+                intentActivity.putExtra(ActivityMain.ACCOUNT, dest);
+                intentActivity.putExtra(ActivityMain.NAV_ID, R.id.item_inbox);
+                intentActivity.putExtra(ActivityMain.NAV_PAGE, ControllerInbox.UNREAD);
                 PendingIntent pendingIntentActivity = PendingIntent
                         .getActivity(context, 0, intentActivity, PendingIntent.FLAG_CANCEL_CURRENT);
 

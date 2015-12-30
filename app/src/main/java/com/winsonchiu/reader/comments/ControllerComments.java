@@ -500,7 +500,6 @@ public class ControllerComments {
     }
 
     public void expandComment(int position) {
-
         List<Thing> commentList = link.getComments()
                 .getChildren();
         int index = commentList.indexOf(listingComments.getChildren()
@@ -721,7 +720,6 @@ public class ControllerComments {
     }
 
     public int getPreviousCommentPosition(int commentIndex) {
-
         List<Thing> things = listingComments.getChildren();
 
         for (int index = commentIndex - 1; index >= 0; index--) {
@@ -762,7 +760,6 @@ public class ControllerComments {
     }
 
     public void jumpToParent(Comment child) {
-
         int commentIndex = listingComments.getChildren()
                 .indexOf(child);
 
@@ -781,7 +778,6 @@ public class ControllerComments {
     }
 
     public boolean setReplyText(String name, String text, boolean collapsed) {
-
         if (name.equals(link.getName())) {
             link.setReplyText(text);
             link.setReplyExpanded(!collapsed);

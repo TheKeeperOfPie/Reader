@@ -122,7 +122,7 @@ public class FragmentNewMessage extends FragmentBase implements Toolbar.OnMenuIt
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
             Bundle savedInstanceState) {
-        ((MainActivity) getActivity()).getComponentActivity().inject(this);
+        ((ActivityMain) getActivity()).getComponentActivity().inject(this);
 
         final View view =  inflater.inflate(R.layout.fragment_new_message, container, false);
 

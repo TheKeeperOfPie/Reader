@@ -10,6 +10,7 @@ import com.winsonchiu.reader.data.reddit.Thing;
 
 /**
  * Created by TheKeeperOfPie on 6/25/2015.
+ * All Fragments for ActivityMain should extend this class.
  */
 public abstract class FragmentBase extends Fragment {
 

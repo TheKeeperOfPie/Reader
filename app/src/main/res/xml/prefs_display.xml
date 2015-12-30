@@ -38,7 +38,18 @@
             android:entryValues="@array/pref_grid_thumbnail_size_values"
             android:defaultValue="0.75"
             android:negativeButtonText="@null"
-            android:positiveButtonText="@null" />
+            android:positiveButtonText="@null"
+            />
+
+        <EditTextPreference
+            android:key="pref_grid_columns"
+            android:title="@string/pref_grid_columns"
+            android:summary="@string/pref_grid_columns_summary"
+            android:defaultValue="0"
+            android:hint="@string/pref_grid_columns_hint"
+            android:inputType="number"
+            android:numeric="integer"
+            />
 
         <ListPreference
             android:key="pref_theme_background"

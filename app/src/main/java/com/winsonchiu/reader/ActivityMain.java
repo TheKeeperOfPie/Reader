@@ -147,10 +147,10 @@ import rx.functions.Func1;
 import rx.schedulers.Schedulers;
 
 
-public class MainActivity extends YouTubeBaseActivity
+public class ActivityMain extends YouTubeBaseActivity
         implements FragmentListenerBase, AppCompatCallback {
 
-    private static final String TAG = MainActivity.class.getCanonicalName();
+    private static final String TAG = ActivityMain.class.getCanonicalName();
 
     public static final String REDDIT_PAGE = "redditPage";
     public static final String NAV_ID = "navId";
@@ -183,7 +183,7 @@ public class MainActivity extends YouTubeBaseActivity
     private final Runnable runnableInbox = new Runnable() {
         @Override
         public void run() {
-            new Receiver().checkInbox(MainActivity.this, null);
+            new Receiver().checkInbox(ActivityMain.this, null);
             handler.postDelayed(this, DURATION_CHECK_INBOX_ACTIVE);
         }
     };
@@ -379,7 +379,7 @@ public class MainActivity extends YouTubeBaseActivity
                         .subscribe(new FinalizingSubscriber<Comment>() {
                             @Override
                             public void error(Throwable e) {
-                                Toast.makeText(MainActivity.this, R.string.failed_reply, Toast.LENGTH_LONG).show();
+                                Toast.makeText(ActivityMain.this, R.string.failed_reply, Toast.LENGTH_LONG).show();
                             }
 
                             @Override
@@ -419,7 +419,7 @@ public class MainActivity extends YouTubeBaseActivity
                         .subscribe(new FinalizingSubscriber<Message>() {
                             @Override
                             public void error(Throwable e) {
-                                Toast.makeText(MainActivity.this, R.string.failed_message, Toast.LENGTH_LONG).show();
+                                Toast.makeText(ActivityMain.this, R.string.failed_message, Toast.LENGTH_LONG).show();
                             }
 
                             @Override
@@ -461,7 +461,7 @@ public class MainActivity extends YouTubeBaseActivity
                             .subscribe(new FinalizingSubscriber<String>() {
                                 @Override
                                 public void error(Throwable e) {
-                                    Toast.makeText(MainActivity.this, R.string.error_saving_post, Toast.LENGTH_SHORT).show();
+                                    Toast.makeText(ActivityMain.this, R.string.error_saving_post, Toast.LENGTH_SHORT).show();
                                 }
                             });
                 }
@@ -479,7 +479,7 @@ public class MainActivity extends YouTubeBaseActivity
                             .subscribe(new FinalizingSubscriber<String>() {
                                 @Override
                                 public void error(Throwable e) {
-                                    Toast.makeText(MainActivity.this, R.string.error_saving_comment, Toast.LENGTH_SHORT).show();
+                                    Toast.makeText(ActivityMain.this, R.string.error_saving_comment, Toast.LENGTH_SHORT).show();
                                 }
                             });
                 }
@@ -507,7 +507,7 @@ public class MainActivity extends YouTubeBaseActivity
                     e.printStackTrace();
                 }
                 if (url != null && url.getHost().contains("reddit.com")) {
-                    Intent intent = new Intent(MainActivity.this, MainActivity.class);
+                    Intent intent = new Intent(ActivityMain.this, ActivityMain.class);
                     intent.setAction(Intent.ACTION_VIEW);
                     intent.putExtra(REDDIT_PAGE, urlString);
                     startActivity(intent);
@@ -562,11 +562,11 @@ public class MainActivity extends YouTubeBaseActivity
                         }
 
                         if (created) {
-                            MediaScannerConnection.scanFile(MainActivity.this,
+                            MediaScannerConnection.scanFile(ActivityMain.this,
                                     new String[]{file.toString()}, null, null);
                         }
 
-                        Toast.makeText(MainActivity.this, getString(R.string.image_downloaded),
+                        Toast.makeText(ActivityMain.this, getString(R.string.image_downloaded),
                                 Toast.LENGTH_SHORT)
                                 .show();
 
@@ -575,16 +575,16 @@ public class MainActivity extends YouTubeBaseActivity
 
                     @Override
                     public void onBitmapFailed(Drawable errorDrawable) {
-                        Toast.makeText(MainActivity.this, getString(R.string.error_downloading), Toast.LENGTH_SHORT).show();
+                        Toast.makeText(ActivityMain.this, getString(R.string.error_downloading), Toast.LENGTH_SHORT).show();
                     }
 
                     @Override
                     public void onPrepareLoad(Drawable placeHolderDrawable) {
-                        Toast.makeText(MainActivity.this, getString(R.string.image_downloading), Toast.LENGTH_SHORT).show();
+                        Toast.makeText(ActivityMain.this, getString(R.string.image_downloading), Toast.LENGTH_SHORT).show();
                     }
                 };
 
-                ActivityCompat.requestPermissions(MainActivity.this, new String[] {android.Manifest.permission.WRITE_EXTERNAL_STORAGE}, REQUEST_PERMISSION_WRITE_EXTERNAL_STORAGE);
+                ActivityCompat.requestPermissions(ActivityMain.this, new String[] {android.Manifest.permission.WRITE_EXTERNAL_STORAGE}, REQUEST_PERMISSION_WRITE_EXTERNAL_STORAGE);
             }
 
             @Override
@@ -599,7 +599,7 @@ public class MainActivity extends YouTubeBaseActivity
 
             @Override
             public void toast(String text) {
-                Toast.makeText(MainActivity.this, text, Toast.LENGTH_SHORT).show();
+                Toast.makeText(ActivityMain.this, text, Toast.LENGTH_SHORT).show();
             }
 
             @Override
@@ -638,7 +638,7 @@ public class MainActivity extends YouTubeBaseActivity
                                 if (position == viewHolderBase.getAdapterPosition()) {
                                     viewHolderBase.setVoteColors();
                                 }
-                                Toast.makeText(MainActivity.this, getString(R.string.error_voting), Toast.LENGTH_SHORT)
+                                Toast.makeText(ActivityMain.this, getString(R.string.error_voting), Toast.LENGTH_SHORT)
                                         .show();
                             }
                         });
@@ -646,7 +646,7 @@ public class MainActivity extends YouTubeBaseActivity
 
             @Override
             public void startActivity(Intent intent) {
-                MainActivity.this.startActivity(intent);
+                ActivityMain.this.startActivity(intent);
             }
 
             @Override
@@ -655,7 +655,7 @@ public class MainActivity extends YouTubeBaseActivity
                         .subscribe(new FinalizingSubscriber<String>() {
                             @Override
                             public void error(Throwable e) {
-                                Toast.makeText(MainActivity.this, R.string.error_deleting_post, Toast.LENGTH_LONG).show();
+                                Toast.makeText(ActivityMain.this, R.string.error_deleting_post, Toast.LENGTH_LONG).show();
                             }
                         });
             }
@@ -733,7 +733,7 @@ public class MainActivity extends YouTubeBaseActivity
                                 @Override
                                 public void error(Throwable e) {
                                     link.setOver18(false);
-                                    Toast.makeText(MainActivity.this, R.string.error_marking_nsfw,
+                                    Toast.makeText(ActivityMain.this, R.string.error_marking_nsfw,
                                             Toast.LENGTH_LONG).show();
                                 }
                             });
@@ -744,7 +744,7 @@ public class MainActivity extends YouTubeBaseActivity
                                 @Override
                                 public void error(Throwable e) {
                                     link.setOver18(true);
-                                    Toast.makeText(MainActivity.this, R.string.error_unmarking_nsfw, Toast.LENGTH_LONG).show();
+                                    Toast.makeText(ActivityMain.this, R.string.error_unmarking_nsfw, Toast.LENGTH_LONG).show();
                                 }
                             });
                 }
@@ -785,7 +785,7 @@ public class MainActivity extends YouTubeBaseActivity
             public void loadNestedComments(Comment comment) {
 
                 if (comment.getCount() == 0) {
-                    Intent intentCommentThread = new Intent(MainActivity.this, MainActivity.class);
+                    Intent intentCommentThread = new Intent(ActivityMain.this, ActivityMain.class);
                     intentCommentThread.setAction(Intent.ACTION_VIEW);
                     // Double slashes used to trigger parseUrl correctly
                     intentCommentThread.putExtra(REDDIT_PAGE, Reddit.BASE_URL + "/r/" + controllerComments.getSubredditName() + "/comments/" + controllerComments.getLink().getId() + "/title/" + comment.getParentId() + "/");
@@ -804,7 +804,7 @@ public class MainActivity extends YouTubeBaseActivity
                         .subscribe(new FinalizingSubscriber<String>() {
                             @Override
                             public void error(Throwable e) {
-                                Toast.makeText(MainActivity.this, getString(R.string.error_voting),
+                                Toast.makeText(ActivityMain.this, getString(R.string.error_voting),
                                         Toast.LENGTH_SHORT)
                                         .show();
                             }
@@ -822,7 +822,7 @@ public class MainActivity extends YouTubeBaseActivity
                         .subscribe(new FinalizingSubscriber<String>() {
                             @Override
                             public void error(Throwable e) {
-                                Toast.makeText(MainActivity.this, R.string.error_deleting_comment, Toast.LENGTH_LONG).show();
+                                Toast.makeText(ActivityMain.this, R.string.error_deleting_comment, Toast.LENGTH_LONG).show();
                             }
                         });
             }
@@ -907,7 +907,7 @@ public class MainActivity extends YouTubeBaseActivity
                     }
                 });
 
-                CustomTabsClient.bindCustomTabsService(MainActivity.this, "com.android.chrome", this);
+                CustomTabsClient.bindCustomTabsService(ActivityMain.this, "com.android.chrome", this);
             }
 
             @Override
@@ -1016,7 +1016,7 @@ public class MainActivity extends YouTubeBaseActivity
                 String permalink = sharedPreferences.getString(AppSettings.HEADER_PERMALINK, "");
 
                 if (!TextUtils.isEmpty(permalink)) {
-                    Intent intentActivity = new Intent(MainActivity.this, MainActivity.class);
+                    Intent intentActivity = new Intent(ActivityMain.this, ActivityMain.class);
                     intentActivity.setAction(Intent.ACTION_VIEW);
                     intentActivity.setData(Uri.parse(Reddit.BASE_URL + permalink));
                     startActivity(intentActivity);
@@ -1355,7 +1355,7 @@ public class MainActivity extends YouTubeBaseActivity
 
                                     @Override
                                     public void onError(Throwable e) {
-                                        Toast.makeText(MainActivity.this, R.string.error_delete_account_securely, Toast.LENGTH_LONG).show();
+                                        Toast.makeText(ActivityMain.this, R.string.error_delete_account_securely, Toast.LENGTH_LONG).show();
                                     }
 
                                     @Override
@@ -1570,7 +1570,7 @@ public class MainActivity extends YouTubeBaseActivity
                             handler.post(new Runnable() {
                                 @Override
                                 public void run() {
-                                    Toast.makeText(MainActivity.this, R.string.error_account, Toast.LENGTH_LONG).show();
+                                    Toast.makeText(ActivityMain.this, R.string.error_account, Toast.LENGTH_LONG).show();
                                 }
                             });
                         }
@@ -1746,7 +1746,7 @@ public class MainActivity extends YouTubeBaseActivity
 
             if (match != Match.NONE) {
                 intent.setData(uri);
-                intent.setComponent(new ComponentName(getApplicationContext().getPackageName(), MainActivity.class.getCanonicalName()));
+                intent.setComponent(new ComponentName(getApplicationContext().getPackageName(), ActivityMain.class.getCanonicalName()));
                 super.startActivity(intent);
             }
             else if (URLUtil.isValidUrl(urlString)) {
@@ -1819,7 +1819,7 @@ public class MainActivity extends YouTubeBaseActivity
 
         if (requestCode == REQUEST_SETTINGS && resultCode == Activity.RESULT_OK) {
             TaskStackBuilder.create(this)
-                    .addNextIntent(new Intent(this, MainActivity.class))
+                    .addNextIntent(new Intent(this, ActivityMain.class))
                     .addNextIntent(this.getIntent())
                     .startActivities();
         }
@@ -1862,6 +1862,49 @@ public class MainActivity extends YouTubeBaseActivity
 
     @Override
     public void onNavigationBackClick() {
+        int backStackCount = getFragmentManager().getBackStackEntryCount();
+
+        if (backStackCount > 0) {
+            FragmentBase fragment = (FragmentBase) getFragmentManager().findFragmentById(R.id.frame_fragment);
+            if (fragment != null && !fragment.isFinished()) {
+                fragment.navigateBack();
+                return;
+            }
+            if (backStackCount == 1) {
+                super.onBackPressed();
+            } else {
+                getFragmentManager().popBackStackImmediate();
+
+                fragment = (FragmentBase) getFragmentManager().findFragmentById(R.id.frame_fragment);
+
+                if (fragment != null && fragment.isHidden()) {
+                    getFragmentManager().beginTransaction()
+                            .show(fragment)
+                            .commit();
+                    fragment.onHiddenChanged(false);
+                    fragment.onShown();
+                }
+            }
+        } else if (isTaskRoot()) {
+            new AlertDialog.Builder(this)
+                    .setMessage(R.string.exit_reader)
+                    .setPositiveButton(R.string.yes,
+                            new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(
+                                        DialogInterface dialog,
+                                        int which) {
+                                    ActivityMain.super.onBackPressed();
+                                }
+                            })
+                    .setNegativeButton(R.string.no, null)
+                    .show();
+        } else {
+            super.onBackPressed();
+        }
+    }
+
+    public void onNavigationBackClickOld() {
         FragmentBase fragment = (FragmentBase) getFragmentManager().findFragmentById(R.id.frame_fragment);
 
         // TODO: Remove this and use a better system
@@ -1880,7 +1923,7 @@ public class MainActivity extends YouTubeBaseActivity
                                             public void onClick(
                                                     DialogInterface dialog,
                                                     int which) {
-                                                MainActivity.super.onBackPressed();
+                                                ActivityMain.super.onBackPressed();
                                             }
                                         })
                                 .setNegativeButton(R.string.no, null)

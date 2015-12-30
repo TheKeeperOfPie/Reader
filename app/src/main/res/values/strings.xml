@@ -131,6 +131,7 @@
     <string name="send_edit">Send edit</string>
     <string name="continue_thread">Continue thread</string>
     <string name="item_load_full_comments">Load full comments</string>
+    <string name="item_show_post">Show/hide OP</string>
     <string name="item_report">Report</string>
     <string name="item_report_spam">Spam</string>
     <string name="item_report_vote_manipulation">Vote manipulation</string>

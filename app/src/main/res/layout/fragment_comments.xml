@@ -30,7 +30,6 @@
                 android:id="@+id/view_background"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:layout_below="@id/youtube"
                 android:background="?attr/colorScreenBackground"
                 />
 
@@ -38,8 +37,6 @@
                 android:id="@+id/swipe_refresh_comment_list"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:layout_below="@id/youtube"
-                app:layout_behavior="@string/appbar_scrolling_view_behavior"
                 >
 
                 <android.support.v7.widget.RecyclerView
@@ -53,6 +50,14 @@
                     />
 
             </com.winsonchiu.reader.views.CustomSwipeRefreshLayout>
+
+            <com.winsonchiu.reader.views.CustomRecyclerView
+                android:id="@+id/recycler_link"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="?attr/colorScreenBackground"
+                android:visibility="invisible"
+                />
 
         </com.winsonchiu.reader.views.CustomRelativeLayout>
 

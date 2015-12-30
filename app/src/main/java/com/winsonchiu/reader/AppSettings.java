@@ -64,6 +64,7 @@ public class AppSettings {
     public static final String PREF_SHOW_THUMBNAILS = "pref_show_thumbnails";
     public static final String PREF_NSFW_THUMBNAILS = "pref_nsfw_thumbnails";
     public static final String PREF_GRID_THUMBNAIL_SIZE = "pref_grid_thumbnail_size";
+    public static final String PREF_GRID_COLUMNS = "pref_grid_columns";
     public static final String PREF_INBOX_CHECK_INTERVAL = "pref_inbox_check_interval";
     public static final String PREF_SAVE_HISTORY = "pref_save_history";
     public static final String PREF_CLEAR_HISTORY = "pref_clear_history";

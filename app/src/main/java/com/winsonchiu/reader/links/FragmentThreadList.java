@@ -54,7 +54,7 @@ import com.winsonchiu.reader.CustomApplication;
 import com.winsonchiu.reader.FragmentBase;
 import com.winsonchiu.reader.FragmentListenerBase;
 import com.winsonchiu.reader.FragmentNewPost;
-import com.winsonchiu.reader.MainActivity;
+import com.winsonchiu.reader.ActivityMain;
 import com.winsonchiu.reader.R;
 import com.winsonchiu.reader.data.reddit.Link;
 import com.winsonchiu.reader.data.reddit.Reddit;
@@ -244,7 +244,7 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
             final Bundle savedInstanceState) {
-        ((MainActivity) activity).getComponentActivity().inject(this);
+        ((ActivityMain) activity).getComponentActivity().inject(this);
 
         initialize();
 

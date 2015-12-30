@@ -37,13 +37,13 @@ import android.widget.ImageView;
 import android.widget.Spinner;
 import android.widget.Toast;
 
+import com.winsonchiu.reader.ActivityMain;
 import com.winsonchiu.reader.AppSettings;
 import com.winsonchiu.reader.ControllerUser;
 import com.winsonchiu.reader.CustomApplication;
 import com.winsonchiu.reader.FragmentBase;
 import com.winsonchiu.reader.FragmentListenerBase;
 import com.winsonchiu.reader.FragmentNewMessage;
-import com.winsonchiu.reader.MainActivity;
 import com.winsonchiu.reader.R;
 import com.winsonchiu.reader.comments.AdapterCommentList;
 import com.winsonchiu.reader.data.Page;
@@ -199,7 +199,7 @@ public class FragmentProfile extends FragmentBase implements Toolbar.OnMenuItemC
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
             Bundle savedInstanceState) {
-        ((MainActivity) activity).getComponentActivity().inject(this);
+        ((ActivityMain) activity).getComponentActivity().inject(this);
 
         view = inflater.inflate(R.layout.fragment_profile, container, false);
 
@@ -239,9 +239,9 @@ public class FragmentProfile extends FragmentBase implements Toolbar.OnMenuItemC
             @Override
             public void loadLink(Comment comment) {
                 Log.d(TAG, "Link ID: " + comment.getLinkId());
-                Intent intent = new Intent(activity, MainActivity.class);
+                Intent intent = new Intent(activity, ActivityMain.class);
                 intent.setAction(Intent.ACTION_VIEW);
-                intent.putExtra(MainActivity.REDDIT_PAGE,
+                intent.putExtra(ActivityMain.REDDIT_PAGE,
                         Reddit.BASE_URL + "/r/" + comment.getSubreddit() + "/comments/" + comment
                                 .getLinkId().replace("t3_", ""));
                 startActivity(intent);

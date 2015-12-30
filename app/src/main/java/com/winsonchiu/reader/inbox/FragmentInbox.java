@@ -33,12 +33,12 @@ import android.widget.AdapterView;
 import android.widget.Spinner;
 import android.widget.Toast;
 
+import com.winsonchiu.reader.ActivityMain;
 import com.winsonchiu.reader.AppSettings;
 import com.winsonchiu.reader.CustomApplication;
 import com.winsonchiu.reader.FragmentBase;
 import com.winsonchiu.reader.FragmentListenerBase;
 import com.winsonchiu.reader.FragmentNewMessage;
-import com.winsonchiu.reader.MainActivity;
 import com.winsonchiu.reader.R;
 import com.winsonchiu.reader.comments.AdapterCommentList;
 import com.winsonchiu.reader.data.Page;
@@ -107,7 +107,7 @@ public class FragmentInbox extends FragmentBase implements Toolbar.OnMenuItemCli
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
             Bundle savedInstanceState) {
-        ((MainActivity) getActivity()).getComponentActivity().inject(this);
+        ((ActivityMain) getActivity()).getComponentActivity().inject(this);
 
         View view = inflater.inflate(R.layout.fragment_inbox, container, false);
 
@@ -343,9 +343,9 @@ public class FragmentInbox extends FragmentBase implements Toolbar.OnMenuItemCli
 
                 @Override
                 public void loadLink(Comment comment) {
-                    Intent intent = new Intent(activity, MainActivity.class);
+                    Intent intent = new Intent(activity, ActivityMain.class);
                     intent.setAction(Intent.ACTION_VIEW);
-                    intent.putExtra(MainActivity.REDDIT_PAGE,
+                    intent.putExtra(ActivityMain.REDDIT_PAGE,
                             Reddit.BASE_URL + comment.getContext());
                     startActivity(intent);
                 }

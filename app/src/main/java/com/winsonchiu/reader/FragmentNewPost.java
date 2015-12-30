@@ -137,7 +137,7 @@ public class FragmentNewPost extends FragmentBase implements Toolbar.OnMenuItemC
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
             Bundle savedInstanceState) {
-        ((MainActivity) activity).getComponentActivity().inject(this);
+        ((ActivityMain) activity).getComponentActivity().inject(this);
 
         final View view = inflater.inflate(R.layout.fragment_new_post, container, false);
 

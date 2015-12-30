@@ -33,10 +33,10 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.github.rjeschke.txtmark.Processor;
+import com.winsonchiu.reader.ActivityMain;
 import com.winsonchiu.reader.ControllerUser;
 import com.winsonchiu.reader.FragmentBase;
 import com.winsonchiu.reader.FragmentListenerBase;
-import com.winsonchiu.reader.MainActivity;
 import com.winsonchiu.reader.R;
 import com.winsonchiu.reader.data.reddit.Comment;
 import com.winsonchiu.reader.data.reddit.Reddit;
@@ -130,7 +130,7 @@ public class FragmentReply extends FragmentBase implements Toolbar.OnMenuItemCli
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
             Bundle savedInstanceState) {
-        ((MainActivity) activity).getComponentActivity().inject(this);
+        ((ActivityMain) activity).getComponentActivity().inject(this);
 
         final View view =  inflater.inflate(R.layout.fragment_reply, container, false);
 

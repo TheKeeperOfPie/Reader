@@ -21,6 +21,8 @@
     <color name="admin">#FFF44336</color>
     <color name="special">#FFC62828</color>
 
+    <color name="translucent">#44000000</color>
+
     <color name="darkThemeTextColor">#FFFFFFFF</color>
     <color name="darkThemeTextColorMuted">#FFBDBDBD</color>
     <color name="darkThemeShadowColor">#FF353535</color>

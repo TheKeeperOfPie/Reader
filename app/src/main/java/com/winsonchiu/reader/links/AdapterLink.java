@@ -74,11 +74,11 @@ import com.google.android.youtube.player.YouTubeInitializationResult;
 import com.google.android.youtube.player.YouTubePlayer;
 import com.google.android.youtube.player.YouTubePlayerView;
 import com.squareup.picasso.Picasso;
+import com.winsonchiu.reader.ActivityMain;
 import com.winsonchiu.reader.ApiKeys;
 import com.winsonchiu.reader.AppSettings;
 import com.winsonchiu.reader.ControllerUser;
 import com.winsonchiu.reader.CustomApplication;
-import com.winsonchiu.reader.MainActivity;
 import com.winsonchiu.reader.R;
 import com.winsonchiu.reader.data.imgur.Album;
 import com.winsonchiu.reader.data.imgur.Image;
@@ -97,6 +97,7 @@ import com.winsonchiu.reader.utils.OnTouchListenerDisallow;
 import com.winsonchiu.reader.utils.RecyclerCallback;
 import com.winsonchiu.reader.utils.SimplePlayerStateChangeListener;
 import com.winsonchiu.reader.utils.UtilsAnimation;
+import com.winsonchiu.reader.utils.YouTubeListener;
 import com.winsonchiu.reader.views.WebViewFixed;
 
 import org.json.JSONException;
@@ -150,7 +151,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         this.recyclerCallback = recyclerCallback;
         viewHolders = new ArrayList<>();
 
-        ((MainActivity) activity).getComponentActivity().inject(this);
+        ((ActivityMain) activity).getComponentActivity().inject(this);
     }
 
     public void setActivity(Activity activity) {
@@ -480,6 +481,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         public MediaPlayer mediaPlayer;
         public Uri uriVideo;
         public int bufferPercentage;
+        public YouTubeListener youTubeListener;
 
         @Inject Historian historian;
         @Inject Picasso picasso;
@@ -881,9 +883,9 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                     break;
                 case R.id.item_view_profile:
                     Intent intentViewProfile = new Intent(itemView.getContext(),
-                            MainActivity.class);
+                            ActivityMain.class);
                     intentViewProfile.setAction(Intent.ACTION_VIEW);
-                    intentViewProfile.putExtra(MainActivity.REDDIT_PAGE,
+                    intentViewProfile.putExtra(ActivityMain.REDDIT_PAGE,
                             "https://reddit.com/user/" + link.getAuthor());
                     eventListener.startActivity(intentViewProfile);
                     break;
@@ -922,9 +924,9 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                     break;
                 case R.id.item_view_subreddit:
                     Intent intentViewSubreddit = new Intent(itemView.getContext(),
-                            MainActivity.class);
+                            ActivityMain.class);
                     intentViewSubreddit.setAction(Intent.ACTION_VIEW);
-                    intentViewSubreddit.putExtra(MainActivity.REDDIT_PAGE,
+                    intentViewSubreddit.putExtra(ActivityMain.REDDIT_PAGE,
                             "https://reddit.com/r/" + link.getSubreddit());
                     eventListener.startActivity(intentViewSubreddit);
                     break;
@@ -1347,7 +1349,13 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                         time = 0;
                     }
                 }
-                loadYouTubeVideo(link, matcher.group(1), time);
+
+                if (youTubeListener == null) {
+                    loadYouTubeVideo(link, matcher.group(1), time);
+                }
+                else {
+                    youTubeListener.loadYouTubeVideo(link, matcher.group(1), time);
+                }
                 return true;
             }
 
@@ -1683,6 +1691,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
 
         public void onRecycle() {
             destroyWebViews();
+            destroySurfaceView();
             
             if (subscription != null && !subscription.isUnsubscribed()) {
                 subscription.unsubscribe();
@@ -1800,6 +1809,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                 if (mediaPlayer != null) {
                     mediaPlayer.stop();
                     mediaPlayer.release();
+                    mediaPlayer = null;
                 }
                 surfaceVideo.setVisibility(View.GONE);
                 mediaController.setAnchorView(frameFull);
@@ -1837,6 +1847,10 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             buttonSendReply.setVisibility(visibility);
             viewYouTube.setVisibility(visibility);
             itemView.setVisibility(visibility);
+        }
+
+        public void setYouTubeListener(YouTubeListener youTubeListener) {
+            this.youTubeListener = youTubeListener;
         }
 
         @Override

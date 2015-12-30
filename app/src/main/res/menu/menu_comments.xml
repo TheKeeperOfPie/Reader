@@ -29,10 +29,18 @@
         />
 
     <item
+        android:id="@+id/item_show_post"
+        android:title="@string/item_show_post"
+        android:icon="@drawable/ic_expand_more_white_24dp"
+        android:orderInCategory="300"
+        app:showAsAction="ifRoom"
+        />
+
+    <item
         android:id="@+id/item_sort"
         android:title="@string/item_sort"
         android:icon="@drawable/ic_sort_white_24dp"
-        android:orderInCategory="300"
+        android:orderInCategory="400"
         app:showAsAction="always"
         >
 

@@ -50,8 +50,8 @@ import android.widget.ImageButton;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
+import com.winsonchiu.reader.ActivityMain;
 import com.winsonchiu.reader.AppSettings;
-import com.winsonchiu.reader.MainActivity;
 import com.winsonchiu.reader.R;
 import com.winsonchiu.reader.data.reddit.Comment;
 import com.winsonchiu.reader.data.reddit.Link;
@@ -64,6 +64,7 @@ import com.winsonchiu.reader.utils.DisallowListener;
 import com.winsonchiu.reader.utils.OnTouchListenerDisallow;
 import com.winsonchiu.reader.utils.RecyclerCallback;
 import com.winsonchiu.reader.utils.UtilsAnimation;
+import com.winsonchiu.reader.utils.YouTubeListener;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -93,7 +94,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
     private ViewHolderComment.EventListener eventListenerComment;
     private DisallowListener disallowListener;
     private RecyclerCallback recyclerCallback;
-    private FragmentComments.YouTubeListener youTubeListener;
+    private YouTubeListener youTubeListener;
     protected List<RecyclerView.ViewHolder> viewHolders;
 
     private AdapterLink.ViewHolderBase viewHolderLink;
@@ -109,7 +110,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
             ViewHolderComment.EventListener eventListenerComment,
             DisallowListener disallowListener,
             RecyclerCallback recyclerCallback,
-            FragmentComments.YouTubeListener youTubeListener,
+            YouTubeListener youTubeListener,
             boolean isGrid,
             int colorLink,
             boolean actionsExpanded) {
@@ -126,7 +127,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
         this.thumbnailSize = displayMetrics.widthPixels / 2;
         viewHolders = new ArrayList<>();
 
-        ((MainActivity) activity).getComponentActivity().inject(this);
+        ((ActivityMain) activity).getComponentActivity().inject(this);
     }
 
     @Override
@@ -200,11 +201,6 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                     }
 
                     @Override
-                    public void loadYouTubeVideo(Link link, String id, int timeInMillis) {
-                        youTubeListener.loadYouTube(link, id, timeInMillis);
-                    }
-
-                    @Override
                     public void onClickThumbnail() {
                         if (youTubeListener.hideYouTube()) {
                             super.onClickThumbnail();
@@ -264,11 +260,6 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                     }
 
                     @Override
-                    public void loadYouTubeVideo(Link link, String id, int timeInMillis) {
-                        youTubeListener.loadYouTube(link, id, timeInMillis);
-                    }
-
-                    @Override
                     public void onClickThumbnail() {
                         if (youTubeListener.hideYouTube()) {
                             super.onClickThumbnail();
@@ -276,6 +267,8 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                     }
                 };
             }
+
+            viewHolderLink.setYouTubeListener(youTubeListener);
 
             return viewHolderLink;
         }
@@ -975,9 +968,9 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                     saveComment(comment);
                     break;
                 case R.id.item_view_profile:
-                    Intent intent = new Intent(itemView.getContext(), MainActivity.class);
+                    Intent intent = new Intent(itemView.getContext(), ActivityMain.class);
                     intent.setAction(Intent.ACTION_VIEW);
-                    intent.putExtra(MainActivity.REDDIT_PAGE,
+                    intent.putExtra(ActivityMain.REDDIT_PAGE,
                             "https://reddit.com/user/" + comment.getAuthor());
                     eventListenerBase.startActivity(intent);
                     break;
