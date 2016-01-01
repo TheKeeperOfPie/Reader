@@ -5,6 +5,8 @@
 package com.winsonchiu.reader.comments;
 
 import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
+import android.animation.ValueAnimator;
 import android.app.Activity;
 import android.content.SharedPreferences;
 import android.content.res.TypedArray;
@@ -43,6 +45,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.Animation;
 import android.view.animation.Transformation;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.Toast;
@@ -101,6 +104,8 @@ public class FragmentComments extends FragmentBase
     private FragmentListenerBase mListener;
     private RecyclerView recyclerLink;
     private RecyclerView recyclerCommentList;
+    private ViewGroup layoutExpandPost;
+    private ImageView imageExpandIndicator;
     private LinearLayoutManagerWrapHeight layoutManagerLink;
     private LinearLayoutManager linearLayoutManager;
     private AdapterLinkHeader adapterLink;
@@ -130,6 +135,7 @@ public class FragmentComments extends FragmentBase
     private View viewBackground;
     private MenuItem itemLoadFullComments;
     private MenuItem itemHideYouTube;
+    private MenuItem itemExpandPost;
     private View viewHolderView;
     private float toolbarHeight;
     private GestureDetectorCompat gestureDetector;
@@ -143,6 +149,7 @@ public class FragmentComments extends FragmentBase
     private float swipeDifferenceX;
     private ColorFilter colorFilterPrimary;
     private ColorFilter colorFilterAccent;
+    private ColorFilter colorFilterIcon;
     private float swipeEndDistance;
     private int scrollToPaddingTop;
     private int scrollToPaddingBottom;
@@ -150,8 +157,7 @@ public class FragmentComments extends FragmentBase
 
     private boolean isStartOnLeft;
     private boolean postExpanded = false;
-    private int scrollY;
-    private boolean isRecycled;
+    private ValueAnimator valueAnimatorPostExpand = ValueAnimator.ofFloat(0, 1);
 
     @Inject ControllerComments controllerComments;
 
@@ -223,14 +229,16 @@ public class FragmentComments extends FragmentBase
         toolbar.getNavigationIcon().mutate().setColorFilter(colorFilterPrimary);
 
         toolbar.inflateMenu(R.menu.menu_comments);
-        itemLoadFullComments = toolbar.getMenu().findItem(R.id.item_load_full_comments);
-        itemHideYouTube = toolbar.getMenu().findItem(R.id.item_hide_youtube);
+
+        Menu menu = toolbar.getMenu();
+
+        itemLoadFullComments = menu.findItem(R.id.item_load_full_comments);
+        itemHideYouTube = menu.findItem(R.id.item_hide_youtube);
+        itemExpandPost = menu.findItem(R.id.item_expand_post);
         toolbar.setOnMenuItemClickListener(this);
 
         toolbar.getMenu().findItem(controllerComments.getSort().getMenuId())
                 .setChecked(true);
-
-        Menu menu = toolbar.getMenu();
 
         for (int index = 0; index < menu.size(); index++) {
             menu.getItem(index).getIcon().mutate().setColorFilter(colorFilterPrimary);
@@ -352,10 +360,11 @@ public class FragmentComments extends FragmentBase
         };
 
         TypedArray typedArray = getActivity().getTheme().obtainStyledAttributes(
-                new int[]{R.attr.colorPrimary, R.attr.colorAccent});
+                new int[]{R.attr.colorPrimary, R.attr.colorAccent, R.attr.colorIconFilter});
         final int colorPrimary = typedArray
                 .getColor(0, getResources().getColor(R.color.colorPrimary));
         int colorAccent = typedArray.getColor(1, getResources().getColor(R.color.colorAccent));
+        int colorIcon = typedArray.getColor(2, getResources().getColor(R.color.darkThemeIconFilter));
         typedArray.recycle();
 
         int colorResourcePrimary = UtilsColor.computeContrast(colorPrimary, Color.WHITE) > 3f ?
@@ -366,6 +375,8 @@ public class FragmentComments extends FragmentBase
         colorFilterPrimary = new PorterDuffColorFilter(
                 getResources().getColor(colorResourcePrimary), PorterDuff.Mode.MULTIPLY);
         colorFilterAccent = new PorterDuffColorFilter(getResources().getColor(colorResourceAccent),
+                PorterDuff.Mode.MULTIPLY);
+        colorFilterIcon = new PorterDuffColorFilter(colorIcon,
                 PorterDuff.Mode.MULTIPLY);
 
         toolbar = (Toolbar) layoutRoot.findViewById(R.id.toolbar);
@@ -680,6 +691,16 @@ public class FragmentComments extends FragmentBase
                 getArguments().getBoolean(ARG_IS_GRID, false),
                 getArguments().getInt(ARG_COLOR_LINK),
                 getArguments().getBoolean(ARG_ACTIONS_EXPANDED, false));
+
+        layoutExpandPost = (ViewGroup) layoutRoot.findViewById(R.id.layout_expand_post);
+        imageExpandIndicator = (ImageView) layoutRoot.findViewById(R.id.image_expand_indicator);
+        imageExpandIndicator.setColorFilter(colorFilterIcon);
+        imageExpandIndicator.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                expandPost(false);
+            }
+        });
 
         recyclerLink = (RecyclerView) layoutRoot.findViewById(R.id.recycler_link);
         recyclerLink.setLayoutManager(layoutManagerLink);
@@ -1353,9 +1374,8 @@ public class FragmentComments extends FragmentBase
             case R.id.item_load_full_comments:
                 controllerComments.loadLinkComments();
                 break;
-            case R.id.item_show_post:
-                postExpanded = !postExpanded;
-                recyclerLink.setVisibility(postExpanded ? View.VISIBLE : View.INVISIBLE);
+            case R.id.item_expand_post:
+                expandPost(!postExpanded);
                 break;
         }
 
@@ -1370,6 +1390,42 @@ public class FragmentComments extends FragmentBase
         }
 
         return true;
+    }
+
+    private void expandPost(boolean expanded) {
+        postExpanded = expanded;
+        float heightImage = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 49, getResources().getDisplayMetrics());
+        final float targetHeight = postExpanded ? layoutManagerLink.getFirstChildHeight() + heightImage : 0;
+        final float startHeight = postExpanded ? 0 : layoutManagerLink.getFirstChildHeight() + heightImage;
+        valueAnimatorPostExpand.cancel();
+        valueAnimatorPostExpand.removeAllUpdateListeners();
+        valueAnimatorPostExpand.removeAllListeners();
+        valueAnimatorPostExpand.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+            @Override
+            public void onAnimationUpdate(ValueAnimator animation) {
+                float interpolatedValue = animation.getAnimatedFraction();
+                layoutExpandPost.getLayoutParams().height = (int) (startHeight + (targetHeight - startHeight) * interpolatedValue);
+                layoutExpandPost.requestLayout();
+            }
+        });
+        valueAnimatorPostExpand.addListener(new AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationStart(Animator animation) {
+                super.onAnimationStart(animation);
+                itemExpandPost.setIcon(postExpanded ? R.drawable.ic_expand_less_white_24dp : R.drawable.ic_expand_more_white_24dp);
+                layoutExpandPost.setVisibility(View.VISIBLE);
+            }
+
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                super.onAnimationEnd(animation);
+                if (!postExpanded) {
+                    layoutExpandPost.setVisibility(View.INVISIBLE);
+                    layoutManagerLink.requestLayout();
+                }
+            }
+        });
+        valueAnimatorPostExpand.start();
     }
 
     @Override

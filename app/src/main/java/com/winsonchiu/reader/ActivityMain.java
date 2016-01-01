@@ -709,11 +709,11 @@ public class ActivityMain extends YouTubeBaseActivity
 
             @Override
             public void showReplyEditor(Replyable replyable) {
+                FragmentReply fragmentReply = FragmentReply.newInstance(replyable);
+                fragmentReply.setFragmentToHide(getFragmentManager().findFragmentById(R.id.frame_fragment));
 
                 getFragmentManager().beginTransaction()
-                        .hide(getFragmentManager().findFragmentById(R.id.frame_fragment))
-                        .add(R.id.frame_fragment, FragmentReply.newInstance(replyable),
-                                FragmentReply.TAG)
+                        .add(R.id.frame_fragment, fragmentReply, FragmentReply.TAG)
                         .addToBackStack(null)
                         .commit();
             }

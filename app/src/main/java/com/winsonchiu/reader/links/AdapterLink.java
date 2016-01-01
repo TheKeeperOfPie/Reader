@@ -1708,7 +1708,8 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             imageThumbnail.setVisibility(View.VISIBLE);
             progressImage.setVisibility(View.GONE);
             textThreadSelf.setVisibility(View.GONE);
-            imageThumbnail.setImageBitmap(null);
+            picasso.cancelRequest(imageThumbnail);
+            imageThumbnail.setImageDrawable(null);
         }
 
         public void onBind(Link link, boolean showSubreddit) {

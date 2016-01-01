@@ -4,6 +4,7 @@
 
 package com.winsonchiu.reader.links;
 
+import android.animation.ValueAnimator;
 import android.app.Activity;
 import android.content.res.Resources;
 import android.graphics.Color;
@@ -126,6 +127,7 @@ public class AdapterLinkGrid extends AdapterLink {
         private final int thumbnailSize;
         protected ImageView imageFull;
         private int colorBackgroundDefault;
+        private ValueAnimator valueAnimatorBackground;
 
         public ViewHolder(View itemView,
                 EventListener eventListener,
@@ -484,9 +486,11 @@ public class AdapterLinkGrid extends AdapterLink {
 
         public void loadBackgroundColor() {
             if (link.getBackgroundColor() != colorBackgroundDefault) {
-                setBackgroundColor(link.getBackgroundColor());
+                syncBackgroundColor();
                 return;
             }
+
+            final Link linkSaved = link;
 
             final int position = getAdapterPosition();
             Drawable drawable = imageFull.getDrawable();
@@ -497,46 +501,20 @@ public class AdapterLinkGrid extends AdapterLink {
                                     @Override
                                     public void onGenerated(Palette palette) {
                                         if (position == getAdapterPosition()) {
-                                            // Fix desync of background colors
-
-                                            setBackgroundColor(palette.getDarkVibrantColor(
+                                            linkSaved.setBackgroundColor(palette.getDarkVibrantColor(
                                                     palette.getMutedColor(colorBackgroundDefault)));
-
+                                            syncBackgroundColor();
                                         }
                                     }
                                 });
             }
         }
 
-//        public void loadBackgroundColor(Bitmap bitmap) {
-//            if (link.getBackgroundColor() != colorBackgroundDefault) {
-//                setBackgroundColor(link.getBackgroundColor());
-//                return;
-//            }
-//
-//            final int position = getAdapterPosition();
-//            Palette.from(bitmap)
-//                    .generate(
-//                            new Palette.PaletteAsyncListener() {
-//                                @Override
-//                                public void onGenerated(Palette palette) {
-//                                    if (position == getAdapterPosition()) {
-//                                        // Fix desync of background colors
-//
-//                                        setBackgroundColor(palette.getDarkVibrantColor(
-//                                                palette.getMutedColor(colorBackgroundDefault)));
-//
-//                                    }
-//                                }
-//                            });
-//        }
-
-        public void setBackgroundColor(int color) {
-
-            link.setBackgroundColor(color);
+        public void syncBackgroundColor() {
+            int color = link.getBackgroundColor();
 
             if (viewOverlay.getVisibility() == View.GONE) {
-                UtilsAnimation.animateBackgroundColor(
+                valueAnimatorBackground = UtilsAnimation.animateBackgroundColor(
                         itemView,
                         ((ColorDrawable) itemView.getBackground())
                                 .getColor(), color);
@@ -544,11 +522,10 @@ public class AdapterLinkGrid extends AdapterLink {
                 setTextColors(color);
             }
             else {
-
                 color = ColorUtils.setAlphaComponent(color, ALPHA_OVERLAY_IMAGE);
 
                 itemView.setBackgroundColor(0x00000000);
-                UtilsAnimation.animateBackgroundColor(
+                valueAnimatorBackground = UtilsAnimation.animateBackgroundColor(
                         viewOverlay,
                         ((ColorDrawable) viewOverlay.getBackground())
                                 .getColor(), color);
@@ -557,7 +534,6 @@ public class AdapterLinkGrid extends AdapterLink {
                 colorTextSecondary = colorTextSecondaryDefault;
                 syncTitleColor();
             }
-
         }
 
         public double calculateLuminance(int color) {
@@ -658,6 +634,9 @@ public class AdapterLinkGrid extends AdapterLink {
                     RelativeLayout.START_OF);
             ((RelativeLayout.LayoutParams) textThreadTitle.getLayoutParams())
                     .setMarginEnd(titleMargin);
+            if (valueAnimatorBackground != null) {
+                valueAnimatorBackground.cancel();
+            }
         }
 
         @Override

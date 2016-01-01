@@ -47,7 +47,7 @@
         <item name="colorCellOverlay">@color/lightThemeCellOverlay</item>
         <item name="colorIconFilter">@color/lightThemeIconFilter</item>
         <item name="colorAlert">@color/textColorAlertMuted</item>
-        <item name="colorScreenBackground">@color/darkThemeBackground</item>
+        <item name="colorScreenBackground">@color/lightThemeBackground</item>
 
         <item name="android:actionOverflowButtonStyle">@style/OverflowStyleLight</item>
 

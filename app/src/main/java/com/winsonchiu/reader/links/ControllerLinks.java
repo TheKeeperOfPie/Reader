@@ -107,6 +107,7 @@ public class ControllerLinks implements ControllerLinksBase {
     }
 
     public Observable<Subreddit> reloadSubreddit() {
+        Log.d(TAG, "reloadSubreddit() called with: ", new Exception());
         Observable<Subreddit> observable = reddit.about(subreddit.getUrl())
                 .flatMap(new Func1<String, Observable<Subreddit>>() {
                     @Override
@@ -149,6 +150,7 @@ public class ControllerLinks implements ControllerLinksBase {
     }
 
     public Observable<Subreddit> reloadSubredditOnly() {
+        Log.d(TAG, "reloadSubredditOnly() called with: ", new Exception());
         Observable<Subreddit> observable = reddit.about(subreddit.getUrl())
                 .flatMap(new Func1<String, Observable<Subreddit>>() {
                     @Override

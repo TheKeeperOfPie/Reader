@@ -5,6 +5,7 @@
 package com.winsonchiu.reader.comments;
 
 import android.app.Activity;
+import android.app.Fragment;
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.Color;
@@ -16,6 +17,7 @@ import android.support.design.widget.AppBarLayout;
 import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.TabLayout;
 import android.support.v4.view.PagerAdapter;
+import android.support.v4.view.ViewCompat;
 import android.support.v4.view.ViewPager;
 import android.support.v4.widget.NestedScrollView;
 import android.support.v7.widget.Toolbar;
@@ -92,6 +94,7 @@ public class FragmentReply extends FragmentBase implements Toolbar.OnMenuItemCli
     private ColorFilter colorFilterPrimary;
     private ColorFilter colorFilterIcon;
     private boolean isFinished;
+    private String fragmentParentTag;
 
     @Inject ControllerLinks controllerLinks;
     @Inject ControllerUser controllerUser;
@@ -319,6 +322,30 @@ public class FragmentReply extends FragmentBase implements Toolbar.OnMenuItemCli
                     }
                 });
 
+        view.post(new Runnable() {
+            @Override
+            public void run() {
+                view.setTranslationY(view.getHeight());
+                view.setVisibility(View.VISIBLE);
+                ViewCompat.animate(view)
+                        .translationY(0)
+                        .withEndAction(new Runnable() {
+                            @Override
+                            public void run() {
+                                Fragment fragment = getFragmentManager()
+                                        .findFragmentByTag(fragmentParentTag);
+
+                                if (fragment != null) {
+                                    getFragmentManager().beginTransaction()
+                                            .hide(fragment)
+                                            .commit();
+                                }
+                            }
+                        })
+                        .start();
+            }
+        });
+
         return view;
     }
 
@@ -459,7 +486,34 @@ public class FragmentReply extends FragmentBase implements Toolbar.OnMenuItemCli
             controllerSearch.setReplyTextLinksSubreddit(nameParent, text, collapsed);
         }
 
+        animateExit();
+    }
+
+    public void animateExit() {
         isFinished = true;
+
+        if (!isAdded() || getView() == null) {
+            return;
+        }
+
+        Fragment fragment = getFragmentManager()
+                .findFragmentByTag(fragmentParentTag);
+
+        if (fragment != null) {
+            getFragmentManager().beginTransaction()
+                    .show(fragment)
+                    .commit();
+        }
+
+        ViewCompat.animate(getView())
+                .translationY(getView().getHeight())
+                .withEndAction(new Runnable() {
+                    @Override
+                    public void run() {
+                        getActivity().onBackPressed();
+                    }
+                })
+                .start();
     }
 
     @Override
@@ -480,5 +534,9 @@ public class FragmentReply extends FragmentBase implements Toolbar.OnMenuItemCli
     @Override
     public void setVisibilityOfThing(int visibility, Thing thing) {
 
+    }
+
+    public void setFragmentToHide(Fragment fragment) {
+        fragmentParentTag = fragment.getTag();
     }
 }

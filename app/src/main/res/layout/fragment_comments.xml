@@ -51,13 +51,39 @@
 
             </com.winsonchiu.reader.views.CustomSwipeRefreshLayout>
 
-            <com.winsonchiu.reader.views.CustomRecyclerView
-                android:id="@+id/recycler_link"
+            <RelativeLayout
+                android:id="@+id/layout_expand_post"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
+                android:layout_height="wrap_content"
                 android:background="?attr/colorScreenBackground"
                 android:visibility="invisible"
-                />
+                >
+
+                <com.winsonchiu.reader.views.CustomRecyclerView
+                    android:id="@+id/recycler_link"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_above="@+id/image_expand_indicator"
+                    />
+
+                <ImageView
+                    android:id="@+id/image_expand_indicator"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:layout_above="@+id/view_divider"
+                    android:scaleType="centerInside"
+                    android:src="@drawable/ic_expand_less_white_24dp"
+                    />
+
+                <View
+                    android:id="@+id/view_divider"
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:layout_alignParentBottom="true"
+                    android:background="?attr/colorIconFilter"
+                    />
+
+            </RelativeLayout>
 
         </com.winsonchiu.reader.views.CustomRelativeLayout>
 
@@ -95,6 +121,7 @@
             android:src="@drawable/ic_unfold_more_white_24dp"
             android:layout_alignParentBottom="true"
             android:layout_alignParentEnd="true"
+            android:rotation="90"
             app:layout_anchor="@id/swipe_refresh_comment_list"
             app:layout_anchorGravity="bottom|end"
             app:elevation="4dp"

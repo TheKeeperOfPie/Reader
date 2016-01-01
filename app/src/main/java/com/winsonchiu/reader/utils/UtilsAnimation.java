@@ -38,7 +38,7 @@ public class UtilsAnimation {
     public static final long BACKGROUND_DURATION = 500;
     private static final String TAG = UtilsAnimation.class.getCanonicalName();
 
-    public static void animateBackgroundColor(final View view, final int start, final int end) {
+    public static ValueAnimator animateBackgroundColor(final View view, final int start, final int end) {
 
         final int alphaTarget = Color.alpha(end);
 
@@ -57,6 +57,8 @@ public class UtilsAnimation {
         });
 
         valueAnimator.start();
+
+        return valueAnimator;
     }
 
     public static void animateExpandActionsWithHeight(final ViewGroup viewGroup,

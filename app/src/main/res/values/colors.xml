@@ -8,7 +8,7 @@
     <color name="colorLight">#FFB39DDB</color>
     <color name="colorPrimary">#FF9575CD</color>
     <color name="colorPrimaryDark">#FF673AB7</color>
-    <color name="colorAccent">#FFFFC400</color>
+    <color name="colorAccent">#FFFBC02D</color>
 
     <color name="positiveScore">#FFFF8B60</color>
     <color name="negativeScore">#FF9494FF</color>
@@ -95,7 +95,7 @@
 
     <color name="yellowThemeColorPrimary">#FDD835</color>
     <color name="yellowThemeColorPrimaryDark">#AFB42B</color>
-    <color name="yellowThemeColorAccent">#FDD835</color>
+    <color name="yellowThemeColorAccent">#FBC02D</color>
 
     <color name="amberThemeColorPrimary">#FF9800</color>
     <color name="amberThemeColorPrimaryDark">#F57C00</color>

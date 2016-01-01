@@ -29,7 +29,7 @@
         />
 
     <item
-        android:id="@+id/item_show_post"
+        android:id="@+id/item_expand_post"
         android:title="@string/item_show_post"
         android:icon="@drawable/ic_expand_more_white_24dp"
         android:orderInCategory="300"
