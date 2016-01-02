@@ -53,7 +53,9 @@ public class AdapterLinkList extends AdapterLink {
         }
 
         return new ViewHolder(LayoutInflater.from(viewGroup.getContext())
-                .inflate(R.layout.row_link, viewGroup, false), eventListenerBase, disallowListener,
+                .inflate(R.layout.row_link, viewGroup, false),
+                eventListenerBase,
+                disallowListener,
                 recyclerCallback);
     }
 
@@ -77,9 +79,9 @@ public class AdapterLinkList extends AdapterLink {
     public static class ViewHolder extends AdapterLink.ViewHolderBase {
 
         public ViewHolder(View itemView,
-                EventListener eventListener,
-                DisallowListener disallowListener,
-                RecyclerCallback recyclerCallback) {
+                          EventListener eventListener,
+                          DisallowListener disallowListener,
+                          RecyclerCallback recyclerCallback) {
             super(itemView, eventListener, disallowListener, recyclerCallback);
         }
 

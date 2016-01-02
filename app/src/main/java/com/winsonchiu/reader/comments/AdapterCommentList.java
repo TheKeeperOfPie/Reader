@@ -49,6 +49,7 @@ import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.winsonchiu.reader.ActivityMain;
 import com.winsonchiu.reader.AppSettings;
@@ -61,6 +62,7 @@ import com.winsonchiu.reader.links.AdapterLinkGrid;
 import com.winsonchiu.reader.links.AdapterLinkList;
 import com.winsonchiu.reader.profile.ControllerProfile;
 import com.winsonchiu.reader.utils.DisallowListener;
+import com.winsonchiu.reader.utils.FinalizingSubscriber;
 import com.winsonchiu.reader.utils.OnTouchListenerDisallow;
 import com.winsonchiu.reader.utils.RecyclerCallback;
 import com.winsonchiu.reader.utils.UtilsAnimation;
@@ -69,7 +71,7 @@ import com.winsonchiu.reader.utils.YouTubeListener;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.inject.Inject;
+import rx.Observable;
 
 /**
  * Created by TheKeeperOfPie on 3/12/2015.
@@ -91,7 +93,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
     private boolean actionsExpanded;
 
     private AdapterLink.ViewHolderBase.EventListener eventListenerBase;
-    private ViewHolderComment.EventListener eventListenerComment;
+    private ViewHolderComment.EventListener eventListener;
     private DisallowListener disallowListener;
     private RecyclerCallback recyclerCallback;
     private YouTubeListener youTubeListener;
@@ -102,12 +104,12 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
     private boolean isGrid;
     private boolean animationFinished;
 
-    @Inject ControllerComments controllerComments;
+    private ControllerComments controllerComments;
 
     public AdapterCommentList(Activity activity,
             ControllerComments controllerComments,
             AdapterLink.ViewHolderBase.EventListener eventListenerBase,
-            ViewHolderComment.EventListener eventListenerComment,
+            ViewHolderComment.EventListener eventListener,
             DisallowListener disallowListener,
             RecyclerCallback recyclerCallback,
             YouTubeListener youTubeListener,
@@ -116,7 +118,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
             boolean actionsExpanded) {
         this.controllerComments = controllerComments;
         this.eventListenerBase = eventListenerBase;
-        this.eventListenerComment = eventListenerComment;
+        this.eventListener = eventListener;
         this.disallowListener = disallowListener;
         this.recyclerCallback = recyclerCallback;
         this.youTubeListener = youTubeListener;
@@ -126,8 +128,6 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
         DisplayMetrics displayMetrics = activity.getResources().getDisplayMetrics();
         this.thumbnailSize = displayMetrics.widthPixels / 2;
         viewHolders = new ArrayList<>();
-
-        ((ActivityMain) activity).getComponentActivity().inject(this);
     }
 
     @Override
@@ -142,7 +142,8 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
             if (isGrid) {
                 viewHolderLink = new AdapterLinkGrid.ViewHolder(
                         LayoutInflater.from(parent.getContext())
-                                .inflate(R.layout.cell_link, parent, false), eventListenerBase,
+                                .inflate(R.layout.cell_link, parent, false),
+                        eventListenerBase,
                         disallowListener,
                         recyclerCallback,
                         thumbnailSize) {
@@ -214,7 +215,8 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
             else {
                 viewHolderLink = new AdapterLinkList.ViewHolder(
                         LayoutInflater.from(parent.getContext())
-                                .inflate(R.layout.row_link, parent, false), eventListenerBase,
+                                .inflate(R.layout.row_link, parent, false),
+                        eventListenerBase,
                         disallowListener,
                         recyclerCallback) {
 
@@ -274,8 +276,12 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
         }
 
         return new ViewHolderComment(LayoutInflater.from(parent.getContext())
-                .inflate(R.layout.row_comment, parent, false), eventListenerBase,
-                eventListenerComment, disallowListener, recyclerCallback);
+                .inflate(R.layout.row_comment, parent, false),
+                eventListenerBase,
+                controllerComments,
+                eventListener,
+                disallowListener,
+                recyclerCallback);
     }
 
     @Override
@@ -390,6 +396,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
     public static class ViewHolderComment extends RecyclerView.ViewHolder
             implements Toolbar.OnMenuItemClickListener {
 
+        private final EventListenerComment eventListenerComment;
         protected Comment comment;
 
         protected View viewIndent;
@@ -440,13 +447,14 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
         protected int colorIconFilter;
         protected int colorGold;
 
-        public ViewHolderComment(final View itemView,
-                AdapterLink.ViewHolderBase.EventListener eventListenerBase,
-                EventListener eventListener,
-                DisallowListener disallowListener,
-                RecyclerCallback recyclerCallback,
-                final ControllerProfile.Listener listener) {
-            this(itemView, eventListenerBase, eventListener, disallowListener, recyclerCallback);
+        public ViewHolderComment(View itemView,
+                                 AdapterLink.ViewHolderBase.EventListener eventListenerBase,
+                                 EventListenerComment eventListenerComment,
+                                 EventListener eventListener,
+                                 DisallowListener disallowListener,
+                                 RecyclerCallback recyclerCallback,
+                                 final ControllerProfile.Listener listener) {
+            this(itemView, eventListenerBase, eventListenerComment, eventListener, disallowListener, recyclerCallback);
             itemViewLink.setVisible(true);
             itemViewLink.setEnabled(true);
             itemViewLink.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
@@ -461,12 +469,14 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
         }
 
         public ViewHolderComment(final View itemView,
-                AdapterLink.ViewHolderBase.EventListener eventListenerBase,
-                EventListener eventListener,
-                DisallowListener disallowListener,
-                RecyclerCallback recyclerCallback) {
+                                 AdapterLink.ViewHolderBase.EventListener eventListenerBase,
+                                 EventListenerComment eventListenerComment,
+                                 EventListener eventListener,
+                                 DisallowListener disallowListener,
+                                 RecyclerCallback recyclerCallback) {
             super(itemView);
 
+            this.eventListenerComment = eventListenerComment;
             this.eventListenerBase = eventListenerBase;
             this.eventListener = eventListener;
             this.disallowListener = disallowListener;
@@ -541,13 +551,13 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
 
                 @Override
                 public void onLongPress(MotionEvent e) {
-                    eventListener.toggleComment(getAdapterPosition());
+                    eventListenerComment.toggleComment(getAdapterPosition());
                 }
 
                 @Override
                 public boolean onDoubleTap(MotionEvent e) {
                     if (!comment.isMore() && !TextUtils.isEmpty(eventListenerBase.getUser().getName())) {
-                        eventListener.voteComment(ViewHolderComment.this, comment, 1);
+                        voteComment(ViewHolderComment.this, comment, 1);
                     }
                     if (layoutContainerExpand.getVisibility() == View.VISIBLE) {
                         layoutContainerExpand.clearAnimation();
@@ -606,7 +616,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
 
         private void sendReply() {
             if (comment.isEditMode()) {
-                eventListener.editComment(comment.getName(), comment.getLevel(), editTextReply.getText().toString());
+                eventListenerComment.editComment(comment.getName(), comment.getLevel(), editTextReply.getText().toString());
                 comment.setEdited(System.currentTimeMillis());
             }
             else {
@@ -662,7 +672,9 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
             }
 
             if (comment.isMore()) {
-                eventListener.loadNestedComments(comment);
+                if (!eventListener.loadNestedComments(comment, eventListenerComment.getSubredditName(), eventListenerComment.getLinkId())) {
+                    eventListenerComment.loadNestedComments(comment);
+                }
                 return;
             }
 
@@ -951,13 +963,13 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
         public boolean onMenuItemClick(MenuItem item) {
             switch (item.getItemId()) {
                 case R.id.item_jump_parent:
-                    eventListener.jumpToParent(comment);
+                    eventListenerComment.jumpToParent(comment);
                     break;
                 case R.id.item_upvote:
-                    eventListener.voteComment(ViewHolderComment.this, comment, 1);
+                    voteComment(ViewHolderComment.this, comment, 1);
                     break;
                 case R.id.item_downvote:
-                    eventListener.voteComment(ViewHolderComment.this, comment, -1);
+                    voteComment(ViewHolderComment.this, comment, -1);
                     break;
                 case R.id.item_reply:
                     comment.setEditMode(false);
@@ -1002,9 +1014,13 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                                         public void onClick(
                                                 DialogInterface dialog,
                                                 int which) {
-
-                                            eventListener.deleteComment(
-                                                    comment);
+                                            eventListenerComment.deleteComment(comment)
+                                                    .subscribe(new FinalizingSubscriber<String>() {
+                                                        @Override
+                                                        public void error(Throwable e) {
+                                                            Toast.makeText(itemView.getContext(), R.string.error_deleting_comment, Toast.LENGTH_LONG).show();
+                                                        }
+                                                    });
                                         }
                                     })
                             .setNegativeButton("No", null)
@@ -1056,6 +1072,18 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
             return true;
         }
 
+        private void voteComment(ViewHolderComment viewHolderComment, Comment comment, int vote) {
+            eventListenerComment.voteComment(viewHolderComment, comment, vote)
+                    .subscribe(new FinalizingSubscriber<String>() {
+                        @Override
+                        public void error(Throwable e) {
+                            Toast.makeText(itemView.getContext(), resources.getString(R.string.error_voting),
+                                    Toast.LENGTH_SHORT)
+                                    .show();
+                        }
+                    });
+        }
+
         private void requestReport(final String reason) {
             String author = comment.getAuthor();
             String title = comment.getBody().toString();
@@ -1095,14 +1123,19 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
             itemView.setVisibility(visibility);
         }
 
-        public interface EventListener {
-            void loadNestedComments(Comment comment);
-            void voteComment(ViewHolderComment viewHolderComment, Comment comment, int vote);
+        public interface EventListenerComment {
             boolean toggleComment(int position);
-            void deleteComment(Comment comment);
+            Observable<String> deleteComment(Comment comment);
             void editComment(String name, int level, String text);
+            Observable<String> voteComment(ViewHolderComment viewHolderComment, Comment comment, int vote);
             void jumpToParent(Comment comment);
+            String getLinkId();
+            String getSubredditName();
+            void loadNestedComments(Comment comment);
         }
 
+        public interface EventListener {
+            boolean loadNestedComments(Comment comment, String subreddit, String linkId);
+        }
     }
 }

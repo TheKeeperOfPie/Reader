@@ -67,6 +67,7 @@ import com.winsonchiu.reader.utils.UtilsColor;
 
 import javax.inject.Inject;
 
+import rx.Observable;
 import rx.Observer;
 
 public class FragmentProfile extends FragmentBase implements Toolbar.OnMenuItemClickListener {
@@ -347,25 +348,17 @@ public class FragmentProfile extends FragmentBase implements Toolbar.OnMenuItemC
             adapterProfile = new AdapterProfile(controllerProfile,
                     controllerLinks,
                     mListener.getEventListenerBase(),
-                    new AdapterCommentList.ViewHolderComment.EventListener() {
+                    new AdapterCommentList.ViewHolderComment.EventListenerComment() {
                         @Override
                         public void loadNestedComments(Comment comment) {
                             controllerProfile.loadNestedComments(comment);
                         }
 
                         @Override
-                        public void voteComment(AdapterCommentList.ViewHolderComment viewHolderComment,
-                                Comment comment,
-                                int vote) {
-                            controllerProfile.voteComment(viewHolderComment, comment, vote)
-                                    .subscribe(new FinalizingSubscriber<String>() {
-                                        @Override
-                                        public void error(Throwable e) {
-                                            Toast.makeText(activity, activity.getString(R.string.error_voting),
-                                                    Toast.LENGTH_SHORT)
-                                                    .show();
-                                        }
-                                    });
+                        public Observable<String> voteComment(AdapterCommentList.ViewHolderComment viewHolderComment,
+                                                              Comment comment,
+                                                              int vote) {
+                            return controllerProfile.voteComment(viewHolderComment, comment, vote);
                         }
 
                         @Override
@@ -374,14 +367,8 @@ public class FragmentProfile extends FragmentBase implements Toolbar.OnMenuItemC
                         }
 
                         @Override
-                        public void deleteComment(Comment comment) {
-                            controllerProfile.deleteComment(comment)
-                                    .subscribe(new FinalizingSubscriber<String>() {
-                                        @Override
-                                        public void error(Throwable e) {
-                                            Toast.makeText(activity, R.string.error_deleting_comment, Toast.LENGTH_LONG).show();
-                                        }
-                                    });
+                        public Observable<String> deleteComment(Comment comment) {
+                            return controllerProfile.deleteComment(comment);
                         }
 
                         @Override
@@ -394,7 +381,18 @@ public class FragmentProfile extends FragmentBase implements Toolbar.OnMenuItemC
 
                         }
 
+                        @Override
+                        public String getLinkId() {
+                            return "";
+                        }
+
+                        @Override
+                        public String getSubredditName() {
+                            return "";
+                        }
+
                     },
+                    mListener.getEventListener(),
                     new DisallowListener() {
                         @Override
                         public void requestDisallowInterceptTouchEventVertical(boolean disallow) {

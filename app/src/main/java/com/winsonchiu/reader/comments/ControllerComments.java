@@ -36,7 +36,7 @@ import rx.functions.Func1;
 /**
  * Created by TheKeeperOfPie on 3/20/2015.
  */
-public class ControllerComments {
+public class ControllerComments implements AdapterCommentList.ViewHolderComment.EventListenerComment{
 
     private static final String TAG = ControllerComments.class.getCanonicalName();
 
@@ -49,12 +49,10 @@ public class ControllerComments {
 
     private boolean isRefreshing;
     private boolean isCommentThread;
-    private int contextNumber;
 
     public ControllerComments() {
         CustomApplication.getComponentMain().inject(this);
     }
-
 
     public void addListener(Listener listener) {
         if (listeners.add(listener)) {
@@ -84,19 +82,20 @@ public class ControllerComments {
     }
 
     public void setLinkId(String linkId) {
-        setLinkIdValues(linkId);
+        setLinkIdValues(linkId, null, 0);
         reloadAllComments();
     }
 
-    public void setLinkId(String linkId, String commentId, int contextNumber) {
-        this.contextNumber = contextNumber;
-        setLinkIdValues(linkId);
-        loadCommentThread(commentId);
+    public void setLinkId(String linkId, String commentId, int contextLevel) {
+        setLinkIdValues(linkId, commentId, contextLevel);
+
     }
 
-    private void setLinkIdValues(String linkId) {
+    private void setLinkIdValues(String linkId, String commentId, int contextLevel) {
         link = new Link();
         link.setId(linkId);
+        link.setContextLevel(contextLevel);
+        link.setCommentId(commentId);
         setSort(link.getSuggestedSort());
     }
 
@@ -106,10 +105,16 @@ public class ControllerComments {
             return;
         }
 
+        if (link.getContextLevel() > 0 && !TextUtils.isEmpty(link.getCommentId())) {
+            loadCommentThread();
+            return;
+        }
+
         if (!link.getComments().getChildren().isEmpty()) {
             Comment commentFirst = ((Comment) link.getComments().getChildren().get(0));
             if (!commentFirst.getParentId().equals(link.getId())) {
-                loadCommentThread(commentFirst.getId());
+                link.setCommentId(commentFirst.getId());
+                loadCommentThread();
                 return;
             }
         }
@@ -145,6 +150,9 @@ public class ControllerComments {
     }
 
     public void loadLinkComments() {
+        link.setCommentId(null);
+        link.setContextLevel(0);
+
         reddit.comments(link.getId(), null, sort.toString(), true, true, null, 10, 100)
                 .flatMap(new Func1<String, Observable<Link>>() {
                     @Override
@@ -178,8 +186,8 @@ public class ControllerComments {
                 });
     }
 
-    public void loadCommentThread(String commentId) {
-        reddit.comments(link.getId(), commentId, sort.toString(), true, true, contextNumber,  10, 100)
+    public void loadCommentThread() {
+        reddit.comments(link.getId(), link.getCommentId(), sort.toString(), true, true, link.getContextLevel(),  10, 100)
                 .flatMap(new Func1<String, Observable<Link>>() {
                     @Override
                     public Observable<Link> call(String response) {
@@ -428,6 +436,10 @@ public class ControllerComments {
             for (Listener listener : listeners) {
                 listener.getAdapter().notifyItemInserted(commentIndex + 2);
             }
+        }
+
+        for (Listener listener : listeners) {
+            listener.insertComment(comment);
         }
     }
 
@@ -777,6 +789,11 @@ public class ControllerComments {
 
     }
 
+    @Override
+    public String getLinkId() {
+        return link.getId();
+    }
+
     public boolean setReplyText(String name, String text, boolean collapsed) {
         if (name.equals(link.getName())) {
             link.setReplyText(text);
@@ -809,12 +826,19 @@ public class ControllerComments {
                 listener.getAdapter().notifyItemChanged(0);
             }
         }
+
+        for (Listener listener : listeners) {
+            listener.setNsfw(name, over18);
+        }
     }
 
     public interface Listener extends ControllerListener {
         void setSort(Sort sort);
         void setIsCommentThread(boolean isCommentThread);
         void scrollTo(int position);
+
+        void insertComment(Comment comment);
+        void setNsfw(String name, boolean over18);
     }
 
 }

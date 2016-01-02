@@ -1,0 +1,80 @@
+<!--
+  ~ Copyright 2015 Winson Chiu
+  -->
+
+<!--
+  ~ Copyright 2015 Winson Chiu
+  -->
+
+<com.winsonchiu.reader.views.CustomRelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/layout_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="com.winsonchiu.reader.comments.FragmentComments"
+    >
+
+    <com.winsonchiu.reader.views.CustomSwipeRefreshLayout
+        android:id="@+id/swipe_refresh_comment_list"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        >
+
+        <android.support.v7.widget.RecyclerView
+            android:id="@+id/recycler_comment_list"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:scrollbars="vertical"
+            android:scrollbarFadeDuration="200"
+            android:paddingBottom="48dp"
+            android:clipToPadding="false"
+            />
+
+    </com.winsonchiu.reader.views.CustomSwipeRefreshLayout>
+
+    <com.winsonchiu.reader.views.CustomFrameLayout
+        android:id="@+id/layout_expand_post"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="invisible"
+        >
+
+        <RelativeLayout
+            android:id="@+id/layout_expand_post_inner"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="?attr/colorScreenBackground"
+            >
+
+            <com.winsonchiu.reader.views.CustomRecyclerView
+                android:id="@+id/recycler_link"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_alignParentTop="true"
+                android:layout_above="@+id/image_expand_indicator"
+                />
+
+            <ImageView
+                android:id="@+id/image_expand_indicator"
+                android:layout_width="match_parent"
+                android:layout_height="32dp"
+                android:layout_above="@+id/view_divider"
+                android:clickable="true"
+                android:scaleType="centerInside"
+                android:src="@drawable/ic_menu_white_24dp"
+                />
+
+            <View
+                android:id="@+id/view_divider"
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:layout_alignParentBottom="true"
+                android:background="?attr/colorIconFilter"
+                />
+
+        </RelativeLayout>
+
+    </com.winsonchiu.reader.views.CustomFrameLayout>
+
+</com.winsonchiu.reader.views.CustomRelativeLayout>

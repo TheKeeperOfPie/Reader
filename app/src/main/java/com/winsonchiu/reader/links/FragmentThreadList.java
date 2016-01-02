@@ -48,13 +48,13 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.squareup.picasso.Picasso;
+import com.winsonchiu.reader.ActivityMain;
 import com.winsonchiu.reader.AppSettings;
 import com.winsonchiu.reader.ControllerUser;
 import com.winsonchiu.reader.CustomApplication;
 import com.winsonchiu.reader.FragmentBase;
 import com.winsonchiu.reader.FragmentListenerBase;
 import com.winsonchiu.reader.FragmentNewPost;
-import com.winsonchiu.reader.ActivityMain;
 import com.winsonchiu.reader.R;
 import com.winsonchiu.reader.data.reddit.Link;
 import com.winsonchiu.reader.data.reddit.Reddit;
@@ -390,14 +390,16 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
             }
         });
         if (adapterLinkList == null) {
-            adapterLinkList = new AdapterLinkList(activity, controllerLinks,
+            adapterLinkList = new AdapterLinkList(activity,
+                    controllerLinks,
                     eventListenerHeader,
                     mListener.getEventListenerBase(),
                     disallowListener,
                     recyclerCallback);
         }
         if (adapterLinkGrid == null) {
-            adapterLinkGrid = new AdapterLinkGrid(activity, controllerLinks,
+            adapterLinkGrid = new AdapterLinkGrid(activity,
+                    controllerLinks,
                     eventListenerHeader,
                     mListener.getEventListenerBase(),
                     disallowListener,

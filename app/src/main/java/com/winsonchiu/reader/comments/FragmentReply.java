@@ -98,11 +98,11 @@ public class FragmentReply extends FragmentBase implements Toolbar.OnMenuItemCli
 
     @Inject ControllerLinks controllerLinks;
     @Inject ControllerUser controllerUser;
-    @Inject ControllerComments controllerComments;
     @Inject ControllerComments controllerProfile;
     @Inject ControllerInbox controllerInbox;
     @Inject ControllerSearch controllerSearch;
     @Inject ControllerInbox controllerHistory;
+    @Inject ControllerCommentsTop controllerCommentsTop;
 
     public static FragmentReply newInstance(Replyable replyable) {
         FragmentReply fragment = new FragmentReply();
@@ -409,7 +409,8 @@ public class FragmentReply extends FragmentBase implements Toolbar.OnMenuItemCli
                 inputManager.hideSoftInputFromWindow(editReply.getWindowToken(), 0);
 
                 if (getArguments().getBoolean(ARG_IS_EDIT)) {
-                    mListener.getEventListenerComment().editComment(nameParent, getArguments().getInt(ARG_COMMENT_LEVEL), editReply.getText().toString());
+                    // TODO: Move to an insert/update comment call after editing
+                    controllerCommentsTop.editComment(nameParent, getArguments().getInt(ARG_COMMENT_LEVEL), editReply.getText().toString());
                 }
                 else {
                     mListener.getEventListenerBase().sendComment(nameParent,
@@ -470,7 +471,7 @@ public class FragmentReply extends FragmentBase implements Toolbar.OnMenuItemCli
             controllerLinks.setReplyText(nameParent, text, collapsed);
         }
         if (getFragmentManager().findFragmentByTag(FragmentComments.TAG) != null) {
-            controllerComments.setReplyText(nameParent, text, collapsed);
+            controllerCommentsTop.setReplyText(nameParent, text, collapsed);
         }
         if (getFragmentManager().findFragmentByTag(FragmentProfile.TAG) != null) {
             controllerProfile.setReplyText(nameParent, text, collapsed);

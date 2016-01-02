@@ -21,11 +21,11 @@ import com.winsonchiu.reader.utils.RecyclerCallback;
 public class AdapterHistoryLinkList extends AdapterLinkList {
 
     public AdapterHistoryLinkList(Activity activity,
-            ControllerLinksBase controllerLinks,
-            ViewHolderHeader.EventListener eventListenerHeader,
-            ViewHolderBase.EventListener eventListenerBase,
-            DisallowListener disallowListener,
-            RecyclerCallback recyclerCallback) {
+                                  ControllerLinksBase controllerLinks,
+                                  ViewHolderHeader.EventListener eventListenerHeader,
+                                  ViewHolderBase.EventListener eventListenerBase,
+                                  DisallowListener disallowListener,
+                                  RecyclerCallback recyclerCallback) {
         super(activity, controllerLinks, eventListenerHeader, eventListenerBase,
                 disallowListener, recyclerCallback);
     }
@@ -38,7 +38,9 @@ public class AdapterHistoryLinkList extends AdapterLinkList {
         }
 
         return new AdapterLinkList.ViewHolder(LayoutInflater.from(viewGroup.getContext())
-                .inflate(R.layout.row_link, viewGroup, false), eventListenerBase, disallowListener,
+                .inflate(R.layout.row_link, viewGroup, false),
+                eventListenerBase,
+                disallowListener,
                 recyclerCallback) {
             @Override
             public boolean isInHistory() {

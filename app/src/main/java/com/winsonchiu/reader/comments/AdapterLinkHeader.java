@@ -11,10 +11,8 @@ import android.text.TextUtils;
 import android.util.DisplayMetrics;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
-import android.view.View;
 import android.view.ViewGroup;
 
-import com.winsonchiu.reader.ActivityMain;
 import com.winsonchiu.reader.R;
 import com.winsonchiu.reader.data.reddit.Link;
 import com.winsonchiu.reader.data.reddit.Reddit;
@@ -24,8 +22,6 @@ import com.winsonchiu.reader.links.AdapterLinkList;
 import com.winsonchiu.reader.utils.DisallowListener;
 import com.winsonchiu.reader.utils.RecyclerCallback;
 import com.winsonchiu.reader.utils.YouTubeListener;
-
-import javax.inject.Inject;
 
 /**
  * Created by TheKeeperOfPie on 12/29/2015.
@@ -43,15 +39,17 @@ public class AdapterLinkHeader extends RecyclerView.Adapter<AdapterLink.ViewHold
     private final YouTubeListener youTubeListener;
     private boolean animationFinished;
 
-    @Inject ControllerComments controllerComments;
+    private ControllerComments controllerComments;
 
     public AdapterLinkHeader(Activity activity,
+                             ControllerComments controllerComments,
                              AdapterLink.ViewHolderBase.EventListener eventListenerBase,
                              DisallowListener disallowListener, RecyclerCallback recyclerCallback,
                              YouTubeListener youTubeListener,
                              boolean isGrid,
                              int colorLink,
                              boolean actionsExpanded) {
+        this.controllerComments = controllerComments;
         this.eventListenerBase = eventListenerBase;
         this.disallowListener = disallowListener;
         this.recyclerCallback = recyclerCallback;
@@ -61,8 +59,6 @@ public class AdapterLinkHeader extends RecyclerView.Adapter<AdapterLink.ViewHold
         this.actionsExpanded = actionsExpanded;
         DisplayMetrics displayMetrics = activity.getResources().getDisplayMetrics();
         thumbnailSize = displayMetrics.widthPixels / 2;
-
-        ((ActivityMain) activity).getComponentActivity().inject(this);
     }
 
     @Override
@@ -218,25 +214,6 @@ public class AdapterLinkHeader extends RecyclerView.Adapter<AdapterLink.ViewHold
     public void setAnimationFinished(boolean animationFinished) {
         this.animationFinished = animationFinished;
         notifyDataSetChanged();
-    }
-
-    public void collapseViewHolderLink(boolean expandActions) {
-        if (controllerComments.getLink().isSelf()) {
-            viewHolderLink.textThreadSelf.setVisibility(View.GONE);
-        }
-        else {
-            viewHolderLink.destroyWebViews();
-            viewHolderLink.onRecycle();
-            viewHolderLink.onBind(controllerComments.getLink(),
-                    controllerComments.showSubreddit());
-        }
-
-        if (expandActions) {
-            actionsExpanded = true;
-            viewHolderLink.showToolbarActionsInstant();
-        } else {
-            viewHolderLink.hideToolbarActionsInstant();
-        }
     }
 
     public void recycle() {

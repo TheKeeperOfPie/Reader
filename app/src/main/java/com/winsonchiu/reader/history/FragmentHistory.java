@@ -43,10 +43,10 @@ import android.view.ViewGroup;
 import android.widget.DatePicker;
 import android.widget.ImageView;
 
+import com.winsonchiu.reader.ActivityMain;
 import com.winsonchiu.reader.AppSettings;
 import com.winsonchiu.reader.FragmentBase;
 import com.winsonchiu.reader.FragmentListenerBase;
-import com.winsonchiu.reader.ActivityMain;
 import com.winsonchiu.reader.R;
 import com.winsonchiu.reader.data.reddit.Link;
 import com.winsonchiu.reader.data.reddit.Reddit;
@@ -318,14 +318,16 @@ public class FragmentHistory extends FragmentBase implements Toolbar.OnMenuItemC
 
 
         if (adapterLinkList == null) {
-            adapterLinkList = new AdapterHistoryLinkList(activity, controllerHistory,
+            adapterLinkList = new AdapterHistoryLinkList(activity,
+                    controllerHistory,
                     eventListenerHeader,
                     mListener.getEventListenerBase(),
                     disallowListener,
                     recyclerCallback);
         }
         if (adapterLinkGrid == null) {
-            adapterLinkGrid = new AdapterHistoryLinkGrid(activity, controllerHistory,
+            adapterLinkGrid = new AdapterHistoryLinkGrid(activity,
+                    controllerHistory,
                     eventListenerHeader,
                     mListener.getEventListenerBase(),
                     disallowListener,

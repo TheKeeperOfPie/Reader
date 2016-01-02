@@ -8,6 +8,7 @@ import android.content.Context;
 
 import com.winsonchiu.reader.ControllerUser;
 import com.winsonchiu.reader.comments.ControllerComments;
+import com.winsonchiu.reader.comments.ControllerCommentsTop;
 import com.winsonchiu.reader.dagger.ScopeActivity;
 import com.winsonchiu.reader.data.reddit.Sort;
 import com.winsonchiu.reader.history.ControllerHistory;
@@ -15,6 +16,8 @@ import com.winsonchiu.reader.inbox.ControllerInbox;
 import com.winsonchiu.reader.links.ControllerLinks;
 import com.winsonchiu.reader.profile.ControllerProfile;
 import com.winsonchiu.reader.search.ControllerSearch;
+
+import javax.inject.Named;
 
 import dagger.Module;
 import dagger.Provides;
@@ -39,7 +42,19 @@ public class ModuleReddit {
 
     @ScopeActivity
     @Provides
+    public ControllerCommentsTop provideControllerCommentsTop() {
+        return new ControllerCommentsTop();
+    }
+
+    @ScopeActivity
+    @Provides
     public ControllerComments provideControllerComments() {
+        return new ControllerComments();
+    }
+
+    @Provides
+    @Named("instance")
+    public ControllerComments provideControllerCommentsInstance() {
         return new ControllerComments();
     }
 

@@ -5,8 +5,6 @@
 package com.winsonchiu.reader.comments;
 
 import android.animation.Animator;
-import android.animation.AnimatorListenerAdapter;
-import android.animation.ValueAnimator;
 import android.app.Activity;
 import android.content.SharedPreferences;
 import android.content.res.TypedArray;
@@ -14,7 +12,6 @@ import android.graphics.Color;
 import android.graphics.ColorFilter;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
-import android.graphics.RectF;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -25,10 +22,9 @@ import android.support.design.widget.FloatingActionButton;
 import android.support.v4.view.GestureDetectorCompat;
 import android.support.v4.view.MotionEventCompat;
 import android.support.v4.view.ViewCompat;
+import android.support.v4.view.ViewPager;
 import android.support.v4.view.ViewPropertyAnimatorListener;
 import android.support.v4.view.animation.FastOutSlowInInterpolator;
-import android.support.v4.widget.SwipeRefreshLayout;
-import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.StaggeredGridLayoutManager;
 import android.support.v7.widget.Toolbar;
@@ -45,7 +41,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.Animation;
 import android.view.animation.Transformation;
-import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.Toast;
@@ -60,13 +55,14 @@ import com.winsonchiu.reader.CustomApplication;
 import com.winsonchiu.reader.FragmentBase;
 import com.winsonchiu.reader.FragmentListenerBase;
 import com.winsonchiu.reader.R;
+import com.winsonchiu.reader.data.reddit.Comment;
 import com.winsonchiu.reader.data.reddit.Link;
+import com.winsonchiu.reader.data.reddit.Listing;
 import com.winsonchiu.reader.data.reddit.Sort;
 import com.winsonchiu.reader.links.AdapterLink;
-import com.winsonchiu.reader.utils.DisallowListener;
-import com.winsonchiu.reader.utils.ItemDecorationDivider;
-import com.winsonchiu.reader.utils.LinearLayoutManagerWrapHeight;
-import com.winsonchiu.reader.utils.RecyclerCallback;
+import com.winsonchiu.reader.links.ControllerLinks;
+import com.winsonchiu.reader.utils.FinalizingSubscriber;
+import com.winsonchiu.reader.utils.RecyclerFragmentPagerAdapter;
 import com.winsonchiu.reader.utils.ScrollAwareFloatingActionButtonBehavior;
 import com.winsonchiu.reader.utils.TouchEventListener;
 import com.winsonchiu.reader.utils.UtilsAnimation;
@@ -99,20 +95,9 @@ public class FragmentComments extends FragmentBase
     public static final long DURATION_ENTER = 250;
     public static final long DURATION_EXIT = 250;
     private static final long DURATION_ACTIONS_FADE = 150;
-    private static final float OFFSET_MODIFIER = 0.5f;;
+    private static final float OFFSET_MODIFIER = 0.5f;
 
     private FragmentListenerBase mListener;
-    private RecyclerView recyclerLink;
-    private RecyclerView recyclerCommentList;
-    private ViewGroup layoutExpandPost;
-    private ImageView imageExpandIndicator;
-    private LinearLayoutManagerWrapHeight layoutManagerLink;
-    private LinearLayoutManager linearLayoutManager;
-    private AdapterLinkHeader adapterLink;
-    private AdapterCommentList adapterCommentList;
-    private SwipeRefreshLayout swipeRefreshCommentList;
-    private ControllerComments.Listener listener;
-    private DisallowListener disallowListener;
     private Toolbar toolbar;
     private LinearLayout layoutActions;
     private FloatingActionButton buttonExpandActions;
@@ -123,7 +108,7 @@ public class FragmentComments extends FragmentBase
     private YouTubePlayerView viewYouTube;
     private YouTubePlayer youTubePlayer;
     private YouTubeListener youTubeListener;
-    private RecyclerView.AdapterDataObserver observer;
+    private ControllerCommentsTop.Listener listenerTop;
     private FastOutSlowInInterpolator fastOutSlowInInterpolator;
     private FragmentBase fragmentToHide;
     private String fragmentParentTag;
@@ -149,17 +134,23 @@ public class FragmentComments extends FragmentBase
     private float swipeDifferenceX;
     private ColorFilter colorFilterPrimary;
     private ColorFilter colorFilterAccent;
-    private ColorFilter colorFilterIcon;
     private float swipeEndDistance;
-    private int scrollToPaddingTop;
-    private int scrollToPaddingBottom;
     private String currentYouTubeId;
 
     private boolean isStartOnLeft;
-    private boolean postExpanded = false;
-    private ValueAnimator valueAnimatorPostExpand = ValueAnimator.ofFloat(0, 1);
+    private boolean animationFinished;
 
-    @Inject ControllerComments controllerComments;
+    private ViewPager pagerComments;
+    private FragmentCommentsInner.Callback fragmentCallback;
+    private Link linkTop;
+    private int positionCurrent;
+    private int indexStart;
+    private int itemCount;
+    private FragmentCommentsInner fragmentCurrent;
+    private RecyclerFragmentPagerAdapter<FragmentCommentsInner> adapterComments;
+
+    @Inject ControllerCommentsTop controllerCommentsTop;
+    @Inject ControllerLinks controllerLinks;
 
     public static FragmentComments newInstance() {
         FragmentComments fragment = new FragmentComments();
@@ -237,9 +228,6 @@ public class FragmentComments extends FragmentBase
         itemExpandPost = menu.findItem(R.id.item_expand_post);
         toolbar.setOnMenuItemClickListener(this);
 
-        toolbar.getMenu().findItem(controllerComments.getSort().getMenuId())
-                .setChecked(true);
-
         for (int index = 0; index < menu.size(); index++) {
             menu.getItem(index).getIcon().mutate().setColorFilter(colorFilterPrimary);
         }
@@ -251,91 +239,28 @@ public class FragmentComments extends FragmentBase
 
         ((ActivityMain) getActivity()).getComponentActivity().inject(this);
 
-        scrollToPaddingTop = (int) TypedValue
-                .applyDimension(TypedValue.COMPLEX_UNIT_DIP, 8, getResources().getDisplayMetrics());
-        scrollToPaddingBottom = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 56,
-                getResources().getDisplayMetrics());
-
         layoutRoot = (CustomRelativeLayout) inflater
                 .inflate(R.layout.fragment_comments, container, false);
 
-        listener = new ControllerComments.Listener() {
+        listenerTop = new ControllerCommentsTop.Listener() {
             @Override
-            public void setSort(Sort sort) {
-                toolbar.getMenu().findItem(sort.getMenuId()).setChecked(true);
+            public void insertComment(Comment comment) {
+                fragmentCurrent.getControllerComments().insertComment(comment);
             }
 
             @Override
-            public void setIsCommentThread(boolean isCommentThread) {
-                itemLoadFullComments.setEnabled(isCommentThread);
-                itemLoadFullComments.setVisible(isCommentThread);
+            public void setNsfw(String name, boolean over18) {
+                fragmentCurrent.getControllerComments().setNsfw(name, over18);
             }
 
             @Override
-            public void scrollTo(final int position) {
-                UtilsAnimation.scrollToPositionWithCentering(position, recyclerCommentList, linearLayoutManager, scrollToPaddingTop, scrollToPaddingBottom, true);
+            public void updateComment(Comment newComment) {
+
             }
 
             @Override
-            public RecyclerView.Adapter getAdapter() {
-                return adapterCommentList;
-            }
+            public void setReplyText(String nameParent, String text, boolean collapsed) {
 
-            @Override
-            public void setToolbarTitle(CharSequence title) {
-                toolbar.setTitle(title);
-            }
-
-            @Override
-            public void setRefreshing(boolean refreshing) {
-                swipeRefreshCommentList.setRefreshing(refreshing);
-            }
-
-            @Override
-            public void post(Runnable runnable) {
-                recyclerCommentList.post(runnable);
-            }
-        };
-
-        disallowListener = new DisallowListener() {
-            @Override
-            public void requestDisallowInterceptTouchEventVertical(boolean disallow) {
-                recyclerCommentList.requestDisallowInterceptTouchEvent(disallow);
-                swipeRefreshCommentList.requestDisallowInterceptTouchEvent(disallow);
-            }
-
-            @Override
-            public void requestDisallowInterceptTouchEventHorizontal(boolean disallow) {
-
-            }
-        };
-
-        final RecyclerCallback recyclerCallback = new RecyclerCallback() {
-            @Override
-            public void scrollTo(int position) {
-                linearLayoutManager.scrollToPositionWithOffset(position, 0);
-            }
-
-            @Override
-            public int getRecyclerHeight() {
-                return recyclerCommentList.getHeight();
-            }
-
-            @Override
-            public RecyclerView.LayoutManager getLayoutManager() {
-                return linearLayoutManager;
-            }
-
-            @Override
-            public void hideToolbar() {
-                AppBarLayout.Behavior behaviorAppBar = (AppBarLayout.Behavior) ((CoordinatorLayout.LayoutParams) layoutAppBar
-                        .getLayoutParams()).getBehavior();
-                behaviorAppBar.onNestedFling(layoutCoordinator, layoutAppBar, null, 0, 1000, true);
-            }
-
-            @Override
-            public void onReplyShown() {
-                behaviorFloatingActionButton.animateOut(buttonExpandActions);
             }
         };
 
@@ -360,11 +285,10 @@ public class FragmentComments extends FragmentBase
         };
 
         TypedArray typedArray = getActivity().getTheme().obtainStyledAttributes(
-                new int[]{R.attr.colorPrimary, R.attr.colorAccent, R.attr.colorIconFilter});
+                new int[]{R.attr.colorPrimary, R.attr.colorAccent});
         final int colorPrimary = typedArray
                 .getColor(0, getResources().getColor(R.color.colorPrimary));
         int colorAccent = typedArray.getColor(1, getResources().getColor(R.color.colorAccent));
-        int colorIcon = typedArray.getColor(2, getResources().getColor(R.color.darkThemeIconFilter));
         typedArray.recycle();
 
         int colorResourcePrimary = UtilsColor.computeContrast(colorPrimary, Color.WHITE) > 3f ?
@@ -375,8 +299,6 @@ public class FragmentComments extends FragmentBase
         colorFilterPrimary = new PorterDuffColorFilter(
                 getResources().getColor(colorResourcePrimary), PorterDuff.Mode.MULTIPLY);
         colorFilterAccent = new PorterDuffColorFilter(getResources().getColor(colorResourceAccent),
-                PorterDuff.Mode.MULTIPLY);
-        colorFilterIcon = new PorterDuffColorFilter(colorIcon,
                 PorterDuff.Mode.MULTIPLY);
 
         toolbar = (Toolbar) layoutRoot.findViewById(R.id.toolbar);
@@ -417,7 +339,7 @@ public class FragmentComments extends FragmentBase
         buttonJumpTop.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                linearLayoutManager.scrollToPositionWithOffset(0, 0);
+                fragmentCurrent.scrollToPositionWithOffset(0, 0);
             }
         });
         buttonJumpTop.setOnLongClickListener(new View.OnLongClickListener() {
@@ -435,21 +357,7 @@ public class FragmentComments extends FragmentBase
         buttonCommentPrevious.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                recyclerCallback.hideToolbar();
-                int position = getIndexAtCenter();
-                if (position == -1) {
-                    position = linearLayoutManager.findFirstVisibleItemPosition();
-                }
-                if (position == 1) {
-                    position = 0;
-                }
-
-                final int newPosition = controllerComments
-                        .getPreviousCommentPosition(
-                                position - 1) + 1;
-
-                UtilsAnimation.scrollToPositionWithCentering(newPosition, recyclerCommentList, linearLayoutManager, scrollToPaddingTop, scrollToPaddingBottom, true);
-
+                fragmentCurrent.previousComment();
             }
         });
         buttonCommentPrevious.setOnLongClickListener(new View.OnLongClickListener() {
@@ -467,28 +375,7 @@ public class FragmentComments extends FragmentBase
         buttonCommentNext.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (adapterCommentList.getItemCount() == 0) {
-                    return;
-                }
-                recyclerCallback.hideToolbar();
-
-                int position = getIndexAtCenter();
-
-                switch (position) {
-                    case RecyclerView.NO_POSITION:
-                        position = 0;
-                        break;
-                    case 0:
-                        position = 1;
-                        break;
-                    default:
-                        position = controllerComments
-                                .getNextCommentPosition(position) + 1;
-                        break;
-                }
-
-                UtilsAnimation.scrollToPositionWithCentering(position, recyclerCommentList, linearLayoutManager, scrollToPaddingTop, scrollToPaddingBottom, true);
-
+                fragmentCurrent.nextComment();
             }
         });
         buttonCommentNext.setOnLongClickListener(new View.OnLongClickListener() {
@@ -538,25 +425,9 @@ public class FragmentComments extends FragmentBase
 
         viewYouTube = (YouTubePlayerView) layoutRoot.findViewById(R.id.youtube);
 
-        swipeRefreshCommentList = (SwipeRefreshLayout) layoutRoot.findViewById(
-                R.id.swipe_refresh_comment_list);
-        swipeRefreshCommentList.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
-            @Override
-            public void onRefresh() {
-                controllerComments.reloadAllComments();
-            }
-        });
-
         layoutCoordinator = (CoordinatorLayout) layoutRoot.findViewById(R.id.layout_coordinator);
         layoutAppBar = (AppBarLayout) layoutRoot.findViewById(R.id.layout_app_bar);
         layoutRelative = (CustomRelativeLayout) layoutRoot.findViewById(R.id.layout_relative);
-
-        linearLayoutManager = new LinearLayoutManager(getActivity());
-        recyclerCommentList = (RecyclerView) layoutRoot.findViewById(R.id.recycler_comment_list);
-        recyclerCommentList.setLayoutManager(linearLayoutManager);
-        recyclerCommentList.setItemAnimator(null);
-        recyclerCommentList.addItemDecoration(
-                new ItemDecorationDivider(getActivity(), ItemDecorationDivider.VERTICAL_LIST));
 
         isStartOnLeft = getResources().getConfiguration().getLayoutDirection() == View.LAYOUT_DIRECTION_LTR;
         final float screenWidth = getResources().getDisplayMetrics().widthPixels;
@@ -583,7 +454,8 @@ public class FragmentComments extends FragmentBase
                             if (e1.getX() > screenWidth * 0.2f || swipeDifferenceX < 0) {
                                 return super.onScroll(e1, e2, distanceX, distanceY);
                             }
-                        } else {
+                        }
+                        else {
                             if (e1.getX() < screenWidth * 0.8f || swipeDifferenceX > 0) {
                                 return super.onScroll(e1, e2, distanceX, distanceY);
                             }
@@ -594,7 +466,7 @@ public class FragmentComments extends FragmentBase
                                     .findFragmentByTag(fragmentParentTag);
                             if (fragment != null) {
                                 fragment.setVisibilityOfThing(View.VISIBLE,
-                                        controllerComments.getLink());
+                                        controllerCommentsTop.getLink());
                                 fragment.onHiddenChanged(false);
                             }
                             hasSwipedEnd = true;
@@ -614,60 +486,45 @@ public class FragmentComments extends FragmentBase
             layoutRoot.setTouchEventListener(this);
         }
 
-        adapterCommentList = new AdapterCommentList(getActivity(),
-                controllerComments,
-                mListener.getEventListenerBase(),
-                mListener.getEventListenerComment(),
-                disallowListener,
-                recyclerCallback,
-                youTubeListener,
-                getArguments().getBoolean(ARG_IS_GRID, false),
-                getArguments().getInt(ARG_COLOR_LINK),
-                getArguments().getBoolean(ARG_ACTIONS_EXPANDED, false));
+        viewBackground = layoutRoot.findViewById(R.id.view_background);
 
-        observer = new RecyclerView.AdapterDataObserver() {
-            @Override
-            public void onItemRangeChanged(int positionStart, int itemCount) {
-                super.onItemRangeChanged(positionStart, itemCount);
-                if (positionStart == 0 && youTubePlayer != null) {
-                    youTubePlayer.release();
-                    youTubePlayer = null;
-                }
+        if (savedInstanceState != null) {
+            String youtubeId = savedInstanceState.getString(ARG_YOUTUBE_ID, null);
+
+            if (!TextUtils.isEmpty(youtubeId)) {
+                loadYoutubeVideo(youtubeId, savedInstanceState.getInt(ARG_YOUTUBE_TIME, 0));
             }
-        };
+        }
 
-        adapterCommentList.registerAdapterDataObserver(observer);
-        recyclerCommentList.setAdapter(adapterCommentList);
-
-        layoutManagerLink = new LinearLayoutManagerWrapHeight(getActivity(), LinearLayoutManager.VERTICAL, false);
-
-        final DisallowListener disallowListenerLink = new DisallowListener() {
+        fragmentCallback = new FragmentCommentsInner.Callback() {
             @Override
-            public void requestDisallowInterceptTouchEventVertical(boolean disallow) {
-                recyclerLink.requestDisallowInterceptTouchEvent(disallow);
+            public void loadYouTubeVideo(String id, int timeInMillis) {
+                FragmentComments.this.loadYoutubeVideo(id, timeInMillis);
             }
 
             @Override
-            public void requestDisallowInterceptTouchEventHorizontal(boolean disallow) {
-
-            }
-        };
-
-        final RecyclerCallback recyclerCallbackLink = new RecyclerCallback() {
-            @Override
-            public void scrollTo(int position) {
-                layoutManagerLink.scrollToPositionWithOffset(position, 0);
+            public void releaseYouTube() {
+                FragmentComments.this.releaseYouTube();
             }
 
             @Override
-            public int getRecyclerHeight() {
-                // Since we animate the height of recyclerLink, we need to return a stable height
-                return recyclerCommentList.getHeight();
+            public void setPostExpanded(boolean expanded) {
+                FragmentComments.this.setPostExpanded(expanded);
             }
 
             @Override
-            public RecyclerView.LayoutManager getLayoutManager() {
-                return layoutManagerLink;
+            public void setIsCommentThread(boolean isCommentThread) {
+                FragmentComments.this.setIsCommentThread(isCommentThread);
+            }
+
+            @Override
+            public void setSort(Sort sort) {
+                FragmentComments.this.setSort(sort);
+            }
+
+            @Override
+            public void setTitle(CharSequence title) {
+                FragmentComments.this.setTitle(title);
             }
 
             @Override
@@ -681,57 +538,132 @@ public class FragmentComments extends FragmentBase
             public void onReplyShown() {
                 behaviorFloatingActionButton.animateOut(buttonExpandActions);
             }
+
+            @Override
+            public int getAppBarHeight() {
+                return layoutAppBar.getHeight();
+            }
+
+            @Override
+            public boolean isCurrentFragment(FragmentCommentsInner fragmentCommentsInner) {
+                return positionCurrent == fragmentCommentsInner.getPosition();
+            }
+
+            @Override
+            public void loadYouTubeVideo(Link link, String id, int timeInMillis) {
+                youTubeListener.loadYouTubeVideo(link, id, timeInMillis);
+            }
+
+            @Override
+            public boolean hideYouTube() {
+                return youTubeListener.hideYouTube();
+            }
         };
 
-        adapterLink = new AdapterLinkHeader(getActivity(),
-                mListener.getEventListenerBase(),
-                disallowListenerLink,
-                recyclerCallbackLink,
-                youTubeListener,
-                getArguments().getBoolean(ARG_IS_GRID, false),
-                getArguments().getInt(ARG_COLOR_LINK),
-                getArguments().getBoolean(ARG_ACTIONS_EXPANDED, false));
+        linkTop = controllerCommentsTop.getLink();
+        indexStart = controllerLinks.indexOf(linkTop);
+        itemCount = controllerLinks.sizeLinks();
+        positionCurrent = indexStart;
 
-        layoutExpandPost = (ViewGroup) layoutRoot.findViewById(R.id.layout_expand_post);
-        imageExpandIndicator = (ImageView) layoutRoot.findViewById(R.id.image_expand_indicator);
-        imageExpandIndicator.setColorFilter(colorFilterIcon);
-        imageExpandIndicator.setOnClickListener(new View.OnClickListener() {
+        adapterComments = new RecyclerFragmentPagerAdapter<FragmentCommentsInner>(getFragmentManager()) {
             @Override
-            public void onClick(View v) {
-                expandPost(false);
+            public FragmentCommentsInner createFragment() {
+                return FragmentCommentsInner.newInstance(getArguments().getBoolean(ARG_IS_GRID, false));
+            }
+
+            @Override
+            protected void bindFragment(FragmentCommentsInner fragment, int position) {
+                Link link = null;
+
+                if (position < indexStart) {
+                    link = controllerLinks.getPreviousLink(linkTop, indexStart - position);
+                }
+                else if (position > indexStart) {
+                    link = controllerLinks.getNextLink(linkTop, position - indexStart);
+                }
+
+                if (link == null) {
+                    link = linkTop;
+                }
+
+                fragment.setCallback(fragmentCallback);
+                fragment.setAnimationFinished(animationFinished);
+                fragment.setLink(link);
+                fragment.setPosition(position);
+
+                if (fragmentCurrent == null && indexStart == position) {
+                    setCurrentFragment(fragment);
+                }
+            }
+
+            @Override
+            public void destroyItem(ViewGroup container, int position, Object object) {
+                super.destroyItem(container, position, object);
+
+                FragmentCommentsInner fragmentCommentsInner = (FragmentCommentsInner) object;
+                fragmentCommentsInner.clear();
+            }
+
+            @Override
+            public int getCount() {
+                return itemCount;
+            }
+        };
+
+        pagerComments = (ViewPager) layoutRoot.findViewById(R.id.pager_comments);
+        pagerComments.setOffscreenPageLimit(0);
+        pagerComments.setAdapter(adapterComments);
+        pagerComments.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
+            public int stateScroll;
+
+            @Override
+            public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
+
+            }
+
+            @Override
+            public void onPageSelected(int position) {
+                positionCurrent = position;
+
+                for (FragmentCommentsInner fragment : adapterComments.getFragments()) {
+                    if (fragment.getPosition() == position) {
+                        setCurrentFragment(fragment);
+                        break;
+                    }
+                }
+
+                if (position >= adapterComments.getCount() - 3) {
+                    controllerLinks.loadMoreLinks()
+                            .subscribe(new FinalizingSubscriber<Listing>() {
+                                @Override
+                                public void completed() {
+                                    itemCount = controllerLinks.sizeLinks();
+                                    adapterComments.notifyDataSetChanged();
+                                }
+                            });
+                }
+            }
+
+            @Override
+            public void onPageScrollStateChanged(int state) {
+                if (stateScroll == ViewPager.SCROLL_STATE_SETTLING && state == ViewPager.SCROLL_STATE_IDLE) {
+                    pagerComments.setOffscreenPageLimit(2);
+                }
+                else if (state == ViewPager.SCROLL_STATE_DRAGGING) {
+                    pagerComments.setOffscreenPageLimit(1);
+                }
+
+                stateScroll = state;
             }
         });
 
-        recyclerLink = (RecyclerView) layoutRoot.findViewById(R.id.recycler_link);
-        recyclerLink.setLayoutManager(layoutManagerLink);
-        recyclerLink.setItemAnimator(null);
-        recyclerLink.setAdapter(adapterLink);
-
-//        recyclerCommentList.addOnScrollListener(new RecyclerView.OnScrollListener() {
-//            @Override
-//            public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
-//                super.onScrolled(recyclerView, dx, dy);
-//
-//                scrollY = recyclerCommentList.computeVerticalScrollOffset();
-//                recyclerLink.setTranslationY(-scrollY);
-//
-//                if (!isRecycled && scrollY > recyclerLink.getHeight()) {
-//                    adapterLink.recycle();
-//                    isRecycled = true;
-//                } else if (scrollY < recyclerLink.getHeight() && isRecycled) {
-//                    isRecycled = false;
-//                    adapterLink.onBind();
-//                }
-//                Log.d(TAG, "onScrolled() called with: " + "scrollY = [" + scrollY + "]");
-//            }
-//        });
-
-        viewBackground = layoutRoot.findViewById(R.id.view_background);
+        if (indexStart > 0) {
+            pagerComments.setCurrentItem(indexStart, false);
+        }
 
         if (!getArguments().getBoolean(ARG_INITIALIZED, false)) {
             viewBackground.setVisibility(View.INVISIBLE);
-            recyclerCommentList.setVisibility(View.GONE);
-            layoutRelative.setVisibility(View.GONE);
+            pagerComments.setVisibility(View.INVISIBLE);
             toolbar.setVisibility(View.GONE);
             layoutAppBar.setTranslationY(-100);
 
@@ -741,19 +673,40 @@ public class FragmentComments extends FragmentBase
                     animateEnter(layoutRoot);
                 }
             });
-        } else {
+        }
+        else {
             setAnimationFinished(true);
         }
 
-        if (savedInstanceState != null) {
-            String youtubeId = savedInstanceState.getString(ARG_YOUTUBE_ID, null);
-
-            if (!TextUtils.isEmpty(youtubeId)) {
-                loadYoutubeVideo(youtubeId, savedInstanceState.getInt(ARG_YOUTUBE_TIME, 0));
-            }
-        }
-
         return layoutRoot;
+    }
+
+    private void setCurrentFragment(FragmentCommentsInner fragment) {
+        fragmentCurrent = fragment;
+
+        setPostExpanded(fragmentCurrent.getPostExpanded());
+        setIsCommentThread(fragmentCurrent.getIsCommentThread());
+        setSort(fragmentCurrent.getSort());
+        setTitle(fragmentCurrent.getTitle());
+        fragmentCurrent.setAnimationFinished(animationFinished);
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+        controllerCommentsTop.addListener(listenerTop);
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        controllerCommentsTop.addListener(listenerTop);
+    }
+
+    @Override
+    public void onPause() {
+        controllerCommentsTop.removeListener(listenerTop);
+        super.onPause();
     }
 
     private void loadYoutubeVideo(final String id, final int timeInMillis) {
@@ -791,11 +744,7 @@ public class FragmentComments extends FragmentBase
                                         public void onFullscreen(boolean fullscreen) {
                                             isFullscreen = fullscreen;
                                             if (!fullscreen) {
-                                                if (youTubePlayer != null) {
-                                                    youTubePlayer.pause();
-                                                    youTubePlayer.release();
-                                                    youTubePlayer = null;
-                                                }
+                                                releaseYouTube();
                                                 toggleYouTubeVisibility(View.GONE);
                                             }
                                         }
@@ -828,7 +777,7 @@ public class FragmentComments extends FragmentBase
     private void toggleYouTubeVisibility(int visibility) {
         viewYouTube.setVisibility(visibility);
         boolean visible = visibility == View.VISIBLE;
-        recyclerCommentList.scrollBy(0, visible ? viewYouTube.getHeight() : -viewYouTube.getHeight());
+//        recyclerCommentList.scrollBy(0, visible ? viewYouTube.getHeight() : -viewYouTube.getHeight());
         itemHideYouTube.setVisible(visible);
         itemHideYouTube.setEnabled(visible);
     }
@@ -900,8 +849,7 @@ public class FragmentComments extends FragmentBase
             @Override
             public void onAnimationStart(Animation animation) {
                 viewBackground.setVisibility(View.VISIBLE);
-                layoutRelative.setVisibility(View.VISIBLE);
-                recyclerCommentList.setVisibility(View.VISIBLE);
+                pagerComments.setVisibility(View.VISIBLE);
                 toolbar.setVisibility(View.VISIBLE);
                 if (viewHolderView != null) {
                     viewHolderView.setVisibility(View.INVISIBLE);
@@ -960,38 +908,6 @@ public class FragmentComments extends FragmentBase
         layoutRelative.setLayoutParams(layoutParams);
 
         layoutRelative.startAnimation(animation);
-    }
-
-    private int getIndexAtCenter() {
-
-        if (adapterCommentList.getItemCount() < 2) {
-            return 0;
-        }
-
-        int start = linearLayoutManager.findFirstVisibleItemPosition();
-        int end = linearLayoutManager.findLastVisibleItemPosition();
-
-        int centerY = 10 + (recyclerCommentList
-                .getHeight() - scrollToPaddingBottom + scrollToPaddingTop) / 2;
-
-        for (int index = start; index <= end; index++) {
-
-            RecyclerView.ViewHolder viewHolder = recyclerCommentList
-                    .findViewHolderForAdapterPosition(index);
-            if (viewHolder != null) {
-                RectF bounds = new RectF(viewHolder.itemView.getX(), viewHolder.itemView.getY(),
-                        viewHolder.itemView.getX() + viewHolder.itemView.getWidth(),
-                        viewHolder.itemView.getY() + viewHolder.itemView.getHeight());
-                if (bounds.contains(bounds.centerX(), centerY)) {
-                    return index;
-                }
-
-            }
-
-        }
-
-        return linearLayoutManager.findFirstCompletelyVisibleItemPosition();
-
     }
 
     private void toggleLayoutActions() {
@@ -1083,35 +999,6 @@ public class FragmentComments extends FragmentBase
     }
 
     @Override
-    public void onActivityCreated(Bundle savedInstanceState) {
-        super.onActivityCreated(savedInstanceState);
-    }
-
-    @Override
-    public void onStart() {
-        super.onStart();
-        controllerComments.addListener(listener);
-    }
-
-    @Override
-    public void onResume() {
-        super.onResume();
-        controllerComments.addListener(listener);
-    }
-
-    @Override
-    public void onPause() {
-        controllerComments.removeListener(listener);
-        super.onPause();
-    }
-
-    @Override
-    public void onStop() {
-        adapterCommentList.destroyViewHolderLink();
-        super.onStop();
-    }
-
-    @Override
     public void onAttach(Activity activity) {
         super.onAttach(activity);
         this.preferences = PreferenceManager
@@ -1132,19 +1019,35 @@ public class FragmentComments extends FragmentBase
     }
 
     @Override
-    public void onDestroyView() {
-        adapterCommentList.unregisterAdapterDataObserver(observer);
-        super.onDestroyView();
+    public void onDestroy() {
+        super.onDestroy();
+        releaseYouTube();
+        CustomApplication.getRefWatcher(getActivity()).watch(this);
     }
 
-    @Override
-    public void onDestroy() {
+    public void releaseYouTube() {
         if (youTubePlayer != null) {
             youTubePlayer.release();
             youTubePlayer = null;
         }
-        super.onDestroy();
-        CustomApplication.getRefWatcher(getActivity()).watch(this);
+    }
+
+    public void setPostExpanded(boolean expanded) {
+        itemExpandPost.setIcon(expanded ? R.drawable.ic_expand_less_white_24dp : R.drawable.ic_expand_more_white_24dp);
+        itemExpandPost.getIcon().mutate().setColorFilter(colorFilterPrimary);
+    }
+
+    private void setIsCommentThread(boolean isCommentThread) {
+        itemLoadFullComments.setEnabled(isCommentThread);
+        itemLoadFullComments.setVisible(isCommentThread);
+    }
+
+    private void setSort(Sort sort) {
+        toolbar.getMenu().findItem(sort.getMenuId()).setChecked(true);
+    }
+
+    private void setTitle(CharSequence title) {
+        toolbar.setTitle(title);
     }
 
     public void setFragmentToHide(FragmentBase fragmentToHide, View viewHolderView) {
@@ -1163,7 +1066,7 @@ public class FragmentComments extends FragmentBase
         else if (getFragmentManager().getBackStackEntryCount() == 0) {
             calculateExit();
         }
-        else if (!recyclerCommentList.isShown()) {
+        else if (fragmentCurrent != null && !fragmentCurrent.isRecyclerCommentsShown()) {
             calculateExit();
         }
         else {
@@ -1181,11 +1084,14 @@ public class FragmentComments extends FragmentBase
 
     private void calculateExit() {
         isFinished = true;
-        if (linearLayoutManager.findFirstCompletelyVisibleItemPosition() <= 0) {
+        if (fragmentCurrent.getPosition() != indexStart) {
+            slideExit();
+        }
+        else if (fragmentCurrent.findFirstCompletelyVisibleItemPosition() <= 0) {
             animateExit();
         }
-        else if (linearLayoutManager.findFirstVisibleItemPosition() < 10) {
-            recyclerCommentList.addOnScrollListener(new RecyclerView.OnScrollListener() {
+        else if (fragmentCurrent.findFirstVisibleItemPosition() < 10) {
+            fragmentCurrent.addOnScrollListener(new RecyclerView.OnScrollListener() {
                 @Override
                 public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
                     super.onScrollStateChanged(recyclerView, newState);
@@ -1195,7 +1101,7 @@ public class FragmentComments extends FragmentBase
                     }
                 }
             });
-            recyclerCommentList.smoothScrollToPosition(0);
+            fragmentCurrent.smoothScrollToPosition(0);
         }
         else {
             slideExit();
@@ -1215,12 +1121,14 @@ public class FragmentComments extends FragmentBase
     private void animateExit() {
 
         viewBackground.setVisibility(View.VISIBLE);
-        adapterCommentList.collapseViewHolderLink(getArguments().getBoolean(ARG_ACTIONS_EXPANDED));
-        adapterCommentList.fadeComments(getResources(), new Runnable() {
+        fragmentCurrent.collapseViewHolderLink(getArguments().getBoolean(ARG_ACTIONS_EXPANDED));
+        fragmentCurrent.fadeComments(new Runnable() {
             @Override
             public void run() {
                 setAnimationFinished(false);
-                recyclerCommentList.post(new Runnable() {
+                fragmentCurrent.expandPost(false);
+
+                pagerComments.post(new Runnable() {
                     @Override
                     public void run() {
 
@@ -1305,7 +1213,7 @@ public class FragmentComments extends FragmentBase
                                     -(viewYouTube.getHeight() + toolbar.getHeight()));
                         }
 
-                        recyclerCommentList.startAnimation(animation);
+                        pagerComments.startAnimation(animation);
                     }
                 });
             }
@@ -1318,7 +1226,7 @@ public class FragmentComments extends FragmentBase
                 .findFragmentByTag(fragmentParentTag);
         if (fragment != null) {
             fragment.setVisibilityOfThing(View.VISIBLE,
-                    controllerComments.getLink());
+                    controllerCommentsTop.getLink());
             fragment.onHiddenChanged(false);
         }
         float screenWidth = getResources().getDisplayMetrics().widthPixels;
@@ -1334,7 +1242,6 @@ public class FragmentComments extends FragmentBase
 
                     @Override
                     public void onAnimationEnd(Animator animation) {
-                        adapterCommentList.destroyViewHolderLink();
                         FragmentBase fragment = (FragmentBase) getFragmentManager()
                                 .findFragmentByTag(fragmentParentTag);
                         if (fragment != null) {
@@ -1372,10 +1279,12 @@ public class FragmentComments extends FragmentBase
                 toggleYouTubeVisibility(View.GONE);
                 break;
             case R.id.item_load_full_comments:
-                controllerComments.loadLinkComments();
+                fragmentCurrent.loadLinkComments();
                 break;
             case R.id.item_expand_post:
-                expandPost(!postExpanded);
+                if (fragmentCurrent != null) {
+                    fragmentCurrent.expandPost(!fragmentCurrent.getPostExpanded());
+                }
                 break;
         }
 
@@ -1383,49 +1292,12 @@ public class FragmentComments extends FragmentBase
 
         Sort sort = Sort.fromMenuId(item.getItemId());
         if (sort != null) {
-            controllerComments
-                    .setSort(sort);
-            linearLayoutManager.scrollToPositionWithOffset(1, 0);
+            fragmentCurrent.setSort(sort);
+            fragmentCurrent.scrollToPositionWithOffset(1, 0);
             return true;
         }
 
         return true;
-    }
-
-    private void expandPost(boolean expanded) {
-        postExpanded = expanded;
-        float heightImage = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 49, getResources().getDisplayMetrics());
-        final float targetHeight = postExpanded ? layoutManagerLink.getFirstChildHeight() + heightImage : 0;
-        final float startHeight = postExpanded ? 0 : layoutManagerLink.getFirstChildHeight() + heightImage;
-        valueAnimatorPostExpand.cancel();
-        valueAnimatorPostExpand.removeAllUpdateListeners();
-        valueAnimatorPostExpand.removeAllListeners();
-        valueAnimatorPostExpand.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
-            @Override
-            public void onAnimationUpdate(ValueAnimator animation) {
-                float interpolatedValue = animation.getAnimatedFraction();
-                layoutExpandPost.getLayoutParams().height = (int) (startHeight + (targetHeight - startHeight) * interpolatedValue);
-                layoutExpandPost.requestLayout();
-            }
-        });
-        valueAnimatorPostExpand.addListener(new AnimatorListenerAdapter() {
-            @Override
-            public void onAnimationStart(Animator animation) {
-                super.onAnimationStart(animation);
-                itemExpandPost.setIcon(postExpanded ? R.drawable.ic_expand_less_white_24dp : R.drawable.ic_expand_more_white_24dp);
-                layoutExpandPost.setVisibility(View.VISIBLE);
-            }
-
-            @Override
-            public void onAnimationEnd(Animator animation) {
-                super.onAnimationEnd(animation);
-                if (!postExpanded) {
-                    layoutExpandPost.setVisibility(View.INVISIBLE);
-                    layoutManagerLink.requestLayout();
-                }
-            }
-        });
-        valueAnimatorPostExpand.start();
     }
 
     @Override
@@ -1466,7 +1338,7 @@ public class FragmentComments extends FragmentBase
                                             .findFragmentByTag(fragmentParentTag);
                                     if (fragment != null) {
                                         fragment.setVisibilityOfThing(View.INVISIBLE,
-                                                controllerComments.getLink());
+                                                controllerCommentsTop.getLink());
                                         fragment.onHiddenChanged(true);
                                     }
                                 }
@@ -1521,7 +1393,12 @@ public class FragmentComments extends FragmentBase
     }
 
     public void setAnimationFinished(boolean animationFinished) {
-        adapterLink.setAnimationFinished(animationFinished);
-        adapterCommentList.setAnimationFinished(animationFinished);
+        this.animationFinished = animationFinished;
+
+        for (FragmentCommentsInner fragmentCommentsInner : adapterComments.getFragments()) {
+            fragmentCommentsInner.setAnimationFinished(animationFinished);
+        }
+
+        pagerComments.setOffscreenPageLimit(2);
     }
 }

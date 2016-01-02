@@ -71,12 +71,7 @@ public class LinearLayoutManagerWrapHeight extends LinearLayoutManager {
             ((CustomRelativeLayout) view).setOnSizeChangedListener(new OnSizeChangedListener() {
                 @Override
                 public void onSizeChanged(int width, int height, int oldWidth, int oldHeight) {
-                    if (recyclerView != null && height > 0) {
-                        heightFirstChild = height;
-
-                        recyclerView.getLayoutParams().height = height;
-                        recyclerView.requestLayout();
-                    }
+                    heightFirstChild = height;
 
                     if (onSizeChangedListener != null) {
                          onSizeChangedListener.onSizeChanged(width, height, oldWidth, oldHeight);

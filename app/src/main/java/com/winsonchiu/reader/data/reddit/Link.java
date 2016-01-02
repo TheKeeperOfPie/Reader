@@ -55,6 +55,8 @@ public class Link extends Replyable {
     private boolean commentsClicked;
     private int backgroundColor;
 
+    private int contextLevel;
+    private String commentId;
 
     public static Link fromJson(JsonNode nodeRoot) {
 
@@ -487,5 +489,21 @@ public class Link extends Replyable {
                 ", commentsClicked=" + commentsClicked +
                 ", backgroundColor=" + backgroundColor +
                 '}';
+    }
+
+    public int getContextLevel() {
+        return contextLevel;
+    }
+
+    public void setContextLevel(int contextLevel) {
+        this.contextLevel = contextLevel;
+    }
+
+    public String getCommentId() {
+        return commentId;
+    }
+
+    public void setCommentId(String commentId) {
+        this.commentId = commentId;
     }
 }

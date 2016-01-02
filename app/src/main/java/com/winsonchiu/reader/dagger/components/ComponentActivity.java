@@ -5,12 +5,12 @@
 package com.winsonchiu.reader.dagger.components;
 
 import com.winsonchiu.reader.ActivityMain;
+import com.winsonchiu.reader.ActivityMainRoot;
 import com.winsonchiu.reader.FragmentNewMessage;
 import com.winsonchiu.reader.FragmentNewPost;
-import com.winsonchiu.reader.ActivityMainRoot;
-import com.winsonchiu.reader.comments.AdapterCommentList;
 import com.winsonchiu.reader.comments.AdapterLinkHeader;
 import com.winsonchiu.reader.comments.FragmentComments;
+import com.winsonchiu.reader.comments.FragmentCommentsInner;
 import com.winsonchiu.reader.comments.FragmentReply;
 import com.winsonchiu.reader.dagger.ScopeActivity;
 import com.winsonchiu.reader.dagger.modules.ModuleReddit;
@@ -44,10 +44,11 @@ public interface ComponentActivity {
     void inject(ControllerProfile target);
     void inject(AdapterLink target);
     void inject(FragmentNewMessage target);
-    void inject(AdapterCommentList target);
     void inject(FragmentComments target);
+    void inject(FragmentCommentsInner target);
     void inject(FragmentInbox target);
     void inject(FragmentHistory target);
     void inject(AdapterLinkHeader target);
+    void inject(AdapterLink.ViewHolderBase target);
 }
 

@@ -60,21 +60,24 @@ public class AdapterInbox extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
 
     private ControllerInbox controllerInbox;
     private AdapterLink.ViewHolderBase.EventListener eventListenerBase;
-    private AdapterCommentList.ViewHolderComment.EventListener eventListenerComment;
+    private AdapterCommentList.ViewHolderComment.EventListenerComment eventListenerComment;
+    private AdapterCommentList.ViewHolderComment.EventListener eventListener;
     private DisallowListener disallowListener;
     private RecyclerCallback recyclerCallback;
     private ControllerProfile.Listener listener;
     private List<RecyclerView.ViewHolder> viewHolders;
 
     public AdapterInbox(ControllerInbox controllerInbox,
-            AdapterLink.ViewHolderBase.EventListener eventListenerBase,
-            AdapterCommentList.ViewHolderComment.EventListener eventListenerComment,
-            DisallowListener disallowListener,
-            RecyclerCallback recyclerCallback,
-            ControllerProfile.Listener listener) {
+                        AdapterLink.ViewHolderBase.EventListener eventListenerBase,
+                        AdapterCommentList.ViewHolderComment.EventListenerComment eventListenerComment,
+                        AdapterCommentList.ViewHolderComment.EventListener eventListener,
+                        DisallowListener disallowListener,
+                        RecyclerCallback recyclerCallback,
+                        ControllerProfile.Listener listener) {
         this.controllerInbox = controllerInbox;
         this.eventListenerBase = eventListenerBase;
         this.eventListenerComment = eventListenerComment;
+        this.eventListener = eventListener;
         this.disallowListener = disallowListener;
         this.recyclerCallback = recyclerCallback;
         this.listener = listener;
@@ -98,7 +101,13 @@ public class AdapterInbox extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
             case ControllerInbox.VIEW_TYPE_COMMENT:
                 // TODO: Move to different ViewHolderComment constructor
                 return new AdapterCommentList.ViewHolderComment(LayoutInflater.from(parent.getContext()).inflate(
-                        R.layout.row_comment, parent, false), eventListenerBase, eventListenerComment, disallowListener, recyclerCallback, listener);
+                        R.layout.row_comment, parent, false),
+                        eventListenerBase,
+                        eventListenerComment,
+                        eventListener,
+                        disallowListener,
+                        recyclerCallback,
+                        listener);
 
         }
 

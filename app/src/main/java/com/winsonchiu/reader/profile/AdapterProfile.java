@@ -39,7 +39,8 @@ public class AdapterProfile extends RecyclerView.Adapter<RecyclerView.ViewHolder
     protected ControllerProfile controllerProfile;
     protected ControllerLinksBase controllerLinks;
     private AdapterLink.ViewHolderBase.EventListener eventListenerBase;
-    private AdapterCommentList.ViewHolderComment.EventListener eventListenerComment;
+    private AdapterCommentList.ViewHolderComment.EventListenerComment eventListenerComment;
+    private final AdapterCommentList.ViewHolderComment.EventListener eventListener;
     private DisallowListener disallowListener;
     private RecyclerCallback recyclerCallback;
     private ControllerProfile.Listener listener;
@@ -48,12 +49,14 @@ public class AdapterProfile extends RecyclerView.Adapter<RecyclerView.ViewHolder
     public AdapterProfile(ControllerProfile controllerProfile,
             ControllerLinksBase controllerLinks,
             AdapterLink.ViewHolderBase.EventListener eventListenerBase,
-            AdapterCommentList.ViewHolderComment.EventListener eventListenerComment,
+            AdapterCommentList.ViewHolderComment.EventListenerComment eventListenerComment,
+            AdapterCommentList.ViewHolderComment.EventListener eventListener,
             DisallowListener disallowListener,
             RecyclerCallback recyclerCallback,
             ControllerProfile.Listener listener) {
         this.eventListenerBase = eventListenerBase;
         this.eventListenerComment = eventListenerComment;
+        this.eventListener = eventListener;
         this.disallowListener = disallowListener;
         this.recyclerCallback = recyclerCallback;
         this.listener = listener;
@@ -110,7 +113,7 @@ public class AdapterProfile extends RecyclerView.Adapter<RecyclerView.ViewHolder
             case ControllerProfile.VIEW_TYPE_COMMENT:
                 return new AdapterCommentList.ViewHolderComment(
                         LayoutInflater.from(parent.getContext())
-                                .inflate(R.layout.row_comment, parent, false), eventListenerBase, eventListenerComment, disallowListener, recyclerCallback, listener);
+                                .inflate(R.layout.row_comment, parent, false), eventListenerBase, eventListenerComment, eventListener, disallowListener, recyclerCallback, listener);
 
         }
 

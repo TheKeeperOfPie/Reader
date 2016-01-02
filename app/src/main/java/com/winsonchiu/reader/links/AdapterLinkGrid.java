@@ -100,8 +100,11 @@ public class AdapterLinkGrid extends AdapterLink {
         }
 
         return new ViewHolder(LayoutInflater.from(viewGroup.getContext())
-                .inflate(R.layout.cell_link, viewGroup, false), eventListenerBase, disallowListener,
-                recyclerCallback, thumbnailSize);
+                .inflate(R.layout.cell_link, viewGroup, false),
+                eventListenerBase,
+                disallowListener,
+                recyclerCallback,
+                thumbnailSize);
     }
 
     @Override
@@ -130,9 +133,9 @@ public class AdapterLinkGrid extends AdapterLink {
         private ValueAnimator valueAnimatorBackground;
 
         public ViewHolder(View itemView,
-                EventListener eventListener,
-                DisallowListener disallowListener,
-                RecyclerCallback recyclerCallback,
+                          EventListener eventListener,
+                          DisallowListener disallowListener,
+                          RecyclerCallback recyclerCallback,
                 int thumbnailSize) {
             super(itemView, eventListener, disallowListener, recyclerCallback);
             this.thumbnailSize = thumbnailSize;

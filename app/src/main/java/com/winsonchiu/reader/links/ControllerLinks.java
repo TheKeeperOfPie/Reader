@@ -4,6 +4,7 @@
 
 package com.winsonchiu.reader.links;
 
+import android.support.annotation.Nullable;
 import android.text.TextUtils;
 import android.util.Log;
 
@@ -252,6 +253,7 @@ public class ControllerLinks implements ControllerLinksBase {
     }
 
     public Link getLink(int position) {
+        // TODO: Really gotta figure out the position shifts
         return (Link) listingLinks.getChildren()
                 .get(position - 1);
     }
@@ -508,6 +510,30 @@ public class ControllerLinks implements ControllerLinksBase {
     public boolean isOnSpecificSubreddit() {
         return !TextUtils.isEmpty(subreddit.getDisplayName()) && !"/r/all/".equalsIgnoreCase(
                 subreddit.getUrl()) && !subreddit.getUrl().contains("+");
+    }
+
+    @Nullable
+    public Link getPreviousLink(Link linkCurrent, int offset) {
+        int index = indexOf(linkCurrent) - offset;
+        if (index >= 0 && !listingLinks.getChildren().isEmpty()) {
+            return (Link) listingLinks.getChildren().get(index);
+        }
+
+        return null;
+    }
+
+    @Nullable
+    public Link getNextLink(Link linkCurrent, int offset) {
+        int index = indexOf(linkCurrent) + offset;
+        if (index < listingLinks.getChildren().size() && !listingLinks.getChildren().isEmpty()) {
+            return (Link) listingLinks.getChildren().get(index);
+        }
+
+        return null;
+    }
+
+    public int indexOf(Link link) {
+        return listingLinks.getChildren().indexOf(link);
     }
 
     public interface Listener extends ControllerListener {

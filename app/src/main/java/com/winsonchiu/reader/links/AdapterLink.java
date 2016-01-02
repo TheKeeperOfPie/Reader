@@ -487,9 +487,9 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         @Inject Picasso picasso;
 
         public ViewHolderBase(View itemView,
-                EventListener eventListener,
-                DisallowListener disallowListener,
-                RecyclerCallback recyclerCallback) {
+                              EventListener eventListener,
+                              DisallowListener disallowListener,
+                              RecyclerCallback recyclerCallback) {
             super(itemView);
             CustomApplication.getComponentMain().inject(this);
             this.eventListener = eventListener;

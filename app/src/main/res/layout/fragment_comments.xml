@@ -33,57 +33,12 @@
                 android:background="?attr/colorScreenBackground"
                 />
 
-            <com.winsonchiu.reader.views.CustomSwipeRefreshLayout
-                android:id="@+id/swipe_refresh_comment_list"
+            <android.support.v4.view.ViewPager
+                android:id="@+id/pager_comments"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                >
-
-                <android.support.v7.widget.RecyclerView
-                    android:id="@+id/recycler_comment_list"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:scrollbars="vertical"
-                    android:scrollbarFadeDuration="200"
-                    android:paddingBottom="48dp"
-                    android:clipToPadding="false"
-                    />
-
-            </com.winsonchiu.reader.views.CustomSwipeRefreshLayout>
-
-            <RelativeLayout
-                android:id="@+id/layout_expand_post"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:background="?attr/colorScreenBackground"
-                android:visibility="invisible"
-                >
-
-                <com.winsonchiu.reader.views.CustomRecyclerView
-                    android:id="@+id/recycler_link"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:layout_above="@+id/image_expand_indicator"
-                    />
-
-                <ImageView
-                    android:id="@+id/image_expand_indicator"
-                    android:layout_width="match_parent"
-                    android:layout_height="48dp"
-                    android:layout_above="@+id/view_divider"
-                    android:scaleType="centerInside"
-                    android:src="@drawable/ic_expand_less_white_24dp"
-                    />
-
-                <View
-                    android:id="@+id/view_divider"
-                    android:layout_width="match_parent"
-                    android:layout_height="1dp"
-                    android:layout_alignParentBottom="true"
-                    android:background="?attr/colorIconFilter"
-                    />
-
-            </RelativeLayout>
+                app:layout_behavior="@string/appbar_scrolling_view_behavior"
+                />
 
         </com.winsonchiu.reader.views.CustomRelativeLayout>
 
@@ -122,7 +77,7 @@
             android:layout_alignParentBottom="true"
             android:layout_alignParentEnd="true"
             android:rotation="90"
-            app:layout_anchor="@id/swipe_refresh_comment_list"
+            app:layout_anchor="@id/pager_comments"
             app:layout_anchorGravity="bottom|end"
             app:elevation="4dp"
             app:borderWidth="0dp"

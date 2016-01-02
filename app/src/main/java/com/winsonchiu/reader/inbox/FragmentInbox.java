@@ -57,6 +57,8 @@ import com.winsonchiu.reader.utils.UtilsColor;
 
 import javax.inject.Inject;
 
+import rx.Observable;
+
 public class FragmentInbox extends FragmentBase implements Toolbar.OnMenuItemClickListener {
 
     public static final String TAG = FragmentInbox.class.getCanonicalName();
@@ -241,25 +243,17 @@ public class FragmentInbox extends FragmentBase implements Toolbar.OnMenuItemCli
         if (adapterInbox == null) {
             adapterInbox = new AdapterInbox(controllerInbox,
                     mListener.getEventListenerBase(),
-                    new AdapterCommentList.ViewHolderComment.EventListener() {
+                    new AdapterCommentList.ViewHolderComment.EventListenerComment() {
                         @Override
                         public void loadNestedComments(Comment comment) {
                             controllerInbox.loadNestedComments(comment);
                         }
 
                         @Override
-                        public void voteComment(AdapterCommentList.ViewHolderComment viewHolderComment,
-                                Comment comment,
-                                int vote) {
-                            controllerInbox.voteComment(viewHolderComment, comment, vote)
-                                    .subscribe(new FinalizingSubscriber<String>() {
-                                        @Override
-                                        public void error(Throwable e) {
-                                            Toast.makeText(activity, activity.getString(R.string.error_voting),
-                                                    Toast.LENGTH_SHORT)
-                                                    .show();
-                                        }
-                                    });
+                        public Observable<String> voteComment(AdapterCommentList.ViewHolderComment viewHolderComment,
+                                                              Comment comment,
+                                                              int vote) {
+                            return controllerInbox.voteComment(viewHolderComment, comment, vote);
                         }
 
                         @Override
@@ -268,14 +262,8 @@ public class FragmentInbox extends FragmentBase implements Toolbar.OnMenuItemCli
                         }
 
                         @Override
-                        public void deleteComment(Comment comment) {
-                            controllerInbox.deleteComment(comment)
-                                    .subscribe(new FinalizingSubscriber<String>() {
-                                        @Override
-                                        public void error(Throwable e) {
-                                            Toast.makeText(activity, R.string.error_deleting_comment, Toast.LENGTH_LONG).show();
-                                        }
-                                    });
+                        public Observable<String> deleteComment(Comment comment) {
+                            return controllerInbox.deleteComment(comment);
                         }
 
                         @Override
@@ -287,7 +275,18 @@ public class FragmentInbox extends FragmentBase implements Toolbar.OnMenuItemCli
                         public void jumpToParent(Comment comment) {
 
                         }
+
+                        @Override
+                        public String getLinkId() {
+                            return "";
+                        }
+
+                        @Override
+                        public String getSubredditName() {
+                            return "";
+                        }
                     },
+                    mListener.getEventListener(),
                     new DisallowListener() {
                         @Override
                         public void requestDisallowInterceptTouchEventVertical(boolean disallow) {

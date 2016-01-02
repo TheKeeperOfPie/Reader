@@ -81,7 +81,7 @@ import com.squareup.picasso.Callback;
 import com.squareup.picasso.Picasso;
 import com.squareup.picasso.Target;
 import com.winsonchiu.reader.comments.AdapterCommentList;
-import com.winsonchiu.reader.comments.ControllerComments;
+import com.winsonchiu.reader.comments.ControllerCommentsTop;
 import com.winsonchiu.reader.comments.FragmentComments;
 import com.winsonchiu.reader.comments.FragmentReply;
 import com.winsonchiu.reader.dagger.FragmentPersist;
@@ -254,7 +254,7 @@ public class ActivityMain extends YouTubeBaseActivity
     @Inject Historian historian;
     @Inject ControllerLinks controllerLinks;
     @Inject ControllerUser controllerUser;
-    @Inject ControllerComments controllerComments;
+    @Inject ControllerCommentsTop controllerCommentsTop;
     @Inject ControllerProfile controllerProfile;
     @Inject ControllerInbox controllerInbox;
     @Inject ControllerSearch controllerSearch;
@@ -385,7 +385,7 @@ public class ActivityMain extends YouTubeBaseActivity
                             @Override
                             public void next(Comment comment) {
                                 if (getFragmentManager().findFragmentByTag(FragmentComments.TAG) != null) {
-                                    controllerComments.insertComment(comment);
+                                    controllerCommentsTop.insertComment(comment);
                                 }
                                 if (getFragmentManager().findFragmentByTag(FragmentProfile.TAG) != null) {
                                     controllerProfile.insertComment(comment);
@@ -434,7 +434,7 @@ public class ActivityMain extends YouTubeBaseActivity
 
                 Log.d(TAG, "onClickComments: " + link);
 
-                controllerComments
+                controllerCommentsTop
                         .setLink(link);
 
                 int color = viewHolderBase.getBackgroundColor();
@@ -753,7 +753,7 @@ public class ActivityMain extends YouTubeBaseActivity
                     controllerLinks.setNsfw(link.getName(), link.isOver18());
                 }
                 if (getFragmentManager().findFragmentByTag(FragmentComments.TAG) != null) {
-                    controllerComments.setNsfw(link.getName(), link.isOver18());
+                    controllerCommentsTop.setNsfw(link.getName(), link.isOver18());
                 }
                 if (getFragmentManager().findFragmentByTag(FragmentProfile.TAG) != null) {
                     controllerProfile.setNsfw(link.getName(), link.isOver18());
@@ -782,61 +782,19 @@ public class ActivityMain extends YouTubeBaseActivity
 
         eventListenerComment = new AdapterCommentList.ViewHolderComment.EventListener() {
             @Override
-            public void loadNestedComments(Comment comment) {
+            public boolean loadNestedComments(Comment comment, String subreddit, String linkId) {
 
                 if (comment.getCount() == 0) {
                     Intent intentCommentThread = new Intent(ActivityMain.this, ActivityMain.class);
                     intentCommentThread.setAction(Intent.ACTION_VIEW);
                     // Double slashes used to trigger parseUrl correctly
-                    intentCommentThread.putExtra(REDDIT_PAGE, Reddit.BASE_URL + "/r/" + controllerComments.getSubredditName() + "/comments/" + controllerComments.getLink().getId() + "/title/" + comment.getParentId() + "/");
+                    intentCommentThread.putExtra(REDDIT_PAGE, Reddit.BASE_URL + "/r/" + subreddit + "/comments/" + linkId + "/title/" + comment.getParentId() + "/");
                     startActivity(intentCommentThread);
+                    return true;
                 }
-                else {
-                    controllerComments.loadNestedComments(comment);
-                }
-            }
 
-            @Override
-            public void voteComment(AdapterCommentList.ViewHolderComment viewHolderComment,
-                    Comment comment,
-                    int vote) {
-                controllerComments.voteComment(viewHolderComment, comment, vote)
-                        .subscribe(new FinalizingSubscriber<String>() {
-                            @Override
-                            public void error(Throwable e) {
-                                Toast.makeText(ActivityMain.this, getString(R.string.error_voting),
-                                        Toast.LENGTH_SHORT)
-                                        .show();
-                            }
-                        });
+                return false;
             }
-
-            @Override
-            public boolean toggleComment(int position) {
-                return controllerComments.toggleComment(position);
-            }
-
-            @Override
-            public void deleteComment(Comment comment) {
-                controllerComments.deleteComment(comment)
-                        .subscribe(new FinalizingSubscriber<String>() {
-                            @Override
-                            public void error(Throwable e) {
-                                Toast.makeText(ActivityMain.this, R.string.error_deleting_comment, Toast.LENGTH_LONG).show();
-                            }
-                        });
-            }
-
-            @Override
-            public void editComment(String name, int level, String text) {
-                controllerComments.editComment(name, level, text);
-            }
-
-            @Override
-            public void jumpToParent(Comment comment) {
-                controllerComments.jumpToParent(comment);
-            }
-
         };
 
         if (sharedPreferences.getBoolean(AppSettings.BETA_NOTICE_0, true)) {
@@ -1596,9 +1554,9 @@ public class ActivityMain extends YouTubeBaseActivity
                 .commit();
 
         if (TextUtils.isEmpty(idComments)) {
-            controllerComments.setLinkId(idLink);
+            controllerCommentsTop.setLinkId(idLink);
         } else {
-            controllerComments.setLinkId(idLink, idComments, context);
+            controllerCommentsTop.setLinkId(idLink, idComments, context);
         }
     }
 
@@ -1836,7 +1794,7 @@ public class ActivityMain extends YouTubeBaseActivity
     }
 
     @Override
-    public AdapterCommentList.ViewHolderComment.EventListener getEventListenerComment() {
+    public AdapterCommentList.ViewHolderComment.EventListener getEventListener() {
         return eventListenerComment;
     }
 

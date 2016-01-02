@@ -10,6 +10,7 @@ import android.view.LayoutInflater;
 import android.view.ViewGroup;
 
 import com.winsonchiu.reader.R;
+import com.winsonchiu.reader.comments.ControllerComments;
 import com.winsonchiu.reader.links.AdapterLinkGrid;
 import com.winsonchiu.reader.links.ControllerLinksBase;
 import com.winsonchiu.reader.utils.DisallowListener;
@@ -21,11 +22,11 @@ import com.winsonchiu.reader.utils.RecyclerCallback;
 public class AdapterHistoryLinkGrid extends AdapterLinkGrid {
 
     public AdapterHistoryLinkGrid(Activity activity,
-            ControllerLinksBase controllerLinks,
-            ViewHolderHeader.EventListener eventListenerHeader,
-            ViewHolderBase.EventListener eventListenerBase,
-            DisallowListener disallowListener,
-            RecyclerCallback recyclerCallback) {
+                                  ControllerLinksBase controllerLinks,
+                                  ViewHolderHeader.EventListener eventListenerHeader,
+                                  ViewHolderBase.EventListener eventListenerBase,
+                                  DisallowListener disallowListener,
+                                  RecyclerCallback recyclerCallback) {
         super(activity, controllerLinks, eventListenerHeader, eventListenerBase, disallowListener,
                 recyclerCallback);
     }
@@ -38,8 +39,11 @@ public class AdapterHistoryLinkGrid extends AdapterLinkGrid {
         }
 
         return new AdapterLinkGrid.ViewHolder(LayoutInflater.from(viewGroup.getContext())
-                .inflate(R.layout.cell_link, viewGroup, false), eventListenerBase, disallowListener,
-                recyclerCallback, thumbnailSize) {
+                .inflate(R.layout.cell_link, viewGroup, false),
+                eventListenerBase,
+                disallowListener,
+                recyclerCallback,
+                thumbnailSize) {
             @Override
             public boolean isInHistory() {
                 return false;
