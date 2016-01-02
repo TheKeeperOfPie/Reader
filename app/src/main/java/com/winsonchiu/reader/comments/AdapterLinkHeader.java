@@ -92,6 +92,7 @@ public class AdapterLinkHeader extends RecyclerView.Adapter<AdapterLink.ViewHold
                         link.setBackgroundColor(colorLink);
                         itemView.setBackgroundColor(colorLink);
                         setTextColors(colorLink);
+                        colorLink = 0;
                     } else {
                         super.loadBackgroundColor();
                     }

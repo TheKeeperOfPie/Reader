@@ -125,6 +125,7 @@ public class ControllerComments implements AdapterCommentList.ViewHolderComment.
 
     public void setLinkWithComments(Link link) {
 
+        link.setBackgroundColor(this.link.getBackgroundColor());
         this.link = link;
         Listing listing = new Listing();
 

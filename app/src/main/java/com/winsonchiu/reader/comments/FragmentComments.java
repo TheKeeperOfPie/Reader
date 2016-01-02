@@ -568,7 +568,11 @@ public class FragmentComments extends FragmentBase
         adapterComments = new RecyclerFragmentPagerAdapter<FragmentCommentsInner>(getFragmentManager()) {
             @Override
             public FragmentCommentsInner createFragment() {
-                return FragmentCommentsInner.newInstance(getArguments().getBoolean(ARG_IS_GRID, false));
+                if (getFragments().isEmpty()) {
+                    return FragmentCommentsInner.newInstance(getArguments().getBoolean(ARG_IS_GRID, false), getArguments().getInt(ARG_COLOR_LINK, 0));
+                }
+
+                return FragmentCommentsInner.newInstance(getArguments().getBoolean(ARG_IS_GRID, false), 0);
             }
 
             @Override

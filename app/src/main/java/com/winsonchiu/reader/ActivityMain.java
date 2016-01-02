@@ -74,7 +74,6 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.crashlytics.android.Crashlytics;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.android.youtube.player.YouTubeBaseActivity;
 import com.squareup.picasso.Callback;
@@ -139,7 +138,6 @@ import java.util.List;
 
 import javax.inject.Inject;
 
-import io.fabric.sdk.android.Fabric;
 import rx.Observable;
 import rx.Observer;
 import rx.android.schedulers.AndroidSchedulers;
@@ -279,8 +277,6 @@ public class ActivityMain extends YouTubeBaseActivity
         themeBackground = sharedPreferences.getString(AppSettings.PREF_THEME_BACKGROUND, AppSettings.THEME_DARK);
         style = theme.getStyle(themeBackground, themeAccent);
         setTheme(style);
-
-        Fabric.with(this, new Crashlytics());
 
         TypedArray typedArray = obtainStyledAttributes(new int[]{R.attr.colorPrimary});
         colorPrimary = typedArray.getColor(0, getResources().getColor(R.color.colorPrimary));

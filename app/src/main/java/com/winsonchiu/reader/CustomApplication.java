@@ -7,10 +7,12 @@ package com.winsonchiu.reader;
 import android.app.Application;
 import android.content.Context;
 
+import com.crashlytics.android.Crashlytics;
 import com.squareup.leakcanary.LeakCanary;
 import com.squareup.leakcanary.RefWatcher;
 import com.winsonchiu.reader.dagger.components.ComponentMain;
 import com.winsonchiu.reader.dagger.components.DaggerComponentMain;
+import io.fabric.sdk.android.Fabric;
 
 /**
  * Created by TheKeeperOfPie on 3/7/2015.
@@ -42,6 +44,7 @@ public class CustomApplication extends Application {
         application = this;
         refWatcher = LeakCanary.install(this);
         super.onCreate();
+        Fabric.with(this, new Crashlytics());
         AppSettings.initPrefs(getApplicationContext());
     }
 }

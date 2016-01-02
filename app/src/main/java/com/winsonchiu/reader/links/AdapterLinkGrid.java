@@ -185,18 +185,19 @@ public class AdapterLinkGrid extends AdapterLink {
 
             int position = getAdapterPosition();
 
+            if (link.getBackgroundColor() == 0) {
+                link.setBackgroundColor(colorBackgroundDefault);
+            }
+
             if (viewOverlay.getVisibility() == View.GONE) {
-                itemView.setBackgroundColor(colorBackgroundDefault);
+                itemView.setBackgroundColor(link.getBackgroundColor());
                 viewOverlay.setBackgroundColor(0x00000000);
             }
             else {
                 itemView.setBackgroundColor(0x00000000);
-                viewOverlay.setBackgroundColor(ColorUtils.setAlphaComponent(colorBackgroundDefault, ALPHA_OVERLAY));
+                viewOverlay.setBackgroundColor(ColorUtils.setAlphaComponent(link.getBackgroundColor(), ALPHA_OVERLAY));
             }
 
-            if (link.getBackgroundColor() == 0) {
-                link.setBackgroundColor(colorBackgroundDefault);
-            }
             buttonComments.setColorFilter(colorFilterIconDefault);
             imagePlay.setColorFilter(colorFilterIconDefault);
             textThreadInfo.setTextColor(colorTextSecondaryDefault);
@@ -517,21 +518,29 @@ public class AdapterLinkGrid extends AdapterLink {
             int color = link.getBackgroundColor();
 
             if (viewOverlay.getVisibility() == View.GONE) {
-                valueAnimatorBackground = UtilsAnimation.animateBackgroundColor(
-                        itemView,
-                        ((ColorDrawable) itemView.getBackground())
-                                .getColor(), color);
+                int viewBackgroundColor = ((ColorDrawable) itemView.getBackground())
+                        .getColor();
+                if (link.getBackgroundColor() != viewBackgroundColor) {
+                    valueAnimatorBackground = UtilsAnimation.animateBackgroundColor(
+                            itemView,
+                            viewBackgroundColor,
+                            color);
+                }
 
                 setTextColors(color);
             }
             else {
                 color = ColorUtils.setAlphaComponent(color, ALPHA_OVERLAY_IMAGE);
+                int overlayBackgroundColor = ((ColorDrawable) viewOverlay.getBackground())
+                        .getColor();
 
                 itemView.setBackgroundColor(0x00000000);
-                valueAnimatorBackground = UtilsAnimation.animateBackgroundColor(
-                        viewOverlay,
-                        ((ColorDrawable) viewOverlay.getBackground())
-                                .getColor(), color);
+                if (link.getBackgroundColor() != overlayBackgroundColor) {
+                    valueAnimatorBackground = UtilsAnimation.animateBackgroundColor(
+                            viewOverlay,
+                            overlayBackgroundColor,
+                            color);
+                }
 
                 titleTextColor = colorTextPrimaryDefault;
                 colorTextSecondary = colorTextSecondaryDefault;

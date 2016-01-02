@@ -168,11 +168,11 @@ public class FragmentCommentsInner extends FragmentBase {
         return fragment;
     }
 
-    public static FragmentCommentsInner newInstance(boolean isGrid) {
+    public static FragmentCommentsInner newInstance(boolean isGrid, int colorLink) {
         FragmentCommentsInner fragment = new FragmentCommentsInner();
         Bundle args = new Bundle();
         args.putBoolean(ARG_IS_GRID, isGrid);
-        args.putInt(ARG_COLOR_LINK, 0);
+        args.putInt(ARG_COLOR_LINK, colorLink);
         args.putIntArray(ARG_LOCATION, new int[2]);
         args.putInt(ARG_ITEM_HEIGHT, 0);
         fragment.setArguments(args);
@@ -436,7 +436,7 @@ public class FragmentCommentsInner extends FragmentBase {
                 recyclerCallbackLink,
                 youTubeListener,
                 getArguments().getBoolean(ARG_IS_GRID, false),
-                getArguments().getInt(ARG_COLOR_LINK),
+                getArguments().getInt(ARG_COLOR_LINK, 0),
                 getArguments().getBoolean(ARG_ACTIONS_EXPANDED, false));
 
         final GestureDetectorCompat gestureDetectorExpand = new GestureDetectorCompat(getActivity(), new GestureDetector.SimpleOnGestureListener() {

@@ -87,7 +87,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
     private static final int ALPHA_LEVELS = 8;
     private static final int MAX_ALPHA = 180;
 
-    private final int colorLink;
+    private int colorLink;
 
     // TODO: Find a way to animate with the toolbar actions expanded without lagging
     private boolean actionsExpanded;
@@ -169,6 +169,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                             link.setBackgroundColor(colorLink);
                             itemView.setBackgroundColor(colorLink);
                             setTextColors(colorLink);
+                            colorLink = 0;
                         }
                         else {
                             super.loadBackgroundColor();
