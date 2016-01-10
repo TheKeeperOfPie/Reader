@@ -81,24 +81,6 @@ public class ControllerComments implements AdapterCommentList.ViewHolderComment.
         reloadAllComments();
     }
 
-    public void setLinkId(String linkId) {
-        setLinkIdValues(linkId, null, 0);
-        reloadAllComments();
-    }
-
-    public void setLinkId(String linkId, String commentId, int contextLevel) {
-        setLinkIdValues(linkId, commentId, contextLevel);
-
-    }
-
-    private void setLinkIdValues(String linkId, String commentId, int contextLevel) {
-        link = new Link();
-        link.setId(linkId);
-        link.setContextLevel(contextLevel);
-        link.setCommentId(commentId);
-        setSort(link.getSuggestedSort());
-    }
-
     public void reloadAllComments() {
         if (TextUtils.isEmpty(link.getId())) {
             setRefreshing(false);

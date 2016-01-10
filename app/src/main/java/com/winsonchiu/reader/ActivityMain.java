@@ -1543,17 +1543,18 @@ public class ActivityMain extends YouTubeBaseActivity
     }
 
     private void loadComments(String idLink, String idComments, int context) {
+        if (TextUtils.isEmpty(idComments)) {
+            controllerCommentsTop.setLinkId(idLink);
+        }
+        else {
+            controllerCommentsTop.setLinkId(idLink, idComments, context);
+        }
+
         getFragmentManager().beginTransaction()
                 .replace(R.id.frame_fragment,
                         FragmentComments.newInstance(),
                         FragmentComments.TAG)
                 .commit();
-
-        if (TextUtils.isEmpty(idComments)) {
-            controllerCommentsTop.setLinkId(idLink);
-        } else {
-            controllerCommentsTop.setLinkId(idLink, idComments, context);
-        }
     }
 
     private void loadProfile(String user) {

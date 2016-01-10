@@ -562,7 +562,7 @@ public class FragmentComments extends FragmentBase
 
         linkTop = controllerCommentsTop.getLink();
         indexStart = controllerLinks.indexOf(linkTop);
-        itemCount = controllerLinks.sizeLinks();
+        itemCount = Math.max(1, controllerLinks.sizeLinks());
         positionCurrent = indexStart;
 
         adapterComments = new RecyclerFragmentPagerAdapter<FragmentCommentsInner>(getFragmentManager()) {
