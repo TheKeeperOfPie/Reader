@@ -80,6 +80,7 @@ import com.winsonchiu.reader.AppSettings;
 import com.winsonchiu.reader.ControllerUser;
 import com.winsonchiu.reader.CustomApplication;
 import com.winsonchiu.reader.R;
+import com.winsonchiu.reader.comments.Source;
 import com.winsonchiu.reader.data.imgur.Album;
 import com.winsonchiu.reader.data.imgur.Image;
 import com.winsonchiu.reader.data.reddit.Comment;
@@ -482,17 +483,21 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         public Uri uriVideo;
         public int bufferPercentage;
         public YouTubeListener youTubeListener;
+        private Source source;
 
         @Inject Historian historian;
         @Inject Picasso picasso;
+        @Inject Reddit reddit;
 
         public ViewHolderBase(View itemView,
                               EventListener eventListener,
+                              Source source,
                               DisallowListener disallowListener,
                               RecyclerCallback recyclerCallback) {
             super(itemView);
             CustomApplication.getComponentMain().inject(this);
             this.eventListener = eventListener;
+            this.source = source;
             this.disallowListener = disallowListener;
             this.recyclerCallback = recyclerCallback;
             initialize();
@@ -620,8 +625,8 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             mediaController = new MediaController(itemView.getContext());
             adapterAlbum = new AdapterAlbum(viewPagerFull, new Album(), new AdapterAlbum.EventListener() {
                 @Override
-                public void downloadImage(String fileName, String url) {
-                    eventListener.downloadImage(fileName, url);
+                public void downloadImage(String title, String fileName, String url) {
+                    eventListener.downloadImage(title, fileName, url);
                 }
             }, new DisallowListener() {
                 @Override
@@ -870,7 +875,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                 case R.id.item_share:
                     break;
                 case R.id.item_download_image:
-                    eventListener.downloadImage(link.getId(), link.getUrl());
+                    eventListener.downloadImage(link.getTitle(), link.getId(), link.getUrl());
                     break;
                 case R.id.item_web:
                     eventListener.loadWebFragment(link.getUrl());
@@ -976,6 +981,10 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             return true;
         }
 
+        protected void scrollToSelf() {
+            recyclerCallback.scrollTo(getAdapterPosition());
+        }
+
         private void requestReport(final String reason) {
             String author = link.getAuthor();
             String title = link.getTitle();
@@ -1059,7 +1068,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                     if (link.isSelf() && !TextUtils.isEmpty(link.getSelfText())) {
                         expandFull(true);
                         textThreadSelf.setVisibility(View.VISIBLE);
-                        recyclerCallback.scrollTo(getAdapterPosition());
+                        scrollToSelf();
                     }
                     link.setCommentsClicked(true);
                     return;
@@ -1071,7 +1080,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                 hideYouTube();
             }
 
-            eventListener.onClickComments(link, this);
+            eventListener.onClickComments(link, this, source);
         }
 
         /**
@@ -1095,7 +1104,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             else {
                 expandFull(true);
                 textThreadSelf.setVisibility(View.VISIBLE);
-                recyclerCallback.scrollTo(getAdapterPosition());
+                scrollToSelf();
             }
 
             return true;
@@ -1223,7 +1232,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                                         public void onFinished() {
                                             webFull.setVisibility(View.GONE);
                                             webFull.setVisibility(View.VISIBLE);
-                                            recyclerCallback.scrollTo(getAdapterPosition());
+                                            scrollToSelf();
                                             Log.d(TAG, "onFinished");
                                         }
                                     });
@@ -1291,7 +1300,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             viewPagerFull.requestLayout();
             adapterAlbum.setAlbum(album, colorFilterMenuItem);
             viewPagerFull.setCurrentItem(0, false);
-            recyclerCallback.scrollTo(getAdapterPosition());
+            scrollToSelf();
         }
 
         /**
@@ -1366,8 +1375,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             String gfycatId = Reddit.parseUrlId(link.getUrl(), Reddit.GFYCAT_PREFIX, ".");
             progressImage.setVisibility(View.VISIBLE);
 
-            subscription = eventListener.getReddit()
-                    .loadGfycat(gfycatId)
+            subscription = reddit.loadGfycat(gfycatId)
                     .flatMap(new Func1<String, Observable<JSONObject>>() {
                         @Override
                         public Observable<JSONObject> call(String response) {
@@ -1439,8 +1447,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         }
 
         private void loadGallery(String id, final Link link) {
-            subscription = eventListener.getReddit()
-                    .loadImgurGallery(id)
+            subscription = reddit.loadImgurGallery(id)
                     .flatMap(new Func1<String, Observable<Album>>() {
                         @Override
                         public Observable<Album> call(String response) {
@@ -1472,7 +1479,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         }
 
         private void loadAlbum(String id, final Link link) {
-            subscription = eventListener.getReddit().loadImgurAlbum(id)
+            subscription = reddit.loadImgurAlbum(id)
                     .flatMap(new Func1<String, Observable<Album>>() {
                         @Override
                         public Observable<Album> call(String response) {
@@ -1504,8 +1511,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         }
 
         private void loadGifv(String id) {
-            eventListener.getReddit()
-                    .loadImgurImage(id)
+            reddit.loadImgurImage(id)
                     .flatMap(new Func1<String, Observable<Image>>() {
                         @Override
                         public Observable<Image> call(String response) {
@@ -1580,7 +1586,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             surfaceHolder = surfaceVideo.getHolder();
             surfaceHolder.addCallback(ViewHolderBase.this);
             surfaceHolder.setSizeFromLayout();
-            recyclerCallback.scrollTo(getAdapterPosition());
+            scrollToSelf();
         }
 
         public void loadYouTubeVideo(final Link link, final String id, final int timeInMillis) {
@@ -1612,7 +1618,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                             });
                             youTubePlayer.loadVideo(id);
                             viewYouTube.setVisibility(View.VISIBLE);
-                            recyclerCallback.scrollTo(getAdapterPosition());
+                            scrollToSelf();
                         }
 
                         @Override
@@ -1919,12 +1925,11 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
 
             void sendComment(String name, String text);
             void sendMessage(String name, String text);
-            void onClickComments(Link link, ViewHolderBase viewHolderBase);
+            void onClickComments(Link link, ViewHolderBase viewHolderBase, Source source);
             void save(Link link);
             void save(Comment comment);
             void loadUrl(String url);
-            void downloadImage(String fileName, String url);
-            Reddit getReddit();
+            void downloadImage(String title, String fileName, String url);
             WebViewFixed getNewWebView(WebViewFixed.OnFinishedListener onFinishedListener);
             void toast(String text);
             boolean isUserLoggedIn();

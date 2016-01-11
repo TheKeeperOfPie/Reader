@@ -59,8 +59,11 @@ import com.winsonchiu.reader.data.reddit.Comment;
 import com.winsonchiu.reader.data.reddit.Link;
 import com.winsonchiu.reader.data.reddit.Listing;
 import com.winsonchiu.reader.data.reddit.Sort;
+import com.winsonchiu.reader.history.ControllerHistory;
 import com.winsonchiu.reader.links.AdapterLink;
 import com.winsonchiu.reader.links.ControllerLinks;
+import com.winsonchiu.reader.profile.ControllerProfile;
+import com.winsonchiu.reader.search.ControllerSearch;
 import com.winsonchiu.reader.utils.FinalizingSubscriber;
 import com.winsonchiu.reader.utils.RecyclerFragmentPagerAdapter;
 import com.winsonchiu.reader.utils.ScrollAwareFloatingActionButtonBehavior;
@@ -148,9 +151,13 @@ public class FragmentComments extends FragmentBase
     private int itemCount;
     private FragmentCommentsInner fragmentCurrent;
     private RecyclerFragmentPagerAdapter<FragmentCommentsInner> adapterComments;
+    private Source source = Source.NONE;
 
     @Inject ControllerCommentsTop controllerCommentsTop;
     @Inject ControllerLinks controllerLinks;
+    @Inject ControllerSearch controllerSearch;
+    @Inject ControllerHistory controllerHistory;
+    @Inject ControllerProfile controllerProfile;
 
     public static FragmentComments newInstance() {
         FragmentComments fragment = new FragmentComments();
@@ -561,9 +568,7 @@ public class FragmentComments extends FragmentBase
         };
 
         linkTop = controllerCommentsTop.getLink();
-        indexStart = controllerLinks.indexOf(linkTop);
-        itemCount = Math.max(1, controllerLinks.sizeLinks());
-        positionCurrent = indexStart;
+        initializePagerValues();
 
         adapterComments = new RecyclerFragmentPagerAdapter<FragmentCommentsInner>(getFragmentManager()) {
             @Override
@@ -580,10 +585,10 @@ public class FragmentComments extends FragmentBase
                 Link link = null;
 
                 if (position < indexStart) {
-                    link = controllerLinks.getPreviousLink(linkTop, indexStart - position);
+                    link = getPreviousLink(position);
                 }
                 else if (position > indexStart) {
-                    link = controllerLinks.getNextLink(linkTop, position - indexStart);
+                    link = getNextLink(position);
                 }
 
                 if (link == null) {
@@ -683,6 +688,75 @@ public class FragmentComments extends FragmentBase
         }
 
         return layoutRoot;
+    }
+
+    private Link getPreviousLink(int positionPager) {
+        int offset = indexStart - positionPager;
+
+        switch (source) {
+            case PROFILE:
+            case NONE:
+                break;
+            case LINKS:
+                return controllerLinks.getPreviousLink(linkTop, offset);
+            case SEARCH_LINKS:
+                return controllerSearch.getPreviousLink(linkTop, offset);
+            case SEARCH_LINKS_SUBREDDIT:
+                return controllerSearch.getPreviousLinkSubreddit(linkTop, offset);
+            case HISTORY:
+                return controllerHistory.getPreviousLink(linkTop, offset);
+        }
+
+        return null;
+    }
+
+    private Link getNextLink(int positionPager) {
+        int offset = positionPager - indexStart;
+
+        switch (source) {
+            case PROFILE:
+            case NONE:
+                break;
+            case LINKS:
+                return controllerLinks.getNextLink(linkTop, offset);
+            case SEARCH_LINKS:
+                return controllerSearch.getNextLink(linkTop, offset);
+            case SEARCH_LINKS_SUBREDDIT:
+                return controllerSearch.getNextLinkSubreddit(linkTop, offset);
+            case HISTORY:
+                return controllerHistory.getNextLink(linkTop, offset);
+        }
+
+        return null;
+    }
+
+    private void initializePagerValues() {
+        source = controllerCommentsTop.getSource();
+
+        switch (source) {
+            case PROFILE:
+            case NONE:
+                indexStart = 0;
+                itemCount = 1;
+                break;
+            case LINKS:
+                indexStart = controllerLinks.indexOf(linkTop);
+                itemCount = Math.max(1, controllerLinks.sizeLinks());
+                break;
+            case SEARCH_LINKS:
+                indexStart = controllerSearch.indexOfLink(linkTop);
+                itemCount = Math.max(1, controllerSearch.sizeLinks());
+                break;
+            case SEARCH_LINKS_SUBREDDIT:
+                indexStart = controllerSearch.indexOfLinkSubreddit(linkTop);
+                itemCount = Math.max(1, controllerSearch.sizeLinks());
+                break;
+            case HISTORY:
+                indexStart = controllerHistory.indexOf(linkTop);
+                itemCount = Math.max(1, controllerHistory.sizeLinks());
+                break;
+        }
+        positionCurrent = indexStart;
     }
 
     private void setCurrentFragment(FragmentCommentsInner fragment) {
@@ -1087,7 +1161,6 @@ public class FragmentComments extends FragmentBase
     }
 
     private void calculateExit() {
-        isFinished = true;
         if (fragmentCurrent.getPosition() != indexStart) {
             slideExit();
         }
@@ -1123,6 +1196,15 @@ public class FragmentComments extends FragmentBase
     }
 
     private void animateExit() {
+        isFinished = true;
+
+        FragmentBase fragment = (FragmentBase) getFragmentManager()
+                .findFragmentByTag(fragmentParentTag);
+        if (fragment != null) {
+            fragment.onHiddenChanged(false);
+            getFragmentManager().beginTransaction().show(fragment).commit();
+            fragment.onShown();
+        }
 
         viewBackground.setVisibility(View.VISIBLE);
         fragmentCurrent.collapseViewHolderLink(getArguments().getBoolean(ARG_ACTIONS_EXPANDED));
@@ -1188,6 +1270,7 @@ public class FragmentComments extends FragmentBase
                                         .findFragmentByTag(fragmentParentTag);
                                 if (fragment != null) {
                                     fragment.onHiddenChanged(false);
+                                    fragment.setVisibilityOfThing(View.INVISIBLE, controllerCommentsTop.getLink());
                                     getFragmentManager().beginTransaction().show(fragment)
                                             .commit();
                                 }
@@ -1225,6 +1308,7 @@ public class FragmentComments extends FragmentBase
     }
 
     private void slideExit() {
+        isFinished = true;
         viewBackground.setVisibility(View.VISIBLE);
         FragmentBase fragment = (FragmentBase) getFragmentManager()
                 .findFragmentByTag(fragmentParentTag);

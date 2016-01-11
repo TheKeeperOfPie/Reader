@@ -66,6 +66,7 @@ public class AdapterLinkHeader extends RecyclerView.Adapter<AdapterLink.ViewHold
         if (isGrid) {
             viewHolderLink = new AdapterLinkGrid.ViewHolder(LayoutInflater.from(parent.getContext()).inflate(R.layout.cell_link, parent, false),
                     eventListenerBase,
+                    Source.LINKS,
                     disallowListener,
                     recyclerCallback,
                     thumbnailSize) {
@@ -139,6 +140,7 @@ public class AdapterLinkHeader extends RecyclerView.Adapter<AdapterLink.ViewHold
         else {
             viewHolderLink = new AdapterLinkList.ViewHolder(LayoutInflater.from(parent.getContext()).inflate(R.layout.row_link, parent, false),
                     eventListenerBase,
+                    Source.LINKS,
                     disallowListener,
                     recyclerCallback) {
 

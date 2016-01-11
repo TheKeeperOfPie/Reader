@@ -826,11 +826,16 @@ public class FragmentCommentsInner extends FragmentBase {
                 break;
             default:
                 position = controllerComments
-                        .getNextCommentPosition(position) + 1;
+                        .getNextCommentPosition(position - 1) + 1;
                 break;
         }
 
-        UtilsAnimation.scrollToPositionWithCentering(position, recyclerCommentList, linearLayoutManager, scrollToPaddingTop, scrollToPaddingBottom, true);
+        UtilsAnimation.scrollToPositionWithCentering(position,
+                recyclerCommentList,
+                linearLayoutManager,
+                scrollToPaddingTop,
+                scrollToPaddingBottom,
+                true);
 
     }
 
@@ -848,7 +853,12 @@ public class FragmentCommentsInner extends FragmentBase {
                 .getPreviousCommentPosition(
                         position - 1) + 1;
 
-        UtilsAnimation.scrollToPositionWithCentering(newPosition, recyclerCommentList, linearLayoutManager, scrollToPaddingTop, scrollToPaddingBottom, true);
+        UtilsAnimation.scrollToPositionWithCentering(newPosition,
+                recyclerCommentList,
+                linearLayoutManager,
+                scrollToPaddingTop,
+                scrollToPaddingBottom,
+                true);
 
     }
 

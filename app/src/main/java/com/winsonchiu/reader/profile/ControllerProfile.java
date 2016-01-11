@@ -481,11 +481,6 @@ public class ControllerProfile implements ControllerLinksBase {
         return observable;
     }
 
-    public boolean toggleComment(int position) {
-        // Not implemented
-        return true;
-    }
-
     public Observable<String> voteComment(final AdapterCommentList.ViewHolderComment viewHolder,
                                           final Comment comment,
                                           int vote) {

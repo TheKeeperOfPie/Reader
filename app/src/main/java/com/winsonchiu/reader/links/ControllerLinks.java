@@ -512,6 +512,10 @@ public class ControllerLinks implements ControllerLinksBase {
                 subreddit.getUrl()) && !subreddit.getUrl().contains("+");
     }
 
+    public int indexOf(Link link) {
+        return listingLinks.getChildren().indexOf(link);
+    }
+
     @Nullable
     public Link getPreviousLink(Link linkCurrent, int offset) {
         int index = indexOf(linkCurrent) - offset;
@@ -530,10 +534,6 @@ public class ControllerLinks implements ControllerLinksBase {
         }
 
         return null;
-    }
-
-    public int indexOf(Link link) {
-        return listingLinks.getChildren().indexOf(link);
     }
 
     public interface Listener extends ControllerListener {

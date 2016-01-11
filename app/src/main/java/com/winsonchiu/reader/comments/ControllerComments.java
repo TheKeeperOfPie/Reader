@@ -36,7 +36,7 @@ import rx.functions.Func1;
 /**
  * Created by TheKeeperOfPie on 3/20/2015.
  */
-public class ControllerComments implements AdapterCommentList.ViewHolderComment.EventListenerComment{
+public class ControllerComments implements AdapterCommentList.ViewHolderComment.EventListenerComment {
 
     private static final String TAG = ControllerComments.class.getCanonicalName();
 
@@ -463,15 +463,20 @@ public class ControllerComments implements AdapterCommentList.ViewHolderComment.
         return commentIndex;
     }
 
+    private int indexOf(Comment comment) {
+        return listingComments.getChildren().indexOf(comment);
+    }
+
     /**
      * Toggles children of comment
      *
-     * @param position
+     * @param comment
      * @return true if comment is now expanded, false if collapsed
      */
-    public boolean toggleComment(int position) {
+    @Override
+    public boolean toggleComment(Comment comment) {
 
-        position = position - 1;
+        int position = indexOf(comment);
 
         if (position == listingComments.getChildren()
                 .size() - 1) {
@@ -480,7 +485,7 @@ public class ControllerComments implements AdapterCommentList.ViewHolderComment.
         }
 
         List<Thing> commentList = listingComments.getChildren();
-        Comment comment = (Comment) commentList.get(position);
+        comment = (Comment) commentList.get(position);
         Comment nextComment = (Comment) commentList.get(position + 1);
 
         if (comment.getLevel() >= nextComment.getLevel()) {
@@ -494,7 +499,7 @@ public class ControllerComments implements AdapterCommentList.ViewHolderComment.
 
     }
 
-    public void expandComment(int position) {
+    private void expandComment(int position) {
         List<Thing> commentList = link.getComments()
                 .getChildren();
         int index = commentList.indexOf(listingComments.getChildren()
@@ -524,7 +529,7 @@ public class ControllerComments implements AdapterCommentList.ViewHolderComment.
         }
     }
 
-    public void collapseComment(int position) {
+    private void collapseComment(int position) {
         List<Thing> commentList = listingComments.getChildren();
         Comment comment = (Comment) commentList.get(position);
         position++;

@@ -5,6 +5,7 @@
 package com.winsonchiu.reader.history;
 
 import android.content.Context;
+import android.support.annotation.Nullable;
 import android.text.TextUtils;
 
 import com.winsonchiu.reader.CustomApplication;
@@ -329,6 +330,30 @@ public class ControllerHistory implements ControllerLinksBase {
 
     public long getTimeEnd() {
         return timeEnd;
+    }
+
+    public int indexOf(Link link) {
+        return history.getChildren().indexOf(link);
+    }
+
+    @Nullable
+    public Link getPreviousLink(Link linkCurrent, int offset) {
+        int index = indexOf(linkCurrent) - offset;
+        if (index >= 0 && !history.getChildren().isEmpty()) {
+            return (Link) history.getChildren().get(index);
+        }
+
+        return null;
+    }
+
+    @Nullable
+    public Link getNextLink(Link linkCurrent, int offset) {
+        int index = indexOf(linkCurrent) + offset;
+        if (index < history.getChildren().size() && !history.getChildren().isEmpty()) {
+            return (Link) history.getChildren().get(index);
+        }
+
+        return null;
     }
 
     public interface Listener extends ControllerListener {

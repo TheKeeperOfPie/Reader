@@ -10,7 +10,7 @@ import android.view.LayoutInflater;
 import android.view.ViewGroup;
 
 import com.winsonchiu.reader.R;
-import com.winsonchiu.reader.comments.ControllerComments;
+import com.winsonchiu.reader.comments.Source;
 import com.winsonchiu.reader.links.AdapterLinkGrid;
 import com.winsonchiu.reader.links.ControllerLinksBase;
 import com.winsonchiu.reader.utils.DisallowListener;
@@ -41,6 +41,7 @@ public class AdapterHistoryLinkGrid extends AdapterLinkGrid {
         return new AdapterLinkGrid.ViewHolder(LayoutInflater.from(viewGroup.getContext())
                 .inflate(R.layout.cell_link, viewGroup, false),
                 eventListenerBase,
+                Source.HISTORY,
                 disallowListener,
                 recyclerCallback,
                 thumbnailSize) {

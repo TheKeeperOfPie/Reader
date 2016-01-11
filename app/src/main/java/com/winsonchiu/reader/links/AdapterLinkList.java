@@ -16,6 +16,7 @@ import android.view.ViewGroup;
 
 import com.winsonchiu.reader.AppSettings;
 import com.winsonchiu.reader.R;
+import com.winsonchiu.reader.comments.Source;
 import com.winsonchiu.reader.data.reddit.Link;
 import com.winsonchiu.reader.data.reddit.Reddit;
 import com.winsonchiu.reader.utils.DisallowListener;
@@ -55,6 +56,7 @@ public class AdapterLinkList extends AdapterLink {
         return new ViewHolder(LayoutInflater.from(viewGroup.getContext())
                 .inflate(R.layout.row_link, viewGroup, false),
                 eventListenerBase,
+                Source.LINKS,
                 disallowListener,
                 recyclerCallback);
     }
@@ -80,9 +82,10 @@ public class AdapterLinkList extends AdapterLink {
 
         public ViewHolder(View itemView,
                           EventListener eventListener,
+                          Source source,
                           DisallowListener disallowListener,
                           RecyclerCallback recyclerCallback) {
-            super(itemView, eventListener, disallowListener, recyclerCallback);
+            super(itemView, eventListener, source, disallowListener, recyclerCallback);
         }
 
         @Override
@@ -147,7 +150,7 @@ public class AdapterLinkList extends AdapterLink {
         @Override
         public void expandFull(boolean expand) {
             super.expandFull(expand);
-            recyclerCallback.scrollTo(getAdapterPosition());
+            scrollToSelf();
         }
 
         @Override

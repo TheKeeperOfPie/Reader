@@ -17,9 +17,6 @@ import android.widget.TextView;
 
 import com.winsonchiu.reader.R;
 
-import java.util.ArrayList;
-import java.util.List;
-
 /**
  * Created by TheKeeperOfPie on 7/2/2015.
  */
@@ -27,16 +24,12 @@ public class AdapterHeaders extends RecyclerView.Adapter<AdapterHeaders.ViewHold
 
     private PorterDuffColorFilter colorFilterIcon;
     private EventListener eventListener;
-    private List<Header> headers;
+    private Header[] headers;
 
     public AdapterHeaders(Activity activity, EventListener eventListener) {
         super();
         this.eventListener = eventListener;
-        headers = new ArrayList<>();
-        headers.add(new Header(R.drawable.ic_palette_white_24dp, R.string.prefs_category_display, R.string.prefs_category_display_summary));
-        headers.add(new Header(R.drawable.ic_build_white_24dp, R.string.prefs_category_behavior, R.string.prefs_category_behavior_summary));
-        headers.add(new Header(R.drawable.ic_mail_white_24dp, R.string.prefs_category_mail, R.string.prefs_category_mail_summary));
-        headers.add(new Header(R.drawable.ic_help_outline_white_24dp, R.string.prefs_category_about, R.string.prefs_category_about_summary));
+        headers = Header.values();
 
         TypedArray typedArray = activity.getTheme().obtainStyledAttributes(new int[] {R.attr.colorIconFilter});
         int colorIconFilter = typedArray.getColor(0, 0xFFFFFFFF);
@@ -53,12 +46,12 @@ public class AdapterHeaders extends RecyclerView.Adapter<AdapterHeaders.ViewHold
 
     @Override
     public void onBindViewHolder(ViewHolder holder, int position) {
-        holder.onBind(headers.get(position));
+        holder.onBind(headers[position]);
     }
 
     @Override
     public int getItemCount() {
-        return headers.size();
+        return headers.length;
     }
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
@@ -80,7 +73,7 @@ public class AdapterHeaders extends RecyclerView.Adapter<AdapterHeaders.ViewHold
             itemView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    eventListener.onClickHeader(getAdapterPosition());
+                    eventListener.onClickHeader(header);
                 }
             });
 
@@ -101,7 +94,7 @@ public class AdapterHeaders extends RecyclerView.Adapter<AdapterHeaders.ViewHold
     }
 
     public interface EventListener {
-        void onClickHeader(int position);
+        void onClickHeader(Header header);
     }
 
 }

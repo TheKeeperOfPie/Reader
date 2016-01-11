@@ -257,8 +257,8 @@ public class FragmentInbox extends FragmentBase implements Toolbar.OnMenuItemCli
                         }
 
                         @Override
-                        public boolean toggleComment(int position) {
-                            return controllerInbox.toggleComment(position);
+                        public boolean toggleComment(Comment comment) {
+                            return true;
                         }
 
                         @Override

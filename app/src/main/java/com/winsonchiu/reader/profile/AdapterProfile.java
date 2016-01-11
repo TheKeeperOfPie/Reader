@@ -18,6 +18,7 @@ import android.widget.TextView;
 
 import com.winsonchiu.reader.R;
 import com.winsonchiu.reader.comments.AdapterCommentList;
+import com.winsonchiu.reader.comments.Source;
 import com.winsonchiu.reader.data.reddit.Thing;
 import com.winsonchiu.reader.data.reddit.User;
 import com.winsonchiu.reader.links.AdapterLink;
@@ -99,8 +100,11 @@ public class AdapterProfile extends RecyclerView.Adapter<RecyclerView.ViewHolder
             case ControllerProfile.VIEW_TYPE_LINK:
                 AdapterLink.ViewHolderBase viewHolder = new AdapterLinkList.ViewHolder(
                         LayoutInflater.from(parent.getContext())
-                                .inflate(R.layout.row_link, parent, false), eventListenerBase,
-                        disallowListener, recyclerCallback);
+                                .inflate(R.layout.row_link, parent, false),
+                        eventListenerBase,
+                        Source.PROFILE,
+                        disallowListener,
+                        recyclerCallback);
                 viewHolders.add(viewHolder);
                 viewHolder.toolbarActions.getMenu().findItem(R.id.item_view_profile)
                         .setShowAsAction(

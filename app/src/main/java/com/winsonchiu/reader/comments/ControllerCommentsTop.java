@@ -33,6 +33,7 @@ public class ControllerCommentsTop {
     private int contextNumber;
     private String commentId;
     private Link link;
+    private Source source = Source.NONE;
 
     @Inject Reddit reddit;
 
@@ -60,26 +61,27 @@ public class ControllerCommentsTop {
         }
     }
 
-
-    public void setLink(Link link) {
+    public void setLink(Link link, Source source) {
         this.link = link;
         this.commentId = null;
+        this.source = source;
     }
 
-    public void setLinkId(String linkId) {
-        setLinkIdValues(linkId);
+    public void setLinkId(String linkId, Source source) {
+        setLinkIdValues(linkId, source);
     }
 
-    public void setLinkId(String linkId, String commentId, int contextNumber) {
+    public void setLinkId(String linkId, String commentId, int contextNumber, Source source) {
         this.contextNumber = contextNumber;
-        setLinkIdValues(linkId);
+        setLinkIdValues(linkId, source);
         this.commentId = commentId;
     }
 
-    private void setLinkIdValues(String linkId) {
+    private void setLinkIdValues(String linkId, Source source) {
         link = new Link();
         link.setId(linkId);
         this.commentId = null;
+        this.source = source;
     }
 
     public Link getLink() {
@@ -130,6 +132,10 @@ public class ControllerCommentsTop {
         for (Listener listener : listeners) {
             listener.setReplyText(nameParent, text, collapsed);
         }
+    }
+
+    public Source getSource() {
+        return source;
     }
 
     public interface Listener {

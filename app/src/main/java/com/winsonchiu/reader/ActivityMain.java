@@ -13,6 +13,7 @@ import android.accounts.OperationCanceledException;
 import android.app.Activity;
 import android.app.ActivityManager;
 import android.app.AlarmManager;
+import android.app.DownloadManager;
 import android.app.FragmentTransaction;
 import android.content.ComponentName;
 import android.content.Context;
@@ -28,7 +29,6 @@ import android.graphics.Color;
 import android.graphics.PorterDuff;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
-import android.media.MediaScannerConnection;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -83,6 +83,7 @@ import com.winsonchiu.reader.comments.AdapterCommentList;
 import com.winsonchiu.reader.comments.ControllerCommentsTop;
 import com.winsonchiu.reader.comments.FragmentComments;
 import com.winsonchiu.reader.comments.FragmentReply;
+import com.winsonchiu.reader.comments.Source;
 import com.winsonchiu.reader.dagger.FragmentPersist;
 import com.winsonchiu.reader.dagger.components.ComponentActivity;
 import com.winsonchiu.reader.dagger.components.ComponentStatic;
@@ -115,8 +116,8 @@ import com.winsonchiu.reader.search.FragmentSearch;
 import com.winsonchiu.reader.settings.ActivitySettings;
 import com.winsonchiu.reader.utils.CustomColorFilter;
 import com.winsonchiu.reader.utils.FinalizingSubscriber;
+import com.winsonchiu.reader.utils.ImageDownload;
 import com.winsonchiu.reader.utils.ObserverEmpty;
-import com.winsonchiu.reader.utils.TargetImageDownload;
 import com.winsonchiu.reader.utils.TouchEventListener;
 import com.winsonchiu.reader.utils.UtilsAnimation;
 import com.winsonchiu.reader.utils.UtilsColor;
@@ -127,7 +128,6 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -146,7 +146,7 @@ import rx.schedulers.Schedulers;
 
 
 public class ActivityMain extends YouTubeBaseActivity
-        implements FragmentListenerBase, AppCompatCallback {
+        implements FragmentListenerBase, AppCompatCallback, ActivityCompat.OnRequestPermissionsResultCallback {
 
     private static final String TAG = ActivityMain.class.getCanonicalName();
 
@@ -188,8 +188,9 @@ public class ActivityMain extends YouTubeBaseActivity
     private CustomColorFilter colorFilterPrimary;
     private int colorPrimary;
     private AppCompatDelegate appCompatDelegate;
+
+    private ImageDownload imageDownload;
     private boolean isDownloadingHeaderImage;
-    private TargetImageDownload targetDownload;
     private Target targetHeader = new Target() {
         @Override
         public void onBitmapLoaded(final Bitmap bitmap, Picasso.LoadedFrom from) {
@@ -426,12 +427,12 @@ public class ActivityMain extends YouTubeBaseActivity
             }
 
             @Override
-            public void onClickComments(Link link, final AdapterLink.ViewHolderBase viewHolderBase) {
+            public void onClickComments(Link link, final AdapterLink.ViewHolderBase viewHolderBase, Source source) {
 
                 Log.d(TAG, "onClickComments: " + link);
 
                 controllerCommentsTop
-                        .setLink(link);
+                        .setLink(link, source);
 
                 int color = viewHolderBase.getBackgroundColor();
 
@@ -514,78 +515,9 @@ public class ActivityMain extends YouTubeBaseActivity
             }
 
             @Override
-            public void downloadImage(final String fileName, final String url) {
-                targetDownload = new TargetImageDownload(fileName, url) {
-                    @Override
-                    public void onBitmapLoaded(Bitmap bitmap, Picasso.LoadedFrom from) {
-                        boolean created = false;
-                        String path = Environment.getExternalStoragePublicDirectory(
-                                Environment.DIRECTORY_PICTURES)
-                                .getAbsolutePath() + "/ReaderForReddit/" + fileName;
-
-                        int index = url.lastIndexOf(".");
-                        if (index > -1) {
-                            String extension = url.substring(index, index + 4);
-                            path += extension;
-                        }
-                        else {
-                            path += ".png";
-                        }
-
-                        File file = new File(path);
-
-                        file.getParentFile()
-                                .mkdirs();
-
-                        FileOutputStream out = null;
-                        try {
-                            out = new FileOutputStream(file);
-                            bitmap.compress(Bitmap.CompressFormat.PNG, 90, out);
-                            created = true;
-                        }
-                        catch (FileNotFoundException e) {
-                            e.printStackTrace();
-                        }
-                        finally {
-                            try {
-                                if (out != null) {
-                                    out.close();
-                                }
-                            }
-                            catch (Throwable e) {
-                                e.printStackTrace();
-                            }
-                        }
-
-                        if (created) {
-                            MediaScannerConnection.scanFile(ActivityMain.this,
-                                    new String[]{file.toString()}, null, null);
-                        }
-
-                        Toast.makeText(ActivityMain.this, getString(R.string.image_downloaded),
-                                Toast.LENGTH_SHORT)
-                                .show();
-
-                        targetDownload = null;
-                    }
-
-                    @Override
-                    public void onBitmapFailed(Drawable errorDrawable) {
-                        Toast.makeText(ActivityMain.this, getString(R.string.error_downloading), Toast.LENGTH_SHORT).show();
-                    }
-
-                    @Override
-                    public void onPrepareLoad(Drawable placeHolderDrawable) {
-                        Toast.makeText(ActivityMain.this, getString(R.string.image_downloading), Toast.LENGTH_SHORT).show();
-                    }
-                };
-
+            public void downloadImage(String title, final String fileName, final String url) {
+                imageDownload = new ImageDownload(title, fileName, url);
                 ActivityCompat.requestPermissions(ActivityMain.this, new String[] {android.Manifest.permission.WRITE_EXTERNAL_STORAGE}, REQUEST_PERMISSION_WRITE_EXTERNAL_STORAGE);
-            }
-
-            @Override
-            public Reddit getReddit() {
-                return reddit;
             }
 
             @Override
@@ -905,9 +837,14 @@ public class ActivityMain extends YouTubeBaseActivity
                 if (grantResults.length == 0 || grantResults[0] != PackageManager.PERMISSION_GRANTED) {
                     Toast.makeText(this, R.string.need_permission_download_image, Toast.LENGTH_LONG).show();
                 }
-                else if (targetDownload != null){
-                    picasso.load(targetDownload.getUrl())
-                            .into(targetDownload);
+                else if (imageDownload != null){
+                    File destination = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES), "ReaderForReddit" + File.separator + imageDownload.getFileName() + Reddit.getImageFileEnding(imageDownload.getUrl()));
+
+                    DownloadManager.Request request = new DownloadManager.Request(Uri.parse(imageDownload.getUrl()));
+                    request.setDestinationUri(Uri.fromFile(destination));
+
+                    DownloadManager downloadManager = (DownloadManager) getSystemService(Context.DOWNLOAD_SERVICE);
+                    downloadManager.enqueue(request);
                 }
         }
     }
@@ -1544,10 +1481,10 @@ public class ActivityMain extends YouTubeBaseActivity
 
     private void loadComments(String idLink, String idComments, int context) {
         if (TextUtils.isEmpty(idComments)) {
-            controllerCommentsTop.setLinkId(idLink);
+            controllerCommentsTop.setLinkId(idLink, Source.NONE);
         }
         else {
-            controllerCommentsTop.setLinkId(idLink, idComments, context);
+            controllerCommentsTop.setLinkId(idLink, idComments, context, Source.NONE);
         }
 
         getFragmentManager().beginTransaction()

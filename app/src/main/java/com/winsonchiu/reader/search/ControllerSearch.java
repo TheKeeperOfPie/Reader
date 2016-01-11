@@ -8,6 +8,7 @@ import android.accounts.AccountManager;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
+import android.support.annotation.Nullable;
 import android.text.TextUtils;
 import android.util.Log;
 
@@ -1027,6 +1028,54 @@ public class ControllerSearch {
                 }
             }
         }
+    }
+
+    public int indexOfLink(Link link) {
+        return links.getChildren().indexOf(link);
+    }
+
+    public int indexOfLinkSubreddit(Link link) {
+        return linksSubreddit.getChildren().indexOf(link);
+    }
+
+    @Nullable
+    public Link getPreviousLink(Link linkCurrent, int offset) {
+        int index = indexOfLink(linkCurrent) - offset;
+        if (index >= 0 && !links.getChildren().isEmpty()) {
+            return (Link) links.getChildren().get(index);
+        }
+
+        return null;
+    }
+
+    @Nullable
+    public Link getNextLink(Link linkCurrent, int offset) {
+        int index = indexOfLink(linkCurrent) + offset;
+        if (index < links.getChildren().size() && !links.getChildren().isEmpty()) {
+            return (Link) links.getChildren().get(index);
+        }
+
+        return null;
+    }
+
+    @Nullable
+    public Link getPreviousLinkSubreddit(Link linkCurrent, int offset) {
+        int index = indexOfLinkSubreddit(linkCurrent) - offset;
+        if (index >= 0 && !linksSubreddit.getChildren().isEmpty()) {
+            return (Link) linksSubreddit.getChildren().get(index);
+        }
+
+        return null;
+    }
+
+    @Nullable
+    public Link getNextLinkSubreddit(Link linkCurrent, int offset) {
+        int index = indexOfLinkSubreddit(linkCurrent) + offset;
+        if (index < linksSubreddit.getChildren().size() && !linksSubreddit.getChildren().isEmpty()) {
+            return (Link) linksSubreddit.getChildren().get(index);
+        }
+
+        return null;
     }
 
     public interface Listener extends ControllerListener {

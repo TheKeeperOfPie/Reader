@@ -744,6 +744,26 @@ public class Reddit {
                 || url.endsWith(JPEG) || url.endsWith(WEBP);
     }
 
+    public static String getImageFileEnding(String url) {
+        if (url.endsWith(PNG)) {
+            return PNG;
+        }
+        if (url.endsWith(JPG)) {
+            return JPG;
+        }
+        if (url.endsWith(JPEG)) {
+            return JPEG;
+        }
+        if (url.endsWith(WEBP)) {
+            return WEBP;
+        }
+        if (url.endsWith(GIF)) {
+            return GIF;
+        }
+
+        return PNG;
+    }
+
     public static boolean showThumbnail(Link link) {
         if (TextUtils.isEmpty(link.getUrl())) {
             return false;

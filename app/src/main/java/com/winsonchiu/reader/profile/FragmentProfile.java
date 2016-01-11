@@ -362,8 +362,8 @@ public class FragmentProfile extends FragmentBase implements Toolbar.OnMenuItemC
                         }
 
                         @Override
-                        public boolean toggleComment(int position) {
-                            return controllerProfile.toggleComment(position);
+                        public boolean toggleComment(Comment comment) {
+                            return true;
                         }
 
                         @Override

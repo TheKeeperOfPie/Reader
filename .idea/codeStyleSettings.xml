@@ -34,6 +34,9 @@
         <AndroidXmlCodeStyleSettings>
           <option name="USE_CUSTOM_SETTINGS" value="true" />
         </AndroidXmlCodeStyleSettings>
+        <JavaCodeStyleSettings>
+          <option name="DO_NOT_WRAP_AFTER_SINGLE_ANNOTATION" value="true" />
+        </JavaCodeStyleSettings>
         <Objective-C-extensions>
           <option name="GENERATE_INSTANCE_VARIABLES_FOR_PROPERTIES" value="ASK" />
           <option name="RELEASE_STYLE" value="IVAR" />
@@ -65,6 +68,9 @@
         <XML>
           <option name="XML_LEGACY_SETTINGS_IMPORTED" value="true" />
         </XML>
+        <codeStyleSettings language="JAVA">
+          <option name="ALIGN_MULTILINE_PARAMETERS" value="false" />
+        </codeStyleSettings>
         <codeStyleSettings language="XML">
           <option name="FORCE_REARRANGE_MODE" value="1" />
           <indentOptions>
@@ -224,6 +230,6 @@
         </codeStyleSettings>
       </value>
     </option>
-    <option name="PREFERRED_PROJECT_CODE_STYLE" value="Default (1)" />
+    <option name="USE_PER_PROJECT_SETTINGS" value="true" />
   </component>
 </project>

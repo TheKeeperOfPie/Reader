@@ -38,6 +38,7 @@ import com.winsonchiu.reader.CustomApplication;
 import com.winsonchiu.reader.FragmentBase;
 import com.winsonchiu.reader.FragmentListenerBase;
 import com.winsonchiu.reader.R;
+import com.winsonchiu.reader.comments.Source;
 import com.winsonchiu.reader.data.reddit.Link;
 import com.winsonchiu.reader.data.reddit.Listing;
 import com.winsonchiu.reader.data.reddit.Reddit;
@@ -496,7 +497,9 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
             public void showSidebar() {
 
             }
-        }, mListener.getEventListenerBase(), disallowListener,
+        }, mListener.getEventListenerBase(),
+                Source.SEARCH_LINKS,
+                disallowListener,
                 new RecyclerCallback() {
                     @Override
                     public void scrollTo(final int position) {
@@ -581,7 +584,9 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
             public void showSidebar() {
 
             }
-        }, mListener.getEventListenerBase(), disallowListener,
+        }, mListener.getEventListenerBase(),
+                Source.SEARCH_LINKS_SUBREDDIT,
+                disallowListener,
                 new RecyclerCallback() {
                     @Override
                     public void scrollTo(final int position) {

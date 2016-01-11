@@ -198,7 +198,7 @@ public class AdapterAlbum extends PagerAdapter {
     }
 
     public interface EventListener {
-        void downloadImage(String fileName, String url);
+        void downloadImage(String title, String fileName, String url);
     }
 
     public static class ViewHolder implements View.OnClickListener {
@@ -241,7 +241,7 @@ public class AdapterAlbum extends PagerAdapter {
         public void onClick(View v) {
             switch (v.getId()) {
                 case R.id.button_download_image:
-                    eventListener.downloadImage("Imgur" + image.getId(), image.getLink());
+                    eventListener.downloadImage(image.getTitle(), "Imgur" + image.getId(), image.getLink());
                     break;
             }
         }

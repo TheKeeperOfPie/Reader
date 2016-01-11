@@ -49,24 +49,23 @@ public class FragmentHeaders extends Fragment {
 
         adapterHeaders = new AdapterHeaders(activity, new AdapterHeaders.EventListener() {
             @Override
-            public void onClickHeader(int position) {
-
+            public void onClickHeader(Header header) {
                 FragmentTransaction fragmentTransaction = getFragmentManager().beginTransaction().addToBackStack(null).hide(FragmentHeaders.this);
 
-                switch (position) {
-                    case 0:
+                switch (header) {
+                    case DISPLAY:
                         fragmentTransaction
                                 .add(R.id.frame_fragment, new FragmentDisplay());
                         break;
-                    case 1:
+                    case BEHAVIOR:
                         fragmentTransaction
                                 .add(R.id.frame_fragment, new FragmentBehavior());
                         break;
-                    case 2:
+                    case MAIL:
                         fragmentTransaction
                                 .add(R.id.frame_fragment, new FragmentMail());
                         break;
-                    case 3:
+                    case ABOUT:
                         fragmentTransaction
                                 .add(R.id.frame_fragment, new FragmentAbout());
                         break;

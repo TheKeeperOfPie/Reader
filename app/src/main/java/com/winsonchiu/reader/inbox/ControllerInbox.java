@@ -281,11 +281,6 @@ public class ControllerInbox {
         return observable;
     }
 
-    public boolean toggleComment(int position) {
-        // Not implemented
-        return true;
-    }
-
     public Observable<String> voteComment(final AdapterCommentList.ViewHolderComment viewHolder,
                                           final Comment comment,
                                           int vote) {

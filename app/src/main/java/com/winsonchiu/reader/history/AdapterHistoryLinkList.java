@@ -10,6 +10,7 @@ import android.view.LayoutInflater;
 import android.view.ViewGroup;
 
 import com.winsonchiu.reader.R;
+import com.winsonchiu.reader.comments.Source;
 import com.winsonchiu.reader.links.AdapterLinkList;
 import com.winsonchiu.reader.links.ControllerLinksBase;
 import com.winsonchiu.reader.utils.DisallowListener;
@@ -40,6 +41,7 @@ public class AdapterHistoryLinkList extends AdapterLinkList {
         return new AdapterLinkList.ViewHolder(LayoutInflater.from(viewGroup.getContext())
                 .inflate(R.layout.row_link, viewGroup, false),
                 eventListenerBase,
+                Source.HISTORY,
                 disallowListener,
                 recyclerCallback) {
             @Override

@@ -144,6 +144,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                         LayoutInflater.from(parent.getContext())
                                 .inflate(R.layout.cell_link, parent, false),
                         eventListenerBase,
+                        Source.LINKS,
                         disallowListener,
                         recyclerCallback,
                         thumbnailSize) {
@@ -218,6 +219,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                         LayoutInflater.from(parent.getContext())
                                 .inflate(R.layout.row_link, parent, false),
                         eventListenerBase,
+                        Source.LINKS,
                         disallowListener,
                         recyclerCallback) {
 
@@ -552,7 +554,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
 
                 @Override
                 public void onLongPress(MotionEvent e) {
-                    eventListenerComment.toggleComment(getAdapterPosition());
+                    eventListenerComment.toggleComment(comment);
                 }
 
                 @Override
@@ -1125,7 +1127,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
         }
 
         public interface EventListenerComment {
-            boolean toggleComment(int position);
+            boolean toggleComment(Comment comment);
             Observable<String> deleteComment(Comment comment);
             void editComment(String name, int level, String text);
             Observable<String> voteComment(ViewHolderComment viewHolderComment, Comment comment, int vote);

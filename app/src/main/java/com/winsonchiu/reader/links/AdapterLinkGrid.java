@@ -28,6 +28,7 @@ import android.widget.RelativeLayout;
 import com.squareup.picasso.Callback;
 import com.winsonchiu.reader.AppSettings;
 import com.winsonchiu.reader.R;
+import com.winsonchiu.reader.comments.Source;
 import com.winsonchiu.reader.data.imgur.Album;
 import com.winsonchiu.reader.data.reddit.Link;
 import com.winsonchiu.reader.data.reddit.Reddit;
@@ -102,6 +103,7 @@ public class AdapterLinkGrid extends AdapterLink {
         return new ViewHolder(LayoutInflater.from(viewGroup.getContext())
                 .inflate(R.layout.cell_link, viewGroup, false),
                 eventListenerBase,
+                Source.LINKS,
                 disallowListener,
                 recyclerCallback,
                 thumbnailSize);
@@ -134,10 +136,11 @@ public class AdapterLinkGrid extends AdapterLink {
 
         public ViewHolder(View itemView,
                           EventListener eventListener,
+                          Source source,
                           DisallowListener disallowListener,
                           RecyclerCallback recyclerCallback,
                 int thumbnailSize) {
-            super(itemView, eventListener, disallowListener, recyclerCallback);
+            super(itemView, eventListener, source, disallowListener, recyclerCallback);
             this.thumbnailSize = thumbnailSize;
 
         }
@@ -262,7 +265,7 @@ public class AdapterLinkGrid extends AdapterLink {
                     ((StaggeredGridLayoutManager) recyclerCallback.getLayoutManager())
                             .invalidateSpanAssignments();
                 }
-                recyclerCallback.scrollTo(getAdapterPosition());
+                scrollToSelf();
             }
         }
 
