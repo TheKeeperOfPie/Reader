@@ -87,8 +87,6 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
     private static final int ALPHA_LEVELS = 8;
     private static final int MAX_ALPHA = 180;
 
-    private int colorLink;
-
     // TODO: Find a way to animate with the toolbar actions expanded without lagging
     private boolean actionsExpanded;
 
@@ -102,6 +100,8 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
     private AdapterLink.ViewHolderBase viewHolderLink;
     private int thumbnailSize;
     private boolean isGrid;
+    private String firstLinkName;
+    private int colorLink;
     private boolean animationFinished;
 
     private ControllerComments controllerComments;
@@ -114,6 +114,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
             RecyclerCallback recyclerCallback,
             YouTubeListener youTubeListener,
             boolean isGrid,
+            String firstLinkName,
             int colorLink,
             boolean actionsExpanded) {
         this.controllerComments = controllerComments;
@@ -123,6 +124,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
         this.recyclerCallback = recyclerCallback;
         this.youTubeListener = youTubeListener;
         this.isGrid = isGrid;
+        this.firstLinkName = firstLinkName;
         this.colorLink = colorLink;
         this.actionsExpanded = actionsExpanded;
         DisplayMetrics displayMetrics = activity.getResources().getDisplayMetrics();
@@ -167,9 +169,11 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                     @Override
                     public void loadBackgroundColor() {
                         if (colorLink != 0) {
-                            link.setBackgroundColor(colorLink);
-                            itemView.setBackgroundColor(colorLink);
-                            setTextColors(colorLink);
+                            if (link.getName().equals(firstLinkName)) {
+                                link.setBackgroundColor(colorLink);
+                                itemView.setBackgroundColor(colorLink);
+                                setTextColors(colorLink);
+                            }
                             colorLink = 0;
                         }
                         else {
@@ -210,9 +214,6 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                         }
                     }
                 };
-                if (colorLink != 0) {
-                    viewHolderLink.itemView.setBackgroundColor(colorLink);
-                }
             }
             else {
                 viewHolderLink = new AdapterLinkList.ViewHolder(

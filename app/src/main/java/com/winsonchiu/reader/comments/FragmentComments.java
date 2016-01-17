@@ -86,6 +86,7 @@ public class FragmentComments extends FragmentBase
     public static final String TAG = FragmentComments.class.getCanonicalName();
 
     private static final String ARG_IS_GRID = "isGrid";
+    private static final String ARG_FIRST_LINK_NAME = "firstLinkName";
     private static final String ARG_COLOR_LINK = "colorLink";
     private static final String ARG_LOCATION = "location";
     private static final String ARG_ITEM_HEIGHT = "itemHeight";
@@ -183,6 +184,7 @@ public class FragmentComments extends FragmentBase
         Log.d(TAG, "getScreenAnchor: " + Arrays.toString(location));
 
         args.putIntArray(ARG_LOCATION, location);
+        args.putString(ARG_FIRST_LINK_NAME, viewHolder.getLink().getName());
         args.putInt(ARG_COLOR_LINK, colorLink);
         args.putInt(ARG_ITEM_HEIGHT, viewHolder.itemView.getHeight());
         args.putInt(ARG_ITEM_WIDTH, viewHolder.itemView.getWidth());
@@ -241,7 +243,7 @@ public class FragmentComments extends FragmentBase
     }
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+    public View onCreateView(final LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
 
         ((ActivityMain) getActivity()).getComponentActivity().inject(this);
@@ -571,17 +573,15 @@ public class FragmentComments extends FragmentBase
         initializePagerValues();
 
         adapterComments = new RecyclerFragmentPagerAdapter<FragmentCommentsInner>(getFragmentManager()) {
+
             @Override
             public FragmentCommentsInner createFragment() {
-                if (getFragments().isEmpty()) {
-                    return FragmentCommentsInner.newInstance(getArguments().getBoolean(ARG_IS_GRID, false), getArguments().getInt(ARG_COLOR_LINK, 0));
-                }
-
-                return FragmentCommentsInner.newInstance(getArguments().getBoolean(ARG_IS_GRID, false), 0);
+                return FragmentCommentsInner.newInstance(getArguments().getBoolean(ARG_IS_GRID, false), getArguments().getString(ARG_FIRST_LINK_NAME), getArguments().getInt(ARG_COLOR_LINK, 0));
             }
 
             @Override
-            protected void bindFragment(FragmentCommentsInner fragment, int position) {
+            public Object instantiateItem(ViewGroup container, int position) {
+                FragmentCommentsInner fragment = (FragmentCommentsInner) super.instantiateItem(container, position);
                 Link link = null;
 
                 if (position < indexStart) {
@@ -595,14 +595,12 @@ public class FragmentComments extends FragmentBase
                     link = linkTop;
                 }
 
+                fragment.setLink(link);
                 fragment.setCallback(fragmentCallback);
                 fragment.setAnimationFinished(animationFinished);
-                fragment.setLink(link);
                 fragment.setPosition(position);
 
-                if (fragmentCurrent == null && indexStart == position) {
-                    setCurrentFragment(fragment);
-                }
+                return fragment;
             }
 
             @Override
@@ -617,14 +615,20 @@ public class FragmentComments extends FragmentBase
             public int getCount() {
                 return itemCount;
             }
+
+//            @Override
+//            public Fragment getItem(int position) {
+//                FragmentCommentsInner fragment = FragmentCommentsInner.newInstance(getArguments().getBoolean(ARG_IS_GRID, false), getArguments().getString(ARG_FIRST_LINK_NAME), getArguments().getInt(ARG_COLOR_LINK, 0));
+//
+//                fragments.add(fragment);
+//
+//                return fragment;
+//            }
         };
 
         pagerComments = (ViewPager) layoutRoot.findViewById(R.id.pager_comments);
-        pagerComments.setOffscreenPageLimit(0);
         pagerComments.setAdapter(adapterComments);
         pagerComments.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
-            public int stateScroll;
-
             @Override
             public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
 
@@ -633,10 +637,13 @@ public class FragmentComments extends FragmentBase
             @Override
             public void onPageSelected(int position) {
                 positionCurrent = position;
+                Log.d(TAG, "onPageSelected() called with: " + "position = [" + position + "]");
 
                 for (FragmentCommentsInner fragment : adapterComments.getFragments()) {
-                    if (fragment.getPosition() == position) {
+                    if (fragment != null && fragment.getPosition() == position) {
                         setCurrentFragment(fragment);
+                        Log.d(TAG, "onPageSelected() fragment position: " + fragment.getPosition());
+                        Log.d(TAG, "onPageSelected() fragment title: " + fragment.getTitle());
                         break;
                     }
                 }
@@ -655,14 +662,7 @@ public class FragmentComments extends FragmentBase
 
             @Override
             public void onPageScrollStateChanged(int state) {
-                if (stateScroll == ViewPager.SCROLL_STATE_SETTLING && state == ViewPager.SCROLL_STATE_IDLE) {
-                    pagerComments.setOffscreenPageLimit(2);
-                }
-                else if (state == ViewPager.SCROLL_STATE_DRAGGING) {
-                    pagerComments.setOffscreenPageLimit(1);
-                }
 
-                stateScroll = state;
             }
         });
 
@@ -933,10 +933,6 @@ public class FragmentComments extends FragmentBase
                     viewHolderView.setVisibility(View.INVISIBLE);
                     viewHolderView = null;
                 }
-//                if (adapterCommentList.getViewHolderLink() != null) {
-//                    adapterCommentList.getViewHolderLink()
-//                            .calculateVisibleToolbarItems(layoutRoot.getWidth());
-//                }
             }
 
             @Override
@@ -1136,8 +1132,6 @@ public class FragmentComments extends FragmentBase
 
     @Override
     public void navigateBack() {
-        Log.d(TAG, "navigateBack");
-
         if (youTubePlayer != null && isFullscreen) {
             youTubePlayer.setFullscreen(false);
         }
@@ -1484,9 +1478,9 @@ public class FragmentComments extends FragmentBase
         this.animationFinished = animationFinished;
 
         for (FragmentCommentsInner fragmentCommentsInner : adapterComments.getFragments()) {
-            fragmentCommentsInner.setAnimationFinished(animationFinished);
+            if (fragmentCommentsInner != null) {
+                fragmentCommentsInner.setAnimationFinished(animationFinished);
+            }
         }
-
-        pagerComments.setOffscreenPageLimit(2);
     }
 }

@@ -4,6 +4,9 @@
 
 package com.winsonchiu.reader.data.imgur;
 
+import android.os.Parcel;
+import android.os.Parcelable;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -14,7 +17,7 @@ import java.util.List;
 /**
  * Created by TheKeeperOfPie on 3/19/2015.
  */
-public class Album {
+public class Album implements Parcelable {
 
     private String id;
     private String title;
@@ -221,4 +224,63 @@ public class Album {
     public void setImages(List<Image> images) {
         this.images = images;
     }
+
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    @Override
+    public void writeToParcel(Parcel dest, int flags) {
+        dest.writeString(this.id);
+        dest.writeString(this.title);
+        dest.writeString(this.description);
+        dest.writeInt(this.dateTime);
+        dest.writeString(this.cover);
+        dest.writeInt(this.coverWidth);
+        dest.writeInt(this.coverHeight);
+        dest.writeString(this.accountUrl);
+        dest.writeInt(this.accountId);
+        dest.writeString(this.privacy);
+        dest.writeString(this.layout);
+        dest.writeInt(this.views);
+        dest.writeString(this.link);
+        dest.writeByte(favorite ? (byte) 1 : (byte) 0);
+        dest.writeByte(nsfw ? (byte) 1 : (byte) 0);
+        dest.writeString(this.section);
+        dest.writeInt(this.imagesCount);
+        dest.writeList(this.images);
+    }
+
+    protected Album(Parcel in) {
+        this.id = in.readString();
+        this.title = in.readString();
+        this.description = in.readString();
+        this.dateTime = in.readInt();
+        this.cover = in.readString();
+        this.coverWidth = in.readInt();
+        this.coverHeight = in.readInt();
+        this.accountUrl = in.readString();
+        this.accountId = in.readInt();
+        this.privacy = in.readString();
+        this.layout = in.readString();
+        this.views = in.readInt();
+        this.link = in.readString();
+        this.favorite = in.readByte() != 0;
+        this.nsfw = in.readByte() != 0;
+        this.section = in.readString();
+        this.imagesCount = in.readInt();
+        this.images = new ArrayList<Image>();
+        in.readList(this.images, List.class.getClassLoader());
+    }
+
+    public static final Creator<Album> CREATOR = new Creator<Album>() {
+        public Album createFromParcel(Parcel source) {
+            return new Album(source);
+        }
+
+        public Album[] newArray(int size) {
+            return new Album[size];
+        }
+    };
 }

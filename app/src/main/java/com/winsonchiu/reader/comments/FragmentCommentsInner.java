@@ -18,7 +18,6 @@ import android.support.v4.view.GestureDetectorCompat;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.support.v7.widget.StaggeredGridLayoutManager;
 import android.text.TextUtils;
 import android.util.Log;
 import android.util.TypedValue;
@@ -36,7 +35,6 @@ import com.winsonchiu.reader.R;
 import com.winsonchiu.reader.data.reddit.Comment;
 import com.winsonchiu.reader.data.reddit.Link;
 import com.winsonchiu.reader.data.reddit.Sort;
-import com.winsonchiu.reader.links.AdapterLink;
 import com.winsonchiu.reader.utils.DisallowListener;
 import com.winsonchiu.reader.utils.ItemDecorationDivider;
 import com.winsonchiu.reader.utils.LinearLayoutManagerWrapHeight;
@@ -47,13 +45,12 @@ import com.winsonchiu.reader.utils.YouTubeListener;
 import com.winsonchiu.reader.views.CustomFrameLayout;
 import com.winsonchiu.reader.views.CustomRelativeLayout;
 
-import java.util.Arrays;
-
 public class FragmentCommentsInner extends FragmentBase {
 
     public static final String TAG = FragmentCommentsInner.class.getCanonicalName();
 
     private static final String ARG_IS_GRID = "isGrid";
+    private static final String ARG_FIRST_LINK_NAME = "firstLinkName";
     private static final String ARG_COLOR_LINK = "colorLink";
     private static final String ARG_LOCATION = "location";
     private static final String ARG_ITEM_HEIGHT = "itemHeight";
@@ -83,8 +80,6 @@ public class FragmentCommentsInner extends FragmentBase {
     private int scrollToPaddingBottom;
 
     private boolean postExpanded;
-    private boolean isCommentThread;
-    private CharSequence title;
     private int heightExpandHandle;
     private int targetExpandPostHeight;
     private float expandFlingThreshold;
@@ -155,7 +150,7 @@ public class FragmentCommentsInner extends FragmentBase {
     };
 
     private ControllerComments controllerComments = new ControllerComments();
-    private int position;
+    private Link link;
 
     public static FragmentCommentsInner newInstance() {
         FragmentCommentsInner fragment = new FragmentCommentsInner();
@@ -168,10 +163,11 @@ public class FragmentCommentsInner extends FragmentBase {
         return fragment;
     }
 
-    public static FragmentCommentsInner newInstance(boolean isGrid, int colorLink) {
+    public static FragmentCommentsInner newInstance(boolean isGrid, String firstLinkId, int colorLink) {
         FragmentCommentsInner fragment = new FragmentCommentsInner();
         Bundle args = new Bundle();
         args.putBoolean(ARG_IS_GRID, isGrid);
+        args.putString(ARG_FIRST_LINK_NAME, firstLinkId);
         args.putInt(ARG_COLOR_LINK, colorLink);
         args.putIntArray(ARG_LOCATION, new int[2]);
         args.putInt(ARG_ITEM_HEIGHT, 0);
@@ -179,29 +175,15 @@ public class FragmentCommentsInner extends FragmentBase {
         return fragment;
     }
 
-    public static FragmentCommentsInner newInstance(AdapterLink.ViewHolderBase viewHolder,
-                                                    int colorLink) {
-        FragmentCommentsInner fragment = new FragmentCommentsInner();
-        Bundle args = new Bundle();
-        if (viewHolder.itemView
-                .getLayoutParams() instanceof StaggeredGridLayoutManager.LayoutParams) {
-            args.putBoolean(ARG_IS_GRID, true);
-        }
-        int[] location = viewHolder.getScreenAnchor();
-
-        Log.d(TAG, "getScreenAnchor: " + Arrays.toString(location));
-
-        args.putIntArray(ARG_LOCATION, location);
-        args.putInt(ARG_COLOR_LINK, colorLink);
-        args.putInt(ARG_ITEM_HEIGHT, viewHolder.itemView.getHeight());
-        args.putInt(ARG_ITEM_WIDTH, viewHolder.itemView.getWidth());
-        args.putBoolean(ARG_ACTIONS_EXPANDED, viewHolder.layoutContainerExpand.isShown());
-        fragment.setArguments(args);
-        return fragment;
-    }
-
     public FragmentCommentsInner() {
         // Required empty public constructor
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+
+        outState.putParcelable("Link", controllerComments.getLink());
     }
 
     @Override
@@ -232,7 +214,6 @@ public class FragmentCommentsInner extends FragmentBase {
 
             @Override
             public void setIsCommentThread(boolean isCommentThread) {
-                FragmentCommentsInner.this.isCommentThread = isCommentThread;
                 if (callback.isCurrentFragment(FragmentCommentsInner.this)) {
                     callback.setIsCommentThread(isCommentThread);
                 }
@@ -260,7 +241,6 @@ public class FragmentCommentsInner extends FragmentBase {
 
             @Override
             public void setToolbarTitle(CharSequence title) {
-                FragmentCommentsInner.this.title = title;
                 if (callback.isCurrentFragment(FragmentCommentsInner.this)) {
                     callback.setTitle(title);
                 }
@@ -361,6 +341,7 @@ public class FragmentCommentsInner extends FragmentBase {
                 recyclerCallback,
                 youTubeListener,
                 getArguments().getBoolean(ARG_IS_GRID, false),
+                getArguments().getString(ARG_FIRST_LINK_NAME),
                 getArguments().getInt(ARG_COLOR_LINK, 0),
                 getArguments().getBoolean(ARG_ACTIONS_EXPANDED, false));
 
@@ -436,6 +417,7 @@ public class FragmentCommentsInner extends FragmentBase {
                 recyclerCallbackLink,
                 youTubeListener,
                 getArguments().getBoolean(ARG_IS_GRID, false),
+                getArguments().getString(ARG_FIRST_LINK_NAME),
                 getArguments().getInt(ARG_COLOR_LINK, 0),
                 getArguments().getBoolean(ARG_ACTIONS_EXPANDED, false));
 
@@ -532,6 +514,18 @@ public class FragmentCommentsInner extends FragmentBase {
         if (animationFinished) {
             setAnimationFinished(true);
         }
+
+        if (savedInstanceState != null && savedInstanceState.containsKey("Link")) {
+            adapterLink.setAnimationFinished(true);
+            adapterCommentList.setAnimationFinished(true);
+            controllerComments.setLinkFromCache((Link) savedInstanceState.get("Link"));
+            Log.d(TAG, "onCreateView() called with: " + "inflater = [" + inflater + "], container = [" + container + "], savedInstanceState = [" + savedInstanceState + "]");
+        } else if (link != null) {
+            controllerComments.setLink(link);
+            link = null;
+        }
+
+        getArguments().putBoolean("Created", true);
 
         return layoutRoot;
     }
@@ -665,8 +659,8 @@ public class FragmentCommentsInner extends FragmentBase {
 
     public void setAnimationFinished(boolean animationFinished) {
         if (isAdded() && adapterLink != null && adapterCommentList != null) {
-            adapterLink.setAnimationFinished(animationFinished);
-            adapterCommentList.setAnimationFinished(animationFinished);
+            adapterLink.setAnimationFinished(true);
+            adapterCommentList.setAnimationFinished(true);
         }
         this.animationFinished = animationFinished;
     }
@@ -676,7 +670,14 @@ public class FragmentCommentsInner extends FragmentBase {
     }
 
     public void setLink(Link link) {
-        controllerComments.setLink(link);
+        if (TextUtils.isEmpty(controllerComments.getLink().getId())) {
+            if (getView() == null) {
+                this.link = link;
+            }
+            else {
+                controllerComments.setLink(link);
+            }
+        }
     }
 
     public boolean getPostExpanded() {
@@ -684,7 +685,7 @@ public class FragmentCommentsInner extends FragmentBase {
     }
 
     public boolean getIsCommentThread() {
-        return isCommentThread;
+        return controllerComments.getIsCommentThread();
     }
 
     public Sort getSort() {
@@ -692,7 +693,11 @@ public class FragmentCommentsInner extends FragmentBase {
     }
 
     public CharSequence getTitle() {
-        return title;
+        if (link != null) {
+            return link.getTitle();
+        }
+
+        return controllerComments.getLink().getTitle();
     }
 
     public void clear() {
@@ -765,11 +770,11 @@ public class FragmentCommentsInner extends FragmentBase {
     }
 
     public void setPosition(int position) {
-        this.position = position;
+        getArguments().putInt("position", position);
     }
 
     public int getPosition() {
-        return position;
+        return getArguments().getInt("position");
     }
 
     public void setSort(Sort sort) {

@@ -30,6 +30,7 @@ public class AdapterLinkHeader extends RecyclerView.Adapter<AdapterLink.ViewHold
 
     private final int thumbnailSize;
     private boolean isGrid;
+    private String firstLinkName;
     private int colorLink;
     private boolean actionsExpanded;
     private AdapterLink.ViewHolderBase viewHolderLink;
@@ -42,19 +43,21 @@ public class AdapterLinkHeader extends RecyclerView.Adapter<AdapterLink.ViewHold
     private ControllerComments controllerComments;
 
     public AdapterLinkHeader(Activity activity,
-                             ControllerComments controllerComments,
-                             AdapterLink.ViewHolderBase.EventListener eventListenerBase,
-                             DisallowListener disallowListener, RecyclerCallback recyclerCallback,
-                             YouTubeListener youTubeListener,
-                             boolean isGrid,
-                             int colorLink,
-                             boolean actionsExpanded) {
+            ControllerComments controllerComments,
+            AdapterLink.ViewHolderBase.EventListener eventListenerBase,
+            DisallowListener disallowListener, RecyclerCallback recyclerCallback,
+            YouTubeListener youTubeListener,
+            boolean isGrid,
+            String firstLinkName,
+            int colorLink,
+            boolean actionsExpanded) {
         this.controllerComments = controllerComments;
         this.eventListenerBase = eventListenerBase;
         this.disallowListener = disallowListener;
         this.recyclerCallback = recyclerCallback;
         this.youTubeListener = youTubeListener;
         this.isGrid = isGrid;
+        this.firstLinkName = firstLinkName;
         this.colorLink = colorLink;
         this.actionsExpanded = actionsExpanded;
         DisplayMetrics displayMetrics = activity.getResources().getDisplayMetrics();
@@ -90,9 +93,11 @@ public class AdapterLinkHeader extends RecyclerView.Adapter<AdapterLink.ViewHold
                 @Override
                 public void loadBackgroundColor() {
                     if (colorLink != 0) {
-                        link.setBackgroundColor(colorLink);
-                        itemView.setBackgroundColor(colorLink);
-                        setTextColors(colorLink);
+                        if (link.getName().equals(firstLinkName)) {
+                            link.setBackgroundColor(colorLink);
+                            itemView.setBackgroundColor(colorLink);
+                            setTextColors(colorLink);
+                        }
                         colorLink = 0;
                     } else {
                         super.loadBackgroundColor();
@@ -132,10 +137,6 @@ public class AdapterLinkHeader extends RecyclerView.Adapter<AdapterLink.ViewHold
                     }
                 }
             };
-
-            if (colorLink != 0) {
-                viewHolderLink.itemView.setBackgroundColor(colorLink);
-            }
         }
         else {
             viewHolderLink = new AdapterLinkList.ViewHolder(LayoutInflater.from(parent.getContext()).inflate(R.layout.row_link, parent, false),

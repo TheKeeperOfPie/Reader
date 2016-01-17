@@ -4,13 +4,16 @@
 
 package com.winsonchiu.reader.data.imgur;
 
+import android.os.Parcel;
+import android.os.Parcelable;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 
 /**
  * Created by TheKeeperOfPie on 3/19/2015.
  */
-public class Image {
+public class Image implements Parcelable {
 
     private String id;
     private String title;
@@ -223,4 +226,66 @@ public class Image {
     public void setAccountId(int accountId) {
         this.accountId = accountId;
     }
+
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    @Override
+    public void writeToParcel(Parcel dest, int flags) {
+        dest.writeString(this.id);
+        dest.writeString(this.title);
+        dest.writeString(this.description);
+        dest.writeInt(this.dateTime);
+        dest.writeString(this.type);
+        dest.writeByte(animated ? (byte) 1 : (byte) 0);
+        dest.writeInt(this.width);
+        dest.writeInt(this.height);
+        dest.writeInt(this.size);
+        dest.writeInt(this.views);
+        dest.writeInt(this.bandwidth);
+        dest.writeString(this.section);
+        dest.writeString(this.link);
+        dest.writeString(this.gifv);
+        dest.writeString(this.mp4);
+        dest.writeString(this.webm);
+        dest.writeByte(favorite ? (byte) 1 : (byte) 0);
+        dest.writeByte(nsfw ? (byte) 1 : (byte) 0);
+        dest.writeString(this.accountUrl);
+        dest.writeInt(this.accountId);
+    }
+
+    protected Image(Parcel in) {
+        this.id = in.readString();
+        this.title = in.readString();
+        this.description = in.readString();
+        this.dateTime = in.readInt();
+        this.type = in.readString();
+        this.animated = in.readByte() != 0;
+        this.width = in.readInt();
+        this.height = in.readInt();
+        this.size = in.readInt();
+        this.views = in.readInt();
+        this.bandwidth = in.readInt();
+        this.section = in.readString();
+        this.link = in.readString();
+        this.gifv = in.readString();
+        this.mp4 = in.readString();
+        this.webm = in.readString();
+        this.favorite = in.readByte() != 0;
+        this.nsfw = in.readByte() != 0;
+        this.accountUrl = in.readString();
+        this.accountId = in.readInt();
+    }
+
+    public static final Creator<Image> CREATOR = new Creator<Image>() {
+        public Image createFromParcel(Parcel source) {
+            return new Image(source);
+        }
+
+        public Image[] newArray(int size) {
+            return new Image[size];
+        }
+    };
 }

@@ -5,10 +5,13 @@
 package com.winsonchiu.reader.data.reddit;
 
 
+import android.os.Parcel;
+import android.os.Parcelable;
+
 /**
  * Created by TheKeeperOfPie on 3/8/2015.
  */
-public class Thing {
+public class Thing implements Parcelable {
 
     private static final String TAG = Thing.class.getCanonicalName();
 
@@ -79,4 +82,31 @@ public class Thing {
         return getId().hashCode();
     }
 
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    @Override
+    public void writeToParcel(Parcel dest, int flags) {
+        dest.writeString(this.id);
+        dest.writeString(this.name);
+        dest.writeString(this.kind);
+    }
+
+    protected Thing(Parcel in) {
+        this.id = in.readString();
+        this.name = in.readString();
+        this.kind = in.readString();
+    }
+
+    public static final Creator<Thing> CREATOR = new Creator<Thing>() {
+        public Thing createFromParcel(Parcel source) {
+            return new Thing(source);
+        }
+
+        public Thing[] newArray(int size) {
+            return new Thing[size];
+        }
+    };
 }

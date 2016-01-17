@@ -1921,6 +1921,10 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             return location;
         }
 
+        public Link getLink() {
+            return link;
+        }
+
         public interface EventListener {
 
             void sendComment(String name, String text);

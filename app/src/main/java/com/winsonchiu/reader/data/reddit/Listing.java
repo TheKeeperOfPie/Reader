@@ -4,6 +4,9 @@
 
 package com.winsonchiu.reader.data.reddit;
 
+import android.os.Parcel;
+import android.os.Parcelable;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.winsonchiu.reader.dagger.components.ComponentStatic;
 import com.winsonchiu.reader.utils.UtilsJson;
@@ -19,7 +22,7 @@ import rx.functions.Func1;
 /**
  * Created by TheKeeperOfPie on 3/8/2015.
  */
-public class Listing {
+public class Listing implements Parcelable {
 
     public static final Func1<String, Observable<Listing>> FLAT_MAP = new FlatMap();
 
@@ -136,4 +139,35 @@ public class Listing {
             }
         }
     }
+
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    @Override
+    public void writeToParcel(Parcel dest, int flags) {
+        dest.writeString(this.before);
+        dest.writeString(this.after);
+        dest.writeString(this.modHash);
+        dest.writeList(this.children);
+    }
+
+    protected Listing(Parcel in) {
+        this.before = in.readString();
+        this.after = in.readString();
+        this.modHash = in.readString();
+        this.children = new ArrayList<Thing>();
+        in.readList(this.children, List.class.getClassLoader());
+    }
+
+    public static final Creator<Listing> CREATOR = new Creator<Listing>() {
+        public Listing createFromParcel(Parcel source) {
+            return new Listing(source);
+        }
+
+        public Listing[] newArray(int size) {
+            return new Listing[size];
+        }
+    };
 }

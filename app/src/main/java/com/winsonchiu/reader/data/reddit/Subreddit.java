@@ -4,6 +4,7 @@
 
 package com.winsonchiu.reader.data.reddit;
 
+import android.os.Parcel;
 import android.support.annotation.Nullable;
 
 import com.fasterxml.jackson.core.JsonGenerator;
@@ -498,4 +499,97 @@ public class Subreddit extends Thing implements JsonSerializable {
     public void serializeWithType(JsonGenerator gen, SerializerProvider serializers, TypeSerializer typeSer) throws IOException {
         serialize(gen, serializers);
     }
+
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    @Override
+    public void writeToParcel(Parcel dest, int flags) {
+        super.writeToParcel(dest, flags);
+        dest.writeInt(this.accountsActive);
+        dest.writeString(this.bannerImg);
+        dest.writeList(this.bannerSize);
+        dest.writeByte(collapseDeletedComments ? (byte) 1 : (byte) 0);
+        dest.writeInt(this.commentScoreHideMins);
+        dest.writeString(this.description);
+        dest.writeString(this.descriptionHtml);
+        dest.writeString(this.displayName);
+        dest.writeString(this.headerImg);
+        dest.writeList(this.headerSize);
+        dest.writeString(this.headerTitle);
+        dest.writeByte(hideAds ? (byte) 1 : (byte) 0);
+        dest.writeString(this.iconImg);
+        dest.writeList(this.iconSize);
+        dest.writeByte(over18 ? (byte) 1 : (byte) 0);
+        dest.writeString(this.publicDescription);
+        dest.writeString(this.publicDescriptionHtml);
+        dest.writeByte(publicTraffic ? (byte) 1 : (byte) 0);
+        dest.writeLong(this.subscribers);
+        dest.writeString(this.submissionType);
+        dest.writeString(this.submitLinkLabel);
+        dest.writeString(this.submitText);
+        dest.writeString(this.submitTextLabel);
+        dest.writeString(this.submitTextHtml);
+        dest.writeString(this.subredditType);
+        dest.writeString(this.title);
+        dest.writeString(this.url);
+        dest.writeByte(userIsBanned ? (byte) 1 : (byte) 0);
+        dest.writeByte(userIsContributor ? (byte) 1 : (byte) 0);
+        dest.writeByte(userIsModerator ? (byte) 1 : (byte) 0);
+        dest.writeByte(userIsSubscriber ? (byte) 1 : (byte) 0);
+        dest.writeLong(this.created);
+        dest.writeLong(this.createdUtc);
+    }
+
+    protected Subreddit(Parcel in) {
+        super(in);
+        this.accountsActive = in.readInt();
+        this.bannerImg = in.readString();
+        this.bannerSize = new ArrayList<Integer>();
+        in.readList(this.bannerSize, List.class.getClassLoader());
+        this.collapseDeletedComments = in.readByte() != 0;
+        this.commentScoreHideMins = in.readInt();
+        this.description = in.readString();
+        this.descriptionHtml = in.readString();
+        this.displayName = in.readString();
+        this.headerImg = in.readString();
+        this.headerSize = new ArrayList<Integer>();
+        in.readList(this.headerSize, List.class.getClassLoader());
+        this.headerTitle = in.readString();
+        this.hideAds = in.readByte() != 0;
+        this.iconImg = in.readString();
+        this.iconSize = new ArrayList<Integer>();
+        in.readList(this.iconSize, List.class.getClassLoader());
+        this.over18 = in.readByte() != 0;
+        this.publicDescription = in.readString();
+        this.publicDescriptionHtml = in.readString();
+        this.publicTraffic = in.readByte() != 0;
+        this.subscribers = in.readLong();
+        this.submissionType = in.readString();
+        this.submitLinkLabel = in.readString();
+        this.submitText = in.readString();
+        this.submitTextLabel = in.readString();
+        this.submitTextHtml = in.readString();
+        this.subredditType = in.readString();
+        this.title = in.readString();
+        this.url = in.readString();
+        this.userIsBanned = in.readByte() != 0;
+        this.userIsContributor = in.readByte() != 0;
+        this.userIsModerator = in.readByte() != 0;
+        this.userIsSubscriber = in.readByte() != 0;
+        this.created = in.readLong();
+        this.createdUtc = in.readLong();
+    }
+
+    public static final Creator<Subreddit> CREATOR = new Creator<Subreddit>() {
+        public Subreddit createFromParcel(Parcel source) {
+            return new Subreddit(source);
+        }
+
+        public Subreddit[] newArray(int size) {
+            return new Subreddit[size];
+        }
+    };
 }

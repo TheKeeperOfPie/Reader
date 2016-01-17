@@ -4,7 +4,10 @@
 
 package com.winsonchiu.reader.data.reddit;
 
+import android.os.Parcel;
+import android.os.Parcelable;
 import android.text.Html;
+import android.text.TextUtils;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.winsonchiu.reader.data.imgur.Album;
@@ -15,7 +18,7 @@ import java.io.IOException;
 /**
  * Created by TheKeeperOfPie on 3/7/2015.
  */
-public class Link extends Replyable {
+public class Link extends Replyable implements Parcelable {
 
     private static final String TAG = Link.class.getCanonicalName();
 
@@ -506,4 +509,100 @@ public class Link extends Replyable {
     public void setCommentId(String commentId) {
         this.commentId = commentId;
     }
+
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    @Override
+    public void writeToParcel(Parcel dest, int flags) {
+        dest.writeString(this.author);
+        dest.writeString(this.authorFlairCssClass);
+        dest.writeString(this.authorFlairText);
+        dest.writeByte(clicked ? (byte) 1 : (byte) 0);
+        dest.writeString(this.domain);
+        dest.writeByte(hidden ? (byte) 1 : (byte) 0);
+        dest.writeByte(isSelf ? (byte) 1 : (byte) 0);
+        dest.writeInt(this.likes);
+        dest.writeString(this.linkFlairCssClass);
+        dest.writeString(this.linkFlairText);
+        dest.writeString(this.media);
+        dest.writeString(this.mediaEmbed);
+        dest.writeInt(this.numComments);
+        dest.writeByte(over18 ? (byte) 1 : (byte) 0);
+        dest.writeString(this.permalink);
+        dest.writeByte(saved ? (byte) 1 : (byte) 0);
+        dest.writeInt(this.score);
+        TextUtils.writeToParcel(this.selfText, dest, flags);
+        TextUtils.writeToParcel(this.selfTextHtml, dest, flags);
+        dest.writeString(this.subreddit);
+        dest.writeString(this.subredditId);
+        dest.writeInt(this.suggestedSort == null ? -1 : this.suggestedSort.ordinal());
+        dest.writeString(this.thumbnail);
+        dest.writeString(this.title);
+        dest.writeString(this.url);
+        dest.writeLong(this.edited);
+        dest.writeInt(this.distinguished == null ? -1 : this.distinguished.ordinal());
+        dest.writeByte(stickied ? (byte) 1 : (byte) 0);
+        dest.writeLong(this.created);
+        dest.writeLong(this.createdUtc);
+        dest.writeParcelable(this.comments, flags);
+        dest.writeParcelable(this.album, flags);
+        dest.writeByte(commentsClicked ? (byte) 1 : (byte) 0);
+        dest.writeInt(this.backgroundColor);
+        dest.writeInt(this.contextLevel);
+        dest.writeString(this.commentId);
+    }
+
+    protected Link(Parcel in) {
+        this.author = in.readString();
+        this.authorFlairCssClass = in.readString();
+        this.authorFlairText = in.readString();
+        this.clicked = in.readByte() != 0;
+        this.domain = in.readString();
+        this.hidden = in.readByte() != 0;
+        this.isSelf = in.readByte() != 0;
+        this.likes = in.readInt();
+        this.linkFlairCssClass = in.readString();
+        this.linkFlairText = in.readString();
+        this.media = in.readString();
+        this.mediaEmbed = in.readString();
+        this.numComments = in.readInt();
+        this.over18 = in.readByte() != 0;
+        this.permalink = in.readString();
+        this.saved = in.readByte() != 0;
+        this.score = in.readInt();
+        this.selfText = TextUtils.CHAR_SEQUENCE_CREATOR.createFromParcel(in);
+        this.selfTextHtml = TextUtils.CHAR_SEQUENCE_CREATOR.createFromParcel(in);
+        this.subreddit = in.readString();
+        this.subredditId = in.readString();
+        int tmpSuggestedSort = in.readInt();
+        this.suggestedSort = tmpSuggestedSort == -1 ? null : Sort.values()[tmpSuggestedSort];
+        this.thumbnail = in.readString();
+        this.title = in.readString();
+        this.url = in.readString();
+        this.edited = in.readLong();
+        int tmpDistinguished = in.readInt();
+        this.distinguished = tmpDistinguished == -1 ? null : Reddit.Distinguished.values()[tmpDistinguished];
+        this.stickied = in.readByte() != 0;
+        this.created = in.readLong();
+        this.createdUtc = in.readLong();
+        this.comments = in.readParcelable(Listing.class.getClassLoader());
+        this.album = in.readParcelable(Album.class.getClassLoader());
+        this.commentsClicked = in.readByte() != 0;
+        this.backgroundColor = in.readInt();
+        this.contextLevel = in.readInt();
+        this.commentId = in.readString();
+    }
+
+    public static final Creator<Link> CREATOR = new Creator<Link>() {
+        public Link createFromParcel(Parcel source) {
+            return new Link(source);
+        }
+
+        public Link[] newArray(int size) {
+            return new Link[size];
+        }
+    };
 }

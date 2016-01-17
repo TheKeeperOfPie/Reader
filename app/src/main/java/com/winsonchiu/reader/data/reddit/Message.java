@@ -4,6 +4,9 @@
 
 package com.winsonchiu.reader.data.reddit;
 
+import android.os.Parcel;
+import android.text.TextUtils;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.winsonchiu.reader.utils.UtilsJson;
 
@@ -243,4 +246,62 @@ public class Message extends Replyable {
     public CharSequence getParentHtml() {
         return getBodyHtml();
     }
+
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    @Override
+    public void writeToParcel(Parcel dest, int flags) {
+        super.writeToParcel(dest, flags);
+        dest.writeString(this.author);
+        dest.writeString(this.body);
+        TextUtils.writeToParcel(this.bodyHtml, dest, flags);
+        dest.writeString(this.context);
+        dest.writeString(this.dest);
+        dest.writeString(this.firstMessageName);
+        dest.writeInt(this.likes);
+        dest.writeString(this.linkTitle);
+        dest.writeByte(isNew ? (byte) 1 : (byte) 0);
+        dest.writeString(this.parentId);
+        dest.writeString(this.replies);
+        dest.writeString(this.subject);
+        dest.writeString(this.subreddit);
+        dest.writeByte(wasComment ? (byte) 1 : (byte) 0);
+        dest.writeLong(this.created);
+        dest.writeLong(this.createdUtc);
+    }
+
+    public Message() {
+    }
+
+    protected Message(Parcel in) {
+        this.author = in.readString();
+        this.body = in.readString();
+        this.bodyHtml = TextUtils.CHAR_SEQUENCE_CREATOR.createFromParcel(in);
+        this.context = in.readString();
+        this.dest = in.readString();
+        this.firstMessageName = in.readString();
+        this.likes = in.readInt();
+        this.linkTitle = in.readString();
+        this.isNew = in.readByte() != 0;
+        this.parentId = in.readString();
+        this.replies = in.readString();
+        this.subject = in.readString();
+        this.subreddit = in.readString();
+        this.wasComment = in.readByte() != 0;
+        this.created = in.readLong();
+        this.createdUtc = in.readLong();
+    }
+
+    public static final Creator<Message> CREATOR = new Creator<Message>() {
+        public Message createFromParcel(Parcel source) {
+            return new Message(source);
+        }
+
+        public Message[] newArray(int size) {
+            return new Message[size];
+        }
+    };
 }

@@ -81,6 +81,18 @@ public class ControllerComments implements AdapterCommentList.ViewHolderComment.
         reloadAllComments();
     }
 
+    public void setLinkFromCache(Link link) {
+        this.link = link;
+        this.listingComments = link.getComments();
+        this.sort = link.getSuggestedSort();
+        for (Listener listener : listeners) {
+            listener.setSort(sort);
+        }
+        for (Listener listener : listeners) {
+            listener.getAdapter().notifyDataSetChanged();
+        }
+    }
+
     public void reloadAllComments() {
         if (TextUtils.isEmpty(link.getId())) {
             setRefreshing(false);
@@ -818,6 +830,10 @@ public class ControllerComments implements AdapterCommentList.ViewHolderComment.
         for (Listener listener : listeners) {
             listener.setNsfw(name, over18);
         }
+    }
+
+    public boolean getIsCommentThread() {
+        return isCommentThread;
     }
 
     public interface Listener extends ControllerListener {
