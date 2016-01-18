@@ -5,6 +5,7 @@
 package com.winsonchiu.reader.comments;
 
 import android.text.TextUtils;
+import android.util.Log;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.winsonchiu.reader.CustomApplication;
@@ -244,8 +245,6 @@ public class ControllerComments implements AdapterCommentList.ViewHolderComment.
 
         setRefreshing(true);
 
-        String url = Reddit.OAUTH_URL + "/api/morechildren";
-
         String children = "";
         List<String> childrenList = moreComment.getChildren();
         if (childrenList.isEmpty()) {
@@ -279,6 +278,7 @@ public class ControllerComments implements AdapterCommentList.ViewHolderComment.
 
                     @Override
                     public void onNext(String response) {
+                        Log.d(TAG, "onNext() called with: " + "response = [" + response + "]");
                         try {
                             JsonNode nodeThings = ComponentStatic.getObjectMapper().readValue(
                                     response, JsonNode.class).get("json").get("data").get("things");

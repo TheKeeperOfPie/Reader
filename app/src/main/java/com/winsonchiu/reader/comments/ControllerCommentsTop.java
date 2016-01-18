@@ -29,9 +29,6 @@ public class ControllerCommentsTop {
     private static final String TAG = ControllerCommentsTop.class.getCanonicalName();
 
     private Set<Listener> listeners = new HashSet<>();
-    private String linkId;
-    private int contextNumber;
-    private String commentId;
     private Link link;
     private Source source = Source.NONE;
 
@@ -63,7 +60,6 @@ public class ControllerCommentsTop {
 
     public void setLink(Link link, Source source) {
         this.link = link;
-        this.commentId = null;
         this.source = source;
     }
 
@@ -71,16 +67,15 @@ public class ControllerCommentsTop {
         setLinkIdValues(linkId, source);
     }
 
-    public void setLinkId(String linkId, String commentId, int contextNumber, Source source) {
-        this.contextNumber = contextNumber;
+    public void setLinkId(String linkId, String commentId, int contextLevel, Source source) {
         setLinkIdValues(linkId, source);
-        this.commentId = commentId;
+        link.setContextLevel(contextLevel);
+        link.setCommentId(commentId);
     }
 
     private void setLinkIdValues(String linkId, Source source) {
         link = new Link();
         link.setId(linkId);
-        this.commentId = null;
         this.source = source;
     }
 

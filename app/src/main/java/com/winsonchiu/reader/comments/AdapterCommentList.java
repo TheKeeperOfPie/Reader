@@ -361,9 +361,11 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
         }
     }
 
-    public void setAnimationFinished(boolean isAnimationFinished) {
-        this.animationFinished = isAnimationFinished;
-        notifyDataSetChanged();
+    public void setAnimationFinished(boolean animationFinished) {
+        if (this.animationFinished != animationFinished) {
+            this.animationFinished = animationFinished;
+            notifyDataSetChanged();
+        }
     }
 
     public boolean isAnimationFinished() {

@@ -118,7 +118,6 @@ import com.winsonchiu.reader.utils.CustomColorFilter;
 import com.winsonchiu.reader.utils.FinalizingSubscriber;
 import com.winsonchiu.reader.utils.ImageDownload;
 import com.winsonchiu.reader.utils.ObserverEmpty;
-import com.winsonchiu.reader.utils.TouchEventListener;
 import com.winsonchiu.reader.utils.UtilsAnimation;
 import com.winsonchiu.reader.utils.UtilsColor;
 import com.winsonchiu.reader.views.ScrollViewHeader;
@@ -448,6 +447,8 @@ public class ActivityMain extends YouTubeBaseActivity
                                 FragmentComments.TAG)
                         .addToBackStack(null)
                         .commit();
+
+                Log.d(TAG, "onClickComments() called with: " + "link = [" + link + "], viewHolderBase = [" + viewHolderBase + "], source = [" + source + "]");
             }
 
             @Override
@@ -929,9 +930,9 @@ public class ActivityMain extends YouTubeBaseActivity
                     }
                 });
 
-        scrollHeaderVertical.setTouchEventListener(new TouchEventListener() {
+        scrollHeaderVertical.setDispatchTouchListener(new View.OnTouchListener() {
             @Override
-            public boolean onTouchEvent(MotionEvent event) {
+            public boolean onTouch(View v, MotionEvent event) {
                 gestureDetector.onTouchEvent(event);
 
                 switch (MotionEventCompat.getActionMasked(event)) {

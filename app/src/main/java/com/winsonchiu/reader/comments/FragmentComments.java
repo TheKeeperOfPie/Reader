@@ -5,6 +5,8 @@
 package com.winsonchiu.reader.comments;
 
 import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
+import android.animation.ValueAnimator;
 import android.app.Activity;
 import android.content.SharedPreferences;
 import android.content.res.TypedArray;
@@ -67,12 +69,11 @@ import com.winsonchiu.reader.search.ControllerSearch;
 import com.winsonchiu.reader.utils.FinalizingSubscriber;
 import com.winsonchiu.reader.utils.RecyclerFragmentPagerAdapter;
 import com.winsonchiu.reader.utils.ScrollAwareFloatingActionButtonBehavior;
-import com.winsonchiu.reader.utils.TouchEventListener;
 import com.winsonchiu.reader.utils.UtilsAnimation;
 import com.winsonchiu.reader.utils.UtilsColor;
 import com.winsonchiu.reader.utils.YouTubeListener;
 import com.winsonchiu.reader.utils.YouTubePlayerStateListener;
-import com.winsonchiu.reader.views.CustomRelativeLayout;
+import com.winsonchiu.reader.views.CustomFrameLayout;
 
 import java.util.Arrays;
 import java.util.regex.Matcher;
@@ -81,7 +82,7 @@ import java.util.regex.Pattern;
 import javax.inject.Inject;
 
 public class FragmentComments extends FragmentBase
-        implements Toolbar.OnMenuItemClickListener, TouchEventListener {
+        implements Toolbar.OnMenuItemClickListener, View.OnTouchListener {
 
     public static final String TAG = FragmentComments.class.getCanonicalName();
 
@@ -132,8 +133,8 @@ public class FragmentComments extends FragmentBase
     private CoordinatorLayout layoutCoordinator;
     private AppBarLayout layoutAppBar;
     private boolean hasSwipedEnd;
-    private CustomRelativeLayout layoutRelative;
-    private CustomRelativeLayout layoutRoot;
+    private CustomFrameLayout layoutComments;
+    private CustomFrameLayout layoutRoot;
     private boolean isFinished;
     private float swipeDifferenceX;
     private ColorFilter colorFilterPrimary;
@@ -152,6 +153,7 @@ public class FragmentComments extends FragmentBase
     private int itemCount;
     private FragmentCommentsInner fragmentCurrent;
     private RecyclerFragmentPagerAdapter<FragmentCommentsInner> adapterComments;
+    private RecyclerFragmentPagerAdapter<FragmentCommentsInner> adapterCommentsSingle;
     private Source source = Source.NONE;
 
     @Inject ControllerCommentsTop controllerCommentsTop;
@@ -246,9 +248,11 @@ public class FragmentComments extends FragmentBase
     public View onCreateView(final LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
 
+        Log.d(TAG, "onCreateView() called with: " + "inflater = [" + inflater + "], container = [" + container + "], savedInstanceState = [" + savedInstanceState + "]");
+
         ((ActivityMain) getActivity()).getComponentActivity().inject(this);
 
-        layoutRoot = (CustomRelativeLayout) inflater
+        layoutRoot = (CustomFrameLayout) inflater
                 .inflate(R.layout.fragment_comments, container, false);
 
         listenerTop = new ControllerCommentsTop.Listener() {
@@ -436,7 +440,7 @@ public class FragmentComments extends FragmentBase
 
         layoutCoordinator = (CoordinatorLayout) layoutRoot.findViewById(R.id.layout_coordinator);
         layoutAppBar = (AppBarLayout) layoutRoot.findViewById(R.id.layout_app_bar);
-        layoutRelative = (CustomRelativeLayout) layoutRoot.findViewById(R.id.layout_relative);
+        layoutComments = (CustomFrameLayout) layoutRoot.findViewById(R.id.layout_comments);
 
         isStartOnLeft = getResources().getConfiguration().getLayoutDirection() == View.LAYOUT_DIRECTION_LTR;
         final float screenWidth = getResources().getDisplayMetrics().widthPixels;
@@ -485,14 +489,14 @@ public class FragmentComments extends FragmentBase
                         buttonExpandActions.setScaleX(ratio);
                         buttonExpandActions.setScaleY(ratio);
                         layoutAppBar.setTranslationX(swipeDifferenceX);
-                        layoutRelative.setTranslationX(swipeDifferenceX);
+                        layoutComments.setTranslationX(swipeDifferenceX);
 
                         return super.onScroll(e1, e2, distanceX, distanceY);
                     }
                 });
 
         if (preferences.getBoolean(AppSettings.SWIPE_EXIT_COMMENTS, true)) {
-            layoutRoot.setTouchEventListener(this);
+            layoutRoot.setDispatchTouchListener(this);
         }
 
         viewBackground = layoutRoot.findViewById(R.id.view_background);
@@ -600,6 +604,10 @@ public class FragmentComments extends FragmentBase
                 fragment.setAnimationFinished(animationFinished);
                 fragment.setPosition(position);
 
+                if (fragmentCurrent == null && indexStart == position) {
+                    setCurrentFragment(fragment);
+                }
+
                 return fragment;
             }
 
@@ -615,68 +623,54 @@ public class FragmentComments extends FragmentBase
             public int getCount() {
                 return itemCount;
             }
+        };
 
-//            @Override
-//            public Fragment getItem(int position) {
-//                FragmentCommentsInner fragment = FragmentCommentsInner.newInstance(getArguments().getBoolean(ARG_IS_GRID, false), getArguments().getString(ARG_FIRST_LINK_NAME), getArguments().getInt(ARG_COLOR_LINK, 0));
-//
-//                fragments.add(fragment);
-//
-//                return fragment;
-//            }
+        adapterCommentsSingle = new RecyclerFragmentPagerAdapter<FragmentCommentsInner>(getFragmentManager()) {
+            @Override
+            public FragmentCommentsInner createFragment() {
+                return FragmentCommentsInner.newInstance(getArguments().getBoolean(ARG_IS_GRID, false), getArguments().getString(ARG_FIRST_LINK_NAME), getArguments().getInt(ARG_COLOR_LINK, 0));
+            }
+
+            @Override
+            public Object instantiateItem(ViewGroup container, int position) {
+                FragmentCommentsInner fragment = (FragmentCommentsInner) super.instantiateItem(container, position);
+
+                fragment.setLink(linkTop);
+                fragment.setCallback(fragmentCallback);
+                fragment.setAnimationFinished(animationFinished);
+                fragment.setPosition(position);
+
+                if (fragmentCurrent == null) {
+                    setCurrentFragment(fragment);
+                }
+
+                return fragment;
+            }
+
+            @Override
+            public void destroyItem(ViewGroup container, int position, Object object) {
+                super.destroyItem(container, position, object);
+
+                FragmentCommentsInner fragmentCommentsInner = (FragmentCommentsInner) object;
+                fragmentCommentsInner.clear();
+            }
+
+            @Override
+            public int getCount() {
+                return 1;
+            }
         };
 
         pagerComments = (ViewPager) layoutRoot.findViewById(R.id.pager_comments);
-        pagerComments.setAdapter(adapterComments);
-        pagerComments.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
-            @Override
-            public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
-
-            }
-
-            @Override
-            public void onPageSelected(int position) {
-                positionCurrent = position;
-                Log.d(TAG, "onPageSelected() called with: " + "position = [" + position + "]");
-
-                for (FragmentCommentsInner fragment : adapterComments.getFragments()) {
-                    if (fragment != null && fragment.getPosition() == position) {
-                        setCurrentFragment(fragment);
-                        Log.d(TAG, "onPageSelected() fragment position: " + fragment.getPosition());
-                        Log.d(TAG, "onPageSelected() fragment title: " + fragment.getTitle());
-                        break;
-                    }
-                }
-
-                if (position >= adapterComments.getCount() - 3) {
-                    controllerLinks.loadMoreLinks()
-                            .subscribe(new FinalizingSubscriber<Listing>() {
-                                @Override
-                                public void completed() {
-                                    itemCount = controllerLinks.sizeLinks();
-                                    adapterComments.notifyDataSetChanged();
-                                }
-                            });
-                }
-            }
-
-            @Override
-            public void onPageScrollStateChanged(int state) {
-
-            }
-        });
-
-        if (indexStart > 0) {
-            pagerComments.setCurrentItem(indexStart, false);
-        }
+        pagerComments.setOffscreenPageLimit(0);
+        pagerComments.setAdapter(adapterCommentsSingle);
 
         if (!getArguments().getBoolean(ARG_INITIALIZED, false)) {
             viewBackground.setVisibility(View.INVISIBLE);
             pagerComments.setVisibility(View.INVISIBLE);
             toolbar.setVisibility(View.GONE);
-            layoutAppBar.setTranslationY(-100);
 
-            layoutRelative.post(new Runnable() {
+            layoutComments.post(new Runnable() {
                 @Override
                 public void run() {
                     animateEnter(layoutRoot);
@@ -896,6 +890,74 @@ public class FragmentComments extends FragmentBase
         final float screenHeight = getResources().getDisplayMetrics().heightPixels;
         final float targetY = startY - locationRootView[1] - toolbarHeight;
 
+        ValueAnimator valueAnimator = ValueAnimator.ofFloat(0, 1);
+        valueAnimator.setDuration(DURATION_ENTER);
+        valueAnimator.setInterpolator(fastOutSlowInInterpolator);
+        valueAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+            @Override
+            public void onAnimationUpdate(ValueAnimator animation) {
+                float interpolatedValue = animation.getAnimatedFraction();
+
+                ViewGroup.MarginLayoutParams layoutParams = (ViewGroup.MarginLayoutParams) layoutComments
+                        .getLayoutParams();
+                float reverseInterpolation = 1.0f - interpolatedValue;
+                layoutParams.topMargin = (int) (targetY * reverseInterpolation);
+                layoutParams.leftMargin = (int) (startX * reverseInterpolation);
+                layoutParams.rightMargin = (int) (startMarginRight * reverseInterpolation);
+                layoutComments.setLayoutParams(layoutParams);
+                layoutAppBar.setTranslationY(-toolbarHeight * reverseInterpolation);
+                ViewGroup.LayoutParams layoutParamsBackground = viewBackground
+                        .getLayoutParams();
+                layoutParamsBackground.height = (int) (startHeight + interpolatedValue * screenHeight);
+                viewBackground.setLayoutParams(layoutParamsBackground);
+            }
+        });
+        valueAnimator.addListener(new AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationStart(Animator animation) {
+                viewBackground.setVisibility(View.VISIBLE);
+                pagerComments.setVisibility(View.VISIBLE);
+                toolbar.setVisibility(View.VISIBLE);
+                if (viewHolderView != null) {
+                    viewHolderView.setVisibility(View.INVISIBLE);
+                    viewHolderView = null;
+                }
+            }
+
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                if (!isAdded()) {
+                    return;
+                }
+
+                if (fragmentToHide != null) {
+                    fragmentToHide.onHiddenChanged(true);
+                    fragmentToHide = null;
+                }
+
+                layoutComments.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        setAnimationFinished(true);
+                    }
+                }, 150);
+
+                getArguments().putBoolean(ARG_INITIALIZED, true);
+                buttonExpandActions.setVisibility(View.VISIBLE);
+                buttonExpandActions.setScaleX(0f);
+                buttonExpandActions.setScaleY(0f);
+                buttonExpandActions.setAlpha(0f);
+                ViewCompat.animate(buttonExpandActions)
+                        .scaleX(1.0F)
+                        .scaleY(1.0F)
+                        .alpha(1.0F)
+                        .withLayer()
+                        .setDuration(DURATION_ACTIONS_FADE)
+                        .setInterpolator(ScrollAwareFloatingActionButtonBehavior.INTERPOLATOR)
+                        .setListener(null);
+            }
+        });
+
         final Animation animation = new Animation() {
 
             @Override
@@ -906,18 +968,6 @@ public class FragmentComments extends FragmentBase
             @Override
             protected void applyTransformation(float interpolatedTime, Transformation t) {
                 super.applyTransformation(interpolatedTime, t);
-                ViewGroup.MarginLayoutParams layoutParams = (ViewGroup.MarginLayoutParams) layoutRelative
-                        .getLayoutParams();
-                float reverseInterpolation = 1.0f - interpolatedTime;
-                layoutParams.topMargin = (int) (targetY * reverseInterpolation);
-                layoutParams.leftMargin = (int) (startX * reverseInterpolation);
-                layoutParams.rightMargin = (int) (startMarginRight * reverseInterpolation);
-                layoutRelative.setLayoutParams(layoutParams);
-                layoutAppBar.setTranslationY(-toolbarHeight * reverseInterpolation);
-                ViewGroup.LayoutParams layoutParamsBackground = viewBackground
-                        .getLayoutParams();
-                layoutParamsBackground.height = (int) (startHeight + interpolatedTime * screenHeight);
-                viewBackground.setLayoutParams(layoutParamsBackground);
 
             }
         };
@@ -946,7 +996,7 @@ public class FragmentComments extends FragmentBase
                     fragmentToHide = null;
                 }
 
-                layoutRelative.postDelayed(new Runnable() {
+                layoutComments.postDelayed(new Runnable() {
                     @Override
                     public void run() {
                         setAnimationFinished(true);
@@ -974,14 +1024,16 @@ public class FragmentComments extends FragmentBase
             }
         });
 
-        ViewGroup.MarginLayoutParams layoutParams = (ViewGroup.MarginLayoutParams) layoutRelative
+        ViewGroup.MarginLayoutParams layoutParams = (ViewGroup.MarginLayoutParams) layoutComments
                 .getLayoutParams();
         layoutParams.topMargin = (int) targetY;
         layoutParams.leftMargin = (int) startX;
         layoutParams.rightMargin = startMarginRight;
-        layoutRelative.setLayoutParams(layoutParams);
+        layoutComments.setLayoutParams(layoutParams);
 
-        layoutRelative.startAnimation(animation);
+        valueAnimator.start();
+
+//        layoutComments.startAnimation(animation);
     }
 
     private void toggleLayoutActions() {
@@ -1121,6 +1173,7 @@ public class FragmentComments extends FragmentBase
     }
 
     private void setTitle(CharSequence title) {
+        Log.d(TAG, "setTitle() called with: " + "title = [" + title + "]", new Exception());
         toolbar.setTitle(title);
     }
 
@@ -1206,7 +1259,10 @@ public class FragmentComments extends FragmentBase
             @Override
             public void run() {
                 setAnimationFinished(false);
-                fragmentCurrent.expandPost(false);
+
+                if (fragmentCurrent.isPostExpanded()) {
+                    fragmentCurrent.expandPost(false);
+                }
 
                 pagerComments.post(new Runnable() {
                     @Override
@@ -1217,8 +1273,8 @@ public class FragmentComments extends FragmentBase
                         }
 
                         int[] locationSwipeRefresh = new int[2];
-                        layoutRelative.getLocationOnScreen(locationSwipeRefresh);
-                        final float viewHeight = layoutRelative.getHeight();
+                        layoutComments.getLocationOnScreen(locationSwipeRefresh);
+                        final float viewHeight = layoutComments.getHeight();
                         final float targetY = startY - locationSwipeRefresh[1];
 
                         long duration = ScrollAwareFloatingActionButtonBehavior.DURATION;
@@ -1241,17 +1297,17 @@ public class FragmentComments extends FragmentBase
                             protected void applyTransformation(float interpolatedTime,
                                     Transformation t) {
                                 super.applyTransformation(interpolatedTime, t);
-                                ViewGroup.MarginLayoutParams layoutParams = (ViewGroup.MarginLayoutParams) layoutRelative
+                                ViewGroup.MarginLayoutParams layoutParams = (ViewGroup.MarginLayoutParams) layoutComments
                                         .getLayoutParams();
                                 layoutParams.topMargin = (int) (targetY * interpolatedTime);
                                 layoutParams.leftMargin = (int) (startX * interpolatedTime);
                                 layoutParams.rightMargin = (int) (startMarginRight * interpolatedTime);
-                                layoutRelative.setLayoutParams(layoutParams);
+                                layoutComments.setLayoutParams(layoutParams);
                                 layoutAppBar.setTranslationY(-toolbarHeight * interpolatedTime);
 
                                 ViewGroup.LayoutParams layoutParamsBackground = viewBackground
                                         .getLayoutParams();
-                                layoutParamsBackground.height = (int) ((1f - interpolatedTime) * viewHeight - targetY * interpolatedTime);
+                                layoutParamsBackground.height = (int) Math.max(0, (1f - interpolatedTime) * viewHeight - targetY * interpolatedTime);
                                 viewBackground.setLayoutParams(layoutParamsBackground);
                             }
                         };
@@ -1315,7 +1371,7 @@ public class FragmentComments extends FragmentBase
         float translationX = isStartOnLeft ? screenWidth : -screenWidth;
         behaviorFloatingActionButton.animateOut(buttonExpandActions);
         layoutAppBar.animate().translationX(translationX);
-        layoutRelative.animate().translationX(translationX)
+        layoutComments.animate().translationX(translationX)
                 .setListener(new Animator.AnimatorListener() {
                     @Override
                     public void onAnimationStart(Animator animation) {
@@ -1383,8 +1439,96 @@ public class FragmentComments extends FragmentBase
     }
 
     @Override
-    public boolean onTouchEvent(MotionEvent event) {
+    public boolean shouldOverrideUrl(String urlString) {
 
+        Pattern pattern = Pattern.compile(
+                ".*(?:youtu.be/|v/|u/\\w/|embed/|watch\\?v=)([^#&\\?]*).*");
+        final Matcher matcher = pattern.matcher(urlString);
+        if (matcher.matches()) {
+            int time = 0;
+            Uri uri = Uri.parse(urlString);
+            String timeQuery = uri.getQueryParameter("t");
+            if (!TextUtils.isEmpty(timeQuery)) {
+                try {
+                    // YouTube query provides time in seconds, but we need milliseconds
+                    time = Integer.parseInt(timeQuery) * 1000;
+                }
+                catch (NumberFormatException e) {
+                    time = 0;
+                }
+            }
+            String id = matcher.group(1);
+
+            if (id.equals(currentYouTubeId)) {
+                return false;
+            }
+
+            loadYoutubeVideo(id, time);
+            return true;
+        }
+
+        return super.shouldOverrideUrl(urlString);
+    }
+
+    public void setAnimationFinished(boolean animationFinished) {
+        if (this.animationFinished != animationFinished) {
+            this.animationFinished = animationFinished;
+
+            if (animationFinished) {
+                adapterComments.notifyDataSetChanged();
+
+                pagerComments.setAdapter(adapterComments);
+                pagerComments.setOffscreenPageLimit(1);
+                pagerComments.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
+                    @Override
+                    public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
+
+                    }
+
+                    @Override
+                    public void onPageSelected(int position) {
+                        positionCurrent = position;
+
+                        for (FragmentCommentsInner fragment : adapterComments.getFragments()) {
+                            if (fragment != null && fragment.getPosition() == position) {
+                                setCurrentFragment(fragment);
+                                break;
+                            }
+                        }
+
+                        if (position >= adapterComments.getCount() - 3) {
+                            controllerLinks.loadMoreLinks()
+                                    .subscribe(new FinalizingSubscriber<Listing>() {
+                                        @Override
+                                        public void completed() {
+                                            itemCount = controllerLinks.sizeLinks();
+                                            adapterComments.notifyDataSetChanged();
+                                        }
+                                    });
+                        }
+                    }
+
+                    @Override
+                    public void onPageScrollStateChanged(int state) {
+
+                    }
+                });
+
+                if (indexStart > 0) {
+                    pagerComments.setCurrentItem(indexStart, false);
+                }
+            }
+        }
+
+        for (FragmentCommentsInner fragmentCommentsInner : adapterComments.getFragments()) {
+            if (fragmentCommentsInner != null) {
+                fragmentCommentsInner.setAnimationFinished(animationFinished);
+            }
+        }
+    }
+
+    @Override
+    public boolean onTouch(View v, MotionEvent event) {
         boolean value = gestureDetector.onTouchEvent(event);
 
         if (isFinished || MotionEventCompat
@@ -1406,7 +1550,7 @@ public class FragmentComments extends FragmentBase
 
                 behaviorFloatingActionButton.animateIn(buttonExpandActions);
                 layoutAppBar.animate().translationX(0);
-                layoutRelative.animate().translationX(0)
+                layoutComments.animate().translationX(0)
                         .setListener(new Animator.AnimatorListener() {
                             @Override
                             public void onAnimationStart(Animator animation) {
@@ -1440,47 +1584,5 @@ public class FragmentComments extends FragmentBase
         }
 
         return false;
-    }
-
-    @Override
-    public boolean shouldOverrideUrl(String urlString) {
-
-        Pattern pattern = Pattern.compile(
-                ".*(?:youtu.be/|v/|u/\\w/|embed/|watch\\?v=)([^#&\\?]*).*");
-        final Matcher matcher = pattern.matcher(urlString);
-        if (matcher.matches()) {
-            int time = 0;
-            Uri uri = Uri.parse(urlString);
-            String timeQuery = uri.getQueryParameter("t");
-            if (!TextUtils.isEmpty(timeQuery)) {
-                try {
-                    // YouTube query provides time in seconds, but we need milliseconds
-                    time = Integer.parseInt(timeQuery) * 1000;
-                }
-                catch (NumberFormatException e) {
-                    time = 0;
-                }
-            }
-            String id = matcher.group(1);
-
-            if (id.equals(currentYouTubeId)) {
-                return false;
-            }
-
-            loadYoutubeVideo(id, time);
-            return true;
-        }
-
-        return super.shouldOverrideUrl(urlString);
-    }
-
-    public void setAnimationFinished(boolean animationFinished) {
-        this.animationFinished = animationFinished;
-
-        for (FragmentCommentsInner fragmentCommentsInner : adapterComments.getFragments()) {
-            if (fragmentCommentsInner != null) {
-                fragmentCommentsInner.setAnimationFinished(animationFinished);
-            }
-        }
     }
 }

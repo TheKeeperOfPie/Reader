@@ -43,7 +43,6 @@ import com.winsonchiu.reader.utils.RecyclerCallback;
 import com.winsonchiu.reader.utils.UtilsAnimation;
 import com.winsonchiu.reader.utils.YouTubeListener;
 import com.winsonchiu.reader.views.CustomFrameLayout;
-import com.winsonchiu.reader.views.CustomRelativeLayout;
 
 public class FragmentCommentsInner extends FragmentBase {
 
@@ -63,7 +62,6 @@ public class FragmentCommentsInner extends FragmentBase {
     private FragmentListenerBase mListener;
     private RecyclerView recyclerLink;
     private RecyclerView recyclerCommentList;
-    private CustomFrameLayout layoutExpandPost;
     private ViewGroup layoutExpandPostInner;
     private ImageView imageExpandIndicator;
     private LinearLayoutManagerWrapHeight layoutManagerLink;
@@ -71,10 +69,8 @@ public class FragmentCommentsInner extends FragmentBase {
     private AdapterLinkHeader adapterLink;
     private AdapterCommentList adapterCommentList;
     private SwipeRefreshLayout swipeRefreshCommentList;
-    private ControllerComments.Listener listener;
-    private DisallowListener disallowListener;
     private RecyclerView.AdapterDataObserver observer;
-    private CustomRelativeLayout layoutRoot;
+    private CustomFrameLayout layoutRoot;
     private ColorFilter colorFilterIcon;
     private int scrollToPaddingTop;
     private int scrollToPaddingBottom;
@@ -86,7 +82,85 @@ public class FragmentCommentsInner extends FragmentBase {
     private ValueAnimator valueAnimatorPostExpand = ValueAnimator.ofFloat(0, 1);
     private boolean animationFinished;
 
-    private YouTubeListener youTubeListener;
+    private ControllerComments controllerComments = new ControllerComments();
+    private Link link;
+
+    private ControllerComments.Listener listener = new ControllerComments.Listener() {
+        @Override
+        public void setSort(Sort sort) {
+            if (callback.isCurrentFragment(FragmentCommentsInner.this)) {
+                callback.setSort(sort);
+            }
+        }
+
+        @Override
+        public void setIsCommentThread(boolean isCommentThread) {
+            if (callback.isCurrentFragment(FragmentCommentsInner.this)) {
+                callback.setIsCommentThread(isCommentThread);
+            }
+        }
+
+        @Override
+        public void scrollTo(final int position) {
+            UtilsAnimation.scrollToPositionWithCentering(position,
+                    recyclerCommentList, linearLayoutManager, scrollToPaddingTop, scrollToPaddingBottom, true);
+        }
+
+        @Override
+        public void insertComment(Comment comment) {
+            // Child ControllerComments so do nothing
+        }
+
+        @Override
+        public void setNsfw(String name, boolean over18) {
+            // Child ControllerComments so do nothing
+        }
+
+        @Override
+        public RecyclerView.Adapter getAdapter() {
+            return adapterCommentList;
+        }
+
+        @Override
+        public void setToolbarTitle(CharSequence title) {
+            if (callback.isCurrentFragment(FragmentCommentsInner.this)) {
+                callback.setTitle(title);
+            }
+        }
+
+        @Override
+        public void setRefreshing(boolean refreshing) {
+            swipeRefreshCommentList.setRefreshing(refreshing);
+        }
+
+        @Override
+        public void post(Runnable runnable) {
+            recyclerCommentList.post(runnable);
+        }
+    };
+    private DisallowListener disallowListener = new DisallowListener() {
+        @Override
+        public void requestDisallowInterceptTouchEventVertical(boolean disallow) {
+            recyclerCommentList.requestDisallowInterceptTouchEvent(disallow);
+            swipeRefreshCommentList.requestDisallowInterceptTouchEvent(disallow);
+        }
+
+        @Override
+        public void requestDisallowInterceptTouchEventHorizontal(boolean disallow) {
+
+        }
+    };
+    private YouTubeListener youTubeListener = new YouTubeListener() {
+        @Override
+        public void loadYouTubeVideo(Link link, final String id, final int timeInMillis) {
+            callback.loadYouTubeVideo(link, id, timeInMillis);
+        }
+
+        @Override
+        public boolean hideYouTube() {
+            return callback.hideYouTube();
+        }
+    };
     private Callback callback = new Callback() {
         @Override
         public void loadYouTubeVideo(String id, int timeInMillis) {
@@ -149,9 +223,6 @@ public class FragmentCommentsInner extends FragmentBase {
         }
     };
 
-    private ControllerComments controllerComments = new ControllerComments();
-    private Link link;
-
     public static FragmentCommentsInner newInstance() {
         FragmentCommentsInner fragment = new FragmentCommentsInner();
         Bundle args = new Bundle();
@@ -201,74 +272,12 @@ public class FragmentCommentsInner extends FragmentBase {
         scrollToPaddingBottom = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 56,
                 getResources().getDisplayMetrics());
 
-        layoutRoot = (CustomRelativeLayout) inflater
+        layoutRoot = (CustomFrameLayout) inflater
                 .inflate(R.layout.fragment_comments_inner, container, false);
 
-        listener = new ControllerComments.Listener() {
-            @Override
-            public void setSort(Sort sort) {
-                if (callback.isCurrentFragment(FragmentCommentsInner.this)) {
-                    callback.setSort(sort);
-                }
-            }
 
-            @Override
-            public void setIsCommentThread(boolean isCommentThread) {
-                if (callback.isCurrentFragment(FragmentCommentsInner.this)) {
-                    callback.setIsCommentThread(isCommentThread);
-                }
-            }
 
-            @Override
-            public void scrollTo(final int position) {
-                UtilsAnimation.scrollToPositionWithCentering(position, recyclerCommentList, linearLayoutManager, scrollToPaddingTop, scrollToPaddingBottom, true);
-            }
 
-            @Override
-            public void insertComment(Comment comment) {
-                // Child ControllerComments so do nothing
-            }
-
-            @Override
-            public void setNsfw(String name, boolean over18) {
-                // Child ControllerComments so do nothing
-            }
-
-            @Override
-            public RecyclerView.Adapter getAdapter() {
-                return adapterCommentList;
-            }
-
-            @Override
-            public void setToolbarTitle(CharSequence title) {
-                if (callback.isCurrentFragment(FragmentCommentsInner.this)) {
-                    callback.setTitle(title);
-                }
-            }
-
-            @Override
-            public void setRefreshing(boolean refreshing) {
-                swipeRefreshCommentList.setRefreshing(refreshing);
-            }
-
-            @Override
-            public void post(Runnable runnable) {
-                recyclerCommentList.post(runnable);
-            }
-        };
-
-        disallowListener = new DisallowListener() {
-            @Override
-            public void requestDisallowInterceptTouchEventVertical(boolean disallow) {
-                recyclerCommentList.requestDisallowInterceptTouchEvent(disallow);
-                swipeRefreshCommentList.requestDisallowInterceptTouchEvent(disallow);
-            }
-
-            @Override
-            public void requestDisallowInterceptTouchEventHorizontal(boolean disallow) {
-
-            }
-        };
 
         final RecyclerCallback recyclerCallback = new RecyclerCallback() {
             @Override
@@ -294,18 +303,6 @@ public class FragmentCommentsInner extends FragmentBase {
             @Override
             public void onReplyShown() {
                 callback.onReplyShown();
-            }
-        };
-
-        youTubeListener = new YouTubeListener() {
-            @Override
-            public void loadYouTubeVideo(Link link, final String id, final int timeInMillis) {
-                callback.loadYouTubeVideo(link, id, timeInMillis);
-            }
-
-            @Override
-            public boolean hideYouTube() {
-                return callback.hideYouTube();
             }
         };
 
@@ -452,7 +449,7 @@ public class FragmentCommentsInner extends FragmentBase {
 
                 float distance = e2.getY() - startY;
 
-                targetExpandPostHeight = (int) Math.min(startHeight + distance, layoutExpandPost.getHeight() - callback.getAppBarHeight());
+                targetExpandPostHeight = (int) Math.min(startHeight + distance, layoutRoot.getHeight());
 
                 layoutExpandPostInner.getLayoutParams().height = targetExpandPostHeight;
                 layoutExpandPostInner.requestLayout();
@@ -473,7 +470,7 @@ public class FragmentCommentsInner extends FragmentBase {
                 }
                 else if (velocityY > expandFlingThreshold) {
                     startY = 0;
-                    targetExpandPostHeight = layoutExpandPost.getHeight() - heightExpandHandle;
+                    targetExpandPostHeight = layoutRoot.getHeight() - heightExpandHandle;
                     postExpanded = false;
                     expandPost(true);
                     return true;
@@ -486,12 +483,11 @@ public class FragmentCommentsInner extends FragmentBase {
         heightExpandHandle = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 33, getResources().getDisplayMetrics());
         expandFlingThreshold = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, EXPAND_FLING_THRESHOLD, getResources().getDisplayMetrics());
 
-        layoutExpandPost = (CustomFrameLayout) layoutRoot.findViewById(R.id.layout_expand_post);
         layoutExpandPostInner = (ViewGroup) layoutRoot.findViewById(R.id.layout_expand_post_inner);
         imageExpandIndicator = (ImageView) layoutRoot.findViewById(R.id.image_expand_indicator);
         imageExpandIndicator.setColorFilter(colorFilterIcon);
 
-        layoutExpandPost.setDispatchTouchListener(new View.OnTouchListener() {
+        layoutRoot.setDispatchTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
                 return gestureDetectorExpand.onTouchEvent(event);
@@ -501,7 +497,6 @@ public class FragmentCommentsInner extends FragmentBase {
         recyclerLink = (RecyclerView) layoutRoot.findViewById(R.id.recycler_link);
         recyclerLink.setLayoutManager(layoutManagerLink);
         recyclerLink.setItemAnimator(null);
-        recyclerLink.setAdapter(adapterLink);
 
         if (savedInstanceState != null) {
             String youtubeId = savedInstanceState.getString(ARG_YOUTUBE_ID, null);
@@ -509,10 +504,6 @@ public class FragmentCommentsInner extends FragmentBase {
             if (!TextUtils.isEmpty(youtubeId)) {
                 callback.loadYouTubeVideo(youtubeId, savedInstanceState.getInt(ARG_YOUTUBE_TIME, 0));
             }
-        }
-
-        if (animationFinished) {
-            setAnimationFinished(true);
         }
 
         if (savedInstanceState != null && savedInstanceState.containsKey("Link")) {
@@ -523,6 +514,10 @@ public class FragmentCommentsInner extends FragmentBase {
         } else if (link != null) {
             controllerComments.setLink(link);
             link = null;
+        }
+
+        if (animationFinished) {
+            setAnimationFinished(true);
         }
 
         getArguments().putBoolean("Created", true);
@@ -563,15 +558,12 @@ public class FragmentCommentsInner extends FragmentBase {
     }
 
     @Override
-    public void onStart() {
-        super.onStart();
-        controllerComments.addListener(listener);
-    }
-
-    @Override
     public void onResume() {
         super.onResume();
-        controllerComments.addListener(listener);
+
+        if (animationFinished) {
+            controllerComments.addListener(listener);
+        }
     }
 
     @Override
@@ -642,14 +634,14 @@ public class FragmentCommentsInner extends FragmentBase {
                 if (callback.isCurrentFragment(FragmentCommentsInner.this)) {
                     callback.setPostExpanded(postExpanded);
                 }
-                layoutExpandPost.setVisibility(View.VISIBLE);
+                layoutExpandPostInner.setVisibility(View.VISIBLE);
             }
 
             @Override
             public void onAnimationEnd(Animator animation) {
                 super.onAnimationEnd(animation);
                 if (!postExpanded) {
-                    layoutExpandPost.setVisibility(View.INVISIBLE);
+                    layoutExpandPostInner.setVisibility(View.INVISIBLE);
                     layoutManagerLink.requestLayout();
                 }
             }
@@ -659,9 +651,18 @@ public class FragmentCommentsInner extends FragmentBase {
 
     public void setAnimationFinished(boolean animationFinished) {
         if (isAdded() && adapterLink != null && adapterCommentList != null) {
-            adapterLink.setAnimationFinished(true);
-            adapterCommentList.setAnimationFinished(true);
+            adapterLink.setAnimationFinished(animationFinished);
+            adapterCommentList.setAnimationFinished(animationFinished);
+
+            if (animationFinished) {
+                if (recyclerLink.getAdapter() != adapterLink) {
+                    recyclerLink.setAdapter(adapterLink);
+                }
+                controllerComments.addListener(listener);
+            }
         }
+
+
         this.animationFinished = animationFinished;
     }
 
@@ -873,6 +874,10 @@ public class FragmentCommentsInner extends FragmentBase {
 
     public void loadLinkComments() {
         controllerComments.loadLinkComments();
+    }
+
+    public boolean isPostExpanded() {
+        return postExpanded;
     }
 
     public interface Callback extends YouTubeListener {

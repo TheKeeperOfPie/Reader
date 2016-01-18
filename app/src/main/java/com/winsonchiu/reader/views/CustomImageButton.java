@@ -7,14 +7,12 @@ import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.widget.ImageButton;
 
-import com.winsonchiu.reader.utils.TouchEventListener;
-
 /**
  * Created by TheKeeperOfPie on 8/21/2015.
  */
 public class CustomImageButton extends ImageButton {
 
-    private TouchEventListener touchEventListener;
+    private OnTouchListener onTouchListener;
 
     public CustomImageButton(Context context) {
         super(context);
@@ -33,18 +31,14 @@ public class CustomImageButton extends ImageButton {
         super(context, attrs, defStyleAttr, defStyleRes);
     }
 
-    public TouchEventListener getTouchEventListener() {
-        return touchEventListener;
-    }
-
-    public void setTouchEventListener(TouchEventListener touchEventListener) {
-        this.touchEventListener = touchEventListener;
+    public void setDispatchTouchListener(OnTouchListener onTouchListener) {
+        this.onTouchListener = onTouchListener;
     }
 
     @Override
     public boolean dispatchTouchEvent(MotionEvent ev) {
-        if (touchEventListener != null) {
-            touchEventListener.onTouchEvent(ev);
+        if (onTouchListener != null) {
+            onTouchListener.onTouch(this, ev);
         }
         return super.dispatchTouchEvent(ev);
     }

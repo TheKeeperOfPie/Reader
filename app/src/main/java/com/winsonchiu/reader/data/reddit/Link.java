@@ -66,6 +66,7 @@ public class Link extends Replyable implements Parcelable {
         // TODO: Move parsing of HTML to asynchronous thread
 
         Link link = new Link();
+        link.setJson(nodeRoot.toString());
         link.setKind(UtilsJson.getString(nodeRoot.get("kind")));
 
         JsonNode nodeData = nodeRoot.get("data");

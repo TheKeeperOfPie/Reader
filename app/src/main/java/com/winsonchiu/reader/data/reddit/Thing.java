@@ -18,6 +18,7 @@ public class Thing implements Parcelable {
     private String id;
     private String name;
     private String kind;
+    private String json;
 
     public Thing() {
 
@@ -109,4 +110,12 @@ public class Thing implements Parcelable {
             return new Thing[size];
         }
     };
+
+    public String getJson() {
+        return json;
+    }
+
+    public void setJson(String json) {
+        this.json = json;
+    }
 }

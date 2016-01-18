@@ -11,7 +11,6 @@ import android.view.ViewTreeObserver;
 import android.widget.RelativeLayout;
 
 import com.winsonchiu.reader.utils.OnSizeChangedListener;
-import com.winsonchiu.reader.utils.TouchEventListener;
 
 /**
  * Created by TheKeeperOfPie on 7/3/2015.
@@ -22,8 +21,8 @@ public class CustomRelativeLayout extends RelativeLayout {
     private float xFraction = 0;
     private float yFraction = 0;
     private ViewTreeObserver.OnPreDrawListener preDrawListener = null;
-    private TouchEventListener touchEventListener;
     private OnSizeChangedListener onSizeChangedListener;
+    private OnTouchListener onTouchListener;
 
     public CustomRelativeLayout(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
@@ -97,18 +96,14 @@ public class CustomRelativeLayout extends RelativeLayout {
         setTranslationX(translationX);
     }
 
-    public TouchEventListener getTouchEventListener() {
-        return touchEventListener;
-    }
-
-    public void setTouchEventListener(TouchEventListener touchEventListener) {
-        this.touchEventListener = touchEventListener;
+    public void setDispatchTouchListener(OnTouchListener onTouchListener) {
+        this.onTouchListener = onTouchListener;
     }
 
     @Override
     public boolean dispatchTouchEvent(MotionEvent ev) {
-        if (touchEventListener != null) {
-            touchEventListener.onTouchEvent(ev);
+        if (onTouchListener != null) {
+            onTouchListener.onTouch(this, ev);
         }
         return super.dispatchTouchEvent(ev);
     }

@@ -4,7 +4,9 @@
 
 package com.winsonchiu.reader.data.reddit;
 
+import android.os.Parcel;
 import android.text.Html;
+import android.text.TextUtils;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.winsonchiu.reader.utils.UtilsJson;
@@ -79,13 +81,14 @@ public class Comment extends Replyable {
 
     }
 
-    public static Comment fromJson(JsonNode rootNode, int level) {
+    public static Comment fromJson(JsonNode nodeRoot, int level) {
 
         Comment comment = new Comment();
+        comment.setJson(nodeRoot.toString());
         comment.setLevel(level);
-        comment.setKind(UtilsJson.getString(rootNode.get("kind")));
+        comment.setKind(UtilsJson.getString(nodeRoot.get("kind")));
 
-        JsonNode jsonNode = rootNode.get("data");
+        JsonNode jsonNode = nodeRoot.get("data");
 
         String id = UtilsJson.getString(jsonNode.get("id"));
         int indexStart = id.indexOf("_");
@@ -492,4 +495,96 @@ public class Comment extends Replyable {
     public void setDest(String dest) {
         this.dest = dest;
     }
+
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    @Override
+    public void writeToParcel(Parcel dest, int flags) {
+        super.writeToParcel(dest, flags);
+        dest.writeString(this.approvedBy);
+        dest.writeString(this.author);
+        dest.writeString(this.authorFlairCssClass);
+        dest.writeString(this.authorFlairText);
+        dest.writeString(this.bannedBy);
+        TextUtils.writeToParcel(this.body, dest, flags);
+        TextUtils.writeToParcel(this.bodyHtml, dest, flags);
+        dest.writeInt(this.distinguished == null ? -1 : this.distinguished.ordinal());
+        dest.writeLong(this.edited);
+        dest.writeInt(this.gilded);
+        dest.writeInt(this.likes);
+        dest.writeString(this.linkId);
+        dest.writeInt(this.numReports);
+        dest.writeString(this.parentId);
+        dest.writeByte(saved ? (byte) 1 : (byte) 0);
+        dest.writeInt(this.score);
+        dest.writeByte(scoreHidden ? (byte) 1 : (byte) 0);
+        dest.writeString(this.subreddit);
+        dest.writeString(this.subredditId);
+        dest.writeLong(this.created);
+        dest.writeLong(this.createdUtc);
+        dest.writeString(this.linkAuthor);
+        dest.writeString(this.linkTitle);
+        dest.writeString(this.linkUrl);
+        dest.writeStringList(this.children);
+        dest.writeStringList(this.replies);
+        dest.writeByte(isNew ? (byte) 1 : (byte) 0);
+        dest.writeString(this.dest);
+        dest.writeString(this.context);
+        dest.writeByte(isMore ? (byte) 1 : (byte) 0);
+        dest.writeInt(this.count);
+        dest.writeInt(this.level);
+        dest.writeByte(editMode ? (byte) 1 : (byte) 0);
+        dest.writeInt(this.collapsed);
+    }
+
+    protected Comment(Parcel in) {
+        this.approvedBy = in.readString();
+        this.author = in.readString();
+        this.authorFlairCssClass = in.readString();
+        this.authorFlairText = in.readString();
+        this.bannedBy = in.readString();
+        this.body = TextUtils.CHAR_SEQUENCE_CREATOR.createFromParcel(in);
+        this.bodyHtml = TextUtils.CHAR_SEQUENCE_CREATOR.createFromParcel(in);
+        int tmpDistinguished = in.readInt();
+        this.distinguished = tmpDistinguished == -1 ? null : Reddit.Distinguished.values()[tmpDistinguished];
+        this.edited = in.readLong();
+        this.gilded = in.readInt();
+        this.likes = in.readInt();
+        this.linkId = in.readString();
+        this.numReports = in.readInt();
+        this.parentId = in.readString();
+        this.saved = in.readByte() != 0;
+        this.score = in.readInt();
+        this.scoreHidden = in.readByte() != 0;
+        this.subreddit = in.readString();
+        this.subredditId = in.readString();
+        this.created = in.readLong();
+        this.createdUtc = in.readLong();
+        this.linkAuthor = in.readString();
+        this.linkTitle = in.readString();
+        this.linkUrl = in.readString();
+        this.children = in.createStringArrayList();
+        this.replies = in.createStringArrayList();
+        this.isNew = in.readByte() != 0;
+        this.dest = in.readString();
+        this.context = in.readString();
+        this.isMore = in.readByte() != 0;
+        this.count = in.readInt();
+        this.level = in.readInt();
+        this.editMode = in.readByte() != 0;
+        this.collapsed = in.readInt();
+    }
+
+    public static final Creator<Comment> CREATOR = new Creator<Comment>() {
+        public Comment createFromParcel(Parcel source) {
+            return new Comment(source);
+        }
+
+        public Comment[] newArray(int size) {
+            return new Comment[size];
+        }
+    };
 }

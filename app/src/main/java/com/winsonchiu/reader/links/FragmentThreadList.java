@@ -971,7 +971,6 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
     public void setVisibilityOfThing(int visibility, Thing thing) {
         super.setVisibilityOfThing(visibility, thing);
         adapterLink.setVisibility(visibility, thing);
-        Log.d(TAG, "setVisibilityOfThing() called with: " + "visibility = [" + visibility + "], thing = [" + thing + "]", new Exception());
     }
 
     @Override
