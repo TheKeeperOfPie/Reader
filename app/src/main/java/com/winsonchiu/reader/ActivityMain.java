@@ -72,6 +72,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.google.android.youtube.player.YouTubePlayerSupportFragment;
 import com.squareup.picasso.Callback;
 import com.squareup.picasso.Picasso;
 import com.squareup.picasso.Target;
@@ -289,6 +290,9 @@ public class ActivityMain extends AppCompatActivity
             setTaskDescription(taskDescription);
         }
 
+        /**
+         * Required for {@link YouTubePlayerSupportFragment} to inflate proper UI
+         */
         getLayoutInflater().setFactory(this);
         super.onCreate(savedInstanceState);
 
@@ -1301,7 +1305,7 @@ public class ActivityMain extends AppCompatActivity
         FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
 
         if (animate) {
-            fragmentTransaction.setCustomAnimations(R.animator.slide_from_left, R.animator.slide_to_right);
+            fragmentTransaction.setCustomAnimations(android.R.anim.slide_in_left, android.R.anim.slide_out_right);
         }
 
         while (getSupportFragmentManager().getBackStackEntryCount() > 0) {
