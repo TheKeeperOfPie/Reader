@@ -4,8 +4,8 @@
 
 package com.winsonchiu.reader.search;
 
-import android.app.Activity;
 import android.content.Context;
+import android.support.v4.app.FragmentActivity;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.ViewGroup;
@@ -25,7 +25,7 @@ public class AdapterSearchLinkList extends AdapterLinkList {
 
     private final Source source;
 
-    public AdapterSearchLinkList(Activity activity,
+    public AdapterSearchLinkList(FragmentActivity activity,
             ControllerLinksBase controllerLinks,
             ViewHolderHeader.EventListener eventListenerHeader,
             ViewHolderBase.EventListener eventListenerBase,

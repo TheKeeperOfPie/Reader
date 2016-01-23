@@ -49,7 +49,7 @@ import android.widget.Toast;
 
 import com.google.android.youtube.player.YouTubeInitializationResult;
 import com.google.android.youtube.player.YouTubePlayer;
-import com.google.android.youtube.player.YouTubePlayerView;
+import com.google.android.youtube.player.YouTubePlayerSupportFragment;
 import com.winsonchiu.reader.ActivityMain;
 import com.winsonchiu.reader.ApiKeys;
 import com.winsonchiu.reader.AppSettings;
@@ -110,9 +110,6 @@ public class FragmentComments extends FragmentBase
     private FloatingActionButton buttonCommentPrevious;
     private FloatingActionButton buttonCommentNext;
     private ScrollAwareFloatingActionButtonBehavior behaviorFloatingActionButton;
-    private YouTubePlayerView viewYouTube;
-    private YouTubePlayer youTubePlayer;
-    private YouTubeListener youTubeListener;
     private ControllerCommentsTop.Listener listenerTop;
     private FastOutSlowInInterpolator fastOutSlowInInterpolator;
     private FragmentBase fragmentToHide;
@@ -140,7 +137,13 @@ public class FragmentComments extends FragmentBase
     private ColorFilter colorFilterPrimary;
     private ColorFilter colorFilterAccent;
     private float swipeEndDistance;
+
+    private YouTubePlayer youTubePlayer;
+    private ViewGroup layoutYouTube;
+    private YouTubeListener youTubeListener;
     private String currentYouTubeId;
+    private int youTubeViewId = View.generateViewId();
+    private YouTubePlayerSupportFragment youTubeFragment;
 
     private boolean isStartOnLeft;
     private boolean animationFinished;
@@ -285,7 +288,7 @@ public class FragmentComments extends FragmentBase
 
             @Override
             public boolean hideYouTube() {
-                if (viewYouTube.isShown()) {
+                if (layoutYouTube.isShown()) {
                     if (youTubePlayer != null) {
                         youTubePlayer.pause();
                     }
@@ -436,7 +439,7 @@ public class FragmentComments extends FragmentBase
         buttonCommentPrevious.setColorFilter(colorFilterAccent);
         buttonCommentNext.setColorFilter(colorFilterAccent);
 
-        viewYouTube = (YouTubePlayerView) layoutRoot.findViewById(R.id.youtube);
+        layoutYouTube = (ViewGroup) layoutRoot.findViewById(R.id.layout_youtube);
 
         layoutCoordinator = (CoordinatorLayout) layoutRoot.findViewById(R.id.layout_coordinator);
         layoutAppBar = (AppBarLayout) layoutRoot.findViewById(R.id.layout_app_bar);
@@ -792,7 +795,12 @@ public class FragmentComments extends FragmentBase
             return;
         }
 
-        viewYouTube.initialize(ApiKeys.YOUTUBE_API_KEY,
+        youTubeFragment = new YouTubePlayerSupportFragment();
+        layoutYouTube.setId(youTubeViewId);
+        getFragmentManager().beginTransaction()
+                .add(youTubeViewId, youTubeFragment, String.valueOf(youTubeViewId))
+                .commit();
+        youTubeFragment.initialize(ApiKeys.YOUTUBE_API_KEY,
                 new YouTubePlayer.OnInitializedListener() {
                     @Override
                     public void onInitializationSuccess(YouTubePlayer.Provider provider,
@@ -847,7 +855,7 @@ public class FragmentComments extends FragmentBase
     }
 
     private void toggleYouTubeVisibility(int visibility) {
-        viewYouTube.setVisibility(visibility);
+        layoutYouTube.setVisibility(visibility);
         boolean visible = visibility == View.VISIBLE;
 //        recyclerCommentList.scrollBy(0, visible ? viewYouTube.getHeight() : -viewYouTube.getHeight());
         itemHideYouTube.setVisible(visible);
@@ -1156,6 +1164,16 @@ public class FragmentComments extends FragmentBase
             youTubePlayer.release();
             youTubePlayer = null;
         }
+
+        if (youTubeFragment != null) {
+            getFragmentManager().beginTransaction()
+                    .remove(youTubeFragment)
+                    .commit();
+
+            getFragmentManager().executePendingTransactions();
+        }
+
+        layoutYouTube.setVisibility(View.GONE);
     }
 
     public void setPostExpanded(boolean expanded) {
@@ -1345,9 +1363,9 @@ public class FragmentComments extends FragmentBase
                             }
                         });
 
-                        if (viewYouTube.isShown()) {
-                            viewYouTube.animate().translationYBy(
-                                    -(viewYouTube.getHeight() + toolbar.getHeight()));
+                        if (layoutYouTube.isShown()) {
+                            layoutYouTube.animate().translationYBy(
+                                    -(layoutYouTube.getHeight() + toolbar.getHeight()));
                         }
 
                         pagerComments.startAnimation(animation);

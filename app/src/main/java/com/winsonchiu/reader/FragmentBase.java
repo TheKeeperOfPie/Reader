@@ -4,7 +4,7 @@
 
 package com.winsonchiu.reader;
 
-import android.app.Fragment;
+import android.support.v4.app.Fragment;
 
 import com.winsonchiu.reader.data.reddit.Thing;
 

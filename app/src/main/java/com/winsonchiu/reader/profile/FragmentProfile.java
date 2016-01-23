@@ -522,7 +522,7 @@ public class FragmentProfile extends FragmentBase implements Toolbar.OnMenuItemC
         return new FinalizingSubscriber<Listing>() {
             @Override
             public void error(Throwable e) {
-                Toast.makeText(activity, activity.getString(R.string.error_loading),
+                Toast.makeText(activity, getString(R.string.error_loading),
                         Toast.LENGTH_SHORT)
                         .show();
             }

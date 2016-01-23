@@ -4,7 +4,6 @@
 
 package com.winsonchiu.reader.comments;
 
-import android.app.Activity;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
@@ -17,6 +16,7 @@ import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
 import android.graphics.drawable.Drawable;
 import android.preference.PreferenceManager;
+import android.support.v4.app.FragmentActivity;
 import android.support.v4.graphics.ColorUtils;
 import android.support.v4.view.GestureDetectorCompat;
 import android.support.v7.app.AlertDialog;
@@ -91,7 +91,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
     // TODO: Find a way to animate with the toolbar actions expanded without lagging
     private boolean actionsExpanded;
 
-    private Activity activity;
+    private FragmentActivity activity;
     private AdapterLink.ViewHolderBase.EventListener eventListenerBase;
     private ViewHolderComment.EventListener eventListener;
     private DisallowListener disallowListener;
@@ -109,7 +109,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
 
     private ControllerComments controllerComments;
 
-    public AdapterCommentList(Activity activity,
+    public AdapterCommentList(FragmentActivity activity,
             ControllerComments controllerComments,
             AdapterLink.ViewHolderBase.EventListener eventListenerBase,
             ViewHolderComment.EventListener eventListener,

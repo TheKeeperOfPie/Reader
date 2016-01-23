@@ -4,8 +4,8 @@
 
 package com.winsonchiu.reader.dagger;
 
-import android.app.Fragment;
 import android.os.Bundle;
+import android.support.v4.app.Fragment;
 
 import com.winsonchiu.reader.CustomApplication;
 import com.winsonchiu.reader.dagger.components.ComponentActivity;

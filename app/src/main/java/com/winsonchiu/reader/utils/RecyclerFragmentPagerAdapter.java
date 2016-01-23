@@ -4,12 +4,11 @@
 
 package com.winsonchiu.reader.utils;
 
-import android.app.Fragment;
-import android.app.FragmentManager;
-import android.app.FragmentTransaction;
 import android.os.Bundle;
 import android.os.Parcelable;
-import android.support.v13.app.FragmentCompat;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentTransaction;
 import android.support.v4.view.PagerAdapter;
 import android.util.Log;
 import android.view.View;
@@ -83,8 +82,8 @@ public abstract class RecyclerFragmentPagerAdapter<FragmentType extends Fragment
         while (fragments.size() <= position) {
             fragments.add(null);
         }
-        FragmentCompat.setMenuVisibility(fragment, false);
-        FragmentCompat.setUserVisibleHint(fragment, false);
+        fragment.setMenuVisibility(false);
+        fragment.setUserVisibleHint(false);
         fragments.set(position, fragment);
         currentTransaction.add(container.getId(), fragment);
 
@@ -116,12 +115,12 @@ public abstract class RecyclerFragmentPagerAdapter<FragmentType extends Fragment
         Fragment fragment = (Fragment)object;
         if (fragment != currentItem) {
             if (currentItem != null) {
-                FragmentCompat.setMenuVisibility(currentItem, false);
-                FragmentCompat.setUserVisibleHint(currentItem, false);
+                currentItem.setMenuVisibility(false);
+                currentItem.setUserVisibleHint(false);
             }
             if (fragment != null) {
-                FragmentCompat.setMenuVisibility(fragment, true);
-                FragmentCompat.setUserVisibleHint(fragment, true);
+                fragment.setMenuVisibility(true);
+                fragment.setUserVisibleHint(true);
             }
             currentItem = fragment;
         }
@@ -191,7 +190,7 @@ public abstract class RecyclerFragmentPagerAdapter<FragmentType extends Fragment
                         while (fragments.size() <= index) {
                             fragments.add(null);
                         }
-                        FragmentCompat.setMenuVisibility(f, false);
+                        f.setMenuVisibility(false);
                         fragments.set(index, f);
                     } else {
                         Log.w(TAG, "Bad fragment at key " + key);

@@ -31,8 +31,6 @@ public class AdapterInboxPage extends BaseAdapter {
     private int colorPrimary;
 
     public AdapterInboxPage(Activity activity) {
-        super();
-
         pages = new ArrayList<>();
         pages.add(new Page(ControllerInbox.INBOX, activity.getString(R.string.inbox_page_inbox)));
         pages.add(new Page(ControllerInbox.UNREAD, activity.getString(R.string.inbox_page_unread)));

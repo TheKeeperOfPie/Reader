@@ -13,10 +13,12 @@ import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.annotation.Nullable;
+import android.support.annotation.StyleRes;
 import android.support.design.widget.AppBarLayout;
 import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
+import android.support.v4.app.FragmentActivity;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.view.ViewCompat;
 import android.support.v4.view.ViewPropertyAnimatorListener;
@@ -84,7 +86,6 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
     private static final long DURATION_TRANSITION = 150;
     private static final long DURATION_ACTIONS_FADE = 150;
     private static final float OFFSET_MODIFIER = 0.5f;
-    private Activity activity;
     private FragmentListenerBase mListener;
 
     private SharedPreferences preferences;
@@ -244,7 +245,7 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
             final Bundle savedInstanceState) {
-        ((ActivityMain) activity).getComponentActivity().inject(this);
+        ((ActivityMain) getActivity()).getComponentActivity().inject(this);
 
         initialize();
 
@@ -255,7 +256,7 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
         layoutCoordinator = (CoordinatorLayout) view.findViewById(R.id.layout_coordinator);
         layoutAppBar = (AppBarLayout) view.findViewById(R.id.layout_app_bar);
 
-        TypedArray typedArray = activity.getTheme().obtainStyledAttributes(
+        TypedArray typedArray = getActivity().getTheme().obtainStyledAttributes(
                 new int[] {R.attr.colorPrimary, R.attr.colorAccent});
         final int colorPrimary = typedArray.getColor(0, getResources().getColor(R.color.colorPrimary));
         int colorAccent = typedArray.getColor(1, getResources().getColor(R.color.colorAccent));
@@ -267,13 +268,13 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
         colorFilterPrimary = new CustomColorFilter(getResources().getColor(colorResourcePrimary), PorterDuff.Mode.MULTIPLY);
         colorFilterAccent = new CustomColorFilter(getResources().getColor(colorResourceAccent), PorterDuff.Mode.MULTIPLY);
 
-        int styleToolbar = UtilsColor.computeContrast(colorPrimary, Color.WHITE) > 3f ? mListener.getAppColorTheme().getStyle(AppSettings.THEME_DARK, mListener.getThemeAccentPrefString()) : mListener.getAppColorTheme().getStyle(AppSettings.THEME_LIGHT, mListener.getThemeAccentPrefString());
+        @StyleRes int styleToolbar = UtilsColor.computeContrast(colorPrimary, Color.WHITE) > 3f ? mListener.getAppColorTheme().getStyle(AppSettings.THEME_DARK, mListener.getThemeAccentPrefString()) : mListener.getAppColorTheme().getStyle(AppSettings.THEME_LIGHT, mListener.getThemeAccentPrefString());
 
         int styleColorBackground = AppSettings.THEME_DARK.equals(mListener.getThemeBackgroundPrefString()) ? R.style.MenuDark : R.style.MenuLight;
 
-        ContextThemeWrapper contextThemeWrapper = new ContextThemeWrapper(new ContextThemeWrapper(activity, styleToolbar), styleColorBackground);
+        ContextThemeWrapper contextThemeWrapper = new ContextThemeWrapper(new ContextThemeWrapper(getActivity(), styleToolbar), styleColorBackground);
 
-        toolbar = (Toolbar) activity.getLayoutInflater().cloneInContext(contextThemeWrapper).inflate(R.layout.toolbar, layoutAppBar, false);
+        toolbar = (Toolbar) getActivity().getLayoutInflater().cloneInContext(contextThemeWrapper).inflate(R.layout.toolbar, layoutAppBar, false);
         layoutAppBar.addView(toolbar);
         ((AppBarLayout.LayoutParams) toolbar.getLayoutParams()).setScrollFlags(AppBarLayout.LayoutParams.SCROLL_FLAG_SCROLL | AppBarLayout.LayoutParams.SCROLL_FLAG_ENTER_ALWAYS);
         toolbar.setTitleTextColor(getResources().getColor(colorResourcePrimary));
@@ -301,7 +302,7 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
         });
 
         behaviorButtonExpandActions = new ScrollAwareFloatingActionButtonBehavior(
-                activity, null,
+                getActivity(), null,
                 new ScrollAwareFloatingActionButtonBehavior.OnVisibilityChangeListener() {
                     @Override
                     public void onStartHideFromScroll() {
@@ -329,7 +330,7 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
         buttonJumpTop.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(View v) {
-                Toast.makeText(activity, getString(R.string.content_description_button_jump_top),
+                Toast.makeText(getActivity(), getString(R.string.content_description_button_jump_top),
                         Toast.LENGTH_SHORT).show();
                 return false;
             }
@@ -345,7 +346,7 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
         buttonClearViewed.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(View v) {
-                Toast.makeText(activity,
+                Toast.makeText(getActivity(),
                         getString(R.string.content_description_button_clear_viewed),
                         Toast.LENGTH_SHORT).show();
                 return false;
@@ -390,7 +391,7 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
             }
         });
         if (adapterLinkList == null) {
-            adapterLinkList = new AdapterLinkList(activity,
+            adapterLinkList = new AdapterLinkList(getActivity(),
                     controllerLinks,
                     eventListenerHeader,
                     mListener.getEventListenerBase(),
@@ -398,7 +399,7 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
                     recyclerCallback);
         }
         if (adapterLinkGrid == null) {
-            adapterLinkGrid = new AdapterLinkGrid(activity,
+            adapterLinkGrid = new AdapterLinkGrid(getActivity(),
                     controllerLinks,
                     eventListenerHeader,
                     mListener.getEventListenerBase(),
@@ -414,10 +415,10 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
             adapterLink = adapterLinkGrid;
         }
 
-        adapterLinkList.setActivity(activity);
-        adapterLinkGrid.setActivity(activity);
+        adapterLinkList.setActivity(getActivity());
+        adapterLinkGrid.setActivity(getActivity());
 
-        itemDecorationDivider = new ItemDecorationDivider(activity, ItemDecorationDivider.VERTICAL_LIST);
+        itemDecorationDivider = new ItemDecorationDivider(getActivity(), ItemDecorationDivider.VERTICAL_LIST);
 
         recyclerThreadList = (RecyclerView) view.findViewById(R.id.recycler_thread_list);
         recyclerThreadList.setItemAnimator(null);
@@ -440,7 +441,7 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
         });
 
         itemTouchHelper = new CustomItemTouchHelper(
-                new CustomItemTouchHelper.SimpleCallback(activity,
+                new CustomItemTouchHelper.SimpleCallback(getActivity(),
                         R.drawable.ic_visibility_off_white_24dp,
                         ItemTouchHelper.START | ItemTouchHelper.END,
                         ItemTouchHelper.START | ItemTouchHelper.END) {
@@ -569,7 +570,7 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
             public void onClickSubmit(Reddit.PostType postType) {
 
                 if (TextUtils.isEmpty(controllerUser.getUser().getName())) {
-                    Toast.makeText(activity, getString(R.string.must_be_logged_in),
+                    Toast.makeText(getActivity(), getString(R.string.must_be_logged_in),
                             Toast.LENGTH_SHORT).show();
                     return;
                 }
@@ -838,7 +839,6 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
     public void onAttach(Activity activity) {
         super.onAttach(activity);
         Log.d(TAG, "onAttach");
-        this.activity = activity;
         this.preferences = PreferenceManager.getDefaultSharedPreferences(
                 activity.getApplicationContext());
         try {
@@ -854,7 +854,6 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
     public void onDetach() {
         super.onDetach();
         mListener = null;
-        activity = null;
     }
 
     @Override

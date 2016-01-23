@@ -13,6 +13,7 @@ import android.graphics.Color;
 import android.graphics.PorterDuff;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.support.annotation.StyleRes;
 import android.support.design.widget.AppBarLayout;
 import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.Snackbar;
@@ -79,7 +80,6 @@ public class FragmentHistory extends FragmentBase implements Toolbar.OnMenuItemC
     private SwipeRefreshLayout swipeRefreshHistory;
     private LayoutManager layoutManager;
     private RecyclerView recyclerHistory;
-    private Activity activity;
     private ControllerHistory.Listener listener;
     private CustomItemTouchHelper itemTouchHelper;
     private AdapterLink adapterLink;
@@ -215,7 +215,7 @@ public class FragmentHistory extends FragmentBase implements Toolbar.OnMenuItemC
             }
         };
 
-        TypedArray typedArray = activity.getTheme().obtainStyledAttributes(
+        TypedArray typedArray = getActivity().getTheme().obtainStyledAttributes(
                 new int[]{R.attr.colorPrimary});
         final int colorPrimary = typedArray.getColor(0, getResources().getColor(R.color.colorPrimary));
         typedArray.recycle();
@@ -224,11 +224,11 @@ public class FragmentHistory extends FragmentBase implements Toolbar.OnMenuItemC
 
         colorFilterPrimary = new CustomColorFilter(getResources().getColor(colorResourcePrimary), PorterDuff.Mode.MULTIPLY);
 
-        int styleToolbar = UtilsColor.computeContrast(colorPrimary, Color.WHITE) > 3f ? mListener.getAppColorTheme().getStyle(AppSettings.THEME_DARK, mListener.getThemeAccentPrefString()) : mListener.getAppColorTheme().getStyle(AppSettings.THEME_LIGHT, mListener.getThemeAccentPrefString());
+        @StyleRes int styleToolbar = UtilsColor.computeContrast(colorPrimary, Color.WHITE) > 3f ? mListener.getAppColorTheme().getStyle(AppSettings.THEME_DARK, mListener.getThemeAccentPrefString()) : mListener.getAppColorTheme().getStyle(AppSettings.THEME_LIGHT, mListener.getThemeAccentPrefString());
 
-        ContextThemeWrapper contextThemeWrapper = new ContextThemeWrapper(activity, styleToolbar);
+        ContextThemeWrapper contextThemeWrapper = new ContextThemeWrapper(getActivity(), styleToolbar);
 
-        toolbar = (Toolbar) activity.getLayoutInflater().cloneInContext(contextThemeWrapper).inflate(R.layout.toolbar, layoutAppBar, false);
+        toolbar = (Toolbar) getActivity().getLayoutInflater().cloneInContext(contextThemeWrapper).inflate(R.layout.toolbar, layoutAppBar, false);
         layoutAppBar.addView(toolbar);
         ((AppBarLayout.LayoutParams) toolbar.getLayoutParams()).setScrollFlags(AppBarLayout.LayoutParams.SCROLL_FLAG_SCROLL | AppBarLayout.LayoutParams.SCROLL_FLAG_ENTER_ALWAYS);
 
@@ -318,7 +318,7 @@ public class FragmentHistory extends FragmentBase implements Toolbar.OnMenuItemC
 
 
         if (adapterLinkList == null) {
-            adapterLinkList = new AdapterHistoryLinkList(activity,
+            adapterLinkList = new AdapterHistoryLinkList(getActivity(),
                     controllerHistory,
                     eventListenerHeader,
                     mListener.getEventListenerBase(),
@@ -326,7 +326,7 @@ public class FragmentHistory extends FragmentBase implements Toolbar.OnMenuItemC
                     recyclerCallback);
         }
         if (adapterLinkGrid == null) {
-            adapterLinkGrid = new AdapterHistoryLinkGrid(activity,
+            adapterLinkGrid = new AdapterHistoryLinkGrid(getActivity(),
                     controllerHistory,
                     eventListenerHeader,
                     mListener.getEventListenerBase(),
@@ -344,7 +344,7 @@ public class FragmentHistory extends FragmentBase implements Toolbar.OnMenuItemC
 
         layoutManager = adapterLink.getLayoutManager();
 
-        itemDecorationDivider = new ItemDecorationDivider(activity, ItemDecorationDivider.VERTICAL_LIST);
+        itemDecorationDivider = new ItemDecorationDivider(getActivity(), ItemDecorationDivider.VERTICAL_LIST);
 
         recyclerHistory = (RecyclerView) view.findViewById(R.id.recycler_history);
         recyclerHistory.setHasFixedSize(true);
@@ -352,7 +352,7 @@ public class FragmentHistory extends FragmentBase implements Toolbar.OnMenuItemC
         resetAdapter(adapterLink);
 
         itemTouchHelper = new CustomItemTouchHelper(
-                new CustomItemTouchHelper.SimpleCallback(activity,
+                new CustomItemTouchHelper.SimpleCallback(getActivity(),
                         R.drawable.ic_visibility_off_white_24dp,
                         ItemTouchHelper.START | ItemTouchHelper.END,
                         ItemTouchHelper.START | ItemTouchHelper.END) {
@@ -475,7 +475,6 @@ public class FragmentHistory extends FragmentBase implements Toolbar.OnMenuItemC
     @Override
     public void onAttach(Activity activity) {
         super.onAttach(activity);
-        this.activity = activity;
         this.preferences = PreferenceManager.getDefaultSharedPreferences(
                 activity.getApplicationContext());
         try {
@@ -490,7 +489,6 @@ public class FragmentHistory extends FragmentBase implements Toolbar.OnMenuItemC
     @Override
     public void onDetach() {
         super.onDetach();
-        activity = null;
         mListener = null;
     }
 
@@ -548,7 +546,7 @@ public class FragmentHistory extends FragmentBase implements Toolbar.OnMenuItemC
 
     private void showDateRangeDialog() {
 
-        View view = LayoutInflater.from(activity).inflate(R.layout.dialog_date_range, null, false);
+        View view = LayoutInflater.from(getActivity()).inflate(R.layout.dialog_date_range, null, false);
         final DatePicker datePickerStart = (DatePicker) view.findViewById(R.id.date_picker_start);
         final DatePicker datePickerEnd = (DatePicker) view.findViewById(R.id.date_picker_end);
         final ViewPager viewPager = (ViewPager) view.findViewById(R.id.view_pager_time);
@@ -601,7 +599,7 @@ public class FragmentHistory extends FragmentBase implements Toolbar.OnMenuItemC
                             int dayOfMonth) {
                         calendarStart.set(year, monthOfYear, dayOfMonth);
                         layoutTab.getTabAt(0).setText(DateUtils
-                                .formatDateTime(activity, calendarStart.getTimeInMillis(),
+                                .formatDateTime(getActivity(), calendarStart.getTimeInMillis(),
                                         FORMAT_DATE));
                     }
                 });
@@ -622,7 +620,7 @@ public class FragmentHistory extends FragmentBase implements Toolbar.OnMenuItemC
                             int dayOfMonth) {
                         calendarEnd.set(year, monthOfYear, dayOfMonth);
                         layoutTab.getTabAt(1).setText(DateUtils
-                                .formatDateTime(activity, calendarEnd.getTimeInMillis(),
+                                .formatDateTime(getActivity(), calendarEnd.getTimeInMillis(),
                                         FORMAT_DATE));
                     }
                 });
@@ -636,7 +634,7 @@ public class FragmentHistory extends FragmentBase implements Toolbar.OnMenuItemC
                     calendarEnd.get(Calendar.MONTH), calendarEnd.get(Calendar.DAY_OF_MONTH));
         }
 
-        AlertDialog dialog = new AlertDialog.Builder(activity)
+        AlertDialog dialog = new AlertDialog.Builder(getActivity())
                 .setView(view)
                 .setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
                     @Override

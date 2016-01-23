@@ -35,7 +35,7 @@ public class FragmentBehavior extends FragmentPreferences
                     @Override
                     public boolean onPreferenceClick(Preference preference) {
                         historian.clear(activity);
-                        Toast.makeText(activity, activity.getString(R.string.history_cleared),
+                        Toast.makeText(activity, getString(R.string.history_cleared),
                                 Toast.LENGTH_SHORT).show();
                         return true;
                     }

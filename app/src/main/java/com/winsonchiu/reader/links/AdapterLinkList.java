@@ -4,8 +4,8 @@
 
 package com.winsonchiu.reader.links;
 
-import android.app.Activity;
 import android.graphics.drawable.Drawable;
+import android.support.v4.app.FragmentActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.text.TextUtils;
@@ -30,7 +30,7 @@ public class AdapterLinkList extends AdapterLink {
 
     private static final String TAG = AdapterLinkList.class.getCanonicalName();
 
-    public AdapterLinkList(Activity activity,
+    public AdapterLinkList(FragmentActivity activity,
             ControllerLinksBase controllerLinks,
             ViewHolderHeader.EventListener eventListenerHeader,
             ViewHolderBase.EventListener eventListenerBase,
@@ -41,7 +41,7 @@ public class AdapterLinkList extends AdapterLink {
     }
 
     @Override
-    public void setActivity(Activity activity) {
+    public void setActivity(FragmentActivity activity) {
         super.setActivity(activity);
         layoutManager = new LinearLayoutManager(activity);
     }
@@ -82,7 +82,7 @@ public class AdapterLinkList extends AdapterLink {
 
     public static class ViewHolder extends AdapterLink.ViewHolderBase {
 
-        public ViewHolder(Activity activity,
+        public ViewHolder(FragmentActivity activity,
                 View itemView,
                 EventListener eventListener,
                 Source source,

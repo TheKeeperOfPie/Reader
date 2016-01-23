@@ -4,8 +4,8 @@
 
 package com.winsonchiu.reader.comments;
 
-import android.app.Activity;
 import android.content.Intent;
+import android.support.v4.app.FragmentActivity;
 import android.support.v7.widget.RecyclerView;
 import android.text.TextUtils;
 import android.util.DisplayMetrics;
@@ -30,7 +30,7 @@ import com.winsonchiu.reader.utils.YouTubeListener;
 public class AdapterLinkHeader extends RecyclerView.Adapter<AdapterLink.ViewHolderBase> implements CallbackYouTubeDestruction {
 
     private int thumbnailSize;
-    private Activity activity;
+    private FragmentActivity activity;
     private boolean isGrid;
     private String firstLinkName;
     private int colorLink;
@@ -45,7 +45,7 @@ public class AdapterLinkHeader extends RecyclerView.Adapter<AdapterLink.ViewHold
 
     private ControllerComments controllerComments;
 
-    public AdapterLinkHeader(Activity activity,
+    public AdapterLinkHeader(FragmentActivity activity,
             ControllerComments controllerComments,
             AdapterLink.ViewHolderBase.EventListener eventListenerBase,
             DisallowListener disallowListener, RecyclerCallback recyclerCallback,

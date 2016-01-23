@@ -4,7 +4,7 @@
 
 package com.winsonchiu.reader.history;
 
-import android.app.Activity;
+import android.support.v4.app.FragmentActivity;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.ViewGroup;
@@ -21,7 +21,7 @@ import com.winsonchiu.reader.utils.RecyclerCallback;
  */
 public class AdapterHistoryLinkGrid extends AdapterLinkGrid {
 
-    public AdapterHistoryLinkGrid(Activity activity,
+    public AdapterHistoryLinkGrid(FragmentActivity activity,
                                   ControllerLinksBase controllerLinks,
                                   ViewHolderHeader.EventListener eventListenerHeader,
                                   ViewHolderBase.EventListener eventListenerBase,

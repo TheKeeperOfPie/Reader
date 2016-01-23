@@ -14,14 +14,12 @@ import android.app.Activity;
 import android.app.ActivityManager;
 import android.app.AlarmManager;
 import android.app.DownloadManager;
-import android.app.FragmentTransaction;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
-import android.content.res.Configuration;
 import android.content.res.TypedArray;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -34,7 +32,6 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
-import android.os.PersistableBundle;
 import android.preference.PreferenceManager;
 import android.provider.Browser;
 import android.support.annotation.NonNull;
@@ -46,14 +43,14 @@ import android.support.customtabs.CustomTabsServiceConnection;
 import android.support.customtabs.CustomTabsSession;
 import android.support.design.widget.NavigationView;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.app.FragmentTransaction;
 import android.support.v4.app.TaskStackBuilder;
 import android.support.v4.view.GestureDetectorCompat;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.view.MotionEventCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.AlertDialog;
-import android.support.v7.app.AppCompatCallback;
-import android.support.v7.app.AppCompatDelegate;
+import android.support.v7.app.AppCompatActivity;
 import android.support.v7.view.ActionMode;
 import android.text.Html;
 import android.text.TextUtils;
@@ -75,7 +72,6 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.google.android.youtube.player.YouTubeBaseActivity;
 import com.squareup.picasso.Callback;
 import com.squareup.picasso.Picasso;
 import com.squareup.picasso.Target;
@@ -144,8 +140,8 @@ import rx.functions.Func1;
 import rx.schedulers.Schedulers;
 
 
-public class ActivityMain extends YouTubeBaseActivity
-        implements FragmentListenerBase, AppCompatCallback, ActivityCompat.OnRequestPermissionsResultCallback {
+public class ActivityMain extends AppCompatActivity
+        implements FragmentListenerBase {
 
     private static final String TAG = ActivityMain.class.getCanonicalName();
 
@@ -186,7 +182,6 @@ public class ActivityMain extends YouTubeBaseActivity
     };
     private CustomColorFilter colorFilterPrimary;
     private int colorPrimary;
-    private AppCompatDelegate appCompatDelegate;
 
     private ImageDownload imageDownload;
     private boolean isDownloadingHeaderImage;
@@ -294,17 +289,15 @@ public class ActivityMain extends YouTubeBaseActivity
             setTaskDescription(taskDescription);
         }
 
+        getLayoutInflater().setFactory(this);
         super.onCreate(savedInstanceState);
-
-        appCompatDelegate = AppCompatDelegate.create(this, this);
-        appCompatDelegate.onCreate(savedInstanceState);
 
         handler = new Handler();
 
-        FragmentPersist fragmentPersist = (FragmentPersist) getFragmentManager().findFragmentByTag(FragmentPersist.TAG);
+        FragmentPersist fragmentPersist = (FragmentPersist) getSupportFragmentManager().findFragmentByTag(FragmentPersist.TAG);
         if (fragmentPersist == null) {
             fragmentPersist = new FragmentPersist();
-            getFragmentManager().beginTransaction().add(fragmentPersist, FragmentPersist.TAG).commit();
+            getSupportFragmentManager().beginTransaction().add(fragmentPersist, FragmentPersist.TAG).commit();
             fragmentPersist.initialize();
         }
 
@@ -317,7 +310,7 @@ public class ActivityMain extends YouTubeBaseActivity
 
         componentActivity.inject(this);
 
-        appCompatDelegate.setContentView(R.layout.activity_main);
+        setContentView(R.layout.activity_main);
 
         getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
 
@@ -380,13 +373,13 @@ public class ActivityMain extends YouTubeBaseActivity
 
                             @Override
                             public void next(Comment comment) {
-                                if (getFragmentManager().findFragmentByTag(FragmentComments.TAG) != null) {
+                                if (getSupportFragmentManager().findFragmentByTag(FragmentComments.TAG) != null) {
                                     controllerCommentsTop.insertComment(comment);
                                 }
-                                if (getFragmentManager().findFragmentByTag(FragmentProfile.TAG) != null) {
+                                if (getSupportFragmentManager().findFragmentByTag(FragmentProfile.TAG) != null) {
                                     controllerProfile.insertComment(comment);
                                 }
-                                if (getFragmentManager().findFragmentByTag(FragmentInbox.TAG) != null) {
+                                if (getSupportFragmentManager().findFragmentByTag(FragmentInbox.TAG) != null) {
                                     controllerInbox.insertComment(comment);
                                 }
                             }
@@ -435,14 +428,14 @@ public class ActivityMain extends YouTubeBaseActivity
 
                 int color = viewHolderBase.getBackgroundColor();
 
-                FragmentBase fragment = (FragmentBase) getFragmentManager().findFragmentById(R.id.frame_fragment);
+                FragmentBase fragment = (FragmentBase) getSupportFragmentManager().findFragmentById(R.id.frame_fragment);
                 fragment.onWindowTransitionStart();
 
                 FragmentComments fragmentComments = FragmentComments
                         .newInstance(viewHolderBase, color);
                 fragmentComments.setFragmentToHide(fragment, viewHolderBase.itemView);
 
-                getFragmentManager().beginTransaction()
+                getSupportFragmentManager().beginTransaction()
                         .add(R.id.frame_fragment, fragmentComments,
                                 FragmentComments.TAG)
                         .addToBackStack(null)
@@ -629,8 +622,8 @@ public class ActivityMain extends YouTubeBaseActivity
             public void editLink(Link link) {
                 FragmentNewPost fragmentNewPost = FragmentNewPost.newInstanceEdit(controllerUser.getUser().getName(), link);
 
-                getFragmentManager().beginTransaction()
-                        .hide(getFragmentManager().findFragmentById(R.id.frame_fragment))
+                getSupportFragmentManager().beginTransaction()
+                        .hide(getSupportFragmentManager().findFragmentById(R.id.frame_fragment))
                         .add(R.id.frame_fragment, fragmentNewPost, FragmentNewPost.TAG)
                         .addToBackStack(null)
                         .commit();
@@ -639,9 +632,9 @@ public class ActivityMain extends YouTubeBaseActivity
             @Override
             public void showReplyEditor(Replyable replyable) {
                 FragmentReply fragmentReply = FragmentReply.newInstance(replyable);
-                fragmentReply.setFragmentToHide(getFragmentManager().findFragmentById(R.id.frame_fragment));
+                fragmentReply.setFragmentToHide(getSupportFragmentManager().findFragmentById(R.id.frame_fragment));
 
-                getFragmentManager().beginTransaction()
+                getSupportFragmentManager().beginTransaction()
                         .add(R.id.frame_fragment, fragmentReply, FragmentReply.TAG)
                         .addToBackStack(null)
                         .commit();
@@ -678,19 +671,19 @@ public class ActivityMain extends YouTubeBaseActivity
                             });
                 }
 
-                if (getFragmentManager().findFragmentByTag(FragmentThreadList.TAG) != null) {
+                if (getSupportFragmentManager().findFragmentByTag(FragmentThreadList.TAG) != null) {
                     controllerLinks.setNsfw(link.getName(), link.isOver18());
                 }
-                if (getFragmentManager().findFragmentByTag(FragmentComments.TAG) != null) {
+                if (getSupportFragmentManager().findFragmentByTag(FragmentComments.TAG) != null) {
                     controllerCommentsTop.setNsfw(link.getName(), link.isOver18());
                 }
-                if (getFragmentManager().findFragmentByTag(FragmentProfile.TAG) != null) {
+                if (getSupportFragmentManager().findFragmentByTag(FragmentProfile.TAG) != null) {
                     controllerProfile.setNsfw(link.getName(), link.isOver18());
                 }
-                if (getFragmentManager().findFragmentByTag(FragmentHistory.TAG) != null) {
+                if (getSupportFragmentManager().findFragmentByTag(FragmentHistory.TAG) != null) {
                     controllerHistory.setNsfw(link.getName(), link.isOver18());
                 }
-                if (getFragmentManager().findFragmentByTag(FragmentSearch.TAG) != null) {
+                if (getSupportFragmentManager().findFragmentByTag(FragmentSearch.TAG) != null) {
                     controllerSearch.setNsfwLinks(link.getName(), link.isOver18());
                     controllerSearch.setNsfwLinksSubreddit(link.getName(), link.isOver18());
                 }
@@ -1303,23 +1296,23 @@ public class ActivityMain extends YouTubeBaseActivity
             item.setChecked(true);
         }
 
-        getFragmentManager().popBackStackImmediate();
+        getSupportFragmentManager().popBackStackImmediate();
 
-        FragmentTransaction fragmentTransaction = getFragmentManager().beginTransaction();
+        FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
 
         if (animate) {
             fragmentTransaction.setCustomAnimations(R.animator.slide_from_left, R.animator.slide_to_right);
         }
 
-        while (getFragmentManager().getBackStackEntryCount() > 0) {
-            getFragmentManager().popBackStackImmediate();
+        while (getSupportFragmentManager().getBackStackEntryCount() > 0) {
+            getSupportFragmentManager().popBackStackImmediate();
         }
 
         FragmentBase fragmentThreadList;
 
         switch (id) {
             case R.id.item_home:
-                fragmentThreadList = (FragmentBase) getFragmentManager().findFragmentByTag(FragmentThreadList.TAG);
+                fragmentThreadList = (FragmentBase) getSupportFragmentManager().findFragmentByTag(FragmentThreadList.TAG);
                 if (fragmentThreadList != null) {
                     controllerLinks.loadFrontPage(Sort.HOT, false);
                     fragmentThreadList.onHiddenChanged(false);
@@ -1332,7 +1325,7 @@ public class ActivityMain extends YouTubeBaseActivity
                 break;
             case R.id.item_history:
                 controllerHistory.reload();
-                if (getFragmentManager().findFragmentByTag(FragmentHistory.TAG) == null) {
+                if (getSupportFragmentManager().findFragmentByTag(FragmentHistory.TAG) == null) {
                     fragmentTransaction.replace(R.id.frame_fragment,
                             FragmentHistory.newInstance(),
                             FragmentHistory.TAG);
@@ -1373,7 +1366,7 @@ public class ActivityMain extends YouTubeBaseActivity
                         FragmentInbox.TAG);
                 break;
             case R.id.item_subreddit:
-                fragmentThreadList = (FragmentBase) getFragmentManager().findFragmentByTag(FragmentThreadList.TAG);
+                fragmentThreadList = (FragmentBase) getSupportFragmentManager().findFragmentByTag(FragmentThreadList.TAG);
                 if (fragmentThreadList != null) {
                     controllerLinks.setParameters("ReaderForReddit", Sort.HOT, Time.ALL);
                     fragmentThreadList.onHiddenChanged(false);
@@ -1473,7 +1466,7 @@ public class ActivityMain extends YouTubeBaseActivity
     }
 
     private void loadSubreddit(String subreddit, Sort sort, Time time) {
-        getFragmentManager().beginTransaction()
+        getSupportFragmentManager().beginTransaction()
                 .replace(R.id.frame_fragment, FragmentThreadList.newInstance(),
                         FragmentThreadList.TAG)
                 .commit();
@@ -1488,7 +1481,7 @@ public class ActivityMain extends YouTubeBaseActivity
             controllerCommentsTop.setLinkId(idLink, idComments, context, Source.NONE);
         }
 
-        getFragmentManager().beginTransaction()
+        getSupportFragmentManager().beginTransaction()
                 .replace(R.id.frame_fragment,
                         FragmentComments.newInstance(),
                         FragmentComments.TAG)
@@ -1496,7 +1489,7 @@ public class ActivityMain extends YouTubeBaseActivity
     }
 
     private void loadProfile(String user) {
-        getFragmentManager().beginTransaction()
+        getSupportFragmentManager().beginTransaction()
                 .replace(R.id.frame_fragment, FragmentProfile.newInstance(),
                         FragmentProfile.TAG)
                 .commit();
@@ -1572,7 +1565,7 @@ public class ActivityMain extends YouTubeBaseActivity
                         .subscribe(new FinalizingSubscriber<Subreddit>() {
                             @Override
                             public void next(Subreddit subreddit) {
-                                getFragmentManager().beginTransaction()
+                                getSupportFragmentManager().beginTransaction()
                                         .add(R.id.frame_fragment, FragmentSearch
                                                 .newInstance(true), FragmentSearch.TAG)
                                         .addToBackStack(null)
@@ -1588,9 +1581,9 @@ public class ActivityMain extends YouTubeBaseActivity
     }
 
     public void onNavigationClick() {
-        Log.d(TAG, "Back stack count: " + getFragmentManager().getBackStackEntryCount());
-        if (getFragmentManager().getBackStackEntryCount() > 0) {
-            getFragmentManager().popBackStack();
+        Log.d(TAG, "Back stack count: " + getSupportFragmentManager().getBackStackEntryCount());
+        if (getSupportFragmentManager().getBackStackEntryCount() > 0) {
+            getSupportFragmentManager().popBackStack();
         }
         else {
             if (drawerLayout.isDrawerVisible(GravityCompat.START)) {
@@ -1643,9 +1636,9 @@ public class ActivityMain extends YouTubeBaseActivity
                 super.startActivity(intent);
             }
             else if (URLUtil.isValidUrl(urlString)) {
-                FragmentTransaction fragmentTransaction = getFragmentManager().beginTransaction();
+                FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
 
-                FragmentBase fragment = (FragmentBase) getFragmentManager().findFragmentById(R.id.frame_fragment);
+                FragmentBase fragment = (FragmentBase) getSupportFragmentManager().findFragmentById(R.id.frame_fragment);
                 if (fragment != null) {
                     fragmentTransaction.hide(fragment);
                     if (fragment.shouldOverrideUrl(urlString)) {
@@ -1675,14 +1668,14 @@ public class ActivityMain extends YouTubeBaseActivity
 
         if (intentChrome == null) {
             if (replace) {
-                getFragmentManager().beginTransaction()
+                getSupportFragmentManager().beginTransaction()
                         .replace(R.id.frame_fragment, FragmentWeb
                                 .newInstance(url), FragmentWeb.TAG)
                         .addToBackStack(null)
                         .commit();
             } else {
-                getFragmentManager().beginTransaction()
-                        .hide(getFragmentManager().findFragmentById(R.id.frame_fragment))
+                getSupportFragmentManager().beginTransaction()
+                        .hide(getSupportFragmentManager().findFragmentById(R.id.frame_fragment))
                         .add(R.id.frame_fragment, FragmentWeb
                                 .newInstance(url), FragmentWeb.TAG)
                         .addToBackStack(null)
@@ -1755,10 +1748,10 @@ public class ActivityMain extends YouTubeBaseActivity
 
     @Override
     public void onNavigationBackClick() {
-        int backStackCount = getFragmentManager().getBackStackEntryCount();
+        int backStackCount = getSupportFragmentManager().getBackStackEntryCount();
 
         if (backStackCount > 0) {
-            FragmentBase fragment = (FragmentBase) getFragmentManager().findFragmentById(R.id.frame_fragment);
+            FragmentBase fragment = (FragmentBase) getSupportFragmentManager().findFragmentById(R.id.frame_fragment);
             if (fragment != null && !fragment.isFinished()) {
                 fragment.navigateBack();
                 return;
@@ -1766,12 +1759,12 @@ public class ActivityMain extends YouTubeBaseActivity
             if (backStackCount == 1) {
                 super.onBackPressed();
             } else {
-                getFragmentManager().popBackStackImmediate();
+                getSupportFragmentManager().popBackStackImmediate();
 
-                fragment = (FragmentBase) getFragmentManager().findFragmentById(R.id.frame_fragment);
+                fragment = (FragmentBase) getSupportFragmentManager().findFragmentById(R.id.frame_fragment);
 
                 if (fragment != null && fragment.isHidden()) {
-                    getFragmentManager().beginTransaction()
+                    getSupportFragmentManager().beginTransaction()
                             .show(fragment)
                             .commit();
                     fragment.onHiddenChanged(false);
@@ -1798,7 +1791,7 @@ public class ActivityMain extends YouTubeBaseActivity
     }
 
     public void onNavigationBackClickOld() {
-        FragmentBase fragment = (FragmentBase) getFragmentManager().findFragmentById(R.id.frame_fragment);
+        FragmentBase fragment = (FragmentBase) getSupportFragmentManager().findFragmentById(R.id.frame_fragment);
 
         // TODO: Remove this and use a better system
         if (fragment != null) {
@@ -1806,7 +1799,7 @@ public class ActivityMain extends YouTubeBaseActivity
                 fragment.navigateBack();
                 return;
             } else {
-                if (getFragmentManager().getBackStackEntryCount() == 0) {
+                if (getSupportFragmentManager().getBackStackEntryCount() == 0) {
                     if (isTaskRoot()) {
                         new AlertDialog.Builder(this)
                                 .setMessage(R.string.exit_reader)
@@ -1832,12 +1825,12 @@ public class ActivityMain extends YouTubeBaseActivity
                 If this is the only fragment in the stack, close out the Activity,
                 otherwise show the fragment
              */
-            getFragmentManager().popBackStackImmediate();
+            getSupportFragmentManager().popBackStackImmediate();
 
-            fragment = (FragmentBase) getFragmentManager().findFragmentById(R.id.frame_fragment);
+            fragment = (FragmentBase) getSupportFragmentManager().findFragmentById(R.id.frame_fragment);
             if (fragment != null) {
                 fragment.onHiddenChanged(false);
-                getFragmentManager().beginTransaction().show(fragment).commit();
+                getSupportFragmentManager().beginTransaction().show(fragment).commit();
                 fragment.onShown();
                 Log.d(TAG, "Fragment shown");
             }
@@ -1865,46 +1858,11 @@ public class ActivityMain extends YouTubeBaseActivity
     }
 
     @Override
-    protected void onPostCreate(Bundle savedInstanceState) {
-        super.onPostCreate(savedInstanceState);
-        appCompatDelegate.onPostCreate(savedInstanceState);
-    }
-
-    @Override
-    public void onPostCreate(Bundle savedInstanceState, PersistableBundle persistentState) {
-        super.onPostCreate(savedInstanceState, persistentState);
-        appCompatDelegate.onPostCreate(savedInstanceState);
-    }
-
-    @Override
-    public void onConfigurationChanged(Configuration newConfig) {
-        super.onConfigurationChanged(newConfig);
-        appCompatDelegate.onConfigurationChanged(newConfig);
-    }
-
-    @Override
     protected void onStop() {
         if (isTaskRoot()) {
             historian.saveToFile(this);
         }
-        appCompatDelegate.onStop();
         super.onStop();
-    }
-
-    @Override
-    protected void onDestroy() {
-        appCompatDelegate.onDestroy();
-        super.onDestroy();
-    }
-
-    @Override
-    public void onSupportActionModeStarted(ActionMode mode) {
-
-    }
-
-    @Override
-    public void onSupportActionModeFinished(ActionMode mode) {
-
     }
 
     @Nullable

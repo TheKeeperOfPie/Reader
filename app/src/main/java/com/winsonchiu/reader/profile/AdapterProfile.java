@@ -4,8 +4,8 @@
 
 package com.winsonchiu.reader.profile;
 
-import android.app.Activity;
 import android.support.annotation.NonNull;
+import android.support.v4.app.FragmentActivity;
 import android.support.v7.widget.RecyclerView;
 import android.text.Spannable;
 import android.text.SpannableString;
@@ -39,7 +39,7 @@ public class AdapterProfile extends RecyclerView.Adapter<RecyclerView.ViewHolder
 
     private static final String TAG = AdapterProfile.class.getCanonicalName();;
 
-    private Activity activity;
+    private FragmentActivity activity;
     protected ControllerProfile controllerProfile;
     protected ControllerLinksBase controllerLinks;
     private AdapterLink.ViewHolderBase.EventListener eventListenerBase;
@@ -50,7 +50,7 @@ public class AdapterProfile extends RecyclerView.Adapter<RecyclerView.ViewHolder
     private ControllerProfile.Listener listener;
     private List<RecyclerView.ViewHolder> viewHolders;
 
-    public AdapterProfile(Activity activity,
+    public AdapterProfile(FragmentActivity activity,
             ControllerProfile controllerProfile,
             ControllerLinksBase controllerLinks,
             AdapterLink.ViewHolderBase.EventListener eventListenerBase,

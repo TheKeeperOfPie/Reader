@@ -491,7 +491,7 @@ public class FragmentNewPost extends FragmentBase implements Toolbar.OnMenuItemC
                                 .subscribe(new FinalizingSubscriber<Listing>() {
                                     @Override
                                     public void error(Throwable e) {
-                                        Toast.makeText(activity, activity.getString(R.string.error_loading_links), Toast.LENGTH_SHORT)
+                                        Toast.makeText(activity, getString(R.string.error_loading_links), Toast.LENGTH_SHORT)
                                                 .show();
                                     }
                                 });
@@ -577,7 +577,7 @@ public class FragmentNewPost extends FragmentBase implements Toolbar.OnMenuItemC
                                 .subscribe(new FinalizingSubscriber<Listing>() {
                                     @Override
                                     public void error(Throwable e) {
-                                        Toast.makeText(activity, activity.getString(R.string.error_loading_links), Toast.LENGTH_SHORT)
+                                        Toast.makeText(activity, getString(R.string.error_loading_links), Toast.LENGTH_SHORT)
                                                 .show();
                                     }
                                 });

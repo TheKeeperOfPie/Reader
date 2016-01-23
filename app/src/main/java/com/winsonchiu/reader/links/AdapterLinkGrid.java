@@ -5,12 +5,12 @@
 package com.winsonchiu.reader.links;
 
 import android.animation.ValueAnimator;
-import android.app.Activity;
 import android.content.res.Resources;
 import android.graphics.Color;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
+import android.support.v4.app.FragmentActivity;
 import android.support.v4.graphics.ColorUtils;
 import android.support.v7.graphics.Palette;
 import android.support.v7.widget.RecyclerView;
@@ -50,7 +50,7 @@ public class AdapterLinkGrid extends AdapterLink {
     private static final int ALPHA_OVERLAY_IMAGE = 200;
     protected int thumbnailSize;
 
-    public AdapterLinkGrid(Activity activity,
+    public AdapterLinkGrid(FragmentActivity activity,
             ControllerLinksBase controllerLinks,
             ViewHolderHeader.EventListener eventListenerHeader,
             ViewHolderBase.EventListener eventListenerBase,
@@ -61,7 +61,7 @@ public class AdapterLinkGrid extends AdapterLink {
     }
 
     @Override
-    public void setActivity(Activity activity) {
+    public void setActivity(FragmentActivity activity) {
         super.setActivity(activity);
 
         Resources resources = activity.getResources();
@@ -136,7 +136,7 @@ public class AdapterLinkGrid extends AdapterLink {
         private int colorBackgroundDefault;
         private ValueAnimator valueAnimatorBackground;
 
-        public ViewHolder(Activity activity,
+        public ViewHolder(FragmentActivity activity,
                 View itemView,
                 EventListener eventListener,
                 Source source,

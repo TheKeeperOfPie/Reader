@@ -10,6 +10,7 @@ import android.content.res.TypedArray;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
 import android.os.Bundle;
+import android.support.annotation.StyleRes;
 import android.support.design.widget.AppBarLayout;
 import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.TabLayout;
@@ -70,7 +71,6 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
 
     private FragmentListenerBase mListener;
 
-    private Activity activity;
     private TabLayout tabLayout;
     private ViewPager viewPager;
     private RecyclerView recyclerSearchSubreddits;
@@ -211,7 +211,7 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
         return new FinalizingSubscriber<Listing>() {
             @Override
             public void error(Throwable e) {
-                Toast.makeText(activity, activity.getString(R.string.error_loading), Toast.LENGTH_SHORT)
+                Toast.makeText(getActivity(), getActivity().getString(R.string.error_loading), Toast.LENGTH_SHORT)
                         .show();
             }
         };
@@ -244,7 +244,7 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        ((ActivityMain) activity).getComponentActivity().inject(this);
+        ((ActivityMain) getActivity()).getComponentActivity().inject(this);
 
         view = inflater.inflate(R.layout.fragment_search, container, false);
 
@@ -329,7 +329,7 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
             }
         };
 
-        TypedArray typedArray = activity.getTheme().obtainStyledAttributes(
+        TypedArray typedArray = getActivity().getTheme().obtainStyledAttributes(
                 new int[]{R.attr.colorPrimary, android.R.attr.windowBackground});
         final int colorPrimary = typedArray.getColor(0, getResources().getColor(R.color.colorPrimary));
         final int windowBackground = typedArray.getColor(1, getResources().getColor(R.color.darkThemeBackground));
@@ -343,20 +343,20 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
         layoutCoordinator = (CoordinatorLayout) view.findViewById(R.id.layout_coordinator);
         layoutAppBar = (AppBarLayout) view.findViewById(R.id.layout_app_bar);
 
-        int styleToolbar = UtilsColor.computeContrast(colorPrimary, Color.WHITE) > 3f ? mListener.getAppColorTheme().getStyle(AppSettings.THEME_DARK, mListener.getThemeAccentPrefString()) : mListener.getAppColorTheme().getStyle(AppSettings.THEME_LIGHT, mListener.getThemeAccentPrefString());
+        @StyleRes int styleToolbar = UtilsColor.computeContrast(colorPrimary, Color.WHITE) > 3f ? mListener.getAppColorTheme().getStyle(AppSettings.THEME_DARK, mListener.getThemeAccentPrefString()) : mListener.getAppColorTheme().getStyle(AppSettings.THEME_LIGHT, mListener.getThemeAccentPrefString());
 
         int styleColorBackground = AppSettings.THEME_DARK.equals(mListener.getThemeBackgroundPrefString()) ? R.style.MenuDark : R.style.MenuLight;
 
-        ContextThemeWrapper contextThemeWrapper = new ContextThemeWrapper(new ContextThemeWrapper(activity, styleToolbar), styleColorBackground);
+        ContextThemeWrapper contextThemeWrapper = new ContextThemeWrapper(new ContextThemeWrapper(getActivity(), styleToolbar), styleColorBackground);
 
-        toolbar = (Toolbar) activity.getLayoutInflater().cloneInContext(contextThemeWrapper).inflate(R.layout.toolbar, layoutAppBar, false);
+        toolbar = (Toolbar) getActivity().getLayoutInflater().cloneInContext(contextThemeWrapper).inflate(R.layout.toolbar, layoutAppBar, false);
         layoutAppBar.addView(toolbar, 0);
         ((AppBarLayout.LayoutParams) toolbar.getLayoutParams()).setScrollFlags(
                 AppBarLayout.LayoutParams.SCROLL_FLAG_SCROLL | AppBarLayout.LayoutParams.SCROLL_FLAG_ENTER_ALWAYS);
         toolbar.setTitleTextColor(getResources().getColor(colorResourcePrimary));
         setUpToolbar();
 
-        adapterSearchSubreddits = new AdapterSearchSubreddits(activity,
+        adapterSearchSubreddits = new AdapterSearchSubreddits(getActivity(),
                 new ControllerSearchBase() {
                     @Override
                     public Subreddit getSubreddit(int position) {
@@ -406,13 +406,13 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
                     }
                 });
 
-        layoutManagerSubreddits = new LinearLayoutManager(activity, LinearLayoutManager.VERTICAL, false);
+        layoutManagerSubreddits = new LinearLayoutManager(getActivity(), LinearLayoutManager.VERTICAL, false);
         recyclerSearchSubreddits = (RecyclerView) view.findViewById(
                 R.id.recycler_search_subreddits);
         recyclerSearchSubreddits.setLayoutManager(layoutManagerSubreddits);
         recyclerSearchSubreddits.setAdapter(adapterSearchSubreddits);
         recyclerSearchSubreddits.addItemDecoration(
-                new ItemDecorationDivider(activity, ItemDecorationDivider.VERTICAL_LIST));
+                new ItemDecorationDivider(getActivity(), ItemDecorationDivider.VERTICAL_LIST));
 
         itemTouchHelperSubreddits = new ItemTouchHelper(new SimpleCallbackBackground(0, 0, windowBackground) {
 
@@ -444,7 +444,7 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
         });
         itemTouchHelperSubreddits.attachToRecyclerView(recyclerSearchSubreddits);
 
-        adapterLinks = new AdapterSearchLinkList(activity, new ControllerLinksBase() {
+        adapterLinks = new AdapterSearchLinkList(getActivity(), new ControllerLinksBase() {
             @Override
             public Link getLink(int position) {
                 return controllerSearch.getLink(position);
@@ -530,7 +530,7 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
 
                 });
 
-        adapterLinksSubreddit = new AdapterSearchLinkList(activity, new ControllerLinksBase() {
+        adapterLinksSubreddit = new AdapterSearchLinkList(getActivity(), new ControllerLinksBase() {
             @Override
             public Link getLink(int position) {
                 return controllerSearch.getLinkSubreddit(position);
@@ -616,22 +616,22 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
 
                 });
 
-        layoutManagerLinks = new LinearLayoutManager(activity, LinearLayoutManager.VERTICAL, false);
+        layoutManagerLinks = new LinearLayoutManager(getActivity(), LinearLayoutManager.VERTICAL, false);
         recyclerSearchLinks = (RecyclerView) view.findViewById(R.id.recycler_search_links);
         recyclerSearchLinks.setLayoutManager(layoutManagerLinks);
         recyclerSearchLinks.setAdapter(adapterLinks);
         recyclerSearchLinks.addItemDecoration(
-                new ItemDecorationDivider(activity, ItemDecorationDivider.VERTICAL_LIST));
+                new ItemDecorationDivider(getActivity(), ItemDecorationDivider.VERTICAL_LIST));
 
-        layoutManagerLinksSubreddit = new LinearLayoutManager(activity, LinearLayoutManager.VERTICAL, false);
+        layoutManagerLinksSubreddit = new LinearLayoutManager(getActivity(), LinearLayoutManager.VERTICAL, false);
         recyclerSearchLinksSubreddit = (RecyclerView) view.findViewById(
                 R.id.recycler_search_links_subreddit);
         recyclerSearchLinksSubreddit.setLayoutManager(layoutManagerLinksSubreddit);
         recyclerSearchLinksSubreddit.setAdapter(adapterLinksSubreddit);
         recyclerSearchLinksSubreddit.addItemDecoration(
-                new ItemDecorationDivider(activity, ItemDecorationDivider.VERTICAL_LIST));
+                new ItemDecorationDivider(getActivity(), ItemDecorationDivider.VERTICAL_LIST));
 
-        adapterSearchSubredditsRecommended = new AdapterSearchSubreddits(activity,
+        adapterSearchSubredditsRecommended = new AdapterSearchSubreddits(getActivity(),
                 new ControllerSearchBase() {
                     @Override
                     public Subreddit getSubreddit(int position) {
@@ -672,13 +672,13 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
                     }
                 });
 
-        layoutManagerSubredditsRecommended = new LinearLayoutManager(activity, LinearLayoutManager.VERTICAL, false);
+        layoutManagerSubredditsRecommended = new LinearLayoutManager(getActivity(), LinearLayoutManager.VERTICAL, false);
         recyclerSearchSubredditsRecommended = (RecyclerView) view.findViewById(
                 R.id.recycler_search_subreddits_recommended);
         recyclerSearchSubredditsRecommended.setLayoutManager(layoutManagerSubredditsRecommended);
         recyclerSearchSubredditsRecommended.setAdapter(adapterSearchSubredditsRecommended);
         recyclerSearchSubredditsRecommended.addItemDecoration(
-                new ItemDecorationDivider(activity, ItemDecorationDivider.VERTICAL_LIST));
+                new ItemDecorationDivider(getActivity(), ItemDecorationDivider.VERTICAL_LIST));
 
         viewPager = (ViewPager) view.findViewById(R.id.view_pager_search);
         viewPager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
@@ -766,7 +766,7 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
     }
 
     private void closeKeyboard() {
-        InputMethodManager inputManager = (InputMethodManager) activity
+        InputMethodManager inputManager = (InputMethodManager) getActivity()
                 .getSystemService(Context.INPUT_METHOD_SERVICE);
         inputManager.hideSoftInputFromWindow(view.getWindowToken(),
                 InputMethodManager.HIDE_NOT_ALWAYS);
@@ -788,7 +788,6 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
     @Override
     public void onAttach(Activity activity) {
         super.onAttach(activity);
-        this.activity = activity;
         try {
             mListener = (FragmentListenerBase) activity;
         }
@@ -801,7 +800,6 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
     @Override
     public void onDetach() {
         controllerLinks.setTitle();
-        activity = null;
         mListener = null;
         super.onDetach();
     }

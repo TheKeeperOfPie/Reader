@@ -4,7 +4,6 @@
 
 package com.winsonchiu.reader.links;
 
-import android.app.Activity;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
@@ -21,6 +20,7 @@ import android.media.MediaPlayer;
 import android.net.Uri;
 import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
+import android.support.v4.app.FragmentActivity;
 import android.support.v4.view.GestureDetectorCompat;
 import android.support.v4.view.MenuItemCompat;
 import android.support.v4.view.MotionEventCompat;
@@ -72,7 +72,7 @@ import android.widget.Toast;
 
 import com.google.android.youtube.player.YouTubeInitializationResult;
 import com.google.android.youtube.player.YouTubePlayer;
-import com.google.android.youtube.player.YouTubePlayerFragment;
+import com.google.android.youtube.player.YouTubePlayerSupportFragment;
 import com.squareup.picasso.Picasso;
 import com.winsonchiu.reader.ActivityMain;
 import com.winsonchiu.reader.ApiKeys;
@@ -131,7 +131,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
     private static final int TIMESTAMP_BITMASK = DateUtils.FORMAT_SHOW_TIME | DateUtils.FORMAT_SHOW_DATE | DateUtils.FORMAT_SHOW_YEAR;
     public static final String TAG_PICASSO = "picassoAdapterLink";
 
-    protected Activity activity;
+    protected FragmentActivity activity;
     protected SharedPreferences preferences;
     protected LayoutManager layoutManager;
     protected ControllerLinksBase controllerLinks;
@@ -144,7 +144,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
 
     @Inject ControllerUser controllerUser;
 
-    public AdapterLink(Activity activity, ViewHolderHeader.EventListener eventListenerHeader,
+    public AdapterLink(FragmentActivity activity, ViewHolderHeader.EventListener eventListenerHeader,
             ViewHolderBase.EventListener eventListenerBase,
             DisallowListener disallowListener, RecyclerCallback recyclerCallback) {
         this.eventListenerHeader = eventListenerHeader;
@@ -157,7 +157,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         setActivity(activity);
     }
 
-    public void setActivity(Activity activity) {
+    public void setActivity(FragmentActivity activity) {
         this.activity = activity;
         this.preferences = PreferenceManager.getDefaultSharedPreferences(activity);
     }
@@ -419,7 +419,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             implements Toolbar.OnMenuItemClickListener, View.OnClickListener,
             View.OnLongClickListener, SurfaceHolder.Callback {
 
-        private final Activity activity;
+        private final FragmentActivity activity;
         public Link link;
         public boolean showSubreddit;
 
@@ -451,7 +451,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         public ViewGroup layoutYouTube;
         public YouTubePlayer youTubePlayer;
         public YouTubeListener youTubeListener;
-        public YouTubePlayerFragment youTubePlayerFragment;
+        public YouTubePlayerSupportFragment youTubeFragment;
         public int youTubeViewId;
 
         public int toolbarItemWidth;
@@ -506,7 +506,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         @Inject Picasso picasso;
         @Inject Reddit reddit;
 
-        public ViewHolderBase(Activity activity,
+        public ViewHolderBase(FragmentActivity activity,
                 View itemView,
                 EventListener eventListener,
                 Source source,
@@ -631,7 +631,6 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             textUsername = (TextView) itemView.findViewById(R.id.text_username);
             buttonSendReply = (Button) itemView.findViewById(R.id.button_send_reply);
             buttonReplyEditor = (ImageButton) itemView.findViewById(R.id.button_reply_editor);
-//            viewYouTube = (YouTubePlayerView) itemView.findViewById(R.id.youtube);
             layoutYouTube = (ViewGroup) itemView.findViewById(R.id.layout_youtube);
             viewOverlay = itemView.findViewById(R.id.view_overlay);
 
@@ -688,8 +687,6 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             colorFilterSave = new PorterDuffColorFilter(colorAccent, PorterDuff.Mode.MULTIPLY);
 
             buttonComments.setColorFilter(colorFilterIconDefault);
-
-//            surfaceVideo = (SurfaceView) itemView.findViewById(R.id.surface_video);
 
             youTubeViewId = View.generateViewId();
         }
@@ -1076,7 +1073,6 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         }
 
         public void loadComments() {
-
             callbackYouTubeDestruction.destroyYouTubePlayerFragments();
             addToHistory();
             clearOverlay();
@@ -1096,11 +1092,6 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                     link.setCommentsClicked(true);
                     return;
                 }
-            }
-
-            // Hide YouTubePlayerView to prevent GPU drawing overlaps
-            if (layoutYouTube.isShown()) {
-                hideYouTube();
             }
 
             eventListener.onClickComments(link, this, source);
@@ -1614,50 +1605,55 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
 
         public void loadYouTubeVideo(final Link link, final String id, final int timeInMillis) {
             callbackYouTubeDestruction.destroyYouTubePlayerFragments();
-            youTubePlayerFragment = new YouTubePlayerFragment();
-            layoutYouTube.setId(youTubeViewId);
-            activity.getFragmentManager()
-                    .beginTransaction()
-                    .add(youTubeViewId, youTubePlayerFragment, String.valueOf(youTubeViewId))
-                    .commit();
-            youTubePlayerFragment.initialize(ApiKeys.YOUTUBE_API_KEY,
-                    new YouTubePlayer.OnInitializedListener() {
-                        @Override
-                        public void onInitializationSuccess(YouTubePlayer.Provider provider,
-                                final YouTubePlayer youTubePlayer,
-                                boolean b) {
-                            ViewHolderBase.this.youTubePlayer = youTubePlayer;
-                            youTubePlayer.setFullscreenControlFlags(
-                                    YouTubePlayer.FULLSCREEN_FLAG_CONTROL_SYSTEM_UI);
-                            youTubePlayer.setManageAudioFocus(false);
-                            youTubePlayer.setOnFullscreenListener(
-                                    new YouTubePlayer.OnFullscreenListener() {
+            layoutYouTube.postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    youTubeFragment = new YouTubePlayerSupportFragment();
+                    layoutYouTube.setId(youTubeViewId);
+                    activity.getSupportFragmentManager()
+                            .beginTransaction()
+                            .add(youTubeViewId, youTubeFragment, String.valueOf(youTubeViewId))
+                            .commit();
+                    youTubeFragment.initialize(ApiKeys.YOUTUBE_API_KEY,
+                            new YouTubePlayer.OnInitializedListener() {
+                                @Override
+                                public void onInitializationSuccess(YouTubePlayer.Provider provider,
+                                        final YouTubePlayer youTubePlayer,
+                                        boolean b) {
+                                    ViewHolderBase.this.youTubePlayer = youTubePlayer;
+                                    youTubePlayer.setFullscreenControlFlags(
+                                            YouTubePlayer.FULLSCREEN_FLAG_CONTROL_SYSTEM_UI);
+                                    youTubePlayer.setManageAudioFocus(false);
+                                    youTubePlayer.setOnFullscreenListener(
+                                            new YouTubePlayer.OnFullscreenListener() {
+                                                @Override
+                                                public void onFullscreen(boolean fullscreen) {
+                                                    Log.d(TAG, "fullscreen: " + fullscreen);
+                                                    isYouTubeFullscreen = fullscreen;
+                                                    youTubePlayer.setFullscreen(fullscreen);
+                                                }
+                                            });
+                                    youTubePlayer.setPlayerStateChangeListener(new SimplePlayerStateChangeListener() {
                                         @Override
-                                        public void onFullscreen(boolean fullscreen) {
-                                            Log.d(TAG, "fullscreen: " + fullscreen);
-                                            isYouTubeFullscreen = fullscreen;
-                                            youTubePlayer.setFullscreen(fullscreen);
+                                        public void onVideoStarted() {
+                                            youTubePlayer.seekToMillis(timeInMillis);
+                                            youTubePlayer.setPlayerStateChangeListener(new SimplePlayerStateChangeListener());
                                         }
                                     });
-                            youTubePlayer.setPlayerStateChangeListener(new SimplePlayerStateChangeListener() {
+                                    youTubePlayer.loadVideo(id);
+                                    layoutYouTube.setVisibility(View.VISIBLE);
+                                    scrollToSelf();
+                                }
+
                                 @Override
-                                public void onVideoStarted() {
-                                    youTubePlayer.seekToMillis(timeInMillis);
-                                    youTubePlayer.setPlayerStateChangeListener(new SimplePlayerStateChangeListener());
+                                public void onInitializationFailure(YouTubePlayer.Provider provider,
+                                        YouTubeInitializationResult youTubeInitializationResult) {
+                                    eventListener.toast(resources
+                                            .getString(R.string.error_youtube));
                                 }
                             });
-                            youTubePlayer.loadVideo(id);
-                            layoutYouTube.setVisibility(View.VISIBLE);
-                            scrollToSelf();
-                        }
-
-                        @Override
-                        public void onInitializationFailure(YouTubePlayer.Provider provider,
-                                YouTubeInitializationResult youTubeInitializationResult) {
-                            eventListener.toast(resources
-                                    .getString(R.string.error_youtube));
-                        }
-                    });
+                }
+            }, 150);
         }
 
         private void hideYouTube() {
@@ -1665,8 +1661,6 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         }
 
         public void setToolbarMenuVisibility() {
-            Menu menu = toolbarActions.getMenu();
-
             boolean loggedIn = eventListener.isUserLoggedIn();
             boolean isAuthor = link.getAuthor().equals(eventListener.getUser().getName());
 
@@ -1956,17 +1950,20 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         public void destroyYouTube() {
             if (youTubePlayer != null) {
                 isYouTubeFullscreen = false;
+                youTubePlayer.release();
                 youTubePlayer = null;
             }
 
-            if (youTubePlayerFragment != null) {
-                activity.getFragmentManager()
+            if (youTubeFragment != null) {
+                activity.getSupportFragmentManager()
                         .beginTransaction()
-                        .remove(youTubePlayerFragment)
+                        .remove(youTubeFragment)
                         .commit();
 
-                activity.getFragmentManager().executePendingTransactions();
+                activity.getSupportFragmentManager().executePendingTransactions();
             }
+
+            layoutYouTube.setVisibility(View.GONE);
         }
 
         public interface EventListener {
