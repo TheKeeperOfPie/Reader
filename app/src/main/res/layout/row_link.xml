@@ -23,8 +23,8 @@
             android:layout_height="wrap_content"
             >
 
-            <com.google.android.youtube.player.YouTubePlayerView
-                android:id="@+id/youtube"
+            <FrameLayout
+                android:id="@+id/layout_youtube"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:visibility="gone"

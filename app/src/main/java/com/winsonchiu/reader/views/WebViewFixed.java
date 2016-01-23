@@ -9,6 +9,7 @@ import android.annotation.TargetApi;
 import android.content.Context;
 import android.graphics.Rect;
 import android.os.Build;
+import android.support.design.widget.Snackbar;
 import android.util.AttributeSet;
 import android.util.TypedValue;
 import android.view.ViewGroup;
@@ -25,16 +26,16 @@ import com.winsonchiu.reader.utils.UtilsAnimation;
 public class WebViewFixed extends WebView {
 
     private static final String TAG = WebViewFixed.class.getCanonicalName();
-    private OnFinishedListener onFinishedListener;
+    private Listener listener;
     private String data;
     private int maxHeight = Integer.MAX_VALUE;
     private boolean isSingular;
     private int lastInvalidateHeight = -1;
 
-    private WebViewFixed(Context context, boolean isSingular, OnFinishedListener onFinishedListener) {
+    private WebViewFixed(Context context, boolean isSingular, Listener listener) {
         super(context);
         this.isSingular = isSingular;
-        this.onFinishedListener = onFinishedListener;
+        this.listener = listener;
     }
 
     private WebViewFixed(Context context, AttributeSet attrs) {
@@ -64,9 +65,9 @@ public class WebViewFixed extends WebView {
 //                Toast.makeText(getContext(), "Error: height == 0", Toast.LENGTH_SHORT).show();
 //                reload();
             }
-            else*/ if (onFinishedListener != null) {
-                onFinishedListener.onFinished();
-                onFinishedListener = null;
+            else*/ if (listener != null) {
+                listener.onFinished();
+                listener = null;
             }
         }
 //        else if (!TextUtils.isEmpty(data) && getProgress() == 100 && isShown() && isSingular) {
@@ -109,6 +110,17 @@ public class WebViewFixed extends WebView {
     }
 
     @Override
+    protected void onSizeChanged(int w, int h, int ow, int oh) {
+        super.onSizeChanged(w, h, ow, oh);
+
+        if (getContentHeight() > 0 && getHeight() == 0) {
+            Snackbar.make(this, "Error loading WebView", Snackbar.LENGTH_SHORT)
+                    .setDuration(1000)
+                    .show();
+        }
+    }
+
+    @Override
     public void loadData(String data, String mimeType, String encoding) {
         this.data = data;
         super.loadData(data, mimeType, encoding);
@@ -132,8 +144,8 @@ public class WebViewFixed extends WebView {
         requestLayout();
     }
 
-    public static WebViewFixed newInstance(Context context, boolean isSingular, OnFinishedListener onFinishedListener) {
-        final WebViewFixed webViewFixed = new WebViewFixed(context, isSingular, onFinishedListener);
+    public static WebViewFixed newInstance(Context context, boolean isSingular, Listener listener) {
+        final WebViewFixed webViewFixed = new WebViewFixed(context, isSingular, listener);
         Reddit.incrementCreate();
         webViewFixed.setMinimumHeight(
                 (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 48,
@@ -152,7 +164,7 @@ public class WebViewFixed extends WebView {
     }
 
 
-    public interface OnFinishedListener {
+    public interface Listener {
         void onFinished();
     }
 

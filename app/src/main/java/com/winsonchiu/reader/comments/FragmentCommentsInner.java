@@ -35,6 +35,7 @@ import com.winsonchiu.reader.R;
 import com.winsonchiu.reader.data.reddit.Comment;
 import com.winsonchiu.reader.data.reddit.Link;
 import com.winsonchiu.reader.data.reddit.Sort;
+import com.winsonchiu.reader.utils.CallbackYouTubeDestruction;
 import com.winsonchiu.reader.utils.DisallowListener;
 import com.winsonchiu.reader.utils.ItemDecorationDivider;
 import com.winsonchiu.reader.utils.LinearLayoutManagerWrapHeight;
@@ -275,10 +276,6 @@ public class FragmentCommentsInner extends FragmentBase {
         layoutRoot = (CustomFrameLayout) inflater
                 .inflate(R.layout.fragment_comments_inner, container, false);
 
-
-
-
-
         final RecyclerCallback recyclerCallback = new RecyclerCallback() {
             @Override
             public void scrollTo(int position) {
@@ -303,6 +300,14 @@ public class FragmentCommentsInner extends FragmentBase {
             @Override
             public void onReplyShown() {
                 callback.onReplyShown();
+            }
+        };
+
+        CallbackYouTubeDestruction callbackYouTubeDestruction = new CallbackYouTubeDestruction() {
+            @Override
+            public void destroyYouTubePlayerFragments() {
+                adapterCommentList.destroyYouTubePlayerFragments();
+                adapterLink.destroyYouTubePlayerFragments();
             }
         };
 
@@ -337,6 +342,7 @@ public class FragmentCommentsInner extends FragmentBase {
                 disallowListener,
                 recyclerCallback,
                 youTubeListener,
+                callbackYouTubeDestruction,
                 getArguments().getBoolean(ARG_IS_GRID, false),
                 getArguments().getString(ARG_FIRST_LINK_NAME),
                 getArguments().getInt(ARG_COLOR_LINK, 0),
@@ -413,6 +419,7 @@ public class FragmentCommentsInner extends FragmentBase {
                 disallowListenerLink,
                 recyclerCallbackLink,
                 youTubeListener,
+                callbackYouTubeDestruction,
                 getArguments().getBoolean(ARG_IS_GRID, false),
                 getArguments().getString(ARG_FIRST_LINK_NAME),
                 getArguments().getInt(ARG_COLOR_LINK, 0),

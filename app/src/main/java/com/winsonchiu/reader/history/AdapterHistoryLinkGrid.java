@@ -38,12 +38,15 @@ public class AdapterHistoryLinkGrid extends AdapterLinkGrid {
             return super.onCreateViewHolder(viewGroup, viewType);
         }
 
-        return new AdapterLinkGrid.ViewHolder(LayoutInflater.from(viewGroup.getContext())
+        return new AdapterLinkGrid.ViewHolder(
+                activity,
+                LayoutInflater.from(viewGroup.getContext())
                 .inflate(R.layout.cell_link, viewGroup, false),
                 eventListenerBase,
                 Source.HISTORY,
                 disallowListener,
                 recyclerCallback,
+                this,
                 thumbnailSize) {
             @Override
             public boolean isInHistory() {

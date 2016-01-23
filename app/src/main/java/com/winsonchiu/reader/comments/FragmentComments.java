@@ -1477,6 +1477,7 @@ public class FragmentComments extends FragmentBase
             if (animationFinished) {
                 adapterComments.notifyDataSetChanged();
 
+                fragmentCurrent = null;
                 pagerComments.setAdapter(adapterComments);
                 pagerComments.setOffscreenPageLimit(1);
                 pagerComments.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {

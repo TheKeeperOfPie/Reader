@@ -44,12 +44,14 @@ public class AdapterSearchLinkList extends AdapterLinkList {
             return super.onCreateViewHolder(viewGroup, viewType);
         }
 
-        return new AdapterLinkList.ViewHolder(LayoutInflater.from(viewGroup.getContext())
+        return new AdapterLinkList.ViewHolder(activity,
+                LayoutInflater.from(viewGroup.getContext())
                 .inflate(R.layout.row_link, viewGroup, false),
                 eventListenerBase,
                 source,
                 disallowListener,
-                recyclerCallback) {
+                recyclerCallback,
+                this) {
             @Override
             public void onClickThumbnail() {
                 InputMethodManager inputManager = (InputMethodManager) activity

@@ -72,7 +72,7 @@ import android.widget.Toast;
 
 import com.google.android.youtube.player.YouTubeInitializationResult;
 import com.google.android.youtube.player.YouTubePlayer;
-import com.google.android.youtube.player.YouTubePlayerView;
+import com.google.android.youtube.player.YouTubePlayerFragment;
 import com.squareup.picasso.Picasso;
 import com.winsonchiu.reader.ActivityMain;
 import com.winsonchiu.reader.ApiKeys;
@@ -91,6 +91,7 @@ import com.winsonchiu.reader.data.reddit.Subreddit;
 import com.winsonchiu.reader.data.reddit.Thing;
 import com.winsonchiu.reader.data.reddit.User;
 import com.winsonchiu.reader.history.Historian;
+import com.winsonchiu.reader.utils.CallbackYouTubeDestruction;
 import com.winsonchiu.reader.utils.CustomColorFilter;
 import com.winsonchiu.reader.utils.DisallowListener;
 import com.winsonchiu.reader.utils.FinalizingSubscriber;
@@ -121,7 +122,7 @@ import rx.functions.Func1;
 /**
  * Created by TheKeeperOfPie on 3/14/2015.
  */
-public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
+public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.ViewHolder> implements CallbackYouTubeDestruction {
 
     public static final int VIEW_LINK_HEADER = 0;
     public static final int VIEW_LINK = 1;
@@ -153,6 +154,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         viewHolders = new ArrayList<>();
 
         ((ActivityMain) activity).getComponentActivity().inject(this);
+        setActivity(activity);
     }
 
     public void setActivity(Activity activity) {
@@ -229,6 +231,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                 }
             }
         }
+        destroyYouTubePlayerFragments();
     }
 
     public boolean navigateBack() {
@@ -257,6 +260,15 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             if (viewHolder instanceof ViewHolderBase) {
                 Reddit.incrementRecycled();
                 ((ViewHolderBase) viewHolder).onRecycle();
+            }
+        }
+    }
+
+    @Override
+    public void destroyYouTubePlayerFragments() {
+        for (RecyclerView.ViewHolder viewHolder : viewHolders) {
+            if (viewHolder instanceof ViewHolderBase) {
+                ((ViewHolderBase) viewHolder).destroyYouTube();
             }
         }
     }
@@ -407,6 +419,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             implements Toolbar.OnMenuItemClickListener, View.OnClickListener,
             View.OnLongClickListener, SurfaceHolder.Callback {
 
+        private final Activity activity;
         public Link link;
         public boolean showSubreddit;
 
@@ -429,13 +442,17 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         public TextView textUsername;
         public Button buttonSendReply;
         public ImageButton buttonReplyEditor;
-        public YouTubePlayerView viewYouTube;
         public View viewOverlay;
 
         public Subscription subscription;
         public MediaController mediaController;
         public AdapterAlbum adapterAlbum;
+
+        public ViewGroup layoutYouTube;
         public YouTubePlayer youTubePlayer;
+        public YouTubeListener youTubeListener;
+        public YouTubePlayerFragment youTubePlayerFragment;
+        public int youTubeViewId;
 
         public int toolbarItemWidth;
         public int titleMargin;
@@ -443,6 +460,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         public EventListener eventListener;
         public DisallowListener disallowListener;
         public RecyclerCallback recyclerCallback;
+        public CallbackYouTubeDestruction callbackYouTubeDestruction;
 
         public MenuItem itemUpvote;
         public MenuItem itemDownvote;
@@ -482,20 +500,23 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         public MediaPlayer mediaPlayer;
         public Uri uriVideo;
         public int bufferPercentage;
-        public YouTubeListener youTubeListener;
         private Source source;
 
         @Inject Historian historian;
         @Inject Picasso picasso;
         @Inject Reddit reddit;
 
-        public ViewHolderBase(View itemView,
-                              EventListener eventListener,
-                              Source source,
-                              DisallowListener disallowListener,
-                              RecyclerCallback recyclerCallback) {
+        public ViewHolderBase(Activity activity,
+                View itemView,
+                EventListener eventListener,
+                Source source,
+                DisallowListener disallowListener,
+                RecyclerCallback recyclerCallback,
+                CallbackYouTubeDestruction callbackYouTubeDestruction) {
             super(itemView);
+            this.callbackYouTubeDestruction = callbackYouTubeDestruction;
             CustomApplication.getComponentMain().inject(this);
+            this.activity = activity;
             this.eventListener = eventListener;
             this.source = source;
             this.disallowListener = disallowListener;
@@ -514,8 +535,6 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         }
 
         protected void expandToolbarActions() {
-            Log.d(TAG, "expandToolbarActions() called", new Exception());
-
             if (!toolbarActions.isShown()) {
                 setToolbarValues();
             }
@@ -612,7 +631,8 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             textUsername = (TextView) itemView.findViewById(R.id.text_username);
             buttonSendReply = (Button) itemView.findViewById(R.id.button_send_reply);
             buttonReplyEditor = (ImageButton) itemView.findViewById(R.id.button_reply_editor);
-            viewYouTube = (YouTubePlayerView) itemView.findViewById(R.id.youtube);
+//            viewYouTube = (YouTubePlayerView) itemView.findViewById(R.id.youtube);
+            layoutYouTube = (ViewGroup) itemView.findViewById(R.id.layout_youtube);
             viewOverlay = itemView.findViewById(R.id.view_overlay);
 
             toolbarItemWidth = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 48,
@@ -670,6 +690,8 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             buttonComments.setColorFilter(colorFilterIconDefault);
 
 //            surfaceVideo = (SurfaceView) itemView.findViewById(R.id.surface_video);
+
+            youTubeViewId = View.generateViewId();
         }
 
         protected void initializeListeners() {
@@ -1055,6 +1077,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
 
         public void loadComments() {
 
+            callbackYouTubeDestruction.destroyYouTubePlayerFragments();
             addToHistory();
             clearOverlay();
             if (mediaPlayer != null) {
@@ -1076,7 +1099,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             }
 
             // Hide YouTubePlayerView to prevent GPU drawing overlaps
-            if (viewYouTube.isShown()) {
+            if (layoutYouTube.isShown()) {
                 hideYouTube();
             }
 
@@ -1227,7 +1250,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                     public void run() {
                         if (webFull == null) {
                             webFull = eventListener.getNewWebView(
-                                    new WebViewFixed.OnFinishedListener() {
+                                    new WebViewFixed.Listener() {
                                         @Override
                                         public void onFinished() {
                                             webFull.setVisibility(View.GONE);
@@ -1329,13 +1352,13 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
 
         public boolean loadYouTube() {
 
-            if (viewYouTube.isShown()) {
+            if (layoutYouTube.isShown()) {
                 hideYouTube();
                 return true;
             }
 
             if (youTubePlayer != null) {
-                viewYouTube.setVisibility(View.VISIBLE);
+                layoutYouTube.setVisibility(View.VISIBLE);
                 return true;
             }
             /*
@@ -1590,7 +1613,14 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         }
 
         public void loadYouTubeVideo(final Link link, final String id, final int timeInMillis) {
-            viewYouTube.initialize(ApiKeys.YOUTUBE_API_KEY,
+            callbackYouTubeDestruction.destroyYouTubePlayerFragments();
+            youTubePlayerFragment = new YouTubePlayerFragment();
+            layoutYouTube.setId(youTubeViewId);
+            activity.getFragmentManager()
+                    .beginTransaction()
+                    .add(youTubeViewId, youTubePlayerFragment, String.valueOf(youTubeViewId))
+                    .commit();
+            youTubePlayerFragment.initialize(ApiKeys.YOUTUBE_API_KEY,
                     new YouTubePlayer.OnInitializedListener() {
                         @Override
                         public void onInitializationSuccess(YouTubePlayer.Provider provider,
@@ -1617,7 +1647,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                                 }
                             });
                             youTubePlayer.loadVideo(id);
-                            viewYouTube.setVisibility(View.VISIBLE);
+                            layoutYouTube.setVisibility(View.VISIBLE);
                             scrollToSelf();
                         }
 
@@ -1631,7 +1661,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         }
 
         private void hideYouTube() {
-            viewYouTube.setVisibility(View.GONE);
+            layoutYouTube.setVisibility(View.GONE);
         }
 
         public void setToolbarMenuVisibility() {
@@ -1704,11 +1734,9 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                 subscription = null;
             }
 
-            if (youTubePlayer != null) {
-                isYouTubeFullscreen = false;
-                youTubePlayer = null;
-            }
-            viewYouTube.setVisibility(View.GONE);
+            destroyYouTube();
+
+            layoutYouTube.setVisibility(View.GONE);
             viewPagerFull.setVisibility(View.GONE);
             imagePlay.setVisibility(View.GONE);
             imageThumbnail.setVisibility(View.VISIBLE);
@@ -1852,7 +1880,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             layoutContainerReply.setVisibility(visibility);
             editTextReply.setVisibility(visibility);
             buttonSendReply.setVisibility(visibility);
-            viewYouTube.setVisibility(visibility);
+            layoutYouTube.setVisibility(visibility);
             itemView.setVisibility(visibility);
         }
 
@@ -1925,6 +1953,22 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             return link;
         }
 
+        public void destroyYouTube() {
+            if (youTubePlayer != null) {
+                isYouTubeFullscreen = false;
+                youTubePlayer = null;
+            }
+
+            if (youTubePlayerFragment != null) {
+                activity.getFragmentManager()
+                        .beginTransaction()
+                        .remove(youTubePlayerFragment)
+                        .commit();
+
+                activity.getFragmentManager().executePendingTransactions();
+            }
+        }
+
         public interface EventListener {
 
             void sendComment(String name, String text);
@@ -1934,7 +1978,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             void save(Comment comment);
             void loadUrl(String url);
             void downloadImage(String title, String fileName, String url);
-            WebViewFixed getNewWebView(WebViewFixed.OnFinishedListener onFinishedListener);
+            WebViewFixed getNewWebView(WebViewFixed.Listener listener);
             void toast(String text);
             boolean isUserLoggedIn();
             void voteLink(ViewHolderBase viewHolderBase, Link link, int vote);

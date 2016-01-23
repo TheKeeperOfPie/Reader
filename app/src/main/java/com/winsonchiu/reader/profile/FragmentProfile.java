@@ -56,6 +56,7 @@ import com.winsonchiu.reader.data.reddit.Thing;
 import com.winsonchiu.reader.data.reddit.Time;
 import com.winsonchiu.reader.data.reddit.User;
 import com.winsonchiu.reader.links.ControllerLinks;
+import com.winsonchiu.reader.utils.CallbackYouTubeDestruction;
 import com.winsonchiu.reader.utils.CustomColorFilter;
 import com.winsonchiu.reader.utils.CustomItemTouchHelper;
 import com.winsonchiu.reader.utils.DisallowListener;
@@ -345,7 +346,8 @@ public class FragmentProfile extends FragmentBase implements Toolbar.OnMenuItemC
         recyclerProfile.addItemDecoration(new ItemDecorationDivider(activity, ItemDecorationDivider.VERTICAL_LIST));
 
         if (adapterProfile == null) {
-            adapterProfile = new AdapterProfile(controllerProfile,
+            adapterProfile = new AdapterProfile(getActivity(),
+                    controllerProfile,
                     controllerLinks,
                     mListener.getEventListenerBase(),
                     new AdapterCommentList.ViewHolderComment.EventListenerComment() {
@@ -356,8 +358,8 @@ public class FragmentProfile extends FragmentBase implements Toolbar.OnMenuItemC
 
                         @Override
                         public Observable<String> voteComment(AdapterCommentList.ViewHolderComment viewHolderComment,
-                                                              Comment comment,
-                                                              int vote) {
+                                Comment comment,
+                                int vote) {
                             return controllerProfile.voteComment(viewHolderComment, comment, vote);
                         }
 

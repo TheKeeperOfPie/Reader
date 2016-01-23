@@ -19,6 +19,7 @@ import com.winsonchiu.reader.R;
 import com.winsonchiu.reader.comments.Source;
 import com.winsonchiu.reader.data.reddit.Link;
 import com.winsonchiu.reader.data.reddit.Reddit;
+import com.winsonchiu.reader.utils.CallbackYouTubeDestruction;
 import com.winsonchiu.reader.utils.DisallowListener;
 import com.winsonchiu.reader.utils.RecyclerCallback;
 
@@ -37,7 +38,6 @@ public class AdapterLinkList extends AdapterLink {
             RecyclerCallback recyclerCallback) {
         super(activity, eventListenerHeader, eventListenerBase, disallowListener, recyclerCallback);
         setController(controllerLinks);
-        setActivity(activity);
     }
 
     @Override
@@ -53,12 +53,14 @@ public class AdapterLinkList extends AdapterLink {
             return new ViewHolderHeader(LayoutInflater.from(viewGroup.getContext()).inflate(R.layout.header_subreddit, viewGroup, false), eventListenerHeader);
         }
 
-        return new ViewHolder(LayoutInflater.from(viewGroup.getContext())
+        return new ViewHolder(activity,
+                LayoutInflater.from(viewGroup.getContext())
                 .inflate(R.layout.row_link, viewGroup, false),
                 eventListenerBase,
                 Source.LINKS,
                 disallowListener,
-                recyclerCallback);
+                recyclerCallback,
+                this);
     }
 
     @Override
@@ -80,12 +82,14 @@ public class AdapterLinkList extends AdapterLink {
 
     public static class ViewHolder extends AdapterLink.ViewHolderBase {
 
-        public ViewHolder(View itemView,
-                          EventListener eventListener,
-                          Source source,
-                          DisallowListener disallowListener,
-                          RecyclerCallback recyclerCallback) {
-            super(itemView, eventListener, source, disallowListener, recyclerCallback);
+        public ViewHolder(Activity activity,
+                View itemView,
+                EventListener eventListener,
+                Source source,
+                DisallowListener disallowListener,
+                RecyclerCallback recyclerCallback,
+                CallbackYouTubeDestruction callbackYouTubeDestruction) {
+            super(activity, itemView, eventListener, source, disallowListener, recyclerCallback, callbackYouTubeDestruction);
         }
 
         @Override

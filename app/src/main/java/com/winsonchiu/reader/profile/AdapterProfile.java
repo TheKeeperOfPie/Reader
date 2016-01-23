@@ -4,6 +4,7 @@
 
 package com.winsonchiu.reader.profile;
 
+import android.app.Activity;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
 import android.text.Spannable;
@@ -24,6 +25,7 @@ import com.winsonchiu.reader.data.reddit.User;
 import com.winsonchiu.reader.links.AdapterLink;
 import com.winsonchiu.reader.links.AdapterLinkList;
 import com.winsonchiu.reader.links.ControllerLinksBase;
+import com.winsonchiu.reader.utils.CallbackYouTubeDestruction;
 import com.winsonchiu.reader.utils.DisallowListener;
 import com.winsonchiu.reader.utils.RecyclerCallback;
 
@@ -33,10 +35,11 @@ import java.util.List;
 /**
  * Created by TheKeeperOfPie on 5/15/2015.
  */
-public class AdapterProfile extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
+public class AdapterProfile extends RecyclerView.Adapter<RecyclerView.ViewHolder> implements CallbackYouTubeDestruction {
 
-    private static final String TAG = AdapterProfile.class.getCanonicalName();
+    private static final String TAG = AdapterProfile.class.getCanonicalName();;
 
+    private Activity activity;
     protected ControllerProfile controllerProfile;
     protected ControllerLinksBase controllerLinks;
     private AdapterLink.ViewHolderBase.EventListener eventListenerBase;
@@ -47,7 +50,8 @@ public class AdapterProfile extends RecyclerView.Adapter<RecyclerView.ViewHolder
     private ControllerProfile.Listener listener;
     private List<RecyclerView.ViewHolder> viewHolders;
 
-    public AdapterProfile(ControllerProfile controllerProfile,
+    public AdapterProfile(Activity activity,
+            ControllerProfile controllerProfile,
             ControllerLinksBase controllerLinks,
             AdapterLink.ViewHolderBase.EventListener eventListenerBase,
             AdapterCommentList.ViewHolderComment.EventListenerComment eventListenerComment,
@@ -55,6 +59,7 @@ public class AdapterProfile extends RecyclerView.Adapter<RecyclerView.ViewHolder
             DisallowListener disallowListener,
             RecyclerCallback recyclerCallback,
             ControllerProfile.Listener listener) {
+        this.activity = activity;
         this.eventListenerBase = eventListenerBase;
         this.eventListenerComment = eventListenerComment;
         this.eventListener = eventListener;
@@ -99,12 +104,14 @@ public class AdapterProfile extends RecyclerView.Adapter<RecyclerView.ViewHolder
                         .inflate(R.layout.row_text, parent, false));
             case ControllerProfile.VIEW_TYPE_LINK:
                 AdapterLink.ViewHolderBase viewHolder = new AdapterLinkList.ViewHolder(
+                        activity,
                         LayoutInflater.from(parent.getContext())
                                 .inflate(R.layout.row_link, parent, false),
                         eventListenerBase,
                         Source.PROFILE,
                         disallowListener,
-                        recyclerCallback);
+                        recyclerCallback,
+                        this);
                 viewHolders.add(viewHolder);
                 viewHolder.toolbarActions.getMenu().findItem(R.id.item_view_profile)
                         .setShowAsAction(
@@ -242,6 +249,16 @@ public class AdapterProfile extends RecyclerView.Adapter<RecyclerView.ViewHolder
                 if (viewHolderBase.mediaPlayer != null) {
                     viewHolderBase.mediaPlayer.stop();
                 }
+            }
+        }
+        destroyYouTubePlayerFragments();
+    }
+
+    @Override
+    public void destroyYouTubePlayerFragments() {
+        for (RecyclerView.ViewHolder viewHolder : viewHolders) {
+            if (viewHolder instanceof AdapterLink.ViewHolderBase) {
+                ((AdapterLink.ViewHolderBase) viewHolder).destroyYouTube();
             }
         }
     }

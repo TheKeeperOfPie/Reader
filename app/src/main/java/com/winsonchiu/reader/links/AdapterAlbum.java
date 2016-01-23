@@ -89,7 +89,7 @@ public class AdapterAlbum extends PagerAdapter {
         final WebViewFixed webView = WebViewFixed.newInstance(
                 container.getContext().getApplicationContext(),
                 false,
-                new WebViewFixed.OnFinishedListener() {
+                new WebViewFixed.Listener() {
                     @Override
                     public void onFinished() {
 

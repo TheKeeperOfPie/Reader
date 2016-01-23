@@ -61,6 +61,7 @@ import com.winsonchiu.reader.links.AdapterLink;
 import com.winsonchiu.reader.links.AdapterLinkGrid;
 import com.winsonchiu.reader.links.AdapterLinkList;
 import com.winsonchiu.reader.profile.ControllerProfile;
+import com.winsonchiu.reader.utils.CallbackYouTubeDestruction;
 import com.winsonchiu.reader.utils.DisallowListener;
 import com.winsonchiu.reader.utils.FinalizingSubscriber;
 import com.winsonchiu.reader.utils.OnTouchListenerDisallow;
@@ -77,7 +78,7 @@ import rx.Observable;
  * Created by TheKeeperOfPie on 3/12/2015.
  */
 
-public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
+public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHolder> implements CallbackYouTubeDestruction {
 
     private static final String TAG = AdapterCommentList.class.getCanonicalName();
 
@@ -90,11 +91,13 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
     // TODO: Find a way to animate with the toolbar actions expanded without lagging
     private boolean actionsExpanded;
 
+    private Activity activity;
     private AdapterLink.ViewHolderBase.EventListener eventListenerBase;
     private ViewHolderComment.EventListener eventListener;
     private DisallowListener disallowListener;
     private RecyclerCallback recyclerCallback;
     private YouTubeListener youTubeListener;
+    private CallbackYouTubeDestruction callbackYouTubeDestruction;
     protected List<RecyclerView.ViewHolder> viewHolders;
 
     private AdapterLink.ViewHolderBase viewHolderLink;
@@ -113,16 +116,19 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
             DisallowListener disallowListener,
             RecyclerCallback recyclerCallback,
             YouTubeListener youTubeListener,
+            CallbackYouTubeDestruction callbackYouTubeDestruction,
             boolean isGrid,
             String firstLinkName,
             int colorLink,
             boolean actionsExpanded) {
+        this.activity = activity;
         this.controllerComments = controllerComments;
         this.eventListenerBase = eventListenerBase;
         this.eventListener = eventListener;
         this.disallowListener = disallowListener;
         this.recyclerCallback = recyclerCallback;
         this.youTubeListener = youTubeListener;
+        this.callbackYouTubeDestruction = callbackYouTubeDestruction;
         this.isGrid = isGrid;
         this.firstLinkName = firstLinkName;
         this.colorLink = colorLink;
@@ -143,12 +149,14 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
         if (viewType == VIEW_LINK) {
             if (isGrid) {
                 viewHolderLink = new AdapterLinkGrid.ViewHolder(
+                        activity,
                         LayoutInflater.from(parent.getContext())
                                 .inflate(R.layout.cell_link, parent, false),
                         eventListenerBase,
                         Source.LINKS,
                         disallowListener,
                         recyclerCallback,
+                        callbackYouTubeDestruction,
                         thumbnailSize) {
 
                     @Override
@@ -217,12 +225,14 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
             }
             else {
                 viewHolderLink = new AdapterLinkList.ViewHolder(
+                        activity,
                         LayoutInflater.from(parent.getContext())
                                 .inflate(R.layout.row_link, parent, false),
                         eventListenerBase,
                         Source.LINKS,
                         disallowListener,
-                        recyclerCallback) {
+                        recyclerCallback,
+                        callbackYouTubeDestruction) {
 
                     @Override
                     public Intent getShareIntent() {
@@ -358,6 +368,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
     public void destroyViewHolderLink() {
         if (viewHolderLink != null) {
             viewHolderLink.destroyWebViews();
+            destroyYouTubePlayerFragments();
         }
     }
 
@@ -397,6 +408,13 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
 
     public AdapterLink.ViewHolderBase getViewHolderLink() {
         return viewHolderLink;
+    }
+
+    @Override
+    public void destroyYouTubePlayerFragments() {
+        if (viewHolderLink != null) {
+            viewHolderLink.destroyYouTube();
+        }
     }
 
     public static class ViewHolderComment extends RecyclerView.ViewHolder
