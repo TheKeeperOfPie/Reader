@@ -77,7 +77,7 @@ public class AdapterLinkHeader extends RecyclerView.Adapter<AdapterLink.ViewHold
                     activity,
                     LayoutInflater.from(parent.getContext()).inflate(R.layout.cell_link, parent, false),
                     eventListenerBase,
-                    Source.LINKS,
+                    Source.NONE,
                     disallowListener,
                     recyclerCallback,
                     callbackYouTubeDestruction,
@@ -145,6 +145,11 @@ public class AdapterLinkHeader extends RecyclerView.Adapter<AdapterLink.ViewHold
                         super.onClickThumbnail();
                     }
                 }
+
+                @Override
+                public void addToHistory() {
+                    // Override to prevent adding to history
+                }
             };
         }
         else {
@@ -152,7 +157,7 @@ public class AdapterLinkHeader extends RecyclerView.Adapter<AdapterLink.ViewHold
                     activity,
                     LayoutInflater.from(parent.getContext()).inflate(R.layout.row_link, parent, false),
                     eventListenerBase,
-                    Source.LINKS,
+                    Source.NONE,
                     disallowListener,
                     recyclerCallback,
                     callbackYouTubeDestruction) {
@@ -203,6 +208,11 @@ public class AdapterLinkHeader extends RecyclerView.Adapter<AdapterLink.ViewHold
                     if (youTubeListener.hideYouTube()) {
                         super.onClickThumbnail();
                     }
+                }
+
+                @Override
+                public void addToHistory() {
+                    // Override to prevent adding to history
                 }
             };
         }

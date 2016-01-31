@@ -17,7 +17,6 @@ import org.json.JSONException;
 
 import java.io.BufferedReader;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
@@ -33,12 +32,14 @@ public class Historian {
 
     private static final String FILE_NAME = "history";
     private static final String TAG = Historian.class.getCanonicalName();
-    private Map<String, HistoryEntry> mapHistory;
+    private Map<String, HistoryEntry> mapHistory = new HashMap<>();
     private HistoryEntry first;
+    private SharedPreferences sharedPreferences;
     private int size;
 
     public Historian(Context context) {
-        this.mapHistory = new HashMap<>();
+        sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context);
+
         try {
             FileInputStream fileInputStream = context.openFileInput(FILE_NAME);
             BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(fileInputStream));
@@ -58,12 +59,10 @@ public class Historian {
         }
     }
 
-    /**
-     *
-     * @param link
-     * @return true if new entry, false if old entry updated
-     */
     public void add(Link link) {
+        if (!sharedPreferences.getBoolean(AppSettings.PREF_SAVE_HISTORY, true) || link == null) {
+            return;
+        }
 
         HistoryEntry entry = mapHistory.get(link.getName());
         if (entry == null) {

@@ -1125,9 +1125,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         }
 
         public void addToHistory() {
-            if (preferences.getBoolean(AppSettings.PREF_SAVE_HISTORY, true)) {
-                historian.add(link);
-            }
+            historian.add(link);
         }
 
         public void expandFull(boolean expand) {

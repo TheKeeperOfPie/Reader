@@ -62,6 +62,7 @@ import com.winsonchiu.reader.data.reddit.Link;
 import com.winsonchiu.reader.data.reddit.Listing;
 import com.winsonchiu.reader.data.reddit.Sort;
 import com.winsonchiu.reader.history.ControllerHistory;
+import com.winsonchiu.reader.history.Historian;
 import com.winsonchiu.reader.links.AdapterLink;
 import com.winsonchiu.reader.links.ControllerLinks;
 import com.winsonchiu.reader.profile.ControllerProfile;
@@ -164,6 +165,7 @@ public class FragmentComments extends FragmentBase
     @Inject ControllerSearch controllerSearch;
     @Inject ControllerHistory controllerHistory;
     @Inject ControllerProfile controllerProfile;
+    @Inject Historian historian;
 
     public static FragmentComments newInstance() {
         FragmentComments fragment = new FragmentComments();
@@ -764,6 +766,19 @@ public class FragmentComments extends FragmentBase
         setSort(fragmentCurrent.getSort());
         setTitle(fragmentCurrent.getTitle());
         fragmentCurrent.setAnimationFinished(animationFinished);
+
+        // Don't add link to history if it's viewed from history
+        switch (source) {
+            case HISTORY:
+                break;
+            case NONE:
+            case LINKS:
+            case SEARCH_LINKS:
+            case SEARCH_LINKS_SUBREDDIT:
+            case PROFILE:
+                historian.add(fragmentCurrent.getLink());
+                break;
+        }
     }
 
     @Override
@@ -1168,9 +1183,7 @@ public class FragmentComments extends FragmentBase
         if (youTubeFragment != null) {
             getFragmentManager().beginTransaction()
                     .remove(youTubeFragment)
-                    .commit();
-
-            getFragmentManager().executePendingTransactions();
+                    .commitAllowingStateLoss();
         }
 
         layoutYouTube.setVisibility(View.GONE);

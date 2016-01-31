@@ -4,8 +4,11 @@
 
 package com.winsonchiu.reader.dagger.modules;
 
+import android.app.Application;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.winsonchiu.reader.data.database.reddit.RedditDatabase;
 
 import javax.inject.Singleton;
 
@@ -24,6 +27,12 @@ public class ModuleData {
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
         return objectMapper;
+    }
+
+    @Singleton
+    @Provides
+    public RedditDatabase provideRedditDatabase(Application application) {
+        return new RedditDatabase(application);
     }
 
 }

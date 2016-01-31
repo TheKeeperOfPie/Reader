@@ -5,6 +5,7 @@
 package com.winsonchiu.reader.dagger.modules;
 
 import android.accounts.AccountManager;
+import android.app.Application;
 import android.content.Context;
 
 import com.squareup.okhttp.OkHttpClient;
@@ -23,6 +24,18 @@ import dagger.Provides;
  */
 @Module
 public class ModuleContext {
+
+    @Singleton
+    @Provides
+    public Application provideApplication() {
+        return CustomApplication.getApplication();
+    }
+
+    @Singleton
+    @Provides
+    public CustomApplication provideCustomApplication() {
+        return CustomApplication.getApplication();
+    }
 
     @Singleton
     @Provides

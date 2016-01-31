@@ -678,6 +678,11 @@ public class FragmentCommentsInner extends FragmentBase {
     }
 
     public void setLink(Link link) {
+        /**
+            This is a confusing but working way to ensure persistence of state
+            between orientation changes. Ensures that a new API request
+            is not made by {@link ControllerComments}.
+         */
         if (TextUtils.isEmpty(controllerComments.getLink().getId())) {
             if (getView() == null) {
                 this.link = link;
@@ -685,6 +690,8 @@ public class FragmentCommentsInner extends FragmentBase {
             else {
                 controllerComments.setLink(link);
             }
+        } else if (!controllerComments.getLink().getId().equals(link.getId())) {
+            controllerComments.setLink(link);
         }
     }
 

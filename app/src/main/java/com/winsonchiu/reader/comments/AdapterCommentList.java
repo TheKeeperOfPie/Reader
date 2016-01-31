@@ -153,7 +153,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                         LayoutInflater.from(parent.getContext())
                                 .inflate(R.layout.cell_link, parent, false),
                         eventListenerBase,
-                        Source.LINKS,
+                        Source.NONE,
                         disallowListener,
                         recyclerCallback,
                         callbackYouTubeDestruction,
@@ -221,6 +221,11 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                             super.onClickThumbnail();
                         }
                     }
+
+                    @Override
+                    public void addToHistory() {
+                        // Override to prevent adding to history
+                    }
                 };
             }
             else {
@@ -229,7 +234,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                         LayoutInflater.from(parent.getContext())
                                 .inflate(R.layout.row_link, parent, false),
                         eventListenerBase,
-                        Source.LINKS,
+                        Source.NONE,
                         disallowListener,
                         recyclerCallback,
                         callbackYouTubeDestruction) {
@@ -280,6 +285,11 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                         if (youTubeListener.hideYouTube()) {
                             super.onClickThumbnail();
                         }
+                    }
+
+                    @Override
+                    public void addToHistory() {
+                        // Override to prevent adding to history
                     }
                 };
             }
