@@ -20,6 +20,7 @@ import com.winsonchiu.reader.data.reddit.Thing;
 import com.winsonchiu.reader.utils.ControllerListener;
 import com.winsonchiu.reader.utils.FinalizingSubscriber;
 import com.winsonchiu.reader.utils.ObserverEmpty;
+import com.winsonchiu.reader.utils.UtilsRx;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -32,6 +33,7 @@ import javax.inject.Inject;
 
 import rx.Observable;
 import rx.Observer;
+import rx.Subscription;
 import rx.functions.Func1;
 
 /**
@@ -50,6 +52,26 @@ public class ControllerComments implements AdapterCommentList.ViewHolderComment.
 
     private boolean isRefreshing;
     private boolean isCommentThread;
+
+    private Subscription subscriptionComments;
+
+    private FinalizingSubscriber<Link> subscriberLink = new FinalizingSubscriber<Link>() {
+        @Override
+        public void start() {
+            setRefreshing(true);
+        }
+
+        @Override
+        public void next(Link link) {
+            setLinkWithComments(link);
+            setIsCommentThread(false);
+        }
+
+        @Override
+        public void finish() {
+            setRefreshing(false);
+        }
+    };
 
     public ControllerComments() {
         CustomApplication.getComponentMain().inject(this);
@@ -149,70 +171,15 @@ public class ControllerComments implements AdapterCommentList.ViewHolderComment.
         link.setCommentId(null);
         link.setContextLevel(0);
 
-        reddit.comments(link.getId(), null, sort.toString(), true, true, null, 10, 100)
-                .flatMap(new Func1<String, Observable<Link>>() {
-                    @Override
-                    public Observable<Link> call(String response) {
-                        try {
-                            return Observable.just(Link.fromJsonWithComments(
-                                    ComponentStatic.getObjectMapper().readValue(response,
-                                            JsonNode.class)));
-                        } catch (IOException e) {
-                            return Observable.error(e);
-                        }
-                    }
-                })
-                .subscribe(new FinalizingSubscriber<Link>() {
-
-                    @Override
-                    public void start() {
-                        setRefreshing(true);
-                    }
-
-                    @Override
-                    public void next(Link link) {
-                        setLinkWithComments(link);
-                        setIsCommentThread(false);
-                    }
-
-                    @Override
-                    public void finish() {
-                        setRefreshing(false);
-                    }
-                });
+        UtilsRx.unsubscribe(subscriptionComments);
+        subscriptionComments = reddit.comments(link.getId(), null, sort.toString(), true, true, null, 10, 100)
+                .subscribe(subscriberLink);
     }
 
     public void loadCommentThread() {
-        reddit.comments(link.getId(), link.getCommentId(), sort.toString(), true, true, link.getContextLevel(),  10, 100)
-                .flatMap(new Func1<String, Observable<Link>>() {
-                    @Override
-                    public Observable<Link> call(String response) {
-                        try {
-                            return Observable.just(Link.fromJsonWithComments(
-                                    ComponentStatic.getObjectMapper().readValue(response,
-                                            JsonNode.class)));
-                        } catch (IOException e) {
-                            return Observable.error(e);
-                        }
-                    }
-                })
-                .subscribe(new FinalizingSubscriber<Link>() {
-                    @Override
-                    public void start() {
-                        setRefreshing(true);
-                    }
-
-                    @Override
-                    public void next(Link link) {
-                        setLinkWithComments(link);
-                        setIsCommentThread(true);
-                    }
-
-                    @Override
-                    public void finish() {
-                        setRefreshing(false);
-                    }
-                });
+        UtilsRx.unsubscribe(subscriptionComments);
+        subscriptionComments = reddit.comments(link.getId(), link.getCommentId(), sort.toString(), true, true, link.getContextLevel(), 10, 100)
+                .subscribe(subscriberLink);
     }
 
     private void setRefreshing(boolean refreshing) {

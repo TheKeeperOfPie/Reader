@@ -399,7 +399,7 @@ public class Reddit {
                 .compose(TRANSFORMER);
     }
 
-    public Observable<String> comments(String id,
+    public Observable<Link> comments(String id,
                                        String comment,
                                        String sort,
                                        Boolean showMore,
@@ -416,7 +416,8 @@ public class Reddit {
                 context,
                 depth,
                 limit)
-                .compose(TRANSFORMER);
+                .compose(TRANSFORMER)
+                .flatMap(Link.COMMENTS);
     }
 
     public Observable<String> moreChildren(String idLink, String children) {

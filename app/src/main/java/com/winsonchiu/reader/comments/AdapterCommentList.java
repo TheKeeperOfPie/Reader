@@ -43,6 +43,8 @@ import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.AccelerateInterpolator;
+import android.view.animation.Interpolator;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
@@ -85,8 +87,10 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
     private static final int VIEW_LINK = 0;
     private static final int VIEW_COMMENT = 1;
 
-    private static final int ALPHA_LEVELS = 8;
+    private static final int ALPHA_LEVELS = 14;
     private static final int MAX_ALPHA = 180;
+
+    private static final Interpolator INTERPOLATOR_LEVEL = new AccelerateInterpolator();
 
     // TODO: Find a way to animate with the toolbar actions expanded without lagging
     private boolean actionsExpanded;
@@ -429,12 +433,13 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
 
     public static class ViewHolderComment extends RecyclerView.ViewHolder
             implements Toolbar.OnMenuItemClickListener {
-
+        ;
         private final EventListenerComment eventListenerComment;
         protected Comment comment;
 
         protected View viewIndent;
         protected View viewIndicator;
+        protected View viewIndentCollapsed;
         protected TextView textComment;
         protected TextView textInfo;
         protected TextView textHidden;
@@ -462,7 +467,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
         protected PorterDuffColorFilter colorFilterMenuItem;
         protected View viewIndicatorContainer;
         protected View viewDivider;
-        protected RelativeLayout layoutContainerCollapsed;
+        protected ViewGroup layoutContainerCollapsed;
         protected View viewIndicatorCollapsed;
         protected TextView textCollapsed;
 
@@ -545,6 +550,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
 
             viewIndent = itemView.findViewById(R.id.view_indent);
             viewIndicator = itemView.findViewById(R.id.view_indicator);
+            viewIndentCollapsed = itemView.findViewById(R.id.view_indent_collapsed);
             viewIndicatorContainer = itemView.findViewById(R.id.view_indicator_container);
             textComment = (TextView) itemView.findViewById(R.id.text_comment);
             textInfo = (TextView) itemView.findViewById(R.id.text_info);
@@ -560,9 +566,8 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
 
             viewDivider = itemView.findViewById(R.id.view_divider);
             viewIndicatorCollapsed = itemView.findViewById(R.id.view_indicator_collapsed);
-            layoutContainerCollapsed = (RelativeLayout) itemView.findViewById(R.id.layout_container_collapsed);
+            layoutContainerCollapsed = (ViewGroup) itemView.findViewById(R.id.layout_container_collapsed);
             textCollapsed = (TextView) itemView.findViewById(R.id.text_collapsed);
-
         }
 
         private void initializeListeners() {
@@ -726,7 +731,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
 
             Menu menu = toolbarActions.getMenu();
 
-            int maxNum = (itemView.getWidth() - getIndentWidth()) / toolbarItemWidth;
+            int maxNum = (itemView.getWidth() - comment.getLevel() * indentWidth) / toolbarItemWidth;
             int numShown = 0;
 
             boolean loggedIn = !TextUtils.isEmpty(eventListenerBase.getUser().getName());
@@ -819,10 +824,17 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                 editTextReply.setText(comment.getReplyText());
             }
 
-            int alphaLevel = comment.getLevel() * MAX_ALPHA / ALPHA_LEVELS;
+            float alphaLevel = comment.getLevel() > 0
+                    ? comment.getLevel() + 6
+                    : 0;
 
-            int overlayColor = ColorUtils.setAlphaComponent(0xFF000000,
-                    alphaLevel <= MAX_ALPHA ? alphaLevel : MAX_ALPHA);
+            if (alphaLevel > ALPHA_LEVELS) {
+                alphaLevel = ALPHA_LEVELS;
+            }
+
+            int interpolatedValue = (int) (MAX_ALPHA * INTERPOLATOR_LEVEL.getInterpolation(alphaLevel / ALPHA_LEVELS));
+
+            int overlayColor = ColorUtils.setAlphaComponent(0xFF000000, interpolatedValue);
             int indicatorColor = ColorUtils.compositeColors(overlayColor, colorPrimary);
 
             viewIndicator.setBackgroundColor(indicatorColor);
@@ -830,9 +842,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
 
             if (comment.getCollapsed() > 0) {
                 viewIndicatorCollapsed.setBackgroundColor(indicatorColor);
-                textCollapsed.setText(
-                        comment.getCollapsed() + " " + resources
-                                .getString(R.string.comments_collapsed));
+                textCollapsed.setText(resources.getString(R.string.comments_collapsed, comment.getCollapsed()));
                 layoutContainerCollapsed.setVisibility(View.VISIBLE);
                 viewDivider.setVisibility(View.VISIBLE);
             }
@@ -841,9 +851,13 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                 viewDivider.setVisibility(View.INVISIBLE);
             }
 
-            ViewGroup.LayoutParams layoutParams = viewIndent.getLayoutParams();
-            layoutParams.width = getIndentWidth();
-            viewIndent.setLayoutParams(layoutParams);
+            ViewGroup.LayoutParams layoutParamsIndent = viewIndent.getLayoutParams();
+            layoutParamsIndent.width = comment.getLevel() * indentWidth;
+            viewIndent.setLayoutParams(layoutParamsIndent);
+
+            ViewGroup.LayoutParams layoutParamsIndentCollapsed = viewIndentCollapsed.getLayoutParams();
+            layoutParamsIndentCollapsed.width = (comment.getLevel() + 1) * indentWidth;
+            viewIndentCollapsed.setLayoutParams(layoutParamsIndentCollapsed);
 
             if (comment.isMore()) {
                 if (comment.getCount() == 0) {
@@ -1145,6 +1159,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
         public void setVisibility(int visibility) {
             viewIndent.setVisibility(visibility);
             viewIndicator.setVisibility(visibility);
+            viewIndentCollapsed.setVisibility(visibility);
             viewIndicatorContainer.setVisibility(visibility);
             textComment.setVisibility(visibility);
             textInfo.setVisibility(visibility);

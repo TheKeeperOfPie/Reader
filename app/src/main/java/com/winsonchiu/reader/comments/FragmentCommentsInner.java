@@ -37,7 +37,6 @@ import com.winsonchiu.reader.data.reddit.Link;
 import com.winsonchiu.reader.data.reddit.Sort;
 import com.winsonchiu.reader.utils.CallbackYouTubeDestruction;
 import com.winsonchiu.reader.utils.DisallowListener;
-import com.winsonchiu.reader.utils.ItemDecorationDivider;
 import com.winsonchiu.reader.utils.LinearLayoutManagerWrapHeight;
 import com.winsonchiu.reader.utils.OnSizeChangedListener;
 import com.winsonchiu.reader.utils.RecyclerCallback;
@@ -332,8 +331,6 @@ public class FragmentCommentsInner extends FragmentBase {
         recyclerCommentList = (RecyclerView) layoutRoot.findViewById(R.id.recycler_comment_list);
         recyclerCommentList.setLayoutManager(linearLayoutManager);
         recyclerCommentList.setItemAnimator(null);
-        recyclerCommentList.addItemDecoration(
-                new ItemDecorationDivider(getActivity(), ItemDecorationDivider.VERTICAL_LIST));
 
         adapterCommentList = new AdapterCommentList(getActivity(),
                 controllerComments,
