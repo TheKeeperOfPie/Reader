@@ -78,6 +78,7 @@ public class AppSettings {
     public static final String PREF_THEME_ACCENT = "pref_theme_accent";
     public static final String PREF_VERSION = "pref_version";
     public static final String PREF_HEADER_SUBREDDIT = "pref_header_subreddit";
+    public static final String PREF_HOME_SUBREDDIT = "pref_home_subreddit";
 
     private static final String TAG = AppSettings.class.getCanonicalName();
     public static final String SUBSCRIPTIONS = "subscriptions";

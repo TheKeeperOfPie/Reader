@@ -55,7 +55,7 @@ public class ModuleContext {
         Picasso.Builder builder = new Picasso.Builder(context.getApplicationContext())
                 .downloader(new OkHttpDownloader(okHttpClient));
         if (BuildConfig.DEBUG) {
-            builder = builder.loggingEnabled(true);
+//            builder = builder.loggingEnabled(true);
         }
         return builder.build();
     }

@@ -1204,7 +1204,6 @@ public class FragmentComments extends FragmentBase
     }
 
     private void setTitle(CharSequence title) {
-        Log.d(TAG, "setTitle() called with: " + "title = [" + title + "]", new Exception());
         toolbar.setTitle(title);
     }
 

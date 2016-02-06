@@ -81,6 +81,14 @@
     <string name="pref_history_size">History size</string>
     <string name="pref_history_size_summary">Max number of history entries to save</string>
 
+
+    <string name="pref_swipe_exit_comments">Swipe exit comments</string>
+    <string name="pref_swipe_exit_comments_summary">Use a swipe gesture to exit comments</string>
+
+    <string name="pref_home_subreddit">Home subreddit</string>
+    <string name="pref_home_subreddit_summary">Starting page when launching Reader</string>
+    <string name="pref_home_subreddit_hint">Blank for front page</string>
+
     <string name="pref_theme_background">Background theme</string>
     <string-array name="pref_theme_background_entries">
         <item>Dark</item>

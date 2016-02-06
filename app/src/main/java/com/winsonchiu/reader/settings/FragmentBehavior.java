@@ -52,6 +52,8 @@ public class FragmentBehavior extends FragmentPreferences
                     }
                 });
         preferenceHistorySize.getOnPreferenceChangeListener().onPreferenceChange(preferenceHistorySize, preferences.getString(AppSettings.PREF_HISTORY_SIZE, "5000"));
+
+        bindPreferenceListenerSummary(findPreference(AppSettings.PREF_HOME_SUBREDDIT));
     }
 
 }

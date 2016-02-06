@@ -55,24 +55,6 @@ public class ControllerComments implements AdapterCommentList.ViewHolderComment.
 
     private Subscription subscriptionComments;
 
-    private FinalizingSubscriber<Link> subscriberLink = new FinalizingSubscriber<Link>() {
-        @Override
-        public void start() {
-            setRefreshing(true);
-        }
-
-        @Override
-        public void next(Link link) {
-            setLinkWithComments(link);
-            setIsCommentThread(false);
-        }
-
-        @Override
-        public void finish() {
-            setRefreshing(false);
-        }
-    };
-
     public ControllerComments() {
         CustomApplication.getComponentMain().inject(this);
     }
@@ -172,14 +154,34 @@ public class ControllerComments implements AdapterCommentList.ViewHolderComment.
         link.setContextLevel(0);
 
         UtilsRx.unsubscribe(subscriptionComments);
-        subscriptionComments = reddit.comments(link.getId(), null, sort.toString(), true, true, null, 10, 100)
-                .subscribe(subscriberLink);
+        subscriptionComments = reddit.comments(link.getId(), link.getCommentId(), sort.toString(), true, true, link.getContextLevel(), 10, 100)
+                .subscribe(getSubscriberLink());
     }
 
     public void loadCommentThread() {
         UtilsRx.unsubscribe(subscriptionComments);
         subscriptionComments = reddit.comments(link.getId(), link.getCommentId(), sort.toString(), true, true, link.getContextLevel(), 10, 100)
-                .subscribe(subscriberLink);
+                .subscribe(getSubscriberLink());
+    }
+
+    private Observer<Link> getSubscriberLink() {
+        return new FinalizingSubscriber<Link>() {
+            @Override
+            public void start() {
+                setRefreshing(true);
+            }
+
+            @Override
+            public void next(com.winsonchiu.reader.data.reddit.Link link) {
+                setLinkWithComments(link);
+                setIsCommentThread(false);
+            }
+
+            @Override
+            public void finish() {
+                setRefreshing(false);
+            }
+        };
     }
 
     private void setRefreshing(boolean refreshing) {

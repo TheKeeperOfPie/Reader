@@ -215,9 +215,6 @@
     <string name="start">Start</string>
     <string name="end">End</string>
     <string name="reset">Reset</string>
-    <string name="pref_swipe_exit_comments">Swipe exit comments</string>
-    <string name="pref_swipe_exit_comments_summary">Use a swipe gesture to exit comments
-    </string>
     <string name="comments_collapsed">%1$d collapsed</string>
     <string name="item_editor_italicize">Italicize</string>
     <string name="item_editor_strikethrough">Strikethrough</string>

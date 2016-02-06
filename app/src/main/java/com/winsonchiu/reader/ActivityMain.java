@@ -117,6 +117,7 @@ import com.winsonchiu.reader.utils.ImageDownload;
 import com.winsonchiu.reader.utils.ObserverEmpty;
 import com.winsonchiu.reader.utils.UtilsAnimation;
 import com.winsonchiu.reader.utils.UtilsColor;
+import com.winsonchiu.reader.utils.UtilsReddit;
 import com.winsonchiu.reader.views.ScrollViewHeader;
 import com.winsonchiu.reader.views.WebViewFixed;
 
@@ -761,13 +762,13 @@ public class ActivityMain extends AppCompatActivity
                 }
                 else {
                     Log.d(TAG, "Not valid URL: " + urlString);
-                    controllerLinks.loadFrontPage(Sort.HOT, true);
+                    loadHomeSubreddit();
                     selectNavigationItem(getIntent().getIntExtra(NAV_ID, R.id.item_home), getIntent().getStringExtra(
                             NAV_PAGE), false);
                 }
             }
             else {
-                controllerLinks.loadFrontPage(Sort.HOT, true);
+                loadHomeSubreddit();
                 selectNavigationItem(getIntent().getIntExtra(NAV_ID, R.id.item_home), getIntent().getStringExtra(
                         NAV_PAGE), false);
             }
@@ -959,7 +960,7 @@ public class ActivityMain extends AppCompatActivity
             return;
         }
 
-        String subreddit = loadAndParseHeaderSubreddit();
+        String subreddit = UtilsReddit.parseSubredditUrlPart(sharedPreferences.getString(AppSettings.PREF_HEADER_SUBREDDIT, "earthporn"));
 
         if (TextUtils.isEmpty(subreddit)) {
             Toast.makeText(this, R.string.header_subreddit_error, Toast.LENGTH_LONG).show();
@@ -1091,24 +1092,6 @@ public class ActivityMain extends AppCompatActivity
         isDownloadingHeaderImage = true;
         linkHeader = link;
         picasso.load(link.getUrl()).into(targetHeader);
-    }
-
-    private String loadAndParseHeaderSubreddit() {
-        String inputRaw = sharedPreferences.getString(AppSettings.PREF_HEADER_SUBREDDIT, "earthporn");
-        inputRaw = inputRaw.replaceAll("\\s", "");
-
-        if (inputRaw.startsWith("/r/")) {
-            inputRaw = inputRaw.substring(3);
-        }
-        else if (inputRaw.startsWith("r/")) {
-            inputRaw = inputRaw.substring(2);
-        }
-
-        if (!inputRaw.matches("^[A-z]+$")) {
-            return null;
-        }
-
-        return "/r/" + inputRaw + "/";
     }
 
     private void resetAccountList() {
@@ -1386,7 +1369,18 @@ public class ActivityMain extends AppCompatActivity
         fragmentTransaction.commit();
     }
 
-    public void loadAccountInfo() {
+    private void loadHomeSubreddit() {
+        String subreddit = UtilsReddit.parseRawSubredditString(sharedPreferences.getString(AppSettings.PREF_HOME_SUBREDDIT, null));
+
+        if (TextUtils.isEmpty(subreddit)) {
+            controllerLinks.loadFrontPage(Sort.HOT, true);
+        }
+        else {
+            controllerLinks.setParameters(subreddit, Sort.HOT, Time.ALL);
+        }
+    }
+
+    private void loadAccountInfo() {
         boolean visible = controllerUser.hasUser();
 
         if (visible) {

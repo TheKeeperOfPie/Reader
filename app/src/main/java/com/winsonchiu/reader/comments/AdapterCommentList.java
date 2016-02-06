@@ -175,22 +175,19 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
 
                     @Override
                     public boolean isInHistory() {
-
                         return false;
                     }
                     @Override
                     public void loadBackgroundColor() {
-                        if (colorLink != 0) {
-                            if (link.getName().equals(firstLinkName)) {
+                        if (colorLink != 0 && (link.getName().equals(firstLinkName))) {
                                 link.setBackgroundColor(colorLink);
                                 itemView.setBackgroundColor(colorLink);
                                 setTextColors(colorLink);
-                            }
-                            colorLink = 0;
                         }
                         else {
                             super.loadBackgroundColor();
                         }
+                        colorLink = 0;
                     }
 
                     @Override

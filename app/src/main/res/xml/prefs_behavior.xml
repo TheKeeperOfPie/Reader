@@ -52,6 +52,15 @@
             android:defaultValue="true"
             />
 
+        <EditTextPreference
+            android:key="pref_home_subreddit"
+            android:title="@string/pref_home_subreddit"
+            android:summary="@string/pref_home_subreddit_summary"
+            android:hint="@string/pref_home_subreddit_hint"
+            android:defaultValue=""
+            android:inputType="text"
+            />
+
     </PreferenceCategory>
 
 </PreferenceScreen>

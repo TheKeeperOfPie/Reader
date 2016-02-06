@@ -11,6 +11,7 @@ import android.os.Bundle;
 import android.preference.ListPreference;
 import android.preference.Preference;
 import android.preference.PreferenceFragment;
+import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -74,10 +75,13 @@ public abstract class FragmentPreferences extends PreferenceFragment implements 
     }
 
     protected void bindPreferenceListenerSummary(Preference preference) {
-
         preference.setOnPreferenceChangeListener(preferenceListenerSummary);
-        preferenceListenerSummary.onPreferenceChange(preference,
-                getPreferenceScreen().getSharedPreferences().getString(preference.getKey(), ""));
+
+        String summary = getPreferenceScreen().getSharedPreferences().getString(preference.getKey(), null);
+
+        if (!TextUtils.isEmpty(summary)) {
+            preferenceListenerSummary.onPreferenceChange(preference, summary);
+        }
 
     }
 
