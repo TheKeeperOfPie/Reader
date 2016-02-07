@@ -6,9 +6,11 @@ package com.winsonchiu.reader.settings;
 
 import android.os.Bundle;
 import android.preference.Preference;
+import android.text.TextUtils;
 
 import com.winsonchiu.reader.AppSettings;
 import com.winsonchiu.reader.R;
+import com.winsonchiu.reader.utils.UtilsReddit;
 
 /**
  * Created by TheKeeperOfPie on 7/1/2015.
@@ -54,13 +56,27 @@ public class FragmentDisplay extends FragmentPreferences {
                         return true;
                     }
                 });
-        findPreference(AppSettings.PREF_HEADER_SUBREDDIT).setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
-            @Override
-            public boolean onPreferenceChange(Preference preference, Object newValue) {
-                preferences.edit().putLong(AppSettings.HEADER_EXPIRATION, 0);
-                return true;
-            }
-        });
+
+        Preference preferenceHomeSubreddit = findPreference(AppSettings.PREF_HEADER_SUBREDDIT);
+
+        preferenceHomeSubreddit.setOnPreferenceChangeListener(
+                new Preference.OnPreferenceChangeListener() {
+                    @Override
+                    public boolean onPreferenceChange(Preference preference, Object newValue) {
+                        String summary = String.valueOf(newValue);
+
+                        if (TextUtils.isEmpty(summary)) {
+                            preference.setSummary(R.string.pref_header_subreddit_summary);
+                        }
+                        else {
+                            preference.setSummary(getString(R.string.subreddit_formatted, UtilsReddit.parseRawSubredditString(summary)));
+                        }
+
+                        preferences.edit().putLong(AppSettings.HEADER_EXPIRATION, 0).apply();
+                        return true;
+                    }
+                });
+        preferenceHomeSubreddit.getOnPreferenceChangeListener().onPreferenceChange(preferenceHomeSubreddit, preferences.getString(AppSettings.PREF_HEADER_SUBREDDIT, ""));
     }
 
 }

@@ -14,6 +14,7 @@ import com.winsonchiu.reader.AppSettings;
 import com.winsonchiu.reader.CustomApplication;
 import com.winsonchiu.reader.R;
 import com.winsonchiu.reader.history.Historian;
+import com.winsonchiu.reader.utils.UtilsReddit;
 
 import javax.inject.Inject;
 
@@ -66,7 +67,7 @@ public class FragmentBehavior extends FragmentPreferences
                             preference.setSummary(R.string.pref_home_subreddit_summary);
                         }
                         else {
-                            preference.setSummary(summary);
+                            preference.setSummary(getString(R.string.subreddit_formatted, UtilsReddit.parseRawSubredditString(summary)));
                         }
                         return true;
                     }

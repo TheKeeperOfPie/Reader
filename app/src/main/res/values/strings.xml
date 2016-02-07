@@ -285,4 +285,6 @@
     <string name="subreddit_reader">/r/ReaderForReddit</string>
     <string name="report">Report "%1$s" by /u/%2$s for %3$s?</string>
 
+    <string name="subreddit_formatted">/r/%1$s</string>
+
 </resources>
