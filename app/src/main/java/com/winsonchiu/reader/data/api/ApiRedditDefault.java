@@ -4,12 +4,12 @@
 
 package com.winsonchiu.reader.data.api;
 
-import com.squareup.okhttp.ResponseBody;
 import com.winsonchiu.reader.data.reddit.Reddit;
 
-import retrofit.Call;
-import retrofit.http.POST;
-import retrofit.http.Query;
+import okhttp3.ResponseBody;
+import retrofit2.Call;
+import retrofit2.http.POST;
+import retrofit2.http.Query;
 import rx.Observable;
 
 /**

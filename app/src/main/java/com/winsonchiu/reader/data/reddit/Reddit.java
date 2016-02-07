@@ -12,7 +12,6 @@ import android.accounts.OperationCanceledException;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.res.Resources;
-import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
@@ -25,14 +24,6 @@ import android.view.MenuItem;
 import android.webkit.URLUtil;
 import android.widget.EditText;
 
-import com.squareup.okhttp.Authenticator;
-import com.squareup.okhttp.Callback;
-import com.squareup.okhttp.FormEncodingBuilder;
-import com.squareup.okhttp.Interceptor;
-import com.squareup.okhttp.OkHttpClient;
-import com.squareup.okhttp.Request;
-import com.squareup.okhttp.RequestBody;
-import com.squareup.okhttp.logging.HttpLoggingInterceptor;
 import com.winsonchiu.reader.ApiKeys;
 import com.winsonchiu.reader.AppSettings;
 import com.winsonchiu.reader.BuildConfig;
@@ -47,15 +38,25 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.IOException;
-import java.net.Proxy;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.inject.Inject;
 
-import retrofit.Retrofit;
-import retrofit.RxJavaCallAdapterFactory;
+import okhttp3.Authenticator;
+import okhttp3.Call;
+import okhttp3.Callback;
+import okhttp3.FormBody;
+import okhttp3.Interceptor;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.Response;
+import okhttp3.Route;
+import okhttp3.logging.HttpLoggingInterceptor;
+import retrofit2.Retrofit;
+import retrofit2.adapter.rxjava.RxJavaCallAdapterFactory;
 import rx.Observable;
 import rx.Subscriber;
 import rx.android.schedulers.AndroidSchedulers;
@@ -135,13 +136,6 @@ public class Reddit {
     private static final String IMGUR_URL_GALLERY = "https://api.imgur.com/3/gallery/";
     private static final String IMGUR_URL_IMAGE = "https://api.imgur.com/3/image/";
 
-    public static final String GIFV = ".gifv";
-    public static final String GIF = ".gif";
-    public static final String PNG = ".png";
-    public static final String JPG = ".jpg";
-    public static final String JPEG = ".jpeg";
-    public static final String WEBP = ".webp";
-
     public static final String DEFAULT = "default";
     public static final String NSFW = "nsfw";
 
@@ -198,63 +192,65 @@ public class Reddit {
                 context.getApplicationContext());
         CustomApplication.getComponentMain().inject(this);
 
-        okHttpClientAuthorized = new OkHttpClient();
-        okHttpClientAuthorized.interceptors().add(new Interceptor() {
-            @Override
-            public com.squareup.okhttp.Response intercept(Chain chain) throws IOException {
-                com.squareup.okhttp.Request requestOriginal = chain.request();
+        OkHttpClient.Builder okHttpClientAuthorizedBuilder = new OkHttpClient.Builder()
+                .authenticator(new Authenticator() {
+                    @Override
+                    public Request authenticate(Route route, Response response) throws IOException {
+                        getTokenBlocking();
 
-                com.squareup.okhttp.Request requestModified = requestOriginal.newBuilder()
-                        .header(USER_AGENT, CUSTOM_USER_AGENT)
-                        .header(AUTHORIZATION, getAuthorizationHeader())
-                        .header(CONTENT_TYPE, CONTENT_TYPE_APP_JSON)
-                        .build();
+                        if (BuildConfig.DEBUG) {
+                            Log.d(TAG, "tokenAuth: " + tokenAuth);
+                        }
 
-                return chain.proceed(requestModified);
-            }
-        });
-        okHttpClientAuthorized.setAuthenticator(new Authenticator() {
-            @Override
-            public com.squareup.okhttp.Request authenticate(Proxy proxy, com.squareup.okhttp.Response response) throws IOException {
-                getTokenBlocking();
+                        return response.request().newBuilder()
+                                .header(AUTHORIZATION, getAuthorizationHeader())
+                                .build();
+                    }
+                })
+                .addInterceptor(new Interceptor() {
+                    @Override
+                    public Response intercept(Chain chain) throws IOException {
+                        Request requestOriginal = chain.request();
 
-                return response.request().newBuilder()
-                        .header(AUTHORIZATION, getAuthorizationHeader())
-                        .build();
-            }
+                        Request requestModified = requestOriginal.newBuilder()
+                                .header(USER_AGENT, CUSTOM_USER_AGENT)
+                                .header(AUTHORIZATION, getAuthorizationHeader())
+                                .header(CONTENT_TYPE, CONTENT_TYPE_APP_JSON)
+                                .build();
 
-            @Override
-            public com.squareup.okhttp.Request authenticateProxy(Proxy proxy, com.squareup.okhttp.Response response) throws IOException {
-                return null;
-            }
-        });
+                        return chain.proceed(requestModified);
+                    }
+                });
 
-        okHttpClientDefault = new OkHttpClient();
-        okHttpClientDefault.interceptors().add(new Interceptor() {
-            @Override
-            public com.squareup.okhttp.Response intercept(Chain chain) throws IOException {
-                com.squareup.okhttp.Request requestOriginal = chain.request();
+        OkHttpClient.Builder okHttpClientDefaultBuilder = new OkHttpClient.Builder()
+                .addInterceptor(new Interceptor() {
+                    @Override
+                    public Response intercept(Chain chain) throws IOException {
+                        Request requestOriginal = chain.request();
 
-                String credentials = ApiKeys.REDDIT_CLIENT_ID + ":";
-                String authorization = "Basic " + Base64.encodeToString(credentials.getBytes(),
-                        Base64.NO_WRAP);
+                        String credentials = ApiKeys.REDDIT_CLIENT_ID + ":";
+                        String authorization = "Basic " + Base64.encodeToString(credentials.getBytes(),
+                                Base64.NO_WRAP);
 
-                com.squareup.okhttp.Request requestModified = requestOriginal.newBuilder()
-                        .header(USER_AGENT, CUSTOM_USER_AGENT)
-                        .header(AUTHORIZATION, authorization)
-                        .header(CONTENT_TYPE, CONTENT_TYPE_APP_JSON)
-                        .build();
+                        Request requestModified = requestOriginal.newBuilder()
+                                .header(USER_AGENT, CUSTOM_USER_AGENT)
+                                .header(AUTHORIZATION, authorization)
+                                .header(CONTENT_TYPE, CONTENT_TYPE_APP_JSON)
+                                .build();
 
-                return chain.proceed(requestModified);
-            }
-        });
+                        return chain.proceed(requestModified);
+                    }
+                });
 
         if (BuildConfig.DEBUG) {
             HttpLoggingInterceptor httpLoggingInterceptor = new HttpLoggingInterceptor();
             httpLoggingInterceptor.setLevel(HttpLoggingInterceptor.Level.BODY);
-            okHttpClientAuthorized.interceptors().add(httpLoggingInterceptor);
-            okHttpClientDefault.interceptors().add(httpLoggingInterceptor);
+            okHttpClientAuthorizedBuilder.addInterceptor(httpLoggingInterceptor);
+            okHttpClientDefaultBuilder.addInterceptor(httpLoggingInterceptor);
         }
+
+        okHttpClientAuthorized = okHttpClientAuthorizedBuilder.build();
+        okHttpClientDefault = okHttpClientDefaultBuilder.build();
 
         apiRedditAuthorized = new Retrofit.Builder()
                 .baseUrl(OAUTH_URL)
@@ -344,13 +340,13 @@ public class Reddit {
                     .apply();
         }
 
-        RequestBody requestBody = new FormEncodingBuilder()
+        RequestBody requestBody = new FormBody.Builder()
                 .add(QUERY_GRANT_TYPE, INSTALLED_CLIENT_GRANT)
                 .add(QUERY_DEVICE_ID, preferences.getString(AppSettings.DEVICE_ID, UUID.randomUUID()
                         .toString()))
                 .build();
 
-        com.squareup.okhttp.Request request = new com.squareup.okhttp.Request.Builder()
+        Request request = new Request.Builder()
                 .url(ACCESS_URL)
                 .post(requestBody)
                 .build();
@@ -541,18 +537,18 @@ public class Reddit {
         return null;
     }
 
-    public Observable<String> load(final com.squareup.okhttp.Request request) {
+    public Observable<String> load(final okhttp3.Request request) {
         return Observable.create(new Observable.OnSubscribe<String>() {
             @Override
             public void call(final Subscriber<? super String> subscriber) {
                 okHttpClient.newCall(request).enqueue(new Callback() {
                     @Override
-                    public void onFailure(com.squareup.okhttp.Request request, IOException e) {
+                    public void onFailure(Call call, IOException e) {
                         subscriber.onError(e);
                     }
 
                     @Override
-                    public void onResponse(com.squareup.okhttp.Response response) throws IOException {
+                    public void onResponse(Call call, Response response) throws IOException {
                         if (response.body() == null) {
                             subscriber.onError(new IOException("Response body null"));
                         }
@@ -569,7 +565,7 @@ public class Reddit {
     }
 
     public Observable<String> loadImgurImage(String id) {
-        return load(new com.squareup.okhttp.Request.Builder()
+        return load(new okhttp3.Request.Builder()
                 .url(IMGUR_URL_IMAGE + id)
                 .header(USER_AGENT, CUSTOM_USER_AGENT)
                 .header(AUTHORIZATION, ApiKeys.IMGUR_AUTHORIZATION)
@@ -579,7 +575,7 @@ public class Reddit {
     }
 
     public Observable<String> loadImgurAlbum(String id) {
-        return load(new com.squareup.okhttp.Request.Builder()
+        return load(new Request.Builder()
                 .url(IMGUR_URL_ALBUM + id)
                 .header(USER_AGENT, CUSTOM_USER_AGENT)
                 .header(AUTHORIZATION, ApiKeys.IMGUR_AUTHORIZATION)
@@ -589,7 +585,7 @@ public class Reddit {
     }
 
     public Observable<String> loadImgurGallery(String id) {
-        return load(new com.squareup.okhttp.Request.Builder()
+        return load(new Request.Builder()
                 .url(IMGUR_URL_GALLERY + id)
                 .header(USER_AGENT, CUSTOM_USER_AGENT)
                 .header(AUTHORIZATION, ApiKeys.IMGUR_AUTHORIZATION)
@@ -599,7 +595,7 @@ public class Reddit {
     }
 
     public Observable<String> loadGfycat(String id) {
-        return load(new com.squareup.okhttp.Request.Builder()
+        return load(new Request.Builder()
                 .url(Reddit.GFYCAT_URL + id)
                 .get()
                 .build());
@@ -610,7 +606,7 @@ public class Reddit {
     }
 
     public String tokenAuthBlocking() throws ExecutionException, InterruptedException {
-        RequestBody requestBody = new FormEncodingBuilder()
+        RequestBody requestBody = new FormBody.Builder()
                 .add(QUERY_GRANT_TYPE, QUERY_REFRESH_TOKEN)
                 .add(QUERY_REFRESH_TOKEN, accountManager.getPassword(account))
                 .build();
@@ -628,7 +624,7 @@ public class Reddit {
     }
 
     public Observable<String> tokenAuth() {
-        RequestBody requestBody = new FormEncodingBuilder()
+        RequestBody requestBody = new FormBody.Builder()
                 .add(QUERY_GRANT_TYPE, QUERY_REFRESH_TOKEN)
                 .add(QUERY_REFRESH_TOKEN, accountManager.getPassword(account))
                 .build();
@@ -642,7 +638,7 @@ public class Reddit {
     }
 
     public Observable<String> tokenRevoke(String tokenType, String token) {
-        RequestBody requestBody = new FormEncodingBuilder()
+        RequestBody requestBody = new FormBody.Builder()
                 .add("token_type_hint", tokenType)
                 .add("token", token)
                 .build();
@@ -738,139 +734,6 @@ public class Reddit {
     public Observable<String> recommend(String subreddit, String omit) {
         return apiRedditAuthorized.recommend(subreddit, omit)
                 .compose(TRANSFORMER);
-    }
-
-    public static boolean checkIsImage(String url) {
-        return url.endsWith(GIF) || url.endsWith(PNG) || url.endsWith(JPG)
-                || url.endsWith(JPEG) || url.endsWith(WEBP);
-    }
-
-    public static String getImageFileEnding(String url) {
-        if (url.endsWith(PNG)) {
-            return PNG;
-        }
-        if (url.endsWith(JPG)) {
-            return JPG;
-        }
-        if (url.endsWith(JPEG)) {
-            return JPEG;
-        }
-        if (url.endsWith(WEBP)) {
-            return WEBP;
-        }
-        if (url.endsWith(GIF)) {
-            return GIF;
-        }
-
-        return PNG;
-    }
-
-    public static boolean showThumbnail(Link link) {
-        if (TextUtils.isEmpty(link.getUrl())) {
-            return false;
-        }
-        String domain = link.getDomain();
-        return domain.contains("gfycat") || domain.contains("imgur") || Reddit.placeImageUrl(link);
-    }
-
-    /**
-     * Sets link's URL to proper image format if applicable
-     *
-     * @param link to set URL
-     * @return try if link is single image file, false otherwise
-     */
-    public static boolean placeImageUrl(Link link) {
-
-        String url = link.getUrl();
-        if (!url.contains("http")) {
-            url += "http://";
-        }
-        // TODO: Add support for popular image domains
-        String domain = link.getDomain();
-        if (domain.contains("imgur")) {
-            if (url.contains(",")) {
-                return false;
-            }
-            else if (url.endsWith(Reddit.GIFV)) {
-                return false;
-            }
-            else if (url.contains(".com/gallery")) {
-                return false;
-            }
-            else if (url.contains(".com/a/")) {
-                return false;
-            }
-            else if (!Reddit.checkIsImage(url)) {
-                if (url.charAt(url.length() - 1) == '/') {
-                    url = url.substring(0, url.length() - 2);
-                }
-                url += ".jpg";
-            }
-        }
-
-        boolean isImage = Reddit.checkIsImage(url);
-        if (!isImage) {
-            return false;
-        }
-
-        link.setUrl(url);
-        return true;
-    }
-
-    public static String getImageHtml(String src) {
-        return "<html>" +
-                "<head>" +
-                "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1, minimum-scale=0.1\">" +
-                "<style>" +
-                "    img {" +
-                "        width:100%;" +
-                "    }" +
-                "    body {" +
-                "        margin:0px;" +
-                "    }" +
-                "</style>" +
-                "</head>" +
-                "<body>" +
-                "<img src=\"" + src + "\"/>" +
-                "</body>" +
-                "</html>";
-    }
-
-    public static String getImageHtmlForAlbum(String src, CharSequence title, CharSequence description, int textColor, int margin) {
-
-        String rgbText = "rgb(" + Color.red(textColor) + ", " + Color.green(textColor) + ", " + Color.blue(textColor) + ")";
-
-        String htmlTitle = TextUtils.isEmpty(title) ? "" : "<h2>" + title + "</h2>";
-        String htmlDescription = TextUtils.isEmpty(description) ? "" : "<p>" + Html.escapeHtml(description) + "</p>";
-
-        return "<html>" +
-                "<head>" +
-                "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1, minimum-scale=0.1\">" +
-                "<style>" +
-                "    img {" +
-                "        width:100%;" +
-                "    }" +
-                "    body {" +
-                "        color: " + rgbText + ";" +
-                "        margin:0px;" +
-                "    }" +
-                "    h2 {" +
-                "        margin-left:" + margin + "px;" +
-                "        margin-right:" + margin + "px;" +
-                "    }" +
-                "    p {" +
-                "        margin-left:" + margin + "px;" +
-                "        margin-right:" + margin + "px;" +
-                "        margin-bottom:" + margin + "px;" +
-                "    }" +
-                "</style>" +
-                "</head>" +
-                "<body>" +
-                "<img src=\"" + src + "\"/>" +
-                htmlTitle +
-                htmlDescription +
-                "</body>" +
-                "</html>";
     }
 
     public static CharSequence getFormattedHtml(String html) {

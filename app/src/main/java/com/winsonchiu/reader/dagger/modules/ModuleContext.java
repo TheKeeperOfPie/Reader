@@ -8,8 +8,7 @@ import android.accounts.AccountManager;
 import android.app.Application;
 import android.content.Context;
 
-import com.squareup.okhttp.OkHttpClient;
-import com.squareup.picasso.OkHttpDownloader;
+import com.jakewharton.picasso.OkHttp3Downloader;
 import com.squareup.picasso.Picasso;
 import com.winsonchiu.reader.BuildConfig;
 import com.winsonchiu.reader.CustomApplication;
@@ -18,6 +17,7 @@ import javax.inject.Singleton;
 
 import dagger.Module;
 import dagger.Provides;
+import okhttp3.OkHttpClient;
 
 /**
  * Created by TheKeeperOfPie on 12/12/2015.
@@ -53,7 +53,7 @@ public class ModuleContext {
     @Provides
     public Picasso providePicasso(Context context, OkHttpClient okHttpClient) {
         Picasso.Builder builder = new Picasso.Builder(context.getApplicationContext())
-                .downloader(new OkHttpDownloader(okHttpClient));
+                .downloader(new OkHttp3Downloader(okHttpClient));
         if (BuildConfig.DEBUG) {
 //            builder = builder.loggingEnabled(true);
         }

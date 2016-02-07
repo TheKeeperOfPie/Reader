@@ -24,7 +24,6 @@ import android.support.v4.app.NotificationManagerCompat;
 import android.util.Log;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.squareup.okhttp.OkHttpClient;
 import com.winsonchiu.reader.ActivityMain;
 import com.winsonchiu.reader.AppSettings;
 import com.winsonchiu.reader.CustomApplication;
@@ -41,6 +40,9 @@ import java.io.IOException;
 import java.util.ArrayList;
 
 import javax.inject.Inject;
+
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
 
 /**
  * Created by TheKeeperOfPie on 6/30/2015.
@@ -130,7 +132,7 @@ public class Receiver extends BroadcastReceiver {
                         Bundle bundle = futureAuth.getResult();
                         final String tokenAuth = bundle.getString(AccountManager.KEY_AUTHTOKEN);
 
-                        com.squareup.okhttp.Request request = new com.squareup.okhttp.Request.Builder()
+                        Request request = new Request.Builder()
                                 .url(Reddit.OAUTH_URL + "/message/unread")
                                 .header(Reddit.USER_AGENT, Reddit.CUSTOM_USER_AGENT)
                                 .header(Reddit.AUTHORIZATION, Reddit.BEARER + tokenAuth)

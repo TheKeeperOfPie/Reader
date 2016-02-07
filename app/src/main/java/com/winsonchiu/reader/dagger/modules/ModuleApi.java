@@ -6,13 +6,13 @@ package com.winsonchiu.reader.dagger.modules;
 
 import android.content.Context;
 
-import com.squareup.okhttp.OkHttpClient;
 import com.winsonchiu.reader.data.reddit.Reddit;
 
 import javax.inject.Singleton;
 
 import dagger.Module;
 import dagger.Provides;
+import okhttp3.OkHttpClient;
 
 /**
  * Created by TheKeeperOfPie on 12/12/2015.
@@ -29,7 +29,8 @@ public class ModuleApi {
     @Singleton
     @Provides
     public OkHttpClient provideOkHttpClient() {
-        return new OkHttpClient();
+        return new OkHttpClient.Builder()
+                .build();
     }
 
 }

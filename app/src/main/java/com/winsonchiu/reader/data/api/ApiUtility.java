@@ -2,8 +2,8 @@ package com.winsonchiu.reader.data.api;
 
 import com.winsonchiu.reader.data.reddit.Reddit;
 
-import retrofit.http.GET;
-import retrofit.http.Path;
+import retrofit2.http.GET;
+import retrofit2.http.Path;
 import rx.Observable;
 
 /**

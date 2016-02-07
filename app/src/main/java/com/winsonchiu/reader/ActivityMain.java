@@ -117,6 +117,7 @@ import com.winsonchiu.reader.utils.ImageDownload;
 import com.winsonchiu.reader.utils.ObserverEmpty;
 import com.winsonchiu.reader.utils.UtilsAnimation;
 import com.winsonchiu.reader.utils.UtilsColor;
+import com.winsonchiu.reader.utils.UtilsImage;
 import com.winsonchiu.reader.utils.UtilsReddit;
 import com.winsonchiu.reader.views.ScrollViewHeader;
 import com.winsonchiu.reader.views.WebViewFixed;
@@ -837,7 +838,7 @@ public class ActivityMain extends AppCompatActivity
                     Toast.makeText(this, R.string.need_permission_download_image, Toast.LENGTH_LONG).show();
                 }
                 else if (imageDownload != null){
-                    File destination = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES), "ReaderForReddit" + File.separator + imageDownload.getFileName() + Reddit.getImageFileEnding(imageDownload.getUrl()));
+                    File destination = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES), "ReaderForReddit" + File.separator + imageDownload.getFileName() + UtilsImage.getImageFileEnding(imageDownload.getUrl()));
 
                     DownloadManager.Request request = new DownloadManager.Request(Uri.parse(imageDownload.getUrl()));
                     request.setDestinationUri(Uri.fromFile(destination));
@@ -993,7 +994,7 @@ public class ActivityMain extends AppCompatActivity
 
                             for (Thing thing : listing.getChildren()) {
                                 Link link = (Link) thing;
-                                if (Reddit.checkIsImage(link.getUrl()) && !thing.getName()
+                                if (UtilsImage.checkIsImageUrl(link.getUrl()) && !thing.getName()
                                         .equals(nameCurrent)) {
                                     linkChosen = link;
                                     break;

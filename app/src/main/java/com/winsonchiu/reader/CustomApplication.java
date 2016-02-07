@@ -8,10 +8,12 @@ import android.app.Application;
 import android.content.Context;
 
 import com.crashlytics.android.Crashlytics;
+import com.facebook.stetho.Stetho;
 import com.squareup.leakcanary.LeakCanary;
 import com.squareup.leakcanary.RefWatcher;
 import com.winsonchiu.reader.dagger.components.ComponentMain;
 import com.winsonchiu.reader.dagger.components.DaggerComponentMain;
+
 import io.fabric.sdk.android.Fabric;
 
 /**
@@ -42,9 +44,10 @@ public class CustomApplication extends Application {
     @Override
     public void onCreate() {
         application = this;
-        refWatcher = LeakCanary.install(this);
         super.onCreate();
+        refWatcher = LeakCanary.install(this);
         Fabric.with(this, new Crashlytics());
+        Stetho.initializeWithDefaults(this);
         AppSettings.initPrefs(getApplicationContext());
     }
 }

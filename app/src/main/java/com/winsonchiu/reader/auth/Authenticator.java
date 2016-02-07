@@ -11,10 +11,6 @@ import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
 
-import com.squareup.okhttp.FormEncodingBuilder;
-import com.squareup.okhttp.OkHttpClient;
-import com.squareup.okhttp.Request;
-import com.squareup.okhttp.RequestBody;
 import com.winsonchiu.reader.CustomApplication;
 import com.winsonchiu.reader.R;
 import com.winsonchiu.reader.data.reddit.Reddit;
@@ -25,6 +21,11 @@ import org.json.JSONObject;
 import java.io.IOException;
 
 import javax.inject.Inject;
+
+import okhttp3.FormBody;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.RequestBody;
 
 /**
  * Created by TheKeeperOfPie on 8/6/2015.
@@ -80,7 +81,7 @@ public class Authenticator extends AbstractAccountAuthenticator {
 
         if (TextUtils.isEmpty(tokenAuth)|| System.currentTimeMillis() > timeExpire) {
             try {
-                RequestBody requestBody = new FormEncodingBuilder()
+                RequestBody requestBody = new FormBody.Builder()
                         .add(Reddit.QUERY_GRANT_TYPE, Reddit.QUERY_REFRESH_TOKEN)
                         .add(Reddit.QUERY_REFRESH_TOKEN, accountManager.getPassword(account))
                         .build();
@@ -90,7 +91,12 @@ public class Authenticator extends AbstractAccountAuthenticator {
                         .post(requestBody)
                         .build();
 
-                String responseNetwork = new OkHttpClient().newCall(request).execute().body().string();
+                String responseNetwork = new OkHttpClient.Builder()
+                        .build()
+                        .newCall(request)
+                        .execute()
+                        .body()
+                        .string();
 
                 JSONObject jsonObject = new JSONObject(responseNetwork);
                 tokenAuth = jsonObject.getString(Reddit.QUERY_ACCESS_TOKEN);

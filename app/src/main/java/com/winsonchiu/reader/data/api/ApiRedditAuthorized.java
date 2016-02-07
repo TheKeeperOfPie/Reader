@@ -6,11 +6,11 @@ package com.winsonchiu.reader.data.api;
 
 import com.winsonchiu.reader.data.reddit.Reddit;
 
-import retrofit.http.GET;
-import retrofit.http.POST;
-import retrofit.http.Path;
-import retrofit.http.Query;
-import retrofit.http.Url;
+import retrofit2.http.GET;
+import retrofit2.http.POST;
+import retrofit2.http.Path;
+import retrofit2.http.Query;
+import retrofit2.http.Url;
 import rx.Observable;
 
 /**

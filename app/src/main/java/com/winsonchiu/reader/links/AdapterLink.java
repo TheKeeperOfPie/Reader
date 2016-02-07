@@ -99,6 +99,7 @@ import com.winsonchiu.reader.utils.OnTouchListenerDisallow;
 import com.winsonchiu.reader.utils.RecyclerCallback;
 import com.winsonchiu.reader.utils.SimplePlayerStateChangeListener;
 import com.winsonchiu.reader.utils.UtilsAnimation;
+import com.winsonchiu.reader.utils.UtilsImage;
 import com.winsonchiu.reader.utils.YouTubeListener;
 import com.winsonchiu.reader.views.WebViewFixed;
 
@@ -576,11 +577,11 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             }
 
             itemDownloadImage.setVisible(
-                    Reddit.checkIsImage(link.getUrl()) || Reddit.placeImageUrl(link) && !link
-                            .getUrl().endsWith(Reddit.GIF));
+                    UtilsImage.checkIsImageUrl(link.getUrl()) || UtilsImage.placeImageUrl(link) && !link
+                            .getUrl().endsWith(UtilsImage.GIF));
             itemDownloadImage.setEnabled(
-                    Reddit.checkIsImage(link.getUrl()) || Reddit.placeImageUrl(link) && !link
-                            .getUrl().endsWith(Reddit.GIF));
+                    UtilsImage.checkIsImageUrl(link.getUrl()) || UtilsImage.placeImageUrl(link) && !link
+                            .getUrl().endsWith(UtilsImage.GIF));
 
             setToolbarMenuVisibility();
             clearOverlay();
@@ -1230,7 +1231,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
 
         public void attemptLoadImage() {
 
-            if (Reddit.placeImageUrl(link)) {
+            if (UtilsImage.placeImageUrl(link)) {
                 expandFull(true);
                 recyclerCallback.getLayoutManager().requestLayout();
                 itemView.invalidate();
@@ -1291,7 +1292,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                         webFull.post(new Runnable() {
                             @Override
                             public void run() {
-                                webFull.loadData(Reddit.getImageHtml(link.getUrl()),
+                                webFull.loadData(UtilsImage.getImageHtml(link.getUrl()),
                                         "text/html", "UTF-8");
                             }
                         });
@@ -1448,7 +1449,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                     setAlbum(link, link.getAlbum());
                 }
             }
-            else if (link.getUrl().contains(Reddit.GIFV)) {
+            else if (link.getUrl().contains(UtilsImage.GIFV)) {
                 loadGifv(Reddit.parseUrlId(link.getUrl(), Reddit.IMGUR_PREFIX, "."));
             }
             else {

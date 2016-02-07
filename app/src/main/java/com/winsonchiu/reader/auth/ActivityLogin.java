@@ -30,9 +30,6 @@ import android.widget.RelativeLayout;
 import android.widget.Toast;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.squareup.okhttp.FormEncodingBuilder;
-import com.squareup.okhttp.Request;
-import com.squareup.okhttp.RequestBody;
 import com.winsonchiu.reader.AppSettings;
 import com.winsonchiu.reader.CustomApplication;
 import com.winsonchiu.reader.R;
@@ -51,6 +48,9 @@ import java.util.UUID;
 
 import javax.inject.Inject;
 
+import okhttp3.FormBody;
+import okhttp3.Request;
+import okhttp3.RequestBody;
 import rx.Observable;
 import rx.functions.Func1;
 
@@ -168,7 +168,7 @@ public class ActivityLogin extends AccountAuthenticatorActivity {
     }
 
     private void fetchTokens(String code) {
-        RequestBody requestBody = new FormEncodingBuilder()
+        RequestBody requestBody = new FormBody.Builder()
                 .add(Reddit.QUERY_GRANT_TYPE, Reddit.CODE_GRANT)
                 .add(Reddit.QUERY_CODE, code)
                 .add(Reddit.QUERY_REDIRECT_URI, Reddit.REDIRECT_URI)

@@ -29,6 +29,7 @@ import com.winsonchiu.reader.data.reddit.Reddit;
 import com.winsonchiu.reader.utils.CustomColorFilter;
 import com.winsonchiu.reader.utils.DisallowListener;
 import com.winsonchiu.reader.utils.OnTouchListenerDisallow;
+import com.winsonchiu.reader.utils.UtilsImage;
 import com.winsonchiu.reader.views.WebViewFixed;
 
 import java.util.Stack;
@@ -142,7 +143,7 @@ public class AdapterAlbum extends PagerAdapter {
             @Override
             public void run() {
                 webView.loadData(
-                        Reddit.getImageHtmlForAlbum(image.getLink(), title, description, 0xFFFFFFFF,
+                        UtilsImage.getImageHtmlForAlbum(image.getLink(), title, description, 0xFFFFFFFF,
                                 margin), "text/html; charset=UTF-8", "UTF-8");
             }
         });

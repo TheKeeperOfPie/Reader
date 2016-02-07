@@ -3,8 +3,8 @@ package com.winsonchiu.reader.data;
 import com.winsonchiu.reader.data.api.ApiUtility;
 import com.winsonchiu.reader.data.retrofit.ConverterFactory;
 
-import retrofit.Retrofit;
-import retrofit.RxJavaCallAdapterFactory;
+import retrofit2.Retrofit;
+import retrofit2.adapter.rxjava.RxJavaCallAdapterFactory;
 
 /**
  * Created by TheKeeperOfPie on 12/6/2015.

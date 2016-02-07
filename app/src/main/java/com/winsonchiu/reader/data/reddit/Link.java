@@ -15,6 +15,10 @@ import com.winsonchiu.reader.data.imgur.Album;
 import com.winsonchiu.reader.utils.UtilsJson;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 
 import rx.Observable;
 import rx.functions.Func1;
@@ -54,6 +58,7 @@ public class Link extends Replyable implements Parcelable {
     private int numComments;
     private boolean over18;
     private String permalink = "";
+    private Preview preview = new Preview();
     private boolean saved;
     private int score;
     private CharSequence selfText = "";
@@ -127,6 +132,7 @@ public class Link extends Replyable implements Parcelable {
         link.setNumComments(UtilsJson.getInt(nodeData.get("num_comments")));
         link.setOver18(UtilsJson.getBoolean(nodeData.get("over_18")));
         link.setPermalink(UtilsJson.getString(nodeData.get("permalink")));
+        link.setPreview(Preview.fromJson(nodeData.get("preview")));
         link.setSaved(UtilsJson.getBoolean(nodeData.get("saved")));
         link.setScore(UtilsJson.getInt(nodeData.get("score")));
         link.setSelfText(Html.fromHtml(UtilsJson.getString(
@@ -307,6 +313,14 @@ public class Link extends Replyable implements Parcelable {
 
     public void setPermalink(String permalink) {
         this.permalink = permalink;
+    }
+
+    public Preview getPreview() {
+        return preview;
+    }
+
+    public void setPreview(Preview preview) {
+        this.preview = preview;
     }
 
     public boolean isSaved() {
@@ -623,4 +637,164 @@ public class Link extends Replyable implements Parcelable {
             return new Link[size];
         }
     };
+
+    public static class Preview {
+
+        private List<Image> images;
+
+        public static Preview fromJson(JsonNode nodeRoot) {
+            Preview preview = new Preview();
+
+            if (nodeRoot == null) {
+                return preview;
+            }
+
+            JsonNode nodeImages = nodeRoot.get("images");
+
+            if (nodeImages != null && nodeImages.isArray()) {
+                List<Image> images = new ArrayList<>(nodeImages.size());
+                for (JsonNode node : nodeImages) {
+                    images.add(Image.fromJson(node));
+                }
+                preview.setImages(images);
+            }
+
+            return preview;
+        }
+
+        public List<Image> getImages() {
+            return images;
+        }
+
+        public void setImages(List<Image> images) {
+            this.images = images;
+        }
+
+        public static class Image {
+
+            private Thumbnail source;
+            private List<Thumbnail> resolutions;
+            private List<Image> variants;
+            private Image nsfw;
+
+            public static Image fromJson(JsonNode nodeRoot) {
+                Image image = new Image();
+                image.setSource(Thumbnail.fromJson(nodeRoot.get("source")));
+
+                JsonNode nodeResolutions = nodeRoot.get("resolutions");
+
+                if (nodeResolutions != null && nodeResolutions.isArray()) {
+                    List<Thumbnail> resolutions = new ArrayList<>(nodeResolutions.size());
+                    for (JsonNode node : nodeResolutions) {
+                        resolutions.add(Thumbnail.fromJson(node));
+                    }
+                    Collections.sort(resolutions, new Comparator<Thumbnail>() {
+                        @Override
+                        public int compare(Thumbnail lhs, Thumbnail rhs) {
+                            int resolutionFirst = lhs.getWidth() * lhs.getHeight();
+                            int resolutionSecond = rhs.getWidth() * rhs.getHeight();
+
+                            return resolutionFirst < resolutionSecond ? -1 : (resolutionFirst == resolutionSecond ? 0 : 1);
+                        }
+                    });
+                    image.setResolutions(resolutions);
+                }
+
+                JsonNode nodeVariants = nodeRoot.get("variants");
+
+                if (nodeVariants != null) {
+                    if (nodeVariants.isArray()) {
+                        List<Image> variants = new ArrayList<>(nodeVariants.size());
+                        for (JsonNode node : nodeVariants) {
+                            variants.add(Image.fromJson(node));
+                        }
+                        image.setVariants(variants);
+                    }
+                    else {
+                        JsonNode nodeNsfw = nodeVariants.get("nsfw");
+                        if (nodeNsfw != null) {
+                            image.setNsfw(Image.fromJson(nodeNsfw));
+                        }
+                    }
+                }
+
+                return image;
+            }
+
+            public Thumbnail getSource() {
+                return source;
+            }
+
+            public void setSource(Thumbnail source) {
+                this.source = source;
+            }
+
+            public List<Thumbnail> getResolutions() {
+                return resolutions;
+            }
+
+            public void setResolutions(List<Thumbnail> resolutions) {
+                this.resolutions = resolutions;
+            }
+
+            public List<Image> getVariants() {
+                return variants;
+            }
+
+            public void setVariants(List<Image> variants) {
+                this.variants = variants;
+            }
+
+            public Image getNsfw() {
+                return nsfw;
+            }
+
+            public void setNsfw(Image nsfw) {
+                this.nsfw = nsfw;
+            }
+
+            public static class Thumbnail {
+                private String url;
+                private int width;
+                private int height;
+
+                public static Thumbnail fromJson(JsonNode nodeRoot) {
+                    Thumbnail thumbnail = new Thumbnail();
+
+                    thumbnail.setUrl(UtilsJson.getString(nodeRoot.get("url")));
+                    thumbnail.setWidth(UtilsJson.getInt(nodeRoot.get("width")));
+                    thumbnail.setHeight(UtilsJson.getInt(nodeRoot.get("height")));
+
+                    return thumbnail;
+                }
+
+                public String getUrl() {
+                    return url;
+                }
+
+                public void setUrl(String url) {
+                    this.url = url;
+                }
+
+                public int getWidth() {
+                    return width;
+                }
+
+                public void setWidth(int width) {
+                    this.width = width;
+                }
+
+                public int getHeight() {
+                    return height;
+                }
+
+                public void setHeight(int height) {
+                    this.height = height;
+                }
+            }
+
+        }
+
+    }
+
 }

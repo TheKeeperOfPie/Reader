@@ -1164,13 +1164,13 @@ public class FragmentComments extends FragmentBase
     @Override
     public void onDetach() {
         mListener = null;
+        releaseYouTube();
         super.onDetach();
     }
 
     @Override
     public void onDestroy() {
         super.onDestroy();
-        releaseYouTube();
         CustomApplication.getRefWatcher(getActivity()).watch(this);
     }
 

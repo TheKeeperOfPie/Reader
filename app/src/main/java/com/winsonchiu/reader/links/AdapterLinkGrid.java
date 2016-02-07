@@ -37,6 +37,7 @@ import com.winsonchiu.reader.utils.DisallowListener;
 import com.winsonchiu.reader.utils.RecyclerCallback;
 import com.winsonchiu.reader.utils.UtilsAnimation;
 import com.winsonchiu.reader.utils.UtilsColor;
+import com.winsonchiu.reader.utils.UtilsImage;
 
 import java.util.ArrayList;
 
@@ -227,7 +228,7 @@ public class AdapterLinkGrid extends AdapterLink {
                 imageThumbnail.setImageDrawable(drawableDefault);
                 imageThumbnail.setVisibility(View.VISIBLE);
             }
-            else if (Reddit.showThumbnail(link)) {
+            else if (UtilsImage.showThumbnail(link)) {
                 loadThumbnail(link, position);
                 return;
             }
@@ -303,54 +304,41 @@ public class AdapterLinkGrid extends AdapterLink {
             picasso.load(android.R.color.transparent)
                     .into(imageFull);
 
-//            Reddit.loadGlide(itemView.getContext())
-//                    .load(android.R.color.transparent)
-//                    .into(imageFull);
-
             if (TextUtils.isEmpty(link.getThumbnail()) || Reddit.NSFW.equals(link.getThumbnail())) {
-                if (Reddit.placeImageUrl(
-                        link) && position == getAdapterPosition()) {
+                if (UtilsImage.placeImageUrl(link) && position == getAdapterPosition()) {
                     int size = getAdjustedThumbnailSize();
 
                     picasso.load(link.getUrl())
                             .tag(TAG_PICASSO)
                             .resize(size, size)
                             .centerCrop()
-                            .into(imageFull, new Callback() {
-                                @Override
-                                public void onSuccess() {
-                                    loadBackgroundColor();
-                                    progressImage.setVisibility(
-                                            View.GONE);
-                                }
+                            .into(imageFull,
+                                    new Callback() {
+                                        @Override
+                                        public void onSuccess() {
+                                            loadBackgroundColor();
 
-                                @Override
-                                public void onError() {
+                                            if (position == getAdapterPosition()) {
+                                                if (link.getDomain().contains("imgur") && (link
+                                                        .getUrl()
+                                                        .contains(Reddit.IMGUR_PREFIX_ALBUM) || link
+                                                        .getUrl()
+                                                        .contains(Reddit.IMGUR_PREFIX_GALLERY))) {
+                                                    imagePlay.setImageResource(
+                                                            R.drawable.ic_photo_album_white_48dp);
+                                                    imagePlay.setColorFilter(colorFilterMenuItem);
+                                                    imagePlay.setVisibility(View.VISIBLE);
+                                                }
+                                            }
 
-                                }
-                            });
+                                            progressImage.setVisibility(View.GONE);
+                                        }
 
-//                    Reddit.loadGlide(itemView.getContext())
-//                            .load(link.getUrl())
-//                            .asBitmap()
-//                            .override(size, size)
-//                            .centerCrop()
-//                            .into(new BitmapImageViewTarget(imageFull) {
-//                                @Override
-//                                public void onLoadFailed(Exception e, Drawable errorDrawable) {
-//                                    super.onLoadFailed(e, errorDrawable);
-//                                    progressImage.setVisibility(
-//                                            View.GONE);
-//                                }
-//
-//                                @Override
-//                                public void onResourceReady(Bitmap resource, GlideAnimation<? super Bitmap> glideAnimation) {
-//                                    super.onResourceReady(resource, glideAnimation);
-//                                    loadBackgroundColor(resource);
-//                                    progressImage.setVisibility(
-//                                            View.GONE);
-//                                }
-//                            });
+                                        @Override
+                                        public void onError() {
+                                            progressImage.setVisibility(View.GONE);
+                                        }
+                                    });
                 }
                 else {
                     imageFull.setVisibility(View.GONE);
@@ -375,7 +363,7 @@ public class AdapterLinkGrid extends AdapterLink {
                                         loadBackgroundColor();
 
                                         if (position == getAdapterPosition()) {
-                                            if (Reddit.placeImageUrl(link)) {
+                                            if (UtilsImage.placeImageUrl(link)) {
                                                 int size = getAdjustedThumbnailSize();
                                                 picasso.load(link.getUrl())
                                                         .tag(TAG_PICASSO)
@@ -390,7 +378,8 @@ public class AdapterLinkGrid extends AdapterLink {
 
                                                             @Override
                                                             public void onError() {
-
+                                                                progressImage.setVisibility(
+                                                                        View.GONE);
                                                             }
                                                         });
 
@@ -421,76 +410,6 @@ public class AdapterLinkGrid extends AdapterLink {
                                         progressImage.setVisibility(View.GONE);
                                     }
                                 });
-
-//                Reddit.loadGlide(itemView.getContext())
-//                        .load(link.getThumbnail())
-//                        .asBitmap()
-//                        .into(new BitmapImageViewTarget(imageFull) {
-//
-//                            @Override
-//                            public void onLoadFailed(Exception e, Drawable errorDrawable) {
-//                                super.onLoadFailed(e, errorDrawable);
-//                                progressImage.setVisibility(View.GONE);
-//                            }
-//
-//                            @Override
-//                            public void onResourceReady(Bitmap resource, GlideAnimation<? super Bitmap> glideAnimation) {
-//                                super.onResourceReady(resource, glideAnimation);
-//                                loadBackgroundColor(resource);
-//
-//                                if (position == getAdapterPosition()) {
-//                                    if (Reddit.placeImageUrl(link)) {
-//
-//                                        if (!link.getUrl().endsWith(Reddit.GIF)) {
-//                                            Reddit.loadGlide(itemView.getContext())
-//                                                    .load(android.R.color.transparent)
-//                                                    .into(imageFull);
-//                                        }
-//
-//                                        int size = getAdjustedThumbnailSize();
-//                                        Reddit.loadGlide(itemView.getContext())
-//                                                .load(link.getUrl())
-//                                                .override(size, size)
-//                                                .centerCrop()
-//                                                .listener(new RequestListener<String, GlideDrawable>() {
-//                                                    @Override
-//                                                    public boolean onException(Exception e, String model, Target<GlideDrawable> target, boolean isFirstResource) {
-//                                                        progressImage.setVisibility(
-//                                                                View.GONE);
-//                                                        return false;
-//                                                    }
-//
-//                                                    @Override
-//                                                    public boolean onResourceReady(GlideDrawable resource, String model, Target<GlideDrawable> target, boolean isFromMemoryCache, boolean isFirstResource) {
-//                                                        progressImage.setVisibility(
-//                                                                View.GONE);
-//                                                        return false;
-//                                                    }
-//                                                })
-//                                                .into(imageFull);
-//
-//                                    }
-//                                    else {
-//                                        if (link.getDomain().contains("imgur") && (link
-//                                                .getUrl()
-//                                                .contains(Reddit.IMGUR_PREFIX_ALBUM) || link
-//                                                .getUrl()
-//                                                .contains(Reddit.IMGUR_PREFIX_GALLERY))) {
-//                                            imagePlay.setImageResource(
-//                                                    R.drawable.ic_photo_album_white_48dp);
-//                                        }
-//                                        else {
-//                                            imagePlay.setImageResource(
-//                                                    R.drawable.ic_play_circle_outline_white_48dp);
-//                                        }
-//
-//                                        imagePlay.setColorFilter(colorFilterMenuItem);
-//                                        imagePlay.setVisibility(View.VISIBLE);
-//                                        progressImage.setVisibility(View.GONE);
-//                                    }
-//                                }
-//                            }
-//                        });
             }
 
         }

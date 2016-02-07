@@ -1,0 +1,168 @@
+/*
+ * Copyright 2015 Winson Chiu
+ */
+
+package com.winsonchiu.reader.utils;
+
+import android.graphics.Color;
+import android.net.Uri;
+import android.text.Html;
+import android.text.TextUtils;
+import android.webkit.URLUtil;
+
+import com.winsonchiu.reader.data.reddit.Link;
+
+/**
+ * Created by TheKeeperOfPie on 2/6/2016.
+ */
+public class UtilsImage {
+
+    public static final String GIFV = ".gifv";
+    public static final String GIF = ".gif";
+    public static final String PNG = ".png";
+    public static final String JPG = ".jpg";
+    public static final String JPEG = ".jpeg";
+    public static final String WEBP = ".webp";
+
+    public static boolean checkIsImageUrl(String url) {
+        if (URLUtil.isNetworkUrl(url)) {
+            return endsWithImageMarker(Uri.parse(url).getPath());
+        }
+
+        return endsWithImageMarker(url);
+    }
+
+    public static boolean endsWithImageMarker(String url) {
+        return url.endsWith(GIF) || url.endsWith(PNG) || url.endsWith(JPG)
+                || url.endsWith(JPEG) || url.endsWith(WEBP);
+    }
+
+    public static String getImageFileEnding(String url) {
+        if (url.endsWith(PNG)) {
+            return PNG;
+        }
+        if (url.endsWith(JPG)) {
+            return JPG;
+        }
+        if (url.endsWith(JPEG)) {
+            return JPEG;
+        }
+        if (url.endsWith(WEBP)) {
+            return WEBP;
+        }
+        if (url.endsWith(GIF)) {
+            return GIF;
+        }
+
+        return PNG;
+    }
+
+    public static boolean showThumbnail(Link link) {
+        if (TextUtils.isEmpty(link.getUrl())) {
+            return false;
+        }
+        String domain = link.getDomain();
+        return domain.contains("gfycat") || domain.contains("imgur") || placeImageUrl(link);
+    }
+
+    /**
+     * Sets link's URL to proper image format if applicable
+     *
+     * @param link to set URL
+     * @return true if link is single image file, false otherwise
+     */
+    public static boolean placeImageUrl(Link link) {
+
+        String url = link.getUrl();
+        if (!url.contains("http")) {
+            url += "http://";
+        }
+        // TODO: Add support for popular image domains
+        String domain = link.getDomain();
+        if (domain.contains("imgur")) {
+            if (url.contains(",")) {
+                return false;
+            }
+            else if (url.endsWith(GIFV)) {
+                return false;
+            }
+            else if (url.contains(".com/gallery")) {
+                return false;
+            }
+            else if (url.contains(".com/a/")) {
+                return false;
+            }
+            else if (!checkIsImageUrl(url)) {
+                if (url.charAt(url.length() - 1) == '/') {
+                    url = url.substring(0, url.length() - 2);
+                }
+                url += ".jpg";
+            }
+        }
+
+        boolean isImage = checkIsImageUrl(url);
+        if (!isImage) {
+            return false;
+        }
+
+        link.setUrl(url);
+        return true;
+    }
+
+    public static String getImageHtml(String src) {
+        return "<html>" +
+                "<head>" +
+                "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1, minimum-scale=0.1\">" +
+                "<style>" +
+                "    img {" +
+                "        width:100%;" +
+                "    }" +
+                "    body {" +
+                "        margin:0px;" +
+                "    }" +
+                "</style>" +
+                "</head>" +
+                "<body>" +
+                "<img src=\"" + src + "\"/>" +
+                "</body>" +
+                "</html>";
+    }
+
+    public static String getImageHtmlForAlbum(String src, CharSequence title, CharSequence description, int textColor, int margin) {
+
+        String rgbText = "rgb(" + Color.red(textColor) + ", " + Color.green(textColor) + ", " + Color.blue(textColor) + ")";
+
+        String htmlTitle = TextUtils.isEmpty(title) ? "" : "<h2>" + title + "</h2>";
+        String htmlDescription = TextUtils.isEmpty(description) ? "" : "<p>" + Html.escapeHtml(description) + "</p>";
+
+        return "<html>" +
+                "<head>" +
+                "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1, minimum-scale=0.1\">" +
+                "<style>" +
+                "    img {" +
+                "        width:100%;" +
+                "    }" +
+                "    body {" +
+                "        color: " + rgbText + ";" +
+                "        margin:0px;" +
+                "    }" +
+                "    h2 {" +
+                "        margin-left:" + margin + "px;" +
+                "        margin-right:" + margin + "px;" +
+                "    }" +
+                "    p {" +
+                "        margin-left:" + margin + "px;" +
+                "        margin-right:" + margin + "px;" +
+                "        margin-bottom:" + margin + "px;" +
+                "    }" +
+                "</style>" +
+                "</head>" +
+                "<body>" +
+                "<img src=\"" + src + "\"/>" +
+                htmlTitle +
+                htmlDescription +
+                "</body>" +
+                "</html>";
+    }
+
+}
