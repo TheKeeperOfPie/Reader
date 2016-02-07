@@ -403,6 +403,19 @@ public class Reddit {
             Integer context,
             Integer depth,
             Integer limit) {
+        if (TextUtils.isEmpty(subreddit)) {
+            return apiRedditAuthorized.comments(id,
+                    comment,
+                    sort,
+                    showMore,
+                    showEdits,
+                    context,
+                    depth,
+                    limit)
+                    .compose(TRANSFORMER)
+                    .flatMap(Link.COMMENTS);
+        }
+
         return apiRedditAuthorized.comments(
                 subreddit,
                 id,

@@ -33,14 +33,24 @@ public interface ApiRedditAuthorized {
 
     @GET("/r/{subreddit}/comments/{id}")
     Observable<String> comments(@Path("subreddit") String subreddit,
-                                @Path("id") String id,
-                                @Query("comment") String comment,
-                                @Query("sort") String sort,
-                                @Query("showmore") Boolean showMore,
-                                @Query("showedits") Boolean showEdits,
-                                @Query("context") Integer context,
-                                @Query("depth") Integer depth,
-                                @Query("limit") Integer limit);
+            @Path("id") String id,
+            @Query("comment") String comment,
+            @Query("sort") String sort,
+            @Query("showmore") Boolean showMore,
+            @Query("showedits") Boolean showEdits,
+            @Query("context") Integer context,
+            @Query("depth") Integer depth,
+            @Query("limit") Integer limit);
+
+    @GET("/comments/{id}")
+    Observable<String> comments(@Path("id") String id,
+            @Query("comment") String comment,
+            @Query("sort") String sort,
+            @Query("showmore") Boolean showMore,
+            @Query("showedits") Boolean showEdits,
+            @Query("context") Integer context,
+            @Query("depth") Integer depth,
+            @Query("limit") Integer limit);
 
     @POST("/api/morechildren" +
             "?api_type=json")

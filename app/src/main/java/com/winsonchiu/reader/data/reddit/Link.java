@@ -688,6 +688,7 @@ public class Link extends Replyable implements Parcelable {
                     for (JsonNode node : nodeResolutions) {
                         resolutions.add(Thumbnail.fromJson(node));
                     }
+
                     Collections.sort(resolutions, new Comparator<Thumbnail>() {
                         @Override
                         public int compare(Thumbnail lhs, Thumbnail rhs) {
@@ -697,6 +698,7 @@ public class Link extends Replyable implements Parcelable {
                             return resolutionFirst < resolutionSecond ? -1 : (resolutionFirst == resolutionSecond ? 0 : 1);
                         }
                     });
+
                     image.setResolutions(resolutions);
                 }
 

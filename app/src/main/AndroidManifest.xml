@@ -23,14 +23,6 @@
         android:supportsRtl="true"
         >
 
-        <!--<meta-data-->
-            <!--android:name="com.bumptech.glide.integration.okhttp.OkHttpGlideModule"-->
-            <!--android:value="GlideModule" />-->
-
-        <!--<meta-data-->
-            <!--android:name="com.winsonchiu.reader.GlideModule"-->
-            <!--android:value="GlideModule" />-->
-
         <meta-data
             android:name="io.fabric.ApiKey"
             android:value="ffde8327e4ffacbe347101a90afc33a9fec234cb" />

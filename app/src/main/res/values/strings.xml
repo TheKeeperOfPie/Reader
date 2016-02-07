@@ -64,6 +64,7 @@
     <string name="search_in_page">Search in page</string>
     <string name="content_description_button_open">Open</string>
     <string name="home">Home</string>
+    <string name="front_page">Front Page</string>
     <string name="profile">Profile</string>
     <string name="inbox">Inbox</string>
     <string name="settings">Settings</string>

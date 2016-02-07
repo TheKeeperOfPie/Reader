@@ -13,12 +13,12 @@ import android.text.util.Linkify;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.webkit.URLUtil;
 
 import com.winsonchiu.reader.AppSettings;
 import com.winsonchiu.reader.R;
 import com.winsonchiu.reader.comments.Source;
 import com.winsonchiu.reader.data.reddit.Link;
-import com.winsonchiu.reader.data.reddit.Reddit;
 import com.winsonchiu.reader.utils.CallbackYouTubeDestruction;
 import com.winsonchiu.reader.utils.DisallowListener;
 import com.winsonchiu.reader.utils.RecyclerCallback;
@@ -121,13 +121,14 @@ public class AdapterLinkList extends AdapterLink {
 
             Drawable drawable = UtilsImage.getDrawableForLink(itemView.getContext(), link);
             if (drawable == null) {
-                if (TextUtils.isEmpty(link.getThumbnail()) || !preferences.getBoolean(AppSettings.PREF_SHOW_THUMBNAILS, true) || (link.isOver18() && !preferences.getBoolean(AppSettings.PREF_NSFW_THUMBNAILS, true)) || Reddit.NSFW.equals(link.getThumbnail())) {
+                String thumbnail = UtilsImage.parseThumbnail(link);
+                if (!URLUtil.isNetworkUrl(thumbnail) || !preferences.getBoolean(AppSettings.PREF_SHOW_THUMBNAILS, true) || (link.isOver18() && !preferences.getBoolean(AppSettings.PREF_NSFW_THUMBNAILS, true))) {
                     imageThumbnail.setColorFilter(colorFilterIconDefault);
                     imageThumbnail.setImageDrawable(drawableDefault);
                 }
                 else {
                     imageThumbnail.clearColorFilter();
-                    picasso.load(link.getThumbnail())
+                    picasso.load(thumbnail)
                             .into(imageThumbnail);
                 }
             }

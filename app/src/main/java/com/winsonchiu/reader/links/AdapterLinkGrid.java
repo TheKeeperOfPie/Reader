@@ -18,7 +18,6 @@ import android.support.v7.widget.StaggeredGridLayoutManager;
 import android.text.TextUtils;
 import android.text.util.Linkify;
 import android.util.DisplayMetrics;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.View;
@@ -234,23 +233,22 @@ public class AdapterLinkGrid extends AdapterLink {
                 loadThumbnail(link, position);
                 return;
             }
-            else if (!TextUtils.isEmpty(link.getThumbnail()) && !Reddit.NSFW.equals(link.getThumbnail())) {
-                imageFull.setVisibility(View.GONE);
-                imageThumbnail.clearColorFilter();
-                imageThumbnail.setVisibility(View.VISIBLE);
-                picasso.load(link.getThumbnail())
-                        .tag(TAG_PICASSO)
-                        .into(imageThumbnail);
-
-//                Reddit.loadGlide(itemView.getContext())
-//                        .load(link.getThumbnail())
-//                        .into(imageThumbnail);
-            }
             else {
-                imageFull.setVisibility(View.GONE);
-                imageThumbnail.setColorFilter(colorFilterIconDefault);
-                imageThumbnail.setImageDrawable(drawableDefault);
-                imageThumbnail.setVisibility(View.VISIBLE);
+                String thumbnail = UtilsImage.parseThumbnail(link);
+                if (URLUtil.isNetworkUrl(thumbnail)) {
+                    imageFull.setVisibility(View.GONE);
+                    imageThumbnail.clearColorFilter();
+                    imageThumbnail.setVisibility(View.VISIBLE);
+                    picasso.load(thumbnail)
+                            .tag(TAG_PICASSO)
+                            .into(imageThumbnail);
+                }
+                else {
+                    imageFull.setVisibility(View.GONE);
+                    imageThumbnail.setColorFilter(colorFilterIconDefault);
+                    imageThumbnail.setImageDrawable(drawableDefault);
+                    imageThumbnail.setVisibility(View.VISIBLE);
+                }
             }
 
             ((RelativeLayout.LayoutParams) textThreadTitle.getLayoutParams()).removeRule(
@@ -303,18 +301,16 @@ public class AdapterLinkGrid extends AdapterLink {
                     RelativeLayout.START_OF, buttonComments.getId());
             ((RelativeLayout.LayoutParams) textThreadTitle.getLayoutParams()).setMarginEnd(0);
 
-            picasso.load(android.R.color.transparent)
-                    .into(imageFull);
+            picasso.cancelRequest(imageFull);
+            imageFull.setImageDrawable(null);
 
             final int size = getAdjustedThumbnailSize();
 
-            String thumbnail = UtilsImage.parseThumbnailForWidth(link, size);
-
-            Log.d(TAG, "loadThumbnail() called with: " + "thumbnail = [" + thumbnail + "]");
+            String thumbnail = UtilsImage.parseThumbnail(link);
 
             if (!TextUtils.isEmpty(thumbnail)) {
                 if (URLUtil.isNetworkUrl(thumbnail)) {
-                    picasso.load(link.getThumbnail())
+                    picasso.load(thumbnail)
                             .tag(TAG_PICASSO)
                             .into(imageFull,
                                     new Callback() {

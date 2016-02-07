@@ -30,13 +30,11 @@ public class UtilsImage {
     public static final String WEBP = ".webp";
 
     public static Drawable getDrawableForLink(Context context, Link link) {
-        String thumbnail = link.getThumbnail();
-
         if (link.isSelf()) {
             return context.getResources().getDrawable(R.drawable.ic_chat_white_48dp);
         }
 
-        if (Reddit.DEFAULT.equals(thumbnail)) {
+        if (Reddit.DEFAULT.equals(link.getThumbnail())) {
             return context.getResources().getDrawable(R.drawable.ic_web_white_48dp);
         }
 
@@ -44,10 +42,14 @@ public class UtilsImage {
     }
 
     @Nullable
-    public static String parseThumbnailForWidth(Link link, int width) {
+    public static String parseThumbnail(Link link) {
+        if (URLUtil.isNetworkUrl(link.getThumbnail())) {
+            return link.getThumbnail();
+        }
+
         for (Link.Preview.Image image : link.getPreview().getImages()) {
             for (Link.Preview.Image.Thumbnail thumbnail : image.getResolutions()) {
-                if (thumbnail.getWidth() > width && URLUtil.isNetworkUrl(thumbnail.getUrl())) {
+                if (URLUtil.isNetworkUrl(thumbnail.getUrl())) {
                     return thumbnail.getUrl();
                 }
             }
@@ -58,7 +60,7 @@ public class UtilsImage {
             }
         }
 
-        return link.getThumbnail();
+        return null;
     }
 
     public static boolean checkIsImageUrl(String url) {

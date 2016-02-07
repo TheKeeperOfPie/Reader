@@ -7,6 +7,7 @@ package com.winsonchiu.reader.settings;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.preference.Preference;
+import android.text.TextUtils;
 import android.widget.Toast;
 
 import com.winsonchiu.reader.AppSettings;
@@ -53,7 +54,24 @@ public class FragmentBehavior extends FragmentPreferences
                 });
         preferenceHistorySize.getOnPreferenceChangeListener().onPreferenceChange(preferenceHistorySize, preferences.getString(AppSettings.PREF_HISTORY_SIZE, "5000"));
 
-        bindPreferenceListenerSummary(findPreference(AppSettings.PREF_HOME_SUBREDDIT));
+        Preference preferenceHomeSubreddit = findPreference(AppSettings.PREF_HOME_SUBREDDIT);
+
+        preferenceHomeSubreddit.setOnPreferenceChangeListener(
+                new Preference.OnPreferenceChangeListener() {
+                    @Override
+                    public boolean onPreferenceChange(Preference preference, Object newValue) {
+                        String summary = String.valueOf(newValue);
+
+                        if (TextUtils.isEmpty(summary)) {
+                            preference.setSummary(R.string.pref_home_subreddit_summary);
+                        }
+                        else {
+                            preference.setSummary(summary);
+                        }
+                        return true;
+                    }
+                });
+        preferenceHomeSubreddit.getOnPreferenceChangeListener().onPreferenceChange(preferenceHomeSubreddit, preferences.getString(AppSettings.PREF_HOME_SUBREDDIT, ""));
     }
 
 }

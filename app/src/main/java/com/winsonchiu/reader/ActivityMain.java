@@ -144,7 +144,7 @@ import rx.schedulers.Schedulers;
 
 
 public class ActivityMain extends AppCompatActivity
-        implements FragmentListenerBase {
+        implements FragmentListenerBase, SharedPreferences.OnSharedPreferenceChangeListener {
 
     private static final String TAG = ActivityMain.class.getCanonicalName();
 
@@ -763,13 +763,11 @@ public class ActivityMain extends AppCompatActivity
                 }
                 else {
                     Log.d(TAG, "Not valid URL: " + urlString);
-                    loadHomeSubreddit();
                     selectNavigationItem(getIntent().getIntExtra(NAV_ID, R.id.item_home), getIntent().getStringExtra(
                             NAV_PAGE), false);
                 }
             }
             else {
-                loadHomeSubreddit();
                 selectNavigationItem(getIntent().getIntExtra(NAV_ID, R.id.item_home), getIntent().getStringExtra(
                         NAV_PAGE), false);
             }
@@ -949,6 +947,14 @@ public class ActivityMain extends AppCompatActivity
         });
 
         loadHeaderImage(false);
+    }
+
+    private void calculateShowFrontPage() {
+        boolean showFrontPage = !TextUtils.isEmpty(sharedPreferences.getString(AppSettings.PREF_HOME_SUBREDDIT, null));
+
+        MenuItem itemFrontPage = viewNavigation.getMenu().findItem(R.id.item_front_page);
+        itemFrontPage.setVisible(showFrontPage);
+        itemFrontPage.setEnabled(showFrontPage);
     }
 
     private void loadHeaderImage(boolean force) {
@@ -1302,7 +1308,6 @@ public class ActivityMain extends AppCompatActivity
             case R.id.item_home:
                 fragmentThreadList = (FragmentBase) getSupportFragmentManager().findFragmentByTag(FragmentThreadList.TAG);
                 if (fragmentThreadList != null) {
-                    controllerLinks.loadFrontPage(Sort.HOT, false);
                     fragmentThreadList.onHiddenChanged(false);
                 }
                 else {
@@ -1310,6 +1315,11 @@ public class ActivityMain extends AppCompatActivity
                             FragmentThreadList.newInstance(),
                             FragmentThreadList.TAG);
                 }
+
+                loadHomeSubreddit();
+                break;
+            case R.id.item_front_page:
+                controllerLinks.loadFrontPage(Sort.HOT, false);
                 break;
             case R.id.item_history:
                 controllerHistory.reload();
@@ -1857,7 +1867,15 @@ public class ActivityMain extends AppCompatActivity
     }
 
     @Override
+    protected void onStart() {
+        super.onStart();
+        sharedPreferences.registerOnSharedPreferenceChangeListener(this);
+        calculateShowFrontPage();
+    }
+
+    @Override
     protected void onStop() {
+        sharedPreferences.unregisterOnSharedPreferenceChangeListener(this);
         if (isTaskRoot()) {
             historian.saveToFile(this);
         }
@@ -1872,5 +1890,14 @@ public class ActivityMain extends AppCompatActivity
 
     public ComponentActivity getComponentActivity() {
         return componentActivity;
+    }
+
+    @Override
+    public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
+        switch (key) {
+            case AppSettings.PREF_HOME_SUBREDDIT:
+                calculateShowFrontPage();
+                break;
+        }
     }
 }
