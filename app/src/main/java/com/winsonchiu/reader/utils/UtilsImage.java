@@ -4,13 +4,18 @@
 
 package com.winsonchiu.reader.utils;
 
+import android.content.Context;
 import android.graphics.Color;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
+import android.support.annotation.Nullable;
 import android.text.Html;
 import android.text.TextUtils;
 import android.webkit.URLUtil;
 
+import com.winsonchiu.reader.R;
 import com.winsonchiu.reader.data.reddit.Link;
+import com.winsonchiu.reader.data.reddit.Reddit;
 
 /**
  * Created by TheKeeperOfPie on 2/6/2016.
@@ -23,6 +28,38 @@ public class UtilsImage {
     public static final String JPG = ".jpg";
     public static final String JPEG = ".jpeg";
     public static final String WEBP = ".webp";
+
+    public static Drawable getDrawableForLink(Context context, Link link) {
+        String thumbnail = link.getThumbnail();
+
+        if (link.isSelf()) {
+            return context.getResources().getDrawable(R.drawable.ic_chat_white_48dp);
+        }
+
+        if (Reddit.DEFAULT.equals(thumbnail)) {
+            return context.getResources().getDrawable(R.drawable.ic_web_white_48dp);
+        }
+
+        return null;
+    }
+
+    @Nullable
+    public static String parseThumbnailForWidth(Link link, int width) {
+        for (Link.Preview.Image image : link.getPreview().getImages()) {
+            for (Link.Preview.Image.Thumbnail thumbnail : image.getResolutions()) {
+                if (thumbnail.getWidth() > width && URLUtil.isNetworkUrl(thumbnail.getUrl())) {
+                    return thumbnail.getUrl();
+                }
+            }
+
+            Link.Preview.Image.Thumbnail source = image.getSource();
+            if (source != null && URLUtil.isNetworkUrl(source.getUrl())) {
+                return source.getUrl();
+            }
+        }
+
+        return link.getThumbnail();
+    }
 
     public static boolean checkIsImageUrl(String url) {
         if (URLUtil.isNetworkUrl(url)) {

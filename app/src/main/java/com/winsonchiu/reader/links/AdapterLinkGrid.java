@@ -18,10 +18,12 @@ import android.support.v7.widget.StaggeredGridLayoutManager;
 import android.text.TextUtils;
 import android.text.util.Linkify;
 import android.util.DisplayMetrics;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.View;
 import android.view.ViewGroup;
+import android.webkit.URLUtil;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
 
@@ -213,7 +215,7 @@ public class AdapterLinkGrid extends AdapterLink {
 
             imagePlay.setVisibility(View.GONE);
 
-            Drawable drawable = Reddit.getDrawableForLink(itemView.getContext(), link);
+            Drawable drawable = UtilsImage.getDrawableForLink(itemView.getContext(), link);
             if (drawable != null) {
                 imageFull.setVisibility(View.GONE);
                 imageThumbnail.setColorFilter(colorFilterIconDefault);
@@ -304,10 +306,70 @@ public class AdapterLinkGrid extends AdapterLink {
             picasso.load(android.R.color.transparent)
                     .into(imageFull);
 
-            if (TextUtils.isEmpty(link.getThumbnail()) || Reddit.NSFW.equals(link.getThumbnail())) {
-                if (UtilsImage.placeImageUrl(link) && position == getAdapterPosition()) {
-                    int size = getAdjustedThumbnailSize();
+            final int size = getAdjustedThumbnailSize();
 
+            String thumbnail = UtilsImage.parseThumbnailForWidth(link, size);
+
+            Log.d(TAG, "loadThumbnail() called with: " + "thumbnail = [" + thumbnail + "]");
+
+            if (!TextUtils.isEmpty(thumbnail)) {
+                if (URLUtil.isNetworkUrl(thumbnail)) {
+                    picasso.load(link.getThumbnail())
+                            .tag(TAG_PICASSO)
+                            .into(imageFull,
+                                    new Callback() {
+                                        @Override
+                                        public void onSuccess() {
+                                            loadBackgroundColor();
+
+                                            if (position == getAdapterPosition()) {
+                                                if (UtilsImage.placeImageUrl(link)) {
+                                                    picasso.load(link.getUrl())
+                                                            .tag(TAG_PICASSO)
+                                                            .resize(size, size)
+                                                            .centerCrop()
+                                                            .into(imageFull, new Callback() {
+                                                                @Override
+                                                                public void onSuccess() {
+                                                                    progressImage.setVisibility(
+                                                                            View.GONE);
+                                                                }
+
+                                                                @Override
+                                                                public void onError() {
+                                                                    progressImage.setVisibility(
+                                                                            View.GONE);
+                                                                }
+                                                            });
+
+                                                }
+                                                else {
+                                                    if (link.getDomain().contains("imgur") && (link
+                                                            .getUrl()
+                                                            .contains(Reddit.IMGUR_PREFIX_ALBUM) || link
+                                                            .getUrl()
+                                                            .contains(Reddit.IMGUR_PREFIX_GALLERY))) {
+                                                        imagePlay.setImageResource(
+                                                                R.drawable.ic_photo_album_white_48dp);
+                                                    }
+                                                    else {
+                                                        imagePlay.setImageResource(
+                                                                R.drawable.ic_play_circle_outline_white_48dp);
+                                                    }
+
+                                                    imagePlay.setColorFilter(colorFilterMenuItem);
+                                                    imagePlay.setVisibility(View.VISIBLE);
+                                                    progressImage.setVisibility(View.GONE);
+                                                }
+                                            }
+                                        }
+
+                                        @Override
+                                        public void onError() {
+                                            progressImage.setVisibility(View.GONE);
+                                        }
+                                    });
+                } else {
                     picasso.load(link.getUrl())
                             .tag(TAG_PICASSO)
                             .resize(size, size)
@@ -336,80 +398,19 @@ public class AdapterLinkGrid extends AdapterLink {
 
                                         @Override
                                         public void onError() {
+                                            imageFull.setVisibility(View.GONE);
+                                            imageThumbnail.setVisibility(View.VISIBLE);
+                                            imageThumbnail.setColorFilter(colorFilterIconDefault);
+                                            imageThumbnail.setImageDrawable(drawableDefault);
                                             progressImage.setVisibility(View.GONE);
+
+                                            ((RelativeLayout.LayoutParams) textThreadTitle.getLayoutParams()).removeRule(
+                                                    RelativeLayout.START_OF);
+                                            ((RelativeLayout.LayoutParams) textThreadTitle.getLayoutParams())
+                                                    .setMarginEnd(titleMargin);
                                         }
                                     });
                 }
-                else {
-                    imageFull.setVisibility(View.GONE);
-                    imageThumbnail.setVisibility(View.VISIBLE);
-                    imageThumbnail.setColorFilter(colorFilterIconDefault);
-                    imageThumbnail.setImageDrawable(drawableDefault);
-                    progressImage.setVisibility(View.GONE);
-
-                    ((RelativeLayout.LayoutParams) textThreadTitle.getLayoutParams()).removeRule(
-                            RelativeLayout.START_OF);
-                    ((RelativeLayout.LayoutParams) textThreadTitle.getLayoutParams())
-                            .setMarginEnd(titleMargin);
-                }
-            }
-            else {
-                picasso.load(link.getThumbnail())
-                        .tag(TAG_PICASSO)
-                        .into(imageFull,
-                                new Callback() {
-                                    @Override
-                                    public void onSuccess() {
-                                        loadBackgroundColor();
-
-                                        if (position == getAdapterPosition()) {
-                                            if (UtilsImage.placeImageUrl(link)) {
-                                                int size = getAdjustedThumbnailSize();
-                                                picasso.load(link.getUrl())
-                                                        .tag(TAG_PICASSO)
-                                                        .resize(size, size)
-                                                        .centerCrop()
-                                                        .into(imageFull, new Callback() {
-                                                            @Override
-                                                            public void onSuccess() {
-                                                                progressImage.setVisibility(
-                                                                        View.GONE);
-                                                            }
-
-                                                            @Override
-                                                            public void onError() {
-                                                                progressImage.setVisibility(
-                                                                        View.GONE);
-                                                            }
-                                                        });
-
-                                            }
-                                            else {
-                                                if (link.getDomain().contains("imgur") && (link
-                                                        .getUrl()
-                                                        .contains(Reddit.IMGUR_PREFIX_ALBUM) || link
-                                                        .getUrl()
-                                                        .contains(Reddit.IMGUR_PREFIX_GALLERY))) {
-                                                    imagePlay.setImageResource(
-                                                            R.drawable.ic_photo_album_white_48dp);
-                                                }
-                                                else {
-                                                    imagePlay.setImageResource(
-                                                            R.drawable.ic_play_circle_outline_white_48dp);
-                                                }
-
-                                                imagePlay.setColorFilter(colorFilterMenuItem);
-                                                imagePlay.setVisibility(View.VISIBLE);
-                                                progressImage.setVisibility(View.GONE);
-                                            }
-                                        }
-                                    }
-
-                                    @Override
-                                    public void onError() {
-                                        progressImage.setVisibility(View.GONE);
-                                    }
-                                });
             }
 
         }

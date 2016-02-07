@@ -154,13 +154,13 @@ public class ControllerComments implements AdapterCommentList.ViewHolderComment.
         link.setContextLevel(0);
 
         UtilsRx.unsubscribe(subscriptionComments);
-        subscriptionComments = reddit.comments(link.getId(), link.getCommentId(), sort.toString(), true, true, link.getContextLevel(), 10, 100)
+        subscriptionComments = reddit.comments(link.getSubreddit(), link.getId(), link.getCommentId(), sort.toString(), true, true, link.getContextLevel(), 10, 100)
                 .subscribe(getSubscriberLink());
     }
 
     public void loadCommentThread() {
         UtilsRx.unsubscribe(subscriptionComments);
-        subscriptionComments = reddit.comments(link.getId(), link.getCommentId(), sort.toString(), true, true, link.getContextLevel(), 10, 100)
+        subscriptionComments = reddit.comments(link.getSubreddit(), link.getId(), link.getCommentId(), sort.toString(), true, true, link.getContextLevel(), 10, 100)
                 .subscribe(getSubscriberLink());
     }
 

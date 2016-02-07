@@ -22,6 +22,7 @@ import com.winsonchiu.reader.data.reddit.Reddit;
 import com.winsonchiu.reader.utils.CallbackYouTubeDestruction;
 import com.winsonchiu.reader.utils.DisallowListener;
 import com.winsonchiu.reader.utils.RecyclerCallback;
+import com.winsonchiu.reader.utils.UtilsImage;
 
 /**
  * Created by TheKeeperOfPie on 3/7/2015.
@@ -118,7 +119,7 @@ public class AdapterLinkList extends AdapterLink {
 
             imageThumbnail.setVisibility(View.VISIBLE);
 
-            Drawable drawable = Reddit.getDrawableForLink(itemView.getContext(), link);
+            Drawable drawable = UtilsImage.getDrawableForLink(itemView.getContext(), link);
             if (drawable == null) {
                 if (TextUtils.isEmpty(link.getThumbnail()) || !preferences.getBoolean(AppSettings.PREF_SHOW_THUMBNAILS, true) || (link.isOver18() && !preferences.getBoolean(AppSettings.PREF_NSFW_THUMBNAILS, true)) || Reddit.NSFW.equals(link.getThumbnail())) {
                     imageThumbnail.setColorFilter(colorFilterIconDefault);

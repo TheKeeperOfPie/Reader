@@ -12,7 +12,6 @@ import android.accounts.OperationCanceledException;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.res.Resources;
-import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.text.Html;
@@ -395,15 +394,17 @@ public class Reddit {
                 .compose(TRANSFORMER);
     }
 
-    public Observable<Link> comments(String id,
-                                       String comment,
-                                       String sort,
-                                       Boolean showMore,
-                                       Boolean showEdits,
-                                       Integer context,
-                                       Integer depth,
-                                       Integer limit) {
+    public Observable<Link> comments(String subreddit,
+            String id,
+            String comment,
+            String sort,
+            Boolean showMore,
+            Boolean showEdits,
+            Integer context,
+            Integer depth,
+            Integer limit) {
         return apiRedditAuthorized.comments(
+                subreddit,
                 id,
                 comment,
                 sort,
@@ -520,21 +521,6 @@ public class Reddit {
                 .indexOf(suffix) + startIndex;
         int lastIndex = slashIndex > startIndex ? slashIndex : url.length();
         return url.substring(startIndex, lastIndex);
-    }
-
-
-    public static Drawable getDrawableForLink(Context context, Link link) {
-        String thumbnail = link.getThumbnail();
-
-        if (link.isSelf()) {
-            return context.getResources().getDrawable(R.drawable.ic_chat_white_48dp);
-        }
-
-        if (Reddit.DEFAULT.equals(thumbnail)) {
-            return context.getResources().getDrawable(R.drawable.ic_web_white_48dp);
-        }
-
-        return null;
     }
 
     public Observable<String> load(final okhttp3.Request request) {

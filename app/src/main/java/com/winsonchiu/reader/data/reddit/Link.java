@@ -640,7 +640,7 @@ public class Link extends Replyable implements Parcelable {
 
     public static class Preview {
 
-        private List<Image> images;
+        private List<Image> images = new ArrayList<>();
 
         public static Preview fromJson(JsonNode nodeRoot) {
             Preview preview = new Preview();
@@ -673,8 +673,8 @@ public class Link extends Replyable implements Parcelable {
         public static class Image {
 
             private Thumbnail source;
-            private List<Thumbnail> resolutions;
-            private List<Image> variants;
+            private List<Thumbnail> resolutions = new ArrayList<>();
+            private List<Image> variants = new ArrayList<>();
             private Image nsfw;
 
             public static Image fromJson(JsonNode nodeRoot) {

@@ -31,8 +31,9 @@ public interface ApiRedditAuthorized {
                              @Query("after") String after,
                              @Query("show") String show);
 
-    @GET("/comments/{id}")
-    Observable<String> comments(@Path("id") String id,
+    @GET("/r/{subreddit}/comments/{id}")
+    Observable<String> comments(@Path("subreddit") String subreddit,
+                                @Path("id") String id,
                                 @Query("comment") String comment,
                                 @Query("sort") String sort,
                                 @Query("showmore") Boolean showMore,
