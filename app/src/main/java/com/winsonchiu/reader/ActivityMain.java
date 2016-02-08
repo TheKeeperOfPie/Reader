@@ -758,7 +758,7 @@ public class ActivityMain extends AppCompatActivity
                             .getString(REDDIT_PAGE);
                 }
 
-                if (URLUtil.isValidUrl(urlString)) {
+                if (URLUtil.isNetworkUrl(urlString)) {
                     parseUrl(urlString);
                 }
                 else {
@@ -1634,7 +1634,7 @@ public class ActivityMain extends AppCompatActivity
             if (match == Match.NONE && getApplicationContext().getPackageName().equals(intent.getStringExtra(Browser.EXTRA_APPLICATION_ID))) {
                 uri = Uri.parse(Reddit.BASE_URL + urlString);
                 match = Match.matchUri(uri);
-                if (!URLUtil.isValidUrl(urlString)) {
+                if (!URLUtil.isNetworkUrl(urlString)) {
                     urlString = Reddit.BASE_URL + urlString;
                 }
             }
@@ -1644,7 +1644,7 @@ public class ActivityMain extends AppCompatActivity
                 intent.setComponent(new ComponentName(getApplicationContext().getPackageName(), ActivityMain.class.getCanonicalName()));
                 super.startActivity(intent);
             }
-            else if (URLUtil.isValidUrl(urlString)) {
+            else if (URLUtil.isNetworkUrl(urlString)) {
                 FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
 
                 FragmentBase fragment = (FragmentBase) getSupportFragmentManager().findFragmentById(R.id.frame_fragment);

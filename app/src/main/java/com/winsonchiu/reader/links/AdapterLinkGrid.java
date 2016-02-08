@@ -308,75 +308,36 @@ public class AdapterLinkGrid extends AdapterLink {
 
             String thumbnail = UtilsImage.parseThumbnail(link);
 
-            if (!TextUtils.isEmpty(thumbnail)) {
-                if (URLUtil.isNetworkUrl(thumbnail)) {
-                    picasso.load(thumbnail)
-                            .tag(TAG_PICASSO)
-                            .into(imageFull,
-                                    new Callback() {
-                                        @Override
-                                        public void onSuccess() {
-                                            loadBackgroundColor();
+            if (URLUtil.isNetworkUrl(thumbnail)) {
+                picasso.load(thumbnail)
+                        .tag(TAG_PICASSO)
+                        .into(imageFull,
+                                new Callback() {
+                                    @Override
+                                    public void onSuccess() {
+                                        loadBackgroundColor();
 
-                                            if (position == getAdapterPosition()) {
-                                                if (UtilsImage.placeImageUrl(link)) {
-                                                    picasso.load(link.getUrl())
-                                                            .tag(TAG_PICASSO)
-                                                            .resize(size, size)
-                                                            .centerCrop()
-                                                            .into(imageFull, new Callback() {
-                                                                @Override
-                                                                public void onSuccess() {
-                                                                    progressImage.setVisibility(
-                                                                            View.GONE);
-                                                                }
+                                        if (position == getAdapterPosition()) {
+                                            if (UtilsImage.placeImageUrl(link)) {
+                                                picasso.load(link.getUrl())
+                                                        .tag(TAG_PICASSO)
+                                                        .resize(size, size)
+                                                        .centerCrop()
+                                                        .into(imageFull, new Callback() {
+                                                            @Override
+                                                            public void onSuccess() {
+                                                                progressImage.setVisibility(
+                                                                        View.GONE);
+                                                            }
 
-                                                                @Override
-                                                                public void onError() {
-                                                                    progressImage.setVisibility(
-                                                                            View.GONE);
-                                                                }
-                                                            });
+                                                            @Override
+                                                            public void onError() {
+                                                                progressImage.setVisibility(
+                                                                        View.GONE);
+                                                            }
+                                                        });
 
-                                                }
-                                                else {
-                                                    if (link.getDomain().contains("imgur") && (link
-                                                            .getUrl()
-                                                            .contains(Reddit.IMGUR_PREFIX_ALBUM) || link
-                                                            .getUrl()
-                                                            .contains(Reddit.IMGUR_PREFIX_GALLERY))) {
-                                                        imagePlay.setImageResource(
-                                                                R.drawable.ic_photo_album_white_48dp);
-                                                    }
-                                                    else {
-                                                        imagePlay.setImageResource(
-                                                                R.drawable.ic_play_circle_outline_white_48dp);
-                                                    }
-
-                                                    imagePlay.setColorFilter(colorFilterMenuItem);
-                                                    imagePlay.setVisibility(View.VISIBLE);
-                                                    progressImage.setVisibility(View.GONE);
-                                                }
-                                            }
-                                        }
-
-                                        @Override
-                                        public void onError() {
-                                            progressImage.setVisibility(View.GONE);
-                                        }
-                                    });
-                } else {
-                    picasso.load(link.getUrl())
-                            .tag(TAG_PICASSO)
-                            .resize(size, size)
-                            .centerCrop()
-                            .into(imageFull,
-                                    new Callback() {
-                                        @Override
-                                        public void onSuccess() {
-                                            loadBackgroundColor();
-
-                                            if (position == getAdapterPosition()) {
+                                            } else {
                                                 if (link.getDomain().contains("imgur") && (link
                                                         .getUrl()
                                                         .contains(Reddit.IMGUR_PREFIX_ALBUM) || link
@@ -384,29 +345,64 @@ public class AdapterLinkGrid extends AdapterLink {
                                                         .contains(Reddit.IMGUR_PREFIX_GALLERY))) {
                                                     imagePlay.setImageResource(
                                                             R.drawable.ic_photo_album_white_48dp);
-                                                    imagePlay.setColorFilter(colorFilterMenuItem);
-                                                    imagePlay.setVisibility(View.VISIBLE);
+                                                } else {
+                                                    imagePlay.setImageResource(
+                                                            R.drawable.ic_play_circle_outline_white_48dp);
                                                 }
+
+                                                imagePlay.setColorFilter(colorFilterMenuItem);
+                                                imagePlay.setVisibility(View.VISIBLE);
+                                                progressImage.setVisibility(View.GONE);
                                             }
+                                        }
+                                    }
 
-                                            progressImage.setVisibility(View.GONE);
+                                    @Override
+                                    public void onError() {
+                                        progressImage.setVisibility(View.GONE);
+                                    }
+                                });
+            } else if (UtilsImage.placeImageUrl(link)) {
+                picasso.load(link.getUrl())
+                        .tag(TAG_PICASSO)
+                        .resize(size, size)
+                        .centerCrop()
+                        .into(imageFull,
+                                new Callback() {
+                                    @Override
+                                    public void onSuccess() {
+                                        loadBackgroundColor();
+
+                                        if (position == getAdapterPosition()) {
+                                            if (link.getDomain().contains("imgur") && (link
+                                                    .getUrl()
+                                                    .contains(Reddit.IMGUR_PREFIX_ALBUM) || link
+                                                    .getUrl()
+                                                    .contains(Reddit.IMGUR_PREFIX_GALLERY))) {
+                                                imagePlay.setImageResource(
+                                                        R.drawable.ic_photo_album_white_48dp);
+                                                imagePlay.setColorFilter(colorFilterMenuItem);
+                                                imagePlay.setVisibility(View.VISIBLE);
+                                            }
                                         }
 
-                                        @Override
-                                        public void onError() {
-                                            imageFull.setVisibility(View.GONE);
-                                            imageThumbnail.setVisibility(View.VISIBLE);
-                                            imageThumbnail.setColorFilter(colorFilterIconDefault);
-                                            imageThumbnail.setImageDrawable(drawableDefault);
-                                            progressImage.setVisibility(View.GONE);
+                                        progressImage.setVisibility(View.GONE);
+                                    }
 
-                                            ((RelativeLayout.LayoutParams) textThreadTitle.getLayoutParams()).removeRule(
-                                                    RelativeLayout.START_OF);
-                                            ((RelativeLayout.LayoutParams) textThreadTitle.getLayoutParams())
-                                                    .setMarginEnd(titleMargin);
-                                        }
-                                    });
-                }
+                                    @Override
+                                    public void onError() {
+                                        imageFull.setVisibility(View.GONE);
+                                        imageThumbnail.setVisibility(View.VISIBLE);
+                                        imageThumbnail.setColorFilter(colorFilterIconDefault);
+                                        imageThumbnail.setImageDrawable(drawableDefault);
+                                        progressImage.setVisibility(View.GONE);
+
+                                        ((RelativeLayout.LayoutParams) textThreadTitle.getLayoutParams()).removeRule(
+                                                RelativeLayout.START_OF);
+                                        ((RelativeLayout.LayoutParams) textThreadTitle.getLayoutParams())
+                                                .setMarginEnd(titleMargin);
+                                    }
+                                });
             }
 
         }

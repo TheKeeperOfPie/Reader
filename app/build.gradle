@@ -18,13 +18,15 @@ repositories {
     maven { url 'https://maven.fabric.io/public' }
 }
 
+int minSdk = hasProperty('minSdk') ? minSdk.toInteger() : 17
+
 android {
     compileSdkVersion 23
     buildToolsVersion '23.0.2'
 
     defaultConfig {
         applicationId "com.winsonchiu.reader"
-        minSdkVersion 17
+        minSdkVersion minSdk
         targetSdkVersion 23
         versionCode 58
         versionName "1.5"
@@ -52,16 +54,6 @@ android {
 
     dexOptions {
         dexInProcess = true
-    }
-
-    productFlavors {
-        development {
-            minSdkVersion 21
-        }
-
-        production {
-            minSdkVersion 17
-        }
     }
 }
 

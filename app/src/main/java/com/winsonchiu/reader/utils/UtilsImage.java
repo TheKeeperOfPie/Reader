@@ -65,15 +65,23 @@ public class UtilsImage {
 
     public static boolean checkIsImageUrl(String url) {
         if (URLUtil.isNetworkUrl(url)) {
-            return endsWithImageMarker(Uri.parse(url).getPath());
+            return endsWithImageExtension(Uri.parse(url).getPath());
         }
 
-        return endsWithImageMarker(url);
+        return endsWithImageExtension(url);
     }
 
-    public static boolean endsWithImageMarker(String url) {
+    public static boolean endsWithImageExtension(String url) {
         return url.endsWith(GIF) || url.endsWith(PNG) || url.endsWith(JPG)
                 || url.endsWith(JPEG) || url.endsWith(WEBP);
+    }
+
+    public static boolean endsWithImageExtension(String url, String extension) {
+        if (URLUtil.isNetworkUrl(url)) {
+            return Uri.parse(url).getPath().endsWith(extension);
+        }
+
+        return url.endsWith(extension);
     }
 
     public static String getImageFileEnding(String url) {
@@ -113,7 +121,7 @@ public class UtilsImage {
     public static boolean placeImageUrl(Link link) {
 
         String url = link.getUrl();
-        if (!url.contains("http")) {
+        if (!url.startsWith("http")) {
             url += "http://";
         }
         // TODO: Add support for popular image domains
@@ -122,7 +130,7 @@ public class UtilsImage {
             if (url.contains(",")) {
                 return false;
             }
-            else if (url.endsWith(GIFV)) {
+            else if (endsWithImageExtension(url, GIFV)) {
                 return false;
             }
             else if (url.contains(".com/gallery")) {

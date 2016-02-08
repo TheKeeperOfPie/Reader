@@ -513,11 +513,11 @@ public class FragmentNewPost extends FragmentBase implements Toolbar.OnMenuItemC
             return;
         }
         else if (Reddit.PostType.LINK == postType && !URLUtil
-                .isValidUrl(text)) {
+                .isNetworkUrl(text)) {
 
             text = "http://" + text;
 
-            if (!URLUtil.isValidUrl(text)) {
+            if (!URLUtil.isNetworkUrl(text)) {
                 Toast.makeText(activity, getString(R.string.invalid_url),
                         Toast.LENGTH_LONG).show();
                 return;
