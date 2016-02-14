@@ -83,13 +83,11 @@
 
         </FrameLayout>
 
-        <View
+        <Space
             android:id="@+id/view_margin"
-            android:layout_width="wrap_content"
-            android:layout_height="match_parent"
+            android:layout_width="match_parent"
+            android:layout_height="12dp"
             android:layout_below="@id/frame_full"
-            android:layout_toStartOf="@+id/button_comments"
-            android:layout_marginTop="12dp"
             />
 
         <com.winsonchiu.reader.views.ImageViewSquare
@@ -105,45 +103,39 @@
             android:visibility="gone"
             />
 
-        <ImageButton
-            android:id="@+id/button_comments"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
-            android:layout_below="@id/frame_full"
-            android:layout_alignParentEnd="true"
-            android:contentDescription="@string/content_description_button_comments"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:src="@drawable/ic_mode_comment_white_24dp"
-            android:padding="12dp"
-            />
-
         <TextView
             android:id="@+id/text_thread_flair"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_below="@id/image_thumbnail"
-            android:layout_toStartOf="@id/button_comments"
-            android:layout_alignParentStart="true"
-            android:layout_marginTop="8dp"
+            android:layout_below="@id/view_margin"
+            android:layout_toEndOf="@id/image_thumbnail"
             android:layout_marginStart="@dimen/activity_horizontal_margin"
             android:layout_marginEnd="@dimen/activity_horizontal_margin"
             android:textSize="12sp"
             android:textColor="?attr/colorAccent"
-            android:textAlignment="viewStart"
             />
 
-        <TextView
-            android:id="@+id/text_thread_title"
-            android:layout_width="wrap_content"
+        <FrameLayout
+            android:id="@+id/layout_title"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_below="@id/text_thread_flair"
-            android:layout_alignParentStart="true"
-            android:layout_marginStart="@dimen/activity_horizontal_margin"
-            android:layout_marginEnd="@dimen/activity_horizontal_margin"
-            android:paddingBottom="8dp"
-            android:textAppearance="@style/TextAppearance.AppCompat.Body2"
-            android:textAlignment="viewStart"
-            />
+            android:clickable="true"
+            >
+
+            <TextView
+                android:id="@+id/text_thread_title"
+                android:minHeight="18sp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="@dimen/activity_horizontal_margin"
+                android:layout_marginEnd="@dimen/activity_horizontal_margin"
+                android:paddingBottom="4dp"
+                android:textAppearance="@style/TextAppearance.AppCompat.Body2"
+                android:textDirection="locale"
+                />
+
+        </FrameLayout>
 
         <!-- TODO: Make self text selectable, fix ripple animation state-->
 
@@ -151,16 +143,18 @@
             android:id="@+id/text_thread_self"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_below="@id/text_thread_title"
+            android:layout_below="@id/layout_title"
             android:layout_marginStart="@dimen/activity_horizontal_margin"
             android:layout_marginEnd="@dimen/activity_horizontal_margin"
             android:textAppearance="@style/TextAppearance.AppCompat.Body1"
+            android:paddingTop="4dp"
             android:paddingBottom="8dp"
             android:background="?attr/selectableItemBackgroundBorderless"
             />
 
         <TextView
             android:id="@+id/text_thread_info"
+            android:minHeight="16sp"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_below="@id/text_thread_self"

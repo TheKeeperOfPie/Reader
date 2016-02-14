@@ -15,16 +15,18 @@ import android.support.v4.graphics.ColorUtils;
 import android.support.v7.graphics.Palette;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.StaggeredGridLayoutManager;
+import android.text.SpannableString;
 import android.text.TextUtils;
 import android.text.util.Linkify;
 import android.util.DisplayMetrics;
+import android.util.Log;
+import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.View;
 import android.view.ViewGroup;
 import android.webkit.URLUtil;
 import android.widget.ImageView;
-import android.widget.RelativeLayout;
 
 import com.squareup.picasso.Callback;
 import com.winsonchiu.reader.AppSettings;
@@ -36,6 +38,7 @@ import com.winsonchiu.reader.data.reddit.Reddit;
 import com.winsonchiu.reader.utils.CallbackYouTubeDestruction;
 import com.winsonchiu.reader.utils.DisallowListener;
 import com.winsonchiu.reader.utils.RecyclerCallback;
+import com.winsonchiu.reader.utils.SpanLeadingMargin;
 import com.winsonchiu.reader.utils.UtilsAnimation;
 import com.winsonchiu.reader.utils.UtilsColor;
 import com.winsonchiu.reader.utils.UtilsImage;
@@ -125,8 +128,7 @@ public class AdapterLinkGrid extends AdapterLink {
                 break;
             case VIEW_LINK:
                 ViewHolder viewHolder = (ViewHolder) holder;
-                viewHolder
-                        .onBind(controllerLinks.getLink(position), controllerLinks.showSubreddit());
+                viewHolder.onBind(controllerLinks.getLink(position), controllerLinks.showSubreddit());
                 break;
         }
     }
@@ -137,6 +139,9 @@ public class AdapterLinkGrid extends AdapterLink {
         protected ImageView imageFull;
         private int colorBackgroundDefault;
         private ValueAnimator valueAnimatorBackground;
+        private float heightFlair;
+        private float marginThumbnailHeight;
+        private float marginThumbnailWidth;
 
         public ViewHolder(FragmentActivity activity,
                 View itemView,
@@ -158,26 +163,19 @@ public class AdapterLinkGrid extends AdapterLink {
             if (itemView.getBackground() instanceof ColorDrawable) {
                 colorBackgroundDefault = ((ColorDrawable) itemView.getBackground()).getColor();
             }
+
+            DisplayMetrics displayMetrics = resources.getDisplayMetrics();
+            heightFlair = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, 12, displayMetrics);
+            marginThumbnailWidth = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 52, displayMetrics);
+            marginThumbnailHeight = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 40, displayMetrics);
         }
 
         @Override
         protected void initializeListeners() {
             super.initializeListeners();
-            buttonComments.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    if (mediaPlayer != null && mediaPlayer.isPlaying()) {
-                        destroySurfaceView();
-                        imageFull.setVisibility(View.VISIBLE);
-                        imagePlay.setVisibility(View.VISIBLE);
-                    }
-                    loadComments();
-                }
-            });
             imageFull.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-
                     imageFull.setVisibility(View.GONE);
                     progressImage.setVisibility(View.GONE);
                     imagePlay.setVisibility(View.GONE);
@@ -185,6 +183,25 @@ public class AdapterLinkGrid extends AdapterLink {
                     loadFull();
                 }
             });
+        }
+
+        @Override
+        public void onClick(View v) {
+            switch (v.getId()) {
+                case R.id.view_margin:
+                case R.id.text_thread_flair:
+                case R.id.layout_title:
+                case R.id.text_thread_title:
+                    if (mediaPlayer != null && mediaPlayer.isPlaying()) {
+                        destroySurfaceView();
+                        imageFull.setVisibility(View.VISIBLE);
+                        imagePlay.setVisibility(View.VISIBLE);
+                    }
+                    loadComments();
+                    break;
+                default:
+                    super.onClick(v);
+            }
         }
 
         @Override
@@ -207,7 +224,6 @@ public class AdapterLinkGrid extends AdapterLink {
                 viewOverlay.setBackgroundColor(ColorUtils.setAlphaComponent(link.getBackgroundColor(), ALPHA_OVERLAY));
             }
 
-            buttonComments.setColorFilter(colorFilterIconDefault);
             imagePlay.setColorFilter(colorFilterIconDefault);
             textThreadInfo.setTextColor(colorTextSecondaryDefault);
             textHidden.setTextColor(colorTextSecondaryDefault);
@@ -219,7 +235,7 @@ public class AdapterLinkGrid extends AdapterLink {
                 imageFull.setVisibility(View.GONE);
                 imageThumbnail.setColorFilter(colorFilterIconDefault);
                 imageThumbnail.setImageDrawable(drawable);
-                imageThumbnail.setVisibility(View.VISIBLE);
+                showThumbnail(true);
             }
             else if (!preferences.getBoolean(AppSettings.PREF_SHOW_THUMBNAILS, true) ||
                     (link.isOver18() && !preferences
@@ -227,18 +243,17 @@ public class AdapterLinkGrid extends AdapterLink {
                 imageFull.setVisibility(View.GONE);
                 imageThumbnail.setColorFilter(colorFilterIconDefault);
                 imageThumbnail.setImageDrawable(drawableDefault);
-                imageThumbnail.setVisibility(View.VISIBLE);
+                showThumbnail(true);
             }
             else if (UtilsImage.showThumbnail(link)) {
                 loadThumbnail(link, position);
-                return;
             }
             else {
                 String thumbnail = UtilsImage.parseThumbnail(link);
                 if (URLUtil.isNetworkUrl(thumbnail)) {
                     imageFull.setVisibility(View.GONE);
                     imageThumbnail.clearColorFilter();
-                    imageThumbnail.setVisibility(View.VISIBLE);
+                    showThumbnail(true);
                     picasso.load(thumbnail)
                             .tag(TAG_PICASSO)
                             .into(imageThumbnail);
@@ -247,14 +262,9 @@ public class AdapterLinkGrid extends AdapterLink {
                     imageFull.setVisibility(View.GONE);
                     imageThumbnail.setColorFilter(colorFilterIconDefault);
                     imageThumbnail.setImageDrawable(drawableDefault);
-                    imageThumbnail.setVisibility(View.VISIBLE);
+                    showThumbnail(true);
                 }
             }
-
-            ((RelativeLayout.LayoutParams) textThreadTitle.getLayoutParams()).removeRule(
-                    RelativeLayout.START_OF);
-            ((RelativeLayout.LayoutParams) textThreadTitle.getLayoutParams()).setMarginEnd(
-                    titleMargin);
         }
 
         @Override
@@ -295,11 +305,8 @@ public class AdapterLinkGrid extends AdapterLink {
             // TODO: Improve thumbnail loading logic
 
             imageFull.setVisibility(View.VISIBLE);
-            imageThumbnail.setVisibility(View.GONE);
+            showThumbnail(false);
             progressImage.setVisibility(View.VISIBLE);
-            ((RelativeLayout.LayoutParams) textThreadTitle.getLayoutParams()).addRule(
-                    RelativeLayout.START_OF, buttonComments.getId());
-            ((RelativeLayout.LayoutParams) textThreadTitle.getLayoutParams()).setMarginEnd(0);
 
             picasso.cancelRequest(imageFull);
             imageFull.setImageDrawable(null);
@@ -307,6 +314,8 @@ public class AdapterLinkGrid extends AdapterLink {
             final int size = getAdjustedThumbnailSize();
 
             String thumbnail = UtilsImage.parseThumbnail(link);
+
+            Log.d(TAG, "loadThumbnail() called with: " + "thumbnail = [" + thumbnail + "], title = [" + link.getTitle() + "]");
 
             if (URLUtil.isNetworkUrl(thumbnail)) {
                 picasso.load(thumbnail)
@@ -362,7 +371,9 @@ public class AdapterLinkGrid extends AdapterLink {
                                         progressImage.setVisibility(View.GONE);
                                     }
                                 });
-            } else if (UtilsImage.placeImageUrl(link)) {
+            }
+            else if (UtilsImage.placeImageUrl(link)) {
+                Log.d(TAG, "loadThumbnail() called with: " + "url = [" + link.getUrl() + "], title = [" + link.getTitle() + "]");
                 picasso.load(link.getUrl())
                         .tag(TAG_PICASSO)
                         .resize(size, size)
@@ -392,17 +403,19 @@ public class AdapterLinkGrid extends AdapterLink {
                                     @Override
                                     public void onError() {
                                         imageFull.setVisibility(View.GONE);
-                                        imageThumbnail.setVisibility(View.VISIBLE);
+                                        showThumbnail(true);
                                         imageThumbnail.setColorFilter(colorFilterIconDefault);
                                         imageThumbnail.setImageDrawable(drawableDefault);
                                         progressImage.setVisibility(View.GONE);
-
-                                        ((RelativeLayout.LayoutParams) textThreadTitle.getLayoutParams()).removeRule(
-                                                RelativeLayout.START_OF);
-                                        ((RelativeLayout.LayoutParams) textThreadTitle.getLayoutParams())
-                                                .setMarginEnd(titleMargin);
                                     }
                                 });
+            }
+            else {
+                imageFull.setVisibility(View.GONE);
+                showThumbnail(true);
+                imageThumbnail.setColorFilter(colorFilterIconDefault);
+                imageThumbnail.setImageDrawable(drawableDefault);
+                progressImage.setVisibility(View.GONE);
             }
 
         }
@@ -478,7 +491,6 @@ public class AdapterLinkGrid extends AdapterLink {
             double contrast = UtilsColor.computeContrast(color, Color.WHITE);
 
             if (contrast > 3f) {
-                buttonComments.setColorFilter(colorFilterIconLight);
                 imagePlay.setColorFilter(colorFilterIconLight);
                 textThreadInfo.setTextColor(resources.getColor(R.color.darkThemeTextColorMuted));
                 textHidden.setTextColor(resources.getColor(R.color.darkThemeTextColorMuted));
@@ -489,7 +501,6 @@ public class AdapterLinkGrid extends AdapterLink {
 
             }
             else {
-                buttonComments.setColorFilter(colorFilterIconDark);
                 imagePlay.setColorFilter(colorFilterIconDark);
                 textThreadInfo.setTextColor(resources.getColor(R.color.lightThemeTextColorMuted));
                 textHidden.setTextColor(resources.getColor(R.color.lightThemeTextColorMuted));
@@ -536,35 +547,47 @@ public class AdapterLinkGrid extends AdapterLink {
         public void setTextValues(Link link) {
             super.setTextValues(link);
 
+            showThumbnail(imageThumbnail.getVisibility() == View.VISIBLE);
+
             textThreadInfo.setText(TextUtils
                     .concat(getSubredditString(), showSubreddit ? "\n" : "", getSpannableScore(),
-                            "by ", link.getAuthor(), getFlairString()));
+                            "by ", link.getAuthor(), " ", getFlairString()));
 
             Linkify.addLinks(textThreadInfo, Linkify.WEB_URLS);
 
             textHidden.setText(getTimestamp() + ", " + link.getNumComments() + " comments");
-
         }
 
         @Override
         public void setAlbum(Link link, Album album) {
             super.setAlbum(link, album);
-            imageThumbnail.setVisibility(View.GONE);
-            ((RelativeLayout.LayoutParams) textThreadTitle.getLayoutParams()).addRule(
-                    RelativeLayout.START_OF,
-                    buttonComments.getId());
-            ((RelativeLayout.LayoutParams) textThreadTitle.getLayoutParams()).setMarginEnd(
-                    0);
+            showThumbnail(false);
+        }
+
+        private void showThumbnail(boolean show) {
+            imageThumbnail.setVisibility(show ? View.VISIBLE : View.GONE);
+
+            if (show) {
+                float heightLine = textThreadTitle.getPaint().getTextSize();
+                float heightThumbnail = marginThumbnailHeight - (textThreadFlair.getVisibility() == View.VISIBLE ? heightFlair : 0);
+                int lines = Math.max(1, (int) Math.ceil(heightThumbnail / heightLine));
+
+                SpannableString text = new SpannableString(link.getTitle());
+                text.setSpan(new SpanLeadingMargin(lines, marginThumbnailWidth), 0, lines, 0);
+                textThreadTitle.setText(text);
+
+                Log.d(TAG, "showThumbnail() called with: " + "lines = [" + lines + "], marginThumbnailWidth = [" + marginThumbnailWidth + "], title = [" + link.getTitle() + "]");
+
+            }
+            else {
+                textThreadTitle.setText(link.getTitle());
+            }
         }
 
         @Override
         public void onRecycle() {
             super.onRecycle();
             expandFull(false);
-            ((RelativeLayout.LayoutParams) textThreadTitle.getLayoutParams()).removeRule(
-                    RelativeLayout.START_OF);
-            ((RelativeLayout.LayoutParams) textThreadTitle.getLayoutParams())
-                    .setMarginEnd(titleMargin);
             if (valueAnimatorBackground != null) {
                 valueAnimatorBackground.cancel();
             }

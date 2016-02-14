@@ -11,6 +11,7 @@ import android.net.Uri;
 import android.support.annotation.Nullable;
 import android.text.Html;
 import android.text.TextUtils;
+import android.util.Log;
 import android.webkit.URLUtil;
 
 import com.winsonchiu.reader.R;
@@ -43,21 +44,33 @@ public class UtilsImage {
 
     @Nullable
     public static String parseThumbnail(Link link) {
+        Log.d(UtilsImage.class.getCanonicalName(), "parseThumbnail() called with: " + "link = [" + link.getTitle() + "]");
+        Log.d(UtilsImage.class.getCanonicalName(), "parseThumbnail() called with: " + "0 = [" + link.getThumbnail() + "]");
         if (URLUtil.isNetworkUrl(link.getThumbnail())) {
             return link.getThumbnail();
         }
 
         for (Link.Preview.Image image : link.getPreview().getImages()) {
             for (Link.Preview.Image.Thumbnail thumbnail : image.getResolutions()) {
+                Log.d(UtilsImage.class.getCanonicalName(), "parseThumbnail() called with: " + "1 = [" + thumbnail.getUrl() + "]");
                 if (URLUtil.isNetworkUrl(thumbnail.getUrl())) {
                     return thumbnail.getUrl();
                 }
             }
 
             Link.Preview.Image.Thumbnail source = image.getSource();
+            if (source != null) {
+                Log.d(UtilsImage.class.getCanonicalName(), "parseThumbnail() called with: " + "1 = [" + source.getUrl() + "]");
+            }
             if (source != null && URLUtil.isNetworkUrl(source.getUrl())) {
                 return source.getUrl();
             }
+        }
+
+        String thumbnailUrl = link.getMedia().getOembed().getThumbnailUrl();
+        Log.d(UtilsImage.class.getCanonicalName(), "parseThumbnail() called with: " + "3 = [" + thumbnailUrl + "]");
+        if (URLUtil.isNetworkUrl(thumbnailUrl)) {
+            return thumbnailUrl;
         }
 
         return null;
@@ -124,6 +137,9 @@ public class UtilsImage {
         if (!url.startsWith("http")) {
             url += "http://";
         }
+
+        Log.d(UtilsImage.class.getCanonicalName(), "placeImageUrl() called with: " + "url = [" + url + "], link = [" + link.getTitle() + "]");
+
         // TODO: Add support for popular image domains
         String domain = link.getDomain();
         if (domain.contains("imgur")) {

@@ -26,7 +26,7 @@ android {
 
     defaultConfig {
         applicationId "com.winsonchiu.reader"
-        minSdkVersion minSdk
+        minSdkVersion 17
         targetSdkVersion 23
         versionCode 58
         versionName "1.5"

@@ -94,18 +94,21 @@ public class AdapterLinkList extends AdapterLink {
         }
 
         @Override
-        protected void initializeListeners() {
-            super.initializeListeners();
-            buttonComments.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
+        public void onClick(View v) {
+            switch (v.getId()) {
+                case R.id.view_margin:
+                case R.id.text_thread_flair:
+                case R.id.layout_title:
+                case R.id.text_thread_title:
                     if (mediaPlayer != null && mediaPlayer.isPlaying()) {
                         destroySurfaceView();
                         imagePlay.setVisibility(View.VISIBLE);
                     }
                     loadComments();
-                }
-            });
+                    break;
+                default:
+                    super.onClick(v);
+            }
         }
 
         @Override
@@ -145,7 +148,7 @@ public class AdapterLinkList extends AdapterLink {
 
             textThreadInfo.setText(TextUtils
                     .concat(getSubredditString(), getSpannableScore(), "by ", link.getAuthor(),
-                            getFlairString()));
+                            " ", getFlairString()));
 
             Linkify.addLinks(textThreadInfo, Linkify.WEB_URLS);
 

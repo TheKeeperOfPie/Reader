@@ -83,6 +83,14 @@ public class Thing implements Parcelable {
         return getId().hashCode();
     }
 
+    public String getJson() {
+        return json;
+    }
+
+    public void setJson(String json) {
+        this.json = json;
+    }
+
     @Override
     public int describeContents() {
         return 0;
@@ -93,12 +101,14 @@ public class Thing implements Parcelable {
         dest.writeString(this.id);
         dest.writeString(this.name);
         dest.writeString(this.kind);
+        dest.writeString(this.json);
     }
 
     protected Thing(Parcel in) {
         this.id = in.readString();
         this.name = in.readString();
         this.kind = in.readString();
+        this.json = in.readString();
     }
 
     public static final Creator<Thing> CREATOR = new Creator<Thing>() {
@@ -110,12 +120,4 @@ public class Thing implements Parcelable {
             return new Thing[size];
         }
     };
-
-    public String getJson() {
-        return json;
-    }
-
-    public void setJson(String json) {
-        this.json = json;
-    }
 }

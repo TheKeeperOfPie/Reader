@@ -53,7 +53,7 @@ public class Link extends Replyable implements Parcelable {
     private int likes;
     private String linkFlairCssClass = "";
     private String linkFlairText = "";
-    private String media = "";
+    private Media media = new Media();
     private String mediaEmbed = "";
     private int numComments;
     private boolean over18;
@@ -127,7 +127,7 @@ public class Link extends Replyable implements Parcelable {
         if (link.getLinkFlairText().equals("null")) {
             link.setLinkFlairText("");
         }
-        link.setMedia(UtilsJson.getString(nodeData.get("media")));
+        link.setMedia(Media.fromJson(nodeData.get("media")));
         link.setMediaEmbed(UtilsJson.getString(nodeData.get("media_embed")));
         link.setNumComments(UtilsJson.getInt(nodeData.get("num_comments")));
         link.setOver18(UtilsJson.getBoolean(nodeData.get("over_18")));
@@ -275,11 +275,11 @@ public class Link extends Replyable implements Parcelable {
         this.linkFlairText = linkFlairText;
     }
 
-    public String getMedia() {
+    public Media getMedia() {
         return media;
     }
 
-    public void setMedia(String media) {
+    public void setMedia(Media media) {
         this.media = media;
     }
 
@@ -542,103 +542,255 @@ public class Link extends Replyable implements Parcelable {
         this.commentId = commentId;
     }
 
-    @Override
-    public int describeContents() {
-        return 0;
-    }
+    public static class Media implements Parcelable {
 
-    @Override
-    public void writeToParcel(Parcel dest, int flags) {
-        dest.writeString(this.author);
-        dest.writeString(this.authorFlairCssClass);
-        dest.writeString(this.authorFlairText);
-        dest.writeByte(clicked ? (byte) 1 : (byte) 0);
-        dest.writeString(this.domain);
-        dest.writeByte(hidden ? (byte) 1 : (byte) 0);
-        dest.writeByte(isSelf ? (byte) 1 : (byte) 0);
-        dest.writeInt(this.likes);
-        dest.writeString(this.linkFlairCssClass);
-        dest.writeString(this.linkFlairText);
-        dest.writeString(this.media);
-        dest.writeString(this.mediaEmbed);
-        dest.writeInt(this.numComments);
-        dest.writeByte(over18 ? (byte) 1 : (byte) 0);
-        dest.writeString(this.permalink);
-        dest.writeByte(saved ? (byte) 1 : (byte) 0);
-        dest.writeInt(this.score);
-        TextUtils.writeToParcel(this.selfText, dest, flags);
-        TextUtils.writeToParcel(this.selfTextHtml, dest, flags);
-        dest.writeString(this.subreddit);
-        dest.writeString(this.subredditId);
-        dest.writeInt(this.suggestedSort == null ? -1 : this.suggestedSort.ordinal());
-        dest.writeString(this.thumbnail);
-        dest.writeString(this.title);
-        dest.writeString(this.url);
-        dest.writeLong(this.edited);
-        dest.writeInt(this.distinguished == null ? -1 : this.distinguished.ordinal());
-        dest.writeByte(stickied ? (byte) 1 : (byte) 0);
-        dest.writeLong(this.created);
-        dest.writeLong(this.createdUtc);
-        dest.writeParcelable(this.comments, flags);
-        dest.writeParcelable(this.album, flags);
-        dest.writeByte(commentsClicked ? (byte) 1 : (byte) 0);
-        dest.writeInt(this.backgroundColor);
-        dest.writeInt(this.contextLevel);
-        dest.writeString(this.commentId);
-    }
+        private String type;
+        private Oembed oembed = new Oembed();
 
-    protected Link(Parcel in) {
-        this.author = in.readString();
-        this.authorFlairCssClass = in.readString();
-        this.authorFlairText = in.readString();
-        this.clicked = in.readByte() != 0;
-        this.domain = in.readString();
-        this.hidden = in.readByte() != 0;
-        this.isSelf = in.readByte() != 0;
-        this.likes = in.readInt();
-        this.linkFlairCssClass = in.readString();
-        this.linkFlairText = in.readString();
-        this.media = in.readString();
-        this.mediaEmbed = in.readString();
-        this.numComments = in.readInt();
-        this.over18 = in.readByte() != 0;
-        this.permalink = in.readString();
-        this.saved = in.readByte() != 0;
-        this.score = in.readInt();
-        this.selfText = TextUtils.CHAR_SEQUENCE_CREATOR.createFromParcel(in);
-        this.selfTextHtml = TextUtils.CHAR_SEQUENCE_CREATOR.createFromParcel(in);
-        this.subreddit = in.readString();
-        this.subredditId = in.readString();
-        int tmpSuggestedSort = in.readInt();
-        this.suggestedSort = tmpSuggestedSort == -1 ? null : Sort.values()[tmpSuggestedSort];
-        this.thumbnail = in.readString();
-        this.title = in.readString();
-        this.url = in.readString();
-        this.edited = in.readLong();
-        int tmpDistinguished = in.readInt();
-        this.distinguished = tmpDistinguished == -1 ? null : Reddit.Distinguished.values()[tmpDistinguished];
-        this.stickied = in.readByte() != 0;
-        this.created = in.readLong();
-        this.createdUtc = in.readLong();
-        this.comments = in.readParcelable(Listing.class.getClassLoader());
-        this.album = in.readParcelable(Album.class.getClassLoader());
-        this.commentsClicked = in.readByte() != 0;
-        this.backgroundColor = in.readInt();
-        this.contextLevel = in.readInt();
-        this.commentId = in.readString();
-    }
+        public static Media fromJson(JsonNode nodeRoot) {
+            Media media = new Media();
 
-    public static final Creator<Link> CREATOR = new Creator<Link>() {
-        public Link createFromParcel(Parcel source) {
-            return new Link(source);
+            if (nodeRoot == null) {
+                return media;
+            }
+
+            media.setType(UtilsJson.getString(nodeRoot.get("type")));
+            media.setOembed(Oembed.fromJson(nodeRoot.get("oembed")));
+
+            return media;
         }
 
-        public Link[] newArray(int size) {
-            return new Link[size];
+        public String getType() {
+            return type;
         }
-    };
 
-    public static class Preview {
+        public void setType(String type) {
+            this.type = type;
+        }
+
+        public Oembed getOembed() {
+            return oembed;
+        }
+
+        public void setOembed(Oembed oembed) {
+            this.oembed = oembed;
+        }
+
+        public static class Oembed implements Parcelable {
+
+            private String type;
+            private String version;
+            private String html;
+            private String title;
+            private String description;
+            private String providerName;
+            private String providerUrl;
+            private int width;
+            private int height;
+            private int thumbnailWidth;
+            private int thumbnailHeight;
+            private String thumbnailUrl;
+
+            public static Oembed fromJson(JsonNode nodeRoot) {
+                Oembed oembed = new Oembed();
+
+                if (nodeRoot == null) {
+                    return oembed;
+                }
+
+                oembed.setType(UtilsJson.getString(nodeRoot.get("type")));
+                oembed.setVersion(UtilsJson.getString(nodeRoot.get("version")));
+                oembed.setHtml(UtilsJson.getString(nodeRoot.get("html")));
+                oembed.setTitle(UtilsJson.getString(nodeRoot.get("title")));
+                oembed.setDescription(UtilsJson.getString(nodeRoot.get("description")));
+                oembed.setProviderName(UtilsJson.getString(nodeRoot.get("provider_name")));
+                oembed.setProviderUrl(UtilsJson.getString(nodeRoot.get("provider_url")));
+                oembed.setWidth(UtilsJson.getInt(nodeRoot.get("width")));
+                oembed.setHeight(UtilsJson.getInt(nodeRoot.get("height")));
+                oembed.setThumbnailWidth(UtilsJson.getInt(nodeRoot.get("thumbnail_width")));
+                oembed.setThumbnailHeight(UtilsJson.getInt(nodeRoot.get("thumbnail_height")));
+                oembed.setThumbnailUrl(UtilsJson.getString(nodeRoot.get("thumbnail_url")));
+
+                return oembed;
+            }
+
+            public String getType() {
+                return type;
+            }
+
+            public void setType(String type) {
+                this.type = type;
+            }
+
+            public String getVersion() {
+                return version;
+            }
+
+            public void setVersion(String version) {
+                this.version = version;
+            }
+
+            public String getHtml() {
+                return html;
+            }
+
+            public void setHtml(String html) {
+                this.html = html;
+            }
+
+            public String getTitle() {
+                return title;
+            }
+
+            public void setTitle(String title) {
+                this.title = title;
+            }
+
+            public String getDescription() {
+                return description;
+            }
+
+            public void setDescription(String description) {
+                this.description = description;
+            }
+
+            public String getProviderName() {
+                return providerName;
+            }
+
+            public void setProviderName(String providerName) {
+                this.providerName = providerName;
+            }
+
+            public String getProviderUrl() {
+                return providerUrl;
+            }
+
+            public void setProviderUrl(String providerUrl) {
+                this.providerUrl = providerUrl;
+            }
+
+            public int getWidth() {
+                return width;
+            }
+
+            public void setWidth(int width) {
+                this.width = width;
+            }
+
+            public int getHeight() {
+                return height;
+            }
+
+            public void setHeight(int height) {
+                this.height = height;
+            }
+
+            public int getThumbnailWidth() {
+                return thumbnailWidth;
+            }
+
+            public void setThumbnailWidth(int thumbnailWidth) {
+                this.thumbnailWidth = thumbnailWidth;
+            }
+
+            public int getThumbnailHeight() {
+                return thumbnailHeight;
+            }
+
+            public void setThumbnailHeight(int thumbnailHeight) {
+                this.thumbnailHeight = thumbnailHeight;
+            }
+
+            public String getThumbnailUrl() {
+                return thumbnailUrl;
+            }
+
+            public void setThumbnailUrl(String thumbnailUrl) {
+                this.thumbnailUrl = thumbnailUrl;
+            }
+
+            @Override
+            public int describeContents() {
+                return 0;
+            }
+
+            @Override
+            public void writeToParcel(Parcel dest, int flags) {
+                dest.writeString(this.type);
+                dest.writeString(this.version);
+                dest.writeString(this.html);
+                dest.writeString(this.title);
+                dest.writeString(this.description);
+                dest.writeString(this.providerName);
+                dest.writeString(this.providerUrl);
+                dest.writeInt(this.width);
+                dest.writeInt(this.height);
+                dest.writeInt(this.thumbnailWidth);
+                dest.writeInt(this.thumbnailHeight);
+                dest.writeString(this.thumbnailUrl);
+            }
+
+            public Oembed() {
+            }
+
+            protected Oembed(Parcel in) {
+                this.type = in.readString();
+                this.version = in.readString();
+                this.html = in.readString();
+                this.title = in.readString();
+                this.description = in.readString();
+                this.providerName = in.readString();
+                this.providerUrl = in.readString();
+                this.width = in.readInt();
+                this.height = in.readInt();
+                this.thumbnailWidth = in.readInt();
+                this.thumbnailHeight = in.readInt();
+                this.thumbnailUrl = in.readString();
+            }
+
+            public static final Creator<Oembed> CREATOR = new Creator<Oembed>() {
+                public Oembed createFromParcel(Parcel source) {
+                    return new Oembed(source);
+                }
+
+                public Oembed[] newArray(int size) {
+                    return new Oembed[size];
+                }
+            };
+        }
+
+        @Override
+        public int describeContents() {
+            return 0;
+        }
+
+        @Override
+        public void writeToParcel(Parcel dest, int flags) {
+            dest.writeString(this.type);
+            dest.writeParcelable(this.oembed, flags);
+        }
+
+        public Media() {
+        }
+
+        protected Media(Parcel in) {
+            this.type = in.readString();
+            this.oembed = in.readParcelable(Oembed.class.getClassLoader());
+        }
+
+        public static final Creator<Media> CREATOR = new Creator<Media>() {
+            public Media createFromParcel(Parcel source) {
+                return new Media(source);
+            }
+
+            public Media[] newArray(int size) {
+                return new Media[size];
+            }
+        };
+    }
+
+    public static class Preview implements Parcelable {
 
         private List<Image> images = new ArrayList<>();
 
@@ -670,7 +822,7 @@ public class Link extends Replyable implements Parcelable {
             this.images = images;
         }
 
-        public static class Image {
+        public static class Image implements Parcelable {
 
             private Thumbnail source;
             private List<Thumbnail> resolutions = new ArrayList<>();
@@ -755,7 +907,7 @@ public class Link extends Replyable implements Parcelable {
                 this.nsfw = nsfw;
             }
 
-            public static class Thumbnail {
+            public static class Thumbnail implements Parcelable {
                 private String url;
                 private int width;
                 private int height;
@@ -793,10 +945,198 @@ public class Link extends Replyable implements Parcelable {
                 public void setHeight(int height) {
                     this.height = height;
                 }
+
+                @Override
+                public int describeContents() {
+                    return 0;
+                }
+
+                @Override
+                public void writeToParcel(Parcel dest, int flags) {
+                    dest.writeString(this.url);
+                    dest.writeInt(this.width);
+                    dest.writeInt(this.height);
+                }
+
+                public Thumbnail() {
+                }
+
+                protected Thumbnail(Parcel in) {
+                    this.url = in.readString();
+                    this.width = in.readInt();
+                    this.height = in.readInt();
+                }
+
+                public static final Creator<Thumbnail> CREATOR = new Creator<Thumbnail>() {
+                    public Thumbnail createFromParcel(Parcel source) {
+                        return new Thumbnail(source);
+                    }
+
+                    public Thumbnail[] newArray(int size) {
+                        return new Thumbnail[size];
+                    }
+                };
             }
 
+            @Override
+            public int describeContents() {
+                return 0;
+            }
+
+            @Override
+            public void writeToParcel(Parcel dest, int flags) {
+                dest.writeParcelable(this.source, 0);
+                dest.writeTypedList(resolutions);
+                dest.writeList(this.variants);
+                dest.writeParcelable(this.nsfw, flags);
+            }
+
+            public Image() {
+            }
+
+            protected Image(Parcel in) {
+                this.source = in.readParcelable(Thumbnail.class.getClassLoader());
+                this.resolutions = in.createTypedArrayList(Thumbnail.CREATOR);
+                this.variants = new ArrayList<Image>();
+                in.readList(this.variants, List.class.getClassLoader());
+                this.nsfw = in.readParcelable(Image.class.getClassLoader());
+            }
+
+            public static final Creator<Image> CREATOR = new Creator<Image>() {
+                public Image createFromParcel(Parcel source) {
+                    return new Image(source);
+                }
+
+                public Image[] newArray(int size) {
+                    return new Image[size];
+                }
+            };
         }
 
+        @Override
+        public int describeContents() {
+            return 0;
+        }
+
+        @Override
+        public void writeToParcel(Parcel dest, int flags) {
+            dest.writeTypedList(images);
+        }
+
+        public Preview() {
+        }
+
+        protected Preview(Parcel in) {
+            this.images = in.createTypedArrayList(Image.CREATOR);
+        }
+
+        public static final Creator<Preview> CREATOR = new Creator<Preview>() {
+            public Preview createFromParcel(Parcel source) {
+                return new Preview(source);
+            }
+
+            public Preview[] newArray(int size) {
+                return new Preview[size];
+            }
+        };
     }
 
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    @Override
+    public void writeToParcel(Parcel dest, int flags) {
+        super.writeToParcel(dest, flags);
+        dest.writeString(this.author);
+        dest.writeString(this.authorFlairCssClass);
+        dest.writeString(this.authorFlairText);
+        dest.writeByte(clicked ? (byte) 1 : (byte) 0);
+        dest.writeString(this.domain);
+        dest.writeByte(hidden ? (byte) 1 : (byte) 0);
+        dest.writeByte(isSelf ? (byte) 1 : (byte) 0);
+        dest.writeInt(this.likes);
+        dest.writeString(this.linkFlairCssClass);
+        dest.writeString(this.linkFlairText);
+        dest.writeParcelable(this.media, flags);
+        dest.writeString(this.mediaEmbed);
+        dest.writeInt(this.numComments);
+        dest.writeByte(over18 ? (byte) 1 : (byte) 0);
+        dest.writeString(this.permalink);
+        dest.writeParcelable(this.preview, flags);
+        dest.writeByte(saved ? (byte) 1 : (byte) 0);
+        dest.writeInt(this.score);
+        TextUtils.writeToParcel(this.selfText, dest, flags);
+        TextUtils.writeToParcel(this.selfTextHtml, dest, flags);
+        dest.writeString(this.subreddit);
+        dest.writeString(this.subredditId);
+        dest.writeInt(this.suggestedSort == null ? -1 : this.suggestedSort.ordinal());
+        dest.writeString(this.thumbnail);
+        dest.writeString(this.title);
+        dest.writeString(this.url);
+        dest.writeLong(this.edited);
+        dest.writeInt(this.distinguished == null ? -1 : this.distinguished.ordinal());
+        dest.writeByte(stickied ? (byte) 1 : (byte) 0);
+        dest.writeLong(this.created);
+        dest.writeLong(this.createdUtc);
+        dest.writeParcelable(this.comments, 0);
+        dest.writeParcelable(this.album, 0);
+        dest.writeByte(commentsClicked ? (byte) 1 : (byte) 0);
+        dest.writeInt(this.backgroundColor);
+        dest.writeInt(this.contextLevel);
+        dest.writeString(this.commentId);
+    }
+
+    protected Link(Parcel in) {
+        this.author = in.readString();
+        this.authorFlairCssClass = in.readString();
+        this.authorFlairText = in.readString();
+        this.clicked = in.readByte() != 0;
+        this.domain = in.readString();
+        this.hidden = in.readByte() != 0;
+        this.isSelf = in.readByte() != 0;
+        this.likes = in.readInt();
+        this.linkFlairCssClass = in.readString();
+        this.linkFlairText = in.readString();
+        this.media = in.readParcelable(Media.class.getClassLoader());
+        this.mediaEmbed = in.readString();
+        this.numComments = in.readInt();
+        this.over18 = in.readByte() != 0;
+        this.permalink = in.readString();
+        this.preview = in.readParcelable(Preview.class.getClassLoader());
+        this.saved = in.readByte() != 0;
+        this.score = in.readInt();
+        this.selfText = TextUtils.CHAR_SEQUENCE_CREATOR.createFromParcel(in);
+        this.selfTextHtml = TextUtils.CHAR_SEQUENCE_CREATOR.createFromParcel(in);
+        this.subreddit = in.readString();
+        this.subredditId = in.readString();
+        int tmpSuggestedSort = in.readInt();
+        this.suggestedSort = tmpSuggestedSort == -1 ? null : Sort.values()[tmpSuggestedSort];
+        this.thumbnail = in.readString();
+        this.title = in.readString();
+        this.url = in.readString();
+        this.edited = in.readLong();
+        int tmpDistinguished = in.readInt();
+        this.distinguished = tmpDistinguished == -1 ? null : Reddit.Distinguished.values()[tmpDistinguished];
+        this.stickied = in.readByte() != 0;
+        this.created = in.readLong();
+        this.createdUtc = in.readLong();
+        this.comments = in.readParcelable(Listing.class.getClassLoader());
+        this.album = in.readParcelable(Album.class.getClassLoader());
+        this.commentsClicked = in.readByte() != 0;
+        this.backgroundColor = in.readInt();
+        this.contextLevel = in.readInt();
+        this.commentId = in.readString();
+    }
+
+    public static final Creator<Link> CREATOR = new Creator<Link>() {
+        public Link createFromParcel(Parcel source) {
+            return new Link(source);
+        }
+
+        public Link[] newArray(int size) {
+            return new Link[size];
+        }
+    };
 }

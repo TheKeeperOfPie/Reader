@@ -45,7 +45,6 @@
             android:key="pref_grid_columns"
             android:title="@string/pref_grid_columns"
             android:summary="@string/pref_grid_columns_summary"
-            android:defaultValue="0"
             android:hint="@string/pref_grid_columns_hint"
             android:inputType="number"
             android:numeric="integer"

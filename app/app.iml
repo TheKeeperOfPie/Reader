@@ -134,12 +134,12 @@
     <orderEntry type="library" exported="" name="okhttp-3.0.1" level="project" />
     <orderEntry type="library" exported="" name="crashlytics-core-2.3.8" level="project" />
     <orderEntry type="library" exported="" name="beta-1.1.4" level="project" />
-    <orderEntry type="library" exported="" name="javax.inject-1" level="project" />
     <orderEntry type="library" exported="" name="dagger-2.0.2" level="project" />
+    <orderEntry type="library" exported="" name="javax.inject-1" level="project" />
     <orderEntry type="library" exported="" name="rxandroid-1.0.1" level="project" />
     <orderEntry type="library" exported="" name="txtmark-0.13" level="project" />
-    <orderEntry type="library" exported="" name="rxjava-1.1.0" level="project" />
     <orderEntry type="library" exported="" name="jackson-databind-2.6.0" level="project" />
+    <orderEntry type="library" exported="" name="rxjava-1.1.0" level="project" />
     <orderEntry type="library" exported="" name="design-23.1.1" level="project" />
     <orderEntry type="library" exported="" name="logging-interceptor-3.0.1" level="project" />
     <orderEntry type="library" exported="" name="support-v13-23.1.1" level="project" />

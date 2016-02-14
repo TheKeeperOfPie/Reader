@@ -430,12 +430,13 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         public ImageView imagePlay;
         public ImageView imageThumbnail;
         public WebViewFixed webFull;
+        public View viewMargin;
+        public ViewGroup layoutTitle;
         public TextView textThreadFlair;
         public TextView textThreadTitle;
         public TextView textThreadSelf;
         public TextView textThreadInfo;
         public TextView textHidden;
-        public ImageButton buttonComments;
         public RelativeLayout layoutContainerExpand;
         public Toolbar toolbarActions;
         public RelativeLayout layoutContainerReply;
@@ -618,12 +619,14 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             frameFull = (FrameLayout) itemView.findViewById(R.id.frame_full);
             viewPagerFull = (ViewPager) itemView.findViewById(R.id.view_pager_full);
             imageThumbnail = (ImageView) itemView.findViewById(R.id.image_thumbnail);
+            viewMargin = itemView.findViewById(R.id.view_margin);
+            layoutTitle = (ViewGroup) itemView.findViewById(R.id.layout_title);
             textThreadFlair = (TextView) itemView.findViewById(R.id.text_thread_flair);
             textThreadTitle = (TextView) itemView.findViewById(R.id.text_thread_title);
             textThreadInfo = (TextView) itemView.findViewById(R.id.text_thread_info);
             textThreadSelf = (TextView) itemView.findViewById(R.id.text_thread_self);
             textHidden = (TextView) itemView.findViewById(R.id.text_hidden);
-            buttonComments = (ImageButton) itemView.findViewById(R.id.button_comments);
+//            buttonComments = (ImageButton) itemView.findViewById(R.id.button_comments);
             layoutContainerExpand = (RelativeLayout) itemView.findViewById(
                     R.id.layout_container_expand);
             layoutContainerReply = (RelativeLayout) itemView.findViewById(
@@ -687,14 +690,16 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                     PorterDuff.Mode.MULTIPLY);
             colorFilterSave = new PorterDuffColorFilter(colorAccent, PorterDuff.Mode.MULTIPLY);
 
-            buttonComments.setColorFilter(colorFilterIconDefault);
+//            buttonComments.setColorFilter(colorFilterIconDefault);
 
             youTubeViewId = View.generateViewId();
         }
 
         protected void initializeListeners() {
 
-            buttonComments.setOnClickListener(this);
+            viewMargin.setOnClickListener(this);
+            textThreadFlair.setOnClickListener(this);
+            layoutTitle.setOnClickListener(this);
             buttonSendReply.setOnClickListener(this);
             imageThumbnail.setOnClickListener(this);
             textThreadSelf.setOnClickListener(this);
@@ -827,7 +832,10 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         @Override
         public void onClick(View v) {
             switch (v.getId()) {
-                case R.id.button_comments:
+                case R.id.view_margin:
+                case R.id.text_thread_flair:
+                case R.id.layout_title:
+                case R.id.text_thread_title:
                     loadComments();
                     break;
                 case R.id.image_thumbnail:
@@ -1164,8 +1172,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                 textThreadFlair.setVisibility(View.GONE);
             }
 
-            textThreadTitle.setText(link.getTitle()
-                    .toString());
+            textThreadTitle.setText(link.getTitle());
             syncTitleColor();
 
             textThreadSelf.setText(link.getSelfTextHtml());
@@ -1867,7 +1874,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             textThreadSelf.setVisibility(visibility);
             textThreadInfo.setVisibility(visibility);
             textHidden.setVisibility(visibility);
-            buttonComments.setVisibility(visibility);
+//            buttonComments.setVisibility(visibility);
             layoutContainerExpand.setVisibility(visibility);
             toolbarActions.setVisibility(visibility);
             layoutContainerReply.setVisibility(visibility);
