@@ -626,7 +626,6 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             textThreadInfo = (TextView) itemView.findViewById(R.id.text_thread_info);
             textThreadSelf = (TextView) itemView.findViewById(R.id.text_thread_self);
             textHidden = (TextView) itemView.findViewById(R.id.text_hidden);
-//            buttonComments = (ImageButton) itemView.findViewById(R.id.button_comments);
             layoutContainerExpand = (RelativeLayout) itemView.findViewById(
                     R.id.layout_container_expand);
             layoutContainerReply = (RelativeLayout) itemView.findViewById(
@@ -690,16 +689,19 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                     PorterDuff.Mode.MULTIPLY);
             colorFilterSave = new PorterDuffColorFilter(colorAccent, PorterDuff.Mode.MULTIPLY);
 
-//            buttonComments.setColorFilter(colorFilterIconDefault);
-
             youTubeViewId = View.generateViewId();
         }
 
         protected void initializeListeners() {
 
             viewMargin.setOnClickListener(this);
+            viewMargin.setOnLongClickListener(this);
             textThreadFlair.setOnClickListener(this);
+            textThreadFlair.setOnLongClickListener(this);
             layoutTitle.setOnClickListener(this);
+            layoutTitle.setOnLongClickListener(this);
+            textThreadInfo.setOnClickListener(this);
+            textThreadInfo.setOnLongClickListener(this);
             buttonSendReply.setOnClickListener(this);
             imageThumbnail.setOnClickListener(this);
             textThreadSelf.setOnClickListener(this);
@@ -857,6 +859,13 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         @Override
         public boolean onLongClick(View v) {
             switch (v.getId()) {
+                case R.id.view_margin:
+                case R.id.text_thread_flair:
+                case R.id.layout_title:
+                case R.id.text_thread_title:
+                case R.id.text_thread_info:
+                    expandToolbarActions();
+                    return true;
                 default:
                     eventListener.voteLink(ViewHolderBase.this, link, 1);
                     clearOverlay();
@@ -1870,11 +1879,12 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             imagePlay.setVisibility(visibility);
             imageThumbnail.setVisibility(visibility);
             textThreadFlair.setVisibility(visibility);
+            viewMargin.setVisibility(visibility);
+            layoutTitle.setVisibility(visibility);
             textThreadTitle.setVisibility(visibility);
             textThreadSelf.setVisibility(visibility);
             textThreadInfo.setVisibility(visibility);
             textHidden.setVisibility(visibility);
-//            buttonComments.setVisibility(visibility);
             layoutContainerExpand.setVisibility(visibility);
             toolbarActions.setVisibility(visibility);
             layoutContainerReply.setVisibility(visibility);
