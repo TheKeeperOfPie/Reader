@@ -160,7 +160,7 @@ public class ActivityMain extends AppCompatActivity
 
     private int loadId = -1;
 
-    private SharedPreferences sharedPreferences;
+    protected SharedPreferences sharedPreferences;
     private DrawerLayout drawerLayout;
     private NavigationView viewNavigation;
 

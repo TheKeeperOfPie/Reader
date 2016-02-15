@@ -96,10 +96,7 @@ public class AdapterLinkList extends AdapterLink {
         @Override
         public void onClick(View v) {
             switch (v.getId()) {
-                case R.id.view_margin:
-                case R.id.text_thread_flair:
-                case R.id.layout_title:
-                case R.id.text_thread_title:
+                case R.id.button_comments:
                     if (mediaPlayer != null && mediaPlayer.isPlaying()) {
                         destroySurfaceView();
                         imagePlay.setVisibility(View.VISIBLE);

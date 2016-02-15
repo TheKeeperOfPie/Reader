@@ -431,7 +431,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         public ImageView imageThumbnail;
         public WebViewFixed webFull;
         public View viewMargin;
-        public ViewGroup layoutTitle;
+        public ImageButton buttonComments;
         public TextView textThreadFlair;
         public TextView textThreadTitle;
         public TextView textThreadSelf;
@@ -620,7 +620,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             viewPagerFull = (ViewPager) itemView.findViewById(R.id.view_pager_full);
             imageThumbnail = (ImageView) itemView.findViewById(R.id.image_thumbnail);
             viewMargin = itemView.findViewById(R.id.view_margin);
-            layoutTitle = (ViewGroup) itemView.findViewById(R.id.layout_title);
+            buttonComments = (ImageButton) itemView.findViewById(R.id.button_comments);
             textThreadFlair = (TextView) itemView.findViewById(R.id.text_thread_flair);
             textThreadTitle = (TextView) itemView.findViewById(R.id.text_thread_title);
             textThreadInfo = (TextView) itemView.findViewById(R.id.text_thread_info);
@@ -694,14 +694,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
 
         protected void initializeListeners() {
 
-            viewMargin.setOnClickListener(this);
-            viewMargin.setOnLongClickListener(this);
-            textThreadFlair.setOnClickListener(this);
-            textThreadFlair.setOnLongClickListener(this);
-            layoutTitle.setOnClickListener(this);
-            layoutTitle.setOnLongClickListener(this);
-            textThreadInfo.setOnClickListener(this);
-            textThreadInfo.setOnLongClickListener(this);
+            buttonComments.setOnClickListener(this);
             buttonSendReply.setOnClickListener(this);
             imageThumbnail.setOnClickListener(this);
             textThreadSelf.setOnClickListener(this);
@@ -834,10 +827,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         @Override
         public void onClick(View v) {
             switch (v.getId()) {
-                case R.id.view_margin:
-                case R.id.text_thread_flair:
-                case R.id.layout_title:
-                case R.id.text_thread_title:
+                case R.id.button_comments:
                     loadComments();
                     break;
                 case R.id.image_thumbnail:
@@ -859,13 +849,6 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         @Override
         public boolean onLongClick(View v) {
             switch (v.getId()) {
-                case R.id.view_margin:
-                case R.id.text_thread_flair:
-                case R.id.layout_title:
-                case R.id.text_thread_title:
-                case R.id.text_thread_info:
-                    expandToolbarActions();
-                    return true;
                 default:
                     eventListener.voteLink(ViewHolderBase.this, link, 1);
                     clearOverlay();
@@ -1880,7 +1863,6 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             imageThumbnail.setVisibility(visibility);
             textThreadFlair.setVisibility(visibility);
             viewMargin.setVisibility(visibility);
-            layoutTitle.setVisibility(visibility);
             textThreadTitle.setVisibility(visibility);
             textThreadSelf.setVisibility(visibility);
             textThreadInfo.setVisibility(visibility);
