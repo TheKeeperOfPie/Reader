@@ -76,7 +76,6 @@ import com.winsonchiu.reader.utils.YouTubeListener;
 import com.winsonchiu.reader.utils.YouTubePlayerStateListener;
 import com.winsonchiu.reader.views.CustomFrameLayout;
 
-import java.util.Arrays;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -188,14 +187,20 @@ public class FragmentComments extends FragmentBase
         }
         int[] location = viewHolder.getScreenAnchor();
 
-        Log.d(TAG, "getScreenAnchor: " + Arrays.toString(location));
+        Link link = viewHolder.getLink();
 
         args.putIntArray(ARG_LOCATION, location);
-        args.putString(ARG_FIRST_LINK_NAME, viewHolder.getLink().getName());
+        args.putString(ARG_FIRST_LINK_NAME, link.getName());
         args.putInt(ARG_COLOR_LINK, colorLink);
         args.putInt(ARG_ITEM_HEIGHT, viewHolder.itemView.getHeight());
         args.putInt(ARG_ITEM_WIDTH, viewHolder.itemView.getWidth());
         args.putBoolean(ARG_ACTIONS_EXPANDED, viewHolder.layoutContainerExpand.isShown());
+
+        if (!TextUtils.isEmpty(link.getYouTubeId()) && link.getYouTubeTime() >= 0) {
+            args.putString(ARG_YOUTUBE_ID, link.getYouTubeId());
+            args.putInt(ARG_YOUTUBE_TIME, link.getYouTubeTime());
+        }
+
         fragment.setArguments(args);
         return fragment;
     }
@@ -506,7 +511,12 @@ public class FragmentComments extends FragmentBase
 
         viewBackground = layoutRoot.findViewById(R.id.view_background);
 
-        if (savedInstanceState != null) {
+        if (savedInstanceState == null) {
+            if (getArguments().getInt(ARG_YOUTUBE_TIME, -1) >= 0) {
+                loadYoutubeVideo(getArguments().getString(ARG_YOUTUBE_ID), getArguments().getInt(ARG_YOUTUBE_TIME));
+            }
+        }
+        else {
             String youtubeId = savedInstanceState.getString(ARG_YOUTUBE_ID, null);
 
             if (!TextUtils.isEmpty(youtubeId)) {

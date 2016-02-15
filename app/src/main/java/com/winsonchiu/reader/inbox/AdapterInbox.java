@@ -121,7 +121,7 @@ public class AdapterInbox extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
             controllerInbox.loadMore();
         }
 
-        switch (getItemViewType(position)) {
+        switch (holder.getItemViewType()) {
             case ControllerInbox.VIEW_TYPE_MESSAGE:
                 ViewHolderMessage viewHolderMessage = (ViewHolderMessage) holder;
                 viewHolderMessage.onBind(controllerInbox.getMessage(position));

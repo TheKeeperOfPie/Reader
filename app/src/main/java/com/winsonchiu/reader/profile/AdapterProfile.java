@@ -154,7 +154,7 @@ public class AdapterProfile extends RecyclerView.Adapter<RecyclerView.ViewHolder
                         ControllerProfile.PAGE_OVERVIEW) ? View.VISIBLE : View.GONE);
                 break;
             case 2:
-                if (getItemViewType(position) == ControllerProfile.VIEW_TYPE_LINK) {
+                if (holder.getItemViewType() == ControllerProfile.VIEW_TYPE_LINK) {
                     AdapterLinkList.ViewHolder viewHolderLinkTop = (AdapterLinkList.ViewHolder) holder;
                     viewHolderLinkTop.onRecycle();
                     viewHolderLinkTop.onBind(controllerProfile.getTopLink(), controllerLinks.showSubreddit());
@@ -173,7 +173,7 @@ public class AdapterProfile extends RecyclerView.Adapter<RecyclerView.ViewHolder
                         ControllerProfile.PAGE_OVERVIEW) ? View.VISIBLE : View.GONE);
                 break;
             case 4:
-                if (getItemViewType(position) == ControllerProfile.VIEW_TYPE_COMMENT) {
+                if (holder.getItemViewType() == ControllerProfile.VIEW_TYPE_COMMENT) {
                     AdapterCommentList.ViewHolderComment viewHolderCommentTop = (AdapterCommentList.ViewHolderComment) holder;
                     viewHolderCommentTop.onBind(controllerProfile.getTopComment());
                 }
@@ -228,7 +228,7 @@ public class AdapterProfile extends RecyclerView.Adapter<RecyclerView.ViewHolder
 
     public void setVisibility(int visibility, @NonNull Thing thing) {
         for (RecyclerView.ViewHolder viewHolder : viewHolders) {
-            switch (getItemViewType(viewHolder.getAdapterPosition())) {
+            switch (viewHolder.getItemViewType()) {
 
                 case ControllerProfile.VIEW_TYPE_LINK:
                     if (thing.equals(((AdapterLink.ViewHolderBase) viewHolder).link)) {

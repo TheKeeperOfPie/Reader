@@ -75,6 +75,7 @@ public class Link extends Replyable implements Parcelable {
     private long created;
     private long createdUtc;
 
+    // Non-Reddit variables
     private Listing comments = new Listing();
     private Album album;
     private boolean commentsClicked;
@@ -82,6 +83,9 @@ public class Link extends Replyable implements Parcelable {
 
     private int contextLevel;
     private String commentId;
+
+    private String youTubeId;
+    private int youTubeTime;
 
     public static Link fromJson(JsonNode nodeRoot) {
 
@@ -540,6 +544,22 @@ public class Link extends Replyable implements Parcelable {
 
     public void setCommentId(String commentId) {
         this.commentId = commentId;
+    }
+
+    public String getYouTubeId() {
+        return youTubeId;
+    }
+
+    public void setYouTubeId(String youTubeId) {
+        this.youTubeId = youTubeId;
+    }
+
+    public int getYouTubeTime() {
+        return youTubeTime;
+    }
+
+    public void setYouTubeTime(int youTubeTime) {
+        this.youTubeTime = youTubeTime;
     }
 
     public static class Media implements Parcelable {

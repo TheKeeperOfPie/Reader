@@ -7,6 +7,8 @@ package com.winsonchiu.reader.dagger.modules;
 import android.accounts.AccountManager;
 import android.app.Application;
 import android.content.Context;
+import android.content.SharedPreferences;
+import android.preference.PreferenceManager;
 
 import com.jakewharton.picasso.OkHttp3Downloader;
 import com.squareup.picasso.Picasso;
@@ -58,6 +60,12 @@ public class ModuleContext {
 //            builder = builder.loggingEnabled(true);
         }
         return builder.build();
+    }
+
+    @Singleton
+    @Provides
+    public SharedPreferences provideSharedPreferences(Context context) {
+        return PreferenceManager.getDefaultSharedPreferences(context);
     }
 
 }

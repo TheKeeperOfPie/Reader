@@ -217,7 +217,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
 
     public void setVisibility(int visibility, @NonNull Thing thing) {
         for (RecyclerView.ViewHolder viewHolder : viewHolders) {
-            if (getItemViewType(viewHolder.getAdapterPosition()) == VIEW_LINK && thing.equals(((ViewHolderBase) viewHolder).link)) {
+            if (viewHolder.getItemViewType() == VIEW_LINK && thing.equals(((ViewHolderBase) viewHolder).link)) {
                 viewHolder.itemView.setVisibility(visibility);
             }
         }
@@ -1074,7 +1074,15 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         }
 
         public void loadComments() {
+            if (youTubePlayer != null) {
+                link.setYouTubeTime(youTubePlayer.getCurrentTimeMillis());
+            }
+            else {
+                link.setYouTubeTime(-1);
+            }
+
             callbackYouTubeDestruction.destroyYouTubePlayerFragments();
+            layoutYouTube.setVisibility(View.GONE);
             addToHistory();
             clearOverlay();
             if (mediaPlayer != null) {
@@ -1095,7 +1103,12 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                 }
             }
 
-            eventListener.onClickComments(link, this, source);
+            itemView.post(new Runnable() {
+                @Override
+                public void run() {
+                    eventListener.onClickComments(link, ViewHolderBase.this, source);
+                }
+            });
         }
 
         /**
@@ -1372,7 +1385,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                 }
 
                 if (youTubeListener == null) {
-                    loadYouTubeVideo(link, matcher.group(1), time);
+                    loadYouTubeVideo(matcher.group(1), time);
                 }
                 else {
                     youTubeListener.loadYouTubeVideo(link, matcher.group(1), time);
@@ -1601,7 +1614,8 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             scrollToSelf();
         }
 
-        public void loadYouTubeVideo(final Link link, final String id, final int timeInMillis) {
+        public void loadYouTubeVideo(final String id, final int timeInMillis) {
+            link.setYouTubeId(id);
             callbackYouTubeDestruction.destroyYouTubePlayerFragments();
             layoutYouTube.postDelayed(new Runnable() {
                 @Override
@@ -1882,7 +1896,6 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
 
         @Override
         public void surfaceCreated(SurfaceHolder holder) {
-            Log.d(TAG, "surfaceCreated() called with: " + "holder = [" + holder + "]");
             surfaceHolder = holder;
             if (uriVideo == null) {
                 return;
@@ -1903,7 +1916,6 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                     mediaController.hide();
                     surfaceHolder.setFixedSize(mp.getVideoWidth(), mp.getVideoHeight());
                     mp.start();
-                    Log.d(TAG, "onPrepared");
                 }
             });
             mediaPlayer.setDisplay(surfaceHolder);
@@ -1919,12 +1931,11 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
 
         @Override
         public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
-            Log.d(TAG, "surfaceChanged() called with: " + "holder = [" + holder + "], format = [" + format + "], width = [" + width + "], height = [" + height + "]");
+
         }
 
         @Override
         public void surfaceDestroyed(SurfaceHolder holder) {
-            Log.d(TAG, "surfaceDestroyed() called with: " + "holder = [" + holder + "]");
             if (mediaPlayer != null) {
                 mediaPlayer.reset();
                 mediaPlayer.release();
@@ -1957,8 +1968,6 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                         .beginTransaction()
                         .remove(youTubeFragment)
                         .commit();
-
-                activity.getSupportFragmentManager().executePendingTransactions();
             }
 
             layoutYouTube.setVisibility(View.GONE);

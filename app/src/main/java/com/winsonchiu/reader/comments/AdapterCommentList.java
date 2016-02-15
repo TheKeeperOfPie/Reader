@@ -316,7 +316,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
             controllerComments.loadMoreComments();
         }
 
-        if (getItemViewType(position) == VIEW_LINK) {
+        if (holder.getItemViewType() == VIEW_LINK) {
             AdapterLink.ViewHolderBase viewHolderBase = (AdapterLink.ViewHolderBase) holder;
 
             viewHolderBase
@@ -337,7 +337,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
     @Override
     public void onViewRecycled(RecyclerView.ViewHolder holder) {
         super.onViewRecycled(holder);
-        if (getItemViewType(holder.getAdapterPosition()) == VIEW_LINK) {
+        if (holder.getItemViewType() == VIEW_LINK) {
             ((AdapterLink.ViewHolderBase) holder).onRecycle();
         }
         viewHolders.remove(holder);

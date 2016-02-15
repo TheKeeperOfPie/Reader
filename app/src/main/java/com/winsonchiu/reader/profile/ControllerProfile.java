@@ -108,7 +108,7 @@ public class ControllerProfile implements ControllerLinksBase {
         List<Thing> children = data.getChildren();
 
         if (position < 0 || position >= children.size()) {
-            throw new IndexOutOfBoundsException("ControllerProfile position invalid");
+            throw new IndexOutOfBoundsException("ControllerProfile position invalid: " + position);
         }
 
         Thing thing = children.get(position);

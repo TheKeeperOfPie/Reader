@@ -81,6 +81,9 @@
     <string name="pref_history_size">History size</string>
     <string name="pref_history_size_summary">Max number of history entries to save</string>
 
+    <string name="pref_collapse_comment_threads">Collapse comment threads</string>
+    <string name="pref_collapse_comment_threads_summary">Start with all threads collapsed</string>
+
 
     <string name="pref_swipe_exit_comments">Swipe exit comments</string>
     <string name="pref_swipe_exit_comments_summary">Use a swipe gesture to exit comments</string>

@@ -4,10 +4,12 @@
 
 package com.winsonchiu.reader.comments;
 
+import android.content.SharedPreferences;
 import android.text.TextUtils;
 import android.util.Log;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.winsonchiu.reader.AppSettings;
 import com.winsonchiu.reader.CustomApplication;
 import com.winsonchiu.reader.dagger.components.ComponentStatic;
 import com.winsonchiu.reader.data.reddit.Comment;
@@ -49,6 +51,7 @@ public class ControllerComments implements AdapterCommentList.ViewHolderComment.
     private Listing listingComments = new Listing();
 
     @Inject Reddit reddit;
+    @Inject SharedPreferences sharedPreferences;
 
     private boolean isRefreshing;
     private boolean isCommentThread;
@@ -143,6 +146,15 @@ public class ControllerComments implements AdapterCommentList.ViewHolderComment.
             listing.setChildren(new ArrayList<Thing>());
         }
         listingComments = listing;
+
+        if (sharedPreferences.getBoolean(AppSettings.PREF_COLLAPSE_COMMENT_THREADS, false)) {
+            for (int index = listingComments.getChildren().size() - 1; index >= 0; index--) {
+                if (((Comment) listingComments.getChildren().get(index)).getLevel() == 0) {
+                    collapseComment(index, false);
+                }
+            }
+        }
+
         for (Listener listener : listeners) {
             listener.getAdapter().notifyDataSetChanged();
         }
@@ -345,6 +357,14 @@ public class ControllerComments implements AdapterCommentList.ViewHolderComment.
 
             insertComments(commentIndex, listComments, listingComments);
 
+            if (sharedPreferences.getBoolean(AppSettings.PREF_COLLAPSE_COMMENT_THREADS, false)) {
+                for (int index = listingComments.getChildren().size() - 1; index >= commentIndex; index--) {
+                    if (((Comment) listingComments.getChildren().get(index)).getLevel() == 0) {
+                        collapseComment(index, false);
+                    }
+                }
+            }
+
             for (Listener listener : listeners) {
                 listener.getAdapter()
                         .notifyItemRangeInserted(commentIndex + 1, listComments.size());
@@ -358,7 +378,6 @@ public class ControllerComments implements AdapterCommentList.ViewHolderComment.
     }
 
     private void insertComments(int positionStart, List<Thing> comments, Listing listing) {
-
         for (int index = comments.size() - 1; index >= 0; index--) {
             Comment comment = (Comment) comments.get(index);
             listing.getChildren().add(positionStart, comment);
@@ -511,6 +530,10 @@ public class ControllerComments implements AdapterCommentList.ViewHolderComment.
     }
 
     private void collapseComment(int position) {
+        collapseComment(position, true);
+    }
+
+    private void collapseComment(int position, boolean notify) {
         List<Thing> commentList = listingComments.getChildren();
         Comment comment = (Comment) commentList.get(position);
         position++;
@@ -523,10 +546,13 @@ public class ControllerComments implements AdapterCommentList.ViewHolderComment.
         if (numRemoved > 0) {
             comment.setCollapsed(numRemoved);
         }
-        for (Listener listener : listeners) {
-            listener.getAdapter().notifyItemChanged(position);
-            listener.getAdapter()
-                    .notifyItemRangeRemoved(position + 1, numRemoved);
+
+        if (notify) {
+            for (Listener listener : listeners) {
+                listener.getAdapter().notifyItemChanged(position);
+                listener.getAdapter()
+                        .notifyItemRangeRemoved(position + 1, numRemoved);
+            }
         }
     }
 

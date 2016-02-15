@@ -78,7 +78,6 @@ public class ControllerLinks implements ControllerLinksBase {
         if (!isLoading() && listingLinks.getChildren().isEmpty()) {
             reloadSubreddit();
         }
-        Log.d(TAG, "addListener: " + listener);
     }
 
     public void removeListener(Listener listener) {
@@ -86,8 +85,6 @@ public class ControllerLinks implements ControllerLinksBase {
     }
 
     public Observable<Subreddit> setParameters(String subredditName, Sort sort, Time time) {
-        Log.d(TAG, "parseUrl setParameters() called with: " + "subredditName = [" + subredditName + "], sort = [" + sort + "], time = [" + time + "]");
-
         if (!TextUtils.equals(subredditName, subreddit.getDisplayName())) {
             this.sort = sort;
             this.time = time;
@@ -108,7 +105,6 @@ public class ControllerLinks implements ControllerLinksBase {
     }
 
     public Observable<Subreddit> reloadSubreddit() {
-        Log.d(TAG, "reloadSubreddit() called with: ", new Exception());
         Observable<Subreddit> observable = reddit.about(subreddit.getUrl())
                 .flatMap(new Func1<String, Observable<Subreddit>>() {
                     @Override
@@ -151,7 +147,6 @@ public class ControllerLinks implements ControllerLinksBase {
     }
 
     public Observable<Subreddit> reloadSubredditOnly() {
-        Log.d(TAG, "reloadSubredditOnly() called with: ", new Exception());
         Observable<Subreddit> observable = reddit.about(subreddit.getUrl())
                 .flatMap(new Func1<String, Observable<Subreddit>>() {
                     @Override
@@ -181,9 +176,6 @@ public class ControllerLinks implements ControllerLinksBase {
             @Override
             public void error(Throwable e) {
                 e.printStackTrace();
-                for (Listener listener : listeners) {
-                    listener.showEmptyView(true);
-                }
             }
 
             @Override
@@ -210,7 +202,6 @@ public class ControllerLinks implements ControllerLinksBase {
             subreddit.setUrl("/");
             reloadAllLinks(true);
         }
-        Log.d(TAG, "loadFrontPage");
     }
 
     public void setSort(Sort sort) {

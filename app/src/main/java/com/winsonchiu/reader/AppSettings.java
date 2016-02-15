@@ -79,9 +79,10 @@ public class AppSettings {
     public static final String PREF_VERSION = "pref_version";
     public static final String PREF_HEADER_SUBREDDIT = "pref_header_subreddit";
     public static final String PREF_HOME_SUBREDDIT = "pref_home_subreddit";
+    public static final String PREF_COLLAPSE_COMMENT_THREADS = "pref_collapse_comment_threads";
 
     private static final String TAG = AppSettings.class.getCanonicalName();
-    public static final String SUBSCRIPTIONS = "subscriptions";
+    public static final String SUBSCRIPTIONS = "subscriptions";;
 
     public static boolean initPrefs(Context context) {
 

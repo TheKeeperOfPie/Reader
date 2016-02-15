@@ -27,6 +27,13 @@
             />
 
         <CheckBoxPreference
+            android:key="pref_collapse_comment_threads"
+            android:title="@string/pref_collapse_comment_threads"
+            android:summary="@string/pref_collapse_comment_threads_summary"
+            android:defaultValue="false"
+            />
+
+        <CheckBoxPreference
             android:key="pref_dim_posts"
             android:title="@string/pref_dim_posts"
             android:summary="@string/pref_dim_posts_summary"

@@ -69,7 +69,7 @@ public class AdapterLinkList extends AdapterLink {
 
         super.onBindViewHolder(holder, position);
 
-        switch (getItemViewType(position)) {
+        switch (holder.getItemViewType()) {
             case VIEW_LINK_HEADER:
                 ViewHolderHeader viewHolderHeader = (ViewHolderHeader) holder;
                 viewHolderHeader.onBind(controllerLinks.getSubreddit());
