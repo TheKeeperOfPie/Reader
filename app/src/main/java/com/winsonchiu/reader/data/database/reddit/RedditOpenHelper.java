@@ -15,7 +15,7 @@ import com.winsonchiu.reader.data.database.Table;
  */
 public class RedditOpenHelper extends SQLiteOpenHelper {
 
-    public static final int VERSION = 0;
+    public static final int VERSION = 1;
     public static final String NAME = "Reader.db";
 
     private final Table[] tables;

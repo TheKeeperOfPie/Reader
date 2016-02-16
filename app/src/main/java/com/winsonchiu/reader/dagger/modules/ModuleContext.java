@@ -14,6 +14,7 @@ import com.jakewharton.picasso.OkHttp3Downloader;
 import com.squareup.picasso.Picasso;
 import com.winsonchiu.reader.BuildConfig;
 import com.winsonchiu.reader.CustomApplication;
+import com.winsonchiu.reader.data.database.reddit.RedditDatabase;
 
 import javax.inject.Singleton;
 
@@ -66,6 +67,12 @@ public class ModuleContext {
     @Provides
     public SharedPreferences provideSharedPreferences(Context context) {
         return PreferenceManager.getDefaultSharedPreferences(context);
+    }
+
+    @Singleton
+    @Provides
+    public RedditDatabase provideRedditDatabase(Application application) {
+        return new RedditDatabase(application);
     }
 
 }

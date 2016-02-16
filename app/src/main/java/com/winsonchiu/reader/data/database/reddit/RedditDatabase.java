@@ -8,6 +8,13 @@ import android.app.Application;
 import android.database.sqlite.SQLiteDatabase;
 
 import com.winsonchiu.reader.data.database.Table;
+import com.winsonchiu.reader.data.reddit.Link;
+import com.winsonchiu.reader.data.reddit.Listing;
+import com.winsonchiu.reader.data.reddit.Thing;
+import com.winsonchiu.reader.utils.ObserverEmpty;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import rx.Observable;
 import rx.Scheduler;
@@ -20,8 +27,8 @@ import rx.subjects.BehaviorSubject;
  */
 public class RedditDatabase {
 
-    private static final Table TABLE_SUBREDDIT = new TableSubreddit();
-    private static final Table TABLE_LINK = new TableLink();
+    private static final TableSubreddit TABLE_SUBREDDIT = new TableSubreddit();
+    private static final TableLink TABLE_LINK = new TableLink();
 
     private static final Table[] TABLES = new Table[]{
             TABLE_SUBREDDIT,
@@ -49,4 +56,17 @@ public class RedditDatabase {
         return subjectDatabase.first();
     }
 
+    public void storeListing(Listing listing) {
+        List<Link> links = new ArrayList<>();
+        for (Thing thing : listing.getChildren()) {
+            if (thing instanceof Link) {
+                links.add((Link) thing);
+            }
+        }
+
+        openDatabase()
+                .subscribeOn(Schedulers.io())
+//                .doOnNext(TABLE_LINK.storeLinks(links))
+                .subscribe(new ObserverEmpty<SQLiteDatabase>());
+    }
 }

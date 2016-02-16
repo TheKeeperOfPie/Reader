@@ -4,38 +4,43 @@
 
 package com.winsonchiu.reader.data.database.reddit;
 
+import android.database.sqlite.SQLiteDatabase;
+
+import com.winsonchiu.reader.data.database.TransactionInsertOrReplace;
 import com.winsonchiu.reader.data.database.Table;
 import com.winsonchiu.reader.data.reddit.Link;
+
+import java.util.List;
+
+import rx.functions.Action1;
 
 /**
  * Created by TheKeeperOfPie on 1/30/2016.
  */
 public final class TableLink extends Table<Link> {
-    public static final String TABLE_NAME = "link";
-    public static final String COLUMN_NAME_JSON = "json";
+    public static final String NAME = "link";
+    public static final String COLUMN_JSON = "json";
+    public static final String COLUMN_TITLE = "title";
+    public static final String COLUMN_AUTHOR = "author";
 
-    public static final String SQL_CREATE = "CREATE TABLE " + TABLE_NAME
-            + "("
-            + _ID + SPACE + TYPE_TEXT + SPACE + PRIMARY_KEY + COMMA
-            + COLUMN_NAME_JSON + SPACE + TYPE_TEXT + COMMA
-            + ")";
-
-    private static final String SQL_CREATE_VERBOSE =
-            "CREATE TABLE subreddit" +
-                    "(" +
-                    "_id TEXT PRIMARY KEY," +
-                    "json TEXT," +
-                    ")";
+    public static final String[] COLUMNS = new String[] {
+            COLUMN_JSON,
+            COLUMN_TITLE,
+            COLUMN_AUTHOR
+    };
 
     public TableLink() {
-        if (!SQL_CREATE.equals(SQL_CREATE_VERBOSE)) {
-            throw new IllegalStateException("SQL_CREATE and SQL_CREATE_VERBOSE do not match");
-        }
+
     }
 
     @Override
-    public void onCreate() {
-        sqLiteDatabase.execSQL(SQL_CREATE);
+    public String getName() {
+        return NAME;
+    }
+
+    @Override
+    public String[] getColumns() {
+        return COLUMNS;
     }
 
     @Override
@@ -46,5 +51,22 @@ public final class TableLink extends Table<Link> {
     @Override
     public void insertOrUpdate(Link link) {
 
+    }
+
+    public Action1<SQLiteDatabase> storeLinks(final List<Link> links) {
+        return new Action1<SQLiteDatabase>() {
+            @Override
+            public void call(SQLiteDatabase sqLiteDatabase) {
+                TransactionInsertOrReplace transaction = getInsertOrReplace(sqLiteDatabase);
+
+                transaction.begin();
+
+                for (Link link : links) {
+                    transaction.insertOrReplace(link.getName(), System.currentTimeMillis(), link.getCreatedUtc(), link.getJson(), link.getTitle(), link.getAuthor());
+                }
+
+                transaction.end();
+            }
+        };
     }
 }

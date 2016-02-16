@@ -11,6 +11,7 @@ import android.util.Log;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.winsonchiu.reader.CustomApplication;
 import com.winsonchiu.reader.dagger.components.ComponentStatic;
+import com.winsonchiu.reader.data.database.reddit.RedditDatabase;
 import com.winsonchiu.reader.data.reddit.Link;
 import com.winsonchiu.reader.data.reddit.Listing;
 import com.winsonchiu.reader.data.reddit.Reddit;
@@ -33,6 +34,7 @@ import javax.inject.Inject;
 
 import rx.Observable;
 import rx.Observer;
+import rx.functions.Action1;
 import rx.functions.Func1;
 
 /**
@@ -51,6 +53,7 @@ public class ControllerLinks implements ControllerLinksBase {
     private Set<Listener> listeners = new HashSet<>();
 
     @Inject Reddit reddit;
+    @Inject RedditDatabase redditDatabase;
 
     public ControllerLinks(String subredditName, Sort sort) {
         CustomApplication.getComponentMain().inject(this);
@@ -267,6 +270,12 @@ public class ControllerLinks implements ControllerLinksBase {
 
                         return Observable.just(listing);
                     }
+                })
+                .doOnNext(new Action1<Listing>() {
+                    @Override
+                    public void call(Listing listing) {
+                        redditDatabase.storeListing(listing);
+                    }
                 });
 
         observable.subscribe(new FinalizingSubscriber<Listing>() {
@@ -314,7 +323,13 @@ public class ControllerLinks implements ControllerLinksBase {
         setLoading(true);
 
         Observable<Listing> observable = reddit.links(subreddit.getUrl(), sort.toString(), time.toString(), LIMIT, listingLinks.getAfter())
-                .flatMap(Listing.FLAT_MAP);
+                .flatMap(Listing.FLAT_MAP)
+                .doOnNext(new Action1<Listing>() {
+                    @Override
+                    public void call(Listing listing) {
+                        redditDatabase.storeListing(listing);
+                    }
+                });
 
         observable.subscribe(new FinalizingSubscriber<Listing>() {
                     @Override

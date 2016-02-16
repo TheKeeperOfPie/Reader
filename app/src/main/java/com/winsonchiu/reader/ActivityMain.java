@@ -975,7 +975,7 @@ public class ActivityMain extends AppCompatActivity
             return;
         }
 
-        reddit.links(subreddit, Sort.HOT.toString(), Time.ALL.toString(), 100, null)
+        reddit.links(subreddit, Sort.HOT.toString(), Time.ALL.toString(), 25, null)
                 .subscribe(new Observer<String>() {
                     @Override
                     public void onCompleted() {
