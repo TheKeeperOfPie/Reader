@@ -13,14 +13,20 @@ import rx.functions.Action1;
  */
 public class ActionLog<Type> implements Action1<Type> {
 
-    private String tag;
+    private String tag = "";
+    private String message = "";
 
     public ActionLog(String tag) {
         this.tag = tag;
     }
 
+    public ActionLog(String tag, String message) {
+        this.tag = tag;
+        this.message = message;
+    }
+
     @Override
     public void call(Type o) {
-        Log.d(tag, "call() called with: " + o);
+        Log.d(tag, message + " with: " + o);
     }
 }

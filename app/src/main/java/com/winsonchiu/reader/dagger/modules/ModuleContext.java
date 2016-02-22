@@ -15,18 +15,20 @@ import com.squareup.picasso.Picasso;
 import com.winsonchiu.reader.BuildConfig;
 import com.winsonchiu.reader.CustomApplication;
 import com.winsonchiu.reader.data.database.reddit.RedditDatabase;
+import com.winsonchiu.reader.data.reddit.Reddit;
 
 import javax.inject.Singleton;
 
 import dagger.Module;
 import dagger.Provides;
-import okhttp3.OkHttpClient;
 
 /**
  * Created by TheKeeperOfPie on 12/12/2015.
  */
 @Module
 public class ModuleContext {
+
+    public static final long PICASSO_CACHE_SIZE = 1024 * 1024 * 1024;
 
     @Singleton
     @Provides
@@ -54,9 +56,9 @@ public class ModuleContext {
 
     @Singleton
     @Provides
-    public Picasso providePicasso(Context context, OkHttpClient okHttpClient) {
+    public Picasso providePicasso(Context context) {
         Picasso.Builder builder = new Picasso.Builder(context.getApplicationContext())
-                .downloader(new OkHttp3Downloader(okHttpClient));
+                .downloader(new OkHttp3Downloader(context, PICASSO_CACHE_SIZE));
         if (BuildConfig.DEBUG) {
 //            builder = builder.loggingEnabled(true);
         }
@@ -71,8 +73,8 @@ public class ModuleContext {
 
     @Singleton
     @Provides
-    public RedditDatabase provideRedditDatabase(Application application) {
-        return new RedditDatabase(application);
+    public RedditDatabase provideRedditDatabase(Application application, Reddit reddit, Picasso picasso) {
+        return new RedditDatabase(application, reddit, picasso);
     }
 
 }

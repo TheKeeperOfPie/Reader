@@ -19,8 +19,10 @@ public abstract class Table<Thing> implements BaseColumns {
     public static final String SPACE = ",";
     public static final String COMMA = ",";
 
-    public static final String COLUMN_DATE_CREATED = "date_created";
-    public static final String COLUMN_DATE_ACCESSED = "date_accessed";
+    public static final String COLUMN_ACCESSED = "accessed";
+    public static final String COLUMN_CREATED = "created";
+
+    public static final String TABLE_COLUMNS_PREFIX = "(" + _ID + ", " + COLUMN_ACCESSED + ", " + COLUMN_CREATED;
 
     protected SQLiteDatabase sqLiteDatabase;
 
@@ -40,9 +42,9 @@ public abstract class Table<Thing> implements BaseColumns {
                 .append(" (")
                 .append(_ID)
                 .append(" TEXT PRIMARY KEY, ")
-                .append(COLUMN_DATE_ACCESSED)
+                .append(COLUMN_ACCESSED)
                 .append(" INTEGER, ")
-                .append(COLUMN_DATE_CREATED)
+                .append(COLUMN_CREATED)
                 .append(" INTEGER");
 
         for (String column : getColumns()) {
@@ -56,25 +58,20 @@ public abstract class Table<Thing> implements BaseColumns {
         return builder.toString();
     }
 
-    public TransactionInsertOrReplace getInsertOrReplace(SQLiteDatabase sqLiteDatabase) {
+    public TransactionInsertOrReplace getInsertOrReplace(SQLiteDatabase sqLiteDatabase, final String... columns) {
         return new TransactionInsertOrReplace(sqLiteDatabase) {
             @Override
             public String createInsertOrReplaceStatement() {
                 StringBuilder builder = new StringBuilder();
 
-                String[] bindings = new String[getColumns().length + 3];
+                String[] bindings = new String[columns.length + 3];
                 Arrays.fill(bindings, "?");
 
                 builder.append("INSERT OR REPLACE INTO ")
                         .append(getName())
-                        .append(" (")
-                        .append(_ID)
-                        .append(", ")
-                        .append(COLUMN_DATE_ACCESSED)
-                        .append(", ")
-                        .append(COLUMN_DATE_CREATED);
+                        .append(TABLE_COLUMNS_PREFIX);
 
-                for (String column : getColumns()) {
+                for (String column : columns) {
                     builder.append(", ")
                             .append(column);
                 }

@@ -12,6 +12,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.winsonchiu.reader.AppSettings;
 import com.winsonchiu.reader.CustomApplication;
 import com.winsonchiu.reader.dagger.components.ComponentStatic;
+import com.winsonchiu.reader.data.database.reddit.RedditDatabase;
 import com.winsonchiu.reader.data.reddit.Comment;
 import com.winsonchiu.reader.data.reddit.Link;
 import com.winsonchiu.reader.data.reddit.Listing;
@@ -36,6 +37,7 @@ import javax.inject.Inject;
 import rx.Observable;
 import rx.Observer;
 import rx.Subscription;
+import rx.android.schedulers.AndroidSchedulers;
 import rx.functions.Func1;
 
 /**
@@ -51,6 +53,7 @@ public class ControllerComments implements AdapterCommentList.ViewHolderComment.
     private Listing listingComments = new Listing();
 
     @Inject Reddit reddit;
+    @Inject RedditDatabase redditDatabase;
     @Inject SharedPreferences sharedPreferences;
 
     private boolean isRefreshing;
@@ -167,12 +170,20 @@ public class ControllerComments implements AdapterCommentList.ViewHolderComment.
 
         UtilsRx.unsubscribe(subscriptionComments);
         subscriptionComments = reddit.comments(link.getSubreddit(), link.getId(), link.getCommentId(), sort.toString(), true, true, link.getContextLevel(), 10, 100)
+                .doOnNext(redditDatabase.storeLink())
+                .onErrorResumeNext(Observable.<Link>empty())
+                .switchIfEmpty(redditDatabase.getLink(link.getId()))
+                .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(getSubscriberLink());
     }
 
     public void loadCommentThread() {
         UtilsRx.unsubscribe(subscriptionComments);
         subscriptionComments = reddit.comments(link.getSubreddit(), link.getId(), link.getCommentId(), sort.toString(), true, true, link.getContextLevel(), 10, 100)
+                .doOnNext(redditDatabase.storeLink())
+                .onErrorResumeNext(Observable.<Link>empty())
+                .switchIfEmpty(redditDatabase.getLink(link.getId()))
+                .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(getSubscriberLink());
     }
 

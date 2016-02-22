@@ -87,6 +87,8 @@ public class Link extends Replyable implements Parcelable {
     private String youTubeId;
     private int youTubeTime;
 
+    private String jsonComments;
+
     public static Link fromJson(JsonNode nodeRoot) {
 
         // TODO: Move parsing of HTML to asynchronous thread
@@ -190,7 +192,10 @@ public class Link extends Replyable implements Parcelable {
                 .get("children")
                 .get(0));
 
-        link.setComments(Listing.fromJson(nodeRoot.get(1)));
+        JsonNode nodeComments = nodeRoot.get(1);
+
+        link.setJsonComments(nodeComments.toString());
+        link.setComments(Listing.fromJson(nodeComments));
 
         return link;
     }
@@ -560,6 +565,14 @@ public class Link extends Replyable implements Parcelable {
 
     public void setYouTubeTime(int youTubeTime) {
         this.youTubeTime = youTubeTime;
+    }
+
+    public String getJsonComments() {
+        return jsonComments;
+    }
+
+    public void setJsonComments(String jsonComments) {
+        this.jsonComments = jsonComments;
     }
 
     public static class Media implements Parcelable {

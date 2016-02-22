@@ -30,11 +30,14 @@ public class Listing implements Parcelable {
     private String before;
     private String after;
     private String modHash;
-    private List<Thing> children;
+    private List<Thing> children = new ArrayList<>();
 
     public Listing() {
-        super();
-        children = new ArrayList<>();
+
+    }
+
+    public Listing(List<Thing> things) {
+        children = things;
     }
 
     public String getBefore() {

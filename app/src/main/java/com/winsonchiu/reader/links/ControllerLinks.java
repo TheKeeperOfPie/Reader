@@ -34,7 +34,7 @@ import javax.inject.Inject;
 
 import rx.Observable;
 import rx.Observer;
-import rx.functions.Action1;
+import rx.android.schedulers.AndroidSchedulers;
 import rx.functions.Func1;
 
 /**
@@ -271,12 +271,11 @@ public class ControllerLinks implements ControllerLinksBase {
                         return Observable.just(listing);
                     }
                 })
-                .doOnNext(new Action1<Listing>() {
-                    @Override
-                    public void call(Listing listing) {
-                        redditDatabase.storeListing(listing);
-                    }
-                });
+                .doOnNext(redditDatabase.storeListing(subreddit, sort, time))
+                .doOnNext(redditDatabase.cacheListing())
+                .onErrorResumeNext(Observable.<Listing>empty())
+                .switchIfEmpty(redditDatabase.getLinksForSubreddit(subreddit))
+                .observeOn(AndroidSchedulers.mainThread());
 
         observable.subscribe(new FinalizingSubscriber<Listing>() {
                     @Override
@@ -324,12 +323,8 @@ public class ControllerLinks implements ControllerLinksBase {
 
         Observable<Listing> observable = reddit.links(subreddit.getUrl(), sort.toString(), time.toString(), LIMIT, listingLinks.getAfter())
                 .flatMap(Listing.FLAT_MAP)
-                .doOnNext(new Action1<Listing>() {
-                    @Override
-                    public void call(Listing listing) {
-                        redditDatabase.storeListing(listing);
-                    }
-                });
+                .doOnNext(redditDatabase.appendListing(subreddit, sort, time))
+                .doOnNext(redditDatabase.cacheListing());
 
         observable.subscribe(new FinalizingSubscriber<Listing>() {
                     @Override

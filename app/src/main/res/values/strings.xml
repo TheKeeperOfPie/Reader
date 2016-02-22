@@ -12,6 +12,7 @@
     <string name="exit_reader">Exit Reader?</string>
     <string name="yes">Yes</string>
     <string name="no">No</string>
+    <string name="delete">Delete</string>
 
     <string name="navigation_drawer_open">Open navigation drawer</string>
     <string name="navigation_drawer_close">Close navigation drawer</string>

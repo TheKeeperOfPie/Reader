@@ -80,6 +80,14 @@
                 app:showAsAction="ifRoom"
                 />
 
+            <item
+                android:id="@+id/item_delete"
+                android:title="@string/delete"
+                android:orderInCategory="800"
+                android:icon="@drawable/ic_warning_white_24dp"
+                app:showAsAction="ifRoom"
+                />
+
         </group>
 
     </group>

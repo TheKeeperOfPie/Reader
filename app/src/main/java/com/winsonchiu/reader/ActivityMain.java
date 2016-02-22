@@ -86,6 +86,7 @@ import com.winsonchiu.reader.dagger.components.ComponentActivity;
 import com.winsonchiu.reader.dagger.components.ComponentStatic;
 import com.winsonchiu.reader.dagger.modules.ModuleReddit;
 import com.winsonchiu.reader.data.Page;
+import com.winsonchiu.reader.data.database.reddit.RedditOpenHelper;
 import com.winsonchiu.reader.data.reddit.Comment;
 import com.winsonchiu.reader.data.reddit.Link;
 import com.winsonchiu.reader.data.reddit.Listing;
@@ -1273,10 +1274,14 @@ public class ActivityMain extends AppCompatActivity
 
         loadId = 0;
 
-        if (id == R.id.item_settings) {
-            Intent intentSettings = new Intent(this, ActivitySettings.class);
-            startActivityForResult(intentSettings, REQUEST_SETTINGS);
-            return;
+        switch (id) {
+            case R.id.item_settings:
+                Intent intentSettings = new Intent(this, ActivitySettings.class);
+                startActivityForResult(intentSettings, REQUEST_SETTINGS);
+                return;
+            case R.id.item_delete:
+                deleteDatabase(RedditOpenHelper.NAME);
+                return;
         }
 
         Menu menu = viewNavigation.getMenu();

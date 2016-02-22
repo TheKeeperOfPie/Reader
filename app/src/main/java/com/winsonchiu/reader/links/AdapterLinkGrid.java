@@ -28,6 +28,7 @@ import android.widget.ImageView;
 import android.widget.RelativeLayout;
 
 import com.squareup.picasso.Callback;
+import com.squareup.picasso.Picasso;
 import com.winsonchiu.reader.AppSettings;
 import com.winsonchiu.reader.R;
 import com.winsonchiu.reader.comments.Source;
@@ -243,6 +244,7 @@ public class AdapterLinkGrid extends AdapterLink {
                     showThumbnail(true);
                     picasso.load(thumbnail)
                             .tag(TAG_PICASSO)
+                            .priority(Picasso.Priority.HIGH)
                             .into(imageThumbnail);
                 }
                 else {
@@ -305,6 +307,7 @@ public class AdapterLinkGrid extends AdapterLink {
             if (URLUtil.isNetworkUrl(thumbnail)) {
                 picasso.load(thumbnail)
                         .tag(TAG_PICASSO)
+                        .priority(Picasso.Priority.HIGH)
                         .into(imageFull,
                                 new Callback() {
                                     @Override
@@ -317,6 +320,7 @@ public class AdapterLinkGrid extends AdapterLink {
                                                         .tag(TAG_PICASSO)
                                                         .resize(size, size)
                                                         .centerCrop()
+                                                        .priority(Picasso.Priority.HIGH)
                                                         .into(imageFull, new Callback() {
                                                             @Override
                                                             public void onSuccess() {
@@ -363,6 +367,7 @@ public class AdapterLinkGrid extends AdapterLink {
                         .tag(TAG_PICASSO)
                         .resize(size, size)
                         .centerCrop()
+                        .priority(Picasso.Priority.HIGH)
                         .into(imageFull,
                                 new Callback() {
                                     @Override
@@ -564,6 +569,7 @@ public class AdapterLinkGrid extends AdapterLink {
             }
 
             textThreadTitle.setText(link.getTitle());
+            textThreadTitle.requestLayout();
         }
 
         @Override
