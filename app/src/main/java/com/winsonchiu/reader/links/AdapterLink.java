@@ -12,7 +12,6 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.content.res.TypedArray;
-import android.graphics.Bitmap;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
 import android.graphics.drawable.Drawable;
@@ -54,10 +53,7 @@ import android.view.SurfaceView;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
-import android.webkit.WebResourceError;
-import android.webkit.WebResourceRequest;
 import android.webkit.WebView;
-import android.webkit.WebViewClient;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.FrameLayout;
@@ -70,9 +66,19 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.bumptech.glide.GenericRequestBuilder;
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.Priority;
+import com.bumptech.glide.RequestManager;
+import com.bumptech.glide.load.resource.drawable.GlideDrawable;
+import com.bumptech.glide.load.resource.gif.GifDrawable;
+import com.bumptech.glide.request.RequestListener;
+import com.bumptech.glide.request.target.GlideDrawableImageViewTarget;
+import com.bumptech.glide.request.target.Target;
 import com.google.android.youtube.player.YouTubeInitializationResult;
 import com.google.android.youtube.player.YouTubePlayer;
 import com.google.android.youtube.player.YouTubePlayerSupportFragment;
+import com.squareup.picasso.Callback;
 import com.squareup.picasso.Picasso;
 import com.winsonchiu.reader.ActivityMain;
 import com.winsonchiu.reader.ApiKeys;
@@ -90,6 +96,7 @@ import com.winsonchiu.reader.data.reddit.Replyable;
 import com.winsonchiu.reader.data.reddit.Subreddit;
 import com.winsonchiu.reader.data.reddit.Thing;
 import com.winsonchiu.reader.data.reddit.User;
+import com.winsonchiu.reader.glide.RequestListenerCompletion;
 import com.winsonchiu.reader.history.Historian;
 import com.winsonchiu.reader.utils.CallbackYouTubeDestruction;
 import com.winsonchiu.reader.utils.CustomColorFilter;
@@ -101,7 +108,7 @@ import com.winsonchiu.reader.utils.SimplePlayerStateChangeListener;
 import com.winsonchiu.reader.utils.UtilsAnimation;
 import com.winsonchiu.reader.utils.UtilsImage;
 import com.winsonchiu.reader.utils.YouTubeListener;
-import com.winsonchiu.reader.views.WebViewFixed;
+import com.winsonchiu.reader.views.ImageViewZoom;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -429,7 +436,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         public ViewPager viewPagerFull;
         public ImageView imagePlay;
         public ImageView imageThumbnail;
-        public WebViewFixed webFull;
+        public ImageViewZoom imageFull;
         public View viewMargin;
         public ImageButton buttonComments;
         public TextView textThreadFlair;
@@ -618,6 +625,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             imagePlay = (ImageView) itemView.findViewById(R.id.image_play);
             frameFull = (FrameLayout) itemView.findViewById(R.id.frame_full);
             viewPagerFull = (ViewPager) itemView.findViewById(R.id.view_pager_full);
+            imageFull = (ImageViewZoom) itemView.findViewById(R.id.image_full);
             imageThumbnail = (ImageView) itemView.findViewById(R.id.image_thumbnail);
             viewMargin = itemView.findViewById(R.id.view_margin);
             buttonComments = (ImageButton) itemView.findViewById(R.id.button_comments);
@@ -733,6 +741,59 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             itemView.setClickable(true);
             itemView.setOnTouchListener(onTouchListener);
             toolbarActions.setOnTouchListener(onTouchListener);
+
+            imageFull.setOnTouchListener(new OnTouchListenerDisallow(disallowListener) {
+                @Override
+                public boolean onTouch(View view, MotionEvent event) {
+                    if (event.getPointerCount() > 1) {
+                        disallowListener.requestDisallowInterceptTouchEventHorizontal(true);
+                        disallowListener.requestDisallowInterceptTouchEventVertical(true);
+                        return false;
+                    }
+
+                    switch (MotionEventCompat.getActionMasked(event)) {
+                        case MotionEvent.ACTION_DOWN:
+                            startY = event.getY();
+
+                            if ((view.canScrollVertically(1) && view.canScrollVertically(-1))) {
+                                disallowListener.requestDisallowInterceptTouchEventVertical(true);
+                            }
+                            else {
+                                disallowListener.requestDisallowInterceptTouchEventVertical(false);
+                            }
+                            disallowListener.requestDisallowInterceptTouchEventHorizontal(true);
+                            break;
+                        case MotionEvent.ACTION_CANCEL:
+                            disallowListener.requestDisallowInterceptTouchEventHorizontal(false);
+                            break;
+                        case MotionEvent.ACTION_UP:
+                            disallowListener.requestDisallowInterceptTouchEventVertical(false);
+                            disallowListener.requestDisallowInterceptTouchEventHorizontal(false);
+                            break;
+                        case MotionEvent.ACTION_MOVE:
+                            disallowListener.requestDisallowInterceptTouchEventHorizontal(true);
+                            if (event.getY() - startY < 0 && view.canScrollVertically(1)) {
+                                disallowListener.requestDisallowInterceptTouchEventVertical(true);
+                            }
+                            else if (event.getY() - startY > 0 && view.canScrollVertically(-1)) {
+                                disallowListener.requestDisallowInterceptTouchEventVertical(true);
+                            }
+                            break;
+                    }
+                    return false;
+                }
+            });
+            imageFull.setListener(new ImageViewZoom.Listener() {
+                @Override
+                public void onTextureSizeExceeded() {
+                    eventListener.loadUrl(link.getUrl());
+                }
+
+                @Override
+                public void onBeforeContentLoad(int width, int height) {
+                    recyclerCallback.scrollAndCenter(getAdapterPosition(), height);
+                }
+            });
 
             mediaController.setMediaPlayer(new MediaController.MediaPlayerControl() {
                 @Override
@@ -1067,7 +1128,6 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         }
 
         public void onClickThumbnail() {
-            clearOverlay();
             if (!loadSelfText()) {
                 loadFull();
             }
@@ -1117,6 +1177,8 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
          */
         public boolean loadSelfText() {
             addToHistory();
+            clearOverlay();
+
             if (!link.isSelf()) {
                 return false;
             }
@@ -1242,74 +1304,27 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         }
 
         public void attemptLoadImage() {
-
             if (UtilsImage.placeImageUrl(link)) {
+                imageFull.setVisibility(View.VISIBLE);
+                progressImage.setVisibility(View.VISIBLE);
                 expandFull(true);
                 recyclerCallback.getLayoutManager().requestLayout();
                 itemView.invalidate();
-                itemView.postDelayed(new Runnable() {
+                itemView.post(new Runnable() {
                     @Override
                     public void run() {
-                        if (webFull == null) {
-                            webFull = eventListener.getNewWebView(
-                                    new WebViewFixed.Listener() {
-                                        @Override
-                                        public void onFinished() {
-                                            webFull.setVisibility(View.GONE);
-                                            webFull.setVisibility(View.VISIBLE);
-                                            scrollToSelf();
-                                            Log.d(TAG, "onFinished");
-                                        }
-                                    });
-                            webFull.setOnTouchListener(
-                                    new OnTouchListenerDisallow(disallowListener));
-                            webFull.setWebViewClient(new WebViewClient() {
-
-                                @Override
-                                public void onPageStarted(WebView view,
-                                        String url,
-                                        Bitmap favicon) {
-                                    super.onPageStarted(view, url, favicon);
-                                    progressImage.setVisibility(View.VISIBLE);
-                                    Log.d(TAG, "onPageStarted");
-                                }
-
-                                @Override
-                                public void onPageFinished(WebView view, String url) {
-                                    super.onPageFinished(view, url);
-                                    progressImage.setVisibility(View.GONE);
-                                    Log.d(TAG, "onPageFinished");
-                                }
-
-                                @Override
-                                public void onScaleChanged(WebView view,
-                                        float oldScale,
-                                        float newScale) {
-                                    ((WebViewFixed) view).lockHeight();
-                                    super.onScaleChanged(view, oldScale, newScale);
-                                }
-
-                                @Override
-                                public void onReceivedError(WebView view,
-                                        WebResourceRequest request,
-                                        WebResourceError error) {
-                                    super.onReceivedError(view, request, error);
-                                    Log.e(TAG, "WebView error: " + error);
-                                }
-
-                            });
-                            frameFull.addView(webFull, frameFull.getChildCount() - 1);
-                        }
-                        webFull.onResume();
-                        webFull.post(new Runnable() {
-                            @Override
-                            public void run() {
-                                webFull.loadData(UtilsImage.getImageHtml(link.getUrl()),
-                                        "text/html", "UTF-8");
-                            }
-                        });
+                        recyclerCallback.getRequestManager()
+                                .load(link.getUrl())
+                                .priority(Priority.IMMEDIATE)
+                                .listener(new RequestListenerCompletion<String, GlideDrawable>() {
+                                    @Override
+                                    protected void onCompleted() {
+                                        progressImage.setVisibility(View.GONE);
+                                    }
+                                })
+                                .into(new GlideDrawableImageViewTarget(imageFull));
                     }
-                }, 50);
+                });
             }
             else {
                 eventListener.loadUrl(link.getUrl());
@@ -1750,6 +1765,9 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             textThreadSelf.setVisibility(View.GONE);
             picasso.cancelRequest(imageThumbnail);
             imageThumbnail.setImageDrawable(null);
+            imageFull.setImageDrawable(null);
+            imageFull.getLayoutParams().height = ViewGroup.LayoutParams.WRAP_CONTENT;
+            imageFull.setVisibility(View.GONE);
         }
 
         public void onBind(Link link, boolean showSubreddit) {
@@ -1817,17 +1835,6 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         }
 
         public void destroyWebViews() {
-
-            if (webFull != null) {
-                frameFull.removeView(webFull);
-                webFull.setOnTouchListener(null);
-                webFull.setWebChromeClient(null);
-                webFull.setWebViewClient(null);
-                webFull.destroy();
-                Reddit.incrementDestroy();
-                webFull = null;
-            }
-
             if (viewPagerFull.getChildCount() > 0) {
                 for (int index = 0; index < viewPagerFull.getChildCount(); index++) {
                     View view = viewPagerFull.getChildAt(index);
@@ -1948,7 +1955,12 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
 
         public int[] getScreenAnchor() {
             int[] location = new int[2];
-            itemView.getLocationOnScreen(location);
+            if (link.isSelf()) {
+                imageThumbnail.getLocationOnScreen(location);
+            }
+            else {
+                itemView.getLocationOnScreen(location);
+            }
             return location;
         }
 
@@ -1982,7 +1994,6 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             void save(Comment comment);
             void loadUrl(String url);
             void downloadImage(String title, String fileName, String url);
-            WebViewFixed getNewWebView(WebViewFixed.Listener listener);
             void toast(String text);
             boolean isUserLoggedIn();
             void voteLink(ViewHolderBase viewHolderBase, Link link, int vote);

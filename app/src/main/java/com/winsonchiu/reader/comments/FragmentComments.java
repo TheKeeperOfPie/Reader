@@ -18,6 +18,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.support.annotation.Nullable;
 import android.support.design.widget.AppBarLayout;
 import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.FloatingActionButton;
@@ -255,13 +256,12 @@ public class FragmentComments extends FragmentBase
     }
 
     @Override
-    public View onCreateView(final LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
-
-        Log.d(TAG, "onCreateView() called with: " + "inflater = [" + inflater + "], container = [" + container + "], savedInstanceState = [" + savedInstanceState + "]");
-
+    protected void inject() {
         ((ActivityMain) getActivity()).getComponentActivity().inject(this);
+    }
 
+    @Override
+    protected View onCreateViewInternal(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         layoutRoot = (CustomFrameLayout) inflater
                 .inflate(R.layout.fragment_comments, container, false);
 
@@ -461,9 +461,9 @@ public class FragmentComments extends FragmentBase
 
                     @Override
                     public boolean onScroll(MotionEvent e1,
-                                            MotionEvent e2,
-                                            float distanceX,
-                                            float distanceY) {
+                            MotionEvent e2,
+                            float distanceX,
+                            float distanceY) {
 
                         // TODO: Implement a fling gesture based on distance-based velocity
 

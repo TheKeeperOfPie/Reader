@@ -14,6 +14,7 @@ import android.widget.ImageView;
  * Created by TheKeeperOfPie on 3/14/2015.
  */
 public class ImageViewSquare extends ImageView {
+
     public ImageViewSquare(Context context) {
         super(context);
     }

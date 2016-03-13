@@ -10,6 +10,10 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
 
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.GlideBuilder;
+import com.bumptech.glide.RequestManager;
+import com.bumptech.glide.load.engine.cache.InternalCacheDiskCacheFactory;
 import com.jakewharton.picasso.OkHttp3Downloader;
 import com.squareup.picasso.Picasso;
 import com.winsonchiu.reader.BuildConfig;
@@ -28,7 +32,7 @@ import dagger.Provides;
 @Module
 public class ModuleContext {
 
-    public static final long PICASSO_CACHE_SIZE = 1024 * 1024 * 1024;
+    public static final int IMAGE_CACHE_SIZE = 1024 * 1024 * 1024;
 
     @Singleton
     @Provides
@@ -58,11 +62,17 @@ public class ModuleContext {
     @Provides
     public Picasso providePicasso(Context context) {
         Picasso.Builder builder = new Picasso.Builder(context.getApplicationContext())
-                .downloader(new OkHttp3Downloader(context, PICASSO_CACHE_SIZE));
+                .downloader(new OkHttp3Downloader(context, IMAGE_CACHE_SIZE));
         if (BuildConfig.DEBUG) {
 //            builder = builder.loggingEnabled(true);
         }
         return builder.build();
+    }
+
+    @Singleton
+    @Provides
+    public RequestManager provideRequestManager(Context context) {
+        return Glide.with(context.getApplicationContext());
     }
 
     @Singleton

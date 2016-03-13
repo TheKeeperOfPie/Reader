@@ -21,6 +21,7 @@ import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
 import android.net.Uri;
 import android.os.Bundle;
+import android.support.annotation.Nullable;
 import android.support.v4.view.MenuItemCompat;
 import android.support.v7.widget.SearchView;
 import android.support.v7.widget.Toolbar;
@@ -150,9 +151,12 @@ public class FragmentWeb extends FragmentBase implements Toolbar.OnMenuItemClick
     }
 
     @Override
-    public View onCreateView(LayoutInflater inflater, final ViewGroup container,
-                             Bundle savedInstanceState) {
+    protected void inject() {
+        ((ActivityMain) getActivity()).getComponentActivity().inject(this);
+    }
 
+    @Override
+    protected View onCreateViewInternal(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_web, container, false);
 
         layoutRoot = (RelativeLayout) view;

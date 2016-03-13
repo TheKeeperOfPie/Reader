@@ -858,7 +858,10 @@ public class Link extends Replyable implements Parcelable {
         public static class Image implements Parcelable {
 
             private Thumbnail source;
+
+            // Sorted lowest to highest
             private List<Thumbnail> resolutions = new ArrayList<>();
+
             private List<Image> variants = new ArrayList<>();
             private Image nsfw;
 
@@ -948,7 +951,7 @@ public class Link extends Replyable implements Parcelable {
                 public static Thumbnail fromJson(JsonNode nodeRoot) {
                     Thumbnail thumbnail = new Thumbnail();
 
-                    thumbnail.setUrl(UtilsJson.getString(nodeRoot.get("url")));
+                    thumbnail.setUrl(String.valueOf(Html.fromHtml(UtilsJson.getString(nodeRoot.get("url")))));
                     thumbnail.setWidth(UtilsJson.getInt(nodeRoot.get("width")));
                     thumbnail.setHeight(UtilsJson.getInt(nodeRoot.get("height")));
 

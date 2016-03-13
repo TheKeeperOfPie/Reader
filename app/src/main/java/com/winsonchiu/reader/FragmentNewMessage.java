@@ -12,6 +12,7 @@ import android.graphics.ColorFilter;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
 import android.os.Bundle;
+import android.support.annotation.Nullable;
 import android.support.design.widget.AppBarLayout;
 import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.TabLayout;
@@ -119,10 +120,14 @@ public class FragmentNewMessage extends FragmentBase implements Toolbar.OnMenuIt
         super.onCreate(savedInstanceState);
     }
 
+
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
-            Bundle savedInstanceState) {
+    protected void inject() {
         ((ActivityMain) getActivity()).getComponentActivity().inject(this);
+    }
+
+    @Override
+    protected View onCreateViewInternal(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
 
         final View view =  inflater.inflate(R.layout.fragment_new_message, container, false);
 

@@ -41,7 +41,7 @@
         android:background="?attr/colorScreenBackground"
         >
 
-        <com.winsonchiu.reader.views.CustomRecyclerView
+        <com.winsonchiu.reader.views.RecyclerViewZeroHeight
             android:id="@+id/recycler_link"
             android:layout_width="match_parent"
             android:layout_height="match_parent"

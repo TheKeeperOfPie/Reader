@@ -25,7 +25,7 @@
             >
 
             <com.winsonchiu.reader.views.ImageViewSquare
-                android:id="@+id/image_full"
+                android:id="@+id/image_square"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:scaleType="centerCrop"
@@ -74,8 +74,8 @@
                 android:indeterminate="true"
                 />
 
-            <ImageView
-                android:id="@+id/image_expanded"
+            <com.winsonchiu.reader.views.ImageViewZoom
+                android:id="@+id/image_full"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:visibility="gone"

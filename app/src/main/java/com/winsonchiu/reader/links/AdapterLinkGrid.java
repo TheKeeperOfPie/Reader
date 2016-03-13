@@ -27,6 +27,12 @@ import android.webkit.URLUtil;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
 
+import com.bumptech.glide.Priority;
+import com.bumptech.glide.load.resource.bitmap.GlideBitmapDrawable;
+import com.bumptech.glide.load.resource.drawable.GlideDrawable;
+import com.bumptech.glide.request.RequestListener;
+import com.bumptech.glide.request.target.GlideDrawableImageViewTarget;
+import com.bumptech.glide.request.target.Target;
 import com.squareup.picasso.Callback;
 import com.squareup.picasso.Picasso;
 import com.winsonchiu.reader.AppSettings;
@@ -35,6 +41,7 @@ import com.winsonchiu.reader.comments.Source;
 import com.winsonchiu.reader.data.imgur.Album;
 import com.winsonchiu.reader.data.reddit.Link;
 import com.winsonchiu.reader.data.reddit.Reddit;
+import com.winsonchiu.reader.glide.RequestListenerCompletion;
 import com.winsonchiu.reader.utils.CallbackYouTubeDestruction;
 import com.winsonchiu.reader.utils.DisallowListener;
 import com.winsonchiu.reader.utils.RecyclerCallback;
@@ -135,7 +142,7 @@ public class AdapterLinkGrid extends AdapterLink {
     public static class ViewHolder extends AdapterLink.ViewHolderBase {
 
         private final int thumbnailSize;
-        protected ImageView imageFull;
+        protected ImageView imageSquare;
         private int colorBackgroundDefault;
         private ValueAnimator valueAnimatorBackground;
 
@@ -155,7 +162,7 @@ public class AdapterLinkGrid extends AdapterLink {
         @Override
         protected void initialize() {
             super.initialize();
-            imageFull = (ImageView) itemView.findViewById(R.id.image_full);
+            imageSquare = (ImageView) itemView.findViewById(R.id.image_square);
             if (itemView.getBackground() instanceof ColorDrawable) {
                 colorBackgroundDefault = ((ColorDrawable) itemView.getBackground()).getColor();
             }
@@ -164,14 +171,20 @@ public class AdapterLinkGrid extends AdapterLink {
         @Override
         protected void initializeListeners() {
             super.initializeListeners();
-            imageFull.setOnClickListener(new View.OnClickListener() {
+            imageSquare.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    imageFull.setVisibility(View.GONE);
+                    imageSquare.setVisibility(View.GONE);
                     progressImage.setVisibility(View.GONE);
                     imagePlay.setVisibility(View.GONE);
 
-                    loadFull();
+                    if (link.isSelf()) {
+                        attemptLoadImageSelfPost();
+                        loadSelfText();
+                    }
+                    else {
+                        loadFull();
+                    }
                 }
             });
         }
@@ -182,7 +195,7 @@ public class AdapterLinkGrid extends AdapterLink {
                 case R.id.button_comments:
                     if (mediaPlayer != null && mediaPlayer.isPlaying()) {
                         destroySurfaceView();
-                        imageFull.setVisibility(View.VISIBLE);
+                        imageSquare.setVisibility(View.VISIBLE);
                         imagePlay.setVisibility(View.VISIBLE);
                     }
                     loadComments();
@@ -194,7 +207,6 @@ public class AdapterLinkGrid extends AdapterLink {
 
         @Override
         public void onBind(Link link, boolean showSubreddit) {
-
             super.onBind(link, showSubreddit);
 
             int position = getAdapterPosition();
@@ -220,15 +232,19 @@ public class AdapterLinkGrid extends AdapterLink {
 
             Drawable drawable = UtilsImage.getDrawableForLink(itemView.getContext(), link);
             if (drawable != null) {
-                imageFull.setVisibility(View.GONE);
+                imageSquare.setVisibility(View.GONE);
                 imageThumbnail.setColorFilter(colorFilterIconDefault);
                 imageThumbnail.setImageDrawable(drawable);
                 showThumbnail(true);
+
+                if (link.isSelf()) {
+                    loadSelfPostThumbnail(link);
+                }
             }
             else if (!preferences.getBoolean(AppSettings.PREF_SHOW_THUMBNAILS, true) ||
                     (link.isOver18() && !preferences
                             .getBoolean(AppSettings.PREF_NSFW_THUMBNAILS, true))) {
-                imageFull.setVisibility(View.GONE);
+                imageSquare.setVisibility(View.GONE);
                 imageThumbnail.setColorFilter(colorFilterIconDefault);
                 imageThumbnail.setImageDrawable(drawableDefault);
                 showThumbnail(true);
@@ -239,16 +255,21 @@ public class AdapterLinkGrid extends AdapterLink {
             else {
                 String thumbnail = UtilsImage.parseThumbnail(link);
                 if (URLUtil.isNetworkUrl(thumbnail)) {
-                    imageFull.setVisibility(View.GONE);
+                    imageSquare.setVisibility(View.GONE);
                     imageThumbnail.clearColorFilter();
                     showThumbnail(true);
+
+//                    recyclerCallback.getRequestManager()
+//                            .load(thumbnail)
+//                            .priority(Priority.HIGH)
+//                            .into(new GlideDrawableImageViewTarget(imageThumbnail));
                     picasso.load(thumbnail)
                             .tag(TAG_PICASSO)
                             .priority(Picasso.Priority.HIGH)
                             .into(imageThumbnail);
                 }
                 else {
-                    imageFull.setVisibility(View.GONE);
+                    imageSquare.setVisibility(View.GONE);
                     imageThumbnail.setColorFilter(colorFilterIconDefault);
                     imageThumbnail.setImageDrawable(drawableDefault);
                     showThumbnail(true);
@@ -293,22 +314,76 @@ public class AdapterLinkGrid extends AdapterLink {
 
             // TODO: Improve thumbnail loading logic
 
-            imageFull.setVisibility(View.VISIBLE);
+            imageSquare.setVisibility(View.VISIBLE);
             showThumbnail(false);
             progressImage.setVisibility(View.VISIBLE);
 
-            picasso.cancelRequest(imageFull);
-            imageFull.setImageDrawable(null);
+            picasso.cancelRequest(imageSquare);
+            imageSquare.setImageDrawable(null);
 
             final int size = getAdjustedThumbnailSize();
 
             String thumbnail = UtilsImage.parseThumbnail(link);
 
             if (URLUtil.isNetworkUrl(thumbnail)) {
+//                recyclerCallback.getRequestManager()
+//                        .load(thumbnail)
+//                        .priority(Priority.HIGH)
+//                        .dontAnimate()
+//                        .listener(new RequestListener<String, GlideDrawable>() {
+//                            @Override
+//                            public boolean onException(Exception e, String model, Target<GlideDrawable> target, boolean isFirstResource) {
+//                                progressImage.setVisibility(View.GONE);
+//                                return false;
+//                            }
+//
+//                            @Override
+//                            public boolean onResourceReady(GlideDrawable resource, String model, Target<GlideDrawable> target, boolean isFromMemoryCache, boolean isFirstResource) {
+//                                loadBackgroundColor(resource);
+//
+//                                if (position == getAdapterPosition()) {
+//                                    if (UtilsImage.placeImageUrl(link)) {
+//                                        recyclerCallback.getRequestManager()
+//                                                .load(link.getUrl())
+//                                                .priority(Priority.HIGH)
+//                                                .dontAnimate()
+//                                                .override(size, size)
+//                                                .centerCrop()
+//                                                .listener(new RequestListenerCompletion<String, GlideDrawable>() {
+//                                                    @Override
+//                                                    protected void onCompleted() {
+//                                                        progressImage.setVisibility(View.GONE);
+//                                                    }
+//                                                })
+//                                                .into(new GlideDrawableImageViewTarget(imageSquare));
+//                                        return true;
+//                                    } else {
+//                                        if (link.getDomain().contains("imgur") && (link
+//                                                .getUrl()
+//                                                .contains(Reddit.IMGUR_PREFIX_ALBUM) || link
+//                                                .getUrl()
+//                                                .contains(Reddit.IMGUR_PREFIX_GALLERY))) {
+//                                            imagePlay.setImageResource(
+//                                                    R.drawable.ic_photo_album_white_48dp);
+//                                        } else {
+//                                            imagePlay.setImageResource(
+//                                                    R.drawable.ic_play_circle_outline_white_48dp);
+//                                        }
+//
+//                                        imagePlay.setColorFilter(colorFilterMenuItem);
+//                                        imagePlay.setVisibility(View.VISIBLE);
+//                                        progressImage.setVisibility(View.GONE);
+//                                    }
+//                                }
+//
+//                                return false;
+//                            }
+//                        })
+//                        .into(new GlideDrawableImageViewTarget(imageSquare));
                 picasso.load(thumbnail)
                         .tag(TAG_PICASSO)
                         .priority(Picasso.Priority.HIGH)
-                        .into(imageFull,
+                        .into(imageSquare,
                                 new Callback() {
                                     @Override
                                     public void onSuccess() {
@@ -321,7 +396,7 @@ public class AdapterLinkGrid extends AdapterLink {
                                                         .resize(size, size)
                                                         .centerCrop()
                                                         .priority(Picasso.Priority.HIGH)
-                                                        .into(imageFull, new Callback() {
+                                                        .into(imageSquare, new Callback() {
                                                             @Override
                                                             public void onSuccess() {
                                                                 progressImage.setVisibility(
@@ -363,12 +438,51 @@ public class AdapterLinkGrid extends AdapterLink {
             }
             else if (UtilsImage.placeImageUrl(link)) {
                 Log.d(TAG, "loadThumbnail() called with: " + "url = [" + link.getUrl() + "], title = [" + link.getTitle() + "]");
+//                recyclerCallback.getRequestManager()
+//                        .load(link.getUrl())
+//                        .priority(Priority.HIGH)
+//                        .dontAnimate()
+//                        .override(size, size)
+//                        .centerCrop()
+//                        .listener(new RequestListener<String, GlideDrawable>() {
+//                            @Override
+//                            public boolean onException(Exception e, String model, Target<GlideDrawable> target, boolean isFirstResource) {
+//                                imageSquare.setVisibility(View.GONE);
+//                                showThumbnail(true);
+//                                imageThumbnail.setColorFilter(colorFilterIconDefault);
+//                                imageThumbnail.setImageDrawable(drawableDefault);
+//                                progressImage.setVisibility(View.GONE);
+//                                return false;
+//                            }
+//
+//                            @Override
+//                            public boolean onResourceReady(GlideDrawable resource, String model, Target<GlideDrawable> target, boolean isFromMemoryCache, boolean isFirstResource) {
+//                                loadBackgroundColor(resource);
+//
+//                                if (position == getAdapterPosition()) {
+//                                    if (link.getDomain().contains("imgur") && (link
+//                                            .getUrl()
+//                                            .contains(Reddit.IMGUR_PREFIX_ALBUM) || link
+//                                            .getUrl()
+//                                            .contains(Reddit.IMGUR_PREFIX_GALLERY))) {
+//                                        imagePlay.setImageResource(
+//                                                R.drawable.ic_photo_album_white_48dp);
+//                                        imagePlay.setColorFilter(colorFilterMenuItem);
+//                                        imagePlay.setVisibility(View.VISIBLE);
+//                                    }
+//                                }
+//
+//                                progressImage.setVisibility(View.GONE);
+//                                return false;
+//                            }
+//                        })
+//                        .into(new GlideDrawableImageViewTarget(imageSquare));
                 picasso.load(link.getUrl())
                         .tag(TAG_PICASSO)
                         .resize(size, size)
                         .centerCrop()
                         .priority(Picasso.Priority.HIGH)
-                        .into(imageFull,
+                        .into(imageSquare,
                                 new Callback() {
                                     @Override
                                     public void onSuccess() {
@@ -392,7 +506,7 @@ public class AdapterLinkGrid extends AdapterLink {
 
                                     @Override
                                     public void onError() {
-                                        imageFull.setVisibility(View.GONE);
+                                        imageSquare.setVisibility(View.GONE);
                                         showThumbnail(true);
                                         imageThumbnail.setColorFilter(colorFilterIconDefault);
                                         imageThumbnail.setImageDrawable(drawableDefault);
@@ -401,13 +515,95 @@ public class AdapterLinkGrid extends AdapterLink {
                                 });
             }
             else {
-                imageFull.setVisibility(View.GONE);
+                imageSquare.setVisibility(View.GONE);
                 showThumbnail(true);
                 imageThumbnail.setColorFilter(colorFilterIconDefault);
                 imageThumbnail.setImageDrawable(drawableDefault);
                 progressImage.setVisibility(View.GONE);
             }
+        }
 
+        private void loadSelfPostThumbnail(final Link link) {
+
+            // TODO: Improve thumbnail loading logic
+
+            imageSquare.setVisibility(View.VISIBLE);
+            progressImage.setVisibility(View.VISIBLE);
+
+            picasso.cancelRequest(imageSquare);
+            imageSquare.setImageDrawable(null);
+
+            final int size = getAdjustedThumbnailSize();
+
+            String thumbnail = UtilsImage.parseSourceImage(link);
+
+            if (URLUtil.isNetworkUrl(thumbnail)) {
+//                recyclerCallback.getRequestManager()
+//                        .load(thumbnail)
+//                        .priority(Priority.HIGH)
+//                        .override(size, size)
+//                        .centerCrop()
+//                        .listener(new RequestListenerCompletion<String, GlideDrawable>() {
+//                            @Override
+//                            public boolean onResourceReady(GlideDrawable glideDrawable, String s, Target<GlideDrawable> target, boolean isFromMemoryCache, boolean isFirstResource) {
+//                                loadBackgroundColor(glideDrawable);
+//                                return super.onResourceReady(glideDrawable, s, target, isFromMemoryCache, isFirstResource);
+//                            }
+//
+//                            @Override
+//                            protected void onCompleted() {
+//                                progressImage.setVisibility(View.GONE);
+//                            }
+//                        })
+//                        .into(new GlideDrawableImageViewTarget(imageSquare));
+                picasso.load(thumbnail)
+                        .tag(TAG_PICASSO)
+                        .resize(size, size)
+                        .centerCrop()
+                        .priority(Picasso.Priority.HIGH)
+                        .into(imageSquare,
+                                new Callback() {
+                                    @Override
+                                    public void onSuccess() {
+                                        loadBackgroundColor();
+                                        progressImage.setVisibility(View.GONE);
+                                    }
+
+                                    @Override
+                                    public void onError() {
+                                        progressImage.setVisibility(View.GONE);
+                                    }
+                                });
+            }
+            else {
+                imageSquare.setVisibility(View.GONE);
+                progressImage.setVisibility(View.GONE);
+            }
+        }
+
+        public boolean attemptLoadImageSelfPost() {
+            final String url = UtilsImage.parseSourceImage(link);
+
+            if (URLUtil.isNetworkUrl(url)) {
+                imageFull.setVisibility(View.VISIBLE);
+                expandFull(true);
+                recyclerCallback.getLayoutManager().requestLayout();
+                itemView.invalidate();
+                itemView.post(new Runnable() {
+                    @Override
+                    public void run() {
+//                        recyclerCallback.getRequestManager()
+//                                .load(url)
+//                                .into(new GlideDrawableImageViewTarget(imageFull));
+                        picasso.load(url)
+                                .into(imageFull);
+                    }
+                });
+
+                return true;
+            }
+
+            return false;
         }
 
         public void loadBackgroundColor() {
@@ -419,7 +615,7 @@ public class AdapterLinkGrid extends AdapterLink {
             final Link linkSaved = link;
 
             final int position = getAdapterPosition();
-            Drawable drawable = imageFull.getDrawable();
+            Drawable drawable = imageSquare.getDrawable();
             if (drawable instanceof BitmapDrawable) {
                 Palette.from(((BitmapDrawable) drawable).getBitmap())
                         .generate(
@@ -545,7 +741,7 @@ public class AdapterLinkGrid extends AdapterLink {
 
             Linkify.addLinks(textThreadInfo, Linkify.WEB_URLS);
 
-            textHidden.setText(getTimestamp() + ", " + link.getNumComments() + " comments");
+            textHidden.setText(resources.getString(R.string.hidden_description, getTimestamp(), link.getNumComments()));
         }
 
         @Override
@@ -591,8 +787,15 @@ public class AdapterLinkGrid extends AdapterLink {
         @Override
         public int[] getScreenAnchor() {
             int[] location = new int[2];
-            if (imageFull.isShown()) {
-                imageFull.getLocationOnScreen(location);
+            if (link.isSelf()) {
+                imageThumbnail.getLocationOnScreen(location);
+
+                if (imageSquare.isShown() || imageFull.isShown()) {
+                    location[1] -= itemView.getWidth();
+                }
+            }
+            else if (imageSquare.isShown()) {
+                imageSquare.getLocationOnScreen(location);
             }
             else {
                 frameFull.getLocationOnScreen(location);

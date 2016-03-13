@@ -14,6 +14,7 @@ import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
 import android.graphics.RectF;
 import android.os.Bundle;
+import android.support.annotation.Nullable;
 import android.support.v4.view.GestureDetectorCompat;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.LinearLayoutManager;
@@ -28,6 +29,9 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.RequestManager;
+import com.winsonchiu.reader.ActivityMain;
 import com.winsonchiu.reader.CustomApplication;
 import com.winsonchiu.reader.FragmentBase;
 import com.winsonchiu.reader.FragmentListenerBase;
@@ -264,9 +268,12 @@ public class FragmentCommentsInner extends FragmentBase {
     }
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
+    protected void inject() {
+        ((ActivityMain) getActivity()).getComponentActivity().inject(this);
+    }
 
+    @Override
+    protected View onCreateViewInternal(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         scrollToPaddingTop = (int) TypedValue
                 .applyDimension(TypedValue.COMPLEX_UNIT_DIP, 8, getResources().getDisplayMetrics());
         scrollToPaddingBottom = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 56,
@@ -274,33 +281,6 @@ public class FragmentCommentsInner extends FragmentBase {
 
         layoutRoot = (CustomFrameLayout) inflater
                 .inflate(R.layout.fragment_comments_inner, container, false);
-
-        final RecyclerCallback recyclerCallback = new RecyclerCallback() {
-            @Override
-            public void scrollTo(int position) {
-                linearLayoutManager.scrollToPositionWithOffset(position, 0);
-            }
-
-            @Override
-            public int getRecyclerHeight() {
-                return recyclerCommentList.getHeight();
-            }
-
-            @Override
-            public RecyclerView.LayoutManager getLayoutManager() {
-                return linearLayoutManager;
-            }
-
-            @Override
-            public void hideToolbar() {
-                callback.hideToolbar();
-            }
-
-            @Override
-            public void onReplyShown() {
-                callback.onReplyShown();
-            }
-        };
 
         CallbackYouTubeDestruction callbackYouTubeDestruction = new CallbackYouTubeDestruction() {
             @Override
@@ -331,6 +311,43 @@ public class FragmentCommentsInner extends FragmentBase {
         recyclerCommentList = (RecyclerView) layoutRoot.findViewById(R.id.recycler_comment_list);
         recyclerCommentList.setLayoutManager(linearLayoutManager);
         recyclerCommentList.setItemAnimator(null);
+
+        final RecyclerCallback recyclerCallback = new RecyclerCallback() {
+            @Override
+            public int getRecyclerHeight() {
+                return recyclerCommentList.getHeight();
+            }
+
+            @Override
+            public RecyclerView.LayoutManager getLayoutManager() {
+                return linearLayoutManager;
+            }
+
+            @Override
+            public void scrollTo(int position) {
+                linearLayoutManager.scrollToPositionWithOffset(position, 0);
+            }
+
+            @Override
+            public void scrollAndCenter(int position, int height) {
+
+            }
+
+            @Override
+            public void hideToolbar() {
+                callback.hideToolbar();
+            }
+
+            @Override
+            public void onReplyShown() {
+                callback.onReplyShown();
+            }
+
+            @Override
+            public RequestManager getRequestManager() {
+                return getGlideRequestManager();
+            }
+        };
 
         adapterCommentList = new AdapterCommentList(getActivity(),
                 controllerComments,
@@ -384,19 +401,23 @@ public class FragmentCommentsInner extends FragmentBase {
 
         final RecyclerCallback recyclerCallbackLink = new RecyclerCallback() {
             @Override
-            public void scrollTo(int position) {
-                layoutManagerLink.scrollToPositionWithOffset(position, 0);
-            }
-
-            @Override
             public int getRecyclerHeight() {
-                // Since we animate the height of recyclerLink, we need to return a stable height
                 return recyclerCommentList.getHeight();
             }
 
             @Override
             public RecyclerView.LayoutManager getLayoutManager() {
                 return layoutManagerLink;
+            }
+
+            @Override
+            public void scrollTo(int position) {
+                layoutManagerLink.scrollToPositionWithOffset(position, 0);
+            }
+
+            @Override
+            public void scrollAndCenter(int position, int height) {
+
             }
 
             @Override
@@ -407,6 +428,11 @@ public class FragmentCommentsInner extends FragmentBase {
             @Override
             public void onReplyShown() {
                 callback.onReplyShown();
+            }
+
+            @Override
+            public RequestManager getRequestManager() {
+                return getGlideRequestManager();
             }
         };
 

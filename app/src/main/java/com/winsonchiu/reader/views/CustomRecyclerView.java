@@ -10,7 +10,7 @@ import android.support.v7.widget.RecyclerView;
 import android.util.AttributeSet;
 
 /**
- * Created by TheKeeperOfPie on 12/28/2015.
+ * Created by TheKeeperOfPie on 3/5/2016.
  */
 public class CustomRecyclerView extends RecyclerView {
 
@@ -24,10 +24,5 @@ public class CustomRecyclerView extends RecyclerView {
 
     public CustomRecyclerView(Context context, @Nullable AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
-    }
-
-    @Override
-    public int getMinimumHeight() {
-        return 0;
     }
 }

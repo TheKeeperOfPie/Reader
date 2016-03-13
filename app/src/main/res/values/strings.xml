@@ -288,4 +288,6 @@
 
     <string name="subreddit_formatted">/r/%1$s</string>
 
+    <string name="hidden_description">%1$s, %2$d comments</string>
+
 </resources>

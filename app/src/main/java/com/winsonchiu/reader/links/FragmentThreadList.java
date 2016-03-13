@@ -40,6 +40,7 @@ import android.view.ContextThemeWrapper;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
@@ -48,6 +49,7 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.bumptech.glide.RequestManager;
 import com.squareup.picasso.Picasso;
 import com.winsonchiu.reader.ActivityMain;
 import com.winsonchiu.reader.AppSettings;
@@ -242,13 +244,13 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
     }
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
-            final Bundle savedInstanceState) {
+    protected void inject() {
         ((ActivityMain) getActivity()).getComponentActivity().inject(this);
+    }
 
+    @Override
+    protected View onCreateViewInternal(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         initialize();
-
-        Log.d(TAG, "onCreateView");
 
         view = inflater.inflate(R.layout.fragment_thread_list, container, false);
 
@@ -530,6 +532,24 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
                 });
         itemTouchHelper.attachToRecyclerView(recyclerThreadList);
 
+        recyclerThreadList.addOnItemTouchListener(new RecyclerView.OnItemTouchListener() {
+            @Override
+            public boolean onInterceptTouchEvent(RecyclerView rv, MotionEvent e) {
+//                rv.getChildViewHolder(rv.findChildViewUnder(e.getX(), e.getY()));
+                return false;
+            }
+
+            @Override
+            public void onTouchEvent(RecyclerView rv, MotionEvent e) {
+
+            }
+
+            @Override
+            public void onRequestDisallowInterceptTouchEvent(boolean disallowIntercept) {
+
+            }
+        });
+
         if (layoutManager instanceof LinearLayoutManager) {
             recyclerThreadList.setPadding(0, 0, 0, 0);
         }
@@ -596,6 +616,7 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
         disallowListener = new DisallowListener() {
             @Override
             public void requestDisallowInterceptTouchEventVertical(boolean disallow) {
+                Log.d(TAG, "requestDisallowInterceptTouchEventVertical() called with: " + "disallow = [" + disallow + "]");
                 recyclerThreadList.requestDisallowInterceptTouchEvent(disallow);
                 swipeRefreshThreadList.requestDisallowInterceptTouchEvent(disallow);
                 itemTouchHelper.select(null, CustomItemTouchHelper.ACTION_STATE_IDLE);
@@ -608,11 +629,6 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
         };
 
         recyclerCallback = new RecyclerCallback() {
-            @Override
-            public void scrollTo(final int position) {
-                recyclerThreadList.requestLayout();
-                UtilsAnimation.scrollToPositionWithCentering(position, recyclerThreadList, layoutManager, false);
-            }
 
             @Override
             public int getRecyclerHeight() {
@@ -622,6 +638,17 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
             @Override
             public RecyclerView.LayoutManager getLayoutManager() {
                 return layoutManager;
+            }
+
+            @Override
+            public void scrollTo(final int position) {
+                recyclerThreadList.requestLayout();
+                UtilsAnimation.scrollToPositionWithCentering(position, recyclerThreadList, layoutManager, false);
+            }
+
+            @Override
+            public void scrollAndCenter(int position, int height) {
+
             }
 
             @Override
@@ -635,6 +662,10 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
                 behaviorButtonExpandActions.animateOut(buttonExpandActions);
             }
 
+            @Override
+            public RequestManager getRequestManager() {
+                return getGlideRequestManager();
+            }
         };
 
         listenerLinks = new ControllerLinks.Listener() {
@@ -651,7 +682,6 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
             @Override
             public void showEmptyView(boolean isEmpty) {
                 textEmpty.setVisibility(isEmpty ? View.VISIBLE : View.GONE);
-                Log.d(TAG, "showEmptyView() called with: " + "isEmpty = [" + isEmpty + "]", new Exception());
             }
 
             @Override

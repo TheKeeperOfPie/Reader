@@ -15,6 +15,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.webkit.URLUtil;
 
+import com.bumptech.glide.load.resource.gif.GifDrawable;
+import com.bumptech.glide.request.target.GlideDrawableImageViewTarget;
 import com.winsonchiu.reader.AppSettings;
 import com.winsonchiu.reader.R;
 import com.winsonchiu.reader.comments.Source;
@@ -128,6 +130,10 @@ public class AdapterLinkList extends AdapterLink {
                 }
                 else {
                     imageThumbnail.clearColorFilter();
+
+//                    recyclerCallback.getRequestManager()
+//                            .load(thumbnail)
+//                            .into(new GlideDrawableImageViewTarget(imageThumbnail));
                     picasso.load(thumbnail)
                             .into(imageThumbnail);
                 }
@@ -136,7 +142,6 @@ public class AdapterLinkList extends AdapterLink {
                 imageThumbnail.setColorFilter(colorFilterIconDefault);
                 imageThumbnail.setImageDrawable(drawable);
             }
-
         }
 
         @Override
@@ -149,7 +154,7 @@ public class AdapterLinkList extends AdapterLink {
 
             Linkify.addLinks(textThreadInfo, Linkify.WEB_URLS);
 
-            textHidden.setText(getTimestamp() + ", " + link.getNumComments() + " comments");
+            textHidden.setText(resources.getString(R.string.hidden_description, getTimestamp(), link.getNumComments()));
 
         }
 

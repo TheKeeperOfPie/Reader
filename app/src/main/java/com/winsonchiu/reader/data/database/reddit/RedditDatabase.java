@@ -8,7 +8,6 @@ import android.app.Application;
 import android.content.SharedPreferences;
 import android.database.sqlite.SQLiteDatabase;
 import android.preference.PreferenceManager;
-import android.util.Log;
 import android.webkit.URLUtil;
 
 import com.squareup.picasso.Picasso;
@@ -195,14 +194,12 @@ public class RedditDatabase {
                         picasso.load(thumbnail)
                                 .priority(Picasso.Priority.LOW)
                                 .fetch();
-                        Log.d(TAG, "cacheLinkImage call() called with: " + thumbnail);
                     }
 
                     if (UtilsImage.placeImageUrl(link)) {
                         picasso.load(link.getUrl())
                                 .priority(Picasso.Priority.LOW)
                                 .fetch();
-                        Log.d(TAG, "cacheLinkImage call() called with: " + link.getUrl());
                     }
                 }
             }

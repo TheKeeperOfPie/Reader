@@ -45,6 +45,13 @@
                 android:visibility="gone"
                 />
 
+            <com.winsonchiu.reader.views.ImageViewZoom
+                android:id="@+id/image_full"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:visibility="gone"
+                />
+
         </FrameLayout>
 
         <ImageView

@@ -83,30 +83,30 @@ public class WebViewFixed extends WebView {
     @Override
     protected void onLayout(boolean changed, int l, int t, int r, int b) {
         super.onLayout(changed, l, t, r, b);
-        if (getHeight() > 0 && getHeight() < getMinimumHeight()) {
-            setVisibility(GONE);
-
-            ViewGroup.LayoutParams layoutParams = null;
-
-            if (getLayoutParams() instanceof FrameLayout.LayoutParams) {
-                layoutParams = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
-                        ViewGroup.LayoutParams.WRAP_CONTENT);
-            }
-            else if (getLayoutParams() instanceof RelativeLayout.LayoutParams) {
-                layoutParams = new RelativeLayout.LayoutParams(
-                        RelativeLayout.LayoutParams.MATCH_PARENT,
-                        RelativeLayout.LayoutParams.WRAP_CONTENT);
-            }
-
-            if (layoutParams != null) {
-                setLayoutParams(layoutParams);
-                reload();
-            }
-            Rect rect = new Rect();
-            getParent().getChildVisibleRect(this, rect, null);
-            getParent().invalidateChild(this, rect);
-            setVisibility(VISIBLE);
-        }
+//        if (getHeight() > 0 && getHeight() < getMinimumHeight()) {
+//            setVisibility(GONE);
+//
+//            ViewGroup.LayoutParams layoutParams = null;
+//
+//            if (getLayoutParams() instanceof FrameLayout.LayoutParams) {
+//                layoutParams = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
+//                        ViewGroup.LayoutParams.WRAP_CONTENT);
+//            }
+//            else if (getLayoutParams() instanceof RelativeLayout.LayoutParams) {
+//                layoutParams = new RelativeLayout.LayoutParams(
+//                        RelativeLayout.LayoutParams.MATCH_PARENT,
+//                        RelativeLayout.LayoutParams.WRAP_CONTENT);
+//            }
+//
+//            if (layoutParams != null) {
+//                setLayoutParams(layoutParams);
+//                reload();
+//            }
+//            Rect rect = new Rect();
+//            getParent().getChildVisibleRect(this, rect, null);
+//            getParent().invalidateChild(this, rect);
+//            setVisibility(VISIBLE);
+//        }
     }
 
     @Override

@@ -121,7 +121,6 @@ import com.winsonchiu.reader.utils.UtilsColor;
 import com.winsonchiu.reader.utils.UtilsImage;
 import com.winsonchiu.reader.utils.UtilsReddit;
 import com.winsonchiu.reader.views.ScrollViewHeader;
-import com.winsonchiu.reader.views.WebViewFixed;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -427,9 +426,6 @@ public class ActivityMain extends AppCompatActivity
 
             @Override
             public void onClickComments(Link link, final AdapterLink.ViewHolderBase viewHolderBase, Source source) {
-
-                Log.d(TAG, "onClickComments: " + link);
-
                 controllerCommentsTop
                         .setLink(link, source);
 
@@ -447,8 +443,6 @@ public class ActivityMain extends AppCompatActivity
                                 FragmentComments.TAG)
                         .addToBackStack(null)
                         .commit();
-
-                Log.d(TAG, "onClickComments() called with: " + "link = [" + link + "], viewHolderBase = [" + viewHolderBase + "], source = [" + source + "]");
             }
 
             @Override
@@ -519,11 +513,6 @@ public class ActivityMain extends AppCompatActivity
             public void downloadImage(String title, final String fileName, final String url) {
                 imageDownload = new ImageDownload(title, fileName, url);
                 ActivityCompat.requestPermissions(ActivityMain.this, new String[] {android.Manifest.permission.WRITE_EXTERNAL_STORAGE}, REQUEST_PERMISSION_WRITE_EXTERNAL_STORAGE);
-            }
-
-            @Override
-            public WebViewFixed getNewWebView(WebViewFixed.Listener listener) {
-                return WebViewFixed.newInstance(getApplicationContext(), true, listener);
             }
 
             @Override
@@ -829,6 +818,10 @@ public class ActivityMain extends AppCompatActivity
 
     }
 
+    protected void superOnCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+    }
+
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         switch (requestCode) {
@@ -972,7 +965,8 @@ public class ActivityMain extends AppCompatActivity
 
         if (TextUtils.isEmpty(subreddit)) {
             Toast.makeText(this, R.string.header_subreddit_error, Toast.LENGTH_LONG).show();
-            picasso.load(android.R.color.transparent).into(imageHeader);
+            picasso.cancelRequest(imageHeader);
+            imageHeader.setImageDrawable(null);
             return;
         }
 

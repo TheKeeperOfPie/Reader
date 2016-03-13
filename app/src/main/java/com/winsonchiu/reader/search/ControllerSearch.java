@@ -629,7 +629,7 @@ public class ControllerSearch {
     }
 
     public Observable<Listing> reloadLinksSubreddit() {
-        if (subscriptionLinksSubreddit != null && !subscriptionSubreddits.isUnsubscribed()) {
+        if (subscriptionLinksSubreddit != null && !subscriptionLinksSubreddit.isUnsubscribed()) {
             subscriptionLinksSubreddit.unsubscribe();
             subscriptionLinksSubreddit = null;
         }

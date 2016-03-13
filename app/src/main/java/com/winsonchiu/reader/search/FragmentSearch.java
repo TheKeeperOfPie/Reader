@@ -10,6 +10,7 @@ import android.content.res.TypedArray;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
 import android.os.Bundle;
+import android.support.annotation.Nullable;
 import android.support.annotation.StyleRes;
 import android.support.design.widget.AppBarLayout;
 import android.support.design.widget.CoordinatorLayout;
@@ -33,6 +34,7 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.Toast;
 
+import com.bumptech.glide.RequestManager;
 import com.winsonchiu.reader.ActivityMain;
 import com.winsonchiu.reader.AppSettings;
 import com.winsonchiu.reader.CustomApplication;
@@ -242,10 +244,12 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
     }
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
+    protected void inject() {
         ((ActivityMain) getActivity()).getComponentActivity().inject(this);
+    }
 
+    @Override
+    protected View onCreateViewInternal(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         view = inflater.inflate(R.layout.fragment_search, container, false);
 
         listenerSearch = new ControllerSearch.Listener() {
@@ -502,11 +506,6 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
                 disallowListener,
                 new RecyclerCallback() {
                     @Override
-                    public void scrollTo(final int position) {
-                        UtilsAnimation.scrollToPositionWithCentering(position, recyclerSearchLinks, layoutManagerLinks, false);
-                    }
-
-                    @Override
                     public int getRecyclerHeight() {
                         return recyclerSearchLinks.getHeight();
                     }
@@ -514,6 +513,16 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
                     @Override
                     public RecyclerView.LayoutManager getLayoutManager() {
                         return layoutManagerLinks;
+                    }
+
+                    @Override
+                    public void scrollTo(final int position) {
+                        UtilsAnimation.scrollToPositionWithCentering(position, recyclerSearchLinks, layoutManagerLinks, false);
+                    }
+
+                    @Override
+                    public void scrollAndCenter(int position, int height) {
+
                     }
 
                     @Override
@@ -526,6 +535,11 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
                     @Override
                     public void onReplyShown() {
 
+                    }
+
+                    @Override
+                    public RequestManager getRequestManager() {
+                        return getGlideRequestManager();
                     }
 
                 });
@@ -589,11 +603,6 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
                 disallowListener,
                 new RecyclerCallback() {
                     @Override
-                    public void scrollTo(final int position) {
-                        UtilsAnimation.scrollToPositionWithCentering(position, recyclerSearchLinksSubreddit, layoutManagerLinksSubreddit, false);
-                    }
-
-                    @Override
                     public int getRecyclerHeight() {
                         return recyclerSearchLinksSubreddit.getHeight();
                     }
@@ -601,6 +610,16 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
                     @Override
                     public RecyclerView.LayoutManager getLayoutManager() {
                         return layoutManagerLinksSubreddit;
+                    }
+
+                    @Override
+                    public void scrollTo(final int position) {
+                        UtilsAnimation.scrollToPositionWithCentering(position, recyclerSearchLinksSubreddit, layoutManagerLinksSubreddit, false);
+                    }
+
+                    @Override
+                    public void scrollAndCenter(int position, int height) {
+
                     }
 
                     @Override
@@ -612,6 +631,11 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
                     @Override
                     public void onReplyShown() {
 
+                    }
+
+                    @Override
+                    public RequestManager getRequestManager() {
+                        return getGlideRequestManager();
                     }
 
                 });
@@ -696,7 +720,7 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
                 boolean sortSubredditsShown = controllerSearch
                         .getCurrentPage() == ControllerSearch.PAGE_SUBREDDITS ||
                         controllerSearch
-                        .getCurrentPage() == ControllerSearch.PAGE_SUBREDDITS_RECOMMENDED;
+                                .getCurrentPage() == ControllerSearch.PAGE_SUBREDDITS_RECOMMENDED;
 
                 menu.findItem(R.id.item_sort_subreddits).setEnabled(sortSubredditsShown);
                 menu.findItem(R.id.item_sort_subreddits).setVisible(sortSubredditsShown);

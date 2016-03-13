@@ -22,7 +22,7 @@ int minSdk = hasProperty('minSdk') ? minSdk.toInteger() : 17
 
 android {
     compileSdkVersion 23
-    buildToolsVersion '23.0.2'
+    buildToolsVersion '24 rc1'
 
     defaultConfig {
         applicationId "com.winsonchiu.reader"
@@ -30,6 +30,7 @@ android {
         targetSdkVersion 23
         versionCode 58
         versionName "1.5"
+        vectorDrawables.useSupportLibrary = true
     }
 
     applicationVariants.all { variant ->
@@ -53,7 +54,7 @@ android {
     }
 
     dexOptions {
-        dexInProcess = true
+        incremental = true
     }
 }
 
@@ -65,20 +66,20 @@ dependencies {
         transitive = true;
     }
     compile files('libs/YouTubeAndroidPlayerApi.jar')
-    compile 'com.android.support:appcompat-v7:23.1.1'
-    compile 'com.android.support:customtabs:23.1.1'
-    compile 'com.android.support:design:23.1.1'
-    compile 'com.android.support:support-v4:23.1.1'
-    compile 'com.android.support:support-v13:23.1.1'
-    compile 'com.android.support:palette-v7:23.1.1'
-    compile 'com.android.support:recyclerview-v7:23.1.1'
+    compile 'com.android.support:appcompat-v7:23.2.1'
+    compile 'com.android.support:customtabs:23.2.1'
+    compile 'com.android.support:design:23.2.1'
+    compile 'com.android.support:support-v4:23.2.1'
+    compile 'com.android.support:support-v13:23.2.1'
+    compile 'com.android.support:palette-v7:23.2.1'
+    compile 'com.android.support:recyclerview-v7:23.2.1'
     compile 'com.facebook.stetho:stetho:1.3.0'
     compile 'com.facebook.stetho:stetho-okhttp3:1.3.0'
     compile 'com.fasterxml.jackson.core:jackson-annotations:2.6.0'
     compile 'com.fasterxml.jackson.core:jackson-core:2.6.0'
     compile 'com.fasterxml.jackson.core:jackson-databind:2.6.0'
-//    compile 'com.github.bumptech.glide:glide:3.6.1'
-//    compile 'com.github.bumptech.glide:okhttp-integration:1.3.0'
+    compile 'com.github.bumptech.glide:glide:3.7.0'
+    compile 'com.github.bumptech.glide:okhttp3-integration:1.4.0@aar'
     compile 'com.github.rjeschke:txtmark:0.13'
     compile 'com.google.dagger:dagger:2.0.2'
     compile 'com.jakewharton.picasso:picasso2-okhttp3-downloader:1.0.2'

@@ -19,6 +19,8 @@ public class ActivityMainRoot extends ActivityMain {
         sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
 
         if (!isTaskRoot()) {
+            superOnCreate(savedInstanceState);
+
             Intent intent = getIntent();
             intent.setComponent(new ComponentName(getPackageName(), ActivityMain.class.getCanonicalName()));
             startActivity(intent);

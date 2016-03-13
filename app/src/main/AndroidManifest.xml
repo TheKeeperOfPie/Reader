@@ -340,6 +340,11 @@
 
         </service>
 
+        <meta-data
+            android:name="com.winsonchiu.reader.glide.GlideConfiguration"
+            android:value="GlideModule"
+            />
+
     </application>
 
 </manifest>

@@ -13,6 +13,7 @@ import android.graphics.Color;
 import android.graphics.PorterDuff;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.support.annotation.Nullable;
 import android.support.annotation.StyleRes;
 import android.support.design.widget.AppBarLayout;
 import android.support.design.widget.CoordinatorLayout;
@@ -44,6 +45,7 @@ import android.view.ViewGroup;
 import android.widget.DatePicker;
 import android.widget.ImageView;
 
+import com.bumptech.glide.RequestManager;
 import com.winsonchiu.reader.ActivityMain;
 import com.winsonchiu.reader.AppSettings;
 import com.winsonchiu.reader.FragmentBase;
@@ -184,10 +186,12 @@ public class FragmentHistory extends FragmentBase implements Toolbar.OnMenuItemC
     }
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
-            Bundle savedInstanceState) {
+    protected void inject() {
         ((ActivityMain) getActivity()).getComponentActivity().inject(this);
+    }
 
+    @Override
+    protected View onCreateViewInternal(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         view = inflater.inflate(R.layout.fragment_history, container, false);
 
         layoutCoordinator = (CoordinatorLayout) view.findViewById(R.id.layout_coordinator);
@@ -289,10 +293,6 @@ public class FragmentHistory extends FragmentBase implements Toolbar.OnMenuItemC
         };
 
         RecyclerCallback recyclerCallback = new RecyclerCallback() {
-            @Override
-            public void scrollTo(final int position) {
-                UtilsAnimation.scrollToPositionWithCentering(position, recyclerHistory, layoutManager, false);
-            }
 
             @Override
             public int getRecyclerHeight() {
@@ -305,6 +305,16 @@ public class FragmentHistory extends FragmentBase implements Toolbar.OnMenuItemC
             }
 
             @Override
+            public void scrollTo(final int position) {
+                UtilsAnimation.scrollToPositionWithCentering(position, recyclerHistory, layoutManager, false);
+            }
+
+            @Override
+            public void scrollAndCenter(int position, int height) {
+
+            }
+
+            @Override
             public void hideToolbar() {
                 AppBarLayout.Behavior behaviorAppBar = (AppBarLayout.Behavior) ((CoordinatorLayout.LayoutParams) layoutAppBar.getLayoutParams()).getBehavior();
                 behaviorAppBar.onNestedFling(layoutCoordinator, layoutAppBar, null, 0, 1000, true);
@@ -314,8 +324,12 @@ public class FragmentHistory extends FragmentBase implements Toolbar.OnMenuItemC
             public void onReplyShown() {
 
             }
-        };
 
+            @Override
+            public RequestManager getRequestManager() {
+                return getGlideRequestManager();
+            }
+        };
 
         if (adapterLinkList == null) {
             adapterLinkList = new AdapterHistoryLinkList(getActivity(),

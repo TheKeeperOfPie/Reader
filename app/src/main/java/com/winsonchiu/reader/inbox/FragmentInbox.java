@@ -12,6 +12,7 @@ import android.graphics.ColorFilter;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
 import android.os.Bundle;
+import android.support.annotation.Nullable;
 import android.support.design.widget.AppBarLayout;
 import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.FloatingActionButton;
@@ -33,6 +34,7 @@ import android.widget.AdapterView;
 import android.widget.Spinner;
 import android.widget.Toast;
 
+import com.bumptech.glide.RequestManager;
 import com.winsonchiu.reader.ActivityMain;
 import com.winsonchiu.reader.AppSettings;
 import com.winsonchiu.reader.CustomApplication;
@@ -107,10 +109,12 @@ public class FragmentInbox extends FragmentBase implements Toolbar.OnMenuItemCli
     }
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
-            Bundle savedInstanceState) {
+    protected void inject() {
         ((ActivityMain) getActivity()).getComponentActivity().inject(this);
+    }
 
+    @Override
+    protected View onCreateViewInternal(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_inbox, container, false);
 
         listener = new ControllerInbox.Listener() {
@@ -251,8 +255,8 @@ public class FragmentInbox extends FragmentBase implements Toolbar.OnMenuItemCli
 
                         @Override
                         public Observable<String> voteComment(AdapterCommentList.ViewHolderComment viewHolderComment,
-                                                              Comment comment,
-                                                              int vote) {
+                                Comment comment,
+                                int vote) {
                             return controllerInbox.voteComment(viewHolderComment, comment, vote);
                         }
 
@@ -300,11 +304,6 @@ public class FragmentInbox extends FragmentBase implements Toolbar.OnMenuItemCli
                         }
                     }, new RecyclerCallback() {
                 @Override
-                public void scrollTo(int position) {
-                    linearLayoutManager.scrollToPositionWithOffset(position, 0);
-                }
-
-                @Override
                 public int getRecyclerHeight() {
                     return recyclerInbox.getHeight();
                 }
@@ -312,6 +311,16 @@ public class FragmentInbox extends FragmentBase implements Toolbar.OnMenuItemCli
                 @Override
                 public RecyclerView.LayoutManager getLayoutManager() {
                     return linearLayoutManager;
+                }
+
+                @Override
+                public void scrollTo(int position) {
+                    linearLayoutManager.scrollToPositionWithOffset(position, 0);
+                }
+
+                @Override
+                public void scrollAndCenter(int position, int height) {
+
                 }
 
                 @Override
@@ -323,6 +332,11 @@ public class FragmentInbox extends FragmentBase implements Toolbar.OnMenuItemCli
                 @Override
                 public void onReplyShown() {
                     behaviorFloatingActionButton.animateOut(floatingActionButtonNewMessage);
+                }
+
+                @Override
+                public RequestManager getRequestManager() {
+                    return getGlideRequestManager();
                 }
             }, new ControllerProfile.Listener() {
                 @Override
@@ -374,7 +388,6 @@ public class FragmentInbox extends FragmentBase implements Toolbar.OnMenuItemCli
         recyclerInbox.setAdapter(adapterInbox);
 
         return view;
-
     }
 
     private void setUpOptionsMenu() {

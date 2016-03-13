@@ -30,15 +30,6 @@ public class CustomDrawerLayout extends DrawerLayout {
         super(context, attrs, defStyle);
     }
 
-    @Override
-    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-        widthMeasureSpec = MeasureSpec.makeMeasureSpec(
-                MeasureSpec.getSize(widthMeasureSpec), MeasureSpec.EXACTLY);
-        heightMeasureSpec = MeasureSpec.makeMeasureSpec(
-                MeasureSpec.getSize(heightMeasureSpec), MeasureSpec.EXACTLY);
-        super.onMeasure(widthMeasureSpec, heightMeasureSpec);
-    }
-
     public float getYFraction() {
         if (getHeight() == 0) {
             return 0;
@@ -98,5 +89,4 @@ public class CustomDrawerLayout extends DrawerLayout {
         float translationX = getWidth() * fraction;
         setTranslationX(translationX);
     }
-
 }

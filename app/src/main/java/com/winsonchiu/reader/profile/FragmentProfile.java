@@ -10,6 +10,7 @@ import android.content.res.TypedArray;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
 import android.os.Bundle;
+import android.support.annotation.Nullable;
 import android.support.design.widget.AppBarLayout;
 import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.Snackbar;
@@ -37,6 +38,7 @@ import android.widget.ImageView;
 import android.widget.Spinner;
 import android.widget.Toast;
 
+import com.bumptech.glide.RequestManager;
 import com.winsonchiu.reader.ActivityMain;
 import com.winsonchiu.reader.AppSettings;
 import com.winsonchiu.reader.ControllerUser;
@@ -199,10 +201,12 @@ public class FragmentProfile extends FragmentBase implements Toolbar.OnMenuItemC
     }
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
-            Bundle savedInstanceState) {
+    protected void inject() {
         ((ActivityMain) activity).getComponentActivity().inject(this);
+    }
 
+    @Override
+    protected View onCreateViewInternal(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         view = inflater.inflate(R.layout.fragment_profile, container, false);
 
         layoutCoordinator = (CoordinatorLayout) view.findViewById(R.id.layout_coordinator);
@@ -409,11 +413,6 @@ public class FragmentProfile extends FragmentBase implements Toolbar.OnMenuItemC
                         }
                     }, new RecyclerCallback() {
                 @Override
-                public void scrollTo(final int position) {
-                    UtilsAnimation.scrollToPositionWithCentering(position, recyclerProfile, linearLayoutManager, false);
-                }
-
-                @Override
                 public int getRecyclerHeight() {
                     return recyclerProfile.getHeight();
                 }
@@ -421,6 +420,16 @@ public class FragmentProfile extends FragmentBase implements Toolbar.OnMenuItemC
                 @Override
                 public RecyclerView.LayoutManager getLayoutManager() {
                     return linearLayoutManager;
+                }
+
+                @Override
+                public void scrollTo(final int position) {
+                    UtilsAnimation.scrollToPositionWithCentering(position, recyclerProfile, linearLayoutManager, false);
+                }
+
+                @Override
+                public void scrollAndCenter(int position, int height) {
+
                 }
 
                 @Override
@@ -432,6 +441,11 @@ public class FragmentProfile extends FragmentBase implements Toolbar.OnMenuItemC
                 @Override
                 public void onReplyShown() {
 
+                }
+
+                @Override
+                public RequestManager getRequestManager() {
+                    return getGlideRequestManager();
                 }
 
             }, listener);
@@ -515,7 +529,6 @@ public class FragmentProfile extends FragmentBase implements Toolbar.OnMenuItemC
         itemTouchHelper.attachToRecyclerView(recyclerProfile);
 
         return view;
-
     }
 
     private Observer<Listing> getReloadObserver() {
