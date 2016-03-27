@@ -12,7 +12,6 @@ import com.winsonchiu.reader.comments.ControllerCommentsTop;
 import com.winsonchiu.reader.dagger.modules.ModuleApi;
 import com.winsonchiu.reader.dagger.modules.ModuleContext;
 import com.winsonchiu.reader.dagger.modules.ModuleHistory;
-import com.winsonchiu.reader.dagger.modules.ModuleReddit;
 import com.winsonchiu.reader.data.reddit.Reddit;
 import com.winsonchiu.reader.history.ControllerHistory;
 import com.winsonchiu.reader.inbox.ControllerInbox;
@@ -39,7 +38,7 @@ import dagger.Component;
         }
 )
 public interface ComponentMain {
-    ComponentActivity plus(ModuleReddit module);
+    ComponentActivity componentActivity();
 
     void inject(ActivityLogin target);
     void inject(AdapterLink.ViewHolderBase target);

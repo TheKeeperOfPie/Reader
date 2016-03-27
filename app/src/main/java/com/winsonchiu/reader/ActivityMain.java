@@ -51,6 +51,8 @@ import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.view.ActionMode;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.text.Html;
 import android.text.TextUtils;
 import android.util.Log;
@@ -61,11 +63,11 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewGroup;
 import android.webkit.URLUtil;
 import android.widget.HorizontalScrollView;
 import android.widget.ImageButton;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -75,6 +77,7 @@ import com.google.android.youtube.player.YouTubePlayerSupportFragment;
 import com.squareup.picasso.Callback;
 import com.squareup.picasso.Picasso;
 import com.squareup.picasso.Target;
+import com.winsonchiu.reader.accounts.AccountsAdapter;
 import com.winsonchiu.reader.comments.AdapterCommentList;
 import com.winsonchiu.reader.comments.ControllerCommentsTop;
 import com.winsonchiu.reader.comments.FragmentComments;
@@ -82,7 +85,6 @@ import com.winsonchiu.reader.comments.FragmentReply;
 import com.winsonchiu.reader.comments.Source;
 import com.winsonchiu.reader.dagger.components.ComponentActivity;
 import com.winsonchiu.reader.dagger.components.ComponentStatic;
-import com.winsonchiu.reader.dagger.modules.ModuleReddit;
 import com.winsonchiu.reader.data.Page;
 import com.winsonchiu.reader.data.database.reddit.RedditOpenHelper;
 import com.winsonchiu.reader.data.reddit.Comment;
@@ -141,7 +143,7 @@ import rx.schedulers.Schedulers;
 
 
 public class ActivityMain extends AppCompatActivity
-        implements FragmentListenerBase, SharedPreferences.OnSharedPreferenceChangeListener {
+        implements FragmentListenerBase, SharedPreferences.OnSharedPreferenceChangeListener, AccountsAdapter.Listener {
 
     private static final String TAG = ActivityMain.class.getCanonicalName();
 
@@ -229,6 +231,9 @@ public class ActivityMain extends AppCompatActivity
     private CustomTabsClient customTabsClient;
     private CustomTabsSession customTabsSession;
 
+    private AccountsAdapter adapterAccounts;
+    private boolean accountsVisible;
+
     @Bind(R.id.layout_drawer) DrawerLayout layoutDrawer;
     @Bind(R.id.layout_navigation) RelativeLayout layoutNavigation;
     @Bind(R.id.view_navigation) NavigationView viewNavigation;
@@ -239,7 +244,7 @@ public class ActivityMain extends AppCompatActivity
     @Bind(R.id.text_account_name) TextView textAccountName;
     @Bind(R.id.text_account_info) TextView textAccountInfo;
     @Bind(R.id.button_accounts) ImageButton buttonAccounts;
-    @Bind(R.id.layout_accounts) LinearLayout layoutAccounts;
+    @Bind(R.id.recycler_accounts) RecyclerView recyclerAccounts;
 
     @Inject AccountManager accountManager;
     @Inject ControllerLinks controllerLinks;
@@ -260,7 +265,7 @@ public class ActivityMain extends AppCompatActivity
 
         if (componentActivity == null) {
             componentActivity = CustomApplication.getComponentMain()
-                    .plus(new ModuleReddit());
+                    .componentActivity();
         }
 
         componentActivity.inject(this);
@@ -302,8 +307,6 @@ public class ActivityMain extends AppCompatActivity
 
         setContentView(R.layout.activity_main);
         ButterKnife.bind(this);
-
-//        getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
 
         inflateNavigationDrawer();
 
@@ -425,53 +428,9 @@ public class ActivityMain extends AppCompatActivity
             }
         };
 
-        if (sharedPreferences.getBoolean(AppSettings.BETA_NOTICE_0, true)) {
-            try {
+        showBetaNotice();
 
-                View view = LayoutInflater.from(this).inflate(R.layout.dialog_text_alert, null, false);
-                TextView textTitle = (TextView) view.findViewById(R.id.text_title);
-                TextView textMessage = (TextView) view.findViewById(R.id.text_message);
-
-                textTitle.setTextColor(getResources().getColor(R.color.colorPrimary));
-                textTitle.setText(R.string.beta_title);
-                textMessage.setText(R.string.beta_notice_0);
-
-                new AlertDialog.Builder(this)
-                        .setView(view)
-                        .setPositiveButton(R.string.ok, null)
-                        .show();
-            }
-            catch (Throwable t) {
-                t.printStackTrace();
-            }
-            finally {
-                sharedPreferences.edit().putBoolean(AppSettings.BETA_NOTICE_0, false).apply();
-            }
-        }
-
-        if (savedInstanceState == null) {
-            if (Intent.ACTION_VIEW.equals(getIntent().getAction())) {
-                Log.d(TAG, "load intent: " + getIntent().toString());
-                String urlString = getIntent().getDataString();
-                if (getIntent().hasExtra(REDDIT_PAGE)) {
-                    urlString = getIntent().getExtras()
-                            .getString(REDDIT_PAGE);
-                }
-
-                if (URLUtil.isNetworkUrl(urlString)) {
-                    parseUrl(urlString);
-                }
-                else {
-                    Log.d(TAG, "Not valid URL: " + urlString);
-                    selectNavigationItem(getIntent().getIntExtra(NAV_ID, R.id.item_home), getIntent().getStringExtra(
-                            NAV_PAGE), false);
-                }
-            }
-            else {
-                selectNavigationItem(getIntent().getIntExtra(NAV_ID, R.id.item_home), getIntent().getStringExtra(
-                        NAV_PAGE), false);
-            }
-        }
+        handleFirstLaunch(savedInstanceState);
 
         customTabsServiceConnection = new CustomTabsServiceConnection() {
             @Override
@@ -500,6 +459,63 @@ public class ActivityMain extends AppCompatActivity
             }
         };
 
+        loadAccount();
+
+    }
+
+    public void handleFirstLaunch(Bundle savedInstanceState) {
+        if (savedInstanceState == null) {
+            if (Intent.ACTION_VIEW.equals(getIntent().getAction())) {
+                Log.d(TAG, "load intent: " + getIntent().toString());
+                String urlString = getIntent().getDataString();
+                if (getIntent().hasExtra(REDDIT_PAGE)) {
+                    urlString = getIntent().getExtras()
+                            .getString(REDDIT_PAGE);
+                }
+
+                if (URLUtil.isNetworkUrl(urlString)) {
+                    parseUrl(urlString);
+                }
+                else {
+                    Log.d(TAG, "Not valid URL: " + urlString);
+                    selectNavigationItem(getIntent().getIntExtra(NAV_ID, R.id.item_home), getIntent().getStringExtra(
+                            NAV_PAGE), false);
+                }
+            }
+            else {
+                selectNavigationItem(getIntent().getIntExtra(NAV_ID, R.id.item_home), getIntent().getStringExtra(
+                        NAV_PAGE), false);
+            }
+        }
+    }
+
+    public void showBetaNotice() {
+        if (sharedPreferences.getBoolean(AppSettings.BETA_NOTICE_0, true)) {
+            try {
+
+                View view = LayoutInflater.from(this).inflate(R.layout.dialog_text_alert, null, false);
+                TextView textTitle = ButterKnife.findById(view, R.id.text_title);
+                TextView textMessage = ButterKnife.findById(view, R.id.text_message);
+
+                textTitle.setTextColor(getResources().getColor(R.color.colorPrimary));
+                textTitle.setText(R.string.beta_title);
+                textMessage.setText(R.string.beta_notice_0);
+
+                new AlertDialog.Builder(this)
+                        .setView(view)
+                        .setPositiveButton(R.string.ok, null)
+                        .show();
+            }
+            catch (Throwable t) {
+                t.printStackTrace();
+            }
+            finally {
+                sharedPreferences.edit().putBoolean(AppSettings.BETA_NOTICE_0, false).apply();
+            }
+        }
+    }
+
+    public void loadAccount() {
         String name;
         if (getIntent().hasExtra(ACCOUNT)) {
             name = getIntent().getStringExtra(ACCOUNT);
@@ -525,7 +541,6 @@ public class ActivityMain extends AppCompatActivity
         else {
             setAccount(accountUser);
         }
-
     }
 
     @Override
@@ -582,13 +597,17 @@ public class ActivityMain extends AppCompatActivity
         View.OnClickListener onClickListener = new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                setAccountsVisible(!layoutAccounts.isShown());
+                setAccountsVisible(!accountsVisible);
             }
         };
 
         textAccountName.setOnClickListener(onClickListener);
         textAccountInfo.setOnClickListener(onClickListener);
         buttonAccounts.setOnClickListener(onClickListener);
+
+        adapterAccounts = new AccountsAdapter(colorFilterPrimary.getColor(), this);
+        recyclerAccounts.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false));
+        recyclerAccounts.setAdapter(adapterAccounts);
 
         resetAccountList();
 
@@ -789,7 +808,6 @@ public class ActivityMain extends AppCompatActivity
     }
 
     private void downloadHeaderImage(final Link link) {
-
         Log.d(TAG, "downloadHeaderImage: " + link);
 
         if (isDownloadingHeaderImage) {
@@ -802,70 +820,66 @@ public class ActivityMain extends AppCompatActivity
     }
 
     private void resetAccountList() {
-        layoutAccounts.removeAllViews();
+        int startSize = adapterAccounts.getItemCount();
 
-        Account[] accounts = accountManager.getAccountsByType(Reddit.ACCOUNT_TYPE);
+        adapterAccounts.setAccounts(accountManager.getAccountsByType(Reddit.ACCOUNT_TYPE));
 
-        for (final Account account : accounts) {
-            View viewAccount = getLayoutInflater().inflate(R.layout.row_account, layoutAccounts, false);
-            TextView textUsername = (TextView) viewAccount.findViewById(R.id.text_username);
-            ImageButton buttonDeleteAccount = (ImageButton) viewAccount.findViewById(R.id.button_delete_account);
-            buttonDeleteAccount.setColorFilter(colorFilterPrimary);
-
-            textUsername.setText(account.name);
-            textUsername.setTextColor(colorFilterPrimary.getColor());
-
-            viewAccount.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    setAccount(account);
-                }
-            });
-            buttonDeleteAccount.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    deleteAccount(account);
-                }
-            });
-
-            layoutAccounts.addView(viewAccount);
+        if (startSize != 0 && startSize != adapterAccounts.getItemCount()) {
+            recyclerAccounts.getLayoutParams().height = ViewGroup.LayoutParams.WRAP_CONTENT;
+            recyclerAccounts.requestLayout();
         }
-
-
-        View viewAddAccount = getLayoutInflater().inflate(R.layout.row_account, layoutAccounts, false);
-        viewAddAccount.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                addNewAccount();
-            }
-        });
-        TextView textAddAccount = (TextView) viewAddAccount.findViewById(R.id.text_username);
-        textAddAccount.setText(R.string.add_account);
-        textAddAccount.setTextColor(colorFilterPrimary.getColor());
-        ImageButton buttonAddAccount = (ImageButton) viewAddAccount.findViewById(R.id.button_delete_account);
-        buttonAddAccount.setImageResource(R.drawable.ic_add_white_24dp);
-        buttonAddAccount.setColorFilter(colorFilterPrimary);
-        buttonAddAccount.setClickable(false);
-        layoutAccounts.addView(viewAddAccount);
-
-        View viewLogout = getLayoutInflater().inflate(R.layout.row_account, layoutAccounts, false);
-        viewLogout.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                clearAccount();
-            }
-        });
-        TextView textLogout = (TextView) viewLogout.findViewById(R.id.text_username);
-        textLogout.setText(R.string.logout);
-        textLogout.setTextColor(colorFilterPrimary.getColor());
-        ImageButton buttonLogout = (ImageButton) viewLogout.findViewById(R.id.button_delete_account);
-        buttonLogout.setImageResource(R.drawable.ic_exit_to_app_white_24dp);
-        buttonLogout.setColorFilter(colorFilterPrimary);
-        buttonLogout.setClickable(false);
-        layoutAccounts.addView(viewLogout);
     }
 
-    private void clearAccount() {
+    public void addNewAccount() {
+        accountManager.addAccount(Reddit.ACCOUNT_TYPE, Reddit.AUTH_TOKEN_FULL_ACCESS, null, null, this, new AccountManagerCallback<Bundle>() {
+            @Override
+            public void run(final AccountManagerFuture<Bundle> future) {
+                Observable.just(future)
+                        .subscribeOn(Schedulers.computation())
+                        .observeOn(Schedulers.computation())
+                        .flatMap(new Func1<AccountManagerFuture<Bundle>, Observable<Bundle>>() {
+                            @Override
+                            public Observable<Bundle> call(AccountManagerFuture<Bundle> bundleAccountManagerFuture) {
+                                try {
+                                    return Observable.just(future.getResult());
+                                } catch (OperationCanceledException | AuthenticatorException | IOException e) {
+                                    return Observable.error(e);
+                                }
+                            }
+                        })
+                        .observeOn(AndroidSchedulers.mainThread())
+                        .subscribe(new FinalizingSubscriber<Bundle>() {
+                            @Override
+                            public void next(Bundle next) {
+                                super.next(next);
+                                String name = next.getString(AccountManager.KEY_ACCOUNT_NAME);
+                                Account[] accounts = accountManager.getAccountsByType(Reddit.ACCOUNT_TYPE);
+
+                                for (Account account : accounts) {
+                                    if (account.name.equals(name)) {
+                                        setAccount(account);
+                                        break;
+                                    }
+                                }
+                            }
+
+                            @Override
+                            public void error(Throwable e) {
+                                super.error(e);
+                                Toast.makeText(ActivityMain.this, R.string.error_account, Toast.LENGTH_LONG).show();
+                            }
+
+                            @Override
+                            public void finish() {
+                                super.finish();
+                                resetAccountList();
+                            }
+                        });
+            }
+        }, null);
+    }
+
+    public void clearAccount() {
         accountUser = null;
         sharedPreferences.edit().putString(AppSettings.ACCOUNT_NAME, "").apply();
         reddit.clearAccount();
@@ -874,7 +888,7 @@ public class ActivityMain extends AppCompatActivity
         loadAccountInfo();
     }
 
-    private void setAccount(final Account account) {
+    public void setAccount(final Account account) {
         Log.d(TAG, "setAccount() called with: " + "account = [" + account + "]");
         accountUser = account;
         sharedPreferences.edit().putString(AppSettings.ACCOUNT_NAME, account.name).apply();
@@ -890,8 +904,7 @@ public class ActivityMain extends AppCompatActivity
                 });
     }
 
-    private void deleteAccount(final Account account) {
-
+    public void deleteAccount(final Account account) {
         new AlertDialog.Builder(this)
                 .setTitle(R.string.delete_account)
                 .setMessage(account.name)
@@ -951,21 +964,23 @@ public class ActivityMain extends AppCompatActivity
     }
 
     private void setAccountsVisible(boolean visible) {
-        if (visible) {
-            buttonAccounts.setImageResource(R.drawable.ic_arrow_drop_down_white_24dp);
-        }
-        else {
-            buttonAccounts.setImageResource(R.drawable.ic_arrow_drop_up_white_24dp);
-        }
+        accountsVisible = visible;
 
-        // Checks if layoutAccounts needs animating or to just immediately hide it
-        if ((layoutAccounts.getVisibility() == View.VISIBLE) != visible) {
-            if (layoutAccounts.isShown() || layoutAccounts.getVisibility() != View.VISIBLE) {
-                UtilsAnimation.animateExpand(layoutAccounts, 1f, null, 250);
+        buttonAccounts.setImageResource(accountsVisible
+                ? R.drawable.ic_arrow_drop_down_white_24dp
+                : R.drawable.ic_arrow_drop_up_white_24dp);
+
+        if (layoutDrawer.isDrawerOpen(GravityCompat.START)) {
+            if (accountsVisible) {
+                if (recyclerAccounts.getVisibility() == View.GONE) {
+                    recyclerAccounts.getLayoutParams().height = 0;
+                }
+                UtilsAnimation.animateExpandHeight(recyclerAccounts, viewNavigation.getWidth(), 0, null);
+            } else {
+                UtilsAnimation.animateCollapseHeight(recyclerAccounts, 0, null);
             }
-            else {
-                layoutAccounts.setVisibility(View.GONE);
-            }
+        } else {
+            recyclerAccounts.setVisibility(accountsVisible ? View.VISIBLE : View.GONE);
         }
     }
 
@@ -1134,48 +1149,6 @@ public class ActivityMain extends AppCompatActivity
         MenuItem itemInbox = viewNavigation.getMenu().findItem(R.id.item_inbox);
         itemInbox.setVisible(visible);
         itemInbox.setEnabled(visible);
-    }
-
-    private void addNewAccount() {
-        accountManager.addAccount(Reddit.ACCOUNT_TYPE, Reddit.AUTH_TOKEN_FULL_ACCESS, null, null, this, new AccountManagerCallback<Bundle>() {
-            @Override
-            public void run(final AccountManagerFuture<Bundle> future) {
-                new Thread(new Runnable() {
-                    @Override
-                    public void run() {
-                        try {
-                            final Bundle bundle = future.getResult();
-                            handler.post(new Runnable() {
-                                @Override
-                                public void run() {
-                                    String name = bundle.getString(AccountManager.KEY_ACCOUNT_NAME);
-                                    sharedPreferences.edit().putString(AppSettings.ACCOUNT_NAME, name).apply();
-                                    Account[] accounts = accountManager.getAccountsByType(Reddit.ACCOUNT_TYPE);
-
-                                    for (Account account : accounts) {
-                                        if (account.name.equals(name)) {
-                                            setAccount(account);
-                                            break;
-                                        }
-                                    }
-
-                                    resetAccountList();
-                                }
-                            });
-                        }
-                        catch (OperationCanceledException | AuthenticatorException | IOException e) {
-                            e.printStackTrace();
-                            handler.post(new Runnable() {
-                                @Override
-                                public void run() {
-                                    Toast.makeText(ActivityMain.this, R.string.error_account, Toast.LENGTH_LONG).show();
-                                }
-                            });
-                        }
-                    }
-                }).start();
-            }
-        }, null);
     }
 
     private void loadSubreddit(String subreddit, Sort sort, Time time) {

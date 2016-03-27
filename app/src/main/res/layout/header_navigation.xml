@@ -85,13 +85,11 @@
         android:src="@drawable/ic_arrow_drop_up_white_24dp"
         />
 
-    <LinearLayout
-        android:id="@+id/layout_accounts"
-        android:orientation="vertical"
+    <android.support.v7.widget.RecyclerView
+        android:id="@+id/recycler_accounts"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="0px"
         android:layout_below="@id/text_account_info"
-        android:animateLayoutChanges="true"
         android:visibility="gone"
         tools:visibility="visible"
         tools:layout_height="320dp"

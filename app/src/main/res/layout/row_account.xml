@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/layout_account"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:background="?attr/colorPrimaryDark"
@@ -13,22 +15,21 @@
         android:background="?attr/selectableItemBackground"
         >
 
-        <ImageButton
-            android:id="@+id/button_delete_account"
+        <ImageView
+            android:id="@+id/image_action"
             android:layout_width="56dp"
             android:layout_height="56dp"
             android:layout_alignParentStart="true"
             android:layout_centerVertical="true"
             android:padding="16dp"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:src="@drawable/ic_delete_white_24dp"
+            tools:src="@drawable/ic_delete_white_24dp"
             />
 
         <TextView
-            android:id="@+id/text_username"
+            android:id="@+id/text_account"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_toEndOf="@+id/button_delete_account"
+            android:layout_toEndOf="@+id/image_action"
             android:layout_marginTop="8dp"
             android:layout_marginBottom="8dp"
             android:layout_marginStart="16dp"
