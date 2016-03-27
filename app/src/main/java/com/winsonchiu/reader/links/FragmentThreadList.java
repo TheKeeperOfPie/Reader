@@ -263,13 +263,13 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
         int colorAccent = typedArray.getColor(1, getResources().getColor(R.color.colorAccent));
         typedArray.recycle();
 
-        int colorResourcePrimary = UtilsColor.computeContrast(colorPrimary, Color.WHITE) > 3f ? R.color.darkThemeIconFilter : R.color.lightThemeIconFilter;
-        int colorResourceAccent = UtilsColor.computeContrast(colorAccent, Color.WHITE) > 3f ? R.color.darkThemeIconFilter : R.color.lightThemeIconFilter;
+        int colorResourcePrimary = UtilsColor.showOnWhite(colorPrimary) ? R.color.darkThemeIconFilter : R.color.lightThemeIconFilter;
+        int colorResourceAccent = UtilsColor.showOnWhite(colorAccent) ? R.color.darkThemeIconFilter : R.color.lightThemeIconFilter;
 
         colorFilterPrimary = new CustomColorFilter(getResources().getColor(colorResourcePrimary), PorterDuff.Mode.MULTIPLY);
         colorFilterAccent = new CustomColorFilter(getResources().getColor(colorResourceAccent), PorterDuff.Mode.MULTIPLY);
 
-        @StyleRes int styleToolbar = UtilsColor.computeContrast(colorPrimary, Color.WHITE) > 3f ? mListener.getAppColorTheme().getStyle(AppSettings.THEME_DARK, mListener.getThemeAccentPrefString()) : mListener.getAppColorTheme().getStyle(AppSettings.THEME_LIGHT, mListener.getThemeAccentPrefString());
+        @StyleRes int styleToolbar = UtilsColor.showOnWhite(colorPrimary) ? mListener.getAppColorTheme().getStyle(AppSettings.THEME_DARK, mListener.getThemeAccentPrefString()) : mListener.getAppColorTheme().getStyle(AppSettings.THEME_LIGHT, mListener.getThemeAccentPrefString());
 
         int styleColorBackground = AppSettings.THEME_DARK.equals(mListener.getThemeBackgroundPrefString()) ? R.style.MenuDark : R.style.MenuLight;
 
@@ -559,7 +559,7 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
             recyclerThreadList.setPadding(padding, 0, padding, 0);
         }
 
-        drawerLayout = (DrawerLayout) view.findViewById(R.id.drawer_layout);
+        drawerLayout = (DrawerLayout) view.findViewById(R.id.layout_drawer);
 
         textSidebar = (TextView) view.findViewById(R.id.text_sidebar);
         textSidebar.setMovementMethod(LinkMovementMethod.getInstance());

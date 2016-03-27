@@ -109,7 +109,7 @@ public class ActivityLogin extends AccountAuthenticatorActivity {
                 new int[]{R.attr.colorPrimary, R.attr.colorAccent});
         int colorPrimary = typedArray.getColor(0, getResources().getColor(R.color.colorPrimary));
 
-        int colorResourcePrimary = UtilsColor.computeContrast(colorPrimary, Color.WHITE) > 3f ? R.color.darkThemeIconFilter : R.color.lightThemeIconFilter;
+        int colorResourcePrimary = UtilsColor.showOnWhite(colorPrimary) ? R.color.darkThemeIconFilter : R.color.lightThemeIconFilter;
 
         toolbar = (Toolbar) findViewById(R.id.toolbar);
         toolbar.setTitleTextColor(getResources().getColor(colorResourcePrimary));

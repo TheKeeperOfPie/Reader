@@ -5,7 +5,7 @@
 <com.winsonchiu.reader.views.CustomDrawerLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:id="@+id/drawer_layout"
+    android:id="@+id/layout_drawer"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:fitsSystemWindows="true"
@@ -25,7 +25,7 @@
         >
 
         <RelativeLayout
-            android:id="@+id/drawer_navigation"
+            android:id="@+id/layout_navigation"
             android:layout_width="@dimen/navigation_drawer_width"
             android:layout_height="match_parent"
             android:layout_gravity="start"
@@ -38,7 +38,7 @@
                 />
 
             <android.support.design.widget.NavigationView
-                android:id="@+id/navigation"
+                android:id="@+id/view_navigation"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:layout_below="@+id/layout_header_navigation"

@@ -50,7 +50,7 @@ public class AdapterProfilePage extends BaseAdapter {
         colorTextMenu = typedArray.getColor(1, Color.WHITE);
         typedArray.recycle();
 
-        colorTextPrimary = UtilsColor.computeContrast(colorPrimary, Color.WHITE) > 3f ? Color.WHITE : Color.BLACK;
+        colorTextPrimary = UtilsColor.showOnWhite(colorPrimary) ? Color.WHITE : Color.BLACK;
     }
 
     @Override

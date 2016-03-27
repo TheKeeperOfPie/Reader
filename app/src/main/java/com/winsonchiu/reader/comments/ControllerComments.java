@@ -180,9 +180,6 @@ public class ControllerComments implements AdapterCommentList.ViewHolderComment.
     public void loadCommentThread() {
         UtilsRx.unsubscribe(subscriptionComments);
         subscriptionComments = reddit.comments(link.getSubreddit(), link.getId(), link.getCommentId(), sort.toString(), true, true, link.getContextLevel(), 10, 100)
-                .doOnNext(redditDatabase.storeLink())
-                .onErrorResumeNext(Observable.<Link>empty())
-                .switchIfEmpty(redditDatabase.getLink(link.getId()))
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(getSubscriberLink());
     }

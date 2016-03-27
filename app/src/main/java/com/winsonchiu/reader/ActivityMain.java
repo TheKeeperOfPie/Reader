@@ -68,6 +68,7 @@ import android.widget.HorizontalScrollView;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -136,6 +137,8 @@ import java.util.List;
 
 import javax.inject.Inject;
 
+import butterknife.Bind;
+import butterknife.ButterKnife;
 import rx.Observable;
 import rx.Observer;
 import rx.android.schedulers.AndroidSchedulers;
@@ -161,16 +164,6 @@ public class ActivityMain extends AppCompatActivity
     private int loadId = -1;
 
     protected SharedPreferences sharedPreferences;
-    private DrawerLayout drawerLayout;
-    private NavigationView viewNavigation;
-
-    private ScrollViewHeader scrollHeaderVertical;
-    private HorizontalScrollView scrollHeaderHorizontal;
-    private ImageView imageHeader;
-    private TextView textAccountName;
-    private TextView textAccountInfo;
-    private ImageButton buttonAccounts;
-    private LinearLayout layoutAccounts;
 
     private Handler handler;
     private Account accountUser;
@@ -244,6 +237,18 @@ public class ActivityMain extends AppCompatActivity
     private CustomTabsClient customTabsClient;
     private CustomTabsSession customTabsSession;
 
+    @Bind(R.id.layout_drawer) DrawerLayout layoutDrawer;
+    @Bind(R.id.layout_navigation) RelativeLayout layoutNavigation;
+    @Bind(R.id.view_navigation) NavigationView viewNavigation;
+
+    @Bind(R.id.scroll_header_vertical) ScrollViewHeader scrollHeaderVertical;
+    @Bind(R.id.scroll_header_horizontal) HorizontalScrollView scrollHeaderHorizontal;
+    @Bind(R.id.image_header) ImageView imageHeader;
+    @Bind(R.id.text_account_name) TextView textAccountName;
+    @Bind(R.id.text_account_info) TextView textAccountInfo;
+    @Bind(R.id.button_accounts) ImageButton buttonAccounts;
+    @Bind(R.id.layout_accounts) LinearLayout layoutAccounts;
+
     @Inject AccountManager accountManager;
     @Inject Reddit reddit;
     @Inject Picasso picasso;
@@ -280,9 +285,8 @@ public class ActivityMain extends AppCompatActivity
         colorPrimary = typedArray.getColor(0, getResources().getColor(R.color.colorPrimary));
         typedArray.recycle();
 
-        int colorResourcePrimary = UtilsColor.computeContrast(colorPrimary, Color.WHITE) > 3f ? R.color.darkThemeIconFilter : R.color.lightThemeIconFilter;
-
-        int resourceIcon = UtilsColor.computeContrast(colorPrimary, Color.WHITE) > 3f ? R.mipmap.app_icon_white_outline : R.mipmap.app_icon_dark_outline;
+        int colorResourcePrimary = UtilsColor.showOnWhite(colorPrimary) ? R.color.darkThemeIconFilter : R.color.lightThemeIconFilter;
+        int resourceIcon = UtilsColor.showOnWhite(colorPrimary) ? R.mipmap.app_icon_white_outline : R.mipmap.app_icon_dark_outline;
 
         colorFilterPrimary = new CustomColorFilter(getResources().getColor(colorResourcePrimary), PorterDuff.Mode.MULTIPLY);
 
@@ -317,6 +321,7 @@ public class ActivityMain extends AppCompatActivity
         componentActivity.inject(this);
 
         setContentView(R.layout.activity_main);
+        ButterKnife.bind(this);
 
         getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
 
@@ -324,8 +329,7 @@ public class ActivityMain extends AppCompatActivity
 
         Receiver.setAlarm(this);
 
-        drawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
-        drawerLayout.setDrawerListener(new DrawerLayout.DrawerListener() {
+        layoutDrawer.setDrawerListener(new DrawerLayout.DrawerListener() {
             @Override
             public void onDrawerSlide(View drawerView, float slideOffset) {
 
@@ -842,9 +846,6 @@ public class ActivityMain extends AppCompatActivity
     }
 
     private void inflateNavigationDrawer() {
-        ViewGroup viewHeader = (ViewGroup) findViewById(R.id.layout_header_navigation);
-        viewNavigation = (NavigationView) findViewById(R.id.navigation);
-
         // TODO: Adhere to guidelines by making the increment 56dp on mobile and 64dp on tablet
         float standardIncrement = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 56, getResources().getDisplayMetrics());
         float screenWidth = getResources().getDisplayMetrics().widthPixels;
@@ -859,15 +860,7 @@ public class ActivityMain extends AppCompatActivity
             navigationWidth = standardIncrement * 6;
         }
 
-        findViewById(R.id.drawer_navigation).getLayoutParams().width = (int) navigationWidth;
-
-        scrollHeaderVertical = (ScrollViewHeader) viewHeader.findViewById(R.id.scroll_header_vertical);
-        scrollHeaderHorizontal = (HorizontalScrollView) viewHeader.findViewById(R.id.scroll_header_horizontal);
-        imageHeader = (ImageView) viewHeader.findViewById(R.id.image_nav_header);
-        textAccountName = (TextView) viewHeader.findViewById(R.id.text_account_name);
-        textAccountInfo = (TextView) viewHeader.findViewById(R.id.text_account_info);
-        buttonAccounts = (ImageButton) viewHeader.findViewById(R.id.button_accounts);
-        layoutAccounts = (LinearLayout) viewHeader.findViewById(R.id.layout_accounts);
+        layoutNavigation.getLayoutParams().width = (int) navigationWidth;
 
         textAccountName.setTextColor(colorFilterPrimary.getColor());
         textAccountInfo.setTextColor(colorFilterPrimary.getColor());
@@ -916,7 +909,7 @@ public class ActivityMain extends AppCompatActivity
                     @Override
                     public boolean onNavigationItemSelected(MenuItem menuItem) {
                         loadId = menuItem.getItemId();
-                        drawerLayout.closeDrawer(GravityCompat.START);
+                        layoutDrawer.closeDrawer(GravityCompat.START);
                         return true;
                     }
                 });
@@ -928,11 +921,11 @@ public class ActivityMain extends AppCompatActivity
 
                 switch (MotionEventCompat.getActionMasked(event)) {
                     case MotionEvent.ACTION_DOWN:
-                        drawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_OPEN);
+                        layoutDrawer.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_OPEN);
                         break;
                     case MotionEvent.ACTION_UP:
                     case MotionEvent.ACTION_CANCEL:
-                        drawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED);
+                        layoutDrawer.setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED);
                         break;
                 }
 
@@ -1594,11 +1587,11 @@ public class ActivityMain extends AppCompatActivity
             getSupportFragmentManager().popBackStack();
         }
         else {
-            if (drawerLayout.isDrawerVisible(GravityCompat.START)) {
-                drawerLayout.closeDrawer(GravityCompat.START);
+            if (layoutDrawer.isDrawerVisible(GravityCompat.START)) {
+                layoutDrawer.closeDrawer(GravityCompat.START);
             }
             else {
-                drawerLayout.openDrawer(GravityCompat.START);
+                layoutDrawer.openDrawer(GravityCompat.START);
             }
         }
     }
@@ -1850,7 +1843,7 @@ public class ActivityMain extends AppCompatActivity
 
     @Override
     public void openDrawer() {
-        drawerLayout.openDrawer(GravityCompat.START);
+        layoutDrawer.openDrawer(GravityCompat.START);
     }
 
     @Override

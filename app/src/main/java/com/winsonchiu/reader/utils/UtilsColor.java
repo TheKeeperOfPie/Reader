@@ -7,6 +7,8 @@ import android.graphics.Color;
  */
 public class UtilsColor {
 
+    public static final float CONTRAST_THRESHOLD = 3F;
+
     /**
      * Code taken from com.android.systemui.recents.misc.Utilities to properly
      * set recents card icon color
@@ -15,7 +17,6 @@ public class UtilsColor {
      * @return
      */
     public static float computeContrast(int background, int foreground) {
-
         float bgR = Color.red(background) / 255f;
         float bgG = Color.green(background) / 255f;
         float bgB = Color.blue(background) / 255f;
@@ -33,6 +34,10 @@ public class UtilsColor {
         float fgL = 0.2126f * fgR + 0.7152f * fgG + 0.0722f * fgB;
 
         return Math.abs((fgL + 0.05f) / (bgL + 0.05f));
+    }
+
+    public static boolean showOnWhite(int color) {
+        return UtilsColor.computeContrast(color, Color.WHITE) > CONTRAST_THRESHOLD;
     }
 
 }

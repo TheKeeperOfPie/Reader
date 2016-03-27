@@ -314,9 +314,9 @@ public class FragmentComments extends FragmentBase
         int colorAccent = typedArray.getColor(1, getResources().getColor(R.color.colorAccent));
         typedArray.recycle();
 
-        int colorResourcePrimary = UtilsColor.computeContrast(colorPrimary, Color.WHITE) > 3f ?
+        int colorResourcePrimary = UtilsColor.showOnWhite(colorPrimary) ?
                 R.color.darkThemeIconFilter : R.color.lightThemeIconFilter;
-        int colorResourceAccent = UtilsColor.computeContrast(colorAccent, Color.WHITE) > 3f ?
+        int colorResourceAccent = UtilsColor.showOnWhite(colorAccent) ?
                 R.color.darkThemeIconFilter : R.color.lightThemeIconFilter;
 
         colorFilterPrimary = new PorterDuffColorFilter(
