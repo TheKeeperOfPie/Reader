@@ -127,7 +127,7 @@ public class FragmentNewMessage extends FragmentBase implements Toolbar.OnMenuIt
     }
 
     @Override
-    protected View onCreateViewInternal(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+    public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
 
         final View view =  inflater.inflate(R.layout.fragment_new_message, container, false);
 

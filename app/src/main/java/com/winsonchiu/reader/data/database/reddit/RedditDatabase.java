@@ -21,7 +21,7 @@ import com.winsonchiu.reader.data.reddit.Subreddit;
 import com.winsonchiu.reader.data.reddit.Thing;
 import com.winsonchiu.reader.data.reddit.Time;
 import com.winsonchiu.reader.rx.ActionLog;
-import com.winsonchiu.reader.utils.ObserverEmpty;
+import com.winsonchiu.reader.rx.ObserverEmpty;
 import com.winsonchiu.reader.utils.UtilsImage;
 
 import java.util.ArrayList;

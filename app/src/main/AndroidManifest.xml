@@ -42,16 +42,20 @@
             android:windowSoftInputMode="adjustResize"
             android:theme="@style/AppDefaultTheme"
             >
+
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
+                <category android:name="android.intent.category.MULTIWINDOW_LAUNCHER" />
+                <category android:name="android.intent.category.PENWINDOW_LAUNCHER" />
             </intent-filter>
+
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
 
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
+
 
                 <!-- HTTP -->
 
@@ -344,6 +348,27 @@
             android:name="com.winsonchiu.reader.glide.GlideConfiguration"
             android:value="GlideModule"
             />
+
+        <uses-library
+            android:required="false"
+            android:name="com.sec.android.app.multiwindow"
+            />
+
+        <meta-data
+            android:name="com.sec.android.support.multiwindow"
+            android:value="true"
+            />
+
+        <meta-data
+            android:name="com.samsung.android.sdk.multiwindow.multiinstance.enable"
+            android:value="true"
+            />
+
+        <meta-data
+            android:name="com.samsung.android.sdk.multiwindow.penwindow.enable"
+            android:value="true"
+            />
+
 
     </application>
 

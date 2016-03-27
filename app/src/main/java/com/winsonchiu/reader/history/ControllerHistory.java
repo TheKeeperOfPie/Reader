@@ -18,7 +18,7 @@ import com.winsonchiu.reader.data.reddit.Subreddit;
 import com.winsonchiu.reader.data.reddit.Thing;
 import com.winsonchiu.reader.links.ControllerLinksBase;
 import com.winsonchiu.reader.utils.ControllerListener;
-import com.winsonchiu.reader.utils.FinalizingSubscriber;
+import com.winsonchiu.reader.rx.FinalizingSubscriber;
 
 import java.util.ArrayList;
 import java.util.List;

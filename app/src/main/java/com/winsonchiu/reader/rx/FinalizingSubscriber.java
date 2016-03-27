@@ -1,4 +1,8 @@
-package com.winsonchiu.reader.utils;
+/*
+ * Copyright 2015 Winson Chiu
+ */
+
+package com.winsonchiu.reader.rx;
 
 import rx.Subscriber;
 

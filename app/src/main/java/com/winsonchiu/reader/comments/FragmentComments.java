@@ -10,7 +10,6 @@ import android.animation.ValueAnimator;
 import android.app.Activity;
 import android.content.SharedPreferences;
 import android.content.res.TypedArray;
-import android.graphics.Color;
 import android.graphics.ColorFilter;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
@@ -33,7 +32,6 @@ import android.support.v7.widget.StaggeredGridLayoutManager;
 import android.support.v7.widget.Toolbar;
 import android.text.TextUtils;
 import android.util.DisplayMetrics;
-import android.util.Log;
 import android.util.TypedValue;
 import android.view.GestureDetector;
 import android.view.LayoutInflater;
@@ -68,7 +66,7 @@ import com.winsonchiu.reader.links.AdapterLink;
 import com.winsonchiu.reader.links.ControllerLinks;
 import com.winsonchiu.reader.profile.ControllerProfile;
 import com.winsonchiu.reader.search.ControllerSearch;
-import com.winsonchiu.reader.utils.FinalizingSubscriber;
+import com.winsonchiu.reader.rx.FinalizingSubscriber;
 import com.winsonchiu.reader.utils.RecyclerFragmentPagerAdapter;
 import com.winsonchiu.reader.utils.ScrollAwareFloatingActionButtonBehavior;
 import com.winsonchiu.reader.utils.UtilsAnimation;
@@ -261,7 +259,7 @@ public class FragmentComments extends FragmentBase
     }
 
     @Override
-    protected View onCreateViewInternal(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+    public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         layoutRoot = (CustomFrameLayout) inflater
                 .inflate(R.layout.fragment_comments, container, false);
 
@@ -1191,9 +1189,13 @@ public class FragmentComments extends FragmentBase
         }
 
         if (youTubeFragment != null) {
-            getFragmentManager().beginTransaction()
-                    .remove(youTubeFragment)
-                    .commitAllowingStateLoss();
+            try {
+                getFragmentManager().beginTransaction()
+                        .remove(youTubeFragment)
+                        .commitAllowingStateLoss();
+            } catch (Exception e) {
+
+            }
         }
 
         layoutYouTube.setVisibility(View.GONE);

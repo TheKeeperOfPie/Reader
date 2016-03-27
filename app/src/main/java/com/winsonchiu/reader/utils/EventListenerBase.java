@@ -9,7 +9,6 @@ import android.widget.Toast;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.winsonchiu.reader.ControllerUser;
-import com.winsonchiu.reader.CustomApplication;
 import com.winsonchiu.reader.R;
 import com.winsonchiu.reader.comments.ControllerCommentsTop;
 import com.winsonchiu.reader.dagger.components.ComponentActivity;
@@ -25,6 +24,8 @@ import com.winsonchiu.reader.inbox.ControllerInbox;
 import com.winsonchiu.reader.links.AdapterLink;
 import com.winsonchiu.reader.links.ControllerLinks;
 import com.winsonchiu.reader.profile.ControllerProfile;
+import com.winsonchiu.reader.rx.FinalizingSubscriber;
+import com.winsonchiu.reader.rx.ObserverEmpty;
 import com.winsonchiu.reader.search.ControllerSearch;
 
 import java.io.IOException;

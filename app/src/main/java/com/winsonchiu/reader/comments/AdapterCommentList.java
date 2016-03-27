@@ -53,7 +53,6 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.bumptech.glide.load.resource.drawable.GlideDrawable;
 import com.winsonchiu.reader.ActivityMain;
 import com.winsonchiu.reader.AppSettings;
 import com.winsonchiu.reader.R;
@@ -66,7 +65,7 @@ import com.winsonchiu.reader.links.AdapterLinkList;
 import com.winsonchiu.reader.profile.ControllerProfile;
 import com.winsonchiu.reader.utils.CallbackYouTubeDestruction;
 import com.winsonchiu.reader.utils.DisallowListener;
-import com.winsonchiu.reader.utils.FinalizingSubscriber;
+import com.winsonchiu.reader.rx.FinalizingSubscriber;
 import com.winsonchiu.reader.utils.OnTouchListenerDisallow;
 import com.winsonchiu.reader.utils.RecyclerCallback;
 import com.winsonchiu.reader.utils.UtilsAnimation;
@@ -1055,19 +1054,14 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                             .setTitle("Delete comment?")
                             .setMessage(comment.getBodyHtml())
                             .setPositiveButton("Yes",
-                                    new DialogInterface.OnClickListener() {
-                                        @Override
-                                        public void onClick(
-                                                DialogInterface dialog,
-                                                int which) {
-                                            eventListenerComment.deleteComment(comment)
-                                                    .subscribe(new FinalizingSubscriber<String>() {
-                                                        @Override
-                                                        public void error(Throwable e) {
-                                                            Toast.makeText(itemView.getContext(), R.string.error_deleting_comment, Toast.LENGTH_LONG).show();
-                                                        }
-                                                    });
-                                        }
+                                    (dialog, which) -> {
+                                        eventListenerComment.deleteComment(comment)
+                                                .subscribe(new FinalizingSubscriber<String>() {
+                                                    @Override
+                                                    public void error(Throwable e) {
+                                                        Toast.makeText(itemView.getContext(), R.string.error_deleting_comment, Toast.LENGTH_LONG).show();
+                                                    }
+                                                });
                                     })
                             .setNegativeButton("No", null)
                             .show();

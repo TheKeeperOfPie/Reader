@@ -34,7 +34,7 @@ import com.winsonchiu.reader.data.reddit.Listing;
 import com.winsonchiu.reader.data.reddit.Message;
 import com.winsonchiu.reader.data.reddit.Reddit;
 import com.winsonchiu.reader.data.reddit.Thing;
-import com.winsonchiu.reader.utils.ObserverEmpty;
+import com.winsonchiu.reader.rx.ObserverEmpty;
 
 import java.io.IOException;
 import java.util.ArrayList;

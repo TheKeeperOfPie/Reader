@@ -22,7 +22,7 @@ import com.winsonchiu.reader.data.reddit.Thing;
 import com.winsonchiu.reader.data.reddit.Time;
 import com.winsonchiu.reader.history.Historian;
 import com.winsonchiu.reader.utils.ControllerListener;
-import com.winsonchiu.reader.utils.FinalizingSubscriber;
+import com.winsonchiu.reader.rx.FinalizingSubscriber;
 
 import java.io.IOException;
 import java.util.ArrayList;

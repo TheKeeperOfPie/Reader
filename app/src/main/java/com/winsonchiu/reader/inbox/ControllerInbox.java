@@ -22,8 +22,8 @@ import com.winsonchiu.reader.data.reddit.Replyable;
 import com.winsonchiu.reader.data.reddit.Subreddit;
 import com.winsonchiu.reader.data.reddit.Thing;
 import com.winsonchiu.reader.utils.ControllerListener;
-import com.winsonchiu.reader.utils.FinalizingSubscriber;
-import com.winsonchiu.reader.utils.ObserverEmpty;
+import com.winsonchiu.reader.rx.FinalizingSubscriber;
+import com.winsonchiu.reader.rx.ObserverEmpty;
 
 import java.io.IOException;
 import java.util.HashSet;

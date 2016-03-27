@@ -16,7 +16,6 @@ import android.app.AlarmManager;
 import android.app.DownloadManager;
 import android.content.ComponentName;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
@@ -33,7 +32,6 @@ import android.os.Environment;
 import android.os.Handler;
 import android.provider.Browser;
 import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
 import android.support.customtabs.CustomTabsCallback;
 import android.support.customtabs.CustomTabsClient;
 import android.support.customtabs.CustomTabsIntent;
@@ -50,7 +48,6 @@ import android.support.v4.view.MotionEventCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.view.ActionMode;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.text.Html;
@@ -87,7 +84,6 @@ import com.winsonchiu.reader.dagger.components.ComponentActivity;
 import com.winsonchiu.reader.dagger.components.ComponentStatic;
 import com.winsonchiu.reader.data.Page;
 import com.winsonchiu.reader.data.database.reddit.RedditOpenHelper;
-import com.winsonchiu.reader.data.reddit.Comment;
 import com.winsonchiu.reader.data.reddit.Link;
 import com.winsonchiu.reader.data.reddit.Listing;
 import com.winsonchiu.reader.data.reddit.Reddit;
@@ -107,21 +103,20 @@ import com.winsonchiu.reader.links.ControllerLinks;
 import com.winsonchiu.reader.links.FragmentThreadList;
 import com.winsonchiu.reader.profile.ControllerProfile;
 import com.winsonchiu.reader.profile.FragmentProfile;
+import com.winsonchiu.reader.rx.FinalizingSubscriber;
+import com.winsonchiu.reader.rx.ObserverNext;
 import com.winsonchiu.reader.search.ControllerSearch;
 import com.winsonchiu.reader.search.FragmentSearch;
 import com.winsonchiu.reader.settings.ActivitySettings;
 import com.winsonchiu.reader.utils.CustomColorFilter;
 import com.winsonchiu.reader.utils.EventListenerBase;
-import com.winsonchiu.reader.utils.FinalizingSubscriber;
 import com.winsonchiu.reader.utils.ImageDownload;
 import com.winsonchiu.reader.utils.UtilsAnimation;
 import com.winsonchiu.reader.utils.UtilsColor;
 import com.winsonchiu.reader.utils.UtilsImage;
+import com.winsonchiu.reader.utils.UtilsJson;
 import com.winsonchiu.reader.utils.UtilsReddit;
 import com.winsonchiu.reader.views.ScrollViewHeader;
-
-import org.json.JSONException;
-import org.json.JSONObject;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -159,7 +154,7 @@ public class ActivityMain extends AppCompatActivity
 
     private int loadId = -1;
 
-    private Handler handler;
+    private Handler handler = new Handler();
     private Account accountUser;
     private AdapterLink.ViewHolderBase.EventListener eventListenerBase;
     private AdapterCommentList.ViewHolderComment.EventListener eventListenerComment;
@@ -172,7 +167,9 @@ public class ActivityMain extends AppCompatActivity
     };
     private CustomColorFilter colorFilterPrimary;
     private int colorPrimary;
+    private int colorAccent;
 
+    private Link linkHeader;
     private ImageDownload imageDownload;
     private boolean isDownloadingHeaderImage;
     private Target targetHeader = new Target() {
@@ -186,24 +183,16 @@ public class ActivityMain extends AppCompatActivity
                     System.currentTimeMillis() + sharedPreferences
                             .getLong(AppSettings.HEADER_INTERVAL, AlarmManager.INTERVAL_HALF_DAY)).apply();
             isDownloadingHeaderImage = false;
-            new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    try {
-                        FileOutputStream fileOutputStream = openFileOutput(AppSettings.HEADER_FILE_NAME, Context.MODE_PRIVATE);
-                        bitmap.compress(Bitmap.CompressFormat.PNG, 100, fileOutputStream);
-                        fileOutputStream.close();
-                    }
-                    catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                    handler.post(new Runnable() {
-                        @Override
-                        public void run() {
-                            loadHeaderFromFile();
-                        }
-                    });
+            new Thread(() -> {
+                try {
+                    FileOutputStream fileOutputStream = openFileOutput(AppSettings.HEADER_FILE_NAME, Context.MODE_PRIVATE);
+                    bitmap.compress(Bitmap.CompressFormat.PNG, 100, fileOutputStream);
+                    fileOutputStream.close();
                 }
+                catch (IOException e) {
+                    e.printStackTrace();
+                }
+                handler.post(() -> loadHeaderFromFile());
             }).start();
         }
 
@@ -219,12 +208,11 @@ public class ActivityMain extends AppCompatActivity
             Log.d(TAG, "downloadHeaderImage onPrepareLoad");
         }
     };
-    private Link linkHeader;
-    private Theme theme;
-    private int style;
+
     private String themeBackground;
     private String themePrimary;
     private String themeAccent;
+    private Theme theme;
     private ComponentActivity componentActivity;
 
     private CustomTabsServiceConnection customTabsServiceConnection;
@@ -279,23 +267,18 @@ public class ActivityMain extends AppCompatActivity
                 : sharedPreferences.getString(AppSettings.PREF_THEME_ACCENT, AppSettings.THEME_YELLOW);
         themeBackground = sharedPreferences.getString(AppSettings.PREF_THEME_BACKGROUND, AppSettings.THEME_DARK);
         theme = Theme.fromString(themePrimary);
-        style = theme.getStyle(themeBackground, themeAccent);
 
-        setTheme(style);
+        setTheme(theme.getStyle(themeBackground, themeAccent));
 
-        TypedArray typedArray = obtainStyledAttributes(new int[]{R.attr.colorPrimary});
+        TypedArray typedArray = obtainStyledAttributes(new int[]{R.attr.colorPrimary, R.attr.colorAccent});
         colorPrimary = typedArray.getColor(0, ContextCompat.getColor(this, R.color.colorPrimary));
+        colorAccent = typedArray.getColor(0, ContextCompat.getColor(this, R.color.colorAccent));
         typedArray.recycle();
 
         int colorResourcePrimary = UtilsColor.showOnWhite(colorPrimary) ? R.color.darkThemeIconFilter : R.color.lightThemeIconFilter;
         int resourceIcon = UtilsColor.showOnWhite(colorPrimary) ? R.mipmap.app_icon_white_outline : R.mipmap.app_icon_dark_outline;
 
         colorFilterPrimary = new CustomColorFilter(ContextCompat.getColor(this, colorResourcePrimary), PorterDuff.Mode.MULTIPLY);
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            ActivityManager.TaskDescription taskDescription = new ActivityManager.TaskDescription("Reader", BitmapFactory.decodeResource(getResources(), resourceIcon), colorPrimary);
-            setTaskDescription(taskDescription);
-        }
 
         /**
          * Required for {@link YouTubePlayerSupportFragment} to inflate proper UI
@@ -411,26 +394,23 @@ public class ActivityMain extends AppCompatActivity
             }
         };
 
-        eventListenerComment = new AdapterCommentList.ViewHolderComment.EventListener() {
-            @Override
-            public boolean loadNestedComments(Comment comment, String subreddit, String linkId) {
-
-                if (comment.getCount() == 0) {
-                    Intent intentCommentThread = new Intent(ActivityMain.this, ActivityMain.class);
-                    intentCommentThread.setAction(Intent.ACTION_VIEW);
-                    // Double slashes used to trigger parseUrl correctly
-                    intentCommentThread.putExtra(REDDIT_PAGE, Reddit.BASE_URL + "/r/" + subreddit + "/comments/" + linkId + "/title/" + comment.getParentId() + "/");
-                    startActivity(intentCommentThread);
-                    return true;
-                }
-
-                return false;
+        eventListenerComment = (comment, subreddit, linkId) -> {
+            if (comment.getCount() == 0) {
+                Intent intentCommentThread = new Intent(ActivityMain.this, ActivityMain.class);
+                intentCommentThread.setAction(Intent.ACTION_VIEW);
+                // Double slashes used to trigger parseUrl correctly
+                intentCommentThread.putExtra(REDDIT_PAGE, Reddit.BASE_URL + "/r/" + subreddit + "/comments/" + linkId + "/title/" + comment.getParentId() + "/");
+                startActivity(intentCommentThread);
+                return true;
             }
+
+            return false;
         };
 
-        showBetaNotice();
-
-        handleFirstLaunch(savedInstanceState);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            ActivityManager.TaskDescription taskDescription = new ActivityManager.TaskDescription("Reader", BitmapFactory.decodeResource(getResources(), resourceIcon), colorPrimary);
+            setTaskDescription(taskDescription);
+        }
 
         customTabsServiceConnection = new CustomTabsServiceConnection() {
             @Override
@@ -458,6 +438,35 @@ public class ActivityMain extends AppCompatActivity
 
             }
         };
+
+        CustomTabsClient.bindCustomTabsService(this, getPackageName(), new CustomTabsServiceConnection() {
+            @Override
+            public void onCustomTabsServiceConnected(ComponentName componentName, CustomTabsClient customTabsClient) {
+                customTabsClient.warmup(0);
+                customTabsSession = customTabsClient.newSession(new CustomTabsCallback() {
+                    @Override
+                    public void onNavigationEvent(int navigationEvent, Bundle extras) {
+                        super.onNavigationEvent(navigationEvent, extras);
+                        Log.d(TAG, "onNavigationEvent() called with: " + "navigationEvent = [" + navigationEvent + "], extras = [" + extras + "]");
+                    }
+
+                    @Override
+                    public void extraCallback(String callbackName, Bundle args) {
+                        super.extraCallback(callbackName, args);
+                        Log.d(TAG, "extraCallback() called with: " + "callbackName = [" + callbackName + "], args = [" + args + "]");
+                    }
+                });
+            }
+
+            @Override
+            public void onServiceDisconnected(ComponentName name) {
+
+            }
+        });
+
+        handleFirstLaunch(savedInstanceState);
+
+        showBetaNotice();
 
         loadAccount();
 
@@ -594,12 +603,7 @@ public class ActivityMain extends AppCompatActivity
 
         buttonAccounts.setColorFilter(colorFilterPrimary);
 
-        View.OnClickListener onClickListener = new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                setAccountsVisible(!accountsVisible);
-            }
-        };
+        View.OnClickListener onClickListener = v -> setAccountsVisible(!accountsVisible);
 
         textAccountName.setOnClickListener(onClickListener);
         textAccountInfo.setOnClickListener(onClickListener);
@@ -636,32 +640,26 @@ public class ActivityMain extends AppCompatActivity
         // Add an empty view to remove extra margin on top
         viewNavigation.addHeaderView(new View(this));
         viewNavigation.setNavigationItemSelectedListener(
-                new NavigationView.OnNavigationItemSelectedListener() {
-                    @Override
-                    public boolean onNavigationItemSelected(MenuItem menuItem) {
-                        loadId = menuItem.getItemId();
-                        layoutDrawer.closeDrawer(GravityCompat.START);
-                        return true;
-                    }
+                menuItem -> {
+                    loadId = menuItem.getItemId();
+                    layoutDrawer.closeDrawer(GravityCompat.START);
+                    return true;
                 });
 
-        scrollHeaderVertical.setDispatchTouchListener(new View.OnTouchListener() {
-            @Override
-            public boolean onTouch(View v, MotionEvent event) {
-                gestureDetector.onTouchEvent(event);
+        scrollHeaderVertical.setDispatchTouchListener((v, event) -> {
+            gestureDetector.onTouchEvent(event);
 
-                switch (MotionEventCompat.getActionMasked(event)) {
-                    case MotionEvent.ACTION_DOWN:
-                        layoutDrawer.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_OPEN);
-                        break;
-                    case MotionEvent.ACTION_UP:
-                    case MotionEvent.ACTION_CANCEL:
-                        layoutDrawer.setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED);
-                        break;
-                }
-
-                return false;
+            switch (MotionEventCompat.getActionMasked(event)) {
+                case MotionEvent.ACTION_DOWN:
+                    layoutDrawer.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_OPEN);
+                    break;
+                case MotionEvent.ACTION_UP:
+                case MotionEvent.ACTION_CANCEL:
+                    layoutDrawer.setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED);
+                    break;
             }
+
+            return false;
         });
 
         loadHeaderImage(false);
@@ -908,56 +906,49 @@ public class ActivityMain extends AppCompatActivity
         new AlertDialog.Builder(this)
                 .setTitle(R.string.delete_account)
                 .setMessage(account.name)
-                .setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
+                .setPositiveButton(R.string.ok, (dialog, which) -> {
+                    String tokenRefresh = accountManager.getPassword(account);
 
-                        String tokenRefresh = accountManager.getPassword(account);
+                    reddit.tokenRevoke(Reddit.QUERY_REFRESH_TOKEN, tokenRefresh)
+                            .observeOn(Schedulers.computation())
+                            .flatMap(s -> {
+                                final AccountManagerFuture future;
+                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
+                                    future = accountManager.removeAccount(account, null, null, null);
+                                }
+                                else {
+                                    future = accountManager.removeAccount(account, null, null);
+                                }
 
-                        reddit.tokenRevoke(Reddit.QUERY_REFRESH_TOKEN, tokenRefresh)
-                                .observeOn(Schedulers.computation())
-                                .flatMap(new Func1<String, Observable<?>>() {
-                                    @Override
-                                    public Observable<?> call(String s) {
-                                        final AccountManagerFuture future;
-                                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
-                                            future = accountManager.removeAccount(account, null, null, null);
-                                        }
-                                        else {
-                                            future = accountManager.removeAccount(account, null, null);
-                                        }
+                                sharedPreferences.edit().putString(AppSettings.SUBSCRIPTIONS + account.name, "").apply();
 
-                                        sharedPreferences.edit().putString(AppSettings.SUBSCRIPTIONS + account.name, "").apply();
+                                try {
+                                    // Force changes in AccountManager
+                                    return Observable.just(future.getResult());
+                                }
+                                catch (OperationCanceledException | IOException | AuthenticatorException e) {
+                                    return Observable.error(e);
+                                }
+                            })
+                            .observeOn(AndroidSchedulers.mainThread())
+                            .subscribe(new Observer<Object>() {
+                                @Override
+                                public void onCompleted() {
+                                    resetAccountList();
+                                }
 
-                                        try {
-                                            // Force changes in AccountManager
-                                            return Observable.just(future.getResult());
-                                        }
-                                        catch (OperationCanceledException | IOException | AuthenticatorException e) {
-                                            return Observable.error(e);
-                                        }
+                                @Override
+                                public void onError(Throwable e) {
+                                    Toast.makeText(ActivityMain.this, R.string.error_delete_account_securely, Toast.LENGTH_LONG).show();
+                                }
+
+                                @Override
+                                public void onNext(Object s) {
+                                    if (account.equals(accountUser)) {
+                                        clearAccount();
                                     }
-                                })
-                                .observeOn(AndroidSchedulers.mainThread())
-                                .subscribe(new Observer<Object>() {
-                                    @Override
-                                    public void onCompleted() {
-                                        resetAccountList();
-                                    }
-
-                                    @Override
-                                    public void onError(Throwable e) {
-                                        Toast.makeText(ActivityMain.this, R.string.error_delete_account_securely, Toast.LENGTH_LONG).show();
-                                    }
-
-                                    @Override
-                                    public void onNext(Object s) {
-                                        if (account.equals(accountUser)) {
-                                            clearAccount();
-                                        }
-                                    }
-                                });
-                    }
+                                }
+                            });
                 })
                 .setNegativeButton(R.string.cancel, null)
                 .show();
@@ -1115,29 +1106,20 @@ public class ActivityMain extends AppCompatActivity
 
         if (visible) {
             reddit.me()
-                    .subscribe(new Observer<String>() {
-                        @Override
-                        public void onCompleted() {
-
+                    .flatMap(response -> {
+                        try {
+                            return Observable.just(ComponentStatic.getObjectMapper().readValue(response, JsonNode.class));
                         }
-
-                        @Override
-                        public void onError(Throwable e) {
-                            e.printStackTrace();
+                        catch (IOException e) {
+                            return Observable.error(e);
                         }
-
+                    })
+                    .subscribe(new ObserverNext<JsonNode>() {
                         @Override
-                        public void onNext(String response) {
-                            try {
-                                Log.d(TAG, "setAccount: onNext() called with: " + "response = [" + response + "]");
-                                JSONObject jsonObject = new JSONObject(response);
-                                textAccountName.setText(jsonObject.getString("name"));
-                                textAccountInfo.setText(getString(R.string.account_info, jsonObject.getString(
-                                        "link_karma"), jsonObject.getString("comment_karma")));
-                            }
-                            catch (JSONException e) {
-                                e.printStackTrace();
-                            }
+                        public void onNext(JsonNode jsonNode) {
+                            textAccountName.setText(UtilsJson.getString(jsonNode.get("name")));
+                            textAccountInfo.setText(getString(R.string.account_info, UtilsJson.getString(
+                                    jsonNode.get("link_karma")), UtilsJson.getString(jsonNode.get("comment_karma"))));
                         }
                     });
         }
@@ -1267,7 +1249,6 @@ public class ActivityMain extends AppCompatActivity
     }
 
     public void onNavigationClick() {
-        Log.d(TAG, "Back stack count: " + getSupportFragmentManager().getBackStackEntryCount());
         if (getSupportFragmentManager().getBackStackEntryCount() > 0) {
             getSupportFragmentManager().popBackStack();
         }
@@ -1283,9 +1264,6 @@ public class ActivityMain extends AppCompatActivity
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-
-        Log.d(TAG, "Menu item clicked: " + item.toString());
-
         switch (item.getItemId()) {
             case android.R.id.home:
                 onNavigationClick();
@@ -1322,11 +1300,8 @@ public class ActivityMain extends AppCompatActivity
                 super.startActivity(intent);
             }
             else if (URLUtil.isNetworkUrl(urlString)) {
-                FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
-
                 FragmentBase fragment = (FragmentBase) getSupportFragmentManager().findFragmentById(R.id.frame_fragment);
                 if (fragment != null) {
-                    fragmentTransaction.hide(fragment);
                     if (fragment.shouldOverrideUrl(urlString)) {
                         return;
                     }
@@ -1345,31 +1320,33 @@ public class ActivityMain extends AppCompatActivity
 
     private void launchUrl(String url, boolean replace) {
         CustomTabsIntent intentCustomTabs = new CustomTabsIntent.Builder(customTabsSession)
+                .setStartAnimations(this, R.anim.slide_from_bottom, R.anim.nothing)
+                .setExitAnimations(this, R.anim.nothing, R.anim.slide_to_bottom)
                 .setToolbarColor(colorPrimary)
+                .setSecondaryToolbarColor(colorAccent)
+                .setShowTitle(true)
+                .enableUrlBarHiding()
+                .addDefaultShareMenuItem()
                 .build();
-
-        intentCustomTabs.intent.setData(Uri.parse(url));
 
         Intent intentChrome = getIntentForChrome();
 
         if (intentChrome == null) {
             if (replace) {
                 getSupportFragmentManager().beginTransaction()
-                        .replace(R.id.frame_fragment, FragmentWeb
-                                .newInstance(url), FragmentWeb.TAG)
+                        .replace(R.id.frame_fragment, FragmentWeb.newInstance(url), FragmentWeb.TAG)
                         .addToBackStack(null)
                         .commit();
             } else {
                 getSupportFragmentManager().beginTransaction()
                         .hide(getSupportFragmentManager().findFragmentById(R.id.frame_fragment))
-                        .add(R.id.frame_fragment, FragmentWeb
-                                .newInstance(url), FragmentWeb.TAG)
+                        .add(R.id.frame_fragment, FragmentWeb.newInstance(url), FragmentWeb.TAG)
                         .addToBackStack(null)
                         .commit();
             }
         } else {
             intentCustomTabs.intent.setComponent(intentChrome.getComponent());
-            super.startActivity(intentCustomTabs.intent, intentCustomTabs.startAnimationBundle);
+            intentCustomTabs.launchUrl(this, Uri.parse(url));
         }
     }
 
@@ -1382,7 +1359,7 @@ public class ActivityMain extends AppCompatActivity
             intentChrome = getPackageManager().getLaunchIntentForPackage("com.android.chrome");
         }
 
-        return getPackageManager().getLaunchIntentForPackage("com.android.chrome");
+        return intentChrome;
     }
 
     @Override
@@ -1444,7 +1421,8 @@ public class ActivityMain extends AppCompatActivity
             }
             if (backStackCount == 1) {
                 super.onBackPressed();
-            } else {
+            }
+            else {
                 getSupportFragmentManager().popBackStackImmediate();
 
                 fragment = (FragmentBase) getSupportFragmentManager().findFragmentById(R.id.frame_fragment);
@@ -1457,72 +1435,16 @@ public class ActivityMain extends AppCompatActivity
                     fragment.onShown();
                 }
             }
-        } else if (isTaskRoot()) {
+        }
+        else if (isTaskRoot()) {
             new AlertDialog.Builder(this)
                     .setMessage(R.string.exit_reader)
-                    .setPositiveButton(R.string.yes,
-                            new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(
-                                        DialogInterface dialog,
-                                        int which) {
-                                    ActivityMain.super.onBackPressed();
-                                }
-                            })
+                    .setPositiveButton(R.string.yes, (dialog, which) -> ActivityMain.super.onBackPressed())
                     .setNegativeButton(R.string.no, null)
                     .show();
-        } else {
-            super.onBackPressed();
         }
-    }
-
-    public void onNavigationBackClickOld() {
-        FragmentBase fragment = (FragmentBase) getSupportFragmentManager().findFragmentById(R.id.frame_fragment);
-
-        // TODO: Remove this and use a better system
-        if (fragment != null) {
-            if (!fragment.isFinished()) {
-                fragment.navigateBack();
-                return;
-            } else {
-                if (getSupportFragmentManager().getBackStackEntryCount() == 0) {
-                    if (isTaskRoot()) {
-                        new AlertDialog.Builder(this)
-                                .setMessage(R.string.exit_reader)
-                                .setPositiveButton(R.string.yes,
-                                        new DialogInterface.OnClickListener() {
-                                            @Override
-                                            public void onClick(
-                                                    DialogInterface dialog,
-                                                    int which) {
-                                                ActivityMain.super.onBackPressed();
-                                            }
-                                        })
-                                .setNegativeButton(R.string.no, null)
-                                .show();
-
-                    } else {
-                        super.onBackPressed();
-                    }
-                }
-            }
-
-            /*
-                If this is the only fragment in the stack, close out the Activity,
-                otherwise show the fragment
-             */
-            getSupportFragmentManager().popBackStackImmediate();
-
-            fragment = (FragmentBase) getSupportFragmentManager().findFragmentById(R.id.frame_fragment);
-            if (fragment != null) {
-                fragment.onHiddenChanged(false);
-                getSupportFragmentManager().beginTransaction().show(fragment).commit();
-                fragment.onShown();
-                Log.d(TAG, "Fragment shown");
-            }
-            else {
-                finish();
-            }
+        else {
+            super.onBackPressed();
         }
     }
 
@@ -1557,12 +1479,6 @@ public class ActivityMain extends AppCompatActivity
             historian.saveToFile(this);
         }
         super.onStop();
-    }
-
-    @Nullable
-    @Override
-    public ActionMode onWindowStartingSupportActionMode(ActionMode.Callback callback) {
-        return null;
     }
 
     public ComponentActivity getComponentActivity() {

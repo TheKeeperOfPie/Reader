@@ -49,6 +49,7 @@
         android:layout_above="@+id/text_account_info"
         android:layout_alignParentStart="true"
         android:layout_toStartOf="@+id/button_accounts"
+        android:paddingTop="@dimen/activity_vertical_margin"
         android:paddingStart="@dimen/activity_horizontal_margin"
         android:paddingEnd="@dimen/activity_horizontal_margin"
         android:textSize="14sp"
@@ -56,6 +57,7 @@
         android:textColor="@android:color/white"
         android:textAlignment="viewStart"
         android:background="?attr/selectableItemBackgroundBorderless"
+        tools:text="TheKeeperOfPie"
         />
 
     <TextView
@@ -66,12 +68,13 @@
         android:layout_alignBottom="@id/scroll_header_vertical"
         android:paddingStart="@dimen/activity_horizontal_margin"
         android:paddingEnd="@dimen/activity_horizontal_margin"
-        android:paddingBottom="16dp"
+        android:paddingBottom="12dp"
         android:layout_toStartOf="@+id/button_accounts"
         android:textSize="14sp"
         android:textColor="@android:color/white"
         android:textAlignment="viewStart"
         android:background="?attr/selectableItemBackgroundBorderless"
+        tools:text="1 Link 7364 Commment"
         />
 
     <ImageButton

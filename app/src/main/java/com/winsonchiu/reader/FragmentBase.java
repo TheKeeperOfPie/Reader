@@ -4,17 +4,14 @@
 
 package com.winsonchiu.reader;
 
+import android.content.Context;
 import android.os.Bundle;
 import android.support.annotation.CallSuper;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.RequestManager;
-import com.winsonchiu.reader.dagger.components.ComponentMain;
 import com.winsonchiu.reader.data.reddit.Thing;
 
 import javax.inject.Inject;
@@ -28,6 +25,7 @@ public abstract class FragmentBase extends Fragment {
     @Inject RequestManager requestManagerGlobal;
     RequestManager requestManagerLocal;
 
+    private boolean injected;
 
     @CallSuper
     @Override
@@ -35,16 +33,17 @@ public abstract class FragmentBase extends Fragment {
         super.onCreate(savedInstanceState);
     }
 
-    @Nullable
     @Override
-    public final View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        inject();
-        return onCreateViewInternal(inflater, container, savedInstanceState);
+    public void onAttach(Context context) {
+        super.onAttach(context);
+
+        if (!injected) {
+            inject();
+            injected = true;
+        }
     }
 
     protected abstract void inject();
-
-    protected abstract View onCreateViewInternal(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState);
 
     protected RequestManager getGlideRequestManager() {
         if (requestManagerLocal == null && getActivity() != null) {

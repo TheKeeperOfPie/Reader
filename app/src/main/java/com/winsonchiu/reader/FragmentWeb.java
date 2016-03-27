@@ -156,7 +156,7 @@ public class FragmentWeb extends FragmentBase implements Toolbar.OnMenuItemClick
     }
 
     @Override
-    protected View onCreateViewInternal(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+    public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_web, container, false);
 
         layoutRoot = (RelativeLayout) view;
