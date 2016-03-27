@@ -39,6 +39,8 @@ import dagger.Component;
         }
 )
 public interface ComponentMain {
+    ComponentActivity plus(ModuleReddit module);
+
     void inject(ActivityLogin target);
     void inject(AdapterLink.ViewHolderBase target);
     void inject(FragmentBehavior target);
@@ -53,6 +55,4 @@ public interface ComponentMain {
     void inject(Receiver target);
     void inject(Authenticator target);
     void inject(Reddit target);
-
-    ComponentActivity plus(ModuleReddit module);
 }

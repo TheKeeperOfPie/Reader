@@ -25,14 +25,12 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
-import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
-import android.preference.PreferenceManager;
 import android.provider.Browser;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -45,6 +43,7 @@ import android.support.design.widget.NavigationView;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v4.app.TaskStackBuilder;
+import android.support.v4.content.ContextCompat;
 import android.support.v4.view.GestureDetectorCompat;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.view.MotionEventCompat;
@@ -62,7 +61,6 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.ViewGroup;
 import android.webkit.URLUtil;
 import android.widget.HorizontalScrollView;
 import android.widget.ImageButton;
@@ -82,7 +80,6 @@ import com.winsonchiu.reader.comments.ControllerCommentsTop;
 import com.winsonchiu.reader.comments.FragmentComments;
 import com.winsonchiu.reader.comments.FragmentReply;
 import com.winsonchiu.reader.comments.Source;
-import com.winsonchiu.reader.dagger.FragmentPersist;
 import com.winsonchiu.reader.dagger.components.ComponentActivity;
 import com.winsonchiu.reader.dagger.components.ComponentStatic;
 import com.winsonchiu.reader.dagger.modules.ModuleReddit;
@@ -91,14 +88,12 @@ import com.winsonchiu.reader.data.database.reddit.RedditOpenHelper;
 import com.winsonchiu.reader.data.reddit.Comment;
 import com.winsonchiu.reader.data.reddit.Link;
 import com.winsonchiu.reader.data.reddit.Listing;
-import com.winsonchiu.reader.data.reddit.Message;
 import com.winsonchiu.reader.data.reddit.Reddit;
 import com.winsonchiu.reader.data.reddit.Replyable;
 import com.winsonchiu.reader.data.reddit.Sort;
 import com.winsonchiu.reader.data.reddit.Subreddit;
 import com.winsonchiu.reader.data.reddit.Thing;
 import com.winsonchiu.reader.data.reddit.Time;
-import com.winsonchiu.reader.data.reddit.User;
 import com.winsonchiu.reader.history.ControllerHistory;
 import com.winsonchiu.reader.history.FragmentHistory;
 import com.winsonchiu.reader.history.Historian;
@@ -114,9 +109,9 @@ import com.winsonchiu.reader.search.ControllerSearch;
 import com.winsonchiu.reader.search.FragmentSearch;
 import com.winsonchiu.reader.settings.ActivitySettings;
 import com.winsonchiu.reader.utils.CustomColorFilter;
+import com.winsonchiu.reader.utils.EventListenerBase;
 import com.winsonchiu.reader.utils.FinalizingSubscriber;
 import com.winsonchiu.reader.utils.ImageDownload;
-import com.winsonchiu.reader.utils.ObserverEmpty;
 import com.winsonchiu.reader.utils.UtilsAnimation;
 import com.winsonchiu.reader.utils.UtilsColor;
 import com.winsonchiu.reader.utils.UtilsImage;
@@ -132,7 +127,6 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 
 import javax.inject.Inject;
@@ -162,8 +156,6 @@ public class ActivityMain extends AppCompatActivity
     private static final int REQUEST_PERMISSION_WRITE_EXTERNAL_STORAGE = 61;
 
     private int loadId = -1;
-
-    protected SharedPreferences sharedPreferences;
 
     private Handler handler;
     private Account accountUser;
@@ -250,9 +242,6 @@ public class ActivityMain extends AppCompatActivity
     @Bind(R.id.layout_accounts) LinearLayout layoutAccounts;
 
     @Inject AccountManager accountManager;
-    @Inject Reddit reddit;
-    @Inject Picasso picasso;
-    @Inject Historian historian;
     @Inject ControllerLinks controllerLinks;
     @Inject ControllerUser controllerUser;
     @Inject ControllerCommentsTop controllerCommentsTop;
@@ -260,38 +249,45 @@ public class ActivityMain extends AppCompatActivity
     @Inject ControllerInbox controllerInbox;
     @Inject ControllerSearch controllerSearch;
     @Inject ControllerHistory controllerHistory;
+    @Inject Historian historian;
+    @Inject Picasso picasso;
+    @Inject Reddit reddit;
+    @Inject SharedPreferences sharedPreferences;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+        componentActivity = (ComponentActivity) getLastCustomNonConfigurationInstance();
 
-        style = R.style.AppDarkTheme;
+        if (componentActivity == null) {
+            componentActivity = CustomApplication.getComponentMain()
+                    .plus(new ModuleReddit());
+        }
 
-        if (sharedPreferences.getBoolean(AppSettings.SECRET, false)) {
-            theme = Theme.random();
-            themePrimary = theme.getName();
-            themeAccent = AppSettings.randomThemeString();
-        }
-        else {
-            themePrimary = sharedPreferences.getString(AppSettings.PREF_THEME_PRIMARY, AppSettings.THEME_DEEP_PURPLE);
-            theme = Theme.fromString(themePrimary);
-            themeAccent = sharedPreferences.getString(AppSettings.PREF_THEME_ACCENT, AppSettings.THEME_YELLOW);
-        }
+        componentActivity.inject(this);
+
+        boolean secret = sharedPreferences.getBoolean(AppSettings.SECRET, false);
+        themePrimary = secret
+                ? AppSettings.randomThemeString()
+                : sharedPreferences.getString(AppSettings.PREF_THEME_PRIMARY, AppSettings.THEME_DEEP_PURPLE);
+        themeAccent = secret
+                ? AppSettings.randomThemeString()
+                : sharedPreferences.getString(AppSettings.PREF_THEME_ACCENT, AppSettings.THEME_YELLOW);
         themeBackground = sharedPreferences.getString(AppSettings.PREF_THEME_BACKGROUND, AppSettings.THEME_DARK);
+        theme = Theme.fromString(themePrimary);
         style = theme.getStyle(themeBackground, themeAccent);
+
         setTheme(style);
 
         TypedArray typedArray = obtainStyledAttributes(new int[]{R.attr.colorPrimary});
-        colorPrimary = typedArray.getColor(0, getResources().getColor(R.color.colorPrimary));
+        colorPrimary = typedArray.getColor(0, ContextCompat.getColor(this, R.color.colorPrimary));
         typedArray.recycle();
 
         int colorResourcePrimary = UtilsColor.showOnWhite(colorPrimary) ? R.color.darkThemeIconFilter : R.color.lightThemeIconFilter;
         int resourceIcon = UtilsColor.showOnWhite(colorPrimary) ? R.mipmap.app_icon_white_outline : R.mipmap.app_icon_dark_outline;
 
-        colorFilterPrimary = new CustomColorFilter(getResources().getColor(colorResourcePrimary), PorterDuff.Mode.MULTIPLY);
+        colorFilterPrimary = new CustomColorFilter(ContextCompat.getColor(this, colorResourcePrimary), PorterDuff.Mode.MULTIPLY);
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-
             ActivityManager.TaskDescription taskDescription = new ActivityManager.TaskDescription("Reader", BitmapFactory.decodeResource(getResources(), resourceIcon), colorPrimary);
             setTaskDescription(taskDescription);
         }
@@ -304,41 +300,16 @@ public class ActivityMain extends AppCompatActivity
 
         handler = new Handler();
 
-        FragmentPersist fragmentPersist = (FragmentPersist) getSupportFragmentManager().findFragmentByTag(FragmentPersist.TAG);
-        if (fragmentPersist == null) {
-            fragmentPersist = new FragmentPersist();
-            getSupportFragmentManager().beginTransaction().add(fragmentPersist, FragmentPersist.TAG).commit();
-            fragmentPersist.initialize();
-        }
-
-        componentActivity = fragmentPersist.getComponentActivity();
-
-        if (componentActivity == null) {
-            componentActivity = CustomApplication.getComponentMain()
-                    .plus(new ModuleReddit());
-        }
-
-        componentActivity.inject(this);
-
         setContentView(R.layout.activity_main);
         ButterKnife.bind(this);
 
-        getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+//        getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
 
         inflateNavigationDrawer();
 
         Receiver.setAlarm(this);
 
-        layoutDrawer.setDrawerListener(new DrawerLayout.DrawerListener() {
-            @Override
-            public void onDrawerSlide(View drawerView, float slideOffset) {
-
-            }
-
-            @Override
-            public void onDrawerOpened(View drawerView) {
-            }
-
+        layoutDrawer.addDrawerListener(new DrawerLayout.SimpleDrawerListener() {
             @Override
             public void onDrawerClosed(View drawerView) {
                 if (loadId != 0) {
@@ -346,90 +317,11 @@ public class ActivityMain extends AppCompatActivity
                 }
                 setAccountsVisible(false);
             }
-
-            @Override
-            public void onDrawerStateChanged(int newState) {
-
-            }
         });
 
-        eventListenerBase = new AdapterLink.ViewHolderBase.EventListener() {
-
+        eventListenerBase = new EventListenerBase(componentActivity) {
             @Override
-            public void sendComment(String name, String text) {
-                reddit.sendComment(name, text)
-                        .flatMap(new Func1<String, Observable<Comment>>() {
-                            @Override
-                            public Observable<Comment> call(String response) {
-                                try {
-                                    Comment comment = Comment.fromJson(ComponentStatic.getObjectMapper()
-                                            .readValue(response, JsonNode.class).get("json")
-                                            .get("data")
-                                            .get("things")
-                                            .get(0), 0);
-
-                                    return Observable.just(comment);
-                                }
-                                catch (IOException e) {
-                                    return Observable.error(e);
-                                }
-                            }
-                        })
-                        .subscribe(new FinalizingSubscriber<Comment>() {
-                            @Override
-                            public void error(Throwable e) {
-                                Toast.makeText(ActivityMain.this, R.string.failed_reply, Toast.LENGTH_LONG).show();
-                            }
-
-                            @Override
-                            public void next(Comment comment) {
-                                if (getSupportFragmentManager().findFragmentByTag(FragmentComments.TAG) != null) {
-                                    controllerCommentsTop.insertComment(comment);
-                                }
-                                if (getSupportFragmentManager().findFragmentByTag(FragmentProfile.TAG) != null) {
-                                    controllerProfile.insertComment(comment);
-                                }
-                                if (getSupportFragmentManager().findFragmentByTag(FragmentInbox.TAG) != null) {
-                                    controllerInbox.insertComment(comment);
-                                }
-                            }
-                        });
-            }
-
-            @Override
-            public void sendMessage(String name, String text) {
-                reddit.sendComment(name, text)
-                        .flatMap(new Func1<String, Observable<Message>>() {
-                            @Override
-                            public Observable<Message> call(String response) {
-                                try {
-                                    Message message = Message.fromJson(ComponentStatic.getObjectMapper().readValue(response, JsonNode.class).get("json")
-                                            .get("data")
-                                            .get("things")
-                                            .get(0));
-
-                                    return Observable.just(message);
-                                }
-                                catch (IOException e) {
-                                    return Observable.error(e);
-                                }
-                            }
-                        })
-                        .subscribe(new FinalizingSubscriber<Message>() {
-                            @Override
-                            public void error(Throwable e) {
-                                Toast.makeText(ActivityMain.this, R.string.failed_message, Toast.LENGTH_LONG).show();
-                            }
-
-                            @Override
-                            public void next(Message next) {
-                                controllerInbox.insertMessage(next);
-                            }
-                        });
-            }
-
-            @Override
-            public void onClickComments(Link link, final AdapterLink.ViewHolderBase viewHolderBase, Source source) {
+            public void onClickComments(Link link, AdapterLink.ViewHolderBase viewHolderBase, Source source) {
                 controllerCommentsTop
                         .setLink(link, source);
 
@@ -447,42 +339,6 @@ public class ActivityMain extends AppCompatActivity
                                 FragmentComments.TAG)
                         .addToBackStack(null)
                         .commit();
-            }
-
-            @Override
-            public void save(Link link) {
-                link.setSaved(!link.isSaved());
-                if (link.isSaved()) {
-                    reddit.save(link, null)
-                            .subscribe(new FinalizingSubscriber<String>() {
-                                @Override
-                                public void error(Throwable e) {
-                                    Toast.makeText(ActivityMain.this, R.string.error_saving_post, Toast.LENGTH_SHORT).show();
-                                }
-                            });
-                }
-                else {
-                    reddit.unsave(link)
-                            .subscribe(new ObserverEmpty<>());
-                }
-            }
-
-            @Override
-            public void save(Comment comment) {
-                comment.setSaved(!comment.isSaved());
-                if (comment.isSaved()) {
-                    reddit.save(comment, null)
-                            .subscribe(new FinalizingSubscriber<String>() {
-                                @Override
-                                public void error(Throwable e) {
-                                    Toast.makeText(ActivityMain.this, R.string.error_saving_comment, Toast.LENGTH_SHORT).show();
-                                }
-                            });
-                }
-                else {
-                    reddit.unsave(comment)
-                            .subscribe(new ObserverEmpty<>());
-                }
             }
 
             @Override
@@ -514,108 +370,9 @@ public class ActivityMain extends AppCompatActivity
             }
 
             @Override
-            public void downloadImage(String title, final String fileName, final String url) {
+            public void downloadImage(String title, String fileName, String url) {
                 imageDownload = new ImageDownload(title, fileName, url);
                 ActivityCompat.requestPermissions(ActivityMain.this, new String[] {android.Manifest.permission.WRITE_EXTERNAL_STORAGE}, REQUEST_PERMISSION_WRITE_EXTERNAL_STORAGE);
-            }
-
-            @Override
-            public void toast(String text) {
-                Toast.makeText(ActivityMain.this, text, Toast.LENGTH_SHORT).show();
-            }
-
-            @Override
-            public boolean isUserLoggedIn() {
-                return controllerUser.hasUser();
-            }
-
-            @Override
-            public void voteLink(final AdapterLink.ViewHolderBase viewHolderBase, final Link link, int vote) {
-                final int position = viewHolderBase.getAdapterPosition();
-
-                final int oldVote = link.getLikes();
-                int newVote = 0;
-
-                if (link.getLikes() != vote) {
-                    newVote = vote;
-                }
-
-                HashMap<String, String> params = new HashMap<>(2);
-                params.put(Reddit.QUERY_ID, link.getName());
-                params.put(Reddit.QUERY_VOTE, String.valueOf(newVote));
-
-                link.setScore(link.getScore() + newVote - link.getLikes());
-                link.setLikes(newVote);
-                if (position == viewHolderBase.getAdapterPosition()) {
-                    viewHolderBase.setVoteColors();
-                }
-                final int finalNewVote = newVote;
-
-                reddit.voteLink(link, newVote)
-                        .subscribe(new FinalizingSubscriber<String>() {
-                            @Override
-                            public void error(Throwable e) {
-                                link.setScore(link.getScore() - finalNewVote);
-                                link.setLikes(oldVote);
-                                if (position == viewHolderBase.getAdapterPosition()) {
-                                    viewHolderBase.setVoteColors();
-                                }
-                                Toast.makeText(ActivityMain.this, getString(R.string.error_voting), Toast.LENGTH_SHORT)
-                                        .show();
-                            }
-                        });
-            }
-
-            @Override
-            public void startActivity(Intent intent) {
-                ActivityMain.this.startActivity(intent);
-            }
-
-            @Override
-            public void deletePost(Link link) {
-                Observable.merge(controllerLinks.deletePost(link), controllerProfile.deletePost(link))
-                        .subscribe(new FinalizingSubscriber<String>() {
-                            @Override
-                            public void error(Throwable e) {
-                                Toast.makeText(ActivityMain.this, R.string.error_deleting_post, Toast.LENGTH_LONG).show();
-                            }
-                        });
-            }
-
-            @Override
-            public void report(Thing thing, String reason, String otherReason) {
-                reddit.report(thing.getName(),
-                        reason, otherReason)
-                        .subscribe(new Observer<String>() {
-                            @Override
-                            public void onCompleted() {
-
-                            }
-
-                            @Override
-                            public void onError(Throwable e) {
-
-                            }
-
-                            @Override
-                            public void onNext(String s) {
-
-                            }
-                        });
-            }
-
-            @Override
-            public void hide(Link link) {
-                link.setHidden(!link.isHidden());
-                if (link.isHidden()) {
-                    reddit.hide(link)
-                            .subscribe(new ObserverEmpty<>());
-                }
-                else {
-                    reddit.unhide(link)
-                            .subscribe(new ObserverEmpty<>());
-                }
-
             }
 
             @Override
@@ -641,65 +398,14 @@ public class ActivityMain extends AppCompatActivity
             }
 
             @Override
-            public void markRead(Thing thing) {
-                reddit.markRead(thing.getName())
-                        .subscribe(new ObserverEmpty<>());
-            }
-
-            @Override
-            public void markNsfw(final Link link) {
-                link.setOver18(!link.isOver18());
-                if (link.isOver18()) {
-                    reddit.markNsfw(link)
-                            .subscribe(new FinalizingSubscriber<String>() {
-                                @Override
-                                public void error(Throwable e) {
-                                    link.setOver18(false);
-                                    Toast.makeText(ActivityMain.this, R.string.error_marking_nsfw,
-                                            Toast.LENGTH_LONG).show();
-                                }
-                            });
-                }
-                else {
-                    reddit.unmarkNsfw(link)
-                            .subscribe(new FinalizingSubscriber<String>() {
-                                @Override
-                                public void error(Throwable e) {
-                                    link.setOver18(true);
-                                    Toast.makeText(ActivityMain.this, R.string.error_unmarking_nsfw, Toast.LENGTH_LONG).show();
-                                }
-                            });
-                }
-
-                if (getSupportFragmentManager().findFragmentByTag(FragmentThreadList.TAG) != null) {
-                    controllerLinks.setNsfw(link.getName(), link.isOver18());
-                }
-                if (getSupportFragmentManager().findFragmentByTag(FragmentComments.TAG) != null) {
-                    controllerCommentsTop.setNsfw(link.getName(), link.isOver18());
-                }
-                if (getSupportFragmentManager().findFragmentByTag(FragmentProfile.TAG) != null) {
-                    controllerProfile.setNsfw(link.getName(), link.isOver18());
-                }
-                if (getSupportFragmentManager().findFragmentByTag(FragmentHistory.TAG) != null) {
-                    controllerHistory.setNsfw(link.getName(), link.isOver18());
-                }
-                if (getSupportFragmentManager().findFragmentByTag(FragmentSearch.TAG) != null) {
-                    controllerSearch.setNsfwLinks(link.getName(), link.isOver18());
-                    controllerSearch.setNsfwLinksSubreddit(link.getName(), link.isOver18());
-                }
-
-            }
-
-            @Override
             public void loadWebFragment(String url) {
                 launchUrl(url, false);
             }
 
             @Override
-            public User getUser() {
-                return controllerUser.getUser();
+            public void launchScreen(Intent intent) {
+                startActivity(intent);
             }
-
         };
 
         eventListenerComment = new AdapterCommentList.ViewHolderComment.EventListener() {
@@ -822,6 +528,11 @@ public class ActivityMain extends AppCompatActivity
 
     }
 
+    @Override
+    public Object onRetainCustomNonConfigurationInstance() {
+        return componentActivity;
+    }
+
     protected void superOnCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
     }
@@ -846,6 +557,7 @@ public class ActivityMain extends AppCompatActivity
     }
 
     private void inflateNavigationDrawer() {
+
         // TODO: Adhere to guidelines by making the increment 56dp on mobile and 64dp on tablet
         float standardIncrement = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 56, getResources().getDisplayMetrics());
         float screenWidth = getResources().getDisplayMetrics().widthPixels;

@@ -1030,7 +1030,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                     intent.setAction(Intent.ACTION_VIEW);
                     intent.putExtra(ActivityMain.REDDIT_PAGE,
                             "https://reddit.com/user/" + comment.getAuthor());
-                    eventListenerBase.startActivity(intent);
+                    eventListenerBase.launchScreen(intent);
                     break;
                 case R.id.item_copy_text:
                     ClipboardManager clipboard = (ClipboardManager) itemView.getContext()

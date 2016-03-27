@@ -102,6 +102,7 @@ import com.winsonchiu.reader.utils.CallbackYouTubeDestruction;
 import com.winsonchiu.reader.utils.CustomColorFilter;
 import com.winsonchiu.reader.utils.DisallowListener;
 import com.winsonchiu.reader.utils.FinalizingSubscriber;
+import com.winsonchiu.reader.utils.ObserverEmpty;
 import com.winsonchiu.reader.utils.OnTouchListenerDisallow;
 import com.winsonchiu.reader.utils.RecyclerCallback;
 import com.winsonchiu.reader.utils.SimplePlayerStateChangeListener;
@@ -973,7 +974,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                     intentViewProfile.setAction(Intent.ACTION_VIEW);
                     intentViewProfile.putExtra(ActivityMain.REDDIT_PAGE,
                             "https://reddit.com/user/" + link.getAuthor());
-                    eventListener.startActivity(intentViewProfile);
+                    eventListener.launchScreen(intentViewProfile);
                     break;
                 case R.id.item_copy_text:
                     ClipboardManager clipboard = (ClipboardManager) itemView.getContext()
@@ -1014,7 +1015,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                     intentViewSubreddit.setAction(Intent.ACTION_VIEW);
                     intentViewSubreddit.putExtra(ActivityMain.REDDIT_PAGE,
                             "https://reddit.com/r/" + link.getSubreddit());
-                    eventListener.startActivity(intentViewSubreddit);
+                    eventListener.launchScreen(intentViewSubreddit);
                     break;
                 // Reporting
                 case R.id.item_report_spam:
@@ -1824,7 +1825,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         }
 
         public void markNsfw() {
-            eventListener.markNsfw(link);
+            eventListener.markNsfw(link).subscribe(new ObserverEmpty<>());
             syncTitleColor();
         }
 
@@ -1985,28 +1986,31 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             layoutYouTube.setVisibility(View.GONE);
         }
 
-        public interface EventListener {
+        public interface EventListenerGeneral {
 
             void sendComment(String name, String text);
             void sendMessage(String name, String text);
-            void onClickComments(Link link, ViewHolderBase viewHolderBase, Source source);
             void save(Link link);
             void save(Comment comment);
-            void loadUrl(String url);
-            void downloadImage(String title, String fileName, String url);
             void toast(String text);
             boolean isUserLoggedIn();
             void voteLink(ViewHolderBase viewHolderBase, Link link, int vote);
-            void startActivity(Intent intent);
             void deletePost(Link link);
             void report(Thing thing, String reason, String otherReason);
             void hide(Link link);
+            void markRead(Thing thing);
+            Observable<String> markNsfw(Link link);
+            User getUser();
+        }
+
+        public interface EventListener extends EventListenerGeneral {
+            void onClickComments(Link link, ViewHolderBase viewHolderBase, Source source);
+            void loadUrl(String url);
+            void downloadImage(String title, String fileName, String url);
             void editLink(Link link);
             void showReplyEditor(Replyable replyable);
-            void markRead(Thing thing);
-            void markNsfw(Link link);
             void loadWebFragment(String url);
-            User getUser();
+            void launchScreen(Intent intent);
         }
 
     }

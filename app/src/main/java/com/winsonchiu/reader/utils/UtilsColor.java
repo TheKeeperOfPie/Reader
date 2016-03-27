@@ -1,6 +1,8 @@
 package com.winsonchiu.reader.utils;
 
 import android.graphics.Color;
+import android.support.v4.util.LruCache;
+import android.support.v4.util.Pair;
 
 /**
  * Created by TheKeeperOfPie on 8/10/2015.
@@ -9,14 +11,26 @@ public class UtilsColor {
 
     public static final float CONTRAST_THRESHOLD = 3F;
 
+    public static LruCache<Pair<Integer, Integer>, Float> contrastCache;
+
     /**
-     * Code taken from com.android.systemui.recents.misc.Utilities to properly
-     * set recents card icon color
+     * Code taken from com.android.systemui.recents.misc.Utilities
      * @param background
      * @param foreground
      * @return
      */
     public static float computeContrast(int background, int foreground) {
+        Pair<Integer, Integer> key = new Pair<>(background, foreground);
+
+        if (contrastCache == null) {
+            contrastCache = new LruCache<>(5);
+        } else {
+            Float contrast = contrastCache.get(key);
+            if (contrast != null) {
+                return contrast;
+            }
+        }
+
         float bgR = Color.red(background) / 255f;
         float bgG = Color.green(background) / 255f;
         float bgB = Color.blue(background) / 255f;
@@ -33,7 +47,11 @@ public class UtilsColor {
         fgB = (fgB < 0.03928f) ? fgB / 12.92f : (float) Math.pow((fgB + 0.055f) / 1.055f, 2.4f);
         float fgL = 0.2126f * fgR + 0.7152f * fgG + 0.0722f * fgB;
 
-        return Math.abs((fgL + 0.05f) / (bgL + 0.05f));
+        float value = Math.abs((fgL + 0.05f) / (bgL + 0.05f));
+
+        contrastCache.put(key, value);
+
+        return value;
     }
 
     public static boolean showOnWhite(int color) {

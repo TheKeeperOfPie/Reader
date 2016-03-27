@@ -22,6 +22,7 @@ import com.winsonchiu.reader.links.FragmentThreadList;
 import com.winsonchiu.reader.profile.ControllerProfile;
 import com.winsonchiu.reader.profile.FragmentProfile;
 import com.winsonchiu.reader.search.FragmentSearch;
+import com.winsonchiu.reader.utils.EventListenerBase;
 
 import dagger.Subcomponent;
 
@@ -52,5 +53,6 @@ public interface ComponentActivity {
     void inject(AdapterLinkHeader target);
     void inject(AdapterLink.ViewHolderBase target);
     void inject(FragmentWeb target);
+    void inject(EventListenerBase target);
 }
 

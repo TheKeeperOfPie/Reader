@@ -342,7 +342,7 @@ public class AdapterInbox extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
                     intent.setAction(Intent.ACTION_VIEW);
                     intent.putExtra(ActivityMain.REDDIT_PAGE,
                             "https://reddit.com/user/" + message.getAuthor());
-                    eventListener.startActivity(intent);
+                    eventListener.launchScreen(intent);
                     break;
                 case R.id.item_copy_text:
                     ClipboardManager clipboard = (ClipboardManager) itemView.getContext()

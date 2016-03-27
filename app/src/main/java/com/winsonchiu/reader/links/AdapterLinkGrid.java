@@ -27,12 +27,6 @@ import android.webkit.URLUtil;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
 
-import com.bumptech.glide.Priority;
-import com.bumptech.glide.load.resource.bitmap.GlideBitmapDrawable;
-import com.bumptech.glide.load.resource.drawable.GlideDrawable;
-import com.bumptech.glide.request.RequestListener;
-import com.bumptech.glide.request.target.GlideDrawableImageViewTarget;
-import com.bumptech.glide.request.target.Target;
 import com.squareup.picasso.Callback;
 import com.squareup.picasso.Picasso;
 import com.winsonchiu.reader.AppSettings;
@@ -41,7 +35,6 @@ import com.winsonchiu.reader.comments.Source;
 import com.winsonchiu.reader.data.imgur.Album;
 import com.winsonchiu.reader.data.reddit.Link;
 import com.winsonchiu.reader.data.reddit.Reddit;
-import com.winsonchiu.reader.glide.RequestListenerCompletion;
 import com.winsonchiu.reader.utils.CallbackYouTubeDestruction;
 import com.winsonchiu.reader.utils.DisallowListener;
 import com.winsonchiu.reader.utils.RecyclerCallback;
@@ -674,9 +667,9 @@ public class AdapterLinkGrid extends AdapterLink {
 
             Menu menu = toolbarActions.getMenu();
 
-            double contrast = UtilsColor.computeContrast(color, Color.WHITE);
+            boolean showOnWhite = UtilsColor.showOnWhite(color);
 
-            if (contrast > 3f) {
+            if (showOnWhite) {
                 imagePlay.setColorFilter(colorFilterIconLight);
                 textThreadInfo.setTextColor(resources.getColor(R.color.darkThemeTextColorMuted));
                 textHidden.setTextColor(resources.getColor(R.color.darkThemeTextColorMuted));
