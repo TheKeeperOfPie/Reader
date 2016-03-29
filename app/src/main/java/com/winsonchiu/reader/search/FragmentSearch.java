@@ -393,12 +393,9 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
                     @Override
                     public void sendToTop(AdapterSearchSubreddits.ViewHolder viewHolder) {
                         controllerSearch.moveSubreddit(viewHolder.getAdapterPosition(), 0);
-                        recyclerSearchSubreddits.postDelayed(new Runnable() {
-                            @Override
-                            public void run() {
-                                if (layoutManagerSubreddits.findFirstVisibleItemPosition() <= 1) {
-                                    layoutManagerSubreddits.smoothScrollToPosition(recyclerSearchSubreddits, null, 0);
-                                }
+                        recyclerSearchSubreddits.postOnAnimationDelayed(() -> {
+                            if (layoutManagerSubreddits.findFirstVisibleItemPosition() <= 1) {
+                                layoutManagerSubreddits.smoothScrollToPosition(recyclerSearchSubreddits, null, 0);
                             }
                         }, 150);
                     }

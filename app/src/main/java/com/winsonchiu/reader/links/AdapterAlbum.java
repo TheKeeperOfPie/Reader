@@ -4,64 +4,62 @@
 
 package com.winsonchiu.reader.links;
 
+import android.support.v4.view.MotionEventCompat;
 import android.support.v4.view.PagerAdapter;
-import android.support.v4.view.ViewPager;
 import android.text.Html;
 import android.text.TextUtils;
-import android.util.Log;
-import android.util.TypedValue;
+import android.text.util.Linkify;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
-import android.webkit.WebResourceError;
-import android.webkit.WebResourceRequest;
-import android.webkit.WebSettings;
-import android.webkit.WebView;
-import android.webkit.WebViewClient;
 import android.widget.ImageButton;
-import android.widget.RelativeLayout;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 
+import com.bumptech.glide.RequestManager;
+import com.bumptech.glide.load.resource.drawable.GlideDrawable;
+import com.bumptech.glide.request.target.GlideDrawableImageViewTarget;
+import com.bumptech.glide.request.target.Target;
 import com.winsonchiu.reader.R;
 import com.winsonchiu.reader.data.imgur.Album;
 import com.winsonchiu.reader.data.imgur.Image;
-import com.winsonchiu.reader.data.reddit.Reddit;
+import com.winsonchiu.reader.glide.RequestListenerCompletion;
 import com.winsonchiu.reader.utils.CustomColorFilter;
 import com.winsonchiu.reader.utils.DisallowListener;
 import com.winsonchiu.reader.utils.OnTouchListenerDisallow;
-import com.winsonchiu.reader.utils.UtilsImage;
-import com.winsonchiu.reader.views.WebViewFixed;
+import com.winsonchiu.reader.views.CustomScrollView;
+import com.winsonchiu.reader.views.ImageViewZoom;
 
 import java.util.Stack;
+
+import butterknife.Bind;
+import butterknife.ButterKnife;
+import butterknife.OnClick;
 
 /**
  * Created by TheKeeperOfPie on 3/19/2015.
  */
 public class AdapterAlbum extends PagerAdapter {
 
-    private static final String TAG = AdapterAlbum.class.getCanonicalName();
-    private final EventListener eventListener;
-    private final ViewPager viewPager;
-    private int margin;
-    private CustomColorFilter colorFilterIcon;
+    public static final String TAG = AdapterAlbum.class.getCanonicalName();
+
+    private Album album = new Album();
+    private Stack<View> recycledViews = new Stack<>();
+
+    private RequestManager requestManager;
     private DisallowListener disallowListener;
-    private Album album;
-    private Stack<View> recycledViews;
+    private EventListener eventListener;
+    private CustomColorFilter colorFilterIcon;
 
-    public AdapterAlbum(ViewPager viewPager,
-            Album album,
-            EventListener eventListener,
+    public AdapterAlbum(RequestManager requestManager,
             DisallowListener disallowListener,
+            EventListener eventListener,
             CustomColorFilter colorFilterIcon) {
-        this.viewPager = viewPager;
-        this.album = album;
-        this.eventListener = eventListener;
+        this.requestManager = requestManager;
         this.disallowListener = disallowListener;
+        this.eventListener = eventListener;
         this.colorFilterIcon = colorFilterIcon;
-        recycledViews = new Stack<>();
-        margin = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 8,
-                viewPager.getContext().getResources().getDisplayMetrics());
-
     }
 
     @Override
@@ -71,82 +69,20 @@ public class AdapterAlbum extends PagerAdapter {
 
     @Override
     public Object instantiateItem(final ViewGroup container, int position) {
-
         final Image image = album.getImages().get(position);
         View view;
 
         if (recycledViews.isEmpty()) {
             view = LayoutInflater.from(container.getContext())
                     .inflate(R.layout.view_image, container, false);
-            view.setTag(new ViewHolder(view, eventListener, disallowListener, colorFilterIcon));
+            view.setTag(new ViewHolder(view, eventListener, requestManager, disallowListener, colorFilterIcon));
         }
         else {
             view = recycledViews.pop();
         }
 
         final ViewHolder viewHolder = (ViewHolder) view.getTag();
-        viewHolder.instantiate(image, position, album.getImagesCount());
-
-        final WebViewFixed webView = WebViewFixed.newInstance(
-                container.getContext().getApplicationContext(),
-                false,
-                new WebViewFixed.Listener() {
-                    @Override
-                    public void onFinished() {
-
-                    }
-                });
-        webView.setVisibility(View.GONE);
-        webView.setOnTouchListener(new OnTouchListenerDisallow(disallowListener));
-        webView.getSettings().setCacheMode(WebSettings.LOAD_CACHE_ELSE_NETWORK);
-        webView.setId(R.id.web);
-        webView.setScrollbarFadingEnabled(false);
-        webView.setScrollY(0);
-        webView.setWebViewClient(new WebViewClient() {
-            @Override
-            public void onScaleChanged(WebView view, float oldScale, float newScale) {
-                ((WebViewFixed) view).lockHeight();
-                super.onScaleChanged(view, oldScale, newScale);
-            }
-
-            @Override
-            public void onReceivedError(WebView view,
-                    WebResourceRequest request,
-                    WebResourceError error) {
-                super.onReceivedError(view, request, error);
-                Log.e(TAG, "WebView error: " + error);
-            }
-
-        });
-
-        RelativeLayout.LayoutParams layoutParams = new RelativeLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
-        layoutParams.addRule(RelativeLayout.ALIGN_PARENT_START, RelativeLayout.TRUE);
-        layoutParams.addRule(RelativeLayout.ALIGN_PARENT_END, RelativeLayout.TRUE);
-        layoutParams.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM, RelativeLayout.TRUE);
-        layoutParams.addRule(RelativeLayout.ALIGN_PARENT_TOP, RelativeLayout.TRUE);
-
-        ((RelativeLayout) view).addView(webView, 0, layoutParams);
-
-        final CharSequence title =
-                !TextUtils.isEmpty(image.getTitle()) && !"null".equals(image.getTitle()) ?
-                        Html.fromHtml(image.getTitle()) : "";
-
-        final CharSequence description = !TextUtils.isEmpty(image.getDescription()) && !"null"
-                .equals(image.getDescription()) ? Html.fromHtml(image.getDescription()) : "";
-
-        Log.d(TAG, "title: " + title);
-        Log.d(TAG, "description: " + description);
-
-        webView.setVisibility(View.VISIBLE);
-        webView.post(new Runnable() {
-            @Override
-            public void run() {
-                webView.loadData(
-                        UtilsImage.getImageHtmlForAlbum(image.getLink(), title, description, 0xFFFFFFFF,
-                                margin), "text/html; charset=UTF-8", "UTF-8");
-            }
-        });
+        viewHolder.bindData(image, position, album.getImagesCount());
 
         container.addView(view);
         container.requestLayout();
@@ -155,23 +91,23 @@ public class AdapterAlbum extends PagerAdapter {
     }
 
     @Override
+    public void setPrimaryItem(ViewGroup container, int position, Object object) {
+        super.setPrimaryItem(container, position, object);
+        album.setPage(position);
+        ((ViewHolder) ((View) object).getTag()).refreshImage();
+    }
+
+    @Override
     public void destroyItem(ViewGroup container, int position, Object object) {
         View view = (View) object;
-        WebView webView = (WebView) view.findViewById(R.id.web);
-        if (webView != null) {
-            webView.stopLoading();
-            webView.onPause();
-            webView.destroy();
-            Reddit.incrementDestroy();
-            ((RelativeLayout) view).removeView(webView);
-        }
+        ((ViewHolder) view.getTag()).recycle();
         container.removeView(view);
         recycledViews.add(view);
     }
 
     @Override
     public int getCount() {
-        return album == null ? 0 : album.getImagesCount();
+        return album.getImagesCount();
     }
 
     @Override
@@ -182,70 +118,167 @@ public class AdapterAlbum extends PagerAdapter {
     public void setAlbum(Album album, CustomColorFilter colorFilterIcon) {
         this.album = album;
         this.colorFilterIcon = colorFilterIcon;
-        destroyViews();
         notifyDataSetChanged();
-    }
-
-    public void destroyViews() {
-//        for (View view : recycledViews) {
-//            WebView webView = (WebView) view.findViewById(R.id.web);
-//            if (webView != null) {
-//                webView.onPause();
-//                webView.destroy();
-//                Reddit.incrementDestroy();
-//                ((RelativeLayout) view).removeView(webView);
-//            }
-//        }
     }
 
     public interface EventListener {
         void downloadImage(String title, String fileName, String url);
     }
 
-    public static class ViewHolder implements View.OnClickListener {
+    public static class ViewHolder {
 
         private Image image;
         private EventListener eventListener;
-        private DisallowListener disallowListener;
+        private RequestManager requestManager;
 
-        protected RelativeLayout layoutRelative;
-        protected RelativeLayout layoutDownloadImage;
-        protected ImageButton buttonDownload;
-        protected TextView textAlbumIndicator;
-        protected WebViewFixed webView;
+        private View view;
+        @Bind(R.id.scroll_image) CustomScrollView scrollImage;
+        @Bind(R.id.image_full) ImageViewZoom imageFull;
+        @Bind(R.id.progress_image) ProgressBar progressImage;
+        @Bind(R.id.text_error) TextView textError;
+        @Bind(R.id.text_title) TextView textTitle;
+        @Bind(R.id.text_description) TextView textDescription;
+        @Bind(R.id.layout_download) ViewGroup layoutDownload;
+        @Bind(R.id.button_download) ImageButton buttonDownload;
+        @Bind(R.id.text_album_indicator) TextView textAlbumIndicator;
 
         public ViewHolder(View view,
                 EventListener listener,
+                RequestManager requestManager,
                 DisallowListener disallowListener,
                 CustomColorFilter colorFilterIcon) {
+            this.view = view;
             this.eventListener = listener;
-            this.disallowListener = disallowListener;
-            layoutRelative = (RelativeLayout) view;
-            textAlbumIndicator = (TextView) view.findViewById(R.id.text_album_indicator);
-            layoutDownloadImage = (RelativeLayout) view.findViewById(R.id.layout_download_image);
-            buttonDownload = (ImageButton) view.findViewById(R.id.button_download_image);
+            this.requestManager = requestManager;
+            ButterKnife.bind(this, view);
 
-            buttonDownload.setColorFilter(colorFilterIcon);
+            textError.setTextColor(colorFilterIcon.getColor());
             textAlbumIndicator.setTextColor(colorFilterIcon.getColor());
+            buttonDownload.setColorFilter(colorFilterIcon);
 
-            buttonDownload.setOnClickListener(this);
+            imageFull.setListener(new ImageViewZoom.Listener() {
+                @Override
+                public void onTextureSizeExceeded() {
+                    showError();
+                }
+
+                @Override
+                public void onBeforeContentLoad(int width, int height) {
+
+                }
+            });
+            imageFull.setOnTouchListener(new OnTouchListenerDisallow(disallowListener) {
+                @Override
+                public boolean onTouch(View view, MotionEvent event) {
+                    if (event.getPointerCount() > 1) {
+                        disallowListener.requestDisallowInterceptTouchEventHorizontal(true);
+                        disallowListener.requestDisallowInterceptTouchEventVertical(true);
+                        return false;
+                    }
+
+                    switch (MotionEventCompat.getActionMasked(event)) {
+                        case MotionEvent.ACTION_DOWN:
+                            startY = event.getY();
+
+                            if ((view.canScrollVertically(1) && view.canScrollVertically(-1))) {
+                                disallowListener.requestDisallowInterceptTouchEventVertical(true);
+                            }
+                            else {
+                                disallowListener.requestDisallowInterceptTouchEventVertical(false);
+                            }
+                            disallowListener.requestDisallowInterceptTouchEventHorizontal(true);
+                            break;
+                        case MotionEvent.ACTION_CANCEL:
+                            disallowListener.requestDisallowInterceptTouchEventHorizontal(false);
+                            break;
+                        case MotionEvent.ACTION_UP:
+                            disallowListener.requestDisallowInterceptTouchEventVertical(false);
+                            disallowListener.requestDisallowInterceptTouchEventHorizontal(false);
+                            break;
+                        case MotionEvent.ACTION_MOVE:
+                            disallowListener.requestDisallowInterceptTouchEventHorizontal(true);
+                            if (event.getY() - startY < 0) {
+                                if (view.canScrollVertically(1)) {
+                                    disallowListener.requestDisallowInterceptTouchEventVertical(true);
+                                } else if (scrollImage.canScrollVertically(1)) {
+                                    disallowListener.requestDisallowInterceptTouchEventVertical(true);
+                                }
+                            }
+                            else if (event.getY() - startY > 0) {
+                                if (view.canScrollVertically(-1)) {
+                                    disallowListener.requestDisallowInterceptTouchEventVertical(true);
+                                } else if (scrollImage.canScrollVertically(-1)) {
+                                    disallowListener.requestDisallowInterceptTouchEventVertical(true);
+                                }
+                            }
+                            break;
+                    }
+                    return false;
+                }
+            });
+
+            scrollImage.setOnTouchListener(new OnTouchListenerDisallow(disallowListener));
         }
 
-        public void instantiate(Image image, int position, int maxImages) {
+        private void showError() {
+            textError.setText(view.getResources().getString(R.string.error_album_image, image.getLink()));
+            textError.setVisibility(View.VISIBLE);
+
+            Linkify.addLinks(textError, Linkify.WEB_URLS);
+        }
+
+        public void bindData(Image image, int position, int maxImages) {
             this.image = image;
 
-            textAlbumIndicator.setText((position + 1) + " / " + maxImages);
+            textAlbumIndicator.setText(textAlbumIndicator.getResources().getString(R.string.album_indicator, position + 1, maxImages));
 
+            CharSequence title =
+                    !TextUtils.isEmpty(image.getTitle()) && !"null".equals(image.getTitle())
+                            ? Html.fromHtml(image.getTitle())
+                            : null;
+
+            CharSequence description =
+                    !TextUtils.isEmpty(image.getDescription()) && !"null".equals(image.getDescription())
+                            ? Html.fromHtml(image.getDescription())
+                            : null;
+
+            textTitle.setText(title);
+            textTitle.setVisibility(TextUtils.isEmpty(title) ? View.GONE : View.VISIBLE);
+
+            textDescription.setText(description);
+            textDescription.setVisibility(TextUtils.isEmpty(description) ? View.GONE : View.VISIBLE);
+
+            progressImage.setVisibility(View.VISIBLE);
+
+            refreshImage();
         }
 
-        @Override
-        public void onClick(View v) {
-            switch (v.getId()) {
-                case R.id.button_download_image:
-                    eventListener.downloadImage(image.getTitle(), "Imgur" + image.getId(), image.getLink());
-                    break;
-            }
+        @OnClick(R.id.button_download)
+        public void downloadImage() {
+            eventListener.downloadImage(image.getTitle(), "Imgur" + image.getId(), image.getLink());
+        }
+
+        public void recycle() {
+            textError.setVisibility(View.GONE);
+            imageFull.setImageDrawable(null);
+            imageFull.getLayoutParams().height = 0;
+        }
+
+        public void refreshImage() {
+            requestManager.load(image.getLink())
+                    .listener(new RequestListenerCompletion<String, GlideDrawable>() {
+                        @Override
+                        public boolean onException(Exception e, String s, Target<GlideDrawable> target, boolean isFirstResource) {
+                            showError();
+                            return super.onException(e, s, target, isFirstResource);
+                        }
+
+                        @Override
+                        protected void onCompleted() {
+                            progressImage.setVisibility(View.GONE);
+                        }
+                    })
+                    .into(new GlideDrawableImageViewTarget(imageFull));
         }
     }
-
 }

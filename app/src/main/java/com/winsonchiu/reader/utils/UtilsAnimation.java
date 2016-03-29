@@ -271,12 +271,7 @@ public class UtilsAnimation {
                     }
                     if (animateRipple) {
                         viewHolder.itemView.setPressed(true);
-                        recyclerView.postDelayed(new Runnable() {
-                            @Override
-                            public void run() {
-                                viewHolder.itemView.setPressed(false);
-                            }
-                        }, 150);
+                        recyclerView.postOnAnimationDelayed(() -> viewHolder.itemView.setPressed(false), 150);
                     }
                 }
                 if (layoutManager instanceof LinearLayoutManager) {

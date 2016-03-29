@@ -966,12 +966,7 @@ public class FragmentComments extends FragmentBase
                     fragmentToHide = null;
                 }
 
-                layoutComments.postDelayed(new Runnable() {
-                    @Override
-                    public void run() {
-                        setAnimationFinished(true);
-                    }
-                }, 150);
+                layoutComments.postOnAnimationDelayed(() -> setAnimationFinished(true), 150);
 
                 getArguments().putBoolean(ARG_INITIALIZED, true);
                 buttonExpandActions.setVisibility(View.VISIBLE);
@@ -1027,12 +1022,7 @@ public class FragmentComments extends FragmentBase
                     fragmentToHide = null;
                 }
 
-                layoutComments.postDelayed(new Runnable() {
-                    @Override
-                    public void run() {
-                        setAnimationFinished(true);
-                    }
-                }, 150);
+                layoutComments.postOnAnimationDelayed(() -> setAnimationFinished(true), 150);
 
                 getArguments().putBoolean(ARG_INITIALIZED, true);
                 buttonExpandActions.setVisibility(View.VISIBLE);

@@ -5,10 +5,84 @@
 
 <RelativeLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/layout_image"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/layout_root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     >
+
+    <com.winsonchiu.reader.views.CustomScrollView
+        android:id="@+id/scroll_image"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        >
+
+        <LinearLayout
+            android:orientation="vertical"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            >
+
+            <ProgressBar
+                style="?android:attr/progressBarStyleLarge"
+                android:id="@+id/progress_image"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_margin="16dp"
+                android:layout_gravity="center"
+                android:visibility="gone"
+                android:indeterminate="true"
+                />
+
+            <com.winsonchiu.reader.views.ImageViewZoom
+                android:id="@+id/image_full"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                />
+
+            <Space
+                android:layout_width="match_parent"
+                android:layout_height="16dp"
+                />
+
+            <TextView
+                android:id="@+id/text_error"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:paddingStart="@dimen/activity_vertical_margin"
+                android:paddingEnd="@dimen/activity_vertical_margin"
+                android:paddingBottom="12dp"
+                android:visibility="gone"
+                android:gravity="center_horizontal"
+                tools:visibility="visible"
+                tools:text="Error loading\nLink"
+                />
+
+            <TextView
+                android:id="@+id/text_title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textAppearance="@style/TextAppearance.AppCompat.Title"
+                android:paddingStart="@dimen/activity_vertical_margin"
+                android:paddingEnd="@dimen/activity_vertical_margin"
+                tools:text="Title"
+                />
+
+            <TextView
+                android:id="@+id/text_description"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textAppearance="@style/TextAppearance.AppCompat.Body1"
+                android:paddingStart="@dimen/activity_vertical_margin"
+                android:paddingEnd="@dimen/activity_vertical_margin"
+                android:layout_marginBottom="32dp"
+                tools:text="Description"
+                />
+
+        </LinearLayout>
+
+    </com.winsonchiu.reader.views.CustomScrollView>
 
     <TextView
         android:id="@+id/text_album_indicator"
@@ -16,93 +90,11 @@
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
         android:layout_centerHorizontal="true"
-        android:textAppearance="?android:textAppearanceSmall"
-        android:textColor="?android:attr/textColorSecondary"
+        android:textAppearance="@style/TextAppearance.AppCompat.Caption"
         />
 
-
-    <!--<ScrollView-->
-        <!--android:id="@+id/scroll_description"-->
-        <!--android:layout_width="match_parent"-->
-        <!--android:layout_height="match_parent"-->
-        <!--android:background="?android:attr/windowBackground"-->
-        <!--android:alpha="0.85"-->
-        <!--android:visibility="gone"-->
-        <!-->-->
-
-        <!--<RelativeLayout-->
-            <!--android:layout_width="match_parent"-->
-            <!--android:layout_height="wrap_content"-->
-            <!-->-->
-
-            <!--<TextView-->
-                <!--android:id="@+id/text_title_hidden"-->
-                <!--android:minHeight="48dp"-->
-                <!--android:layout_width="match_parent"-->
-                <!--android:layout_height="wrap_content"-->
-                <!--android:layout_alignParentTop="true"-->
-                <!--android:layout_alignParentStart="true"-->
-                <!--android:paddingTop="8dp"-->
-                <!--android:paddingStart="@dimen/activity_horizontal_margin"-->
-                <!--android:paddingEnd="116dp"-->
-                <!--android:textAppearance="?android:textAppearanceMedium"-->
-                <!--/>-->
-
-            <!--<TextView-->
-                <!--android:id="@+id/text_image_description"-->
-                <!--android:layout_width="match_parent"-->
-                <!--android:layout_height="wrap_content"-->
-                <!--android:layout_below="@id/text_title_hidden"-->
-                <!--android:paddingTop="16dp"-->
-                <!--android:paddingStart="@dimen/activity_horizontal_margin"-->
-                <!--android:paddingEnd="@dimen/activity_horizontal_margin"-->
-                <!--android:textColor="?android:attr/textColor"-->
-                <!--/>-->
-
-        <!--</RelativeLayout>-->
-
-    <!--</ScrollView>-->
-
-    <!--<TextView-->
-        <!--android:id="@+id/text_image_title"-->
-        <!--android:minHeight="48dp"-->
-        <!--android:layout_width="wrap_content"-->
-        <!--android:layout_height="wrap_content"-->
-        <!--android:layout_alignParentTop="true"-->
-        <!--android:layout_alignParentStart="true"-->
-        <!--android:layout_toStartOf="@+id/layout_info"-->
-        <!--android:paddingTop="8dp"-->
-        <!--android:paddingStart="@dimen/activity_horizontal_margin"-->
-        <!--android:paddingEnd="@dimen/activity_horizontal_margin"-->
-        <!--android:textAppearance="?android:textAppearanceMedium"-->
-        <!--android:ellipsize="marquee"-->
-        <!--android:singleLine="true"-->
-        <!--/>-->
-
-    <!--<RelativeLayout-->
-        <!--android:id="@+id/layout_info"-->
-        <!--android:layout_width="48dp"-->
-        <!--android:layout_height="48dp"-->
-        <!--android:layout_alignParentTop="true"-->
-        <!--android:layout_toStartOf="@+id/layout_download_image"-->
-        <!--android:background="@drawable/circular_shadow"-->
-        <!--android:visibility="gone"-->
-        <!-->-->
-
-        <!--<ImageButton-->
-            <!--android:id="@+id/button_info"-->
-            <!--android:layout_width="match_parent"-->
-            <!--android:layout_height="match_parent"-->
-            <!--android:contentDescription="@string/content_description_button_open"-->
-            <!--android:background="?attr/selectableItemBackground"-->
-            <!--android:src="@drawable/ic_info_outline_white_24dp"-->
-            <!--android:padding="12dp"-->
-            <!--/>-->
-
-    <!--</RelativeLayout>-->
-
     <RelativeLayout
-        android:id="@+id/layout_download_image"
+        android:id="@+id/layout_download"
         android:layout_width="48dp"
         android:layout_height="48dp"
         android:layout_alignParentTop="true"
@@ -112,7 +104,7 @@
         >
 
         <ImageButton
-            android:id="@+id/button_download_image"
+            android:id="@+id/button_download"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:contentDescription="@string/content_description_button_open"

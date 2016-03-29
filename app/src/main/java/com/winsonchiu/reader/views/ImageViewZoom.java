@@ -18,11 +18,9 @@ import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
 import android.view.View;
-import android.view.ViewParent;
 import android.widget.ImageView;
 import android.widget.Scroller;
 
-import com.bumptech.glide.load.resource.bitmap.GlideBitmapDrawable;
 import com.bumptech.glide.load.resource.drawable.GlideDrawable;
 import com.winsonchiu.reader.utils.UtilsImage;
 
@@ -64,7 +62,17 @@ public class ImageViewZoom extends ImageView {
         }
     };
 
-    private Listener listener;
+    private Listener listener = new Listener() {
+        @Override
+        public void onTextureSizeExceeded() {
+
+        }
+
+        @Override
+        public void onBeforeContentLoad(int width, int height) {
+
+        }
+    };
 
     public ImageViewZoom(Context context) {
         super(context);
@@ -163,42 +171,36 @@ public class ImageViewZoom extends ImageView {
             contentWidth = drawable.getIntrinsicWidth();
             contentHeight = drawable.getIntrinsicHeight();
 
-            UtilsImage.checkMaxTextureSize(getHandler(), new Runnable() {
-                @Override
-                public void run() {
-                    if (contentWidth > UtilsImage.getMaxTextureSize()
-                            || contentHeight > UtilsImage.getMaxTextureSize()) {
-                        listener.onTextureSizeExceeded();
-                        return;
-                    }
-
-                    int startHeight = 0;
-                    int targetHeight = (int) (getWidth() * contentHeight / contentWidth);
-
-                    listener.onBeforeContentLoad(getWidth(), targetHeight);
-
-                    setScaleType(ScaleType.MATRIX);
-                    ImageViewZoom.super.setImageDrawable(drawable);
-
-                    scaleStart = getWidth() / contentWidth;
-                    translationX = (scaleCurrent - 1) * contentWidth / 2;
-                    translationY = (scaleCurrent - 1) * contentHeight / 2;
-                    setScaleFactor(0, 0, scaleStart);
-
-                    if (getParent() instanceof View) {
-                        startHeight = ((View) getParent()).getHeight();
-                    }
-
-                    ValueAnimator valueAnimator = ValueAnimator.ofInt(startHeight, targetHeight);
-                    valueAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
-                        @Override
-                        public void onAnimationUpdate(ValueAnimator animation) {
-                            getLayoutParams().height = (int) animation.getAnimatedValue();
-                            requestLayout();
-                        }
-                    });
-                    valueAnimator.start();
+            UtilsImage.checkMaxTextureSize(getHandler(), () -> {
+                if (contentWidth > UtilsImage.getMaxTextureSize()
+                        || contentHeight > UtilsImage.getMaxTextureSize()) {
+                    listener.onTextureSizeExceeded();
+                    return;
                 }
+
+                int startHeight = 0;
+                int targetHeight = (int) (getWidth() * contentHeight / contentWidth);
+
+                listener.onBeforeContentLoad(getWidth(), targetHeight);
+
+                setScaleType(ScaleType.MATRIX);
+                ImageViewZoom.super.setImageDrawable(drawable);
+
+                scaleStart = getWidth() / contentWidth;
+                translationX = (scaleCurrent - 1) * contentWidth / 2;
+                translationY = (scaleCurrent - 1) * contentHeight / 2;
+                setScaleFactor(0, 0, scaleStart);
+
+                if (getParent() instanceof View) {
+                    startHeight = ((View) getParent()).getHeight();
+                }
+
+                ValueAnimator valueAnimator = ValueAnimator.ofInt(startHeight, targetHeight);
+                valueAnimator.addUpdateListener(animation -> {
+                    getLayoutParams().height = (int) animation.getAnimatedValue();
+                    requestLayout();
+                });
+                valueAnimator.start();
             });
         }
         else {

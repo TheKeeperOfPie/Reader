@@ -647,36 +647,20 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             drawableDefault = resources.getDrawable(
                     R.drawable.ic_web_white_48dp);
             mediaController = new MediaController(itemView.getContext());
-            adapterAlbum = new AdapterAlbum(viewPagerFull, new Album(), new AdapterAlbum.EventListener() {
-                @Override
-                public void downloadImage(String title, String fileName, String url) {
-                    eventListener.downloadImage(title, fileName, url);
-                }
-            }, new DisallowListener() {
-                @Override
-                public void requestDisallowInterceptTouchEventVertical(boolean disallow) {
-                    disallowListener.requestDisallowInterceptTouchEventVertical(disallow);
-                }
-
-                @Override
-                public void requestDisallowInterceptTouchEventHorizontal(boolean disallow) {
-                    disallowListener.requestDisallowInterceptTouchEventHorizontal(disallow);
-                }
-            }, colorFilterMenuItem);
+            adapterAlbum = new AdapterAlbum(recyclerCallback.getRequestManager(), disallowListener,
+                    (title, fileName, url) -> eventListener.downloadImage(title, fileName, url),
+                    colorFilterMenuItem);
 
             viewPagerFull.setAdapter(adapterAlbum);
-            viewPagerFull.setPageTransformer(false, new ViewPager.PageTransformer() {
-                @Override
-                public void transformPage(View page, float position) {
-                    if (page.getTag() instanceof AdapterAlbum.ViewHolder) {
-                        AdapterAlbum.ViewHolder viewHolder = (AdapterAlbum.ViewHolder) page
-                                .getTag();
-                        if (position >= -1 && position <= 1) {
-                            viewHolder.textAlbumIndicator.setTranslationX(
-                                    -position * page.getWidth());
-                            viewHolder.layoutDownloadImage.setTranslationX(
-                                    -position * page.getWidth());
-                        }
+            viewPagerFull.setPageTransformer(false, (page, position) -> {
+                if (page.getTag() instanceof AdapterAlbum.ViewHolder) {
+                    AdapterAlbum.ViewHolder viewHolder = (AdapterAlbum.ViewHolder) page
+                            .getTag();
+                    if (position >= -1 && position <= 1) {
+                        viewHolder.textAlbumIndicator.setTranslationX(
+                                -position * page.getWidth());
+                        viewHolder.layoutDownload.setTranslationX(
+                                -position * page.getWidth());
                     }
                 }
             });
@@ -1304,21 +1288,16 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                 expandFull(true);
                 recyclerCallback.getLayoutManager().requestLayout();
                 itemView.invalidate();
-                itemView.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        recyclerCallback.getRequestManager()
-                                .load(link.getUrl())
-                                .priority(Priority.IMMEDIATE)
-                                .listener(new RequestListenerCompletion<String, GlideDrawable>() {
-                                    @Override
-                                    protected void onCompleted() {
-                                        progressImage.setVisibility(View.GONE);
-                                    }
-                                })
-                                .into(new GlideDrawableImageViewTarget(imageFull));
-                    }
-                });
+                itemView.post(() -> recyclerCallback.getRequestManager()
+                        .load(link.getUrl())
+                        .priority(Priority.IMMEDIATE)
+                        .listener(new RequestListenerCompletion<String, GlideDrawable>() {
+                            @Override
+                            protected void onCompleted() {
+                                progressImage.setVisibility(View.GONE);
+                            }
+                        })
+                        .into(new GlideDrawableImageViewTarget(imageFull)));
             }
             else {
                 eventListener.loadUrl(link.getUrl());
@@ -1333,7 +1312,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             viewPagerFull.setVisibility(View.VISIBLE);
             viewPagerFull.requestLayout();
             adapterAlbum.setAlbum(album, colorFilterMenuItem);
-            viewPagerFull.setCurrentItem(0, false);
+            viewPagerFull.setCurrentItem(album.getPage(), false);
             scrollToSelf();
         }
 
@@ -1626,54 +1605,51 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         public void loadYouTubeVideo(final String id, final int timeInMillis) {
             link.setYouTubeId(id);
             callbackYouTubeDestruction.destroyYouTubePlayerFragments();
-            layoutYouTube.postDelayed(new Runnable() {
-                @Override
-                public void run() {
-                    youTubeFragment = new YouTubePlayerSupportFragment();
-                    layoutYouTube.setId(youTubeViewId);
-                    activity.getSupportFragmentManager()
-                            .beginTransaction()
-                            .add(youTubeViewId, youTubeFragment, String.valueOf(youTubeViewId))
-                            .commit();
-                    youTubeFragment.initialize(ApiKeys.YOUTUBE_API_KEY,
-                            new YouTubePlayer.OnInitializedListener() {
-                                @Override
-                                public void onInitializationSuccess(YouTubePlayer.Provider provider,
-                                        final YouTubePlayer youTubePlayer,
-                                        boolean b) {
-                                    ViewHolderBase.this.youTubePlayer = youTubePlayer;
-                                    youTubePlayer.setFullscreenControlFlags(
-                                            YouTubePlayer.FULLSCREEN_FLAG_CONTROL_SYSTEM_UI);
-                                    youTubePlayer.setManageAudioFocus(false);
-                                    youTubePlayer.setOnFullscreenListener(
-                                            new YouTubePlayer.OnFullscreenListener() {
-                                                @Override
-                                                public void onFullscreen(boolean fullscreen) {
-                                                    Log.d(TAG, "fullscreen: " + fullscreen);
-                                                    isYouTubeFullscreen = fullscreen;
-                                                    youTubePlayer.setFullscreen(fullscreen);
-                                                }
-                                            });
-                                    youTubePlayer.setPlayerStateChangeListener(new SimplePlayerStateChangeListener() {
-                                        @Override
-                                        public void onVideoStarted() {
-                                            youTubePlayer.seekToMillis(timeInMillis);
-                                            youTubePlayer.setPlayerStateChangeListener(new SimplePlayerStateChangeListener());
-                                        }
-                                    });
-                                    youTubePlayer.loadVideo(id);
-                                    layoutYouTube.setVisibility(View.VISIBLE);
-                                    scrollToSelf();
-                                }
+            layoutYouTube.postOnAnimationDelayed(() -> {
+                youTubeFragment = new YouTubePlayerSupportFragment();
+                layoutYouTube.setId(youTubeViewId);
+                activity.getSupportFragmentManager()
+                        .beginTransaction()
+                        .add(youTubeViewId, youTubeFragment, String.valueOf(youTubeViewId))
+                        .commit();
+                youTubeFragment.initialize(ApiKeys.YOUTUBE_API_KEY,
+                        new YouTubePlayer.OnInitializedListener() {
+                            @Override
+                            public void onInitializationSuccess(YouTubePlayer.Provider provider,
+                                    final YouTubePlayer youTubePlayer1,
+                                    boolean b) {
+                                ViewHolderBase.this.youTubePlayer = youTubePlayer1;
+                                youTubePlayer1.setFullscreenControlFlags(
+                                        YouTubePlayer.FULLSCREEN_FLAG_CONTROL_SYSTEM_UI);
+                                youTubePlayer1.setManageAudioFocus(false);
+                                youTubePlayer1.setOnFullscreenListener(
+                                        new YouTubePlayer.OnFullscreenListener() {
+                                            @Override
+                                            public void onFullscreen(boolean fullscreen) {
+                                                Log.d(TAG, "fullscreen: " + fullscreen);
+                                                isYouTubeFullscreen = fullscreen;
+                                                youTubePlayer1.setFullscreen(fullscreen);
+                                            }
+                                        });
+                                youTubePlayer1.setPlayerStateChangeListener(new SimplePlayerStateChangeListener() {
+                                    @Override
+                                    public void onVideoStarted() {
+                                        youTubePlayer1.seekToMillis(timeInMillis);
+                                        youTubePlayer1.setPlayerStateChangeListener(new SimplePlayerStateChangeListener());
+                                    }
+                                });
+                                youTubePlayer1.loadVideo(id);
+                                layoutYouTube.setVisibility(View.VISIBLE);
+                                scrollToSelf();
+                            }
 
-                                @Override
-                                public void onInitializationFailure(YouTubePlayer.Provider provider,
-                                        YouTubeInitializationResult youTubeInitializationResult) {
-                                    eventListener.toast(resources
-                                            .getString(R.string.error_youtube));
-                                }
-                            });
-                }
+                            @Override
+                            public void onInitializationFailure(YouTubePlayer.Provider provider,
+                                    YouTubeInitializationResult youTubeInitializationResult) {
+                                eventListener.toast(resources
+                                        .getString(R.string.error_youtube));
+                            }
+                        });
             }, 150);
         }
 
@@ -1794,7 +1770,6 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             frameFull.requestLayout();
 
             textThreadSelf.setVisibility(View.GONE);
-            adapterAlbum.setAlbum(null, null);
 
             setTextValues(link);
 
@@ -1829,20 +1804,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         }
 
         public void destroyWebViews() {
-            if (viewPagerFull.getChildCount() > 0) {
-                for (int index = 0; index < viewPagerFull.getChildCount(); index++) {
-                    View view = viewPagerFull.getChildAt(index);
-                    WebView webView = (WebView) view.findViewById(R.id.web);
-                    if (webView != null) {
-                        webView.onPause();
-                        webView.destroy();
-                        Reddit.incrementDestroy();
-                        ((RelativeLayout) view).removeView(webView);
-                    }
-                }
-            }
-            adapterAlbum.setAlbum(null, null);
-            viewPagerFull.removeAllViews();
+            adapterAlbum.setAlbum(new Album(), null);
             frameFull.requestLayout();
         }
 

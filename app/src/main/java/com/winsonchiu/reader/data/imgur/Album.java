@@ -38,6 +38,8 @@ public class Album implements Parcelable {
     private int imagesCount;
     private List<Image> images;
 
+    private int page;
+
     public Album() {
         super();
     }
@@ -283,4 +285,12 @@ public class Album implements Parcelable {
             return new Album[size];
         }
     };
+
+    public int getPage() {
+        return page;
+    }
+
+    public void setPage(int page) {
+        this.page = page;
+    }
 }
