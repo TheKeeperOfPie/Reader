@@ -5,9 +5,11 @@
 
 <com.winsonchiu.reader.views.CustomRelativeLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/layout_root"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:minHeight="72dp"
+    android:clickable="true"
     >
 
     <RelativeLayout
@@ -36,13 +38,6 @@
                 android:layout_height="wrap_content"
                 android:visibility="gone"
                 android:minHeight="48dp"
-                />
-
-            <SurfaceView
-                android:id="@+id/surface_video"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:visibility="gone"
                 />
 
             <com.winsonchiu.reader.views.ImageViewZoom

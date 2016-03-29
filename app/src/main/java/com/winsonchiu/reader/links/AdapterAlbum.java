@@ -94,7 +94,6 @@ public class AdapterAlbum extends PagerAdapter {
     public void setPrimaryItem(ViewGroup container, int position, Object object) {
         super.setPrimaryItem(container, position, object);
         album.setPage(position);
-        ((ViewHolder) ((View) object).getTag()).refreshImage();
     }
 
     @Override
@@ -248,8 +247,6 @@ public class AdapterAlbum extends PagerAdapter {
             textDescription.setText(description);
             textDescription.setVisibility(TextUtils.isEmpty(description) ? View.GONE : View.VISIBLE);
 
-            progressImage.setVisibility(View.VISIBLE);
-
             refreshImage();
         }
 
@@ -265,6 +262,7 @@ public class AdapterAlbum extends PagerAdapter {
         }
 
         public void refreshImage() {
+            progressImage.setVisibility(View.VISIBLE);
             requestManager.load(image.getLink())
                     .listener(new RequestListenerCompletion<String, GlideDrawable>() {
                         @Override

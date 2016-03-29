@@ -6,7 +6,6 @@ package com.winsonchiu.reader.links;
 
 import android.animation.ValueAnimator;
 import android.content.res.Resources;
-import android.graphics.Color;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
@@ -164,20 +163,17 @@ public class AdapterLinkGrid extends AdapterLink {
         @Override
         protected void initializeListeners() {
             super.initializeListeners();
-            imageSquare.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    imageSquare.setVisibility(View.GONE);
-                    progressImage.setVisibility(View.GONE);
-                    imagePlay.setVisibility(View.GONE);
+            imageSquare.setOnClickListener(v -> {
+                imageSquare.setVisibility(View.GONE);
+                progressImage.setVisibility(View.GONE);
+                imagePlay.setVisibility(View.GONE);
 
-                    if (link.isSelf()) {
-                        attemptLoadImageSelfPost();
-                        loadSelfText();
-                    }
-                    else {
-                        loadFull();
-                    }
+                if (link.isSelf()) {
+                    attemptLoadImageSelfPost();
+                    loadSelfText();
+                }
+                else {
+                    loadFull();
                 }
             });
         }
@@ -217,6 +213,7 @@ public class AdapterLinkGrid extends AdapterLink {
                 viewOverlay.setBackgroundColor(ColorUtils.setAlphaComponent(link.getBackgroundColor(), ALPHA_OVERLAY));
             }
 
+            buttonComments.setColorFilter(colorFilterIconDefault);
             imagePlay.setColorFilter(colorFilterIconDefault);
             textThreadInfo.setTextColor(colorTextSecondaryDefault);
             textHidden.setTextColor(colorTextSecondaryDefault);
@@ -582,15 +579,12 @@ public class AdapterLinkGrid extends AdapterLink {
                 expandFull(true);
                 recyclerCallback.getLayoutManager().requestLayout();
                 itemView.invalidate();
-                itemView.post(new Runnable() {
-                    @Override
-                    public void run() {
+                itemView.post(() -> {
 //                        recyclerCallback.getRequestManager()
 //                                .load(url)
 //                                .into(new GlideDrawableImageViewTarget(imageFull));
-                        picasso.load(url)
-                                .into(imageFull);
-                    }
+                    picasso.load(url)
+                            .into(imageFull);
                 });
 
                 return true;
@@ -611,17 +605,13 @@ public class AdapterLinkGrid extends AdapterLink {
             Drawable drawable = imageSquare.getDrawable();
             if (drawable instanceof BitmapDrawable) {
                 Palette.from(((BitmapDrawable) drawable).getBitmap())
-                        .generate(
-                                new Palette.PaletteAsyncListener() {
-                                    @Override
-                                    public void onGenerated(Palette palette) {
-                                        if (position == getAdapterPosition()) {
-                                            linkSaved.setBackgroundColor(palette.getDarkVibrantColor(
-                                                    palette.getMutedColor(colorBackgroundDefault)));
-                                            syncBackgroundColor();
-                                        }
-                                    }
-                                });
+                        .generate(palette -> {
+                            if (position == getAdapterPosition()) {
+                                linkSaved.setBackgroundColor(palette.getDarkVibrantColor(
+                                        palette.getMutedColor(colorBackgroundDefault)));
+                                syncBackgroundColor();
+                            }
+                        });
             }
         }
 
@@ -659,33 +649,30 @@ public class AdapterLinkGrid extends AdapterLink {
             }
         }
 
-        public double calculateLuminance(int color) {
-            return Math.sqrt(0.299f * Math.pow(Color.red(color) / 255f, 2) + 0.587f * Math.pow(Color.green(color) / 255f, 2) + 0.114f * Math.pow(Color.blue(color) / 255f, 2));
-        }
-
         public void setTextColors(int color) {
-
             Menu menu = toolbarActions.getMenu();
 
             boolean showOnWhite = UtilsColor.showOnWhite(color);
 
             if (showOnWhite) {
                 imagePlay.setColorFilter(colorFilterIconLight);
-                textThreadInfo.setTextColor(resources.getColor(R.color.darkThemeTextColorMuted));
-                textHidden.setTextColor(resources.getColor(R.color.darkThemeTextColorMuted));
-                colorTextSecondary = resources.getColor(R.color.darkThemeTextColorMuted);
-                titleTextColorAlert = resources.getColor(R.color.textColorAlert);
-                titleTextColor = resources.getColor(R.color.darkThemeTextColor);
+                buttonComments.setColorFilter(colorFilterIconLight);
+                textThreadInfo.setTextColor(getColor(R.color.darkThemeTextColorMuted));
+                textHidden.setTextColor(getColor(R.color.darkThemeTextColorMuted));
+                colorTextSecondary = getColor(R.color.darkThemeTextColorMuted);
+                titleTextColorAlert = getColor(R.color.textColorAlert);
+                titleTextColor = getColor(R.color.darkThemeTextColor);
                 colorFilterMenuItem = colorFilterIconLight;
 
             }
             else {
                 imagePlay.setColorFilter(colorFilterIconDark);
-                textThreadInfo.setTextColor(resources.getColor(R.color.lightThemeTextColorMuted));
-                textHidden.setTextColor(resources.getColor(R.color.lightThemeTextColorMuted));
-                colorTextSecondary = resources.getColor(R.color.lightThemeTextColorMuted);
-                titleTextColorAlert = resources.getColor(R.color.textColorAlertMuted);
-                titleTextColor = resources.getColor(R.color.lightThemeTextColor);
+                buttonComments.setColorFilter(colorFilterIconDark);
+                textThreadInfo.setTextColor(getColor(R.color.lightThemeTextColorMuted));
+                textHidden.setTextColor(getColor(R.color.lightThemeTextColorMuted));
+                colorTextSecondary = getColor(R.color.lightThemeTextColorMuted);
+                titleTextColorAlert = getColor(R.color.textColorAlertMuted);
+                titleTextColor = getColor(R.color.lightThemeTextColor);
                 colorFilterMenuItem = colorFilterIconDark;
             }
             syncTitleColor();
@@ -698,7 +685,6 @@ public class AdapterLinkGrid extends AdapterLink {
         }
 
         public void setOverflowColorFilter() {
-
             ArrayList<View> views = new ArrayList<>();
             toolbarActions.findViewsWithText(views, "toolbar_overflow_access",
                     View.FIND_VIEWS_WITH_CONTENT_DESCRIPTION);

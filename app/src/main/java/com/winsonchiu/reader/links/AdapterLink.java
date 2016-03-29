@@ -18,8 +18,10 @@ import android.graphics.drawable.Drawable;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.preference.PreferenceManager;
+import android.support.annotation.ColorRes;
 import android.support.annotation.NonNull;
 import android.support.v4.app.FragmentActivity;
+import android.support.v4.content.ContextCompat;
 import android.support.v4.view.GestureDetectorCompat;
 import android.support.v4.view.MenuItemCompat;
 import android.support.v4.view.MotionEventCompat;
@@ -41,8 +43,6 @@ import android.text.TextWatcher;
 import android.text.format.DateUtils;
 import android.text.method.LinkMovementMethod;
 import android.text.style.ForegroundColorSpan;
-import android.util.Log;
-import android.util.TypedValue;
 import android.view.GestureDetector;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -53,7 +53,6 @@ import android.view.SurfaceView;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
-import android.webkit.WebView;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.FrameLayout;
@@ -91,11 +90,11 @@ import com.winsonchiu.reader.data.reddit.Thing;
 import com.winsonchiu.reader.data.reddit.User;
 import com.winsonchiu.reader.glide.RequestListenerCompletion;
 import com.winsonchiu.reader.history.Historian;
+import com.winsonchiu.reader.rx.FinalizingSubscriber;
+import com.winsonchiu.reader.rx.ObserverEmpty;
 import com.winsonchiu.reader.utils.CallbackYouTubeDestruction;
 import com.winsonchiu.reader.utils.CustomColorFilter;
 import com.winsonchiu.reader.utils.DisallowListener;
-import com.winsonchiu.reader.rx.FinalizingSubscriber;
-import com.winsonchiu.reader.rx.ObserverEmpty;
 import com.winsonchiu.reader.utils.OnTouchListenerDisallow;
 import com.winsonchiu.reader.utils.RecyclerCallback;
 import com.winsonchiu.reader.utils.SimplePlayerStateChangeListener;
@@ -116,10 +115,15 @@ import java.util.regex.Pattern;
 
 import javax.inject.Inject;
 
+import butterknife.Bind;
+import butterknife.BindDimen;
+import butterknife.BindDrawable;
+import butterknife.ButterKnife;
+import butterknife.OnClick;
+import butterknife.OnTouch;
 import rx.Observable;
 import rx.Subscription;
 import rx.functions.Action1;
-import rx.functions.Func1;
 
 /**
  * Created by TheKeeperOfPie on 3/14/2015.
@@ -278,42 +282,28 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
     public static class ViewHolderHeader extends RecyclerView.ViewHolder
             implements View.OnClickListener {
 
-        private final EventListener eventListener;
-        protected TextView textName;
-        protected TextView textTitle;
-        protected TextView textDescription;
-        protected LinearLayout layoutButtons;
-        protected Button buttonSubmitLink;
-        protected Button buttomSubmitSelf;
-        protected RelativeLayout layoutContainerExpand;
-        protected TextView textHidden;
-        protected ImageButton buttonShowSidebar;
+        @Bind(R.id.text_name) TextView textName;
+        @Bind(R.id.text_title) TextView textTitle;
+        @Bind(R.id.text_description) TextView textDescription;
+        @Bind(R.id.layout_buttons) LinearLayout layoutButtons;
+        @Bind(R.id.button_submit_link) Button buttonSubmitLink;
+        @Bind(R.id.button_submit_self) Button buttonSubmitSelf;
+        @Bind(R.id.layout_container_expand) RelativeLayout layoutContainerExpand;
+        @Bind(R.id.text_hidden) TextView textHidden;
+        @Bind(R.id.button_show_sidebar) ImageButton buttonShowSidebar;
 
         private String defaultTextSubmitLink;
         private String defaultTextSubmitText;
 
+        private EventListener eventListener;
+
         public ViewHolderHeader(View itemView,
                 EventListener eventListener) {
             super(itemView);
-
             this.eventListener = eventListener;
-            buttonShowSidebar = (ImageButton) itemView.findViewById(R.id.button_show_sidebar);
-            textName = (TextView) itemView.findViewById(R.id.text_name);
-            textTitle = (TextView) itemView.findViewById(R.id.text_title);
-            textDescription = (TextView) itemView.findViewById(R.id.text_description);
-            textDescription.setMovementMethod(LinkMovementMethod.getInstance());
-            layoutButtons = (LinearLayout) itemView.findViewById(R.id.layout_buttons);
-            buttonSubmitLink = (Button) itemView.findViewById(R.id.button_submit_link);
-            buttomSubmitSelf = (Button) itemView.findViewById(R.id.button_submit_self);
-            layoutContainerExpand = (RelativeLayout) itemView
-                    .findViewById(R.id.layout_container_expand);
-            textHidden = (TextView) itemView.findViewById(R.id.text_hidden);
+            ButterKnife.bind(this, itemView);
 
-            textDescription.setOnClickListener(this);
-            buttonShowSidebar.setOnClickListener(this);
-            buttonSubmitLink.setOnClickListener(this);
-            buttomSubmitSelf.setOnClickListener(this);
-            itemView.setOnClickListener(this);
+            textDescription.setMovementMethod(LinkMovementMethod.getInstance());
 
             if (itemView.getLayoutParams() instanceof StaggeredGridLayoutManager.LayoutParams) {
                 ((StaggeredGridLayoutManager.LayoutParams) itemView.getLayoutParams()).setFullSpan(
@@ -329,8 +319,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
 
             TypedArray typedArray = itemView.getContext().getTheme().obtainStyledAttributes(
                     new int[] {R.attr.colorIconFilter});
-            buttonShowSidebar.setColorFilter(typedArray.getColor(0, 0xFFFFFFFF),
-                    PorterDuff.Mode.MULTIPLY);
+            buttonShowSidebar.setColorFilter(typedArray.getColor(0, ContextCompat.getColor(itemView.getContext(), R.color.darkThemeIconFilter)), PorterDuff.Mode.MULTIPLY);
             typedArray.recycle();
 
         }
@@ -343,7 +332,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             layoutButtons.setVisibility(visibility);
             buttonShowSidebar.setVisibility(visibility);
             buttonSubmitLink.setVisibility(visibility);
-            buttomSubmitSelf.setVisibility(visibility);
+            buttonSubmitSelf.setVisibility(visibility);
         }
 
         public void onBind(Subreddit subreddit) {
@@ -378,14 +367,14 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
 
             if (TextUtils.isEmpty(subreddit.getSubmitTextLabel()) || "null".equals(
                     subreddit.getSubmitTextLabel())) {
-                buttomSubmitSelf.setText(defaultTextSubmitText);
+                buttonSubmitSelf.setText(defaultTextSubmitText);
             }
             else {
-                buttomSubmitSelf.setText(subreddit.getSubmitTextLabel());
+                buttonSubmitSelf.setText(subreddit.getSubmitTextLabel());
             }
 
             if (Reddit.PostType.fromString(subreddit.getSubmissionType()) == Reddit.PostType.LINK) {
-                buttomSubmitSelf.setVisibility(View.GONE);
+                buttonSubmitSelf.setVisibility(View.GONE);
             }
             else {
                 buttonSubmitLink.setVisibility(View.GONE);
@@ -394,6 +383,13 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         }
 
         @Override
+        @OnClick({
+                R.id.button_show_sidebar,
+                R.id.button_submit_link,
+                R.id.button_submit_self,
+                R.id.text_description,
+                R.id.layout_root
+        })
         public void onClick(View v) {
             switch (v.getId()) {
                 case R.id.button_show_sidebar:
@@ -421,44 +417,50 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             implements Toolbar.OnMenuItemClickListener, View.OnClickListener,
             View.OnLongClickListener, SurfaceHolder.Callback {
 
+        @Bind(R.id.frame_full) public FrameLayout frameFull;
+        @Bind(R.id.progress_image) public ProgressBar progressImage;
+        @Bind(R.id.view_pager_full) public ViewPager viewPagerFull;
+        @Bind(R.id.image_play) public ImageView imagePlay;
+        @Bind(R.id.image_thumbnail) public ImageView imageThumbnail;
+        @Bind(R.id.image_full) public ImageViewZoom imageFull;
+        @Bind(R.id.view_margin) public View viewMargin;
+        @Bind(R.id.button_comments) public ImageButton buttonComments;
+        @Bind(R.id.text_thread_flair) public TextView textThreadFlair;
+        @Bind(R.id.text_thread_title) public TextView textThreadTitle;
+        @Bind(R.id.text_thread_self) public TextView textThreadSelf;
+        @Bind(R.id.text_thread_info) public TextView textThreadInfo;
+        @Bind(R.id.text_hidden) public TextView textHidden;
+        @Bind(R.id.layout_container_expand) public RelativeLayout layoutContainerExpand;
+        @Bind(R.id.toolbar_actions) public Toolbar toolbarActions;
+        @Bind(R.id.layout_container_reply) public RelativeLayout layoutContainerReply;
+        @Bind(R.id.edit_text_reply) public EditText editTextReply;
+        @Bind(R.id.text_username) public TextView textUsername;
+        @Bind(R.id.button_send_reply) public Button buttonSendReply;
+        @Bind(R.id.button_reply_editor) public ImageButton buttonReplyEditor;
+        @Bind(R.id.view_overlay) public View viewOverlay;
+        @Bind(R.id.layout_youtube) ViewGroup layoutYouTube;
+
+        @BindDimen(R.dimen.touch_target_size) public int toolbarItemWidth;
+        @BindDimen(R.dimen.activity_horizontal_margin) public int titleMargin;
+
+        @BindDrawable(R.drawable.ic_web_white_48dp) public Drawable drawableDefault;
+
+        @Inject Historian historian;
+        @Inject Picasso picasso;
+        @Inject Reddit reddit;
+
         private final FragmentActivity activity;
         public Link link;
         public boolean showSubreddit;
-
-        public FrameLayout frameFull;
-        public ProgressBar progressImage;
-        public ViewPager viewPagerFull;
-        public ImageView imagePlay;
-        public ImageView imageThumbnail;
-        public ImageViewZoom imageFull;
-        public View viewMargin;
-        public ImageButton buttonComments;
-        public TextView textThreadFlair;
-        public TextView textThreadTitle;
-        public TextView textThreadSelf;
-        public TextView textThreadInfo;
-        public TextView textHidden;
-        public RelativeLayout layoutContainerExpand;
-        public Toolbar toolbarActions;
-        public RelativeLayout layoutContainerReply;
-        public EditText editTextReply;
-        public TextView textUsername;
-        public Button buttonSendReply;
-        public ImageButton buttonReplyEditor;
-        public View viewOverlay;
 
         public Subscription subscription;
         public MediaController mediaController;
         public AdapterAlbum adapterAlbum;
 
-        public ViewGroup layoutYouTube;
         public YouTubePlayer youTubePlayer;
         public YouTubeListener youTubeListener;
         public YouTubePlayerSupportFragment youTubeFragment;
-        public int youTubeViewId;
-
-        public int toolbarItemWidth;
-        public int titleMargin;
+        public int youTubeViewId = View.generateViewId();
 
         public EventListener eventListener;
         public DisallowListener disallowListener;
@@ -493,21 +495,18 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         public int titleTextColor;
         public int titleTextColorAlert;
         public int colorTextSecondary;
-        public Drawable drawableDefault;
 
         public SharedPreferences preferences;
         public Resources resources;
         public boolean isYouTubeFullscreen;
+        private GestureDetectorCompat gestureDetectorDoubleTap;
+
         public SurfaceView surfaceVideo;
         public SurfaceHolder surfaceHolder;
         public MediaPlayer mediaPlayer;
         public Uri uriVideo;
         public int bufferPercentage;
         private Source source;
-
-        @Inject Historian historian;
-        @Inject Picasso picasso;
-        @Inject Reddit reddit;
 
         public ViewHolderBase(FragmentActivity activity,
                 View itemView,
@@ -517,13 +516,16 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                 RecyclerCallback recyclerCallback,
                 CallbackYouTubeDestruction callbackYouTubeDestruction) {
             super(itemView);
-            this.callbackYouTubeDestruction = callbackYouTubeDestruction;
-            CustomApplication.getComponentMain().inject(this);
             this.activity = activity;
             this.eventListener = eventListener;
             this.source = source;
             this.disallowListener = disallowListener;
             this.recyclerCallback = recyclerCallback;
+            this.callbackYouTubeDestruction = callbackYouTubeDestruction;
+
+            ButterKnife.bind(this, itemView);
+            CustomApplication.getComponentMain().inject(this);
+
             initialize();
             initializeToolbar();
             initializeListeners();
@@ -542,17 +544,11 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                 setToolbarValues();
             }
 
-            toolbarActions.post(new Runnable() {
-                @Override
-                public void run() {
-                    UtilsAnimation.animateExpand(layoutContainerExpand,
-                            getRatio(), null);
-                }
-            });
+            toolbarActions.post(() -> UtilsAnimation.animateExpand(layoutContainerExpand,
+                    getRatio(), null));
         }
 
         public void showToolbarActionsInstant() {
-
             if (!toolbarActions.isShown()) {
                 setToolbarValues();
             }
@@ -567,7 +563,6 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         }
 
         private void setToolbarValues() {
-
             addToHistory();
             setVoteColors();
 
@@ -598,55 +593,25 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         }
 
         protected void initialize() {
-
+            Context context = itemView.getContext();
             resources = itemView.getResources();
-            preferences = PreferenceManager.getDefaultSharedPreferences(itemView.getContext());
+            preferences = PreferenceManager.getDefaultSharedPreferences(context);
 
-            TypedArray typedArray = itemView.getContext().getTheme().obtainStyledAttributes(
+            TypedArray typedArray = context.getTheme().obtainStyledAttributes(
                     new int[]{android.R.attr.textColorPrimary, android.R.attr.textColorSecondary, R.attr.colorAlert, R.attr.colorAccent, R.attr.colorIconFilter});
             colorTextPrimaryDefault = typedArray.getColor(0,
-                    resources.getColor(R.color.darkThemeTextColor));
+                    getColor(R.color.darkThemeTextColor));
             colorTextSecondaryDefault = typedArray.getColor(1,
-                    resources.getColor(R.color.darkThemeTextColorMuted));
-            colorTextAlertDefault = typedArray.getColor(2, resources.getColor(R.color.textColorAlert));
-            colorAccent = typedArray.getColor(3, resources.getColor(R.color.colorAccent));
+                    getColor(R.color.darkThemeTextColorMuted));
+            colorTextAlertDefault = typedArray.getColor(2, getColor(R.color.textColorAlert));
+            colorAccent = typedArray.getColor(3, getColor(R.color.colorAccent));
             int colorIconFilter = typedArray.getColor(4, 0xFFFFFFFF);
             typedArray.recycle();
-            colorPositive = resources.getColor(R.color.positiveScore);
-            colorNegative = resources.getColor(R.color.negativeScore);
 
-            progressImage = (ProgressBar) itemView.findViewById(R.id.progress_image);
-            imagePlay = (ImageView) itemView.findViewById(R.id.image_play);
-            frameFull = (FrameLayout) itemView.findViewById(R.id.frame_full);
-            viewPagerFull = (ViewPager) itemView.findViewById(R.id.view_pager_full);
-            imageFull = (ImageViewZoom) itemView.findViewById(R.id.image_full);
-            imageThumbnail = (ImageView) itemView.findViewById(R.id.image_thumbnail);
-            viewMargin = itemView.findViewById(R.id.view_margin);
-            buttonComments = (ImageButton) itemView.findViewById(R.id.button_comments);
-            textThreadFlair = (TextView) itemView.findViewById(R.id.text_thread_flair);
-            textThreadTitle = (TextView) itemView.findViewById(R.id.text_thread_title);
-            textThreadInfo = (TextView) itemView.findViewById(R.id.text_thread_info);
-            textThreadSelf = (TextView) itemView.findViewById(R.id.text_thread_self);
-            textHidden = (TextView) itemView.findViewById(R.id.text_hidden);
-            layoutContainerExpand = (RelativeLayout) itemView.findViewById(
-                    R.id.layout_container_expand);
-            layoutContainerReply = (RelativeLayout) itemView.findViewById(
-                    R.id.layout_container_reply);
-            editTextReply = (EditText) itemView.findViewById(R.id.edit_text_reply);
-            textUsername = (TextView) itemView.findViewById(R.id.text_username);
-            buttonSendReply = (Button) itemView.findViewById(R.id.button_send_reply);
-            buttonReplyEditor = (ImageButton) itemView.findViewById(R.id.button_reply_editor);
-            layoutYouTube = (ViewGroup) itemView.findViewById(R.id.layout_youtube);
-            viewOverlay = itemView.findViewById(R.id.view_overlay);
+            colorPositive = getColor(R.color.positiveScore);
+            colorNegative = getColor(R.color.negativeScore);
 
-            toolbarItemWidth = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 48,
-                    resources.getDisplayMetrics());
-            titleMargin = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 16,
-                    resources.getDisplayMetrics());
-
-            drawableDefault = resources.getDrawable(
-                    R.drawable.ic_web_white_48dp);
-            mediaController = new MediaController(itemView.getContext());
+            mediaController = new MediaController(context);
             adapterAlbum = new AdapterAlbum(recyclerCallback.getRequestManager(), disallowListener,
                     (title, fileName, url) -> eventListener.downloadImage(title, fileName, url),
                     colorFilterMenuItem);
@@ -666,27 +631,20 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             });
 
             colorFilterIconDefault = new CustomColorFilter(colorIconFilter, PorterDuff.Mode.MULTIPLY);
-            colorFilterIconLight = new CustomColorFilter(resources.getColor(R.color.darkThemeIconFilter), PorterDuff.Mode.MULTIPLY);
-            colorFilterIconDark = new CustomColorFilter(resources.getColor(R.color.lightThemeIconFilter), PorterDuff.Mode.MULTIPLY);
+            colorFilterIconLight = new CustomColorFilter(getColor(R.color.darkThemeIconFilter), PorterDuff.Mode.MULTIPLY);
+            colorFilterIconDark = new CustomColorFilter(getColor(R.color.lightThemeIconFilter), PorterDuff.Mode.MULTIPLY);
             colorFilterMenuItem = colorFilterIconDefault;
             colorFilterPositive = new PorterDuffColorFilter(colorPositive,
                     PorterDuff.Mode.MULTIPLY);
             colorFilterNegative = new PorterDuffColorFilter(colorNegative,
                     PorterDuff.Mode.MULTIPLY);
             colorFilterSave = new PorterDuffColorFilter(colorAccent, PorterDuff.Mode.MULTIPLY);
-
-            youTubeViewId = View.generateViewId();
         }
 
         protected void initializeListeners() {
-
-            buttonComments.setOnClickListener(this);
-            buttonSendReply.setOnClickListener(this);
-            imageThumbnail.setOnClickListener(this);
-            textThreadSelf.setOnClickListener(this);
             textThreadSelf.setMovementMethod(LinkMovementMethod.getInstance());
 
-            final GestureDetectorCompat gestureDetector = new GestureDetectorCompat(itemView.getContext(), new GestureDetector.SimpleOnGestureListener() {
+            gestureDetectorDoubleTap = new GestureDetectorCompat(itemView.getContext(), new GestureDetector.SimpleOnGestureListener() {
 
                 @Override
                 public boolean onDoubleTap(MotionEvent e) {
@@ -707,18 +665,6 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                 }
 
             });
-
-            View.OnTouchListener onTouchListener = new View.OnTouchListener() {
-                @Override
-                public boolean onTouch(View v, MotionEvent event) {
-                    return gestureDetector.onTouchEvent(event);
-                }
-            };
-
-            // setClickable is needed otherwise we can't intercept touch events
-            itemView.setClickable(true);
-            itemView.setOnTouchListener(onTouchListener);
-            toolbarActions.setOnTouchListener(onTouchListener);
 
             imageFull.setOnTouchListener(new OnTouchListenerDisallow(disallowListener) {
                 @Override
@@ -855,15 +801,21 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                     }
                 }
             });
-            buttonReplyEditor.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    eventListener.showReplyEditor(link);
-                }
-            });
+        }
+
+        @OnTouch({R.id.layout_root, R.id.toolbar_actions})
+        protected boolean onDoubleTapEvent(MotionEvent event) {
+            return gestureDetectorDoubleTap.onTouchEvent(event);
         }
 
         @Override
+        @OnClick({
+                R.id.button_comments,
+                R.id.button_reply_editor,
+                R.id.image_thumbnail,
+                R.id.button_send_reply,
+                R.id.text_thread_self
+        })
         public void onClick(View v) {
             switch (v.getId()) {
                 case R.id.button_comments:
@@ -879,7 +831,10 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                         inputManager.hideSoftInputFromWindow(itemView.getWindowToken(), 0);
                     }
                     break;
-                default:
+                case R.id.button_reply_editor:
+                    eventListener.showReplyEditor(link);
+                    break;
+                case R.id.text_thread_self:
                     expandToolbarActions();
                     break;
             }
@@ -896,8 +851,6 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
         }
 
         protected void initializeToolbar() {
-
-            toolbarActions = (Toolbar) itemView.findViewById(R.id.toolbar_actions);
             toolbarActions.inflateMenu(R.menu.menu_link);
             toolbarActions.setOnMenuItemClickListener(this);
 
@@ -1020,24 +973,18 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                     new AlertDialog.Builder(itemView.getContext())
                             .setView(viewDialog)
                             .setTitle(R.string.item_report)
-                            .setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialog, int which) {
-                                    eventListener
-                                            .report(link, "other", editText.getText().toString());
-                                }
+                            .setPositiveButton(R.string.ok, (dialog, which) -> {
+                                eventListener.report(link, "other", editText.getText().toString());
                             })
-                            .setNegativeButton(R.string.cancel,
-                                    new DialogInterface.OnClickListener() {
-                                        @Override
-                                        public void onClick(DialogInterface dialog, int which) {
-
-                                        }
-                                    })
+                            .setNegativeButton(R.string.cancel, (dialog, which) -> {})
                             .show();
                     break;
             }
             return true;
+        }
+
+        public int getColor(@ColorRes int colorRes) {
+            return ContextCompat.getColor(itemView.getContext(), colorRes);
         }
 
         protected void scrollToSelf() {
@@ -1050,11 +997,8 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
 
             new AlertDialog.Builder(itemView.getContext())
                     .setMessage(resources.getString(R.string.report, title, author, reason))
-                    .setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            eventListener.report(link, reason, null);
-                        }
+                    .setPositiveButton(R.string.ok, (dialog, which) -> {
+                        eventListener.report(link, reason, null);
                     })
                     .setNegativeButton(R.string.cancel, null)
                     .show();
@@ -1078,12 +1022,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                 inputManager.toggleSoftInput(InputMethodManager.SHOW_FORCED, 0);
                 editTextReply.setText(link.getReplyText());
                 editTextReply.clearFocus();
-                editTextReply.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        editTextReply.requestFocus();
-                    }
-                });
+                editTextReply.post(() -> editTextReply.requestFocus());
             }
         }
 
@@ -1141,12 +1080,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                 }
             }
 
-            itemView.post(new Runnable() {
-                @Override
-                public void run() {
-                    eventListener.onClickComments(link, ViewHolderBase.this, source);
-                }
-            });
+            itemView.post(() -> eventListener.onClickComments(link, ViewHolderBase.this, source));
         }
 
         /**
@@ -1389,18 +1323,12 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             progressImage.setVisibility(View.VISIBLE);
 
             subscription = reddit.loadGfycat(gfycatId)
-                    .flatMap(new Func1<String, Observable<JSONObject>>() {
-                        @Override
-                        public Observable<JSONObject> call(String response) {
-                            try {
-                                JSONObject jsonObject = new JSONObject(
-                                        response).getJSONObject(Reddit.GFYCAT_ITEM);
-
-                                return Observable.just(jsonObject);
-                            }
-                            catch (JSONException e) {
-                                return Observable.error(e);
-                            }
+                    .flatMap(response -> {
+                        try {
+                            return Observable.just(new JSONObject(response).getJSONObject(Reddit.GFYCAT_ITEM));
+                        }
+                        catch (JSONException e) {
+                            return Observable.error(e);
                         }
                     })
                     .subscribe(new FinalizingSubscriber<JSONObject>() {
@@ -1461,16 +1389,13 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
 
         private void loadGallery(String id, final Link link) {
             subscription = reddit.loadImgurGallery(id)
-                    .flatMap(new Func1<String, Observable<Album>>() {
-                        @Override
-                        public Observable<Album> call(String response) {
-                            try {
-                                return Observable.just(Album.fromJson(new JSONObject(response)
-                                        .getJSONObject("data")));
-                            }
-                            catch (JSONException e) {
-                                return Observable.error(e);
-                            }
+                    .flatMap(response -> {
+                        try {
+                            return Observable.just(Album.fromJson(new JSONObject(response)
+                                    .getJSONObject("data")));
+                        }
+                        catch (JSONException e) {
+                            return Observable.error(e);
                         }
                     })
                     .subscribe(new FinalizingSubscriber<Album>() {
@@ -1493,16 +1418,13 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
 
         private void loadAlbum(String id, final Link link) {
             subscription = reddit.loadImgurAlbum(id)
-                    .flatMap(new Func1<String, Observable<Album>>() {
-                        @Override
-                        public Observable<Album> call(String response) {
-                            try {
-                                return Observable.just(Album.fromJson(new JSONObject(response)
-                                        .getJSONObject("data")));
-                            }
-                            catch (JSONException e) {
-                                return Observable.error(e);
-                            }
+                    .flatMap(response -> {
+                        try {
+                            return Observable.just(Album.fromJson(new JSONObject(response)
+                                    .getJSONObject("data")));
+                        }
+                        catch (JSONException e) {
+                            return Observable.error(e);
                         }
                     })
                     .subscribe(new FinalizingSubscriber<Album>() {
@@ -1525,18 +1447,15 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
 
         private void loadGifv(String id) {
             reddit.loadImgurImage(id)
-                    .flatMap(new Func1<String, Observable<Image>>() {
-                        @Override
-                        public Observable<Image> call(String response) {
-                            try {
-                                return Observable.just(Image.fromJson(
-                                        new JSONObject(
-                                                response).getJSONObject(
-                                                "data")));
-                            }
-                            catch (JSONException e) {
-                                return Observable.error(e);
-                            }
+                    .flatMap(response -> {
+                        try {
+                            return Observable.just(Image.fromJson(
+                                    new JSONObject(
+                                            response).getJSONObject(
+                                            "data")));
+                        }
+                        catch (JSONException e) {
+                            return Observable.error(e);
                         }
                     })
                     .subscribe(new FinalizingSubscriber<Image>() {
@@ -1572,20 +1491,17 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                 surfaceVideo = new SurfaceView(itemView.getContext());
                 frameFull.addView(surfaceVideo, frameFull.getChildCount() - 1);
 
-                surfaceVideo.setOnTouchListener(new View.OnTouchListener() {
-                    @Override
-                    public boolean onTouch(View v, MotionEvent event) {
-                        // TODO: Use custom MediaController
-                        if (MotionEventCompat.getActionMasked(event) == MotionEvent.ACTION_DOWN) {
-                            if (mediaController.isShowing()) {
-                                mediaController.hide();
-                            }
-                            else {
-                                mediaController.show();
-                            }
+                surfaceVideo.setOnTouchListener((v, event) -> {
+                    // TODO: Use custom MediaController
+                    if (MotionEventCompat.getActionMasked(event) == MotionEvent.ACTION_DOWN) {
+                        if (mediaController.isShowing()) {
+                            mediaController.hide();
                         }
-                        return true;
+                        else {
+                            mediaController.show();
+                        }
                     }
+                    return true;
                 });
                 mediaController.setAnchorView(surfaceVideo);
             }
@@ -1623,13 +1539,9 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
                                         YouTubePlayer.FULLSCREEN_FLAG_CONTROL_SYSTEM_UI);
                                 youTubePlayer1.setManageAudioFocus(false);
                                 youTubePlayer1.setOnFullscreenListener(
-                                        new YouTubePlayer.OnFullscreenListener() {
-                                            @Override
-                                            public void onFullscreen(boolean fullscreen) {
-                                                Log.d(TAG, "fullscreen: " + fullscreen);
-                                                isYouTubeFullscreen = fullscreen;
-                                                youTubePlayer1.setFullscreen(fullscreen);
-                                            }
+                                        fullscreen -> {
+                                            isYouTubeFullscreen = fullscreen;
+                                            youTubePlayer1.setFullscreen(fullscreen);
                                         });
                                 youTubePlayer1.setPlayerStateChangeListener(new SimplePlayerStateChangeListener() {
                                     @Override
@@ -1680,12 +1592,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
 
             syncSaveIcon();
 
-            toolbarActions.post(new Runnable() {
-                @Override
-                public void run() {
-                    calculateVisibleToolbarItems(itemView.getWidth());
-                }
-            });
+            toolbarActions.post(() -> calculateVisibleToolbarItems(itemView.getWidth()));
         }
 
         public void calculateVisibleToolbarItems(int width) {
@@ -1867,19 +1774,11 @@ public abstract class AdapterLink extends RecyclerView.Adapter<RecyclerView.View
             bufferPercentage = 0;
             mediaPlayer = new MediaPlayer();
             mediaPlayer.setLooping(true);
-            mediaPlayer.setOnBufferingUpdateListener(new MediaPlayer.OnBufferingUpdateListener() {
-                @Override
-                public void onBufferingUpdate(MediaPlayer mp, int percent) {
-                    bufferPercentage = percent;
-                }
-            });
-            mediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
-                @Override
-                public void onPrepared(MediaPlayer mp) {
-                    mediaController.hide();
-                    surfaceHolder.setFixedSize(mp.getVideoWidth(), mp.getVideoHeight());
-                    mp.start();
-                }
+            mediaPlayer.setOnBufferingUpdateListener((mp, percent) -> bufferPercentage = percent);
+            mediaPlayer.setOnPreparedListener(mp -> {
+                mediaController.hide();
+                surfaceHolder.setFixedSize(mp.getVideoWidth(), mp.getVideoHeight());
+                mp.start();
             });
             mediaPlayer.setDisplay(surfaceHolder);
 
