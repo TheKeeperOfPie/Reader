@@ -156,7 +156,7 @@ public class ActivityMain extends AppCompatActivity
 
     private Handler handler = new Handler();
     private Account accountUser;
-    private AdapterLink.ViewHolderBase.EventListener eventListenerBase;
+    private AdapterLink.ViewHolderLink.EventListener eventListenerBase;
     private AdapterCommentList.ViewHolderComment.EventListener eventListenerComment;
     private final Runnable runnableInbox = new Runnable() {
         @Override
@@ -307,18 +307,18 @@ public class ActivityMain extends AppCompatActivity
 
         eventListenerBase = new EventListenerBase(componentActivity) {
             @Override
-            public void onClickComments(Link link, AdapterLink.ViewHolderBase viewHolderBase, Source source) {
+            public void onClickComments(Link link, AdapterLink.ViewHolderLink viewHolderLink, Source source) {
                 controllerCommentsTop
                         .setLink(link, source);
 
-                int color = viewHolderBase.getBackgroundColor();
+                int color = viewHolderLink.getBackgroundColor();
 
                 FragmentBase fragment = (FragmentBase) getSupportFragmentManager().findFragmentById(R.id.frame_fragment);
                 fragment.onWindowTransitionStart();
 
                 FragmentComments fragmentComments = FragmentComments
-                        .newInstance(viewHolderBase, color);
-                fragmentComments.setFragmentToHide(fragment, viewHolderBase.itemView);
+                        .newInstance(viewHolderLink, color);
+                fragmentComments.setFragmentToHide(fragment, viewHolderLink.itemView);
 
                 getSupportFragmentManager().beginTransaction()
                         .add(R.id.frame_fragment, fragmentComments,
@@ -1380,7 +1380,7 @@ public class ActivityMain extends AppCompatActivity
     }
 
     @Override
-    public AdapterLink.ViewHolderBase.EventListener getEventListenerBase() {
+    public AdapterLink.ViewHolderLink.EventListener getEventListenerBase() {
         return eventListenerBase;
     }
 

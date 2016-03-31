@@ -6,7 +6,6 @@ package com.winsonchiu.reader.search;
 
 import android.content.Context;
 import android.support.v4.app.FragmentActivity;
-import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
@@ -17,6 +16,7 @@ import com.winsonchiu.reader.links.AdapterLinkList;
 import com.winsonchiu.reader.links.ControllerLinksBase;
 import com.winsonchiu.reader.utils.DisallowListener;
 import com.winsonchiu.reader.utils.RecyclerCallback;
+import com.winsonchiu.reader.utils.ViewHolderBase;
 
 /**
  * Created by TheKeeperOfPie on 6/21/2015.
@@ -28,7 +28,7 @@ public class AdapterSearchLinkList extends AdapterLinkList {
     public AdapterSearchLinkList(FragmentActivity activity,
             ControllerLinksBase controllerLinks,
             ViewHolderHeader.EventListener eventListenerHeader,
-            ViewHolderBase.EventListener eventListenerBase,
+            ViewHolderLink.EventListener eventListenerBase,
             Source source,
             DisallowListener disallowListener,
             RecyclerCallback recyclerCallback) {
@@ -38,9 +38,9 @@ public class AdapterSearchLinkList extends AdapterLinkList {
     }
 
     @Override
-    public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup viewGroup, int viewType) {
+    public ViewHolderBase onCreateViewHolder(ViewGroup viewGroup, int viewType) {
 
-        if (viewType == VIEW_LINK_HEADER) {
+        if (viewType == TYPE_HEADER) {
             return super.onCreateViewHolder(viewGroup, viewType);
         }
 

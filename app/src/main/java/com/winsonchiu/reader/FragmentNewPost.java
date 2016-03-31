@@ -47,6 +47,7 @@ import com.winsonchiu.reader.data.reddit.Reddit;
 import com.winsonchiu.reader.links.ControllerLinks;
 import com.winsonchiu.reader.rx.FinalizingSubscriber;
 import com.winsonchiu.reader.utils.UtilsColor;
+import com.winsonchiu.reader.utils.UtilsReddit;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -190,7 +191,7 @@ public class FragmentNewPost extends FragmentBase implements Toolbar.OnMenuItemC
             textSubmit.setVisibility(View.GONE);
         }
         else {
-            textSubmit.setText(Reddit.getFormattedHtml(submitTextHtml));
+            textSubmit.setText(UtilsReddit.getFormattedHtml(submitTextHtml));
         }
         textSubmit.setMovementMethod(LinkMovementMethod.getInstance());
 

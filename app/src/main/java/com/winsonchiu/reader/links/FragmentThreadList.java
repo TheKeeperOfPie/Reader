@@ -77,6 +77,7 @@ import com.winsonchiu.reader.utils.RecyclerCallback;
 import com.winsonchiu.reader.utils.ScrollAwareFloatingActionButtonBehavior;
 import com.winsonchiu.reader.utils.UtilsAnimation;
 import com.winsonchiu.reader.utils.UtilsColor;
+import com.winsonchiu.reader.utils.UtilsReddit;
 
 import javax.inject.Inject;
 
@@ -693,7 +694,7 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
                 }
 
                 drawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED, GravityCompat.END);
-                textSidebar.setText(Reddit.getFormattedHtml(subreddit.getDescriptionHtml()));
+                textSidebar.setText(UtilsReddit.getFormattedHtml(subreddit.getDescriptionHtml()));
                 drawerLayout.setDrawerLockMode(
                         DrawerLayout.LOCK_MODE_UNLOCKED);
                 if (subreddit.isUserIsSubscriber()) {

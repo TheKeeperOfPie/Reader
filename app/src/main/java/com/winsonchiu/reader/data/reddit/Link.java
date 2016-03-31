@@ -13,6 +13,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.winsonchiu.reader.dagger.components.ComponentStatic;
 import com.winsonchiu.reader.data.imgur.Album;
 import com.winsonchiu.reader.utils.UtilsJson;
+import com.winsonchiu.reader.utils.UtilsReddit;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -143,7 +144,7 @@ public class Link extends Replyable implements Parcelable {
         link.setScore(UtilsJson.getInt(nodeData.get("score")));
         link.setSelfText(Html.fromHtml(UtilsJson.getString(
                 nodeData.get("selftext")).replaceAll("\n", "<br>")));
-        link.setSelfTextHtml(Reddit.getFormattedHtml(UtilsJson.getString(
+        link.setSelfTextHtml(UtilsReddit.getFormattedHtml(UtilsJson.getString(
                 nodeData.get("selftext_html"))));
         link.setSubreddit(UtilsJson.getString(nodeData.get("subreddit")));
         link.setSubredditId(UtilsJson.getString(nodeData.get("subreddit_id")));

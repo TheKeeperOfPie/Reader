@@ -51,7 +51,7 @@ public interface ComponentActivity {
     void inject(FragmentInbox target);
     void inject(FragmentHistory target);
     void inject(AdapterLinkHeader target);
-    void inject(AdapterLink.ViewHolderBase target);
+    void inject(AdapterLink.ViewHolderLink target);
     void inject(FragmentWeb target);
     void inject(EventListenerBase target);
 }

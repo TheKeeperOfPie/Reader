@@ -5,7 +5,7 @@
 
 <resources>
 
-    <declare-styleable name="ViewHolderBase">
+    <declare-styleable name="ViewHolderLink">
         <attr name="colorScreenBackground" format="color"/>
         <attr name="colorRowBackground" format="color"/>
         <attr name="colorRowOverlay" format="color"/>

@@ -47,6 +47,7 @@ import com.winsonchiu.reader.profile.ControllerProfile;
 import com.winsonchiu.reader.utils.DisallowListener;
 import com.winsonchiu.reader.utils.RecyclerCallback;
 import com.winsonchiu.reader.utils.UtilsAnimation;
+import com.winsonchiu.reader.utils.ViewHolderBase;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -59,7 +60,7 @@ public class AdapterInbox extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
     private static final String TAG = AdapterInbox.class.getCanonicalName();
 
     private ControllerInbox controllerInbox;
-    private AdapterLink.ViewHolderBase.EventListener eventListenerBase;
+    private AdapterLink.ViewHolderLink.EventListener eventListenerBase;
     private AdapterCommentList.ViewHolderComment.EventListenerComment eventListenerComment;
     private AdapterCommentList.ViewHolderComment.EventListener eventListener;
     private DisallowListener disallowListener;
@@ -68,7 +69,7 @@ public class AdapterInbox extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
     private List<RecyclerView.ViewHolder> viewHolders;
 
     public AdapterInbox(ControllerInbox controllerInbox,
-                        AdapterLink.ViewHolderBase.EventListener eventListenerBase,
+                        AdapterLink.ViewHolderLink.EventListener eventListenerBase,
                         AdapterCommentList.ViewHolderComment.EventListenerComment eventListenerComment,
                         AdapterCommentList.ViewHolderComment.EventListener eventListener,
                         DisallowListener disallowListener,
@@ -152,7 +153,7 @@ public class AdapterInbox extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
         }
     }
 
-    protected static class ViewHolderMessage extends RecyclerView.ViewHolder
+    protected static class ViewHolderMessage extends ViewHolderBase
             implements Toolbar.OnMenuItemClickListener {
 
         protected Message message;
@@ -166,7 +167,7 @@ public class AdapterInbox extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
         protected Button buttonSendReply;
         protected ImageButton buttonReplyEditor;
         protected Toolbar toolbarActions;
-        protected AdapterLink.ViewHolderBase.EventListener eventListener;
+        protected AdapterLink.ViewHolderLink.EventListener eventListener;
         protected RecyclerCallback recyclerCallback;
         private View.OnClickListener clickListenerLink;
 
@@ -174,7 +175,7 @@ public class AdapterInbox extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
         protected int toolbarItemWidth;
         private Resources resources;
 
-        public ViewHolderMessage(View itemView, final AdapterLink.ViewHolderBase.EventListener listener, RecyclerCallback recyclerCallback) {
+        public ViewHolderMessage(View itemView, final AdapterLink.ViewHolderLink.EventListener listener, RecyclerCallback recyclerCallback) {
             super(itemView);
             this.eventListener = listener;
             this.recyclerCallback = recyclerCallback;

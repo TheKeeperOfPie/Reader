@@ -4,8 +4,16 @@
 
 package com.winsonchiu.reader.utils;
 
+import android.content.Intent;
 import android.support.annotation.Nullable;
+import android.text.Html;
+import android.text.SpannedString;
 import android.text.TextUtils;
+
+import com.winsonchiu.reader.data.reddit.Link;
+import com.winsonchiu.reader.data.reddit.Reddit;
+import com.winsonchiu.reader.data.reddit.Subreddit;
+import com.winsonchiu.reader.data.reddit.TagHandlerReddit;
 
 /**
  * Created by TheKeeperOfPie on 2/6/2016.
@@ -13,7 +21,7 @@ import android.text.TextUtils;
 public class UtilsReddit {
 
     @Nullable
-    public static String parseRawSubredditString(String input) {
+    public static String parseRawSubredditString(@Nullable String input) {
         if (TextUtils.isEmpty(input)) {
             return null;
         }
@@ -46,5 +54,53 @@ public class UtilsReddit {
         else {
             return "/r/" + subreddit + "/";
         }
+    }
+
+    public static boolean isAll(Subreddit subreddit) {
+        return "/r/all/".equalsIgnoreCase(subreddit.getUrl());
+    }
+
+    public static boolean isMultiple(Subreddit subreddit) {
+        return subreddit.getUrl().contains("+");
+    }
+
+    public static CharSequence getFormattedHtml(String html) {
+
+        if (TextUtils.isEmpty(html)) {
+            return new SpannedString("");
+        }
+
+        html = html.replaceAll("\n", "<br>");
+
+        CharSequence sequence = Html.fromHtml(Html.fromHtml(html).toString(), null, new TagHandlerReddit());
+
+        // Trims leading and trailing whitespace
+        int start = 0;
+        int end = sequence.length();
+        while (start < end && Character.isWhitespace(sequence.charAt(start))) {
+            start++;
+        }
+        while (end > start && Character.isWhitespace(sequence.charAt(end - 1))) {
+            end--;
+        }
+
+
+        return sequence.subSequence(start, end);
+    }
+
+    public static Intent getShareIntentLinkSource(Link link) {
+        Intent intent = new Intent(Intent.ACTION_SEND);
+        intent.setType("text/plain");
+        intent.putExtra(Intent.EXTRA_SUBJECT, link.getTitle());
+        intent.putExtra(Intent.EXTRA_TEXT, link.getUrl());
+        return intent;
+    }
+
+    public static Intent getShareIntentLinkComments(Link link) {
+        Intent intent = new Intent(Intent.ACTION_SEND);
+        intent.setType("text/plain");
+        intent.putExtra(Intent.EXTRA_SUBJECT, link.getTitle());
+        intent.putExtra(Intent.EXTRA_TEXT, Reddit.BASE_URL + link.getPermalink());
+        return intent;
     }
 }

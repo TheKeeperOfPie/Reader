@@ -65,8 +65,8 @@ import com.winsonchiu.reader.history.Historian;
 import com.winsonchiu.reader.links.AdapterLink;
 import com.winsonchiu.reader.links.ControllerLinks;
 import com.winsonchiu.reader.profile.ControllerProfile;
+import com.winsonchiu.reader.rx.ObserverFinish;
 import com.winsonchiu.reader.search.ControllerSearch;
-import com.winsonchiu.reader.rx.FinalizingSubscriber;
 import com.winsonchiu.reader.utils.RecyclerFragmentPagerAdapter;
 import com.winsonchiu.reader.utils.ScrollAwareFloatingActionButtonBehavior;
 import com.winsonchiu.reader.utils.UtilsAnimation;
@@ -176,7 +176,7 @@ public class FragmentComments extends FragmentBase
         return fragment;
     }
 
-    public static FragmentComments newInstance(AdapterLink.ViewHolderBase viewHolder,
+    public static FragmentComments newInstance(AdapterLink.ViewHolderLink viewHolder,
             int colorLink) {
         FragmentComments fragment = new FragmentComments();
         Bundle args = new Bundle();
@@ -1531,9 +1531,9 @@ public class FragmentComments extends FragmentBase
 
                         if (position >= adapterComments.getCount() - 3) {
                             controllerLinks.loadMoreLinks()
-                                    .subscribe(new FinalizingSubscriber<Listing>() {
+                                    .subscribe(new ObserverFinish<Listing>() {
                                         @Override
-                                        public void completed() {
+                                        public void onFinish() {
                                             itemCount = controllerLinks.sizeLinks();
                                             adapterComments.notifyDataSetChanged();
                                         }

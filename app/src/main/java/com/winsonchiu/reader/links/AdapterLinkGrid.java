@@ -12,7 +12,6 @@ import android.graphics.drawable.Drawable;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.graphics.ColorUtils;
 import android.support.v7.graphics.Palette;
-import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.StaggeredGridLayoutManager;
 import android.text.TextUtils;
 import android.text.util.Linkify;
@@ -40,6 +39,7 @@ import com.winsonchiu.reader.utils.RecyclerCallback;
 import com.winsonchiu.reader.utils.UtilsAnimation;
 import com.winsonchiu.reader.utils.UtilsColor;
 import com.winsonchiu.reader.utils.UtilsImage;
+import com.winsonchiu.reader.utils.ViewHolderBase;
 
 import java.util.ArrayList;
 
@@ -56,7 +56,7 @@ public class AdapterLinkGrid extends AdapterLink {
     public AdapterLinkGrid(FragmentActivity activity,
             ControllerLinksBase controllerLinks,
             ViewHolderHeader.EventListener eventListenerHeader,
-            ViewHolderBase.EventListener eventListenerBase,
+            ViewHolderLink.EventListener eventListenerBase,
             DisallowListener disallowListener,
             RecyclerCallback recyclerCallback) {
         super(activity, eventListenerHeader, eventListenerBase, disallowListener, recyclerCallback);
@@ -96,9 +96,9 @@ public class AdapterLinkGrid extends AdapterLink {
     }
 
     @Override
-    public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup viewGroup, int viewType) {
+    public ViewHolderBase onCreateViewHolder(ViewGroup viewGroup, int viewType) {
 
-        if (viewType == VIEW_LINK_HEADER) {
+        if (viewType == TYPE_HEADER) {
             return new ViewHolderHeader(LayoutInflater.from(viewGroup.getContext())
                     .inflate(R.layout.header_subreddit, viewGroup, false), eventListenerHeader);
         }
@@ -115,23 +115,23 @@ public class AdapterLinkGrid extends AdapterLink {
     }
 
     @Override
-    public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
+    public void onBindViewHolder(ViewHolderBase holder, int position) {
 
         super.onBindViewHolder(holder, position);
 
         switch (holder.getItemViewType()) {
-            case VIEW_LINK_HEADER:
+            case TYPE_HEADER:
                 ViewHolderHeader viewHolderHeader = (ViewHolderHeader) holder;
                 viewHolderHeader.onBind(controllerLinks.getSubreddit());
                 break;
-            case VIEW_LINK:
+            case TYPE_LINK:
                 ViewHolder viewHolder = (ViewHolder) holder;
                 viewHolder.onBind(controllerLinks.getLink(position), controllerLinks.showSubreddit());
                 break;
         }
     }
 
-    public static class ViewHolder extends AdapterLink.ViewHolderBase {
+    public static class ViewHolder extends ViewHolderLink {
 
         private final int thumbnailSize;
         protected ImageView imageSquare;
@@ -231,8 +231,8 @@ public class AdapterLinkGrid extends AdapterLink {
                     loadSelfPostThumbnail(link);
                 }
             }
-            else if (!preferences.getBoolean(AppSettings.PREF_SHOW_THUMBNAILS, true) ||
-                    (link.isOver18() && !preferences
+            else if (!sharedPreferences.getBoolean(AppSettings.PREF_SHOW_THUMBNAILS, true) ||
+                    (link.isOver18() && !sharedPreferences
                             .getBoolean(AppSettings.PREF_NSFW_THUMBNAILS, true))) {
                 imageSquare.setVisibility(View.GONE);
                 imageThumbnail.setColorFilter(colorFilterIconDefault);
@@ -285,14 +285,14 @@ public class AdapterLinkGrid extends AdapterLink {
         }
 
         @Override
-        protected void expandToolbarActions() {
-            super.expandToolbarActions();
+        protected void toggleToolbarActions() {
+            super.toggleToolbarActions();
             setOverflowColorFilter();
         }
 
         private int getAdjustedThumbnailSize() {
             float modifier = Float.parseFloat(
-                    preferences.getString(AppSettings.PREF_GRID_THUMBNAIL_SIZE, "0.75"));
+                    sharedPreferences.getString(AppSettings.PREF_GRID_THUMBNAIL_SIZE, "0.75"));
             if (modifier > 0) {
                 return (int) (thumbnailSize * modifier);
             }

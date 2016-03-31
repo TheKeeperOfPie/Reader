@@ -16,6 +16,11 @@ public class CustomColorFilter extends PorterDuffColorFilter {
 
     private final int color;
 
+    public CustomColorFilter(int color) {
+        super(color, PorterDuff.Mode.SRC_IN);
+        this.color = color;
+    }
+
     public CustomColorFilter(int color, PorterDuff.Mode mode) {
         super(color, mode);
         this.color = color;

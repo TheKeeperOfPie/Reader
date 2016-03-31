@@ -5,7 +5,6 @@
 package com.winsonchiu.reader.history;
 
 import android.support.v4.app.FragmentActivity;
-import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.ViewGroup;
 
@@ -15,6 +14,7 @@ import com.winsonchiu.reader.links.AdapterLinkGrid;
 import com.winsonchiu.reader.links.ControllerLinksBase;
 import com.winsonchiu.reader.utils.DisallowListener;
 import com.winsonchiu.reader.utils.RecyclerCallback;
+import com.winsonchiu.reader.utils.ViewHolderBase;
 
 /**
  * Created by TheKeeperOfPie on 6/21/2015.
@@ -24,7 +24,7 @@ public class AdapterHistoryLinkGrid extends AdapterLinkGrid {
     public AdapterHistoryLinkGrid(FragmentActivity activity,
                                   ControllerLinksBase controllerLinks,
                                   ViewHolderHeader.EventListener eventListenerHeader,
-                                  ViewHolderBase.EventListener eventListenerBase,
+                                  ViewHolderLink.EventListener eventListenerBase,
                                   DisallowListener disallowListener,
                                   RecyclerCallback recyclerCallback) {
         super(activity, controllerLinks, eventListenerHeader, eventListenerBase, disallowListener,
@@ -32,9 +32,9 @@ public class AdapterHistoryLinkGrid extends AdapterLinkGrid {
     }
 
     @Override
-    public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup viewGroup, int viewType) {
+    public ViewHolderBase onCreateViewHolder(ViewGroup viewGroup, int viewType) {
 
-        if (viewType == VIEW_LINK_HEADER) {
+        if (viewType == TYPE_HEADER) {
             return super.onCreateViewHolder(viewGroup, viewType);
         }
 

@@ -41,7 +41,7 @@ public interface ComponentMain {
     ComponentActivity componentActivity();
 
     void inject(ActivityLogin target);
-    void inject(AdapterLink.ViewHolderBase target);
+    void inject(AdapterLink.ViewHolderLink target);
     void inject(FragmentBehavior target);
     void inject(ControllerComments target);
     void inject(ControllerCommentsTop target);

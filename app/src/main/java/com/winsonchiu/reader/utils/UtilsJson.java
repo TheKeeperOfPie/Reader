@@ -4,6 +4,8 @@
 
 package com.winsonchiu.reader.utils;
 
+import android.text.TextUtils;
+
 import com.fasterxml.jackson.databind.JsonNode;
 
 /**
@@ -14,7 +16,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 public class UtilsJson {
 
     public static String getString(JsonNode jsonNode) {
-        return jsonNode == null ? "" : jsonNode.asText();
+        return jsonNode == null || jsonNode.isNull() ? "" : jsonNode.asText();
     }
 
     public static int getInt(JsonNode jsonNode) {
@@ -29,4 +31,7 @@ public class UtilsJson {
         return jsonNode == null ? 0 : jsonNode.asLong();
     }
 
+    public static boolean isEmptyOrNullLiteral(String input) {
+        return TextUtils.isEmpty(input) || "null".equalsIgnoreCase(input);
+    }
 }

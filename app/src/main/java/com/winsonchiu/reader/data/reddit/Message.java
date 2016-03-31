@@ -9,6 +9,7 @@ import android.text.TextUtils;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.winsonchiu.reader.utils.UtilsJson;
+import com.winsonchiu.reader.utils.UtilsReddit;
 
 /**
  * Created by TheKeeperOfPie on 3/7/2015.
@@ -66,7 +67,7 @@ public class Message extends Replyable {
 
         message.setAuthor(UtilsJson.getString(nodeData.get("author")));
         message.setBody(UtilsJson.getString(nodeData.get("body")));
-        message.setBodyHtml(Reddit.getFormattedHtml(UtilsJson.getString(
+        message.setBodyHtml(UtilsReddit.getFormattedHtml(UtilsJson.getString(
                 nodeData.get("body_html"))));
         message.setContext(UtilsJson.getString(nodeData.get("context")));
         message.setDest(UtilsJson.getString(nodeData.get("dest")));

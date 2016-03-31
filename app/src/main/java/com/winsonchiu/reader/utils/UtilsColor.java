@@ -1,8 +1,15 @@
 package com.winsonchiu.reader.utils;
 
+import android.content.Context;
 import android.graphics.Color;
+import android.graphics.ColorFilter;
+import android.graphics.drawable.Drawable;
 import android.support.v4.util.LruCache;
 import android.support.v4.util.Pair;
+import android.util.TypedValue;
+import android.view.Menu;
+
+import com.winsonchiu.reader.R;
 
 /**
  * Created by TheKeeperOfPie on 8/10/2015.
@@ -56,6 +63,21 @@ public class UtilsColor {
 
     public static boolean showOnWhite(int color) {
         return UtilsColor.computeContrast(color, Color.WHITE) > CONTRAST_THRESHOLD;
+    }
+
+    public static int getColorIconFilter(Context context) {
+        TypedValue typedValue = new TypedValue();
+        context.getTheme().resolveAttribute(R.attr.colorIconFilter, typedValue, true);
+        return typedValue.data;
+    }
+
+    public static void tintMenu(Menu menu, ColorFilter colorFilter) {
+        for (int index = 0; index < menu.size(); index++) {
+            Drawable drawable = menu.getItem(index).getIcon();
+            if (drawable != null) {
+                drawable.mutate().setColorFilter(colorFilter);
+            }
+        }
     }
 
 }

@@ -41,7 +41,7 @@ import rx.functions.Func1;
 /**
  * Created by TheKeeperOfPie on 3/27/2016.
  */
-public abstract class EventListenerBase implements AdapterLink.ViewHolderBase.EventListener {
+public abstract class EventListenerBase implements AdapterLink.ViewHolderLink.EventListener {
 
     @Inject Context context;
     @Inject ControllerLinks controllerLinks;
@@ -171,8 +171,8 @@ public abstract class EventListenerBase implements AdapterLink.ViewHolderBase.Ev
     }
 
     @Override
-    public void voteLink(final AdapterLink.ViewHolderBase viewHolderBase, final Link link, int vote) {
-        final int position = viewHolderBase.getAdapterPosition();
+    public void voteLink(final AdapterLink.ViewHolderLink viewHolderLink, final Link link, int vote) {
+        final int position = viewHolderLink.getAdapterPosition();
 
         final int oldVote = link.getLikes();
         int newVote = 0;
@@ -187,8 +187,8 @@ public abstract class EventListenerBase implements AdapterLink.ViewHolderBase.Ev
 
         link.setScore(link.getScore() + newVote - link.getLikes());
         link.setLikes(newVote);
-        if (position == viewHolderBase.getAdapterPosition()) {
-            viewHolderBase.setVoteColors();
+        if (position == viewHolderLink.getAdapterPosition()) {
+            viewHolderLink.setVoteColors();
         }
         final int finalNewVote = newVote;
 
@@ -198,8 +198,8 @@ public abstract class EventListenerBase implements AdapterLink.ViewHolderBase.Ev
                     public void error(Throwable e) {
                         link.setScore(link.getScore() - finalNewVote);
                         link.setLikes(oldVote);
-                        if (position == viewHolderBase.getAdapterPosition()) {
-                            viewHolderBase.setVoteColors();
+                        if (position == viewHolderLink.getAdapterPosition()) {
+                            viewHolderLink.setVoteColors();
                         }
                         Toast.makeText(context, context.getString(R.string.error_voting), Toast.LENGTH_SHORT)
                                 .show();

@@ -16,6 +16,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.winsonchiu.reader.R;
+import com.winsonchiu.reader.utils.ViewHolderBase;
 
 /**
  * Created by TheKeeperOfPie on 7/2/2015.
@@ -54,7 +55,7 @@ public class AdapterHeaders extends RecyclerView.Adapter<AdapterHeaders.ViewHold
         return headers.length;
     }
 
-    public static class ViewHolder extends RecyclerView.ViewHolder {
+    public static class ViewHolder extends ViewHolderBase {
 
         protected EventListener eventListener;
         protected ImageView imageIcon;

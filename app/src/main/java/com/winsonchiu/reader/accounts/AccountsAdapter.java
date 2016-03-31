@@ -15,6 +15,7 @@ import android.widget.TextView;
 
 import com.winsonchiu.reader.R;
 import com.winsonchiu.reader.utils.CustomColorFilter;
+import com.winsonchiu.reader.utils.ViewHolderBase;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -27,7 +28,7 @@ import butterknife.OnClick;
 /**
  * Created by TheKeeperOfPie on 3/27/2016.
  */
-public class AccountsAdapter extends RecyclerView.Adapter<AccountsAdapter.ViewHolderBase> {
+public class AccountsAdapter extends RecyclerView.Adapter<AccountsAdapter.ViewHolder> {
 
     public static final String TAG = AccountsAdapter.class.getCanonicalName();
 
@@ -58,7 +59,7 @@ public class AccountsAdapter extends RecyclerView.Adapter<AccountsAdapter.ViewHo
     }
 
     @Override
-    public ViewHolderBase onCreateViewHolder(ViewGroup parent, int viewType) {
+    public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         switch (viewType) {
             case TYPE_ACCOUNT:
                 return new ViewHolderAccount(parent, colorFilterPrimary, listener);
@@ -72,7 +73,7 @@ public class AccountsAdapter extends RecyclerView.Adapter<AccountsAdapter.ViewHo
     }
 
     @Override
-    public void onBindViewHolder(ViewHolderBase holder, int position) {
+    public void onBindViewHolder(ViewHolder holder, int position) {
         switch (holder.getItemViewType()) {
             case TYPE_ACCOUNT:
                 holder.bindData(accounts.get(position));
@@ -94,7 +95,7 @@ public class AccountsAdapter extends RecyclerView.Adapter<AccountsAdapter.ViewHo
         notifyDataSetChanged();
     }
 
-    public static abstract class ViewHolderBase extends RecyclerView.ViewHolder {
+    public static abstract class ViewHolder extends ViewHolderBase {
 
         @Bind(R.id.layout_account) ViewGroup layoutAccount;
         @Bind(R.id.image_action) ImageView imageAction;
@@ -104,7 +105,7 @@ public class AccountsAdapter extends RecyclerView.Adapter<AccountsAdapter.ViewHo
         protected Listener listener;
         protected Account account;
 
-        public ViewHolderBase(ViewGroup parent, CustomColorFilter colorFilterPrimary, Listener listener) {
+        public ViewHolder(ViewGroup parent, CustomColorFilter colorFilterPrimary, Listener listener) {
             super(LayoutInflater.from(parent.getContext()).inflate(R.layout.row_account, parent, false));
             ButterKnife.bind(this, itemView);
 
@@ -118,7 +119,7 @@ public class AccountsAdapter extends RecyclerView.Adapter<AccountsAdapter.ViewHo
         }
     }
 
-    public static class ViewHolderAccount extends ViewHolderBase {
+    public static class ViewHolderAccount extends ViewHolder {
 
         public ViewHolderAccount(ViewGroup parent, CustomColorFilter colorFilterPrimary, final Listener listener) {
             super(parent, colorFilterPrimary, listener);
@@ -145,7 +146,7 @@ public class AccountsAdapter extends RecyclerView.Adapter<AccountsAdapter.ViewHo
         }
     }
 
-    public static class ViewHolderAdd extends ViewHolderBase {
+    public static class ViewHolderAdd extends ViewHolder {
 
         public ViewHolderAdd(ViewGroup parent, CustomColorFilter colorFilterPrimary, final Listener listener) {
             super(parent, colorFilterPrimary, listener);
@@ -162,7 +163,7 @@ public class AccountsAdapter extends RecyclerView.Adapter<AccountsAdapter.ViewHo
         }
     }
 
-    public static class ViewHolderLogout extends ViewHolderBase {
+    public static class ViewHolderLogout extends ViewHolder {
 
         public ViewHolderLogout(ViewGroup parent, CustomColorFilter colorFilterPrimary, final Listener listener) {
             super(parent, colorFilterPrimary, listener);

@@ -15,7 +15,7 @@ public interface FragmentListenerBase {
     void onNavigationBackClick();
     void openDrawer();
     Reddit getReddit();
-    AdapterLink.ViewHolderBase.EventListener getEventListenerBase();
+    AdapterLink.ViewHolderLink.EventListener getEventListenerBase();
     AdapterCommentList.ViewHolderComment.EventListener getEventListener();
     Theme getAppColorTheme();
     String getThemeBackgroundPrefString();

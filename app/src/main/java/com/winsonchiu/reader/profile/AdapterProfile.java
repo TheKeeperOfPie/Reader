@@ -28,6 +28,7 @@ import com.winsonchiu.reader.links.ControllerLinksBase;
 import com.winsonchiu.reader.utils.CallbackYouTubeDestruction;
 import com.winsonchiu.reader.utils.DisallowListener;
 import com.winsonchiu.reader.utils.RecyclerCallback;
+import com.winsonchiu.reader.utils.ViewHolderBase;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -42,7 +43,7 @@ public class AdapterProfile extends RecyclerView.Adapter<RecyclerView.ViewHolder
     private FragmentActivity activity;
     protected ControllerProfile controllerProfile;
     protected ControllerLinksBase controllerLinks;
-    private AdapterLink.ViewHolderBase.EventListener eventListenerBase;
+    private AdapterLink.ViewHolderLink.EventListener eventListenerBase;
     private AdapterCommentList.ViewHolderComment.EventListenerComment eventListenerComment;
     private final AdapterCommentList.ViewHolderComment.EventListener eventListener;
     private DisallowListener disallowListener;
@@ -53,7 +54,7 @@ public class AdapterProfile extends RecyclerView.Adapter<RecyclerView.ViewHolder
     public AdapterProfile(FragmentActivity activity,
             ControllerProfile controllerProfile,
             ControllerLinksBase controllerLinks,
-            AdapterLink.ViewHolderBase.EventListener eventListenerBase,
+            AdapterLink.ViewHolderLink.EventListener eventListenerBase,
             AdapterCommentList.ViewHolderComment.EventListenerComment eventListenerComment,
             AdapterCommentList.ViewHolderComment.EventListener eventListener,
             DisallowListener disallowListener,
@@ -103,7 +104,7 @@ public class AdapterProfile extends RecyclerView.Adapter<RecyclerView.ViewHolder
                 return new ViewHolderText(LayoutInflater.from(parent.getContext())
                         .inflate(R.layout.row_text, parent, false));
             case ControllerProfile.VIEW_TYPE_LINK:
-                AdapterLink.ViewHolderBase viewHolder = new AdapterLinkList.ViewHolder(
+                AdapterLink.ViewHolderLink viewHolder = new AdapterLinkList.ViewHolder(
                         activity,
                         LayoutInflater.from(parent.getContext())
                                 .inflate(R.layout.row_link, parent, false),
@@ -208,8 +209,8 @@ public class AdapterProfile extends RecyclerView.Adapter<RecyclerView.ViewHolder
     public void onViewRecycled(RecyclerView.ViewHolder holder) {
         super.onViewRecycled(holder);
 
-        if (holder instanceof AdapterLink.ViewHolderBase) {
-            ((AdapterLink.ViewHolderBase) holder).onRecycle();
+        if (holder instanceof AdapterLink.ViewHolderLink) {
+            ((AdapterLink.ViewHolderLink) holder).onRecycle();
         }
 
         viewHolders.remove(holder);
@@ -231,7 +232,7 @@ public class AdapterProfile extends RecyclerView.Adapter<RecyclerView.ViewHolder
             switch (viewHolder.getItemViewType()) {
 
                 case ControllerProfile.VIEW_TYPE_LINK:
-                    if (thing.equals(((AdapterLink.ViewHolderBase) viewHolder).link)) {
+                    if (thing.equals(((AdapterLink.ViewHolderLink) viewHolder).link)) {
                         viewHolder.itemView.setVisibility(visibility);
                     }
                 case ControllerProfile.VIEW_TYPE_COMMENT:
@@ -244,10 +245,10 @@ public class AdapterProfile extends RecyclerView.Adapter<RecyclerView.ViewHolder
 
     public void pauseViewHolders() {
         for (RecyclerView.ViewHolder viewHolder : viewHolders) {
-            if (viewHolder instanceof AdapterLink.ViewHolderBase) {
-                AdapterLink.ViewHolderBase viewHolderBase = (AdapterLink.ViewHolderBase) viewHolder;
-                if (viewHolderBase.mediaPlayer != null) {
-                    viewHolderBase.mediaPlayer.stop();
+            if (viewHolder instanceof AdapterLink.ViewHolderLink) {
+                AdapterLink.ViewHolderLink viewHolderLink = (AdapterLink.ViewHolderLink) viewHolder;
+                if (viewHolderLink.mediaPlayer != null) {
+                    viewHolderLink.mediaPlayer.stop();
                 }
             }
         }
@@ -257,13 +258,13 @@ public class AdapterProfile extends RecyclerView.Adapter<RecyclerView.ViewHolder
     @Override
     public void destroyYouTubePlayerFragments() {
         for (RecyclerView.ViewHolder viewHolder : viewHolders) {
-            if (viewHolder instanceof AdapterLink.ViewHolderBase) {
-                ((AdapterLink.ViewHolderBase) viewHolder).destroyYouTube();
+            if (viewHolder instanceof AdapterLink.ViewHolderLink) {
+                ((AdapterLink.ViewHolderLink) viewHolder).destroyYouTube();
             }
         }
     }
 
-    public static class ViewHolderHeader extends RecyclerView.ViewHolder {
+    public static class ViewHolderHeader extends ViewHolderBase {
 
         protected TextView textUsername;
         protected TextView textKarma;
@@ -305,7 +306,7 @@ public class AdapterProfile extends RecyclerView.Adapter<RecyclerView.ViewHolder
         }
     }
 
-    public static class ViewHolderText extends RecyclerView.ViewHolder {
+    public static class ViewHolderText extends ViewHolderBase {
 
         protected TextView textMessage;
 

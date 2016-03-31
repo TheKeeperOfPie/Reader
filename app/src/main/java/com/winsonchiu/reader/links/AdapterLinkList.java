@@ -7,7 +7,6 @@ package com.winsonchiu.reader.links;
 import android.graphics.drawable.Drawable;
 import android.support.v4.app.FragmentActivity;
 import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.RecyclerView;
 import android.text.TextUtils;
 import android.text.util.Linkify;
 import android.view.LayoutInflater;
@@ -15,8 +14,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.webkit.URLUtil;
 
-import com.bumptech.glide.load.resource.gif.GifDrawable;
-import com.bumptech.glide.request.target.GlideDrawableImageViewTarget;
 import com.winsonchiu.reader.AppSettings;
 import com.winsonchiu.reader.R;
 import com.winsonchiu.reader.comments.Source;
@@ -25,6 +22,7 @@ import com.winsonchiu.reader.utils.CallbackYouTubeDestruction;
 import com.winsonchiu.reader.utils.DisallowListener;
 import com.winsonchiu.reader.utils.RecyclerCallback;
 import com.winsonchiu.reader.utils.UtilsImage;
+import com.winsonchiu.reader.utils.ViewHolderBase;
 
 /**
  * Created by TheKeeperOfPie on 3/7/2015.
@@ -36,7 +34,7 @@ public class AdapterLinkList extends AdapterLink {
     public AdapterLinkList(FragmentActivity activity,
             ControllerLinksBase controllerLinks,
             ViewHolderHeader.EventListener eventListenerHeader,
-            ViewHolderBase.EventListener eventListenerBase,
+            ViewHolderLink.EventListener eventListenerBase,
             DisallowListener disallowListener,
             RecyclerCallback recyclerCallback) {
         super(activity, eventListenerHeader, eventListenerBase, disallowListener, recyclerCallback);
@@ -50,9 +48,9 @@ public class AdapterLinkList extends AdapterLink {
     }
 
     @Override
-    public RecyclerView.ViewHolder  onCreateViewHolder(ViewGroup viewGroup, int viewType) {
+    public ViewHolderBase onCreateViewHolder(ViewGroup viewGroup, int viewType) {
 
-        if (viewType == VIEW_LINK_HEADER) {
+        if (viewType == TYPE_HEADER) {
             return new ViewHolderHeader(LayoutInflater.from(viewGroup.getContext()).inflate(R.layout.header_subreddit, viewGroup, false), eventListenerHeader);
         }
 
@@ -67,23 +65,23 @@ public class AdapterLinkList extends AdapterLink {
     }
 
     @Override
-    public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
+    public void onBindViewHolder(ViewHolderBase holder, int position) {
 
         super.onBindViewHolder(holder, position);
 
         switch (holder.getItemViewType()) {
-            case VIEW_LINK_HEADER:
+            case TYPE_HEADER:
                 ViewHolderHeader viewHolderHeader = (ViewHolderHeader) holder;
                 viewHolderHeader.onBind(controllerLinks.getSubreddit());
                 break;
-            case VIEW_LINK:
+            case TYPE_LINK:
                 ViewHolder viewHolder = (ViewHolder) holder;
                 viewHolder.onBind(controllerLinks.getLink(position), controllerLinks.showSubreddit());
                 break;
         }
     }
 
-    public static class ViewHolder extends AdapterLink.ViewHolderBase {
+    public static class ViewHolder extends ViewHolderLink {
 
         public ViewHolder(FragmentActivity activity,
                 View itemView,
@@ -124,7 +122,7 @@ public class AdapterLinkList extends AdapterLink {
             Drawable drawable = UtilsImage.getDrawableForLink(itemView.getContext(), link);
             if (drawable == null) {
                 String thumbnail = UtilsImage.parseThumbnail(link);
-                if (!URLUtil.isNetworkUrl(thumbnail) || !preferences.getBoolean(AppSettings.PREF_SHOW_THUMBNAILS, true) || (link.isOver18() && !preferences.getBoolean(AppSettings.PREF_NSFW_THUMBNAILS, true))) {
+                if (!URLUtil.isNetworkUrl(thumbnail) || !sharedPreferences.getBoolean(AppSettings.PREF_SHOW_THUMBNAILS, true) || (link.isOver18() && !sharedPreferences.getBoolean(AppSettings.PREF_NSFW_THUMBNAILS, true))) {
                     imageThumbnail.setColorFilter(colorFilterIconDefault);
                     imageThumbnail.setImageDrawable(drawableDefault);
                 }

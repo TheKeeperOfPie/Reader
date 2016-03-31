@@ -21,8 +21,8 @@ import com.winsonchiu.reader.data.reddit.Subreddit;
 import com.winsonchiu.reader.data.reddit.Thing;
 import com.winsonchiu.reader.data.reddit.Time;
 import com.winsonchiu.reader.history.Historian;
-import com.winsonchiu.reader.utils.ControllerListener;
 import com.winsonchiu.reader.rx.FinalizingSubscriber;
+import com.winsonchiu.reader.utils.ControllerListener;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -311,43 +311,30 @@ public class ControllerLinks implements ControllerLinksBase {
     }
 
     public Observable<Listing> loadMoreLinks() {
-        if (isLoading) {
-            return Observable.empty();
-        }
-
-        if (TextUtils.isEmpty(listingLinks.getAfter())) {
+        if (isLoading || TextUtils.isEmpty(listingLinks.getAfter())) {
             return Observable.empty();
         }
 
         setLoading(true);
 
-        Observable<Listing> observable = reddit.links(subreddit.getUrl(), sort.toString(), time.toString(), LIMIT, listingLinks.getAfter())
+        return reddit.links(subreddit.getUrl(), sort.toString(), time.toString(), LIMIT, listingLinks.getAfter())
                 .flatMap(Listing.FLAT_MAP)
                 .doOnNext(redditDatabase.appendListing(subreddit, sort, time))
-                .doOnNext(redditDatabase.cacheListing());
-
-        observable.subscribe(new FinalizingSubscriber<Listing>() {
-                    @Override
-                    public void completed() {
-                        setLoading(false);
+                .doOnNext(redditDatabase.cacheListing())
+                .doOnNext(listing -> {
+                    final int positionStart = listingLinks.getChildren()
+                            .size();
+                    listingLinks.addChildren(listing.getChildren());
+                    listingLinks.setAfter(listing.getAfter());
+                    for (final Listener listener : listeners) {
+                        listener.getAdapter()
+                                .notifyItemRangeInserted(positionStart + 1,
+                                        listingLinks.getChildren()
+                                                .size() - positionStart);
                     }
-
-                    @Override
-                    public void next(Listing listing) {
-                        final int positionStart = listingLinks.getChildren()
-                                .size();
-                        listingLinks.addChildren(listing.getChildren());
-                        listingLinks.setAfter(listing.getAfter());
-                        for (final Listener listener : listeners) {
-                            listener.getAdapter()
-                                    .notifyItemRangeInserted(positionStart + 1,
-                                            listingLinks.getChildren()
-                                                    .size() - positionStart);
-                        }
-                    }
-                });
-
-        return observable;
+                })
+                .doOnSubscribe(() -> setLoading(true))
+                .doOnTerminate(() -> setLoading(false));
     }
 
     @Override

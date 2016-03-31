@@ -15,7 +15,6 @@ import android.content.res.Resources;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.text.Html;
-import android.text.SpannedString;
 import android.text.TextUtils;
 import android.util.Base64;
 import android.util.Log;
@@ -733,30 +732,6 @@ public class Reddit {
     public Observable<String> recommend(String subreddit, String omit) {
         return apiRedditAuthorized.recommend(subreddit, omit)
                 .compose(TRANSFORMER);
-    }
-
-    public static CharSequence getFormattedHtml(String html) {
-
-        if (TextUtils.isEmpty(html)) {
-            return new SpannedString("");
-        }
-
-        html = html.replaceAll("\n", "<br>");
-
-        CharSequence sequence = Html.fromHtml(Html.fromHtml(html).toString(), null, new TagHandlerReddit());
-
-        // Trims leading and trailing whitespace
-        int start = 0;
-        int end = sequence.length();
-        while (start < end && Character.isWhitespace(sequence.charAt(start))) {
-            start++;
-        }
-        while (end > start && Character.isWhitespace(sequence.charAt(end - 1))) {
-            end--;
-        }
-
-
-        return sequence.subSequence(start, end);
     }
 
     public static void onMenuItemClickEditor(EditText editText, MenuItem menuItem, Resources resources) {

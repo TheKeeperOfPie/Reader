@@ -24,10 +24,11 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.winsonchiu.reader.R;
-import com.winsonchiu.reader.data.reddit.Reddit;
 import com.winsonchiu.reader.data.reddit.Subreddit;
 import com.winsonchiu.reader.utils.CustomColorFilter;
 import com.winsonchiu.reader.utils.UtilsAnimation;
+import com.winsonchiu.reader.utils.UtilsReddit;
+import com.winsonchiu.reader.utils.ViewHolderBase;
 
 import java.util.Date;
 
@@ -64,7 +65,7 @@ public class AdapterSearchSubreddits extends RecyclerView.Adapter<AdapterSearchS
         return controllerSearchBase.getSubredditCount();
     }
 
-    public static class ViewHolder extends RecyclerView.ViewHolder {
+    public static class ViewHolder extends ViewHolderBase {
 
         protected EventListener eventListener;
         protected ImageButton buttonReorder;
@@ -180,7 +181,7 @@ public class AdapterSearchSubreddits extends RecyclerView.Adapter<AdapterSearchS
             }
             else {
                 textDescription
-                        .setText(Reddit.getFormattedHtml(subreddit.getPublicDescriptionHtml()));
+                        .setText(UtilsReddit.getFormattedHtml(subreddit.getPublicDescriptionHtml()));
             }
 
             // TODO: Move to String resource

@@ -10,6 +10,7 @@ import android.text.TextUtils;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.winsonchiu.reader.utils.UtilsJson;
+import com.winsonchiu.reader.utils.UtilsReddit;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -131,7 +132,7 @@ public class Comment extends Replyable {
         comment.setBannedBy(UtilsJson.getString(jsonNode.get("banned_by")));
         comment.setBody(Html.fromHtml(UtilsJson.getString(jsonNode.get("body")).replaceAll("\n",
                 "<br>")));
-        comment.setBodyHtml(Reddit.getFormattedHtml(UtilsJson.getString(
+        comment.setBodyHtml(UtilsReddit.getFormattedHtml(UtilsJson.getString(
                 jsonNode.get("body_html"))));
 
         switch (UtilsJson.getString(jsonNode.get("distinguished"))) {

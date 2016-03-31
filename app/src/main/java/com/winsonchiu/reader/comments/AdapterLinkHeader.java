@@ -13,22 +13,21 @@ import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.ViewGroup;
 
-import com.bumptech.glide.load.resource.drawable.GlideDrawable;
 import com.winsonchiu.reader.R;
 import com.winsonchiu.reader.data.reddit.Link;
-import com.winsonchiu.reader.data.reddit.Reddit;
 import com.winsonchiu.reader.links.AdapterLink;
 import com.winsonchiu.reader.links.AdapterLinkGrid;
 import com.winsonchiu.reader.links.AdapterLinkList;
 import com.winsonchiu.reader.utils.CallbackYouTubeDestruction;
 import com.winsonchiu.reader.utils.DisallowListener;
 import com.winsonchiu.reader.utils.RecyclerCallback;
+import com.winsonchiu.reader.utils.UtilsReddit;
 import com.winsonchiu.reader.utils.YouTubeListener;
 
 /**
  * Created by TheKeeperOfPie on 12/29/2015.
  */
-public class AdapterLinkHeader extends RecyclerView.Adapter<AdapterLink.ViewHolderBase> implements CallbackYouTubeDestruction {
+public class AdapterLinkHeader extends RecyclerView.Adapter<AdapterLink.ViewHolderLink> implements CallbackYouTubeDestruction {
 
     private int thumbnailSize;
     private FragmentActivity activity;
@@ -36,8 +35,8 @@ public class AdapterLinkHeader extends RecyclerView.Adapter<AdapterLink.ViewHold
     private String firstLinkName;
     private int colorLink;
     private boolean actionsExpanded;
-    private AdapterLink.ViewHolderBase viewHolderLink;
-    private final AdapterLink.ViewHolderBase.EventListener eventListenerBase;
+    private AdapterLink.ViewHolderLink viewHolderLink;
+    private final AdapterLink.ViewHolderLink.EventListener eventListenerBase;
     private final DisallowListener disallowListener;
     private final RecyclerCallback recyclerCallback;
     private final YouTubeListener youTubeListener;
@@ -48,7 +47,7 @@ public class AdapterLinkHeader extends RecyclerView.Adapter<AdapterLink.ViewHold
 
     public AdapterLinkHeader(FragmentActivity activity,
             ControllerComments controllerComments,
-            AdapterLink.ViewHolderBase.EventListener eventListenerBase,
+            AdapterLink.ViewHolderLink.EventListener eventListenerBase,
             DisallowListener disallowListener, RecyclerCallback recyclerCallback,
             YouTubeListener youTubeListener,
             CallbackYouTubeDestruction callbackYouTubeDestruction,
@@ -72,7 +71,7 @@ public class AdapterLinkHeader extends RecyclerView.Adapter<AdapterLink.ViewHold
     }
 
     @Override
-    public AdapterLink.ViewHolderBase onCreateViewHolder(ViewGroup parent, int viewType) {
+    public AdapterLink.ViewHolderLink onCreateViewHolder(ViewGroup parent, int viewType) {
         if (isGrid) {
             viewHolderLink = new AdapterLinkGrid.ViewHolder(
                     activity,
@@ -85,13 +84,8 @@ public class AdapterLinkHeader extends RecyclerView.Adapter<AdapterLink.ViewHold
                     thumbnailSize) {
 
                 @Override
-                public Intent getShareIntent() {
-                    Intent shareIntent = new Intent(Intent.ACTION_SEND);
-                    shareIntent.setType("text/plain");
-                    shareIntent.putExtra(Intent.EXTRA_SUBJECT, link.getTitle());
-                    shareIntent
-                            .putExtra(Intent.EXTRA_TEXT, Reddit.BASE_URL + link.getPermalink());
-                    return shareIntent;
+                protected Intent getShareIntent() {
+                    return UtilsReddit.getShareIntentLinkComments(link);
                 }
 
                 @Override
@@ -164,13 +158,8 @@ public class AdapterLinkHeader extends RecyclerView.Adapter<AdapterLink.ViewHold
                     callbackYouTubeDestruction) {
 
                 @Override
-                public Intent getShareIntent() {
-                    Intent shareIntent = new Intent(Intent.ACTION_SEND);
-                    shareIntent.setType("text/plain");
-                    shareIntent.putExtra(Intent.EXTRA_SUBJECT, link.getTitle());
-                    shareIntent
-                            .putExtra(Intent.EXTRA_TEXT, Reddit.BASE_URL + link.getPermalink());
-                    return shareIntent;
+                protected Intent getShareIntent() {
+                    return UtilsReddit.getShareIntentLinkComments(link);
                 }
 
                 @Override
@@ -224,12 +213,12 @@ public class AdapterLinkHeader extends RecyclerView.Adapter<AdapterLink.ViewHold
     }
 
     @Override
-    public void onBindViewHolder(AdapterLink.ViewHolderBase holder, int position) {
+    public void onBindViewHolder(AdapterLink.ViewHolderLink holder, int position) {
         holder.onBind(controllerComments.getLink(), true);
     }
 
     @Override
-    public void onViewRecycled(AdapterLink.ViewHolderBase holder) {
+    public void onViewRecycled(AdapterLink.ViewHolderLink holder) {
         holder.onRecycle();
     }
 
