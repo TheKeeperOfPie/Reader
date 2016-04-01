@@ -4,12 +4,14 @@
 
 package com.winsonchiu.reader.utils;
 
+import android.content.Context;
 import android.content.Intent;
 import android.support.annotation.Nullable;
 import android.text.Html;
 import android.text.SpannedString;
 import android.text.TextUtils;
 
+import com.winsonchiu.reader.ActivityMain;
 import com.winsonchiu.reader.data.reddit.Link;
 import com.winsonchiu.reader.data.reddit.Reddit;
 import com.winsonchiu.reader.data.reddit.Subreddit;
@@ -102,5 +104,20 @@ public class UtilsReddit {
         intent.putExtra(Intent.EXTRA_SUBJECT, link.getTitle());
         intent.putExtra(Intent.EXTRA_TEXT, Reddit.BASE_URL + link.getPermalink());
         return intent;
+    }
+
+    private static void launchRedditPage(Context context, String url) {
+        Intent intent = new Intent(context, ActivityMain.class);
+        intent.setAction(Intent.ACTION_VIEW);
+        intent.putExtra(ActivityMain.REDDIT_PAGE, url);
+        context.startActivity(intent);
+    }
+
+    public static void launchScreenProfile(Context context, Link link) {
+        launchRedditPage(context, "https://reddit.com/user/" + link.getAuthor());
+    }
+
+    public static void launchScreenSubreddit(Context context, Link link) {
+        launchRedditPage(context, "https://reddit.com/r/" + link.getSubreddit());
     }
 }

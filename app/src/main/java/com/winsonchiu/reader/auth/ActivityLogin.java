@@ -17,6 +17,7 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.webkit.CookieManager;
 import android.webkit.WebChromeClient;
@@ -25,7 +26,6 @@ import android.webkit.WebResourceRequest;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.ProgressBar;
-import android.widget.RelativeLayout;
 import android.widget.Toast;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -67,7 +67,7 @@ public class ActivityLogin extends AccountAuthenticatorActivity {
     private ProgressBar progressAuth;
     private WebView webAuth;
     private String state;
-    private RelativeLayout layoutRoot;
+    private ViewGroup layoutRoot;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -102,7 +102,7 @@ public class ActivityLogin extends AccountAuthenticatorActivity {
         preferences = PreferenceManager.getDefaultSharedPreferences(this);
         state = UUID.randomUUID().toString();
 
-        layoutRoot = (RelativeLayout) findViewById(R.id.layout_root);
+        layoutRoot = (ViewGroup) findViewById(R.id.layout_root);
 
         TypedArray typedArray = getTheme().obtainStyledAttributes(
                 new int[]{R.attr.colorPrimary, R.attr.colorAccent});

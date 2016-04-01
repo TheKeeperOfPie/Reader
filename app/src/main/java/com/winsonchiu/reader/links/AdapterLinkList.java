@@ -165,8 +165,8 @@ public class AdapterLinkList extends AdapterLink {
         @Override
         public int[] getScreenAnchor() {
             int[] location = new int[2];
-            frameFull.getLocationOnScreen(location);
-            location[1] += frameFull.getHeight();
+            layoutFull.getLocationOnScreen(location);
+            location[1] += layoutFull.getHeight();
             return location;
         }
     }

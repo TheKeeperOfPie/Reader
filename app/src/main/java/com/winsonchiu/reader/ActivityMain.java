@@ -69,6 +69,7 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.bumptech.glide.Glide;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.android.youtube.player.YouTubePlayerSupportFragment;
 import com.squareup.picasso.Callback;
@@ -130,6 +131,15 @@ import javax.inject.Inject;
 
 import butterknife.Bind;
 import butterknife.ButterKnife;
+import io.palaima.debugdrawer.DebugDrawer;
+import io.palaima.debugdrawer.commons.BuildModule;
+import io.palaima.debugdrawer.commons.DeviceModule;
+import io.palaima.debugdrawer.commons.NetworkModule;
+import io.palaima.debugdrawer.commons.SettingsModule;
+import io.palaima.debugdrawer.glide.GlideModule;
+import io.palaima.debugdrawer.picasso.PicassoModule;
+import jp.wasabeef.takt.Seat;
+import jp.wasabeef.takt.Takt;
 import rx.Observable;
 import rx.Observer;
 import rx.android.schedulers.AndroidSchedulers;
@@ -222,6 +232,8 @@ public class ActivityMain extends AppCompatActivity
     private AccountsAdapter adapterAccounts;
     private boolean accountsVisible;
 
+    private DebugDrawer debugDrawer;
+
     @Bind(R.id.layout_drawer) DrawerLayout layoutDrawer;
     @Bind(R.id.layout_navigation) RelativeLayout layoutNavigation;
     @Bind(R.id.view_navigation) NavigationView viewNavigation;
@@ -249,6 +261,7 @@ public class ActivityMain extends AppCompatActivity
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        ButterKnife.setDebug(true);
         componentActivity = (ComponentActivity) getLastCustomNonConfigurationInstance();
 
         if (componentActivity == null) {
@@ -292,6 +305,16 @@ public class ActivityMain extends AppCompatActivity
         ButterKnife.bind(this);
 
         inflateNavigationDrawer();
+
+        debugDrawer = new DebugDrawer.Builder(this)
+                .modules(
+                        new DeviceModule(this),
+                        new BuildModule(this),
+                        new NetworkModule(this),
+                        new SettingsModule(this),
+                        new PicassoModule(picasso),
+                        new GlideModule(Glide.get(ActivityMain.this))
+                ).build();
 
         Receiver.setAlarm(this);
 
@@ -1456,18 +1479,35 @@ public class ActivityMain extends AppCompatActivity
     @Override
     protected void onResume() {
         super.onResume();
+        debugDrawer.onResume();
         handler.postDelayed(runnableInbox, 1000);
+
+        if (BuildConfig.DEBUG) {
+            Takt.stock(getApplication())
+                    .seat(Seat.BOTTOM_RIGHT)
+                    .interval(250)
+                    .color(Color.WHITE)
+                    .size(14f)
+                    .alpha(.5f)
+                    .play();
+        }
     }
 
     @Override
     protected void onPause() {
+        if (BuildConfig.DEBUG) {
+            Takt.finish();
+        }
+
         handler.removeCallbacks(runnableInbox);
         super.onPause();
+        debugDrawer.onPause();
     }
 
     @Override
     protected void onStart() {
         super.onStart();
+        debugDrawer.onStart();
         sharedPreferences.registerOnSharedPreferenceChangeListener(this);
         calculateShowFrontPage();
     }
@@ -1479,6 +1519,7 @@ public class ActivityMain extends AppCompatActivity
             historian.saveToFile(this);
         }
         super.onStop();
+        debugDrawer.onStop();
     }
 
     public ComponentActivity getComponentActivity() {

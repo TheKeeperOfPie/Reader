@@ -3,7 +3,7 @@
   ~ Copyright 2015 Winson Chiu
   -->
 
-<com.winsonchiu.reader.views.CustomRelativeLayout
+<com.winsonchiu.reader.views.CustomFrameLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/layout_root"
     android:layout_width="match_parent"
@@ -21,7 +21,7 @@
         >
 
         <FrameLayout
-            android:id="@+id/frame_full"
+            android:id="@+id/layout_full"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             >
@@ -78,20 +78,19 @@
 
         </FrameLayout>
 
-        <View
+        <android.support.v4.widget.Space
             android:id="@+id/view_margin"
             android:layout_width="wrap_content"
-            android:layout_height="match_parent"
-            android:layout_below="@id/frame_full"
+            android:layout_height="12dp"
+            android:layout_below="@id/layout_full"
             android:layout_toStartOf="@+id/button_comments"
-            android:layout_marginTop="12dp"
             />
 
         <com.winsonchiu.reader.views.ImageViewSquare
             android:id="@+id/image_thumbnail"
             android:layout_width="52dp"
             android:layout_height="48dp"
-            android:layout_below="@id/frame_full"
+            android:layout_below="@id/layout_full"
             android:layout_alignParentStart="true"
             android:paddingTop="12dp"
             android:paddingStart="16dp"
@@ -107,7 +106,7 @@
             android:id="@+id/button_comments"
             android:layout_width="48dp"
             android:layout_height="48dp"
-            android:layout_below="@id/frame_full"
+            android:layout_below="@id/layout_full"
             android:layout_alignParentEnd="true"
             android:contentDescription="@string/content_description_button_comments"
             android:background="?attr/selectableItemBackgroundBorderless"
@@ -172,8 +171,9 @@
             android:textColor="?android:attr/textColorSecondary"
             />
 
-        <RelativeLayout
+        <LinearLayout
             android:id="@+id/layout_container_expand"
+            android:orientation="vertical"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_below="@id/text_thread_info"
@@ -186,8 +186,6 @@
                 android:layout_height="wrap_content"
                 android:layout_marginStart="@dimen/activity_horizontal_margin"
                 android:layout_marginEnd="@dimen/activity_horizontal_margin"
-                android:layout_alignParentTop="true"
-                android:layout_alignParentEnd="true"
                 android:layout_gravity="end"
                 android:gravity="end"
                 android:textSize="12sp"
@@ -200,11 +198,9 @@
                 android:id="@+id/toolbar_actions"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_below="@id/text_hidden"
-                android:layout_alignParentEnd="true"
                 />
 
-        </RelativeLayout>
+        </LinearLayout>
 
         <include
             layout="@layout/reply"
@@ -227,4 +223,4 @@
         android:visibility="gone"
         />
 
-</com.winsonchiu.reader.views.CustomRelativeLayout>
+</com.winsonchiu.reader.views.CustomFrameLayout>

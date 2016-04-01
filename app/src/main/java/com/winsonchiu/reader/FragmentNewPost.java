@@ -55,6 +55,7 @@ import org.json.JSONObject;
 import javax.inject.Inject;
 
 import rx.Observer;
+import rx.android.schedulers.AndroidSchedulers;
 
 public class FragmentNewPost extends FragmentBase implements Toolbar.OnMenuItemClickListener {
 
@@ -491,6 +492,7 @@ public class FragmentNewPost extends FragmentBase implements Toolbar.OnMenuItemC
                                 Context.INPUT_METHOD_SERVICE);
                         inputManager.hideSoftInputFromWindow(editTextBody.getWindowToken(), 0);
                         controllerLinks.reloadAllLinks(false)
+                                .observeOn(AndroidSchedulers.mainThread())
                                 .subscribe(new FinalizingSubscriber<Listing>() {
                                     @Override
                                     public void error(Throwable e) {
@@ -577,6 +579,7 @@ public class FragmentNewPost extends FragmentBase implements Toolbar.OnMenuItemC
                                 Context.INPUT_METHOD_SERVICE);
                         inputManager.hideSoftInputFromWindow(editTextBody.getWindowToken(), 0);
                         controllerLinks.reloadAllLinks(false)
+                                .observeOn(AndroidSchedulers.mainThread())
                                 .subscribe(new FinalizingSubscriber<Listing>() {
                                     @Override
                                     public void error(Throwable e) {

@@ -777,8 +777,8 @@ public class AdapterLinkGrid extends AdapterLink {
                 imageSquare.getLocationOnScreen(location);
             }
             else {
-                frameFull.getLocationOnScreen(location);
-                location[1] += frameFull.getHeight();
+                layoutFull.getLocationOnScreen(location);
+                location[1] += layoutFull.getHeight();
                 if (!imageThumbnail.isShown()) {
                     location[1] -= itemView.getWidth();
                 }

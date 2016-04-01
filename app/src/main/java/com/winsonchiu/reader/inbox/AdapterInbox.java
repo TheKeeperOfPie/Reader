@@ -34,7 +34,6 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
-import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.winsonchiu.reader.ActivityMain;
@@ -161,7 +160,7 @@ public class AdapterInbox extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
         protected TextView textSubject;
         protected TextView textMessage;
         protected TextView textInfo;
-        protected RelativeLayout layoutContainerReply;
+        protected ViewGroup layoutContainerReply;
         protected EditText editTextReply;
         protected TextView textUsername;
         protected Button buttonSendReply;
@@ -188,7 +187,7 @@ public class AdapterInbox extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
             textMessage = (TextView) itemView.findViewById(R.id.text_message);
             textMessage.setMovementMethod(LinkMovementMethod.getInstance());
             textInfo = (TextView) itemView.findViewById(R.id.text_info);
-            layoutContainerReply = (RelativeLayout) itemView.findViewById(
+            layoutContainerReply = (ViewGroup) itemView.findViewById(
                     R.id.layout_container_reply);
             editTextReply = (EditText) itemView.findViewById(R.id.edit_text_reply);
             editTextReply.addTextChangedListener(new TextWatcher() {

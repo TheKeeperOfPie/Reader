@@ -7,10 +7,8 @@ package com.winsonchiu.reader.links;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.content.res.Resources;
 import android.content.res.TypedArray;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
@@ -21,7 +19,6 @@ import android.preference.PreferenceManager;
 import android.support.annotation.CallSuper;
 import android.support.annotation.NonNull;
 import android.support.v4.app.FragmentActivity;
-import android.support.v4.content.SharedPreferencesCompat;
 import android.support.v4.view.GestureDetectorCompat;
 import android.support.v4.view.MenuItemCompat;
 import android.support.v4.view.MotionEventCompat;
@@ -43,6 +40,7 @@ import android.text.TextWatcher;
 import android.text.format.DateUtils;
 import android.text.method.LinkMovementMethod;
 import android.text.style.ForegroundColorSpan;
+import android.util.Log;
 import android.view.GestureDetector;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -55,7 +53,6 @@ import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -132,6 +129,7 @@ import butterknife.OnClick;
 import butterknife.OnTouch;
 import rx.Observable;
 import rx.Subscription;
+import rx.android.schedulers.AndroidSchedulers;
 
 /**
  * Created by TheKeeperOfPie on 3/14/2015.
@@ -199,6 +197,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<ViewHolderBase> i
     public void onBindViewHolder(ViewHolderBase holder, int position) {
         if (!controllerLinks.isLoading() && position > controllerLinks.sizeLinks() - 5) {
             controllerLinks.loadMoreLinks()
+                    .observeOn(AndroidSchedulers.mainThread())
                     .subscribe(new ObserverError<Listing>() {
                         @Override
                         public void onError(Throwable e) {
@@ -400,22 +399,22 @@ public abstract class AdapterLink extends RecyclerView.Adapter<ViewHolderBase> i
             implements Toolbar.OnMenuItemClickListener, View.OnClickListener,
             View.OnLongClickListener, SurfaceHolder.Callback {
 
-        @Bind(R.id.frame_full) public FrameLayout frameFull;
+        @Bind(R.id.layout_full) public ViewGroup layoutFull;
         @Bind(R.id.progress_image) public ProgressBar progressImage;
         @Bind(R.id.view_pager_full) public ViewPager viewPagerFull;
         @Bind(R.id.image_play) public ImageView imagePlay;
         @Bind(R.id.image_thumbnail) public ImageView imageThumbnail;
         @Bind(R.id.image_full) public ImageViewZoom imageFull;
         @Bind(R.id.view_margin) public View viewMargin;
-        @Bind(R.id.button_comments) public ImageButton buttonComments;
+        @Bind(R.id.button_comments) public ImageView buttonComments;
         @Bind(R.id.text_thread_flair) public TextView textThreadFlair;
         @Bind(R.id.text_thread_title) public TextView textThreadTitle;
         @Bind(R.id.text_thread_self) public TextView textThreadSelf;
         @Bind(R.id.text_thread_info) public TextView textThreadInfo;
         @Bind(R.id.text_hidden) public TextView textHidden;
-        @Bind(R.id.layout_container_expand) public RelativeLayout layoutContainerExpand;
+        @Bind(R.id.layout_container_expand) public ViewGroup layoutContainerExpand;
         @Bind(R.id.toolbar_actions) public Toolbar toolbarActions;
-        @Bind(R.id.layout_container_reply) public RelativeLayout layoutContainerReply;
+        @Bind(R.id.layout_container_reply) public ViewGroup layoutContainerReply;
         @Bind(R.id.edit_text_reply) public EditText editTextReply;
         @Bind(R.id.text_username) public TextView textUsername;
         @Bind(R.id.button_send_reply) public Button buttonSendReply;
@@ -793,8 +792,6 @@ public abstract class AdapterLink extends RecyclerView.Adapter<ViewHolderBase> i
                 case R.id.button_send_reply:
                     if (!TextUtils.isEmpty(editTextReply.getText())) {
                         sendComment();
-                        InputMethodManager inputManager = (InputMethodManager) itemView.getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
-                        inputManager.hideSoftInputFromWindow(itemView.getWindowToken(), 0);
                     }
                     break;
                 case R.id.button_reply_editor:
@@ -863,12 +860,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<ViewHolderBase> i
                     saveLink();
                     break;
                 case R.id.item_view_profile:
-                    Intent intentViewProfile = new Intent(itemView.getContext(),
-                            ActivityMain.class);
-                    intentViewProfile.setAction(Intent.ACTION_VIEW);
-                    intentViewProfile.putExtra(ActivityMain.REDDIT_PAGE,
-                            "https://reddit.com/user/" + link.getAuthor());
-                    eventListener.launchScreen(intentViewProfile);
+                    UtilsReddit.launchScreenProfile(itemView.getContext(), link);
                     break;
                 case R.id.item_copy_text:
                     ClipboardManager clipboard = (ClipboardManager) itemView.getContext()
@@ -898,14 +890,10 @@ public abstract class AdapterLink extends RecyclerView.Adapter<ViewHolderBase> i
                             .show();
                     break;
                 case R.id.item_view_subreddit:
-                    Intent intentViewSubreddit = new Intent(itemView.getContext(),
-                            ActivityMain.class);
-                    intentViewSubreddit.setAction(Intent.ACTION_VIEW);
-                    intentViewSubreddit.putExtra(ActivityMain.REDDIT_PAGE,
-                            "https://reddit.com/r/" + link.getSubreddit());
-                    eventListener.launchScreen(intentViewSubreddit);
+                    UtilsReddit.launchScreenSubreddit(itemView.getContext(), link);
                     break;
                 // Reporting
+                // TODO: Use report reasons from subreddit rules
                 case R.id.item_report_spam:
                     requestReport("spam");
                     break;
@@ -924,10 +912,8 @@ public abstract class AdapterLink extends RecyclerView.Adapter<ViewHolderBase> i
                 case R.id.item_report_other:
                     View viewDialog = LayoutInflater.from(itemView.getContext())
                             .inflate(R.layout.dialog_text_input, null, false);
-                    InputFilter[] filterArray = new InputFilter[1];
-                    filterArray[0] = new InputFilter.LengthFilter(100);
                     final EditText editText = (EditText) viewDialog.findViewById(R.id.edit_text);
-                    editText.setFilters(filterArray);
+                    editText.setFilters(new InputFilter[] {new InputFilter.LengthFilter(100)});
                     new AlertDialog.Builder(itemView.getContext())
                             .setView(viewDialog)
                             .setTitle(R.string.item_report)
@@ -945,6 +931,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<ViewHolderBase> i
             return UtilsReddit.getShareIntentLinkSource(link);
         }
 
+        // TODO: Improve scrolling/centering logic
         protected void scrollToSelf() {
             recyclerCallback.scrollTo(getAdapterPosition());
         }
@@ -972,7 +959,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<ViewHolderBase> i
             link.setReplyExpanded(!link.isReplyExpanded());
             layoutContainerReply.setVisibility(link.isReplyExpanded() ? View.VISIBLE : View.GONE);
             if (link.isReplyExpanded()) {
-                textUsername.setText("- " + eventListener.getUser().getName());
+                textUsername.setText(resources.getString(R.string.as_author, eventListener.getUser().getName()));
                 recyclerCallback.hideToolbar();
                 recyclerCallback.onReplyShown();
                 InputMethodManager inputManager = (InputMethodManager) itemView.getContext()
@@ -1174,6 +1161,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<ViewHolderBase> i
         }
 
         public void attemptLoadImage() {
+            Log.d(TAG, "attemptLoadImage() called with: " + link.getUrl());
             if (UtilsImage.placeImageUrl(link)) {
                 imageFull.setVisibility(View.VISIBLE);
                 progressImage.setVisibility(View.VISIBLE);
@@ -1447,7 +1435,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<ViewHolderBase> i
 
             if (surfaceVideo == null) {
                 surfaceVideo = new SurfaceView(itemView.getContext());
-                frameFull.addView(surfaceVideo, frameFull.getChildCount() - 1);
+                layoutFull.addView(surfaceVideo, layoutFull.getChildCount() - 1);
 
                 surfaceVideo.setOnTouchListener((v, event) -> {
                     // TODO: Use custom MediaController
@@ -1584,7 +1572,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<ViewHolderBase> i
         public void onRecycle() {
             destroyWebViews();
             destroySurfaceView();
-            
+
             if (subscription != null && !subscription.isUnsubscribed()) {
                 subscription.unsubscribe();
                 subscription = null;
@@ -1632,7 +1620,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<ViewHolderBase> i
 
             progressImage.setIndeterminate(true);
 
-            frameFull.requestLayout();
+            layoutFull.requestLayout();
 
             textThreadSelf.setVisibility(View.GONE);
 
@@ -1670,7 +1658,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<ViewHolderBase> i
 
         public void destroyWebViews() {
             adapterAlbum.setAlbum(new Album(), null);
-            frameFull.requestLayout();
+            layoutFull.requestLayout();
         }
 
         public void destroySurfaceView() {
@@ -1681,9 +1669,9 @@ public abstract class AdapterLink extends RecyclerView.Adapter<ViewHolderBase> i
                     mediaPlayer = null;
                 }
                 surfaceVideo.setVisibility(View.GONE);
-                mediaController.setAnchorView(frameFull);
+                mediaController.setAnchorView(layoutFull);
                 mediaController.hide();
-                frameFull.removeView(surfaceVideo);
+                layoutFull.removeView(surfaceVideo);
                 surfaceVideo = null;
             }
         }
@@ -1698,7 +1686,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<ViewHolderBase> i
 
         // TODO: Calculate which Views are visible
         public void setVisibility(int visibility) {
-            frameFull.setVisibility(visibility);
+            layoutFull.setVisibility(visibility);
             progressImage.setVisibility(visibility);
             viewPagerFull.setVisibility(visibility);
             imagePlay.setVisibility(visibility);

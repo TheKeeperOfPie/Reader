@@ -432,7 +432,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
         protected TextView textComment;
         protected TextView textInfo;
         protected TextView textHidden;
-        protected RelativeLayout layoutContainerReply;
+        protected ViewGroup layoutContainerReply;
         protected EditText editTextReply;
         protected TextView textUsername;
         protected Button buttonSendReply;
@@ -546,7 +546,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
             textHidden = (TextView) itemView.findViewById(R.id.text_hidden);
             layoutContainerExpand = (RelativeLayout) itemView.findViewById(
                     R.id.layout_container_expand);
-            layoutContainerReply = (RelativeLayout) itemView.findViewById(
+            layoutContainerReply = (ViewGroup) itemView.findViewById(
                     R.id.layout_container_reply);
             editTextReply = (EditText) itemView.findViewById(R.id.edit_text_reply);
             textUsername = (TextView) itemView.findViewById(R.id.text_username);

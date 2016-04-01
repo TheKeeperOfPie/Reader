@@ -6,6 +6,7 @@ package com.winsonchiu.reader;
 
 import android.app.Application;
 import android.content.Context;
+import android.graphics.Color;
 
 import com.crashlytics.android.Crashlytics;
 import com.facebook.stetho.Stetho;
@@ -15,6 +16,8 @@ import com.winsonchiu.reader.dagger.components.ComponentMain;
 import com.winsonchiu.reader.dagger.components.DaggerComponentMain;
 
 import io.fabric.sdk.android.Fabric;
+import jp.wasabeef.takt.Seat;
+import jp.wasabeef.takt.Takt;
 
 /**
  * Created by TheKeeperOfPie on 3/7/2015.

@@ -80,6 +80,9 @@ import java.util.regex.Pattern;
 
 import javax.inject.Inject;
 
+import rx.android.schedulers.AndroidSchedulers;
+import rx.schedulers.Schedulers;
+
 public class FragmentComments extends FragmentBase
         implements Toolbar.OnMenuItemClickListener, View.OnTouchListener {
 
@@ -1531,6 +1534,7 @@ public class FragmentComments extends FragmentBase
 
                         if (position >= adapterComments.getCount() - 3) {
                             controllerLinks.loadMoreLinks()
+                                    .observeOn(AndroidSchedulers.mainThread())
                                     .subscribe(new ObserverFinish<Listing>() {
                                         @Override
                                         public void onFinish() {

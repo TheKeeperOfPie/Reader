@@ -22,6 +22,7 @@ import com.winsonchiu.reader.data.reddit.Thing;
 import com.winsonchiu.reader.data.reddit.Time;
 import com.winsonchiu.reader.history.Historian;
 import com.winsonchiu.reader.rx.FinalizingSubscriber;
+import com.winsonchiu.reader.rx.ObserverEmpty;
 import com.winsonchiu.reader.utils.ControllerListener;
 
 import java.io.IOException;
@@ -36,6 +37,7 @@ import rx.Observable;
 import rx.Observer;
 import rx.android.schedulers.AndroidSchedulers;
 import rx.functions.Func1;
+import rx.schedulers.Schedulers;
 
 /**
  * Created by TheKeeperOfPie on 3/14/2015.
@@ -109,16 +111,13 @@ public class ControllerLinks implements ControllerLinksBase {
 
     public Observable<Subreddit> reloadSubreddit() {
         Observable<Subreddit> observable = reddit.about(subreddit.getUrl())
-                .flatMap(new Func1<String, Observable<Subreddit>>() {
-                    @Override
-                    public Observable<Subreddit> call(String response) {
-                        try {
-                            return Observable.just(Subreddit.fromJson(ComponentStatic.getObjectMapper().readValue(
-                                    response, JsonNode.class)));
-                        }
-                        catch (IOException e) {
-                            return Observable.error(e);
-                        }
+                .flatMap(response -> {
+                    try {
+                        return Observable.just(Subreddit.fromJson(ComponentStatic.getObjectMapper().readValue(
+                                response, JsonNode.class)));
+                    }
+                    catch (IOException e) {
+                        return Observable.error(e);
                     }
                 });
         observable.subscribe(new FinalizingSubscriber<Subreddit>() {
@@ -143,7 +142,8 @@ public class ControllerLinks implements ControllerLinksBase {
                     @Override
                     public void finish() {
                         setLoading(false);
-                        reloadAllLinks(true);
+                        reloadAllLinks(true)
+                                .subscribe(new ObserverEmpty<>());
                     }
                 });
         return observable;
@@ -203,7 +203,8 @@ public class ControllerLinks implements ControllerLinksBase {
             this.sort = sort;
             subreddit = new Subreddit();
             subreddit.setUrl("/");
-            reloadAllLinks(true);
+            reloadAllLinks(true)
+                    .subscribe(new ObserverEmpty<>());
         }
     }
 
@@ -213,7 +214,8 @@ public class ControllerLinks implements ControllerLinksBase {
             for (Listener listener : listeners) {
                 listener.setSortAndTime(sort, time);
             }
-            reloadAllLinks(true);
+            reloadAllLinks(true)
+                    .subscribe(new ObserverEmpty<>());
         }
     }
 
@@ -223,7 +225,8 @@ public class ControllerLinks implements ControllerLinksBase {
             for (Listener listener : listeners) {
                 listener.setSortAndTime(sort, time);
             }
-            reloadAllLinks(true);
+            reloadAllLinks(true)
+                    .subscribe(new ObserverEmpty<>());
         }
     }
 
@@ -260,50 +263,36 @@ public class ControllerLinks implements ControllerLinksBase {
 
     public Observable<Listing> reloadAllLinks(final boolean scroll) {
         Observable<Listing> observable = reddit.links(subreddit.getUrl(), sort.toString(), time.toString(), LIMIT, null)
+                .observeOn(Schedulers.computation())
                 .flatMap(Listing.FLAT_MAP)
-                .flatMap(new Func1<Listing, Observable<Listing>>() {
-                    @Override
-                    public Observable<Listing> call(Listing listing) {
-                        if (!listing.getChildren().isEmpty() && !(listing.getChildren().get(0) instanceof Link)) {
-                            return Observable.error(new Exception());
-                        }
-
-                        return Observable.just(listing);
+                .flatMap(listing -> {
+                    if (!listing.getChildren().isEmpty() && !(listing.getChildren().get(0) instanceof Link)) {
+                        return Observable.error(new Exception());
                     }
+
+                    return Observable.just(listing);
                 })
                 .doOnNext(redditDatabase.storeListing(subreddit, sort, time))
                 .doOnNext(redditDatabase.cacheListing())
                 .onErrorResumeNext(Observable.<Listing>empty())
                 .switchIfEmpty(redditDatabase.getLinksForSubreddit(subreddit))
-                .observeOn(AndroidSchedulers.mainThread());
+                .observeOn(AndroidSchedulers.mainThread())
+                .doOnSubscribe(() -> setLoading(true))
+                .doOnNext(listing -> {
+                    listingLinks = listing;
 
-        observable.subscribe(new FinalizingSubscriber<Listing>() {
-                    @Override
-                    public void start() {
-                        setLoading(true);
-                    }
-
-                    @Override
-                    public void next(Listing next) {
-                        listingLinks = next;
-                    }
-
-                    @Override
-                    public void finish() {
-                        setLoading(false);
-
-                        for (final Listener listener : listeners) {
-                            listener.getAdapter().notifyDataSetChanged();
-                            listener.loadSideBar(subreddit);
-                            listener.showEmptyView(listingLinks.getChildren()
-                                    .isEmpty() && TextUtils.isEmpty(subreddit.getDisplayName()));
-                            if (scroll) {
-                                listener.scrollTo(0);
-                            }
+                    for (final Listener listener : listeners) {
+                        listener.getAdapter().notifyDataSetChanged();
+                        listener.loadSideBar(subreddit);
+                        listener.showEmptyView(listingLinks.getChildren()
+                                .isEmpty() && TextUtils.isEmpty(subreddit.getDisplayName()));
+                        if (scroll) {
+                            listener.scrollTo(0);
                         }
-                        setTitle();
                     }
-                });
+                    setTitle();
+                })
+                .doOnTerminate(() -> setLoading(false));
 
         Log.d(TAG, "reloadAllLinks");
 
@@ -318,9 +307,11 @@ public class ControllerLinks implements ControllerLinksBase {
         setLoading(true);
 
         return reddit.links(subreddit.getUrl(), sort.toString(), time.toString(), LIMIT, listingLinks.getAfter())
+                .observeOn(Schedulers.computation())
                 .flatMap(Listing.FLAT_MAP)
                 .doOnNext(redditDatabase.appendListing(subreddit, sort, time))
                 .doOnNext(redditDatabase.cacheListing())
+                .observeOn(AndroidSchedulers.mainThread())
                 .doOnNext(listing -> {
                     final int positionStart = listingLinks.getChildren()
                             .size();

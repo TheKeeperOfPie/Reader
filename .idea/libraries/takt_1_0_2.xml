@@ -1,0 +1,12 @@
+<component name="libraryTable">
+  <library name="takt-1.0.2">
+    <CLASSES>
+      <root url="file://$PROJECT_DIR$/app/build/intermediates/exploded-aar/jp.wasabeef/takt/1.0.2/res" />
+      <root url="jar://$PROJECT_DIR$/app/build/intermediates/exploded-aar/jp.wasabeef/takt/1.0.2/jars/classes.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/jp.wasabeef/takt/1.0.2/6d79cfc4280c6f0534568cdbf681ee31911c6a12/takt-1.0.2-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

@@ -1,0 +1,12 @@
+<component name="libraryTable">
+  <library name="debugdrawer-okhttp3-0.7.0">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/app/build/intermediates/exploded-aar/io.palaima.debugdrawer/debugdrawer-okhttp3/0.7.0/jars/classes.jar!/" />
+      <root url="file://$PROJECT_DIR$/app/build/intermediates/exploded-aar/io.palaima.debugdrawer/debugdrawer-okhttp3/0.7.0/res" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/io.palaima.debugdrawer/debugdrawer-okhttp3/0.7.0/a7c4d7d99a5748f1d7431c0aa88bc49e01a9fc39/debugdrawer-okhttp3-0.7.0-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>
