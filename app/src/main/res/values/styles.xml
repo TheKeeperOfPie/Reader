@@ -4,6 +4,8 @@
 
 <resources>
 
+    <style name="Empty" />
+
     <style name="AppDefaultTheme" parent="@style/Theme.AppCompat.NoActionBar">
 
         <item name="colorPrimary">@color/darkThemeBackground</item>
@@ -12,11 +14,7 @@
 
     </style>
 
-    <style name="AppDefaultThemeTranslucent" parent="@style/Theme.AppCompat.NoActionBar">
-
-        <item name="colorPrimary">@color/darkThemeBackground</item>
-        <item name="colorPrimaryDark">@color/darkThemeBackground</item>
-        <item name="colorAccent">@color/darkThemeBackground</item>
+    <style name="AppDefaultThemeTranslucent" parent="AppDefaultTheme">
 
         <item name="android:windowIsTranslucent">true</item>
         <item name="android:windowBackground">@android:color/transparent</item>

@@ -57,6 +57,7 @@ import com.winsonchiu.reader.data.reddit.Thing;
 import com.winsonchiu.reader.data.reddit.Time;
 import com.winsonchiu.reader.data.reddit.User;
 import com.winsonchiu.reader.links.ControllerLinks;
+import com.winsonchiu.reader.theme.ThemeWrapper;
 import com.winsonchiu.reader.utils.CustomColorFilter;
 import com.winsonchiu.reader.utils.CustomItemTouchHelper;
 import com.winsonchiu.reader.utils.DisallowListener;
@@ -279,13 +280,11 @@ public class FragmentProfile extends FragmentBase implements Toolbar.OnMenuItemC
 
         int colorResourcePrimary = UtilsColor.showOnWhite(colorPrimary) ? R.color.darkThemeIconFilter : R.color.lightThemeIconFilter;
 
-        int styleToolbar = UtilsColor.showOnWhite(colorPrimary) ? mListener.getAppColorTheme().getStyle(AppSettings.THEME_DARK, mListener.getThemeAccentPrefString()) : mListener.getAppColorTheme().getStyle(AppSettings.THEME_LIGHT, mListener.getThemeAccentPrefString());
-
-        int styleColorBackground = AppSettings.THEME_DARK.equals(mListener.getThemeBackgroundPrefString()) ? R.style.MenuDark : R.style.MenuLight;
+        int styleColorBackground = AppSettings.THEME_DARK.equals(mListener.getThemeBackground()) ? R.style.MenuDark : R.style.MenuLight;
 
         colorFilterPrimary = new CustomColorFilter(getResources().getColor(colorResourcePrimary), PorterDuff.Mode.MULTIPLY);
 
-        ContextThemeWrapper contextThemeWrapper = new ContextThemeWrapper(new ContextThemeWrapper(activity, styleToolbar), styleColorBackground);
+        ContextThemeWrapper contextThemeWrapper = new ContextThemeWrapper(new ThemeWrapper(activity, UtilsColor.getThemeForColor(getResources(), colorPrimary, mListener)), styleColorBackground);
 
         toolbar = (Toolbar) activity.getLayoutInflater().cloneInContext(contextThemeWrapper).inflate(R.layout.toolbar, layoutAppBar, false);
         layoutAppBar.addView(toolbar);

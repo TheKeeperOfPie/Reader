@@ -17,8 +17,8 @@ public interface FragmentListenerBase {
     Reddit getReddit();
     AdapterLink.ViewHolderLink.EventListener getEventListenerBase();
     AdapterCommentList.ViewHolderComment.EventListener getEventListener();
-    Theme getAppColorTheme();
-    String getThemeBackgroundPrefString();
-    String getThemePrimaryPrefString();
-    String getThemeAccentPrefString();
+    @AppSettings.ThemeBackground String getThemeBackground();
+    @AppSettings.ThemeColor String getThemePrimary();
+    @AppSettings.ThemeColor String getThemePrimaryDark();
+    @AppSettings.ThemeColor String getThemeAccent();
 }

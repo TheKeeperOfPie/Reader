@@ -12,6 +12,7 @@ import android.preference.ListPreference;
 import android.preference.Preference;
 import android.preference.PreferenceFragment;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -110,6 +111,8 @@ public abstract class FragmentPreferences extends PreferenceFragment implements 
                         index >= 0
                                 ? listPreference.getEntries()[index]
                                 : null);
+
+                Log.d(TAG, "onPreferenceChange() called with: " + "preference = [" + preference.getKey() + "], index = [" + index + "]");
 
             }
             else {

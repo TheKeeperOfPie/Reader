@@ -5,12 +5,12 @@ import android.accounts.AccountAuthenticatorActivity;
 import android.accounts.AccountManager;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.res.Resources;
 import android.content.res.TypedArray;
 import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.preference.PreferenceManager;
 import android.support.v7.widget.Toolbar;
 import android.text.TextUtils;
 import android.util.Log;
@@ -32,11 +32,11 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.winsonchiu.reader.AppSettings;
 import com.winsonchiu.reader.CustomApplication;
 import com.winsonchiu.reader.R;
-import com.winsonchiu.reader.Theme;
 import com.winsonchiu.reader.dagger.components.ComponentStatic;
 import com.winsonchiu.reader.data.reddit.Reddit;
 import com.winsonchiu.reader.data.reddit.User;
 import com.winsonchiu.reader.rx.FinalizingSubscriber;
+import com.winsonchiu.reader.theme.ThemeColor;
 import com.winsonchiu.reader.utils.UtilsColor;
 
 import org.json.JSONException;
@@ -61,35 +61,36 @@ public class ActivityLogin extends AccountAuthenticatorActivity {
 
     @Inject AccountManager accountManager;
     @Inject Reddit reddit;
+    @Inject SharedPreferences sharedPreferences;
 
-    private SharedPreferences preferences;
     private Toolbar toolbar;
     private ProgressBar progressAuth;
     private WebView webAuth;
-    private String state;
+    private String state = UUID.randomUUID().toString();
     private ViewGroup layoutRoot;
+
+    @Override
+    public Resources.Theme getTheme() {
+        boolean secret = sharedPreferences.getBoolean(AppSettings.SECRET, false);
+        @AppSettings.ThemeBackground String themeBackground = sharedPreferences.getString(AppSettings.PREF_THEME_BACKGROUND, AppSettings.THEME_DARK);
+        @AppSettings.ThemeColor String themePrimary = secret ? ThemeColor.random().getName() : sharedPreferences.getString(AppSettings.PREF_THEME_PRIMARY, AppSettings.THEME_DEEP_PURPLE);
+        @AppSettings.ThemeColor String themePrimaryDark = secret ? ThemeColor.random().getName() : sharedPreferences.getString(AppSettings.PREF_THEME_PRIMARY_DARK, AppSettings.THEME_DEEP_PURPLE);
+        @AppSettings.ThemeColor String themeAccent = secret ? ThemeColor.random().getName() : sharedPreferences.getString(AppSettings.PREF_THEME_ACCENT, AppSettings.THEME_YELLOW);
+
+        Resources.Theme theme = getResources().newTheme();
+
+        UtilsColor.applyTheme(theme,
+                themeBackground,
+                themePrimary,
+                themePrimaryDark,
+                themeAccent);
+
+        return theme;
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         CustomApplication.getComponentMain().inject(this);
-        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
-
-        Theme theme;
-        String themeAccent;
-
-        if (sharedPreferences.getBoolean(AppSettings.SECRET, false)) {
-            theme = Theme.random();
-            themeAccent = AppSettings.randomThemeString();
-        }
-        else {
-            theme = Theme.fromString(sharedPreferences.getString(AppSettings.PREF_THEME_PRIMARY, AppSettings.THEME_DEEP_PURPLE));
-            themeAccent = sharedPreferences.getString(AppSettings.PREF_THEME_ACCENT, AppSettings.THEME_YELLOW);
-        }
-        if (theme != null) {
-            String themeBackground = sharedPreferences.getString(AppSettings.PREF_THEME_BACKGROUND, AppSettings.THEME_DARK);
-
-            setTheme(theme.getStyle(themeBackground, themeAccent));
-        }
 
         super.onCreate(savedInstanceState);
 
@@ -98,9 +99,6 @@ public class ActivityLogin extends AccountAuthenticatorActivity {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
             getWindow().clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
         }
-
-        preferences = PreferenceManager.getDefaultSharedPreferences(this);
-        state = UUID.randomUUID().toString();
 
         layoutRoot = (ViewGroup) findViewById(R.id.layout_root);
 

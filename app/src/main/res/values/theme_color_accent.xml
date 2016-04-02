@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ~ Copyright 2015 Winson Chiu
+  -->
+
+<resources>
+
+    <style name="ColorAccentAmber">
+        <item name="colorAccent">@color/amberThemeColorAccent</item>
+    </style>
+
+    <style name="ColorAccentBlue">
+        <item name="colorAccent">@color/blueThemeColorAccent</item>
+    </style>
+
+    <style name="ColorAccentBlueGrey">
+        <item name="colorAccent">@color/blueGreyThemeColorAccent</item>
+    </style>
+
+    <style name="ColorAccentBrown">
+        <item name="colorAccent">@color/brownThemeColorAccent</item>
+    </style>
+
+    <style name="ColorAccentCyan">
+        <item name="colorAccent">@color/cyanThemeColorAccent</item>
+    </style>
+
+    <style name="ColorAccentDeepOrange">
+        <item name="colorAccent">@color/deepOrangeThemeColorAccent</item>
+    </style>
+
+    <style name="ColorAccentDeepPurple">
+        <item name="colorAccent">@color/deepPurpleThemeColorAccent</item>
+    </style>
+
+    <style name="ColorAccentGreen">
+        <item name="colorAccent">@color/greenThemeColorAccent</item>
+    </style>
+
+    <style name="ColorAccentGrey">
+        <item name="colorAccent">@color/greyThemeColorAccent</item>
+    </style>
+
+    <style name="ColorAccentIndigo">
+        <item name="colorAccent">@color/indigoThemeColorAccent</item>
+    </style>
+
+    <style name="ColorAccentLightBlue">
+        <item name="colorAccent">@color/lightBlueThemeColorAccent</item>
+    </style>
+
+    <style name="ColorAccentLightGreen">
+        <item name="colorAccent">@color/lightGreenThemeColorAccent</item>
+    </style>
+
+    <style name="ColorAccentLime">
+        <item name="colorAccent">@color/limeThemeColorAccent</item>
+    </style>
+
+    <style name="ColorAccentOrange">
+        <item name="colorAccent">@color/orangeThemeColorAccent</item>
+    </style>
+
+    <style name="ColorAccentPink">
+        <item name="colorAccent">@color/pinkThemeColorAccent</item>
+    </style>
+
+    <style name="ColorAccentPurple">
+        <item name="colorAccent">@color/purpleThemeColorAccent</item>
+    </style>
+
+    <style name="ColorAccentRed">
+        <item name="colorAccent">@color/redThemeColorAccent</item>
+    </style>
+
+    <style name="ColorAccentTeal">
+        <item name="colorAccent">@color/tealThemeColorAccent</item>
+    </style>
+
+    <style name="ColorAccentYellow">
+        <item name="colorAccent">@color/yellowThemeColorAccent</item>
+    </style>
+
+</resources>

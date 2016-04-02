@@ -7,19 +7,51 @@ package com.winsonchiu.reader;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
+import android.support.annotation.StringDef;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
 
 /**
  * Created by TheKeeperOfPie on 3/7/2015.
  */
 public class AppSettings {
 
+    @Retention(RetentionPolicy.SOURCE)
+    @StringDef({
+            THEME_DARK,
+            THEME_LIGHT,
+            THEME_BLACK,
+    })
+    public @interface ThemeBackground {}
+
     public static final String THEME_DARK = "Dark";
     public static final String THEME_LIGHT = "Light";
     public static final String THEME_BLACK = "Black";
+
+    @Retention(RetentionPolicy.SOURCE)
+    @StringDef({
+            THEME_RED,
+            THEME_PINK,
+            THEME_PURPLE,
+            THEME_DEEP_PURPLE,
+            THEME_INDIGO,
+            THEME_BLUE,
+            THEME_LIGHT_BLUE,
+            THEME_CYAN,
+            THEME_TEAL,
+            THEME_GREEN,
+            THEME_LIGHT_GREEN,
+            THEME_LIME,
+            THEME_YELLOW,
+            THEME_AMBER,
+            THEME_ORANGE,
+            THEME_DEEP_ORANGE,
+            THEME_BROWN,
+            THEME_GREY,
+            THEME_BLUE_GREY,
+    })
+    public @interface ThemeColor {}
 
     public static final String THEME_RED = "Red";
     public static final String THEME_PINK = "Pink";
@@ -75,6 +107,7 @@ public class AppSettings {
     public static final String SWIPE_EXIT_COMMENTS = "swipe_exit_comments";
     public static final String PREF_THEME_BACKGROUND = "pref_theme_background";
     public static final String PREF_THEME_PRIMARY = "pref_theme_primary";
+    public static final String PREF_THEME_PRIMARY_DARK = "pref_theme_primary_dark";
     public static final String PREF_THEME_ACCENT = "pref_theme_accent";
     public static final String PREF_VERSION = "pref_version";
     public static final String PREF_HEADER_SUBREDDIT = "pref_header_subreddit";
@@ -103,28 +136,6 @@ public class AppSettings {
     }
 
     public static String randomThemeString() {
-
-        List<String> themes = new ArrayList<>(19);
-        themes.add(THEME_RED);
-        themes.add(THEME_PINK);
-        themes.add(THEME_PURPLE);
-        themes.add(THEME_DEEP_PURPLE);
-        themes.add(THEME_INDIGO);
-        themes.add(THEME_BLUE);
-        themes.add(THEME_LIGHT_BLUE);
-        themes.add(THEME_CYAN);
-        themes.add(THEME_TEAL);
-        themes.add(THEME_GREEN);
-        themes.add(THEME_LIGHT_GREEN);
-        themes.add(THEME_LIME);
-        themes.add(THEME_YELLOW);
-        themes.add(THEME_AMBER);
-        themes.add(THEME_ORANGE);
-        themes.add(THEME_DEEP_ORANGE);
-        themes.add(THEME_BROWN);
-        themes.add(THEME_GREY);
-        themes.add(THEME_BLUE_GREY);
-
-        return themes.get(new Random().nextInt(themes.size()));
+        return com.winsonchiu.reader.theme.ThemeColor.random().getName();
     }
 }

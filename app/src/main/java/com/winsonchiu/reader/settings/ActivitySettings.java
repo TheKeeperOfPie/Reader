@@ -7,8 +7,8 @@ package com.winsonchiu.reader.settings;
 import android.app.Activity;
 import android.app.Fragment;
 import android.content.SharedPreferences;
+import android.content.res.Resources;
 import android.content.res.TypedArray;
-import android.graphics.Color;
 import android.graphics.ColorFilter;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
@@ -22,7 +22,7 @@ import android.view.WindowManager;
 
 import com.winsonchiu.reader.AppSettings;
 import com.winsonchiu.reader.R;
-import com.winsonchiu.reader.Theme;
+import com.winsonchiu.reader.theme.ThemeColor;
 import com.winsonchiu.reader.utils.UtilsColor;
 
 /**
@@ -35,18 +35,27 @@ public class ActivitySettings extends AppCompatActivity {
     private ColorFilter colorFilterPrimary;
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
-
+    public Resources.Theme getTheme() {
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+        boolean secret = sharedPreferences.getBoolean(AppSettings.SECRET, false);
+        @AppSettings.ThemeBackground String themeBackground = sharedPreferences.getString(AppSettings.PREF_THEME_BACKGROUND, AppSettings.THEME_DARK);
+        @AppSettings.ThemeColor String themePrimary = secret ? ThemeColor.random().getName() : sharedPreferences.getString(AppSettings.PREF_THEME_PRIMARY, AppSettings.THEME_DEEP_PURPLE);
+        @AppSettings.ThemeColor String themePrimaryDark = secret ? ThemeColor.random().getName() : sharedPreferences.getString(AppSettings.PREF_THEME_PRIMARY_DARK, AppSettings.THEME_DEEP_PURPLE);
+        @AppSettings.ThemeColor String themeAccent = secret ? ThemeColor.random().getName() : sharedPreferences.getString(AppSettings.PREF_THEME_ACCENT, AppSettings.THEME_YELLOW);
 
-        Theme theme = Theme.fromString(sharedPreferences.getString(AppSettings.PREF_THEME_PRIMARY, AppSettings.THEME_DEEP_PURPLE));
-        if (theme != null) {
-            String themeBackground = sharedPreferences.getString(AppSettings.PREF_THEME_BACKGROUND, AppSettings.THEME_DARK);
-            String themeAccent = sharedPreferences.getString(AppSettings.PREF_THEME_ACCENT, AppSettings.THEME_YELLOW);
+        Resources.Theme theme = getResources().newTheme();
 
-            setTheme(theme.getStyle(themeBackground, themeAccent));
-        }
+        UtilsColor.applyTheme(theme,
+                themeBackground,
+                themePrimary,
+                themePrimaryDark,
+                themeAccent);
 
+        return theme;
+    }
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
         setContentView(R.layout.activity_settings);

@@ -1,15 +1,21 @@
 package com.winsonchiu.reader.utils;
 
 import android.content.Context;
+import android.content.res.Resources;
 import android.graphics.Color;
 import android.graphics.ColorFilter;
 import android.graphics.drawable.Drawable;
+import android.support.annotation.ColorInt;
 import android.support.v4.util.LruCache;
 import android.support.v4.util.Pair;
 import android.util.TypedValue;
 import android.view.Menu;
 
+import com.winsonchiu.reader.AppSettings;
+import com.winsonchiu.reader.FragmentListenerBase;
 import com.winsonchiu.reader.R;
+import com.winsonchiu.reader.theme.ThemeBackground;
+import com.winsonchiu.reader.theme.ThemeColor;
 
 /**
  * Created by TheKeeperOfPie on 8/10/2015.
@@ -78,6 +84,51 @@ public class UtilsColor {
                 drawable.mutate().setColorFilter(colorFilter);
             }
         }
+    }
+
+    public static void applyTheme(Resources.Theme theme,
+            @AppSettings.ThemeBackground String background,
+            @AppSettings.ThemeColor String colorPrimary,
+            @AppSettings.ThemeColor String colorPrimaryDark,
+            @AppSettings.ThemeColor String colorAccent) {
+
+        theme.applyStyle(ThemeBackground.getTheme(background).getStyleBackground(), true);
+        theme.applyStyle(ThemeColor.getTheme(colorPrimary).getStyleColorPrimary(), true);
+        theme.applyStyle(ThemeColor.getTheme(colorPrimaryDark).getStyleColorPrimaryDark(), true);
+        theme.applyStyle(ThemeColor.getTheme(colorAccent).getStyleColorAccent(), true);
+    }
+
+    public static Resources.Theme getThemeForColor(Resources resources, int color, FragmentListenerBase fragmentListenerBase) {
+        return getThemeForColor(resources,
+                color,
+                fragmentListenerBase.getThemePrimary(),
+                fragmentListenerBase.getThemePrimaryDark(),
+                fragmentListenerBase.getThemeAccent());
+    }
+
+    public static Resources.Theme getThemeForColor(Resources resources,
+            @ColorInt int color,
+            @AppSettings.ThemeColor String colorPrimary,
+            @AppSettings.ThemeColor String colorPrimaryDark,
+            @AppSettings.ThemeColor String colorAccent) {
+        Resources.Theme theme = resources.newTheme();
+
+        if (UtilsColor.showOnWhite(color)) {
+            applyTheme(theme,
+                    AppSettings.THEME_DARK,
+                    colorPrimary,
+                    colorPrimaryDark,
+                    colorAccent);
+        }
+        else {
+            applyTheme(theme,
+                    AppSettings.THEME_LIGHT,
+                    colorPrimary,
+                    colorPrimaryDark,
+                    colorAccent);
+        }
+
+        return theme;
     }
 
 }

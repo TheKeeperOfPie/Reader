@@ -435,7 +435,7 @@ public class FragmentComments extends FragmentBase
             layoutParamsNext.setMargins(0, 0, 0, 0);
             buttonCommentNext.setLayoutParams(layoutParamsNext);
 
-            RelativeLayout.LayoutParams layoutParamsActions = (RelativeLayout.LayoutParams) layoutActions
+            ViewGroup.MarginLayoutParams layoutParamsActions = (ViewGroup.MarginLayoutParams) layoutActions
                     .getLayoutParams();
             layoutParamsActions.setMarginStart(margin);
             layoutParamsActions.setMarginEnd(margin);

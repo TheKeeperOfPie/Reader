@@ -19,6 +19,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.content.res.Resources;
 import android.content.res.TypedArray;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -109,6 +110,7 @@ import com.winsonchiu.reader.rx.ObserverNext;
 import com.winsonchiu.reader.search.ControllerSearch;
 import com.winsonchiu.reader.search.FragmentSearch;
 import com.winsonchiu.reader.settings.ActivitySettings;
+import com.winsonchiu.reader.theme.ThemeColor;
 import com.winsonchiu.reader.utils.CustomColorFilter;
 import com.winsonchiu.reader.utils.EventListenerBase;
 import com.winsonchiu.reader.utils.ImageDownload;
@@ -219,10 +221,10 @@ public class ActivityMain extends AppCompatActivity
         }
     };
 
-    private String themeBackground;
-    private String themePrimary;
-    private String themeAccent;
-    private Theme theme;
+    @AppSettings.ThemeBackground private String themeBackground;
+    @AppSettings.ThemeColor private String themePrimary;
+    @AppSettings.ThemeColor private String themePrimaryDark;
+    @AppSettings.ThemeColor private String themeAccent;
     private ComponentActivity componentActivity;
 
     private CustomTabsServiceConnection customTabsServiceConnection;
@@ -260,6 +262,35 @@ public class ActivityMain extends AppCompatActivity
     @Inject SharedPreferences sharedPreferences;
 
     @Override
+    protected void attachBaseContext(Context newBase) {
+        super.attachBaseContext(newBase);
+    }
+
+    @Override
+    public Resources.Theme getTheme() {
+        boolean secret = sharedPreferences.getBoolean(AppSettings.SECRET, false);
+        @AppSettings.ThemeBackground String themeBackground = sharedPreferences.getString(AppSettings.PREF_THEME_BACKGROUND, AppSettings.THEME_DARK);
+        @AppSettings.ThemeColor String themePrimary = secret ? ThemeColor.random().getName() : sharedPreferences.getString(AppSettings.PREF_THEME_PRIMARY, AppSettings.THEME_DEEP_PURPLE);
+        @AppSettings.ThemeColor String themePrimaryDark = secret ? ThemeColor.random().getName() : sharedPreferences.getString(AppSettings.PREF_THEME_PRIMARY_DARK, AppSettings.THEME_DEEP_PURPLE);
+        @AppSettings.ThemeColor String themeAccent = secret ? ThemeColor.random().getName() : sharedPreferences.getString(AppSettings.PREF_THEME_ACCENT, AppSettings.THEME_YELLOW);
+
+        this.themeBackground = themeBackground;
+        this.themePrimary = themePrimary;
+        this.themePrimaryDark = themePrimaryDark;
+        this.themeAccent = themeAccent;
+
+        Resources.Theme theme = getResources().newTheme();
+
+        UtilsColor.applyTheme(theme,
+                themeBackground,
+                themePrimary,
+                themePrimaryDark,
+                themeAccent);
+
+        return theme;
+    }
+
+    @Override
     protected void onCreate(Bundle savedInstanceState) {
         ButterKnife.setDebug(true);
         componentActivity = (ComponentActivity) getLastCustomNonConfigurationInstance();
@@ -270,18 +301,6 @@ public class ActivityMain extends AppCompatActivity
         }
 
         componentActivity.inject(this);
-
-        boolean secret = sharedPreferences.getBoolean(AppSettings.SECRET, false);
-        themePrimary = secret
-                ? AppSettings.randomThemeString()
-                : sharedPreferences.getString(AppSettings.PREF_THEME_PRIMARY, AppSettings.THEME_DEEP_PURPLE);
-        themeAccent = secret
-                ? AppSettings.randomThemeString()
-                : sharedPreferences.getString(AppSettings.PREF_THEME_ACCENT, AppSettings.THEME_YELLOW);
-        themeBackground = sharedPreferences.getString(AppSettings.PREF_THEME_BACKGROUND, AppSettings.THEME_DARK);
-        theme = Theme.fromString(themePrimary);
-
-        setTheme(theme.getStyle(themeBackground, themeAccent));
 
         TypedArray typedArray = obtainStyledAttributes(new int[]{R.attr.colorPrimary, R.attr.colorAccent});
         colorPrimary = typedArray.getColor(0, ContextCompat.getColor(this, R.color.colorPrimary));
@@ -1413,22 +1432,26 @@ public class ActivityMain extends AppCompatActivity
     }
 
     @Override
-    public Theme getAppColorTheme() {
-        return theme;
-    }
-
-    @Override
-    public String getThemeBackgroundPrefString() {
+    @AppSettings.ThemeBackground
+    public String getThemeBackground() {
         return themeBackground;
     }
 
     @Override
-    public String getThemePrimaryPrefString() {
+    @AppSettings.ThemeColor
+    public String getThemePrimary() {
         return themePrimary;
     }
 
     @Override
-    public String getThemeAccentPrefString() {
+    @AppSettings.ThemeColor
+    public String getThemePrimaryDark() {
+        return themePrimaryDark;
+    }
+
+    @Override
+    @AppSettings.ThemeColor
+    public String getThemeAccent() {
         return themeAccent;
     }
 

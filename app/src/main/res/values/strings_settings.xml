@@ -148,12 +148,51 @@
         <item>Yellow</item>
     </string-array>
 
+    <string name="pref_theme_primary_dark">Secondary theme</string>
+    <string-array name="pref_theme_primary_dark_entries">
+        <item>Amber</item>
+        <item>Blue</item>
+        <item>Blue Grey</item>
+        <item>Brown</item>
+        <item>Cyan</item>
+        <item>Deep Orange</item>
+        <item>Deep Purple</item>
+        <item>Green</item>
+        <item>Grey</item>
+        <item>Indigo</item>
+        <item>Light Blue</item>
+        <item>Light Green</item>
+        <item>Lime</item>
+        <item>Orange</item>
+        <item>Pink</item>
+        <item>Purple</item>
+        <item>Red</item>
+        <item>Teal</item>
+        <item>Yellow</item>
+    </string-array>
+    <string-array name="pref_theme_primary_dark_values">
+        <item>Amber</item>
+        <item>Blue</item>
+        <item>Blue Grey</item>
+        <item>Brown</item>
+        <item>Cyan</item>
+        <item>Deep Orange</item>
+        <item>Deep Purple</item>
+        <item>Green</item>
+        <item>Grey</item>
+        <item>Indigo</item>
+        <item>Light Blue</item>
+        <item>Light Green</item>
+        <item>Lime</item>
+        <item>Orange</item>
+        <item>Pink</item>
+        <item>Purple</item>
+        <item>Red</item>
+        <item>Teal</item>
+        <item>Yellow</item>
+    </string-array>
+
     <string name="pref_theme_accent">Accent theme</string>
-    <string name="pref_header_subreddit">Header subreddit</string>
-    <string name="pref_header_subreddit_summary">Subreddit for header image</string>
-
-
-
     <string-array name="pref_theme_accent_entries">
         <item>Amber</item>
         <item>Blue</item>
@@ -196,5 +235,8 @@
         <item>Teal</item>
         <item>Yellow</item>
     </string-array>
+
+    <string name="pref_header_subreddit">Header subreddit</string>
+    <string name="pref_header_subreddit_summary">Subreddit for header image</string>
 
 </resources>

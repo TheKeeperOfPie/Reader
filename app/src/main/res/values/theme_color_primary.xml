@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ~ Copyright 2015 Winson Chiu
+  -->
+
+<resources>
+
+    <style name="ColorPrimaryAmber">
+        <item name="colorPrimary">@color/amberThemeColorPrimary</item>
+    </style>
+
+    <style name="ColorPrimaryBlue">
+        <item name="colorPrimary">@color/blueThemeColorPrimary</item>
+    </style>
+
+    <style name="ColorPrimaryBlueGrey">
+        <item name="colorPrimary">@color/blueGreyThemeColorPrimary</item>
+    </style>
+
+    <style name="ColorPrimaryBrown">
+        <item name="colorPrimary">@color/brownThemeColorPrimary</item>
+    </style>
+
+    <style name="ColorPrimaryCyan">
+        <item name="colorPrimary">@color/cyanThemeColorPrimary</item>
+    </style>
+
+    <style name="ColorPrimaryDeepOrange">
+        <item name="colorPrimary">@color/deepOrangeThemeColorPrimary</item>
+    </style>
+
+    <style name="ColorPrimaryDeepPurple">
+        <item name="colorPrimary">@color/deepPurpleThemeColorPrimary</item>
+    </style>
+
+    <style name="ColorPrimaryGreen">
+        <item name="colorPrimary">@color/greenThemeColorPrimary</item>
+    </style>
+
+    <style name="ColorPrimaryGrey">
+        <item name="colorPrimary">@color/greyThemeColorPrimary</item>
+    </style>
+
+    <style name="ColorPrimaryIndigo">
+        <item name="colorPrimary">@color/indigoThemeColorPrimary</item>
+    </style>
+
+    <style name="ColorPrimaryLightBlue">
+        <item name="colorPrimary">@color/lightBlueThemeColorPrimary</item>
+    </style>
+
+    <style name="ColorPrimaryLightGreen">
+        <item name="colorPrimary">@color/lightGreenThemeColorPrimary</item>
+    </style>
+
+    <style name="ColorPrimaryLime">
+        <item name="colorPrimary">@color/limeThemeColorPrimary</item>
+    </style>
+
+    <style name="ColorPrimaryOrange">
+        <item name="colorPrimary">@color/orangeThemeColorPrimary</item>
+    </style>
+
+    <style name="ColorPrimaryPink">
+        <item name="colorPrimary">@color/pinkThemeColorPrimary</item>
+    </style>
+
+    <style name="ColorPrimaryPurple">
+        <item name="colorPrimary">@color/purpleThemeColorPrimary</item>
+    </style>
+
+    <style name="ColorPrimaryRed">
+        <item name="colorPrimary">@color/redThemeColorPrimary</item>
+    </style>
+
+    <style name="ColorPrimaryTeal">
+        <item name="colorPrimary">@color/tealThemeColorPrimary</item>
+    </style>
+
+    <style name="ColorPrimaryYellow">
+        <item name="colorPrimary">@color/yellowThemeColorPrimary</item>
+    </style>
+
+</resources>
