@@ -28,7 +28,6 @@ import com.winsonchiu.reader.rx.FinalizingSubscriber;
 import com.winsonchiu.reader.rx.ObserverEmpty;
 import com.winsonchiu.reader.search.ControllerSearch;
 
-import java.io.IOException;
 import java.util.HashMap;
 
 import javax.inject.Inject;
@@ -36,7 +35,6 @@ import javax.inject.Inject;
 import rx.Observable;
 import rx.Observer;
 import rx.functions.Action1;
-import rx.functions.Func1;
 
 /**
  * Created by TheKeeperOfPie on 3/27/2016.
@@ -60,23 +58,12 @@ public abstract class EventListenerBase implements AdapterLink.ViewHolderLink.Ev
     @Override
     public void sendComment(String name, String text) {
         reddit.sendComment(name, text)
-                .flatMap(new Func1<String, Observable<Comment>>() {
-                    @Override
-                    public Observable<Comment> call(String response) {
-                        try {
-                            Comment comment = Comment.fromJson(ComponentStatic.getObjectMapper()
-                                    .readValue(response, JsonNode.class).get("json")
-                                    .get("data")
-                                    .get("things")
-                                    .get(0), 0);
-
-                            return Observable.just(comment);
-                        }
-                        catch (IOException e) {
-                            return Observable.error(e);
-                        }
-                    }
-                })
+                .flatMap(UtilsRx.flatMapWrapError(response ->
+                        Comment.fromJson(ComponentStatic.getObjectMapper()
+                                .readValue(response, JsonNode.class).get("json")
+                                .get("data")
+                                .get("things")
+                                .get(0), 0)))
                 .subscribe(new FinalizingSubscriber<Comment>() {
                     @Override
                     public void error(Throwable e) {
@@ -95,22 +82,11 @@ public abstract class EventListenerBase implements AdapterLink.ViewHolderLink.Ev
     @Override
     public void sendMessage(String name, String text) {
         reddit.sendComment(name, text)
-                .flatMap(new Func1<String, Observable<Message>>() {
-                    @Override
-                    public Observable<Message> call(String response) {
-                        try {
-                            Message message = Message.fromJson(ComponentStatic.getObjectMapper().readValue(response, JsonNode.class).get("json")
-                                    .get("data")
-                                    .get("things")
-                                    .get(0));
-
-                            return Observable.just(message);
-                        }
-                        catch (IOException e) {
-                            return Observable.error(e);
-                        }
-                    }
-                })
+                .flatMap(UtilsRx.flatMapWrapError(response ->
+                        Message.fromJson(ComponentStatic.getObjectMapper().readValue(response, JsonNode.class).get("json")
+                                .get("data")
+                                .get("things")
+                                .get(0))))
                 .subscribe(new FinalizingSubscriber<Message>() {
                     @Override
                     public void error(Throwable e) {

@@ -8,8 +8,6 @@ import android.accounts.Account;
 import android.accounts.AccountManager;
 import android.accounts.AccountManagerCallback;
 import android.accounts.AccountManagerFuture;
-import android.accounts.AuthenticatorException;
-import android.accounts.OperationCanceledException;
 import android.app.Activity;
 import android.app.ActivityManager;
 import android.app.AlarmManager;
@@ -119,6 +117,7 @@ import com.winsonchiu.reader.utils.UtilsColor;
 import com.winsonchiu.reader.utils.UtilsImage;
 import com.winsonchiu.reader.utils.UtilsJson;
 import com.winsonchiu.reader.utils.UtilsReddit;
+import com.winsonchiu.reader.utils.UtilsRx;
 import com.winsonchiu.reader.views.ScrollViewHeader;
 
 import java.io.File;
@@ -145,7 +144,6 @@ import jp.wasabeef.takt.Takt;
 import rx.Observable;
 import rx.Observer;
 import rx.android.schedulers.AndroidSchedulers;
-import rx.functions.Func1;
 import rx.schedulers.Schedulers;
 
 
@@ -262,11 +260,6 @@ public class ActivityMain extends AppCompatActivity
     @Inject SharedPreferences sharedPreferences;
 
     @Override
-    protected void attachBaseContext(Context newBase) {
-        super.attachBaseContext(newBase);
-    }
-
-    @Override
     public Resources.Theme getTheme() {
         boolean secret = sharedPreferences.getBoolean(AppSettings.SECRET, false);
         @AppSettings.ThemeBackground String themeBackground = sharedPreferences.getString(AppSettings.PREF_THEME_BACKGROUND, AppSettings.THEME_DARK);
@@ -292,7 +285,6 @@ public class ActivityMain extends AppCompatActivity
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        ButterKnife.setDebug(true);
         componentActivity = (ComponentActivity) getLastCustomNonConfigurationInstance();
 
         if (componentActivity == null) {
@@ -877,16 +869,7 @@ public class ActivityMain extends AppCompatActivity
                 Observable.just(future)
                         .subscribeOn(Schedulers.computation())
                         .observeOn(Schedulers.computation())
-                        .flatMap(new Func1<AccountManagerFuture<Bundle>, Observable<Bundle>>() {
-                            @Override
-                            public Observable<Bundle> call(AccountManagerFuture<Bundle> bundleAccountManagerFuture) {
-                                try {
-                                    return Observable.just(future.getResult());
-                                } catch (OperationCanceledException | AuthenticatorException | IOException e) {
-                                    return Observable.error(e);
-                                }
-                            }
-                        })
+                        .flatMap(UtilsRx.flatMapWrapError(AccountManagerFuture::getResult))
                         .observeOn(AndroidSchedulers.mainThread())
                         .subscribe(new FinalizingSubscriber<Bundle>() {
                             @Override
@@ -953,7 +936,7 @@ public class ActivityMain extends AppCompatActivity
 
                     reddit.tokenRevoke(Reddit.QUERY_REFRESH_TOKEN, tokenRefresh)
                             .observeOn(Schedulers.computation())
-                            .flatMap(s -> {
+                            .flatMap(UtilsRx.flatMapWrapError(s -> {
                                 final AccountManagerFuture future;
                                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
                                     future = accountManager.removeAccount(account, null, null, null);
@@ -964,14 +947,8 @@ public class ActivityMain extends AppCompatActivity
 
                                 sharedPreferences.edit().putString(AppSettings.SUBSCRIPTIONS + account.name, "").apply();
 
-                                try {
-                                    // Force changes in AccountManager
-                                    return Observable.just(future.getResult());
-                                }
-                                catch (OperationCanceledException | IOException | AuthenticatorException e) {
-                                    return Observable.error(e);
-                                }
-                            })
+                                return future.getResult();
+                            }))
                             .observeOn(AndroidSchedulers.mainThread())
                             .subscribe(new Observer<Object>() {
                                 @Override
@@ -1148,14 +1125,7 @@ public class ActivityMain extends AppCompatActivity
 
         if (visible) {
             reddit.me()
-                    .flatMap(response -> {
-                        try {
-                            return Observable.just(ComponentStatic.getObjectMapper().readValue(response, JsonNode.class));
-                        }
-                        catch (IOException e) {
-                            return Observable.error(e);
-                        }
-                    })
+                    .flatMap(UtilsRx.flatMapWrapError(response -> ComponentStatic.getObjectMapper().readValue(response, JsonNode.class)))
                     .subscribe(new ObserverNext<JsonNode>() {
                         @Override
                         public void onNext(JsonNode jsonNode) {

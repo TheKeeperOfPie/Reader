@@ -22,15 +22,18 @@ import android.view.MenuItem;
 import android.webkit.URLUtil;
 import android.widget.EditText;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.winsonchiu.reader.ApiKeys;
 import com.winsonchiu.reader.AppSettings;
 import com.winsonchiu.reader.BuildConfig;
 import com.winsonchiu.reader.CustomApplication;
 import com.winsonchiu.reader.R;
 import com.winsonchiu.reader.auth.ActivityLogin;
+import com.winsonchiu.reader.dagger.components.ComponentStatic;
 import com.winsonchiu.reader.data.api.ApiRedditAuthorized;
 import com.winsonchiu.reader.data.api.ApiRedditDefault;
 import com.winsonchiu.reader.data.retrofit.ConverterFactory;
+import com.winsonchiu.reader.utils.UtilsRx;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -65,26 +68,8 @@ import rx.schedulers.Schedulers;
  */
 public class Reddit {
 
-    private static AtomicInteger created = new AtomicInteger();
-    private static AtomicInteger destroyed = new AtomicInteger();
     private static AtomicInteger bound = new AtomicInteger();
     private static AtomicInteger recycled = new AtomicInteger();
-
-    /**
-     * Used to count and log the creation of WebViews to track memory leaks
-     */
-    public static void incrementCreate() {
-        Log.d(TAG, "Created: " + created.incrementAndGet());
-        Log.d(TAG, "Destroyed: " + destroyed.get());
-    }
-
-    /**
-     * Used to count and log the destruction of WebViews to track memory leaks
-     */
-    public static void incrementDestroy() {
-        Log.d(TAG, "Created: " + created.get());
-        Log.d(TAG, "Destroyed: " + destroyed.incrementAndGet());
-    }
 
     /**
      * Used to count and log the binding of ViewHolders to track memory leaks
@@ -412,7 +397,9 @@ public class Reddit {
                     depth,
                     limit)
                     .compose(TRANSFORMER)
-                    .flatMap(Link.COMMENTS);
+                    .observeOn(Schedulers.computation())
+                    .flatMap(UtilsRx.flatMapWrapError(response -> Link.fromJsonWithComments(ComponentStatic.getObjectMapper().readValue(response, JsonNode.class))))
+                    .observeOn(AndroidSchedulers.mainThread());
         }
 
         return apiRedditAuthorized.comments(
@@ -426,7 +413,9 @@ public class Reddit {
                 depth,
                 limit)
                 .compose(TRANSFORMER)
-                .flatMap(Link.COMMENTS);
+                .observeOn(Schedulers.computation())
+                .flatMap(UtilsRx.flatMapWrapError(response -> Link.fromJsonWithComments(ComponentStatic.getObjectMapper().readValue(response, JsonNode.class))))
+                .observeOn(AndroidSchedulers.mainThread());
     }
 
     public Observable<String> moreChildren(String idLink, String children) {

@@ -24,8 +24,8 @@ import com.winsonchiu.reader.history.Historian;
 import com.winsonchiu.reader.rx.FinalizingSubscriber;
 import com.winsonchiu.reader.rx.ObserverEmpty;
 import com.winsonchiu.reader.utils.ControllerListener;
+import com.winsonchiu.reader.utils.UtilsRx;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -36,7 +36,6 @@ import javax.inject.Inject;
 import rx.Observable;
 import rx.Observer;
 import rx.android.schedulers.AndroidSchedulers;
-import rx.functions.Func1;
 import rx.schedulers.Schedulers;
 
 /**
@@ -111,15 +110,9 @@ public class ControllerLinks implements ControllerLinksBase {
 
     public Observable<Subreddit> reloadSubreddit() {
         Observable<Subreddit> observable = reddit.about(subreddit.getUrl())
-                .flatMap(response -> {
-                    try {
-                        return Observable.just(Subreddit.fromJson(ComponentStatic.getObjectMapper().readValue(
-                                response, JsonNode.class)));
-                    }
-                    catch (IOException e) {
-                        return Observable.error(e);
-                    }
-                });
+                .observeOn(Schedulers.computation())
+                .flatMap(UtilsRx.flatMapWrapError(response -> Subreddit.fromJson(ComponentStatic.getObjectMapper().readValue(response, JsonNode.class))))
+                .observeOn(AndroidSchedulers.mainThread());
         observable.subscribe(new FinalizingSubscriber<Subreddit>() {
                     @Override
                     public void start() {
@@ -151,25 +144,17 @@ public class ControllerLinks implements ControllerLinksBase {
 
     public Observable<Subreddit> reloadSubredditOnly() {
         Observable<Subreddit> observable = reddit.about(subreddit.getUrl())
-                .flatMap(new Func1<String, Observable<Subreddit>>() {
-                    @Override
-                    public Observable<Subreddit> call(String response) {
-                        try {
-                            Subreddit subreddit = Subreddit.fromJson(ComponentStatic.getObjectMapper().readValue(
-                                    response, JsonNode.class));
-
-                            if (!TextUtils.isEmpty(subreddit.getUrl())) {
-                                return Observable.just(subreddit);
-                            }
-                            else {
-                                return Observable.error(new Exception());
-                            }
-                        }
-                        catch (IOException e) {
-                            return Observable.error(e);
-                        }
+                .observeOn(Schedulers.computation())
+                .flatMap(UtilsRx.flatMapWrapError((UtilsRx.Call<String, Subreddit>) response -> Subreddit.fromJson(ComponentStatic.getObjectMapper().readValue(response, JsonNode.class))))
+                .flatMap(subreddit1 -> {
+                    if (!TextUtils.isEmpty(subreddit1.getUrl())) {
+                        return Observable.just(subreddit1);
                     }
-                });
+                    else {
+                        return Observable.error(new Exception("Subreddit URL empty"));
+                    }
+                })
+                .observeOn(AndroidSchedulers.mainThread());
         observable.subscribe(new FinalizingSubscriber<Subreddit>() {
             @Override
             public void start() {
@@ -264,7 +249,7 @@ public class ControllerLinks implements ControllerLinksBase {
     public Observable<Listing> reloadAllLinks(final boolean scroll) {
         Observable<Listing> observable = reddit.links(subreddit.getUrl(), sort.toString(), time.toString(), LIMIT, null)
                 .observeOn(Schedulers.computation())
-                .flatMap(Listing.FLAT_MAP)
+                .flatMap(UtilsRx.flatMapWrapError(response -> Listing.fromJson(ComponentStatic.getObjectMapper().readValue(response, JsonNode.class))))
                 .flatMap(listing -> {
                     if (!listing.getChildren().isEmpty() && !(listing.getChildren().get(0) instanceof Link)) {
                         return Observable.error(new Exception());
@@ -308,7 +293,7 @@ public class ControllerLinks implements ControllerLinksBase {
 
         return reddit.links(subreddit.getUrl(), sort.toString(), time.toString(), LIMIT, listingLinks.getAfter())
                 .observeOn(Schedulers.computation())
-                .flatMap(Listing.FLAT_MAP)
+                .flatMap(UtilsRx.flatMapWrapError(response -> Listing.fromJson(ComponentStatic.getObjectMapper().readValue(response, JsonNode.class))))
                 .doOnNext(redditDatabase.appendListing(subreddit, sort, time))
                 .doOnNext(redditDatabase.cacheListing())
                 .observeOn(AndroidSchedulers.mainThread())

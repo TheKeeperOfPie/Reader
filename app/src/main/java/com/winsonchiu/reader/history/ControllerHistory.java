@@ -8,8 +8,10 @@ import android.content.Context;
 import android.support.annotation.Nullable;
 import android.text.TextUtils;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.winsonchiu.reader.CustomApplication;
 import com.winsonchiu.reader.R;
+import com.winsonchiu.reader.dagger.components.ComponentStatic;
 import com.winsonchiu.reader.data.reddit.Link;
 import com.winsonchiu.reader.data.reddit.Listing;
 import com.winsonchiu.reader.data.reddit.Reddit;
@@ -19,6 +21,7 @@ import com.winsonchiu.reader.data.reddit.Thing;
 import com.winsonchiu.reader.links.ControllerLinksBase;
 import com.winsonchiu.reader.rx.FinalizingSubscriber;
 import com.winsonchiu.reader.utils.ControllerListener;
+import com.winsonchiu.reader.utils.UtilsRx;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -120,7 +123,7 @@ public class ControllerHistory implements ControllerLinksBase {
         }
 
         reddit.info(builder.toString())
-                .flatMap(Listing.FLAT_MAP)
+                .flatMap(UtilsRx.flatMapWrapError(response -> Listing.fromJson(ComponentStatic.getObjectMapper().readValue(response, JsonNode.class))))
                 .subscribe(new FinalizingSubscriber<Listing>() {
                     @Override
                     public void start() {
@@ -181,7 +184,7 @@ public class ControllerHistory implements ControllerLinksBase {
         }
 
         return reddit.info(builder.toString())
-                .flatMap(Listing.FLAT_MAP)
+                .flatMap(UtilsRx.flatMapWrapError(response -> Listing.fromJson(ComponentStatic.getObjectMapper().readValue(response, JsonNode.class))))
                 .doOnNext(listing -> {
                     int startPosition = history.getChildren().size();
                     history.addChildren(listing.getChildren());

@@ -10,16 +10,14 @@ import com.winsonchiu.reader.dagger.components.ComponentStatic;
 import com.winsonchiu.reader.data.reddit.Comment;
 import com.winsonchiu.reader.data.reddit.Link;
 import com.winsonchiu.reader.data.reddit.Reddit;
+import com.winsonchiu.reader.utils.UtilsRx;
 
-import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
 
 import javax.inject.Inject;
 
-import rx.Observable;
 import rx.Observer;
-import rx.functions.Func1;
 
 /**
  * Created by TheKeeperOfPie on 3/20/2015.
@@ -85,24 +83,12 @@ public class ControllerCommentsTop {
 
     public void editComment(String name, final int level, String text) {
         reddit.editUserText(name, text)
-                .flatMap(new Func1<String, Observable<Comment>>() {
-                    @Override
-                    public Observable<Comment> call(String response) {
-                        try {
-                            Comment comment = Comment.fromJson(ComponentStatic.getObjectMapper()
-                                    .readValue(response, JsonNode.class)
-                                    .get("json")
-                                    .get("data")
-                                    .get("things")
-                                    .get(0), level);
-
-                            return Observable.just(comment);
-                        }
-                        catch (IOException e) {
-                            return Observable.error(e);
-                        }
-                    }
-                })
+                .flatMap(UtilsRx.flatMapWrapError(response -> Comment.fromJson(ComponentStatic.getObjectMapper()
+                        .readValue(response, JsonNode.class)
+                        .get("json")
+                        .get("data")
+                        .get("things")
+                        .get(0), level)))
                 .subscribe(new Observer<Comment>() {
                     @Override
                     public void onCompleted() {

@@ -25,11 +25,11 @@ import com.winsonchiu.reader.data.reddit.Thing;
 import com.winsonchiu.reader.data.reddit.Time;
 import com.winsonchiu.reader.data.reddit.User;
 import com.winsonchiu.reader.links.ControllerLinksBase;
-import com.winsonchiu.reader.utils.ControllerListener;
 import com.winsonchiu.reader.rx.FinalizingSubscriber;
 import com.winsonchiu.reader.rx.ObserverEmpty;
+import com.winsonchiu.reader.utils.ControllerListener;
+import com.winsonchiu.reader.utils.UtilsRx;
 
-import java.io.IOException;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -38,7 +38,6 @@ import javax.inject.Inject;
 
 import rx.Observable;
 import rx.Observer;
-import rx.functions.Func1;
 
 /**
  * Created by TheKeeperOfPie on 5/16/2015.
@@ -170,7 +169,7 @@ public class ControllerProfile implements ControllerLinksBase {
 
     public Observable<Listing> reload() {
         Observable<Listing> observable = reddit.user(user.getName(), page.getPage().toLowerCase(), sort.toString(), time.toString(), null, LIMIT)
-                .flatMap(Listing.FLAT_MAP);
+                .flatMap(UtilsRx.flatMapWrapError(response -> Listing.fromJson(ComponentStatic.getObjectMapper().readValue(response, JsonNode.class))));
         observable.subscribe(new FinalizingSubscriber<Listing>() {
                     @Override
                     public void start() {
@@ -204,7 +203,7 @@ public class ControllerProfile implements ControllerLinksBase {
         }
 
         reddit.user(user.getName(), page.getPage().toLowerCase(), sort.toString(), time.toString(), data.getAfter(), 15)
-                .flatMap(Listing.FLAT_MAP)
+                .flatMap(UtilsRx.flatMapWrapError(response -> Listing.fromJson(ComponentStatic.getObjectMapper().readValue(response, JsonNode.class))))
                 .subscribe(new FinalizingSubscriber<Listing>() {
                     @Override
                     public void start() {
@@ -252,7 +251,7 @@ public class ControllerProfile implements ControllerLinksBase {
 //                }, 0);
 
         reddit.user(user.getName(), PAGE_SUBMITTED.toLowerCase(), Sort.TOP.toString(), Time.ALL.toString(), null, 10)
-                .flatMap(Listing.FLAT_MAP)
+                .flatMap(UtilsRx.flatMapWrapError(response -> Listing.fromJson(ComponentStatic.getObjectMapper().readValue(response, JsonNode.class))))
                 .subscribe(new FinalizingSubscriber<Listing>() {
                     @Override
                     public void start() {
@@ -285,7 +284,7 @@ public class ControllerProfile implements ControllerLinksBase {
                 });
 
         reddit.user(user.getName(), PAGE_COMMENTS.toLowerCase(), Sort.TOP.toString(), Time.ALL.toString(), null, 10)
-                .flatMap(Listing.FLAT_MAP)
+                .flatMap(UtilsRx.flatMapWrapError(response -> Listing.fromJson(ComponentStatic.getObjectMapper().readValue(response, JsonNode.class))))
                 .subscribe(new FinalizingSubscriber<Listing>() {
                     @Override
                     public void start() {
@@ -531,24 +530,13 @@ public class ControllerProfile implements ControllerLinksBase {
 
     public void editComment(String name, final int level, String text) {
         reddit.editUserText(name, text)
-                .flatMap(new Func1<String, Observable<Comment>>() {
-                    @Override
-                    public Observable<Comment> call(String response) {
-                        try {
-                            Comment comment = Comment.fromJson(ComponentStatic.getObjectMapper()
-                                    .readValue(response, JsonNode.class)
-                                    .get("json")
-                                    .get("data")
-                                    .get("things")
-                                    .get(0), level);
-
-                            return Observable.just(comment);
-                        }
-                        catch (IOException e) {
-                            return Observable.error(e);
-                        }
-                    }
-                })
+                .flatMap(UtilsRx.flatMapWrapError(response ->
+                        Comment.fromJson(ComponentStatic.getObjectMapper()
+                                .readValue(response, JsonNode.class)
+                                .get("json")
+                                .get("data")
+                                .get("things")
+                                .get(0), level)))
                 .subscribe(new Observer<Comment>() {
                     @Override
                     public void onCompleted() {
@@ -595,17 +583,7 @@ public class ControllerProfile implements ControllerLinksBase {
 
     public Observable<User> loadUser(String query) {
         Observable<User> observable = reddit.user(query, "about", null, null, null, null)
-                .flatMap(new Func1<String, Observable<User>>() {
-                    @Override
-                    public Observable<User> call(String response) {
-                        try {
-                            return Observable.just(User.fromJson(ComponentStatic.getObjectMapper().readValue(
-                                    response, JsonNode.class).get("data")));
-                        } catch (IOException e) {
-                            return Observable.error(e);
-                        }
-                    }
-                });
+                .flatMap(UtilsRx.flatMapWrapError(response -> User.fromJson(ComponentStatic.getObjectMapper().readValue(response, JsonNode.class).get("data"))));
         observable.subscribe(new FinalizingSubscriber<User>() {
                     @Override
                     public void start() {
@@ -661,23 +639,12 @@ public class ControllerProfile implements ControllerLinksBase {
 
     public void sendComment(String name, String text) {
         reddit.sendComment(name, text)
-                .flatMap(new Func1<String, Observable<Comment>>() {
-                    @Override
-                    public Observable<Comment> call(String response) {
-                        try {
-                            Comment comment = Comment.fromJson(ComponentStatic.getObjectMapper()
-                                    .readValue(response, JsonNode.class).get("json")
-                                    .get("data")
-                                    .get("things")
-                                    .get(0), 0);
-
-                            return Observable.just(comment);
-                        }
-                        catch (IOException e) {
-                            return Observable.error(e);
-                        }
-                    }
-                })
+                .flatMap(UtilsRx.flatMapWrapError(response ->
+                        Comment.fromJson(ComponentStatic.getObjectMapper()
+                                .readValue(response, JsonNode.class).get("json")
+                                .get("data")
+                                .get("things")
+                                .get(0), 0)))
                 .subscribe(new FinalizingSubscriber<Comment>() {
                     @Override
                     public void next(Comment next) {

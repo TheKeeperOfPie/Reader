@@ -39,8 +39,10 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.github.rjeschke.txtmark.Processor;
 import com.squareup.picasso.Picasso;
+import com.winsonchiu.reader.dagger.components.ComponentStatic;
 import com.winsonchiu.reader.data.reddit.Link;
 import com.winsonchiu.reader.data.reddit.Listing;
 import com.winsonchiu.reader.data.reddit.Reddit;
@@ -48,6 +50,7 @@ import com.winsonchiu.reader.links.ControllerLinks;
 import com.winsonchiu.reader.rx.FinalizingSubscriber;
 import com.winsonchiu.reader.utils.UtilsColor;
 import com.winsonchiu.reader.utils.UtilsReddit;
+import com.winsonchiu.reader.utils.UtilsRx;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -441,7 +444,7 @@ public class FragmentNewPost extends FragmentBase implements Toolbar.OnMenuItemC
 
     private void loadEditValues() {
         reddit.info(getArguments().getString(EDIT_ID))
-                .flatMap(Listing.FLAT_MAP)
+                .flatMap(UtilsRx.flatMapWrapError(response -> Listing.fromJson(ComponentStatic.getObjectMapper().readValue(response, JsonNode.class))))
                 .subscribe(new Observer<Listing>() {
                     @Override
                     public void onCompleted() {

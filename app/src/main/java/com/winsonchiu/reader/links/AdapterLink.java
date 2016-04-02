@@ -103,6 +103,7 @@ import com.winsonchiu.reader.utils.UtilsColor;
 import com.winsonchiu.reader.utils.UtilsImage;
 import com.winsonchiu.reader.utils.UtilsJson;
 import com.winsonchiu.reader.utils.UtilsReddit;
+import com.winsonchiu.reader.utils.UtilsRx;
 import com.winsonchiu.reader.utils.ViewHolderBase;
 import com.winsonchiu.reader.utils.YouTubeListener;
 import com.winsonchiu.reader.views.ImageViewZoom;
@@ -130,6 +131,7 @@ import butterknife.OnTouch;
 import rx.Observable;
 import rx.Subscription;
 import rx.android.schedulers.AndroidSchedulers;
+import rx.functions.Func1;
 
 /**
  * Created by TheKeeperOfPie on 3/14/2015.
@@ -1269,14 +1271,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<ViewHolderBase> i
             progressImage.setVisibility(View.VISIBLE);
 
             subscription = reddit.loadGfycat(gfycatId)
-                    .flatMap(response -> {
-                        try {
-                            return Observable.just(new JSONObject(response).getJSONObject(Reddit.GFYCAT_ITEM));
-                        }
-                        catch (JSONException e) {
-                            return Observable.error(e);
-                        }
-                    })
+                    .flatMap(UtilsRx.flatMapWrapError(response -> new JSONObject(response).getJSONObject(Reddit.GFYCAT_ITEM)))
                     .subscribe(new FinalizingSubscriber<JSONObject>() {
                         @Override
                         public void error(Throwable e) {
@@ -1335,15 +1330,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<ViewHolderBase> i
 
         private void loadGallery(String id, final Link link) {
             subscription = reddit.loadImgurGallery(id)
-                    .flatMap(response -> {
-                        try {
-                            return Observable.just(Album.fromJson(new JSONObject(response)
-                                    .getJSONObject("data")));
-                        }
-                        catch (JSONException e) {
-                            return Observable.error(e);
-                        }
-                    })
+                    .flatMap(UtilsRx.flatMapWrapError(response -> Album.fromJson(new JSONObject(response).getJSONObject("data"))))
                     .subscribe(new FinalizingSubscriber<Album>() {
                         @Override
                         public void start() {
@@ -1364,15 +1351,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<ViewHolderBase> i
 
         private void loadAlbum(String id, final Link link) {
             subscription = reddit.loadImgurAlbum(id)
-                    .flatMap(response -> {
-                        try {
-                            return Observable.just(Album.fromJson(new JSONObject(response)
-                                    .getJSONObject("data")));
-                        }
-                        catch (JSONException e) {
-                            return Observable.error(e);
-                        }
-                    })
+                    .flatMap(UtilsRx.flatMapWrapError(response -> Album.fromJson(new JSONObject(response).getJSONObject("data"))))
                     .subscribe(new FinalizingSubscriber<Album>() {
                         @Override
                         public void start() {
@@ -1393,17 +1372,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<ViewHolderBase> i
 
         private void loadGifv(String id) {
             reddit.loadImgurImage(id)
-                    .flatMap(response -> {
-                        try {
-                            return Observable.just(Image.fromJson(
-                                    new JSONObject(
-                                            response).getJSONObject(
-                                            "data")));
-                        }
-                        catch (JSONException e) {
-                            return Observable.error(e);
-                        }
-                    })
+                    .flatMap(UtilsRx.flatMapWrapError(response -> Image.fromJson(new JSONObject(response).getJSONObject("data"))))
                     .subscribe(new FinalizingSubscriber<Image>() {
                         @Override
                         public void start() {

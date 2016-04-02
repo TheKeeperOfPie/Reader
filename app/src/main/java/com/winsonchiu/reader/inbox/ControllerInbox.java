@@ -21,11 +21,11 @@ import com.winsonchiu.reader.data.reddit.Reddit;
 import com.winsonchiu.reader.data.reddit.Replyable;
 import com.winsonchiu.reader.data.reddit.Subreddit;
 import com.winsonchiu.reader.data.reddit.Thing;
-import com.winsonchiu.reader.utils.ControllerListener;
 import com.winsonchiu.reader.rx.FinalizingSubscriber;
 import com.winsonchiu.reader.rx.ObserverEmpty;
+import com.winsonchiu.reader.utils.ControllerListener;
+import com.winsonchiu.reader.utils.UtilsRx;
 
-import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -33,7 +33,6 @@ import javax.inject.Inject;
 
 import rx.Observable;
 import rx.Observer;
-import rx.functions.Func1;
 
 /**
  * Created by TheKeeperOfPie on 5/17/2015.
@@ -132,7 +131,7 @@ public class ControllerInbox {
         Log.d(TAG, "Page: " + page.getPage());
 
         reddit.message(page.getPage(), null)
-                .flatMap(Listing.FLAT_MAP)
+                .flatMap(UtilsRx.flatMapWrapError(response -> Listing.fromJson(ComponentStatic.getObjectMapper().readValue(response, JsonNode.class))))
                 .subscribe(new FinalizingSubscriber<Listing>() {
                     @Override
                     public void start() {
@@ -166,24 +165,13 @@ public class ControllerInbox {
     public void editComment(String name, final int level, String text) {
 
         reddit.editUserText(name, text)
-                .flatMap(new Func1<String, Observable<Comment>>() {
-                    @Override
-                    public Observable<Comment> call(String response) {
-                        try {
-                            Comment comment = Comment.fromJson(ComponentStatic.getObjectMapper()
-                                    .readValue(response, JsonNode.class)
-                                    .get("json")
-                                    .get("data")
-                                    .get("things")
-                                    .get(0), level);
-
-                            return Observable.just(comment);
-                        }
-                        catch (IOException e) {
-                            return Observable.error(e);
-                        }
-                    }
-                })
+                .flatMap(UtilsRx.flatMapWrapError(response ->
+                        Comment.fromJson(ComponentStatic.getObjectMapper()
+                                .readValue(response, JsonNode.class)
+                                .get("json")
+                                .get("data")
+                                .get("things")
+                                .get(0), level)))
                 .subscribe(new Observer<Comment>() {
                     @Override
                     public void onCompleted() {
@@ -327,23 +315,12 @@ public class ControllerInbox {
 
     public void sendComment(String name, String text) {
         reddit.sendComment(name, text)
-                .flatMap(new Func1<String, Observable<Comment>>() {
-                    @Override
-                    public Observable<Comment> call(String response) {
-                        try {
-                            Comment comment = Comment.fromJson(ComponentStatic.getObjectMapper()
-                                    .readValue(response, JsonNode.class).get("json")
-                                    .get("data")
-                                    .get("things")
-                                    .get(0), 0);
-
-                            return Observable.just(comment);
-                        }
-                        catch (IOException e) {
-                            return Observable.error(e);
-                        }
-                    }
-                })
+                .flatMap(UtilsRx.flatMapWrapError(response ->
+                        Comment.fromJson(ComponentStatic.getObjectMapper()
+                                .readValue(response, JsonNode.class).get("json")
+                                .get("data")
+                                .get("things")
+                                .get(0), 0)))
                 .subscribe(new FinalizingSubscriber<Comment>() {
                     @Override
                     public void next(Comment next) {
@@ -355,7 +332,7 @@ public class ControllerInbox {
     public void loadMore() {
 
         reddit.message(page.getPage(), data.getAfter())
-                .flatMap(Listing.FLAT_MAP)
+                .flatMap(UtilsRx.flatMapWrapError(response -> Listing.fromJson(ComponentStatic.getObjectMapper().readValue(response, JsonNode.class))))
                 .subscribe(new FinalizingSubscriber<Listing>() {
                     @Override
                     public void start() {

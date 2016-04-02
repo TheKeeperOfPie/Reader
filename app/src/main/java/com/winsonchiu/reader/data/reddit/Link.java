@@ -10,7 +10,6 @@ import android.text.Html;
 import android.text.TextUtils;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.winsonchiu.reader.dagger.components.ComponentStatic;
 import com.winsonchiu.reader.data.imgur.Album;
 import com.winsonchiu.reader.utils.UtilsJson;
 import com.winsonchiu.reader.utils.UtilsReddit;
@@ -21,28 +20,12 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-import rx.Observable;
-import rx.functions.Func1;
-
 /**
  * Created by TheKeeperOfPie on 3/7/2015.
  */
 public class Link extends Replyable implements Parcelable {
 
     public static final String TAG = Link.class.getCanonicalName();
-
-    public static Func1<String, Observable<Link>> COMMENTS = new Func1<String, Observable<Link>>() {
-        @Override
-        public Observable<Link> call(String response) {
-            try {
-                return Observable.just(Link.fromJsonWithComments(
-                        ComponentStatic.getObjectMapper().readValue(response,
-                                JsonNode.class)));
-            } catch (IOException e) {
-                return Observable.error(e);
-            }
-        }
-    };
 
     private String author = "";
     private String authorFlairCssClass = "";

@@ -20,9 +20,9 @@ import com.winsonchiu.reader.data.reddit.Reddit;
 import com.winsonchiu.reader.data.reddit.Replyable;
 import com.winsonchiu.reader.data.reddit.Sort;
 import com.winsonchiu.reader.data.reddit.Thing;
-import com.winsonchiu.reader.utils.ControllerListener;
 import com.winsonchiu.reader.rx.FinalizingSubscriber;
 import com.winsonchiu.reader.rx.ObserverEmpty;
+import com.winsonchiu.reader.utils.ControllerListener;
 import com.winsonchiu.reader.utils.UtilsRx;
 
 import java.io.IOException;
@@ -38,7 +38,7 @@ import rx.Observable;
 import rx.Observer;
 import rx.Subscription;
 import rx.android.schedulers.AndroidSchedulers;
-import rx.functions.Func1;
+import rx.schedulers.Schedulers;
 
 /**
  * Created by TheKeeperOfPie on 3/20/2015.
@@ -146,7 +146,7 @@ public class ControllerComments implements AdapterCommentList.ViewHolderComment.
                     .getChildren()));
         }
         else {
-            listing.setChildren(new ArrayList<Thing>());
+            listing.setChildren(new ArrayList<>());
         }
         listingComments = listing;
 
@@ -170,6 +170,7 @@ public class ControllerComments implements AdapterCommentList.ViewHolderComment.
 
         UtilsRx.unsubscribe(subscriptionComments);
         subscriptionComments = reddit.comments(link.getSubreddit(), link.getId(), link.getCommentId(), sort.toString(), true, true, link.getContextLevel(), 10, 100)
+                .observeOn(Schedulers.computation())
                 .doOnNext(redditDatabase.storeLink())
                 .onErrorResumeNext(Observable.<Link>empty())
                 .switchIfEmpty(redditDatabase.getLink(link.getId()))
@@ -680,24 +681,13 @@ public class ControllerComments implements AdapterCommentList.ViewHolderComment.
 
     public void editComment(String name, final int level, String text) {
         reddit.editUserText(name, text)
-                .flatMap(new Func1<String, Observable<Comment>>() {
-                    @Override
-                    public Observable<Comment> call(String response) {
-                        try {
-                            Comment comment = Comment.fromJson(ComponentStatic.getObjectMapper()
-                                    .readValue(response, JsonNode.class)
-                                    .get("json")
-                                    .get("data")
-                                    .get("things")
-                                    .get(0), level);
-
-                            return Observable.just(comment);
-                        }
-                        catch (IOException e) {
-                            return Observable.error(e);
-                        }
-                    }
-                })
+                .flatMap(UtilsRx.flatMapWrapError(response ->
+                        Comment.fromJson(ComponentStatic.getObjectMapper()
+                                .readValue(response, JsonNode.class)
+                                .get("json")
+                                .get("data")
+                                .get("things")
+                                .get(0), level)))
                 .subscribe(new Observer<Comment>() {
                     @Override
                     public void onCompleted() {

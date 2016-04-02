@@ -28,11 +28,11 @@ import com.winsonchiu.reader.data.reddit.Thing;
 import com.winsonchiu.reader.data.reddit.Time;
 import com.winsonchiu.reader.links.AdapterLink;
 import com.winsonchiu.reader.links.ControllerLinks;
-import com.winsonchiu.reader.utils.ControllerListener;
 import com.winsonchiu.reader.rx.FinalizingSubscriber;
+import com.winsonchiu.reader.utils.ControllerListener;
+import com.winsonchiu.reader.utils.UtilsRx;
 
 import org.json.JSONArray;
-import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.IOException;
@@ -52,7 +52,6 @@ import javax.inject.Inject;
 import rx.Observable;
 import rx.Observer;
 import rx.Subscription;
-import rx.functions.Func1;
 
 /**
  * Created by TheKeeperOfPie on 6/3/2015.
@@ -187,7 +186,7 @@ public class ControllerSearch {
         }
 
         reddit.subreddits(url, null, 100)
-                .flatMap(Listing.FLAT_MAP)
+                .flatMap(UtilsRx.flatMapWrapError(response -> Listing.fromJson(ComponentStatic.getObjectMapper().readValue(response, JsonNode.class))))
                 .subscribe(new Observer<Listing>() {
                     @Override
                     public void onCompleted() {
@@ -224,7 +223,7 @@ public class ControllerSearch {
         }
 
         reddit.subreddits(url, subredditsLoaded.getAfter(), 100)
-                .flatMap(Listing.FLAT_MAP)
+                .flatMap(UtilsRx.flatMapWrapError(response -> Listing.fromJson(ComponentStatic.getObjectMapper().readValue(response, JsonNode.class))))
                 .subscribe(new Observer<Listing>() {
                     @Override
                     public void onCompleted() {
@@ -319,7 +318,7 @@ public class ControllerSearch {
         String url = Reddit.OAUTH_URL + "/subreddits/mine/contributor";
 
         reddit.subreddits(url, null, 100)
-                .flatMap(Listing.FLAT_MAP)
+                .flatMap(UtilsRx.flatMapWrapError(response -> Listing.fromJson(ComponentStatic.getObjectMapper().readValue(response, JsonNode.class))))
                 .subscribe(new Observer<Listing>() {
                     @Override
                     public void onCompleted() {
@@ -349,7 +348,7 @@ public class ControllerSearch {
         String url = Reddit.OAUTH_URL + "/subreddits/mine/contributor";
 
         reddit.subreddits(url, subredditsLoaded.getAfter(), 100)
-                .flatMap(Listing.FLAT_MAP)
+                .flatMap(UtilsRx.flatMapWrapError(response -> Listing.fromJson(ComponentStatic.getObjectMapper().readValue(response, JsonNode.class))))
                 .subscribe(new Observer<Listing>() {
                     @Override
                     public void onCompleted() {
@@ -446,7 +445,7 @@ public class ControllerSearch {
 
         try {
             subscriptionSubreddits = reddit.subredditsSearch(URLEncoder.encode(query, Reddit.UTF_8).replaceAll("\\s", ""), sort.toString())
-                    .flatMap(Listing.FLAT_MAP)
+                    .flatMap(UtilsRx.flatMapWrapError(response -> Listing.fromJson(ComponentStatic.getObjectMapper().readValue(response, JsonNode.class))))
                     .subscribe(new Observer<Listing>() {
                         @Override
                         public void onCompleted() {
@@ -505,47 +504,23 @@ public class ControllerSearch {
         currentSubreddit = controllerLinks.getSubreddit().getDisplayName();
 
         reddit.recommend(currentSubreddit, builderOmit.toString())
-                .flatMap(new Func1<String, Observable<String>>() {
-                    @Override
-                    public Observable<String> call(String response) {
-                        try {
-                            final JSONArray jsonArray = new JSONArray(response);
-                            List<String> names = new ArrayList<>(jsonArray.length());
-                            for (int index = 0; index < jsonArray.length(); index++) {
-                                /*
-                                    No idea why the API returns a {"sr_name": "subreddit"} rather than an
-                                    array of Strings, but we'll convert it.
-                                 */
-                                JSONObject dataSubreddit = jsonArray.getJSONObject(index);
-                                names.add(dataSubreddit.optString("sr_name"));
-                            }
+                .flatMap(UtilsRx.flatMapWrapError( response -> {
+                    final JSONArray jsonArray = new JSONArray(response);
+                    List<String> names = new ArrayList<>(jsonArray.length());
+                    for (int index = 0; index < jsonArray.length(); index++) {
+                            /*
+                                No idea why the API returns a {"sr_name": "subreddit"} rather than an
+                                array of Strings, but we'll convert it.
+                             */
+                        JSONObject dataSubreddit = jsonArray.getJSONObject(index);
+                        names.add(dataSubreddit.optString("sr_name"));
+                    }
 
-                            return Observable.from(names);
-                        }
-                        catch (JSONException e) {
-                            return Observable.error(e);
-                        }
-                    }
-                })
-                .flatMap(new Func1<String, Observable<Subreddit>>() {
-                    @Override
-                    public Observable<Subreddit> call(String next) {
-                        return reddit.about("/r/" + next + "/")
-                                .flatMap(new Func1<String, Observable<Subreddit>>() {
-                                    @Override
-                                    public Observable<Subreddit> call(String response) {
-                                        try {
-                                            return Observable.just(Subreddit
-                                                    .fromJson(ComponentStatic.getObjectMapper().readValue(
-                                                            response, JsonNode.class)));
-                                        }
-                                        catch (IOException e) {
-                                            return Observable.error(e);
-                                        }
-                                    }
-                                });
-                    }
-                })
+                    return names;
+                }))
+                .flatMap(Observable::from)
+                .flatMap(next -> reddit.about("/r/" + next + "/"))
+                .flatMap(UtilsRx.flatMapWrapError(response -> Subreddit.fromJson(ComponentStatic.getObjectMapper().readValue(response, JsonNode.class))))
                 .subscribe(new FinalizingSubscriber<Subreddit>() {
                     @Override
                     public void start() {
@@ -592,7 +567,7 @@ public class ControllerSearch {
             }
 
             Observable<Listing> observable = reddit.search("", URLEncoder.encode(query, Reddit.UTF_8), sortString, time.toString(), null, false)
-                    .flatMap(Listing.FLAT_MAP);
+                    .flatMap(UtilsRx.flatMapWrapError(response -> Listing.fromJson(ComponentStatic.getObjectMapper().readValue(response, JsonNode.class))));
             subscriptionLinks = observable
                     .subscribe(new FinalizingSubscriber<Listing>() {
                         @Override
@@ -642,7 +617,7 @@ public class ControllerSearch {
         }
 
         Observable<Listing> observable = reddit.search(pathSubreddit, query, sort.toString(), time.toString(), null, true)
-                .flatMap(Listing.FLAT_MAP);
+                .flatMap(UtilsRx.flatMapWrapError(response -> Listing.fromJson(ComponentStatic.getObjectMapper().readValue(response, JsonNode.class))));
         subscriptionSubreddits = observable
                 .subscribe(new FinalizingSubscriber<Listing>() {
                     @Override
@@ -715,7 +690,7 @@ public class ControllerSearch {
         }
 
         Observable<Listing> observable = reddit.search("", query, sortString, time.toString(), links.getAfter(), false)
-                .flatMap(Listing.FLAT_MAP);
+                .flatMap(UtilsRx.flatMapWrapError(response -> Listing.fromJson(ComponentStatic.getObjectMapper().readValue(response, JsonNode.class))));
 
         subscriptionLinks = observable.subscribe(new FinalizingSubscriber<Listing>() {
                     @Override
@@ -778,7 +753,7 @@ public class ControllerSearch {
         }
 
         Observable<Listing> observable = reddit.search(pathSubreddit, query, sort.toString(), time.toString(), linksSubreddit.getAfter(), true)
-                .flatMap(Listing.FLAT_MAP);
+                .flatMap(UtilsRx.flatMapWrapError(response -> Listing.fromJson(ComponentStatic.getObjectMapper().readValue(response, JsonNode.class))));
 
         subscriptionLinksSubreddit = observable.subscribe(new FinalizingSubscriber<Listing>() {
                     @Override

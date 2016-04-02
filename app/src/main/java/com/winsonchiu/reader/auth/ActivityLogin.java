@@ -38,11 +38,11 @@ import com.winsonchiu.reader.data.reddit.User;
 import com.winsonchiu.reader.rx.FinalizingSubscriber;
 import com.winsonchiu.reader.theme.ThemeColor;
 import com.winsonchiu.reader.utils.UtilsColor;
+import com.winsonchiu.reader.utils.UtilsRx;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.IOException;
 import java.util.UUID;
 
 import javax.inject.Inject;
@@ -50,8 +50,6 @@ import javax.inject.Inject;
 import okhttp3.FormBody;
 import okhttp3.Request;
 import okhttp3.RequestBody;
-import rx.Observable;
-import rx.functions.Func1;
 
 public class ActivityLogin extends AccountAuthenticatorActivity {
 
@@ -214,17 +212,7 @@ public class ActivityLogin extends AccountAuthenticatorActivity {
                 .build();
 
         reddit.load(request)
-                .flatMap(new Func1<String, Observable<User>>() {
-                    @Override
-                    public Observable<User> call(String response) {
-                        try {
-                            return Observable.just(User.fromJson(ComponentStatic.getObjectMapper().readValue(response, JsonNode.class)));
-                        }
-                        catch (IOException e) {
-                            return Observable.error(e);
-                        }
-                    }
-                })
+                .flatMap(UtilsRx.flatMapWrapError(response -> User.fromJson(ComponentStatic.getObjectMapper().readValue(response, JsonNode.class))))
                 .subscribe(new FinalizingSubscriber<User>() {
                     @Override
                     public void next(User user) {

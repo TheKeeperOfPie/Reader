@@ -8,23 +8,16 @@ import android.os.Parcel;
 import android.os.Parcelable;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.winsonchiu.reader.dagger.components.ComponentStatic;
 import com.winsonchiu.reader.utils.UtilsJson;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
-
-import rx.Observable;
-import rx.functions.Func1;
 
 /**
  * Created by TheKeeperOfPie on 3/8/2015.
  */
 public class Listing implements Parcelable {
-
-    public static final Func1<String, Observable<Listing>> FLAT_MAP = new FlatMap();
 
     private static final String TAG = Listing.class.getCanonicalName();
     private String before;
@@ -128,19 +121,6 @@ public class Listing implements Parcelable {
         listing.setChildren(things);
 
         return listing;
-    }
-
-    private static class FlatMap implements Func1<String, Observable<Listing>> {
-        @Override
-        public Observable<Listing> call(String response) {
-            try {
-                return Observable.just(Listing.fromJson(ComponentStatic.getObjectMapper().readValue(
-                        response, JsonNode.class)));
-            }
-            catch (IOException e) {
-                return Observable.error(e);
-            }
-        }
     }
 
     @Override
