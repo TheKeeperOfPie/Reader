@@ -25,6 +25,8 @@ import android.widget.TextView;
 
 import com.winsonchiu.reader.R;
 import com.winsonchiu.reader.data.reddit.Subreddit;
+import com.winsonchiu.reader.utils.AdapterBase;
+import com.winsonchiu.reader.utils.AdapterCallback;
 import com.winsonchiu.reader.utils.CustomColorFilter;
 import com.winsonchiu.reader.utils.UtilsAnimation;
 import com.winsonchiu.reader.utils.UtilsReddit;
@@ -35,7 +37,7 @@ import java.util.Date;
 /**
  * Created by TheKeeperOfPie on 5/17/2015.
  */
-public class AdapterSearchSubreddits extends RecyclerView.Adapter<AdapterSearchSubreddits.ViewHolder> {
+public class AdapterSearchSubreddits extends AdapterBase<AdapterSearchSubreddits.ViewHolder> {
 
     private static final String TAG = AdapterSearchSubreddits.class.getCanonicalName();
     private RecyclerView.LayoutManager layoutManager;
@@ -52,7 +54,9 @@ public class AdapterSearchSubreddits extends RecyclerView.Adapter<AdapterSearchS
 
     @Override
     public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-        return new ViewHolder(LayoutInflater.from(parent.getContext()).inflate(R.layout.row_subreddit, parent, false), eventListener);
+        return new ViewHolder(LayoutInflater.from(parent.getContext()).inflate(R.layout.row_subreddit, parent, false),
+                adapterCallback,
+                eventListener);
     }
 
     @Override
@@ -78,8 +82,8 @@ public class AdapterSearchSubreddits extends RecyclerView.Adapter<AdapterSearchS
         protected CustomColorFilter colorFilterIcon;
         protected Subreddit subreddit;
 
-        public ViewHolder(final View itemView, final EventListener eventListener) {
-            super(itemView);
+        public ViewHolder(final View itemView, AdapterCallback adapterCallback, final EventListener eventListener) {
+            super(itemView, adapterCallback);
             this.eventListener = eventListener;
 
             buttonReorder = (ImageButton) itemView.findViewById(R.id.button_reorder);

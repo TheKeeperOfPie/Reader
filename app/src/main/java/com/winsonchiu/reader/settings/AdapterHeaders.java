@@ -8,7 +8,6 @@ import android.app.Activity;
 import android.content.res.TypedArray;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
-import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -16,12 +15,14 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.winsonchiu.reader.R;
+import com.winsonchiu.reader.utils.AdapterBase;
+import com.winsonchiu.reader.utils.AdapterCallback;
 import com.winsonchiu.reader.utils.ViewHolderBase;
 
 /**
  * Created by TheKeeperOfPie on 7/2/2015.
  */
-public class AdapterHeaders extends RecyclerView.Adapter<AdapterHeaders.ViewHolder> {
+public class AdapterHeaders extends AdapterBase<AdapterHeaders.ViewHolder> {
 
     private PorterDuffColorFilter colorFilterIcon;
     private EventListener eventListener;
@@ -42,7 +43,10 @@ public class AdapterHeaders extends RecyclerView.Adapter<AdapterHeaders.ViewHold
 
     @Override
     public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-        return new ViewHolder(LayoutInflater.from(parent.getContext()).inflate(R.layout.row_pref_header, parent, false), eventListener, colorFilterIcon);
+        return new ViewHolder(LayoutInflater.from(parent.getContext()).inflate(R.layout.row_pref_header, parent, false),
+                adapterCallback,
+                eventListener,
+                colorFilterIcon);
     }
 
     @Override
@@ -63,8 +67,8 @@ public class AdapterHeaders extends RecyclerView.Adapter<AdapterHeaders.ViewHold
         protected TextView textSummary;
         private Header header;
 
-        public ViewHolder(View itemView, EventListener listener, PorterDuffColorFilter colorFilterIcon) {
-            super(itemView);
+        public ViewHolder(View itemView, AdapterCallback adapterCallback, EventListener listener, PorterDuffColorFilter colorFilterIcon) {
+            super(itemView, adapterCallback);
             this.eventListener = listener;
 
             imageIcon = (ImageView) itemView.findViewById(R.id.image_icon);

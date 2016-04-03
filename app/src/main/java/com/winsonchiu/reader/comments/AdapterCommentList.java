@@ -62,6 +62,8 @@ import com.winsonchiu.reader.links.AdapterLinkGrid;
 import com.winsonchiu.reader.links.AdapterLinkList;
 import com.winsonchiu.reader.profile.ControllerProfile;
 import com.winsonchiu.reader.rx.FinalizingSubscriber;
+import com.winsonchiu.reader.utils.AdapterBase;
+import com.winsonchiu.reader.utils.AdapterCallback;
 import com.winsonchiu.reader.utils.CallbackYouTubeDestruction;
 import com.winsonchiu.reader.utils.DisallowListener;
 import com.winsonchiu.reader.utils.OnTouchListenerDisallow;
@@ -81,7 +83,7 @@ import rx.Observable;
  * Created by TheKeeperOfPie on 3/12/2015.
  */
 
-public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHolder> implements CallbackYouTubeDestruction {
+public class AdapterCommentList extends AdapterBase<RecyclerView.ViewHolder> implements CallbackYouTubeDestruction {
 
     private static final String TAG = AdapterCommentList.class.getCanonicalName();
 
@@ -157,6 +159,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                         activity,
                         LayoutInflater.from(parent.getContext())
                                 .inflate(R.layout.cell_link, parent, false),
+                        adapterCallback,
                         eventListenerBase,
                         Source.NONE,
                         disallowListener,
@@ -230,6 +233,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                         activity,
                         LayoutInflater.from(parent.getContext())
                                 .inflate(R.layout.row_link, parent, false),
+                        adapterCallback,
                         eventListenerBase,
                         Source.NONE,
                         disallowListener,
@@ -293,6 +297,7 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
 
         return new ViewHolderComment(LayoutInflater.from(parent.getContext())
                 .inflate(R.layout.row_comment, parent, false),
+                adapterCallback,
                 eventListenerBase,
                 controllerComments,
                 eventListener,
@@ -475,13 +480,14 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
         protected int colorGold;
 
         public ViewHolderComment(View itemView,
-                                 AdapterLink.ViewHolderLink.EventListener eventListenerBase,
-                                 EventListenerComment eventListenerComment,
-                                 EventListener eventListener,
-                                 DisallowListener disallowListener,
-                                 RecyclerCallback recyclerCallback,
-                                 final ControllerProfile.Listener listener) {
-            this(itemView, eventListenerBase, eventListenerComment, eventListener, disallowListener, recyclerCallback);
+                AdapterCallback adapterCallback,
+                AdapterLink.ViewHolderLink.EventListener eventListenerBase,
+                EventListenerComment eventListenerComment,
+                EventListener eventListener,
+                DisallowListener disallowListener,
+                RecyclerCallback recyclerCallback,
+                final ControllerProfile.Listener listener) {
+            this(itemView, adapterCallback, eventListenerBase, eventListenerComment, eventListener, disallowListener, recyclerCallback);
             itemViewLink.setVisible(true);
             itemViewLink.setEnabled(true);
             itemViewLink.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
@@ -496,12 +502,13 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
         }
 
         public ViewHolderComment(final View itemView,
-                                 AdapterLink.ViewHolderLink.EventListener eventListenerBase,
-                                 EventListenerComment eventListenerComment,
-                                 EventListener eventListener,
-                                 DisallowListener disallowListener,
-                                 RecyclerCallback recyclerCallback) {
-            super(itemView);
+                AdapterCallback adapterCallback,
+                AdapterLink.ViewHolderLink.EventListener eventListenerBase,
+                EventListenerComment eventListenerComment,
+                EventListener eventListener,
+                DisallowListener disallowListener,
+                RecyclerCallback recyclerCallback) {
+            super(itemView, adapterCallback);
 
             this.eventListenerComment = eventListenerComment;
             this.eventListenerBase = eventListenerBase;

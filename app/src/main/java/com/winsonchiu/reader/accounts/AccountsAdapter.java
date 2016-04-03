@@ -7,13 +7,14 @@ package com.winsonchiu.reader.accounts;
 import android.accounts.Account;
 import android.graphics.PorterDuff;
 import android.support.annotation.CallSuper;
-import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.winsonchiu.reader.R;
+import com.winsonchiu.reader.utils.AdapterBase;
+import com.winsonchiu.reader.utils.AdapterCallback;
 import com.winsonchiu.reader.utils.CustomColorFilter;
 import com.winsonchiu.reader.utils.ViewHolderBase;
 
@@ -28,7 +29,7 @@ import butterknife.OnClick;
 /**
  * Created by TheKeeperOfPie on 3/27/2016.
  */
-public class AccountsAdapter extends RecyclerView.Adapter<AccountsAdapter.ViewHolder> {
+public class AccountsAdapter extends AdapterBase<AccountsAdapter.ViewHolder> {
 
     public static final String TAG = AccountsAdapter.class.getCanonicalName();
 
@@ -62,11 +63,11 @@ public class AccountsAdapter extends RecyclerView.Adapter<AccountsAdapter.ViewHo
     public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         switch (viewType) {
             case TYPE_ACCOUNT:
-                return new ViewHolderAccount(parent, colorFilterPrimary, listener);
+                return new ViewHolderAccount(parent, adapterCallback, colorFilterPrimary, listener);
             case TYPE_ADD:
-                return new ViewHolderAdd(parent, colorFilterPrimary, listener);
+                return new ViewHolderAdd(parent, adapterCallback, colorFilterPrimary, listener);
             case TYPE_LOGOUT:
-                return new ViewHolderLogout(parent, colorFilterPrimary, listener);
+                return new ViewHolderLogout(parent, adapterCallback, colorFilterPrimary, listener);
         }
 
         throw new IllegalArgumentException(TAG + " viewType " + viewType + " not valid");
@@ -105,8 +106,8 @@ public class AccountsAdapter extends RecyclerView.Adapter<AccountsAdapter.ViewHo
         protected Listener listener;
         protected Account account;
 
-        public ViewHolder(ViewGroup parent, CustomColorFilter colorFilterPrimary, Listener listener) {
-            super(LayoutInflater.from(parent.getContext()).inflate(R.layout.row_account, parent, false));
+        public ViewHolder(ViewGroup parent, AdapterCallback adapterCallback, CustomColorFilter colorFilterPrimary, Listener listener) {
+            super(LayoutInflater.from(parent.getContext()).inflate(R.layout.row_account, parent, false), adapterCallback);
             ButterKnife.bind(this, itemView);
 
             this.colorFilterPrimary = colorFilterPrimary;
@@ -121,8 +122,8 @@ public class AccountsAdapter extends RecyclerView.Adapter<AccountsAdapter.ViewHo
 
     public static class ViewHolderAccount extends ViewHolder {
 
-        public ViewHolderAccount(ViewGroup parent, CustomColorFilter colorFilterPrimary, final Listener listener) {
-            super(parent, colorFilterPrimary, listener);
+        public ViewHolderAccount(ViewGroup parent, AdapterCallback adapterCallback, CustomColorFilter colorFilterPrimary, final Listener listener) {
+            super(parent, adapterCallback, colorFilterPrimary, listener);
 
             textAccount.setTextColor(colorFilterPrimary.getColor());
             imageAction.setImageResource(R.drawable.ic_delete_white_24dp);
@@ -148,8 +149,8 @@ public class AccountsAdapter extends RecyclerView.Adapter<AccountsAdapter.ViewHo
 
     public static class ViewHolderAdd extends ViewHolder {
 
-        public ViewHolderAdd(ViewGroup parent, CustomColorFilter colorFilterPrimary, final Listener listener) {
-            super(parent, colorFilterPrimary, listener);
+        public ViewHolderAdd(ViewGroup parent, AdapterCallback adapterCallback, CustomColorFilter colorFilterPrimary, final Listener listener) {
+            super(parent, adapterCallback, colorFilterPrimary, listener);
 
             textAccount.setText(R.string.add_account);
             textAccount.setTextColor(colorFilterPrimary.getColor());
@@ -165,8 +166,8 @@ public class AccountsAdapter extends RecyclerView.Adapter<AccountsAdapter.ViewHo
 
     public static class ViewHolderLogout extends ViewHolder {
 
-        public ViewHolderLogout(ViewGroup parent, CustomColorFilter colorFilterPrimary, final Listener listener) {
-            super(parent, colorFilterPrimary, listener);
+        public ViewHolderLogout(ViewGroup parent, AdapterCallback adapterCallback, CustomColorFilter colorFilterPrimary, final Listener listener) {
+            super(parent, adapterCallback, colorFilterPrimary, listener);
 
             textAccount.setText(R.string.logout);
             textAccount.setTextColor(colorFilterPrimary.getColor());

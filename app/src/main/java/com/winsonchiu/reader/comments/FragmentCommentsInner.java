@@ -106,7 +106,10 @@ public class FragmentCommentsInner extends FragmentBase {
         @Override
         public void scrollTo(final int position) {
             UtilsAnimation.scrollToPositionWithCentering(position,
-                    recyclerCommentList, linearLayoutManager, scrollToPaddingTop, scrollToPaddingBottom, true);
+                    recyclerCommentList,
+                    scrollToPaddingTop,
+                    scrollToPaddingBottom,
+                    true);
         }
 
         @Override
@@ -874,7 +877,6 @@ public class FragmentCommentsInner extends FragmentBase {
 
         UtilsAnimation.scrollToPositionWithCentering(position,
                 recyclerCommentList,
-                linearLayoutManager,
                 scrollToPaddingTop,
                 scrollToPaddingBottom,
                 true);
@@ -897,7 +899,6 @@ public class FragmentCommentsInner extends FragmentBase {
 
         UtilsAnimation.scrollToPositionWithCentering(newPosition,
                 recyclerCommentList,
-                linearLayoutManager,
                 scrollToPaddingTop,
                 scrollToPaddingBottom,
                 true);

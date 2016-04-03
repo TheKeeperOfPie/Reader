@@ -615,7 +615,6 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
         disallowListener = new DisallowListener() {
             @Override
             public void requestDisallowInterceptTouchEventVertical(boolean disallow) {
-                Log.d(TAG, "requestDisallowInterceptTouchEventVertical() called with: " + "disallow = [" + disallow + "]");
                 recyclerThreadList.requestDisallowInterceptTouchEvent(disallow);
                 swipeRefreshThreadList.requestDisallowInterceptTouchEvent(disallow);
                 itemTouchHelper.select(null, CustomItemTouchHelper.ACTION_STATE_IDLE);
@@ -641,13 +640,12 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
 
             @Override
             public void scrollTo(final int position) {
-                recyclerThreadList.requestLayout();
-                UtilsAnimation.scrollToPositionWithCentering(position, recyclerThreadList, layoutManager, false);
+                UtilsAnimation.scrollToPositionWithCentering(position, recyclerThreadList, false);
             }
 
             @Override
             public void scrollAndCenter(int position, int height) {
-
+                UtilsAnimation.scrollToPositionWithCentering(position, recyclerThreadList, height, 0, 0, false);
             }
 
             @Override

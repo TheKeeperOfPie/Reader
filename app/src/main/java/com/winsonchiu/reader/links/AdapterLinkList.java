@@ -18,6 +18,7 @@ import com.winsonchiu.reader.AppSettings;
 import com.winsonchiu.reader.R;
 import com.winsonchiu.reader.comments.Source;
 import com.winsonchiu.reader.data.reddit.Link;
+import com.winsonchiu.reader.utils.AdapterCallback;
 import com.winsonchiu.reader.utils.CallbackYouTubeDestruction;
 import com.winsonchiu.reader.utils.DisallowListener;
 import com.winsonchiu.reader.utils.RecyclerCallback;
@@ -51,12 +52,15 @@ public class AdapterLinkList extends AdapterLink {
     public ViewHolderBase onCreateViewHolder(ViewGroup viewGroup, int viewType) {
 
         if (viewType == TYPE_HEADER) {
-            return new ViewHolderHeader(LayoutInflater.from(viewGroup.getContext()).inflate(R.layout.header_subreddit, viewGroup, false), eventListenerHeader);
+            return new ViewHolderHeader(LayoutInflater.from(viewGroup.getContext()).inflate(R.layout.header_subreddit, viewGroup, false),
+                    adapterCallback,
+                    eventListenerHeader);
         }
 
         return new ViewHolder(activity,
                 LayoutInflater.from(viewGroup.getContext())
                 .inflate(R.layout.row_link, viewGroup, false),
+                adapterCallback,
                 eventListenerBase,
                 Source.LINKS,
                 disallowListener,
@@ -85,12 +89,13 @@ public class AdapterLinkList extends AdapterLink {
 
         public ViewHolder(FragmentActivity activity,
                 View itemView,
+                AdapterCallback adapterCallback,
                 EventListener eventListener,
                 Source source,
                 DisallowListener disallowListener,
                 RecyclerCallback recyclerCallback,
                 CallbackYouTubeDestruction callbackYouTubeDestruction) {
-            super(activity, itemView, eventListener, source, disallowListener, recyclerCallback, callbackYouTubeDestruction);
+            super(activity, itemView, adapterCallback, eventListener, source, disallowListener, recyclerCallback, callbackYouTubeDestruction);
         }
 
         @Override

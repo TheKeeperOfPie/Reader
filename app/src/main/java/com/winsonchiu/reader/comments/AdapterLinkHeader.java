@@ -6,7 +6,6 @@ package com.winsonchiu.reader.comments;
 
 import android.content.Intent;
 import android.support.v4.app.FragmentActivity;
-import android.support.v7.widget.RecyclerView;
 import android.text.TextUtils;
 import android.util.DisplayMetrics;
 import android.view.LayoutInflater;
@@ -18,6 +17,7 @@ import com.winsonchiu.reader.data.reddit.Link;
 import com.winsonchiu.reader.links.AdapterLink;
 import com.winsonchiu.reader.links.AdapterLinkGrid;
 import com.winsonchiu.reader.links.AdapterLinkList;
+import com.winsonchiu.reader.utils.AdapterBase;
 import com.winsonchiu.reader.utils.CallbackYouTubeDestruction;
 import com.winsonchiu.reader.utils.DisallowListener;
 import com.winsonchiu.reader.utils.RecyclerCallback;
@@ -27,7 +27,7 @@ import com.winsonchiu.reader.utils.YouTubeListener;
 /**
  * Created by TheKeeperOfPie on 12/29/2015.
  */
-public class AdapterLinkHeader extends RecyclerView.Adapter<AdapterLink.ViewHolderLink> implements CallbackYouTubeDestruction {
+public class AdapterLinkHeader extends AdapterBase<AdapterLink.ViewHolderLink> implements CallbackYouTubeDestruction {
 
     private int thumbnailSize;
     private FragmentActivity activity;
@@ -76,6 +76,7 @@ public class AdapterLinkHeader extends RecyclerView.Adapter<AdapterLink.ViewHold
             viewHolderLink = new AdapterLinkGrid.ViewHolder(
                     activity,
                     LayoutInflater.from(parent.getContext()).inflate(R.layout.cell_link, parent, false),
+                    adapterCallback,
                     eventListenerBase,
                     Source.NONE,
                     disallowListener,
@@ -151,6 +152,7 @@ public class AdapterLinkHeader extends RecyclerView.Adapter<AdapterLink.ViewHold
             viewHolderLink = new AdapterLinkList.ViewHolder(
                     activity,
                     LayoutInflater.from(parent.getContext()).inflate(R.layout.row_link, parent, false),
+                    adapterCallback,
                     eventListenerBase,
                     Source.NONE,
                     disallowListener,

@@ -13,9 +13,7 @@ import android.support.v4.graphics.ColorUtils;
 import android.support.v4.view.ViewCompat;
 import android.support.v4.view.ViewPropertyAnimatorCompat;
 import android.support.v4.view.animation.FastOutSlowInInterpolator;
-import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.support.v7.widget.StaggeredGridLayoutManager;
 import android.util.Log;
 import android.util.TypedValue;
 import android.view.Display;
@@ -243,52 +241,51 @@ public class UtilsAnimation {
 
     public static void scrollToPositionWithCentering(final int position,
             final RecyclerView recyclerView,
-            final RecyclerView.LayoutManager layoutManager,
             boolean animateRipple) {
-        scrollToPositionWithCentering(position, recyclerView, layoutManager, 0, 0, animateRipple);
+        scrollToPositionWithCentering(position, recyclerView, 0, 0, 0, animateRipple);
     }
 
     public static void scrollToPositionWithCentering(final int position,
             final RecyclerView recyclerView,
-            final RecyclerView.LayoutManager layoutManager,
+            final int paddingTop,
+            final int paddingBottom,
+            final boolean animateRipple) {
+        scrollToPositionWithCentering(position, recyclerView, 0, paddingTop, paddingBottom, animateRipple);
+    }
+
+    public static void scrollToPositionWithCentering(final int position,
+            final RecyclerView recyclerView,
+            final int targetHeight,
             final int paddingTop,
             final int paddingBottom,
             final boolean animateRipple) {
         recyclerView.requestLayout();
 
-        Runnable runnable = new Runnable() {
-            @Override
-            public void run() {
-                final RecyclerView.ViewHolder viewHolder = recyclerView
-                        .findViewHolderForAdapterPosition(position);
-                int offset = paddingTop;
-                if (viewHolder != null) {
-                    int difference = recyclerView
-                            .getHeight() - paddingBottom - viewHolder.itemView
-                            .getHeight();
-                    if (difference > 0) {
-                        offset = difference / 2;
-                    }
-                    if (animateRipple) {
-                        viewHolder.itemView.setPressed(true);
-                        recyclerView.postOnAnimationDelayed(() -> viewHolder.itemView.setPressed(false), 150);
-                    }
+        Runnable runnable = () -> {
+            final RecyclerView.ViewHolder viewHolder = recyclerView
+                    .findViewHolderForAdapterPosition(position);
+            int offset = paddingTop;
+
+            if (viewHolder != null) {
+                int viewHeight = targetHeight > 0 ? targetHeight : viewHolder.itemView.getHeight();
+
+                int difference = recyclerView.getHeight() - paddingBottom - viewHeight;
+                if (difference > 0) {
+                    offset = difference / 2;
                 }
-                if (layoutManager instanceof LinearLayoutManager) {
-                    ((LinearLayoutManager) layoutManager).scrollToPositionWithOffset(position, offset);
+                if (animateRipple) {
+                    viewHolder.itemView.setPressed(true);
+                    recyclerView.postOnAnimationDelayed(() -> viewHolder.itemView.setPressed(false), 150);
                 }
-                else {
-                    if (layoutManager instanceof StaggeredGridLayoutManager) {
-                        ((StaggeredGridLayoutManager) layoutManager).scrollToPositionWithOffset(position, offset);
-                    }
-                    else {
-                        layoutManager.scrollToPosition(position);
-                    }
-                }
+
+                recyclerView.smoothScrollBy(0, viewHolder.itemView.getTop() - offset);
             }
         };
 
-        if (recyclerView.findViewHolderForAdapterPosition(position) == null) {
+        RecyclerView.LayoutManager layoutManager = recyclerView.getLayoutManager();
+
+        if (recyclerView.findViewHolderForAdapterPosition(position) == null
+                && layoutManager != null) {
             layoutManager.scrollToPosition(position);
         }
 

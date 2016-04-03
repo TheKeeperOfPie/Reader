@@ -17,13 +17,13 @@ import android.net.Uri;
 import android.preference.PreferenceManager;
 import android.support.annotation.CallSuper;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.view.GestureDetectorCompat;
 import android.support.v4.view.MenuItemCompat;
 import android.support.v4.view.MotionEventCompat;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AlertDialog;
-import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.RecyclerView.LayoutManager;
 import android.support.v7.widget.ShareActionProvider;
 import android.support.v7.widget.StaggeredGridLayoutManager;
@@ -51,7 +51,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -90,6 +89,8 @@ import com.winsonchiu.reader.history.Historian;
 import com.winsonchiu.reader.rx.FinalizingSubscriber;
 import com.winsonchiu.reader.rx.ObserverEmpty;
 import com.winsonchiu.reader.rx.ObserverError;
+import com.winsonchiu.reader.utils.AdapterBase;
+import com.winsonchiu.reader.utils.AdapterCallback;
 import com.winsonchiu.reader.utils.CallbackYouTubeDestruction;
 import com.winsonchiu.reader.utils.CustomColorFilter;
 import com.winsonchiu.reader.utils.DisallowListener;
@@ -129,7 +130,6 @@ import butterknife.BindString;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
 import butterknife.OnTouch;
-import butterknife.Optional;
 import rx.Observable;
 import rx.Subscription;
 import rx.android.schedulers.AndroidSchedulers;
@@ -137,7 +137,7 @@ import rx.android.schedulers.AndroidSchedulers;
 /**
  * Created by TheKeeperOfPie on 3/14/2015.
  */
-public abstract class AdapterLink extends RecyclerView.Adapter<ViewHolderBase> implements CallbackYouTubeDestruction {
+public abstract class AdapterLink extends AdapterBase<ViewHolderBase> implements CallbackYouTubeDestruction {
 
     public static final int TYPE_HEADER = 0;
     public static final int TYPE_LINK = 1;
@@ -302,8 +302,9 @@ public abstract class AdapterLink extends RecyclerView.Adapter<ViewHolderBase> i
         private EventListener eventListener;
 
         public ViewHolderHeader(View itemView,
+                AdapterCallback adapterCallback,
                 EventListener eventListener) {
-            super(itemView);
+            super(itemView, adapterCallback);
             this.eventListener = eventListener;
             ButterKnife.bind(this, itemView);
 
@@ -427,8 +428,8 @@ public abstract class AdapterLink extends RecyclerView.Adapter<ViewHolderBase> i
         @Bind(R.id.view_overlay) public View viewOverlay;
         @Bind(R.id.layout_youtube) ViewGroup layoutYouTube;
 
-        @Bind(R.id.view_mask_start)View viewMaskStart;
-        @Bind(R.id.view_mask_end) View viewMaskEnd;
+        @Nullable @Bind(R.id.view_mask_start) View viewMaskStart;
+        @Nullable @Bind(R.id.view_mask_end) View viewMaskEnd;
 
         @BindDimen(R.dimen.touch_target_size) public int toolbarItemWidth;
         @BindDimen(R.dimen.activity_horizontal_margin) public int titleMargin;
@@ -520,12 +521,13 @@ public abstract class AdapterLink extends RecyclerView.Adapter<ViewHolderBase> i
 
         public ViewHolderLink(FragmentActivity activity,
                 View itemView,
+                AdapterCallback adapterCallback,
                 EventListener eventListener,
                 Source source,
                 DisallowListener disallowListener,
                 RecyclerCallback recyclerCallback,
                 CallbackYouTubeDestruction callbackYouTubeDestruction) {
-            super(itemView);
+            super(itemView, adapterCallback);
             this.activity = activity;
             this.eventListener = eventListener;
             this.source = source;
@@ -1052,6 +1054,16 @@ public abstract class AdapterLink extends RecyclerView.Adapter<ViewHolderBase> i
                 layoutInner.getLayoutParams().width = itemView.getWidth();
                 layoutInner.setTranslationX((int) startX);
 
+                if (viewMaskStart != null) {
+                    viewMaskStart.getLayoutParams().width = (int) startX;
+                }
+
+                if (viewMaskEnd != null && adapterCallback.getRecyclerView() != null) {
+                    viewMaskEnd.getLayoutParams().width = (int) (adapterCallback.getRecyclerView().getWidth() - itemView.getWidth() - startX);
+                }
+
+                itemView.requestLayout();
+
                 int targetWidth = UtilsView.getContentWidth(recyclerCallback.getLayoutManager());
                 UtilsAnimation.animateExpandRecyclerItemView(layoutInner, layoutRoot, viewMaskStart, viewMaskEnd, targetWidth, 0, null);
             }
@@ -1170,6 +1182,9 @@ public abstract class AdapterLink extends RecyclerView.Adapter<ViewHolderBase> i
                             @Override
                             protected void onCompleted() {
                                 progressImage.setVisibility(View.GONE);
+                                if (adapterCallback.getRecyclerView() != null) {
+                                    UtilsAnimation.scrollToPositionWithCentering(getAdapterPosition(), adapterCallback.getRecyclerView(), 0, 0, 0, false);
+                                }
                             }
                         })
                         .into(new GlideDrawableImageViewTarget(imageFull)));
@@ -1563,6 +1578,14 @@ public abstract class AdapterLink extends RecyclerView.Adapter<ViewHolderBase> i
             textThreadSelf.getLayoutParams().height = ViewGroup.LayoutParams.WRAP_CONTENT;
             layoutInner.getLayoutParams().width = ViewGroup.LayoutParams.WRAP_CONTENT;
             layoutInner.setTranslationX(0);
+
+            if (viewMaskStart != null) {
+                viewMaskStart.getLayoutParams().width = 0;
+            }
+
+            if (viewMaskEnd != null) {
+                viewMaskEnd.getLayoutParams().width = 0;
+            }
 
             titleTextColor = colorTextPrimaryDefault;
             titleTextColorAlert = colorTextAlertDefault;

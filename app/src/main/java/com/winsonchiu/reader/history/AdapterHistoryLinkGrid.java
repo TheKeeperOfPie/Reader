@@ -42,6 +42,7 @@ public class AdapterHistoryLinkGrid extends AdapterLinkGrid {
                 activity,
                 LayoutInflater.from(viewGroup.getContext())
                 .inflate(R.layout.cell_link, viewGroup, false),
+                adapterCallback,
                 eventListenerBase,
                 Source.HISTORY,
                 disallowListener,

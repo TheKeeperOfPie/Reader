@@ -510,7 +510,7 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
 
                     @Override
                     public void scrollTo(final int position) {
-                        UtilsAnimation.scrollToPositionWithCentering(position, recyclerSearchLinks, layoutManagerLinks, false);
+                        UtilsAnimation.scrollToPositionWithCentering(position, recyclerSearchLinks, false);
                     }
 
                     @Override
@@ -608,7 +608,7 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
 
                     @Override
                     public void scrollTo(final int position) {
-                        UtilsAnimation.scrollToPositionWithCentering(position, recyclerSearchLinksSubreddit, layoutManagerLinksSubreddit, false);
+                        UtilsAnimation.scrollToPositionWithCentering(position, recyclerSearchLinksSubreddit, false);
                     }
 
                     @Override

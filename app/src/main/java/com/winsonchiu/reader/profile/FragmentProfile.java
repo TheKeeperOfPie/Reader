@@ -421,7 +421,7 @@ public class FragmentProfile extends FragmentBase implements Toolbar.OnMenuItemC
 
                 @Override
                 public void scrollTo(final int position) {
-                    UtilsAnimation.scrollToPositionWithCentering(position, recyclerProfile, linearLayoutManager, false);
+                    UtilsAnimation.scrollToPositionWithCentering(position, recyclerProfile, false);
                 }
 
                 @Override

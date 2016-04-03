@@ -42,6 +42,8 @@ import com.winsonchiu.reader.comments.AdapterCommentList;
 import com.winsonchiu.reader.data.reddit.Message;
 import com.winsonchiu.reader.links.AdapterLink;
 import com.winsonchiu.reader.profile.ControllerProfile;
+import com.winsonchiu.reader.utils.AdapterBase;
+import com.winsonchiu.reader.utils.AdapterCallback;
 import com.winsonchiu.reader.utils.DisallowListener;
 import com.winsonchiu.reader.utils.RecyclerCallback;
 import com.winsonchiu.reader.utils.UtilsAnimation;
@@ -54,7 +56,7 @@ import java.util.List;
 /**
  * Created by TheKeeperOfPie on 5/15/2015.
  */
-public class AdapterInbox extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
+public class AdapterInbox extends AdapterBase<RecyclerView.ViewHolder> {
 
     private static final String TAG = AdapterInbox.class.getCanonicalName();
 
@@ -97,11 +99,15 @@ public class AdapterInbox extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
             case ControllerInbox.VIEW_TYPE_MESSAGE:
                 return new ViewHolderMessage(
                         LayoutInflater.from(parent.getContext())
-                                .inflate(R.layout.row_message, parent, false), eventListenerBase, recyclerCallback);
+                                .inflate(R.layout.row_message, parent, false),
+                        adapterCallback,
+                        eventListenerBase,
+                        recyclerCallback);
             case ControllerInbox.VIEW_TYPE_COMMENT:
                 // TODO: Move to different ViewHolderComment constructor
                 return new AdapterCommentList.ViewHolderComment(LayoutInflater.from(parent.getContext()).inflate(
                         R.layout.row_comment, parent, false),
+                        adapterCallback,
                         eventListenerBase,
                         eventListenerComment,
                         eventListener,
@@ -174,8 +180,8 @@ public class AdapterInbox extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
         protected int toolbarItemWidth;
         private Resources resources;
 
-        public ViewHolderMessage(View itemView, final AdapterLink.ViewHolderLink.EventListener listener, RecyclerCallback recyclerCallback) {
-            super(itemView);
+        public ViewHolderMessage(View itemView, AdapterCallback adapterCallback, final AdapterLink.ViewHolderLink.EventListener listener, RecyclerCallback recyclerCallback) {
+            super(itemView, adapterCallback);
             this.eventListener = listener;
             this.recyclerCallback = recyclerCallback;
 

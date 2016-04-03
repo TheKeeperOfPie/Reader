@@ -18,9 +18,11 @@ public abstract class ViewHolderBase extends RecyclerView.ViewHolder {
     public static final String TAG = ViewHolderBase.class.getCanonicalName();
 
     protected Resources resources;
+    protected AdapterCallback adapterCallback;
 
-    public ViewHolderBase(View itemView) {
+    public ViewHolderBase(View itemView, AdapterCallback adapterCallback) {
         super(itemView);
+        this.adapterCallback = adapterCallback;
         this.resources = itemView.getResources();
     }
 

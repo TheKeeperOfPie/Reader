@@ -25,6 +25,8 @@ import com.winsonchiu.reader.data.reddit.User;
 import com.winsonchiu.reader.links.AdapterLink;
 import com.winsonchiu.reader.links.AdapterLinkList;
 import com.winsonchiu.reader.links.ControllerLinksBase;
+import com.winsonchiu.reader.utils.AdapterBase;
+import com.winsonchiu.reader.utils.AdapterCallback;
 import com.winsonchiu.reader.utils.CallbackYouTubeDestruction;
 import com.winsonchiu.reader.utils.DisallowListener;
 import com.winsonchiu.reader.utils.RecyclerCallback;
@@ -36,7 +38,7 @@ import java.util.List;
 /**
  * Created by TheKeeperOfPie on 5/15/2015.
  */
-public class AdapterProfile extends RecyclerView.Adapter<RecyclerView.ViewHolder> implements CallbackYouTubeDestruction {
+public class AdapterProfile extends AdapterBase<RecyclerView.ViewHolder> implements CallbackYouTubeDestruction {
 
     private static final String TAG = AdapterProfile.class.getCanonicalName();;
 
@@ -99,15 +101,16 @@ public class AdapterProfile extends RecyclerView.Adapter<RecyclerView.ViewHolder
 
             case ControllerProfile.VIEW_TYPE_HEADER:
                 return new ViewHolderHeader(LayoutInflater.from(parent.getContext())
-                        .inflate(R.layout.row_header, parent, false));
+                        .inflate(R.layout.row_header, parent, false), adapterCallback);
             case ControllerProfile.VIEW_TYPE_HEADER_TEXT:
                 return new ViewHolderText(LayoutInflater.from(parent.getContext())
-                        .inflate(R.layout.row_text, parent, false));
+                        .inflate(R.layout.row_text, parent, false), adapterCallback);
             case ControllerProfile.VIEW_TYPE_LINK:
                 AdapterLink.ViewHolderLink viewHolder = new AdapterLinkList.ViewHolder(
                         activity,
                         LayoutInflater.from(parent.getContext())
                                 .inflate(R.layout.row_link, parent, false),
+                        adapterCallback,
                         eventListenerBase,
                         Source.PROFILE,
                         disallowListener,
@@ -124,8 +127,14 @@ public class AdapterProfile extends RecyclerView.Adapter<RecyclerView.ViewHolder
                 return viewHolder;
             case ControllerProfile.VIEW_TYPE_COMMENT:
                 return new AdapterCommentList.ViewHolderComment(
-                        LayoutInflater.from(parent.getContext())
-                                .inflate(R.layout.row_comment, parent, false), eventListenerBase, eventListenerComment, eventListener, disallowListener, recyclerCallback, listener);
+                        LayoutInflater.from(parent.getContext()).inflate(R.layout.row_comment, parent, false),
+                        adapterCallback,
+                        eventListenerBase,
+                        eventListenerComment,
+                        eventListener,
+                        disallowListener,
+                        recyclerCallback,
+                        listener);
 
         }
 
@@ -269,8 +278,8 @@ public class AdapterProfile extends RecyclerView.Adapter<RecyclerView.ViewHolder
         protected TextView textUsername;
         protected TextView textKarma;
 
-        public ViewHolderHeader(View itemView) {
-            super(itemView);
+        public ViewHolderHeader(View itemView, AdapterCallback adapterCallback) {
+            super(itemView, adapterCallback);
 
             textUsername = (TextView) itemView.findViewById(R.id.text_username);
             textKarma = (TextView) itemView.findViewById(R.id.text_karma);
@@ -310,8 +319,8 @@ public class AdapterProfile extends RecyclerView.Adapter<RecyclerView.ViewHolder
 
         protected TextView textMessage;
 
-        public ViewHolderText(View itemView) {
-            super(itemView);
+        public ViewHolderText(View itemView, AdapterCallback adapterCallback) {
+            super(itemView, adapterCallback);
 
             textMessage = (TextView) itemView.findViewById(R.id.text_message);
         }

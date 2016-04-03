@@ -33,6 +33,7 @@ import com.winsonchiu.reader.comments.Source;
 import com.winsonchiu.reader.data.imgur.Album;
 import com.winsonchiu.reader.data.reddit.Link;
 import com.winsonchiu.reader.data.reddit.Reddit;
+import com.winsonchiu.reader.utils.AdapterCallback;
 import com.winsonchiu.reader.utils.CallbackYouTubeDestruction;
 import com.winsonchiu.reader.utils.DisallowListener;
 import com.winsonchiu.reader.utils.RecyclerCallback;
@@ -102,12 +103,15 @@ public class AdapterLinkGrid extends AdapterLink {
 
         if (viewType == TYPE_HEADER) {
             return new ViewHolderHeader(LayoutInflater.from(viewGroup.getContext())
-                    .inflate(R.layout.header_subreddit, viewGroup, false), eventListenerHeader);
+                    .inflate(R.layout.header_subreddit, viewGroup, false),
+                    adapterCallback,
+                    eventListenerHeader);
         }
 
         return new ViewHolder(activity,
                 LayoutInflater.from(viewGroup.getContext())
                 .inflate(R.layout.cell_link, viewGroup, false),
+                adapterCallback,
                 eventListenerBase,
                 Source.LINKS,
                 disallowListener,
@@ -144,13 +148,14 @@ public class AdapterLinkGrid extends AdapterLink {
 
         public ViewHolder(FragmentActivity activity,
                 View itemView,
+                AdapterCallback adapterCallback,
                 EventListener eventListener,
                 Source source,
                 DisallowListener disallowListener,
                 RecyclerCallback recyclerCallback,
                 CallbackYouTubeDestruction callbackYouTubeDestruction,
                 int thumbnailSize) {
-            super(activity, itemView, eventListener, source, disallowListener, recyclerCallback, callbackYouTubeDestruction);
+            super(activity, itemView, adapterCallback, eventListener, source, disallowListener, recyclerCallback, callbackYouTubeDestruction);
             this.thumbnailSize = thumbnailSize;
 
         }
@@ -273,6 +278,8 @@ public class AdapterLinkGrid extends AdapterLink {
 
         @Override
         public void expandFull(boolean expand) {
+            int offset = itemView.getTop();
+
             super.expandFull(expand);
 
             if (itemView.getLayoutParams() instanceof StaggeredGridLayoutManager.LayoutParams) {
@@ -284,6 +291,15 @@ public class AdapterLinkGrid extends AdapterLink {
                     ((StaggeredGridLayoutManager) recyclerCallback.getLayoutManager())
                             .invalidateSpanAssignments();
                 }
+
+                recyclerCallback.getLayoutManager().postOnAnimation(() -> {
+                    itemView.postOnAnimation(() -> {
+                        if (adapterCallback.getRecyclerView() != null) {
+                            int top = itemView.getTop();
+                            adapterCallback.getRecyclerView().scrollBy(0, itemView.getTop() - offset);
+                        }
+                    });
+                });
             }
         }
 

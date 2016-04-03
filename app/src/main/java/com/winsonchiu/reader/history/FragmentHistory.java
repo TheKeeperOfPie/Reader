@@ -305,7 +305,7 @@ public class FragmentHistory extends FragmentBase implements Toolbar.OnMenuItemC
 
             @Override
             public void scrollTo(final int position) {
-                UtilsAnimation.scrollToPositionWithCentering(position, recyclerHistory, layoutManager, false);
+                UtilsAnimation.scrollToPositionWithCentering(position, recyclerHistory, false);
             }
 
             @Override

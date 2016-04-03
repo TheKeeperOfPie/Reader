@@ -46,6 +46,7 @@ public class AdapterSearchLinkList extends AdapterLinkList {
         return new AdapterLinkList.ViewHolder(activity,
                 LayoutInflater.from(viewGroup.getContext())
                 .inflate(R.layout.row_link, viewGroup, false),
+                adapterCallback,
                 eventListenerBase,
                 source,
                 disallowListener,
