@@ -328,8 +328,10 @@ public class FragmentInbox extends FragmentBase implements Toolbar.OnMenuItemCli
                 }
 
                 @Override
-                public void onReplyShown() {
+                public void clearDecoration() {
                     behaviorFloatingActionButton.animateOut(floatingActionButtonNewMessage);
+                    AppBarLayout.Behavior behaviorAppBar = (AppBarLayout.Behavior) ((CoordinatorLayout.LayoutParams) layoutAppBar.getLayoutParams()).getBehavior();
+                    behaviorAppBar.onNestedFling(layoutCoordinator, layoutAppBar, null, 0, 1000, true);
                 }
 
                 @Override

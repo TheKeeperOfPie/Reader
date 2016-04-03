@@ -557,15 +557,18 @@ public class FragmentComments extends FragmentBase
             }
 
             @Override
-            public void hideToolbar() {
+            public void clearDecoration() {
+                behaviorFloatingActionButton.animateOut(buttonExpandActions);
                 AppBarLayout.Behavior behaviorAppBar = (AppBarLayout.Behavior) ((CoordinatorLayout.LayoutParams) layoutAppBar
                         .getLayoutParams()).getBehavior();
                 behaviorAppBar.onNestedFling(layoutCoordinator, layoutAppBar, null, 0, 1000, true);
             }
 
             @Override
-            public void onReplyShown() {
-                behaviorFloatingActionButton.animateOut(buttonExpandActions);
+            public void hideToolbar() {
+                AppBarLayout.Behavior behaviorAppBar = (AppBarLayout.Behavior) ((CoordinatorLayout.LayoutParams) layoutAppBar
+                        .getLayoutParams()).getBehavior();
+                behaviorAppBar.onNestedFling(layoutCoordinator, layoutAppBar, null, 0, 1000, true);
             }
 
             @Override

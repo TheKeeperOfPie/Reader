@@ -134,8 +134,4 @@ public class AppSettings {
 
         return initialized;
     }
-
-    public static String randomThemeString() {
-        return com.winsonchiu.reader.theme.ThemeColor.random().getName();
-    }
 }

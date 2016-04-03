@@ -436,8 +436,9 @@ public class FragmentProfile extends FragmentBase implements Toolbar.OnMenuItemC
                 }
 
                 @Override
-                public void onReplyShown() {
-
+                public void clearDecoration() {
+                    AppBarLayout.Behavior behaviorAppBar = (AppBarLayout.Behavior) ((CoordinatorLayout.LayoutParams) layoutAppBar.getLayoutParams()).getBehavior();
+                    behaviorAppBar.onNestedFling(layoutCoordinator, layoutAppBar, null, 0, 1000, true);
                 }
 
                 @Override

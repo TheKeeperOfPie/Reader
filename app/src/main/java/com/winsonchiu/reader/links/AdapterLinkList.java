@@ -157,12 +157,6 @@ public class AdapterLinkList extends AdapterLink {
         }
 
         @Override
-        public void expandFull(boolean expand) {
-            super.expandFull(expand);
-            scrollToSelf();
-        }
-
-        @Override
         public int[] getScreenAnchor() {
             int[] location = new int[2];
             layoutFull.getLocationOnScreen(location);

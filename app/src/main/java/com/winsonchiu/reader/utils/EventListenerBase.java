@@ -151,6 +151,7 @@ public abstract class EventListenerBase implements AdapterLink.ViewHolderLink.Ev
         final int position = viewHolderLink.getAdapterPosition();
 
         final int oldVote = link.getLikes();
+        final int oldScore = link.getScore();
         int newVote = 0;
 
         if (link.getLikes() != vote) {
@@ -172,7 +173,7 @@ public abstract class EventListenerBase implements AdapterLink.ViewHolderLink.Ev
                 .subscribe(new FinalizingSubscriber<String>() {
                     @Override
                     public void error(Throwable e) {
-                        link.setScore(link.getScore() - finalNewVote);
+                        link.setScore(oldScore);
                         link.setLikes(oldVote);
                         if (position == viewHolderLink.getAdapterPosition()) {
                             viewHolderLink.setVoteColors();

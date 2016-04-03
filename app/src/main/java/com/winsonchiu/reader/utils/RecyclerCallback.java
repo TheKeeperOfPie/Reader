@@ -17,6 +17,6 @@ public interface RecyclerCallback {
     void scrollTo(int position);
     void scrollAndCenter(int position, int height);
     void hideToolbar();
-    void onReplyShown();
+    void clearDecoration();
     RequestManager getRequestManager();
 }

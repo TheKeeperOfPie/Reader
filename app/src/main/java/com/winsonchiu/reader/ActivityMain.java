@@ -223,6 +223,8 @@ public class ActivityMain extends AppCompatActivity
     @AppSettings.ThemeColor private String themePrimary;
     @AppSettings.ThemeColor private String themePrimaryDark;
     @AppSettings.ThemeColor private String themeAccent;
+    private Resources.Theme theme;
+
     private ComponentActivity componentActivity;
 
     private CustomTabsServiceConnection customTabsServiceConnection;
@@ -262,6 +264,11 @@ public class ActivityMain extends AppCompatActivity
     @Override
     public Resources.Theme getTheme() {
         boolean secret = sharedPreferences.getBoolean(AppSettings.SECRET, false);
+
+        if (!secret && theme != null) {
+            return theme;
+        }
+
         @AppSettings.ThemeBackground String themeBackground = sharedPreferences.getString(AppSettings.PREF_THEME_BACKGROUND, AppSettings.THEME_DARK);
         @AppSettings.ThemeColor String themePrimary = secret ? ThemeColor.random().getName() : sharedPreferences.getString(AppSettings.PREF_THEME_PRIMARY, AppSettings.THEME_DEEP_PURPLE);
         @AppSettings.ThemeColor String themePrimaryDark = secret ? ThemeColor.random().getName() : sharedPreferences.getString(AppSettings.PREF_THEME_PRIMARY_DARK, AppSettings.THEME_DEEP_PURPLE);
@@ -272,7 +279,7 @@ public class ActivityMain extends AppCompatActivity
         this.themePrimaryDark = themePrimaryDark;
         this.themeAccent = themeAccent;
 
-        Resources.Theme theme = getResources().newTheme();
+        theme = getResources().newTheme();
 
         UtilsColor.applyTheme(theme,
                 themeBackground,
@@ -463,8 +470,6 @@ public class ActivityMain extends AppCompatActivity
                         Log.d(TAG, "extraCallback() called with: " + "callbackName = [" + callbackName + "], args = [" + args + "]");
                     }
                 });
-
-                CustomTabsClient.bindCustomTabsService(ActivityMain.this, "com.android.chrome", this);
             }
 
             @Override
@@ -473,30 +478,7 @@ public class ActivityMain extends AppCompatActivity
             }
         };
 
-        CustomTabsClient.bindCustomTabsService(this, getPackageName(), new CustomTabsServiceConnection() {
-            @Override
-            public void onCustomTabsServiceConnected(ComponentName componentName, CustomTabsClient customTabsClient) {
-                customTabsClient.warmup(0);
-                customTabsSession = customTabsClient.newSession(new CustomTabsCallback() {
-                    @Override
-                    public void onNavigationEvent(int navigationEvent, Bundle extras) {
-                        super.onNavigationEvent(navigationEvent, extras);
-                        Log.d(TAG, "onNavigationEvent() called with: " + "navigationEvent = [" + navigationEvent + "], extras = [" + extras + "]");
-                    }
-
-                    @Override
-                    public void extraCallback(String callbackName, Bundle args) {
-                        super.extraCallback(callbackName, args);
-                        Log.d(TAG, "extraCallback() called with: " + "callbackName = [" + callbackName + "], args = [" + args + "]");
-                    }
-                });
-            }
-
-            @Override
-            public void onServiceDisconnected(ComponentName name) {
-
-            }
-        });
+        CustomTabsClient.bindCustomTabsService(this, getPackageName(), customTabsServiceConnection);
 
         handleFirstLaunch(savedInstanceState);
 
@@ -504,6 +486,7 @@ public class ActivityMain extends AppCompatActivity
 
         loadAccount();
 
+        UtilsImage.checkMaxTextureSize(handler, () -> {});
     }
 
     public void handleFirstLaunch(Bundle savedInstanceState) {
@@ -803,8 +786,10 @@ public class ActivityMain extends AppCompatActivity
                     targetWidth = scrollHeaderVertical.getWidth();
                 }
 
-                picasso.load(getFileStreamPath(AppSettings.HEADER_FILE_NAME)).noPlaceholder()
-                        .resize(targetWidth, targetHeight).into(imageHeader, new Callback() {
+                final int finalTargetWidth = targetWidth;
+                final int finalTargetHeight = targetHeight;
+                imageHeader.post(() -> picasso.load(getFileStreamPath(AppSettings.HEADER_FILE_NAME)).noPlaceholder()
+                        .resize(finalTargetWidth, finalTargetHeight).into(imageHeader, new Callback() {
                     @Override
                     public void onSuccess() {
 
@@ -816,16 +801,13 @@ public class ActivityMain extends AppCompatActivity
                         textAccountInfo.setTextColor(Color.WHITE);
                         textAccountInfo.setShadowLayer(3, 0, 0, Color.BLACK);
                         buttonAccounts.clearColorFilter();
-                        imageHeader.post(new Runnable() {
-                            @Override
-                            public void run() {
-                                scrollHeaderVertical.scrollTo(0,
-                                        imageHeader.getHeight() / 2 - scrollHeaderVertical
-                                                .getHeight() / 2);
-                                scrollHeaderHorizontal.scrollTo(0,
-                                        imageHeader.getWidth() / 2 - scrollHeaderHorizontal
-                                                .getWidth() / 2);
-                            }
+                        imageHeader.post(() -> {
+                            scrollHeaderVertical.scrollTo(0,
+                                    imageHeader.getHeight() / 2 - scrollHeaderVertical
+                                            .getHeight() / 2);
+                            scrollHeaderHorizontal.scrollTo(0,
+                                    imageHeader.getWidth() / 2 - scrollHeaderHorizontal
+                                            .getWidth() / 2);
                         });
                     }
 
@@ -833,7 +815,7 @@ public class ActivityMain extends AppCompatActivity
                     public void onError() {
                         imageHeader.setAlpha(1f);
                     }
-                });
+                }));
             }
         });
 
@@ -1513,6 +1495,12 @@ public class ActivityMain extends AppCompatActivity
         }
         super.onStop();
         debugDrawer.onStop();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        unbindService(customTabsServiceConnection);
     }
 
     public ComponentActivity getComponentActivity() {

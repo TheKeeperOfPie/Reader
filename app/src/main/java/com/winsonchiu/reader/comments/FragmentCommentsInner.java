@@ -29,7 +29,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 
-import com.bumptech.glide.Glide;
 import com.bumptech.glide.RequestManager;
 import com.winsonchiu.reader.ActivityMain;
 import com.winsonchiu.reader.CustomApplication;
@@ -197,7 +196,7 @@ public class FragmentCommentsInner extends FragmentBase {
         }
 
         @Override
-        public void onReplyShown() {
+        public void clearDecoration() {
 
         }
 
@@ -339,8 +338,8 @@ public class FragmentCommentsInner extends FragmentBase {
             }
 
             @Override
-            public void onReplyShown() {
-                callback.onReplyShown();
+            public void clearDecoration() {
+                callback.clearDecoration();
             }
 
             @Override
@@ -426,8 +425,8 @@ public class FragmentCommentsInner extends FragmentBase {
             }
 
             @Override
-            public void onReplyShown() {
-                callback.onReplyShown();
+            public void clearDecoration() {
+                callback.clearDecoration();
             }
 
             @Override
@@ -771,12 +770,12 @@ public class FragmentCommentsInner extends FragmentBase {
             }
 
             @Override
-            public void hideToolbar() {
+            public void clearDecoration() {
 
             }
 
             @Override
-            public void onReplyShown() {
+            public void hideToolbar() {
 
             }
 
@@ -924,8 +923,8 @@ public class FragmentCommentsInner extends FragmentBase {
         void setIsCommentThread(boolean isCommentThread);
         void setSort(Sort sort);
         void setTitle(CharSequence title);
+        void clearDecoration();
         void hideToolbar();
-        void onReplyShown();
         int getAppBarHeight();
         boolean isCurrentFragment(FragmentCommentsInner fragmentCommentsInner);
     }

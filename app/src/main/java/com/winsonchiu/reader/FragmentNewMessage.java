@@ -5,9 +5,7 @@
 package com.winsonchiu.reader;
 
 import android.app.Activity;
-import android.content.Context;
 import android.content.res.TypedArray;
-import android.graphics.Color;
 import android.graphics.ColorFilter;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
@@ -30,7 +28,6 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
-import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
@@ -42,6 +39,7 @@ import com.github.rjeschke.txtmark.Processor;
 import com.squareup.picasso.Picasso;
 import com.winsonchiu.reader.data.reddit.Reddit;
 import com.winsonchiu.reader.utils.UtilsColor;
+import com.winsonchiu.reader.utils.UtilsInput;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -165,27 +163,18 @@ public class FragmentNewMessage extends FragmentBase implements Toolbar.OnMenuIt
         toolbar.setTitle(getString(R.string.message));
         toolbar.setTitleTextColor(getResources().getColor(colorResourcePrimary));
         toolbar.setNavigationIcon(R.drawable.ic_arrow_back_white_24dp);
-        toolbar.setNavigationOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                InputMethodManager inputManager = (InputMethodManager) activity.getSystemService(
-                        Context.INPUT_METHOD_SERVICE);
-                inputManager.hideSoftInputFromWindow(editTextMessage.getWindowToken(), 0);
-                mListener.onNavigationBackClick();
-            }
+        toolbar.setNavigationOnClickListener(v -> {
+            UtilsInput.hideKeyboard(editTextMessage);
+            mListener.onNavigationBackClick();
         });
         toolbar.getNavigationIcon().mutate().setColorFilter(colorFilterPrimary);
         setUpOptionsMenu();
 
-        View.OnFocusChangeListener onFocusChangeListener = new View.OnFocusChangeListener() {
-            @Override
-            public void onFocusChange(View v, boolean hasFocus) {
-                if (hasFocus) {
-                    AppBarLayout.Behavior behaviorAppBar = (AppBarLayout.Behavior) ((CoordinatorLayout.LayoutParams) layoutAppBar
-                            .getLayoutParams()).getBehavior();
-                    behaviorAppBar
-                            .onNestedFling(layoutCoordinator, layoutAppBar, null, 0, 1000, true);
-                }
+        View.OnFocusChangeListener onFocusChangeListener = (v, hasFocus) -> {
+            if (hasFocus) {
+                AppBarLayout.Behavior behaviorAppBar = (AppBarLayout.Behavior) ((CoordinatorLayout.LayoutParams) layoutAppBar
+                        .getLayoutParams()).getBehavior();
+                behaviorAppBar.onNestedFling(layoutCoordinator, layoutAppBar, null, 0, 1000, true);
             }
         };
 
@@ -428,9 +417,7 @@ public class FragmentNewMessage extends FragmentBase implements Toolbar.OnMenuIt
                             return;
                         }
 
-                        InputMethodManager inputManager = (InputMethodManager) activity.getSystemService(
-                                Context.INPUT_METHOD_SERVICE);
-                        inputManager.hideSoftInputFromWindow(editTextMessage.getWindowToken(), 0);
+                        UtilsInput.hideKeyboard(editTextMessage);
                         mListener.onNavigationBackClick();
                     }
                 });

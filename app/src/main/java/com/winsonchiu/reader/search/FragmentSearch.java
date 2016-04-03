@@ -5,12 +5,10 @@
 package com.winsonchiu.reader.search;
 
 import android.app.Activity;
-import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.PorterDuff;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
-import android.support.annotation.StyleRes;
 import android.support.design.widget.AppBarLayout;
 import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.TabLayout;
@@ -28,7 +26,6 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.Toast;
@@ -51,15 +48,16 @@ import com.winsonchiu.reader.data.reddit.Time;
 import com.winsonchiu.reader.links.AdapterLink;
 import com.winsonchiu.reader.links.ControllerLinks;
 import com.winsonchiu.reader.links.ControllerLinksBase;
+import com.winsonchiu.reader.rx.FinalizingSubscriber;
 import com.winsonchiu.reader.theme.ThemeWrapper;
 import com.winsonchiu.reader.utils.CustomColorFilter;
 import com.winsonchiu.reader.utils.DisallowListener;
-import com.winsonchiu.reader.rx.FinalizingSubscriber;
 import com.winsonchiu.reader.utils.ItemDecorationDivider;
 import com.winsonchiu.reader.utils.RecyclerCallback;
 import com.winsonchiu.reader.utils.SimpleCallbackBackground;
 import com.winsonchiu.reader.utils.UtilsAnimation;
 import com.winsonchiu.reader.utils.UtilsColor;
+import com.winsonchiu.reader.utils.UtilsInput;
 
 import javax.inject.Inject;
 
@@ -528,8 +526,9 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
                     }
 
                     @Override
-                    public void onReplyShown() {
-
+                    public void clearDecoration() {
+                        AppBarLayout.Behavior behaviorAppBar = (AppBarLayout.Behavior) ((CoordinatorLayout.LayoutParams) layoutAppBar.getLayoutParams()).getBehavior();
+                        behaviorAppBar.onNestedFling(layoutCoordinator, layoutAppBar, null, 0, 1000, true);
                     }
 
                     @Override
@@ -624,8 +623,9 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
                     }
 
                     @Override
-                    public void onReplyShown() {
-
+                    public void clearDecoration() {
+                        AppBarLayout.Behavior behaviorAppBar = (AppBarLayout.Behavior) ((CoordinatorLayout.LayoutParams) layoutAppBar.getLayoutParams()).getBehavior();
+                        behaviorAppBar.onNestedFling(layoutCoordinator, layoutAppBar, null, 0, 1000, true);
                     }
 
                     @Override
@@ -785,10 +785,7 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
     }
 
     private void closeKeyboard() {
-        InputMethodManager inputManager = (InputMethodManager) getActivity()
-                .getSystemService(Context.INPUT_METHOD_SERVICE);
-        inputManager.hideSoftInputFromWindow(view.getWindowToken(),
-                InputMethodManager.HIDE_NOT_ALWAYS);
+        UtilsInput.hideKeyboard(view);
     }
 
     @Override

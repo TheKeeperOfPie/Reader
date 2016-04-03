@@ -92,8 +92,6 @@
     <string name="empty_title">Title cannot be empty</string>
     <string name="invalid_url">Text is not valid URL</string>
     <string name="item_delete">Delete</string>
-    <string name="submitting_to">Submitting to</string>
-    <string name="as">as</string>
     <string name="must_be_logged_in">Must be logged in to do that</string>
     <string name="must_be_logged_in_to_vote">Must be logged in to vote</string>
     <string name="must_be_logged_in_to_reply">Must be logged in to reply</string>
@@ -294,5 +292,6 @@
     <string name="error_album_image">Error loading\n%1$s</string>
 
     <string name="as_author">as %1$s</string>
+    <string name="submitting_post">Submitting to %1$s as /u/%2$s</string>
 
 </resources>

@@ -71,7 +71,7 @@ public enum ThemeColor {
     }
 
     public static ThemeColor random() {
-        return values()[new SecureRandom().nextInt(values().length)];
+        return values()[new SecureRandom().nextInt(values().length - 1) + 1];
     }
 
     public static ThemeColor getTheme(@AppSettings.ThemeColor String themeColor) {

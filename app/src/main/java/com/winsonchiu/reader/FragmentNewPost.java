@@ -5,7 +5,6 @@
 package com.winsonchiu.reader;
 
 import android.app.Activity;
-import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.ColorFilter;
 import android.graphics.PorterDuff;
@@ -30,7 +29,6 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
-import android.view.inputmethod.InputMethodManager;
 import android.webkit.URLUtil;
 import android.widget.EditText;
 import android.widget.ImageButton;
@@ -49,6 +47,7 @@ import com.winsonchiu.reader.data.reddit.Reddit;
 import com.winsonchiu.reader.links.ControllerLinks;
 import com.winsonchiu.reader.rx.FinalizingSubscriber;
 import com.winsonchiu.reader.utils.UtilsColor;
+import com.winsonchiu.reader.utils.UtilsInput;
 import com.winsonchiu.reader.utils.UtilsReddit;
 import com.winsonchiu.reader.utils.UtilsRx;
 
@@ -173,21 +172,14 @@ public class FragmentNewPost extends FragmentBase implements Toolbar.OnMenuItemC
         toolbar.setTitle(getString(R.string.new_post));
         toolbar.setTitleTextColor(getResources().getColor(colorResourcePrimary));
         toolbar.setNavigationIcon(R.drawable.ic_arrow_back_white_24dp);
-        toolbar.setNavigationOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                InputMethodManager inputManager = (InputMethodManager) activity.getSystemService(
-                        Context.INPUT_METHOD_SERVICE);
-                inputManager.hideSoftInputFromWindow(editTextBody.getWindowToken(), 0);
-                mListener.onNavigationBackClick();
-            }
+        toolbar.setNavigationOnClickListener(v -> {
+            UtilsInput.hideKeyboard(editTextBody);
+            mListener.onNavigationBackClick();
         });
         toolbar.getNavigationIcon().mutate().setColorFilter(colorFilterPrimary);
         setUpOptionsMenu();
 
-        textInfo.setText(getString(R.string.submitting_to) + " " + getArguments()
-                .getString(SUBREDDIT) + " " + getString(R.string.as) + " /u/" + getArguments()
-                .getString(USER));
+        textInfo.setText(getString(R.string.submitting_post, getArguments().getString(SUBREDDIT), getArguments().getString(USER)));
 
         String submitTextHtml = getArguments().getString(SUBMIT_TEXT_HTML);
         Log.d(TAG, "submitTextHtml: " + submitTextHtml);
@@ -206,15 +198,11 @@ public class FragmentNewPost extends FragmentBase implements Toolbar.OnMenuItemC
             editTextBody.setHint("Text");
         }
 
-        View.OnFocusChangeListener onFocusChangeListener = new View.OnFocusChangeListener() {
-            @Override
-            public void onFocusChange(View v, boolean hasFocus) {
-                if (hasFocus) {
-                    AppBarLayout.Behavior behaviorAppBar = (AppBarLayout.Behavior) ((CoordinatorLayout.LayoutParams) layoutAppBar
-                            .getLayoutParams()).getBehavior();
-                    behaviorAppBar
-                            .onNestedFling(layoutCoordinator, layoutAppBar, null, 0, 1000, true);
-                }
+        View.OnFocusChangeListener onFocusChangeListener = (v, hasFocus) -> {
+            if (hasFocus) {
+                AppBarLayout.Behavior behaviorAppBar = (AppBarLayout.Behavior) ((CoordinatorLayout.LayoutParams) layoutAppBar
+                        .getLayoutParams()).getBehavior();
+                behaviorAppBar.onNestedFling(layoutCoordinator, layoutAppBar, null, 0, 1000, true);
             }
         };
 
@@ -491,9 +479,7 @@ public class FragmentNewPost extends FragmentBase implements Toolbar.OnMenuItemC
 
                     @Override
                     public void onNext(String s) {
-                        InputMethodManager inputManager = (InputMethodManager) activity.getSystemService(
-                                Context.INPUT_METHOD_SERVICE);
-                        inputManager.hideSoftInputFromWindow(editTextBody.getWindowToken(), 0);
+                        UtilsInput.hideKeyboard(editTextBody);
                         controllerLinks.reloadAllLinks(false)
                                 .observeOn(AndroidSchedulers.mainThread())
                                 .subscribe(new FinalizingSubscriber<Listing>() {
@@ -578,9 +564,7 @@ public class FragmentNewPost extends FragmentBase implements Toolbar.OnMenuItemC
                             return;
                         }
 
-                        InputMethodManager inputManager = (InputMethodManager) activity.getSystemService(
-                                Context.INPUT_METHOD_SERVICE);
-                        inputManager.hideSoftInputFromWindow(editTextBody.getWindowToken(), 0);
+                        UtilsInput.hideKeyboard(editTextBody);
                         controllerLinks.reloadAllLinks(false)
                                 .observeOn(AndroidSchedulers.mainThread())
                                 .subscribe(new FinalizingSubscriber<Listing>() {

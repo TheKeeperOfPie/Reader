@@ -62,7 +62,6 @@ public class Link extends Replyable implements Parcelable {
     // Non-Reddit variables
     private Listing comments = new Listing();
     private Album album;
-    private boolean commentsClicked;
     private int backgroundColor;
 
     private int contextLevel;
@@ -442,14 +441,6 @@ public class Link extends Replyable implements Parcelable {
         this.createdUtc = createdUtc;
     }
 
-    public boolean isCommentsClicked() {
-        return commentsClicked;
-    }
-
-    public void setCommentsClicked(boolean commentsClicked) {
-        this.commentsClicked = commentsClicked;
-    }
-
     public Album getAlbum() {
         return album;
     }
@@ -514,7 +505,6 @@ public class Link extends Replyable implements Parcelable {
                 ", created=" + created +
                 ", createdUtc=" + createdUtc +
                 ", comments=" + comments +
-                ", commentsClicked=" + commentsClicked +
                 ", backgroundColor=" + backgroundColor +
                 '}';
     }
@@ -1102,7 +1092,6 @@ public class Link extends Replyable implements Parcelable {
         dest.writeLong(this.createdUtc);
         dest.writeParcelable(this.comments, 0);
         dest.writeParcelable(this.album, 0);
-        dest.writeByte(commentsClicked ? (byte) 1 : (byte) 0);
         dest.writeInt(this.backgroundColor);
         dest.writeInt(this.contextLevel);
         dest.writeString(this.commentId);
@@ -1144,7 +1133,6 @@ public class Link extends Replyable implements Parcelable {
         this.createdUtc = in.readLong();
         this.comments = in.readParcelable(Listing.class.getClassLoader());
         this.album = in.readParcelable(Album.class.getClassLoader());
-        this.commentsClicked = in.readByte() != 0;
         this.backgroundColor = in.readInt();
         this.contextLevel = in.readInt();
         this.commentId = in.readString();

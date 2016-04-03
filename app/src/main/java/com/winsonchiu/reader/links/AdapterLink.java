@@ -11,7 +11,6 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.TypedArray;
 import android.graphics.PorterDuff;
-import android.graphics.PorterDuffColorFilter;
 import android.graphics.drawable.Drawable;
 import android.media.MediaPlayer;
 import android.net.Uri;
@@ -50,9 +49,9 @@ import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -101,9 +100,11 @@ import com.winsonchiu.reader.utils.Utils;
 import com.winsonchiu.reader.utils.UtilsAnimation;
 import com.winsonchiu.reader.utils.UtilsColor;
 import com.winsonchiu.reader.utils.UtilsImage;
+import com.winsonchiu.reader.utils.UtilsInput;
 import com.winsonchiu.reader.utils.UtilsJson;
 import com.winsonchiu.reader.utils.UtilsReddit;
 import com.winsonchiu.reader.utils.UtilsRx;
+import com.winsonchiu.reader.utils.UtilsView;
 import com.winsonchiu.reader.utils.ViewHolderBase;
 import com.winsonchiu.reader.utils.YouTubeListener;
 import com.winsonchiu.reader.views.ImageViewZoom;
@@ -128,10 +129,10 @@ import butterknife.BindString;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
 import butterknife.OnTouch;
+import butterknife.Optional;
 import rx.Observable;
 import rx.Subscription;
 import rx.android.schedulers.AndroidSchedulers;
-import rx.functions.Func1;
 
 /**
  * Created by TheKeeperOfPie on 3/14/2015.
@@ -401,6 +402,8 @@ public abstract class AdapterLink extends RecyclerView.Adapter<ViewHolderBase> i
             implements Toolbar.OnMenuItemClickListener, View.OnClickListener,
             View.OnLongClickListener, SurfaceHolder.Callback {
 
+        @Bind(R.id.layout_root) ViewGroup layoutRoot;
+        @Bind(R.id.layout_inner) ViewGroup layoutInner;
         @Bind(R.id.layout_full) public ViewGroup layoutFull;
         @Bind(R.id.progress_image) public ProgressBar progressImage;
         @Bind(R.id.view_pager_full) public ViewPager viewPagerFull;
@@ -423,6 +426,9 @@ public abstract class AdapterLink extends RecyclerView.Adapter<ViewHolderBase> i
         @Bind(R.id.button_reply_editor) public ImageButton buttonReplyEditor;
         @Bind(R.id.view_overlay) public View viewOverlay;
         @Bind(R.id.layout_youtube) ViewGroup layoutYouTube;
+
+        @Bind(R.id.view_mask_start)View viewMaskStart;
+        @Bind(R.id.view_mask_end) View viewMaskEnd;
 
         @BindDimen(R.dimen.touch_target_size) public int toolbarItemWidth;
         @BindDimen(R.dimen.activity_horizontal_margin) public int titleMargin;
@@ -464,9 +470,9 @@ public abstract class AdapterLink extends RecyclerView.Adapter<ViewHolderBase> i
         public MenuItem itemReport;
         public MenuItem itemViewSubreddit;
         public MenuItem itemCopyText;
-        public PorterDuffColorFilter colorFilterSave;
-        public PorterDuffColorFilter colorFilterPositive;
-        public PorterDuffColorFilter colorFilterNegative;
+        public CustomColorFilter colorFilterSave;
+        public CustomColorFilter colorFilterPositive;
+        public CustomColorFilter colorFilterNegative;
         public CustomColorFilter colorFilterIconDefault;
         public CustomColorFilter colorFilterIconLight;
         public CustomColorFilter colorFilterIconDark;
@@ -536,18 +542,14 @@ public abstract class AdapterLink extends RecyclerView.Adapter<ViewHolderBase> i
         }
 
         protected void toggleToolbarActions() {
-            if (!toolbarActions.isShown()) {
-                setToolbarValues();
-            }
+            setToolbarValues();
 
             toolbarActions.post(() -> UtilsAnimation.animateExpand(layoutContainerExpand,
                     getRatio(), null));
         }
 
         public void showToolbarActionsInstant() {
-            if (!toolbarActions.isShown()) {
-                setToolbarValues();
-            }
+            setToolbarValues();
 
             layoutContainerExpand.setVisibility(View.VISIBLE);
             layoutContainerExpand.getLayoutParams().height = UtilsAnimation.getMeasuredHeight(layoutContainerExpand, getRatio());
@@ -960,16 +962,16 @@ public abstract class AdapterLink extends RecyclerView.Adapter<ViewHolderBase> i
             expandFull(true);
             link.setReplyExpanded(!link.isReplyExpanded());
             layoutContainerReply.setVisibility(link.isReplyExpanded() ? View.VISIBLE : View.GONE);
+
             if (link.isReplyExpanded()) {
                 textUsername.setText(resources.getString(R.string.as_author, eventListener.getUser().getName()));
-                recyclerCallback.hideToolbar();
-                recyclerCallback.onReplyShown();
-                InputMethodManager inputManager = (InputMethodManager) itemView.getContext()
-                        .getSystemService(Context.INPUT_METHOD_SERVICE);
-                inputManager.toggleSoftInput(InputMethodManager.SHOW_FORCED, 0);
+                recyclerCallback.clearDecoration();
                 editTextReply.setText(link.getReplyText());
-                editTextReply.clearFocus();
-                editTextReply.post(() -> editTextReply.requestFocus());
+                editTextReply.requestFocus();
+                UtilsInput.showKeyboard(editTextReply);
+            }
+            else {
+                UtilsInput.hideKeyboard(editTextReply);
             }
         }
 
@@ -998,12 +1000,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<ViewHolderBase> i
         }
 
         public void loadComments() {
-            if (youTubePlayer != null) {
-                link.setYouTubeTime(youTubePlayer.getCurrentTimeMillis());
-            }
-            else {
-                link.setYouTubeTime(-1);
-            }
+            link.setYouTubeTime(youTubePlayer == null ? -1 : youTubePlayer.getCurrentTimeMillis());
 
             callbackYouTubeDestruction.destroyYouTubePlayerFragments();
             layoutYouTube.setVisibility(View.GONE);
@@ -1011,20 +1008,6 @@ public abstract class AdapterLink extends RecyclerView.Adapter<ViewHolderBase> i
             clearOverlay();
             if (mediaPlayer != null) {
                 mediaPlayer.stop();
-            }
-
-            // TODO: Improve where this logic is handled in click timeline
-            if (link.getNumComments() == 0) {
-                if (!link.isCommentsClicked()) {
-                    eventListener.toast(resources.getString(R.string.no_comments));
-                    if (link.isSelf() && !TextUtils.isEmpty(link.getSelfText())) {
-                        expandFull(true);
-                        textThreadSelf.setVisibility(View.VISIBLE);
-                        scrollToSelf();
-                    }
-                    link.setCommentsClicked(true);
-                    return;
-                }
             }
 
             itemView.post(() -> eventListener.onClickComments(link, ViewHolderLink.this, source));
@@ -1044,16 +1027,14 @@ public abstract class AdapterLink extends RecyclerView.Adapter<ViewHolderBase> i
 
             if (textThreadSelf.isShown()) {
                 textThreadSelf.setVisibility(View.GONE);
-                // TODO: Check if textThreadSelf is taller than view and optimize animation
-//                UtilsAnimation.animateExpand(textThreadSelf, 1f, null);
+                UtilsAnimation.animateCollapseHeight(textThreadSelf, 0, null);
             }
             else if (TextUtils.isEmpty(link.getSelfText())) {
                 loadComments();
             }
             else {
                 expandFull(true);
-                textThreadSelf.setVisibility(View.VISIBLE);
-                scrollToSelf();
+                UtilsAnimation.animateExpandHeight(textThreadSelf, UtilsView.getContentWidth(recyclerCallback.getLayoutManager()), 0, null);
             }
 
             return true;
@@ -1063,26 +1044,38 @@ public abstract class AdapterLink extends RecyclerView.Adapter<ViewHolderBase> i
             historian.add(link);
         }
 
+        @CallSuper
         public void expandFull(boolean expand) {
+            if (expand) {
+                float startX = itemView.getX() - recyclerCallback.getLayoutManager().getPaddingStart();
+
+                layoutInner.getLayoutParams().width = itemView.getWidth();
+                layoutInner.setTranslationX((int) startX);
+
+                int targetWidth = UtilsView.getContentWidth(recyclerCallback.getLayoutManager());
+                UtilsAnimation.animateExpandRecyclerItemView(layoutInner, layoutRoot, viewMaskStart, viewMaskEnd, targetWidth, 0, null);
+            }
+
             setToolbarMenuVisibility();
         }
 
         public void setVoteColors() {
 
-            switch (link.getLikes()) {
-                case 1:
-                    itemUpvote.getIcon().mutate().setColorFilter(colorFilterPositive);
-                    itemDownvote.getIcon().setColorFilter(colorFilterMenuItem);
-                    break;
-                case -1:
-                    itemDownvote.getIcon().mutate().setColorFilter(colorFilterNegative);
-                    itemUpvote.getIcon().setColorFilter(colorFilterMenuItem);
-                    break;
-                case 0:
-                    itemUpvote.getIcon().setColorFilter(colorFilterMenuItem);
-                    itemDownvote.getIcon().setColorFilter(colorFilterMenuItem);
-                    break;
-            }
+            // TODO: Fix this
+//            switch (link.getLikes()) {
+//                case 1:
+//                    itemUpvote.getIcon().mutate().setColorFilter(colorFilterPositive);
+//                    itemDownvote.getIcon().mutate().setColorFilter(colorFilterMenuItem);
+//                    break;
+//                case -1:
+//                    itemUpvote.getIcon().mutate().setColorFilter(colorFilterMenuItem);
+//                    itemDownvote.getIcon().mutate().setColorFilter(colorFilterNegative);
+//                    break;
+//                case 0:
+//                    itemUpvote.getIcon().mutate().setColorFilter(colorFilterMenuItem);
+//                    itemDownvote.getIcon().mutate().setColorFilter(colorFilterMenuItem);
+//                    break;
+//            }
 
             setTextValues(link);
 
@@ -1565,6 +1558,12 @@ public abstract class AdapterLink extends RecyclerView.Adapter<ViewHolderBase> i
         public void onBind(Link link, boolean showSubreddit) {
             this.link = link;
             this.showSubreddit = showSubreddit;
+
+            UtilsAnimation.clearAnimation(textThreadSelf, layoutInner);
+            textThreadSelf.getLayoutParams().height = ViewGroup.LayoutParams.WRAP_CONTENT;
+            layoutInner.getLayoutParams().width = ViewGroup.LayoutParams.WRAP_CONTENT;
+            layoutInner.setTranslationX(0);
+
             titleTextColor = colorTextPrimaryDefault;
             titleTextColorAlert = colorTextAlertDefault;
             colorTextSecondary = colorTextSecondaryDefault;
@@ -1593,7 +1592,7 @@ public abstract class AdapterLink extends RecyclerView.Adapter<ViewHolderBase> i
 
             textThreadSelf.setVisibility(View.GONE);
 
-            setTextValues(link);
+            setVoteColors();
 
             if (sharedPreferences.getBoolean(AppSettings.PREF_DIM_POSTS, true)) {
                 viewOverlay.setVisibility(

@@ -5,9 +5,7 @@
 package com.winsonchiu.reader.comments;
 
 import android.app.Activity;
-import android.content.Context;
 import android.content.res.TypedArray;
-import android.graphics.Color;
 import android.graphics.ColorFilter;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
@@ -30,7 +28,6 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
-import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
@@ -54,6 +51,7 @@ import com.winsonchiu.reader.profile.FragmentProfile;
 import com.winsonchiu.reader.search.ControllerSearch;
 import com.winsonchiu.reader.search.FragmentSearch;
 import com.winsonchiu.reader.utils.UtilsColor;
+import com.winsonchiu.reader.utils.UtilsInput;
 
 import javax.inject.Inject;
 
@@ -362,14 +360,9 @@ public class FragmentReply extends FragmentBase implements Toolbar.OnMenuItemCli
 
         toolbar.setTitle(getString(R.string.item_reply));
         toolbar.setNavigationIcon(R.drawable.ic_arrow_back_white_24dp);
-        toolbar.setNavigationOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                InputMethodManager inputManager = (InputMethodManager) activity.getSystemService(
-                        Context.INPUT_METHOD_SERVICE);
-                inputManager.hideSoftInputFromWindow(editReply.getWindowToken(), 0);
-                mListener.onNavigationBackClick();
-            }
+        toolbar.setNavigationOnClickListener(v -> {
+            UtilsInput.hideKeyboard(editReply);
+            mListener.onNavigationBackClick();
         });
         toolbar.getNavigationIcon().mutate().setColorFilter(colorFilterPrimary);
 
@@ -407,9 +400,7 @@ public class FragmentReply extends FragmentBase implements Toolbar.OnMenuItemCli
 
         switch (item.getItemId()) {
             case R.id.item_send_reply:
-                InputMethodManager inputManager = (InputMethodManager) activity.getSystemService(
-                        Context.INPUT_METHOD_SERVICE);
-                inputManager.hideSoftInputFromWindow(editReply.getWindowToken(), 0);
+                UtilsInput.hideKeyboard(editReply);
 
                 if (getArguments().getBoolean(ARG_IS_EDIT)) {
                     // TODO: Move to an insert/update comment call after editing

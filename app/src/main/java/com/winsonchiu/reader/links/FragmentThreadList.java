@@ -657,8 +657,10 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
             }
 
             @Override
-            public void onReplyShown() {
+            public void clearDecoration() {
                 behaviorButtonExpandActions.animateOut(buttonExpandActions);
+                AppBarLayout.Behavior behaviorAppBar = (AppBarLayout.Behavior) ((CoordinatorLayout.LayoutParams) layoutAppBar.getLayoutParams()).getBehavior();
+                behaviorAppBar.onNestedFling(layoutCoordinator, layoutAppBar, null, 0, 1000, true);
             }
 
             @Override

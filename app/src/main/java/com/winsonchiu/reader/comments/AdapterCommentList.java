@@ -45,7 +45,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.AccelerateInterpolator;
 import android.view.animation.Interpolator;
-import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
@@ -58,7 +57,6 @@ import com.winsonchiu.reader.AppSettings;
 import com.winsonchiu.reader.R;
 import com.winsonchiu.reader.data.reddit.Comment;
 import com.winsonchiu.reader.data.reddit.Link;
-import com.winsonchiu.reader.data.reddit.Reddit;
 import com.winsonchiu.reader.links.AdapterLink;
 import com.winsonchiu.reader.links.AdapterLinkGrid;
 import com.winsonchiu.reader.links.AdapterLinkList;
@@ -69,6 +67,7 @@ import com.winsonchiu.reader.utils.DisallowListener;
 import com.winsonchiu.reader.utils.OnTouchListenerDisallow;
 import com.winsonchiu.reader.utils.RecyclerCallback;
 import com.winsonchiu.reader.utils.UtilsAnimation;
+import com.winsonchiu.reader.utils.UtilsInput;
 import com.winsonchiu.reader.utils.UtilsReddit;
 import com.winsonchiu.reader.utils.ViewHolderBase;
 import com.winsonchiu.reader.utils.YouTubeListener;
@@ -564,14 +563,10 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
             textComment.setMovementMethod(LinkMovementMethod.getInstance());
             textComment.setOnTouchListener(new OnTouchListenerDisallow(disallowListener));
             editTextReply.setOnTouchListener(new OnTouchListenerDisallow(disallowListener));
-            buttonSendReply.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    if (!TextUtils.isEmpty(editTextReply.getText())) {
-                        sendReply();
-                        InputMethodManager inputManager = (InputMethodManager) itemView.getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
-                        inputManager.hideSoftInputFromWindow(itemView.getWindowToken(), 0);
-                    }
+            buttonSendReply.setOnClickListener(v -> {
+                if (!TextUtils.isEmpty(editTextReply.getText())) {
+                    sendReply();
+                    UtilsInput.hideKeyboard(itemView);
                 }
             });
 
@@ -985,14 +980,14 @@ public class AdapterCommentList extends RecyclerView.Adapter<RecyclerView.ViewHo
                     comment.isReplyExpanded() ? View.VISIBLE : View.GONE);
             if (comment.isReplyExpanded()) {
                 textUsername.setText("- " + eventListenerBase.getUser().getName());
-                recyclerCallback.hideToolbar();
-                recyclerCallback.onReplyShown();
+                recyclerCallback.clearDecoration();
                 editTextReply.setText(comment.getReplyText());
                 editTextReply.clearFocus();
-                InputMethodManager inputManager = (InputMethodManager) itemView.getContext()
-                        .getSystemService(Context.INPUT_METHOD_SERVICE);
-                inputManager.toggleSoftInput(InputMethodManager.SHOW_FORCED, 0);
                 editTextReply.requestFocus();
+                UtilsInput.showKeyboard(editTextReply);
+            }
+            else {
+                UtilsInput.hideKeyboard(editTextReply);
             }
         }
 

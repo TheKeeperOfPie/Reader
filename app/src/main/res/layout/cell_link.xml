@@ -9,15 +9,14 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_margin="2dp"
-    android:background="?attr/colorCellBackground"
     android:clickable="true"
     >
 
     <RelativeLayout
-        android:id="@+id/layout"
+        android:id="@+id/layout_background"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="?attr/selectableItemBackground"
+        android:background="?attr/colorCellBackground"
         >
 
         <FrameLayout
@@ -78,138 +77,153 @@
 
         </FrameLayout>
 
-        <android.support.v4.widget.Space
-            android:id="@+id/view_margin"
-            android:layout_width="wrap_content"
-            android:layout_height="12dp"
-            android:layout_below="@id/layout_full"
-            android:layout_toStartOf="@+id/button_comments"
-            />
-
-        <com.winsonchiu.reader.views.ImageViewSquare
-            android:id="@+id/image_thumbnail"
-            android:layout_width="52dp"
-            android:layout_height="48dp"
-            android:layout_below="@id/layout_full"
-            android:layout_alignParentStart="true"
-            android:paddingTop="12dp"
-            android:paddingStart="16dp"
-            android:paddingEnd="12dp"
-            android:paddingBottom="12dp"
-            android:scaleType="centerCrop"
-            android:cropToPadding="true"
-            android:contentDescription="@string/content_description_thread_preview"
-            android:visibility="gone"
-            />
-
-        <ImageButton
-            android:id="@+id/button_comments"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
-            android:layout_below="@id/layout_full"
-            android:layout_alignParentEnd="true"
-            android:contentDescription="@string/content_description_button_comments"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:src="@drawable/ic_mode_comment_white_24dp"
-            android:padding="12dp"
-            />
-
-        <TextView
-            android:id="@+id/text_thread_flair"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_below="@id/image_thumbnail"
-            android:layout_toStartOf="@id/button_comments"
-            android:layout_alignParentStart="true"
-            android:layout_marginStart="@dimen/activity_horizontal_margin"
-            android:layout_marginEnd="@dimen/activity_horizontal_margin"
-            android:textSize="12sp"
-            android:textColor="?attr/colorAccent"
-            android:textAlignment="viewStart"
-            />
-
-        <TextView
-            android:id="@+id/text_thread_title"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_below="@id/text_thread_flair"
-            android:layout_alignParentStart="true"
-            android:layout_marginStart="@dimen/activity_horizontal_margin"
-            android:layout_marginEnd="@dimen/activity_horizontal_margin"
-            android:paddingBottom="8dp"
-            android:textAppearance="@style/TextAppearance.AppCompat.Body2"
-            android:textAlignment="viewStart"
-            />
-
-        <!-- TODO: Make self text selectable, fix ripple animation state-->
-
-        <TextView
-            android:id="@+id/text_thread_self"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_below="@id/text_thread_title"
-            android:layout_marginStart="@dimen/activity_horizontal_margin"
-            android:layout_marginEnd="@dimen/activity_horizontal_margin"
-            android:textAppearance="@style/TextAppearance.AppCompat.Body1"
-            android:paddingTop="4dp"
-            android:paddingBottom="8dp"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            />
-
-        <TextView
-            android:id="@+id/text_thread_info"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_below="@id/text_thread_self"
-            android:layout_alignParentEnd="true"
-            android:layout_marginStart="@dimen/activity_horizontal_margin"
-            android:layout_marginEnd="@dimen/activity_horizontal_margin"
-            android:paddingBottom="12dp"
-            android:gravity="end"
-            android:textAppearance="@style/TextAppearance.AppCompat.Caption"
-            android:textAlignment="viewEnd"
-            android:textColor="?android:attr/textColorSecondary"
-            />
-
-        <LinearLayout
-            android:id="@+id/layout_container_expand"
-            android:orientation="vertical"
+        <FrameLayout
+            android:id="@+id/layout_inner"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_below="@id/text_thread_info"
-            android:layout_alignParentEnd="true"
+            android:layout_below="@id/layout_full"
             >
 
-            <TextView
-                android:id="@+id/text_hidden"
-                android:layout_width="wrap_content"
+            <RelativeLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="@dimen/activity_horizontal_margin"
-                android:layout_marginEnd="@dimen/activity_horizontal_margin"
-                android:layout_gravity="end"
-                android:gravity="end"
-                android:textSize="12sp"
-                android:textColor="?android:attr/textColorSecondary"
-                android:textAlignment="viewEnd"
-                android:scrollHorizontally="false"
-                />
+                android:background="?attr/selectableItemBackground"
+                >
 
-            <android.support.v7.widget.Toolbar
-                android:id="@+id/toolbar_actions"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                />
+                <android.support.v4.widget.Space
+                    android:id="@+id/view_margin"
+                    android:layout_width="wrap_content"
+                    android:layout_height="12dp"
+                    android:layout_toStartOf="@+id/button_comments"
+                    />
 
-        </LinearLayout>
+                <com.winsonchiu.reader.views.ImageViewSquare
+                    android:id="@+id/image_thumbnail"
+                    android:layout_width="52dp"
+                    android:layout_height="48dp"
+                    android:layout_alignParentStart="true"
+                    android:paddingTop="12dp"
+                    android:paddingStart="16dp"
+                    android:paddingEnd="12dp"
+                    android:paddingBottom="12dp"
+                    android:scaleType="centerCrop"
+                    android:cropToPadding="true"
+                    android:contentDescription="@string/content_description_thread_preview"
+                    android:visibility="gone"
+                    />
 
-        <include
-            layout="@layout/reply"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_below="@id/layout_container_expand"
-            android:layout_alignParentBottom="true"
-            android:layout_alignParentEnd="true"
-            />
+                <ImageButton
+                    android:id="@+id/button_comments"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:layout_alignParentEnd="true"
+                    android:contentDescription="@string/content_description_button_comments"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:src="@drawable/ic_mode_comment_white_24dp"
+                    android:padding="12dp"
+                    />
+
+                <TextView
+                    android:id="@+id/text_thread_flair"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@id/image_thumbnail"
+                    android:layout_toStartOf="@id/button_comments"
+                    android:layout_alignParentStart="true"
+                    android:layout_marginStart="@dimen/activity_horizontal_margin"
+                    android:layout_marginEnd="@dimen/activity_horizontal_margin"
+                    android:textSize="12sp"
+                    android:textColor="?attr/colorAccent"
+                    android:textAlignment="viewStart"
+                    />
+
+                <TextView
+                    android:id="@+id/text_thread_title"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@id/text_thread_flair"
+                    android:layout_alignParentStart="true"
+                    android:layout_marginStart="@dimen/activity_horizontal_margin"
+                    android:layout_marginEnd="@dimen/activity_horizontal_margin"
+                    android:paddingBottom="8dp"
+                    android:textAppearance="@style/TextAppearance.AppCompat.Body2"
+                    android:textAlignment="viewStart"
+                    />
+
+                <!-- TODO: Make self text selectable, fix ripple animation state-->
+
+                <TextView
+                    android:id="@+id/text_thread_self"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@id/text_thread_title"
+                    android:layout_marginStart="@dimen/activity_horizontal_margin"
+                    android:layout_marginEnd="@dimen/activity_horizontal_margin"
+                    android:textAppearance="@style/TextAppearance.AppCompat.Body1"
+                    android:paddingTop="4dp"
+                    android:paddingBottom="8dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    />
+
+                <TextView
+                    android:id="@+id/text_thread_info"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@id/text_thread_self"
+                    android:layout_alignParentEnd="true"
+                    android:layout_marginStart="@dimen/activity_horizontal_margin"
+                    android:layout_marginEnd="@dimen/activity_horizontal_margin"
+                    android:paddingBottom="12dp"
+                    android:gravity="end"
+                    android:textAppearance="@style/TextAppearance.AppCompat.Caption"
+                    android:textAlignment="viewEnd"
+                    android:textColor="?android:attr/textColorSecondary"
+                    />
+
+                <LinearLayout
+                    android:id="@+id/layout_container_expand"
+                    android:orientation="vertical"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@id/text_thread_info"
+                    android:layout_alignParentEnd="true"
+                    >
+
+                    <TextView
+                        android:id="@+id/text_hidden"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="@dimen/activity_horizontal_margin"
+                        android:layout_marginEnd="@dimen/activity_horizontal_margin"
+                        android:layout_gravity="end"
+                        android:gravity="end"
+                        android:textSize="12sp"
+                        android:textColor="?android:attr/textColorSecondary"
+                        android:textAlignment="viewEnd"
+                        android:scrollHorizontally="false"
+                        />
+
+                    <android.support.v7.widget.Toolbar
+                        android:id="@+id/toolbar_actions"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="end"
+                        />
+
+                </LinearLayout>
+
+                <include
+                    layout="@layout/reply"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@id/layout_container_expand"
+                    android:layout_alignParentBottom="true"
+                    android:layout_alignParentEnd="true"
+                    />
+
+            </RelativeLayout>
+
+        </FrameLayout>
 
     </RelativeLayout>
 
@@ -217,10 +231,24 @@
         android:id="@+id/view_overlay"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_alignTop="@id/layout"
-        android:layout_alignBottom="@id/layout"
         android:background="?attr/colorCellOverlay"
         android:visibility="gone"
+        />
+
+    <View
+        android:id="@+id/view_mask_start"
+        android:layout_width="0px"
+        android:layout_height="match_parent"
+        android:layout_gravity="start"
+        android:background="?attr/colorScreenBackground"
+        />
+
+    <View
+        android:id="@+id/view_mask_end"
+        android:layout_width="0px"
+        android:layout_height="match_parent"
+        android:layout_gravity="end"
+        android:background="?attr/colorScreenBackground"
         />
 
 </com.winsonchiu.reader.views.CustomFrameLayout>

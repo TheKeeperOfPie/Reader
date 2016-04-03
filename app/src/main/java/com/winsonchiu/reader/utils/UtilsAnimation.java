@@ -295,6 +295,128 @@ public class UtilsAnimation {
         recyclerView.post(runnable);
     }
 
+    public static void clearAnimation(View... views) {
+        for (View view : views) {
+            if (view.getAnimation() != null) {
+                view.getAnimation().cancel();
+            }
+
+            view.clearAnimation();
+        }
+    }
+
+    public static void animateExpandRecyclerItemView(final View view,
+            final View viewParent,
+            final View viewMaskStart,
+            final View viewMaskEnd,
+            final int targetWidth,
+            final long duration,
+            @Nullable final OnAnimationEndListener callback) {
+        if (view.getAnimation() != null && !view.getAnimation().hasEnded()) {
+            view.getAnimation().setAnimationListener(new Animation.AnimationListener() {
+                @Override
+                public void onAnimationStart(Animation animation) {
+
+                }
+
+                @Override
+                public void onAnimationEnd(Animation animation) {
+                    view.startAnimation(getExpandRecyclerItemViewAnimationInternal(view, viewParent, viewMaskStart, viewMaskEnd, targetWidth, duration, callback));
+                }
+
+                @Override
+                public void onAnimationRepeat(Animation animation) {
+
+                }
+            });
+        } else {
+            view.startAnimation(getExpandRecyclerItemViewAnimationInternal(view, viewParent, viewMaskStart, viewMaskEnd, targetWidth, duration, callback));
+        }
+    }
+
+    private static Animation getExpandRecyclerItemViewAnimationInternal(final View view,
+            final View viewParent,
+            final View viewMaskStart,
+            final View viewMaskEnd,
+            final int targetWidth,
+            final long duration,
+            @Nullable final OnAnimationEndListener callback) {
+        final int startWidth = view.getVisibility() == View.GONE ? 0 : view.getWidth();
+        final float startX = view.getTranslationX();
+        float speed = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 1, view.getContext().getResources().getDisplayMetrics());
+
+        if (startWidth == targetWidth) {
+            return new Animation() {};
+        }
+
+        Animation animationExpand = new Animation() {
+            @Override
+            protected void applyTransformation(float interpolatedTime, Transformation t) {
+                if (interpolatedTime >= 0.99f) {
+                    if (viewMaskStart != null) {
+                        viewMaskStart.getLayoutParams().width = 0;
+                        viewMaskEnd.getLayoutParams().width = 0;
+                    }
+                    view.getLayoutParams().width = ViewGroup.LayoutParams.WRAP_CONTENT;
+                    view.setTranslationX(0);
+                }
+                else {
+                    int translationX = (int) ((1f - interpolatedTime) * startX);
+                    int width = (int) (startWidth + interpolatedTime * (targetWidth - startWidth));
+                    if (viewMaskStart != null) {
+                        viewMaskStart.getLayoutParams().width = translationX;
+                        viewMaskEnd.getLayoutParams().width = viewParent.getWidth() - width - translationX;
+                    }
+                    view.getLayoutParams().width = width;
+                    view.setTranslationX(translationX);
+                }
+
+                view.requestLayout();
+            }
+
+            @Override
+            public boolean willChangeBounds() {
+                return true;
+            }
+        };
+
+        animationExpand.setAnimationListener(new Animation.AnimationListener() {
+            @Override
+            public void onAnimationStart(Animation animation) {
+
+            }
+
+            @Override
+            public void onAnimationEnd(Animation animation) {
+                if (viewMaskStart != null) {
+                    viewMaskStart.getLayoutParams().width = 0;
+                    viewMaskEnd.getLayoutParams().width = 0;
+                }
+                view.getLayoutParams().width = ViewGroup.LayoutParams.WRAP_CONTENT;
+                view.setTranslationX(0);
+                view.requestLayout();
+
+                if (callback != null) {
+                    callback.onAnimationEnd();
+                }
+            }
+
+            @Override
+            public void onAnimationRepeat(Animation animation) {
+
+            }
+        });
+
+        if (view.getVisibility() == View.GONE) {
+            view.getLayoutParams().width = 0;
+        }
+        view.setVisibility(View.VISIBLE);
+
+        animationExpand.setDuration(duration > 0 ? duration : (long) ((targetWidth - startWidth) / speed * 2));
+
+        return animationExpand;
+    }
+
     /**
      * Animate a view's height from its current height to its WRAP_CONTENT measured height
      * @param widthAtMost the maximum width of the view to be measured in
@@ -313,7 +435,7 @@ public class UtilsAnimation {
 
                 @Override
                 public void onAnimationEnd(Animation animation) {
-                    view.startAnimation(getExpandAnimationInternal(view, widthAtMost, duration, callback));
+                    view.startAnimation(getExpandHeightAnimationInternal(view, widthAtMost, duration, callback));
                 }
 
                 @Override
@@ -322,11 +444,11 @@ public class UtilsAnimation {
                 }
             });
         } else {
-            view.startAnimation(getExpandAnimationInternal(view, widthAtMost, duration, callback));
+            view.startAnimation(getExpandHeightAnimationInternal(view, widthAtMost, duration, callback));
         }
     }
 
-    private static Animation getExpandAnimationInternal(final View view,
+    private static Animation getExpandHeightAnimationInternal(final View view,
             final int widthAtMost,
             final long duration,
             @Nullable final OnAnimationEndListener callback) {
@@ -341,7 +463,13 @@ public class UtilsAnimation {
         Animation animationExpand = new Animation() {
             @Override
             protected void applyTransformation(float interpolatedTime, Transformation t) {
-                view.getLayoutParams().height = (int) (startHeight + interpolatedTime * (targetHeight - startHeight));
+                if (interpolatedTime >= 0.99f) {
+                    view.getLayoutParams().height = ViewGroup.LayoutParams.WRAP_CONTENT;
+                }
+                else {
+                    view.getLayoutParams().height = (int) (startHeight + interpolatedTime * (targetHeight - startHeight));
+                }
+
                 view.requestLayout();
             }
 
@@ -373,9 +501,12 @@ public class UtilsAnimation {
             }
         });
 
-        animationExpand.setDuration(duration > 0 ? duration : (long) ((targetHeight - startHeight) / speed * 2));
-
+        if (view.getVisibility() == View.GONE) {
+            view.getLayoutParams().height = 0;
+        }
         view.setVisibility(View.VISIBLE);
+
+        animationExpand.setDuration(duration > 0 ? duration : (long) ((targetHeight - startHeight) / speed * 2));
 
         return animationExpand;
     }
@@ -396,7 +527,7 @@ public class UtilsAnimation {
 
                 @Override
                 public void onAnimationEnd(Animation animation) {
-                    view.startAnimation(getCollapseAnimationInternal(view, duration, callback));
+                    view.startAnimation(getCollapseHeightAnimationInternal(view, duration, callback));
                 }
 
                 @Override
@@ -405,11 +536,11 @@ public class UtilsAnimation {
                 }
             });
         } else {
-            view.startAnimation(getCollapseAnimationInternal(view, duration, callback));
+            view.startAnimation(getCollapseHeightAnimationInternal(view, duration, callback));
         }
     }
 
-    private static Animation getCollapseAnimationInternal(final View view,
+    private static Animation getCollapseHeightAnimationInternal(final View view,
             final long duration,
             @Nullable final OnAnimationEndListener callback) {
         final int height = view.getHeight();
@@ -422,7 +553,13 @@ public class UtilsAnimation {
         Animation animationCollapse = new Animation() {
             @Override
             protected void applyTransformation(float interpolatedTime, Transformation t) {
-                view.getLayoutParams().height = (int) ((1f - interpolatedTime) * height);
+                if (interpolatedTime >= 0.99f) {
+                    view.getLayoutParams().height = 0;
+                }
+                else {
+                    view.getLayoutParams().height = (int) ((1f - interpolatedTime) * height);
+                }
+
                 view.requestLayout();
             }
 
@@ -440,6 +577,7 @@ public class UtilsAnimation {
 
             @Override
             public void onAnimationEnd(Animation animation) {
+                view.getLayoutParams().height = 0;
                 view.setVisibility(View.GONE);
 
                 if (callback != null) {
@@ -460,16 +598,7 @@ public class UtilsAnimation {
         return animationCollapse;
     }
 
-    /**
-     * Measure a View's bounds assuming its height is unbounded and there is a provided width
-     */
     public static int getMeasuredHeightWithWidth(View view, int width) {
-        Point size = new Point();
-
-        ((WindowManager) view.getContext().getSystemService(Context.WINDOW_SERVICE))
-                .getDefaultDisplay()
-                .getSize(size);
-
         int widthMeasureSpec = View.MeasureSpec.makeMeasureSpec(width, View.MeasureSpec.AT_MOST);
         int heightMeasureSpec = View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED);
         view.measure(widthMeasureSpec, heightMeasureSpec);

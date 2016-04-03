@@ -43,6 +43,8 @@ import com.winsonchiu.reader.utils.ViewHolderBase;
 
 import java.util.ArrayList;
 
+import butterknife.Bind;
+
 /**
  * Created by TheKeeperOfPie on 3/7/2015.
  */
@@ -133,6 +135,8 @@ public class AdapterLinkGrid extends AdapterLink {
 
     public static class ViewHolder extends ViewHolderLink {
 
+        @Bind(R.id.layout_background) ViewGroup layoutBackground;
+
         private final int thumbnailSize;
         protected ImageView imageSquare;
         private int colorBackgroundDefault;
@@ -155,8 +159,8 @@ public class AdapterLinkGrid extends AdapterLink {
         protected void initialize() {
             super.initialize();
             imageSquare = (ImageView) itemView.findViewById(R.id.image_square);
-            if (itemView.getBackground() instanceof ColorDrawable) {
-                colorBackgroundDefault = ((ColorDrawable) itemView.getBackground()).getColor();
+            if (layoutBackground.getBackground() instanceof ColorDrawable) {
+                colorBackgroundDefault = ((ColorDrawable) layoutBackground.getBackground()).getColor();
             }
         }
 
@@ -205,11 +209,11 @@ public class AdapterLinkGrid extends AdapterLink {
             }
 
             if (viewOverlay.getVisibility() == View.GONE) {
-                itemView.setBackgroundColor(link.getBackgroundColor());
+                layoutBackground.setBackgroundColor(link.getBackgroundColor());
                 viewOverlay.setBackgroundColor(0x00000000);
             }
             else {
-                itemView.setBackgroundColor(0x00000000);
+                layoutBackground.setBackgroundColor(0x00000000);
                 viewOverlay.setBackgroundColor(ColorUtils.setAlphaComponent(link.getBackgroundColor(), ALPHA_OVERLAY));
             }
 
@@ -280,7 +284,6 @@ public class AdapterLinkGrid extends AdapterLink {
                     ((StaggeredGridLayoutManager) recyclerCallback.getLayoutManager())
                             .invalidateSpanAssignments();
                 }
-                scrollToSelf();
             }
         }
 
@@ -619,11 +622,11 @@ public class AdapterLinkGrid extends AdapterLink {
             int color = link.getBackgroundColor();
 
             if (viewOverlay.getVisibility() == View.GONE) {
-                int viewBackgroundColor = ((ColorDrawable) itemView.getBackground())
+                int viewBackgroundColor = ((ColorDrawable) layoutBackground.getBackground())
                         .getColor();
                 if (link.getBackgroundColor() != viewBackgroundColor) {
                     valueAnimatorBackground = UtilsAnimation.animateBackgroundColor(
-                            itemView,
+                            layoutBackground,
                             viewBackgroundColor,
                             color);
                 }
@@ -635,7 +638,7 @@ public class AdapterLinkGrid extends AdapterLink {
                 int overlayBackgroundColor = ((ColorDrawable) viewOverlay.getBackground())
                         .getColor();
 
-                itemView.setBackgroundColor(0x00000000);
+                layoutBackground.setBackgroundColor(0x00000000);
                 if (link.getBackgroundColor() != overlayBackgroundColor) {
                     valueAnimatorBackground = UtilsAnimation.animateBackgroundColor(
                             viewOverlay,
@@ -758,7 +761,7 @@ public class AdapterLinkGrid extends AdapterLink {
 
         @Override
         public void clearOverlay() {
-            itemView.setBackgroundColor(link.getBackgroundColor());
+            layoutBackground.setBackgroundColor(link.getBackgroundColor());
             setTextColors(link.getBackgroundColor());
             viewOverlay.setVisibility(View.GONE);
         }

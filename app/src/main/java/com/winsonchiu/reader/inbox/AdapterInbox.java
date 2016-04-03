@@ -30,7 +30,6 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
@@ -46,6 +45,7 @@ import com.winsonchiu.reader.profile.ControllerProfile;
 import com.winsonchiu.reader.utils.DisallowListener;
 import com.winsonchiu.reader.utils.RecyclerCallback;
 import com.winsonchiu.reader.utils.UtilsAnimation;
+import com.winsonchiu.reader.utils.UtilsInput;
 import com.winsonchiu.reader.utils.ViewHolderBase;
 
 import java.util.ArrayList;
@@ -366,13 +366,14 @@ public class AdapterInbox extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
                     message.isReplyExpanded() ? View.VISIBLE : View.GONE);
             if (message.isReplyExpanded()) {
                 textUsername.setText("- " + eventListener.getUser().getName());
-                recyclerCallback.onReplyShown();
+                recyclerCallback.clearDecoration();
                 editTextReply.setText(message.getReplyText());
                 editTextReply.clearFocus();
-                InputMethodManager inputManager = (InputMethodManager) itemView.getContext()
-                        .getSystemService(Context.INPUT_METHOD_SERVICE);
-                inputManager.toggleSoftInput(InputMethodManager.SHOW_FORCED, 0);
                 editTextReply.requestFocus();
+                UtilsInput.showKeyboard(editTextReply);
+            }
+            else {
+                UtilsInput.hideKeyboard(editTextReply);
             }
         }
     }

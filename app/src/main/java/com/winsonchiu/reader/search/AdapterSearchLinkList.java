@@ -4,11 +4,9 @@
 
 package com.winsonchiu.reader.search;
 
-import android.content.Context;
 import android.support.v4.app.FragmentActivity;
 import android.view.LayoutInflater;
 import android.view.ViewGroup;
-import android.view.inputmethod.InputMethodManager;
 
 import com.winsonchiu.reader.R;
 import com.winsonchiu.reader.comments.Source;
@@ -16,6 +14,7 @@ import com.winsonchiu.reader.links.AdapterLinkList;
 import com.winsonchiu.reader.links.ControllerLinksBase;
 import com.winsonchiu.reader.utils.DisallowListener;
 import com.winsonchiu.reader.utils.RecyclerCallback;
+import com.winsonchiu.reader.utils.UtilsInput;
 import com.winsonchiu.reader.utils.ViewHolderBase;
 
 /**
@@ -54,10 +53,7 @@ public class AdapterSearchLinkList extends AdapterLinkList {
                 this) {
             @Override
             public void onClickThumbnail() {
-                InputMethodManager inputManager = (InputMethodManager) activity
-                        .getSystemService(Context.INPUT_METHOD_SERVICE);
-                inputManager.hideSoftInputFromWindow(itemView.getWindowToken(),
-                        InputMethodManager.HIDE_NOT_ALWAYS);
+                UtilsInput.hideKeyboard(itemView);
                 super.onClickThumbnail();
             }
         };
