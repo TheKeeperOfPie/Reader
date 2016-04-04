@@ -1066,6 +1066,8 @@ public abstract class AdapterLink extends AdapterBase<ViewHolderBase> implements
 
                 int targetWidth = UtilsView.getContentWidth(recyclerCallback.getLayoutManager());
                 UtilsAnimation.animateExpandRecyclerItemView(layoutInner, layoutRoot, viewMaskStart, viewMaskEnd, targetWidth, 0, null);
+
+                scrollToSelf();
             }
 
             setToolbarMenuVisibility();

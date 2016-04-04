@@ -292,14 +292,14 @@ public class AdapterLinkGrid extends AdapterLink {
                             .invalidateSpanAssignments();
                 }
 
-                recyclerCallback.getLayoutManager().postOnAnimation(() -> {
-                    itemView.postOnAnimation(() -> {
-                        if (adapterCallback.getRecyclerView() != null) {
-                            int top = itemView.getTop();
-                            adapterCallback.getRecyclerView().scrollBy(0, itemView.getTop() - offset);
-                        }
-                    });
-                });
+//                recyclerCallback.getLayoutManager().postOnAnimation(() -> {
+//                    itemView.postOnAnimation(() -> {
+//                        if (adapterCallback.getRecyclerView() != null) {
+//                            int top = itemView.getTop();
+//                            adapterCallback.getRecyclerView().scrollBy(0, itemView.getTop() - offset);
+//                        }
+//                    });
+//                });
             }
         }
 
