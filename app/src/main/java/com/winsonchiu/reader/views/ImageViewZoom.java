@@ -105,9 +105,9 @@ public class ImageViewZoom extends ImageView {
         scaleGestureDetector = new ScaleGestureDetector(getContext(), new ScaleGestureDetector.SimpleOnScaleGestureListener() {
             @Override
             public boolean onScale(ScaleGestureDetector detector) {
-                Log.d(TAG, "onScale() called with: " + "detector = [" + detector + "]");
-
-                Log.d(TAG, "onScale() called with: " + "focusX = [" + detector.getFocusX() + "], focusY = [" + detector.getFocusY() + "], width = [" + getWidth() + "], height = [" + getHeight() + "]");
+//                Log.d(TAG, "onScale() called with: " + "detector = [" + detector + "]");
+//
+//                Log.d(TAG, "onScale() called with: " + "focusX = [" + detector.getFocusX() + "], focusY = [" + detector.getFocusY() + "], width = [" + getWidth() + "], height = [" + getHeight() + "]");
 
 //                float translationX = detector.getFocusX() * (translationMaxX - translationMinX) / getWidth() + translationMinX;
 //                float translationY = detector.getFocusY() * (translationMaxY - translationMinY) / getHeight() + translationMinY;
@@ -124,8 +124,8 @@ public class ImageViewZoom extends ImageView {
 
             @Override
             public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
-                Log.d(TAG, "onScroll() called with: " + "translationX = [" + translationX + "], translationMinX = [" + translationMinX + "], translationMaxX = [" + translationMaxX + "], scaleStart = [" + scaleStart + "], scaleCurrent = [" + scaleCurrent + "], contentWidth = [" + contentWidth + "]");
-                Log.d(TAG, "onScroll() called with relative: " + "x = [" + getRelativeX() + "], y = [" + getRelativeY() + "]");
+//                Log.d(TAG, "onScroll() called with: " + "translationX = [" + translationX + "], translationMinX = [" + translationMinX + "], translationMaxX = [" + translationMaxX + "], scaleStart = [" + scaleStart + "], scaleCurrent = [" + scaleCurrent + "], contentWidth = [" + contentWidth + "]");
+//                Log.d(TAG, "onScroll() called with relative: " + "x = [" + getRelativeX() + "], y = [" + getRelativeY() + "]");
 
                 scroller.forceFinished(true);
 

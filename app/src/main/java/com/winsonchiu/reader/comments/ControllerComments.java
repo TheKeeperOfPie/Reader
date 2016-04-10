@@ -129,7 +129,6 @@ public class ControllerComments implements AdapterCommentList.ViewHolderComment.
     }
 
     public void setLinkWithComments(Link link) {
-
         link.setBackgroundColor(this.link.getBackgroundColor());
         this.link = link;
         Listing listing = new Listing();
@@ -681,6 +680,7 @@ public class ControllerComments implements AdapterCommentList.ViewHolderComment.
 
     public void editComment(String name, final int level, String text) {
         reddit.editUserText(name, text)
+                .observeOn(Schedulers.computation())
                 .flatMap(UtilsRx.flatMapWrapError(response ->
                         Comment.fromJson(ComponentStatic.getObjectMapper()
                                 .readValue(response, JsonNode.class)
@@ -688,6 +688,7 @@ public class ControllerComments implements AdapterCommentList.ViewHolderComment.
                                 .get("data")
                                 .get("things")
                                 .get(0), level)))
+                .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(new Observer<Comment>() {
                     @Override
                     public void onCompleted() {

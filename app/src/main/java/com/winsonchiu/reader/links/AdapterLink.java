@@ -14,6 +14,8 @@ import android.graphics.PorterDuff;
 import android.graphics.drawable.Drawable;
 import android.media.MediaPlayer;
 import android.net.Uri;
+import android.os.Parcel;
+import android.os.Parcelable;
 import android.preference.PreferenceManager;
 import android.support.annotation.CallSuper;
 import android.support.annotation.NonNull;
@@ -35,7 +37,6 @@ import android.text.Spannable;
 import android.text.SpannableString;
 import android.text.Spanned;
 import android.text.TextUtils;
-import android.text.TextWatcher;
 import android.text.format.DateUtils;
 import android.text.method.LinkMovementMethod;
 import android.text.style.ForegroundColorSpan;
@@ -91,6 +92,8 @@ import com.winsonchiu.reader.rx.ObserverEmpty;
 import com.winsonchiu.reader.rx.ObserverError;
 import com.winsonchiu.reader.utils.AdapterBase;
 import com.winsonchiu.reader.utils.AdapterCallback;
+import com.winsonchiu.reader.utils.BaseMediaPlayerControl;
+import com.winsonchiu.reader.utils.BaseTextWatcher;
 import com.winsonchiu.reader.utils.CallbackYouTubeDestruction;
 import com.winsonchiu.reader.utils.CustomColorFilter;
 import com.winsonchiu.reader.utils.DisallowListener;
@@ -131,6 +134,7 @@ import butterknife.ButterKnife;
 import butterknife.OnClick;
 import butterknife.OnTouch;
 import rx.Observable;
+import rx.Observer;
 import rx.Subscription;
 import rx.android.schedulers.AndroidSchedulers;
 
@@ -368,7 +372,6 @@ public abstract class AdapterLink extends AdapterBase<ViewHolderBase> implements
             }
         }
 
-        @Override
         @OnClick({
                 R.id.button_show_sidebar,
                 R.id.button_submit_link,
@@ -376,6 +379,7 @@ public abstract class AdapterLink extends AdapterBase<ViewHolderBase> implements
                 R.id.text_description,
                 R.id.layout_root
         })
+        @Override
         public void onClick(View view) {
             switch (view.getId()) {
                 case R.id.button_show_sidebar:
@@ -426,7 +430,7 @@ public abstract class AdapterLink extends AdapterBase<ViewHolderBase> implements
         @Bind(R.id.button_send_reply) public Button buttonSendReply;
         @Bind(R.id.button_reply_editor) public ImageButton buttonReplyEditor;
         @Bind(R.id.view_overlay) public View viewOverlay;
-        @Bind(R.id.layout_youtube) ViewGroup layoutYouTube;
+        @Bind(R.id.layout_youtube) public ViewGroup layoutYouTube;
 
         @Nullable @Bind(R.id.view_mask_start) View viewMaskStart;
         @Nullable @Bind(R.id.view_mask_end) View viewMaskEnd;
@@ -436,10 +440,10 @@ public abstract class AdapterLink extends AdapterBase<ViewHolderBase> implements
 
         @BindDrawable(R.drawable.ic_web_white_48dp) public Drawable drawableDefault;
 
-        @Inject Historian historian;
-        @Inject Picasso picasso;
-        @Inject Reddit reddit;
-        @Inject SharedPreferences sharedPreferences;
+        @Inject protected Historian historian;
+        @Inject protected Picasso picasso;
+        @Inject protected Reddit reddit;
+        @Inject protected SharedPreferences sharedPreferences;
 
         private final FragmentActivity activity;
         public Link link;
@@ -490,7 +494,7 @@ public abstract class AdapterLink extends AdapterBase<ViewHolderBase> implements
         public int colorTextSecondary;
 
         public boolean isYouTubeFullscreen;
-        private GestureDetectorCompat gestureDetectorDoubleTap = new GestureDetectorCompat(itemView.getContext(), new GestureDetector.SimpleOnGestureListener() {
+        protected GestureDetectorCompat gestureDetectorDoubleTap = new GestureDetectorCompat(itemView.getContext(), new GestureDetector.SimpleOnGestureListener() {
 
             @Override
             public boolean onDoubleTap(MotionEvent e) {
@@ -518,6 +522,7 @@ public abstract class AdapterLink extends AdapterBase<ViewHolderBase> implements
         public Uri uriVideo;
         public int bufferPercentage;
         private Source source;
+        private boolean expanded;
 
         public ViewHolderLink(FragmentActivity activity,
                 View itemView,
@@ -590,18 +595,25 @@ public abstract class AdapterLink extends AdapterBase<ViewHolderBase> implements
             layoutContainerReply.setVisibility(View.GONE);
         }
 
+        @SuppressWarnings("ResourceType")
         protected void initialize() {
             Context context = itemView.getContext();
 
             TypedArray typedArray = context.getTheme().obtainStyledAttributes(
-                    new int[]{android.R.attr.textColorPrimary, android.R.attr.textColorSecondary, R.attr.colorAlert, R.attr.colorAccent, R.attr.colorIconFilter});
-            colorTextPrimaryDefault = typedArray.getColor(0,
-                    getColor(R.color.darkThemeTextColor));
-            colorTextSecondaryDefault = typedArray.getColor(1,
-                    getColor(R.color.darkThemeTextColorMuted));
+                    new int[]{
+                            android.R.attr.textColorPrimary,
+                            android.R.attr.textColorSecondary,
+                            R.attr.colorAlert,
+                            R.attr.colorAccent,
+                            R.attr.colorIconFilter
+                    });
+
+            colorTextPrimaryDefault = typedArray.getColor(0, getColor(R.color.darkThemeTextColor));
+            colorTextSecondaryDefault = typedArray.getColor(1, getColor(R.color.darkThemeTextColorMuted));
             colorTextAlertDefault = typedArray.getColor(2, getColor(R.color.textColorAlert));
             colorAccent = typedArray.getColor(3, getColor(R.color.colorAccent));
             int colorIconFilter = typedArray.getColor(4, 0xFFFFFFFF);
+
             typedArray.recycle();
 
             colorFilterIconDefault = new CustomColorFilter(colorIconFilter);
@@ -632,6 +644,11 @@ public abstract class AdapterLink extends AdapterBase<ViewHolderBase> implements
                     }
                 }
             });
+
+            titleTextColor = colorTextPrimaryDefault;
+            titleTextColorAlert = colorTextAlertDefault;
+            colorTextSecondary = colorTextSecondaryDefault;
+            colorFilterMenuItem = colorFilterIconDefault;
         }
 
         protected void initializeListeners() {
@@ -690,81 +707,20 @@ public abstract class AdapterLink extends AdapterBase<ViewHolderBase> implements
                 }
             });
 
-            mediaController.setMediaPlayer(new MediaController.MediaPlayerControl() {
+            mediaController.setMediaPlayer(new BaseMediaPlayerControl() {
                 @Override
-                public void start() {
-                    if (mediaPlayer != null) {
-                        mediaPlayer.start();
-                    }
-                }
-
-                @Override
-                public void pause() {
-                    if (mediaPlayer != null) {
-                        mediaPlayer.pause();
-                    }
-                }
-
-                @Override
-                public int getDuration() {
-                    return mediaPlayer != null ? mediaPlayer.getDuration() : 0;
-                }
-
-                @Override
-                public int getCurrentPosition() {
-                    return mediaPlayer != null ? mediaPlayer.getCurrentPosition() : 0;
-                }
-
-                @Override
-                public void seekTo(int pos) {
-                    if (mediaPlayer != null) {
-                        mediaPlayer.seekTo(pos);
-                    }
-                }
-
-                @Override
-                public boolean isPlaying() {
-                    return mediaPlayer != null && mediaPlayer.isPlaying();
+                protected MediaPlayer getMediaPlayer() {
+                    return mediaPlayer;
                 }
 
                 @Override
                 public int getBufferPercentage() {
                     return bufferPercentage;
                 }
-
-                @Override
-                public boolean canPause() {
-                    return true;
-                }
-
-                @Override
-                public boolean canSeekBackward() {
-                    return true;
-                }
-
-                @Override
-                public boolean canSeekForward() {
-                    return true;
-                }
-
-                @Override
-                public int getAudioSessionId() {
-                    return mediaPlayer != null ? mediaPlayer.getAudioSessionId() : 0;
-                }
             });
 
             editTextReply.setOnTouchListener(new OnTouchListenerDisallow(disallowListener));
-            editTextReply.addTextChangedListener(new TextWatcher() {
-                @Override
-                public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-
-                }
-
-                @Override
-                public void onTextChanged(CharSequence s, int start, int before, int count) {
-
-                }
-
+            editTextReply.addTextChangedListener(new BaseTextWatcher() {
                 @Override
                 public void afterTextChanged(Editable s) {
                     if (s.length() > 0) {
@@ -779,7 +735,6 @@ public abstract class AdapterLink extends AdapterBase<ViewHolderBase> implements
             return gestureDetectorDoubleTap.onTouchEvent(event);
         }
 
-        @Override
         @OnClick({
                 R.id.button_comments,
                 R.id.button_reply_editor,
@@ -787,6 +742,7 @@ public abstract class AdapterLink extends AdapterBase<ViewHolderBase> implements
                 R.id.button_send_reply,
                 R.id.text_thread_self
         })
+        @Override
         public void onClick(View v) {
             switch (v.getId()) {
                 case R.id.button_comments:
@@ -1037,6 +993,7 @@ public abstract class AdapterLink extends AdapterBase<ViewHolderBase> implements
             else {
                 expandFull(true);
                 UtilsAnimation.animateExpandHeight(textThreadSelf, UtilsView.getContentWidth(recyclerCallback.getLayoutManager()), 0, null);
+                textThreadSelf.setVisibility(View.VISIBLE);
             }
 
             return true;
@@ -1048,11 +1005,32 @@ public abstract class AdapterLink extends AdapterBase<ViewHolderBase> implements
 
         @CallSuper
         public void expandFull(boolean expand) {
+            if (expanded == expand) {
+                return;
+            }
+
+            this.expanded = expand;
+
+            if (expand) {
+                ViewGroup.LayoutParams layoutParams = itemView.getLayoutParams();
+                if (layoutParams instanceof StaggeredGridLayoutManager.LayoutParams) {
+                    if (((StaggeredGridLayoutManager.LayoutParams) layoutParams).isFullSpan() && (layoutParams.width == ViewGroup.LayoutParams.WRAP_CONTENT || layoutParams.width == ViewGroup.LayoutParams.MATCH_PARENT)) {
+                        setToolbarMenuVisibility();
+                        return;
+                    }
+                }
+                else if (layoutParams.width == ViewGroup.LayoutParams.WRAP_CONTENT || layoutParams.width == ViewGroup.LayoutParams.MATCH_PARENT) {
+                    setToolbarMenuVisibility();
+                    return;
+                }
+            }
+
             if (expand) {
                 float startX = itemView.getX() - recyclerCallback.getLayoutManager().getPaddingStart();
 
                 layoutInner.getLayoutParams().width = itemView.getWidth();
                 layoutInner.setTranslationX((int) startX);
+                layoutInner.requestLayout();
 
                 if (viewMaskStart != null) {
                     viewMaskStart.getLayoutParams().width = (int) startX;
@@ -1065,7 +1043,10 @@ public abstract class AdapterLink extends AdapterBase<ViewHolderBase> implements
                 itemView.requestLayout();
 
                 int targetWidth = UtilsView.getContentWidth(recyclerCallback.getLayoutManager());
-                UtilsAnimation.animateExpandRecyclerItemView(layoutInner, layoutRoot, viewMaskStart, viewMaskEnd, targetWidth, 0, null);
+                itemView.postOnAnimation(() -> {
+                    Log.d(TAG, "run() called with with: " + layoutInner.getLayoutParams().width);
+                    UtilsAnimation.animateExpandRecyclerItemView(layoutInner, layoutRoot, viewMaskStart, viewMaskEnd, targetWidth, 0, null);
+                });
 
                 scrollToSelf();
             }
@@ -1196,6 +1177,28 @@ public abstract class AdapterLink extends AdapterBase<ViewHolderBase> implements
             }
         }
 
+        public Observer<Album> getObserverAlbum(Link link) {
+            return new FinalizingSubscriber<Album>() {
+                @Override
+                public void start() {
+                    super.start();
+                    progressImage.setVisibility(View.VISIBLE);
+                }
+
+                @Override
+                public void next(Album next) {
+                    super.next(next);
+                    setAlbum(link, next);
+                }
+
+                @Override
+                public void finish() {
+                    super.finish();
+                    progressImage.setVisibility(View.GONE);
+                }
+            };
+        }
+
         public void setAlbum(Link link, Album album) {
             link.setAlbum(album);
             ViewGroup.LayoutParams layoutParams = viewPagerFull.getLayoutParams();
@@ -1212,8 +1215,11 @@ public abstract class AdapterLink extends AdapterBase<ViewHolderBase> implements
          * @return true if Link loading has been handled, false otherwise
          */
         public boolean checkLinkUrl() {
-
-            if (link.getDomain()
+            if (link.getAlbum() != null) {
+                setAlbum(link, link.getAlbum());
+                return true;
+            }
+            else if (link.getDomain()
                     .contains("imgur")) {
                 expandFull(true);
                 return loadImgur();
@@ -1310,23 +1316,13 @@ public abstract class AdapterLink extends AdapterBase<ViewHolderBase> implements
         private boolean loadImgur() {
             // TODO: Use regex or better parsing system
             if (link.getUrl().contains(Reddit.IMGUR_PREFIX_ALBUM)) {
-                if (link.getAlbum() == null) {
-                    loadAlbum(Reddit.parseUrlId(link.getUrl(), Reddit.IMGUR_PREFIX_ALBUM, "/"),
-                            link);
-                }
-                else {
-                    setAlbum(link, link.getAlbum());
-                }
+                loadAlbum(Reddit.parseUrlId(link.getUrl(), Reddit.IMGUR_PREFIX_ALBUM, "/"),
+                        link);
             }
             else if (link.getUrl().contains(Reddit.IMGUR_PREFIX_GALLERY)) {
-                if (link.getAlbum() == null) {
-                    loadGallery(
-                            Reddit.parseUrlId(link.getUrl(), Reddit.IMGUR_PREFIX_GALLERY, "/"),
-                            link);
-                }
-                else {
-                    setAlbum(link, link.getAlbum());
-                }
+                loadGallery(
+                        Reddit.parseUrlId(link.getUrl(), Reddit.IMGUR_PREFIX_GALLERY, "/"),
+                        link);
             }
             else if (link.getUrl().contains(UtilsImage.GIFV)) {
                 loadGifv(Reddit.parseUrlId(link.getUrl(), Reddit.IMGUR_PREFIX, "."));
@@ -1341,43 +1337,13 @@ public abstract class AdapterLink extends AdapterBase<ViewHolderBase> implements
         private void loadGallery(String id, final Link link) {
             subscription = reddit.loadImgurGallery(id)
                     .flatMap(UtilsRx.flatMapWrapError(response -> Album.fromJson(new JSONObject(response).getJSONObject("data"))))
-                    .subscribe(new FinalizingSubscriber<Album>() {
-                        @Override
-                        public void start() {
-                            progressImage.setVisibility(View.VISIBLE);
-                        }
-
-                        @Override
-                        public void next(Album next) {
-                            setAlbum(link, next);
-                        }
-
-                        @Override
-                        public void finish() {
-                            progressImage.setVisibility(View.GONE);
-                        }
-                    });
+                    .subscribe(getObserverAlbum(link));
         }
 
         private void loadAlbum(String id, final Link link) {
             subscription = reddit.loadImgurAlbum(id)
                     .flatMap(UtilsRx.flatMapWrapError(response -> Album.fromJson(new JSONObject(response).getJSONObject("data"))))
-                    .subscribe(new FinalizingSubscriber<Album>() {
-                        @Override
-                        public void start() {
-                            progressImage.setVisibility(View.VISIBLE);
-                        }
-
-                        @Override
-                        public void next(Album next) {
-                            setAlbum(link, next);
-                        }
-
-                        @Override
-                        public void finish() {
-                            progressImage.setVisibility(View.GONE);
-                        }
-                    });
+                    .subscribe(getObserverAlbum(link));
         }
 
         private void loadGifv(String id) {
@@ -1521,7 +1487,6 @@ public abstract class AdapterLink extends AdapterBase<ViewHolderBase> implements
         }
 
         public void calculateVisibleToolbarItems(int width) {
-
             Menu menu = toolbarActions.getMenu();
 
             int maxNum = width / toolbarItemWidth;
@@ -1544,11 +1509,49 @@ public abstract class AdapterLink extends AdapterBase<ViewHolderBase> implements
             }
         }
 
-        public void onDetach() {
+        public void onBind(Link link, boolean showSubreddit) {
+            this.link = link;
+            this.showSubreddit = showSubreddit;
 
+            if (link.isReplyExpanded() && !TextUtils.isEmpty(link.getReplyText())) {
+                expandFull(true);
+                editTextReply.setText(link.getReplyText());
+                layoutContainerReply.setVisibility(View.VISIBLE);
+            }
+            else {
+                link.setReplyExpanded(false);
+                layoutContainerReply.setVisibility(View.GONE);
+            }
+
+            setVoteColors();
+
+            if (sharedPreferences.getBoolean(AppSettings.PREF_DIM_POSTS, true)) {
+                viewOverlay.setVisibility(isInHistory() && !link.isReplyExpanded() ? View.VISIBLE : View.GONE);
+            }
         }
 
         public void onRecycle() {
+            UtilsAnimation.clearAnimation(textThreadSelf, layoutInner);
+            textThreadSelf.getLayoutParams().height = ViewGroup.LayoutParams.WRAP_CONTENT;
+            layoutInner.getLayoutParams().width = ViewGroup.LayoutParams.WRAP_CONTENT;
+            layoutInner.setTranslationX(0);
+
+            if (viewMaskStart != null) {
+                viewMaskStart.getLayoutParams().width = 0;
+            }
+
+            if (viewMaskEnd != null) {
+                viewMaskEnd.getLayoutParams().width = 0;
+            }
+
+            titleTextColor = colorTextPrimaryDefault;
+            titleTextColorAlert = colorTextAlertDefault;
+            colorTextSecondary = colorTextSecondaryDefault;
+            colorFilterMenuItem = colorFilterIconDefault;
+            isYouTubeFullscreen = false;
+            layoutContainerExpand.setVisibility(View.GONE);
+            itemView.setVisibility(View.VISIBLE);
+
             destroyWebViews();
             destroySurfaceView();
 
@@ -1570,61 +1573,6 @@ public abstract class AdapterLink extends AdapterBase<ViewHolderBase> implements
             imageFull.setImageDrawable(null);
             imageFull.getLayoutParams().height = ViewGroup.LayoutParams.WRAP_CONTENT;
             imageFull.setVisibility(View.GONE);
-        }
-
-        public void onBind(Link link, boolean showSubreddit) {
-            this.link = link;
-            this.showSubreddit = showSubreddit;
-
-            UtilsAnimation.clearAnimation(textThreadSelf, layoutInner);
-            textThreadSelf.getLayoutParams().height = ViewGroup.LayoutParams.WRAP_CONTENT;
-            layoutInner.getLayoutParams().width = ViewGroup.LayoutParams.WRAP_CONTENT;
-            layoutInner.setTranslationX(0);
-
-            if (viewMaskStart != null) {
-                viewMaskStart.getLayoutParams().width = 0;
-            }
-
-            if (viewMaskEnd != null) {
-                viewMaskEnd.getLayoutParams().width = 0;
-            }
-
-            titleTextColor = colorTextPrimaryDefault;
-            titleTextColorAlert = colorTextAlertDefault;
-            colorTextSecondary = colorTextSecondaryDefault;
-            colorFilterMenuItem = colorFilterIconDefault;
-            isYouTubeFullscreen = false;
-            layoutContainerExpand.setVisibility(View.GONE);
-
-            if (link.isReplyExpanded()) {
-                if (TextUtils.isEmpty(link.getReplyText())) {
-                    link.setReplyExpanded(false);
-                    layoutContainerReply.setVisibility(View.GONE);
-                }
-                else {
-                    expandFull(true);
-                    editTextReply.setText(link.getReplyText());
-                    layoutContainerReply.setVisibility(View.VISIBLE);
-                }
-            }
-            else {
-                layoutContainerReply.setVisibility(View.GONE);
-            }
-
-            progressImage.setIndeterminate(true);
-
-            layoutFull.requestLayout();
-
-            textThreadSelf.setVisibility(View.GONE);
-
-            setVoteColors();
-
-            if (sharedPreferences.getBoolean(AppSettings.PREF_DIM_POSTS, true)) {
-                viewOverlay.setVisibility(
-                        isInHistory() && !link.isReplyExpanded() ? View.VISIBLE : View.GONE);
-            }
-
-            itemView.setVisibility(View.VISIBLE);
         }
 
         public void syncSaveIcon() {
@@ -1777,6 +1725,42 @@ public abstract class AdapterLink extends AdapterBase<ViewHolderBase> implements
             }
 
             layoutYouTube.setVisibility(View.GONE);
+        }
+
+        public static class State implements Parcelable {
+            private boolean isSelfExpanded;
+            private boolean isToolbarActionsExpanded;
+
+            @Override
+            public int describeContents() {
+                return 0;
+            }
+
+            @Override
+            public void writeToParcel(Parcel dest, int flags) {
+                dest.writeByte(isSelfExpanded ? (byte) 1 : (byte) 0);
+                dest.writeByte(isToolbarActionsExpanded ? (byte) 1 : (byte) 0);
+            }
+
+            public State() {
+            }
+
+            protected State(Parcel in) {
+                this.isSelfExpanded = in.readByte() != 0;
+                this.isToolbarActionsExpanded = in.readByte() != 0;
+            }
+
+            public static final Creator<State> CREATOR = new Creator<State>() {
+                @Override
+                public State createFromParcel(Parcel source) {
+                    return new State(source);
+                }
+
+                @Override
+                public State[] newArray(int size) {
+                    return new State[size];
+                }
+            };
         }
 
         public interface EventListenerGeneral {

@@ -8,6 +8,7 @@
     android:id="@+id/layout_root"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    android:clickable="true"
     >
 
     <com.winsonchiu.reader.views.CustomRelativeLayout
@@ -15,7 +16,6 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:minHeight="72dp"
-        android:clickable="true"
         android:background="?attr/selectableItemBackground"
         >
 
@@ -78,8 +78,8 @@
             android:layout_height="40dp"
             android:layout_alignTop="@id/image_thumbnail"
             android:layout_alignStart="@id/image_thumbnail"
+            android:indeterminate="true"
             android:visibility="gone"
-            android:indeterminate="false"
             />
 
         <TextView

@@ -64,8 +64,8 @@
                 android:layout_width="48dp"
                 android:layout_height="48dp"
                 android:layout_gravity="center"
-                android:visibility="gone"
                 android:indeterminate="true"
+                android:visibility="gone"
                 />
 
             <com.winsonchiu.reader.views.ImageViewZoom
@@ -163,6 +163,7 @@
                     android:paddingTop="4dp"
                     android:paddingBottom="8dp"
                     android:background="?attr/selectableItemBackgroundBorderless"
+                    android:visibility="gone"
                     />
 
                 <TextView
@@ -187,6 +188,7 @@
                     android:layout_height="wrap_content"
                     android:layout_below="@id/text_thread_info"
                     android:layout_alignParentEnd="true"
+                    android:visibility="gone"
                     >
 
                     <TextView

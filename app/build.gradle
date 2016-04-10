@@ -57,17 +57,22 @@ dependencies {
     apt 'com.jakewharton:butterknife-compiler:8.0.0-SNAPSHOT'
 
     compile fileTree(include: ['*.jar'], dir: 'libs')
+
     compile('com.crashlytics.sdk.android:crashlytics:2.5.5@aar') {
         transitive = true;
     }
+
     compile files('libs/YouTubeAndroidPlayerApi.jar')
-    compile 'com.android.support:appcompat-v7:23.2.1'
-    compile 'com.android.support:customtabs:23.2.1'
-    compile 'com.android.support:design:23.2.1'
-    compile 'com.android.support:support-v4:23.2.1'
-    compile 'com.android.support:support-v13:23.2.1'
-    compile 'com.android.support:palette-v7:23.2.1'
-    compile 'com.android.support:recyclerview-v7:23.2.1'
+
+    def versionSupportLibrary = "23.3.0"
+
+    compile "com.android.support:appcompat-v7:$versionSupportLibrary"
+    compile "com.android.support:customtabs:$versionSupportLibrary"
+    compile "com.android.support:design:$versionSupportLibrary"
+    compile "com.android.support:support-v4:$versionSupportLibrary"
+    compile "com.android.support:support-v13:$versionSupportLibrary"
+    compile "com.android.support:palette-v7:$versionSupportLibrary"
+    compile "com.android.support:recyclerview-v7:$versionSupportLibrary"
     compile 'com.facebook.stetho:stetho:1.3.0'
     compile 'com.facebook.stetho:stetho-okhttp3:1.3.0'
     compile 'com.fasterxml.jackson.core:jackson-annotations:2.7.0'
@@ -87,14 +92,8 @@ dependencies {
     compile 'io.reactivex:rxandroid:1.1.0'
     compile 'io.reactivex:rxjava:1.1.0'
     compile 'javax.annotation:jsr250-api:1.0'
+    compile 'jp.wasabeef:takt:1.0.2'
+
     debugCompile 'com.squareup.leakcanary:leakcanary-android-no-op:1.4-beta2'
     releaseCompile 'com.squareup.leakcanary:leakcanary-android-no-op:1.4-beta2'
-
-    debugCompile 'io.palaima.debugdrawer:debugdrawer:0.7.0'
-    releaseCompile 'io.palaima.debugdrawer:debugdrawer-no-op:0.7.0'
-    compile 'io.palaima.debugdrawer:debugdrawer-commons:0.7.0'
-    compile 'io.palaima.debugdrawer:debugdrawer-glide:0.7.0'
-    compile 'io.palaima.debugdrawer:debugdrawer-okhttp3:0.7.0'
-    compile 'io.palaima.debugdrawer:debugdrawer-picasso:0.7.0'
-    compile 'jp.wasabeef:takt:1.0.2'
 }

@@ -241,6 +241,7 @@ public class FragmentCommentsInner extends FragmentBase {
     }
 
     public static FragmentCommentsInner newInstance(boolean isGrid, String firstLinkId, int colorLink) {
+        Log.d(TAG, "newInstance() called with: " + "isGrid = [" + isGrid + "], firstLinkId = [" + firstLinkId + "], colorLink = [" + colorLink + "]", new Exception());
         FragmentCommentsInner fragment = new FragmentCommentsInner();
         Bundle args = new Bundle();
         args.putBoolean(ARG_IS_GRID, isGrid);
@@ -312,6 +313,7 @@ public class FragmentCommentsInner extends FragmentBase {
         linearLayoutManager = new LinearLayoutManager(getActivity());
         recyclerCommentList = (RecyclerView) layoutRoot.findViewById(R.id.recycler_comment_list);
         recyclerCommentList.setLayoutManager(linearLayoutManager);
+        recyclerCommentList.setHasFixedSize(true);
         recyclerCommentList.setItemAnimator(null);
 
         final RecyclerCallback recyclerCallback = new RecyclerCallback() {

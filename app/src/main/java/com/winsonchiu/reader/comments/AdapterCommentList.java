@@ -35,6 +35,7 @@ import android.text.method.LinkMovementMethod;
 import android.text.style.ForegroundColorSpan;
 import android.text.util.Linkify;
 import android.util.DisplayMetrics;
+import android.util.Log;
 import android.util.TypedValue;
 import android.view.GestureDetector;
 import android.view.LayoutInflater;
@@ -198,7 +199,7 @@ public class AdapterCommentList extends AdapterBase<RecyclerView.ViewHolder> imp
                             showToolbarActionsInstant();
                         }
                         if (animationFinished) {
-                            if (!TextUtils.isEmpty(link.getSelfText())) {
+                            if (!TextUtils.isEmpty(link.getSelfText()) && textThreadSelf.getVisibility() != View.VISIBLE) {
                                 loadSelfText();
                             }
                         }
@@ -206,7 +207,12 @@ public class AdapterCommentList extends AdapterBase<RecyclerView.ViewHolder> imp
 
                     @Override
                     public void onRecycle() {
+                        boolean selfShown = textThreadSelf.getVisibility() == View.VISIBLE;
                         super.onRecycle();
+                        if (selfShown) {
+                            textThreadSelf.setVisibility(View.VISIBLE);
+                        }
+
                         actionsExpanded = false;
                     }
 
@@ -259,7 +265,7 @@ public class AdapterCommentList extends AdapterBase<RecyclerView.ViewHolder> imp
                             showToolbarActionsInstant();
                         }
                         if (animationFinished) {
-                            if (!TextUtils.isEmpty(link.getSelfText())) {
+                            if (!TextUtils.isEmpty(link.getSelfText()) && textThreadSelf.getVisibility() != View.VISIBLE) {
                                 loadSelfText();
                             }
                         }
@@ -267,7 +273,12 @@ public class AdapterCommentList extends AdapterBase<RecyclerView.ViewHolder> imp
 
                     @Override
                     public void onRecycle() {
+                        boolean selfShown = textThreadSelf.getVisibility() == View.VISIBLE;
                         super.onRecycle();
+                        if (selfShown) {
+                            textThreadSelf.setVisibility(View.VISIBLE);
+                        }
+
                         actionsExpanded = false;
                     }
 
@@ -799,7 +810,6 @@ public class AdapterCommentList extends AdapterBase<RecyclerView.ViewHolder> imp
         }
 
         public void onBind(Comment comment) {
-
             this.comment = comment;
 
             if (itemView.getBackground() != null) {
@@ -878,7 +888,6 @@ public class AdapterCommentList extends AdapterBase<RecyclerView.ViewHolder> imp
             textComment.setTextColor(
                     comment.getGilded() > 0 ? colorGold :
                             colorTextPrimary);
-
         }
 
         public void setTextInfo() {

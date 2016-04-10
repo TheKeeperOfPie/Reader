@@ -20,26 +20,32 @@
         >
 
         <com.winsonchiu.reader.views.CustomFrameLayout
-            android:id="@+id/layout_comments"
+            android:id="@+id/layout_anchor"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             app:layout_behavior="@string/appbar_scrolling_view_behavior"
             >
 
-            <View
-                android:id="@+id/view_background"
+            <com.winsonchiu.reader.views.CustomFrameLayout
+                android:id="@+id/layout_comments"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:background="?attr/colorScreenBackground"
-                app:layout_behavior="@string/appbar_scrolling_view_behavior"
-                />
+                >
 
-            <android.support.v4.view.ViewPager
-                android:id="@+id/pager_comments"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                app:layout_behavior="@string/appbar_scrolling_view_behavior"
-                />
+                <View
+                    android:id="@+id/view_background"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:background="?attr/colorScreenBackground"
+                    />
+
+                <android.support.v4.view.ViewPager
+                    android:id="@+id/pager_comments"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    />
+
+            </com.winsonchiu.reader.views.CustomFrameLayout>
 
         </com.winsonchiu.reader.views.CustomFrameLayout>
 
@@ -76,7 +82,7 @@
             android:layout_alignParentBottom="true"
             android:layout_alignParentEnd="true"
             android:rotation="90"
-            app:layout_anchor="@id/pager_comments"
+            app:layout_anchor="@id/layout_anchor"
             app:layout_anchorGravity="bottom|end"
             app:elevation="4dp"
             app:borderWidth="0dp"

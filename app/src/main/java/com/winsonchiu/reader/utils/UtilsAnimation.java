@@ -4,6 +4,8 @@
 
 package com.winsonchiu.reader.utils;
 
+import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
 import android.animation.ValueAnimator;
 import android.content.Context;
 import android.graphics.Color;
@@ -23,6 +25,8 @@ import android.view.WindowManager;
 import android.view.animation.Animation;
 import android.view.animation.Transformation;
 
+import com.winsonchiu.reader.R;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -35,6 +39,7 @@ public class UtilsAnimation {
     public static final long EXPAND_ACTION_DURATION = 150;
     public static final long ALPHA_DURATION = 500;
     public static final long BACKGROUND_DURATION = 500;
+
     private static final String TAG = UtilsAnimation.class.getCanonicalName();
 
     public static ValueAnimator animateBackgroundColor(final View view, final int start, final int end) {
@@ -309,86 +314,91 @@ public class UtilsAnimation {
             final int targetWidth,
             final long duration,
             @Nullable final OnAnimationEndListener callback) {
-        if (view.getAnimation() != null && !view.getAnimation().hasEnded()) {
-            view.getAnimation().setAnimationListener(new Animation.AnimationListener() {
-                @Override
-                public void onAnimationStart(Animation animation) {
+        Log.d(TAG, "animateExpandRecyclerItemView() called with: " + "view = [" + view + "], viewParent = [" + viewParent + "], viewMaskStart = [" + viewMaskStart + "], viewMaskEnd = [" + viewMaskEnd + "], targetWidth = [" + targetWidth + "], duration = [" + duration + "], callback = [" + callback + "]", new Exception());
+        Object tag = view.getTag(R.id.key_value_animator);
 
-                }
-
-                @Override
-                public void onAnimationEnd(Animation animation) {
-                    view.startAnimation(getExpandRecyclerItemViewAnimationInternal(view, viewParent, viewMaskStart, viewMaskEnd, targetWidth, duration, callback));
-                }
-
-                @Override
-                public void onAnimationRepeat(Animation animation) {
-
-                }
-            });
-        } else {
-            view.startAnimation(getExpandRecyclerItemViewAnimationInternal(view, viewParent, viewMaskStart, viewMaskEnd, targetWidth, duration, callback));
+        if (tag instanceof ValueAnimator) {
+            ((ValueAnimator) tag).cancel();
         }
+
+        ValueAnimator valueAnimator = getExpandRecyclerItemViewAnimatorInternal(view, viewParent, viewMaskStart, viewMaskEnd, targetWidth, duration, callback);
+        view.setTag(valueAnimator);
+        valueAnimator.start();
     }
 
-    private static Animation getExpandRecyclerItemViewAnimationInternal(final View view,
+    private static ValueAnimator getExpandRecyclerItemViewAnimatorInternal(final View view,
             final View viewParent,
             final View viewMaskStart,
             final View viewMaskEnd,
             final int targetWidth,
             final long duration,
             @Nullable final OnAnimationEndListener callback) {
+
         final int startWidth = view.getVisibility() == View.GONE ? 0 : view.getWidth();
         final float startX = view.getTranslationX();
         float speed = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 1, view.getContext().getResources().getDisplayMetrics());
 
+        ValueAnimator valueAnimator = ValueAnimator.ofFloat(0, 1);
+
         if (startWidth == targetWidth) {
-            return new Animation() {};
+            return valueAnimator;
         }
 
-        Animation animationExpand = new Animation() {
+        valueAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
             @Override
-            protected void applyTransformation(float interpolatedTime, Transformation t) {
+            public void onAnimationUpdate(ValueAnimator animation) {
+                float interpolatedTime = animation.getAnimatedFraction();
                 if (interpolatedTime >= 0.99f) {
-                    if (viewMaskStart != null) {
-                        viewMaskStart.getLayoutParams().width = 0;
-                        viewMaskEnd.getLayoutParams().width = 0;
-                    }
-                    view.getLayoutParams().width = ViewGroup.LayoutParams.WRAP_CONTENT;
-                    view.setTranslationX(0);
+                    resetValues();
                 }
                 else {
                     int translationX = (int) ((1f - interpolatedTime) * startX);
                     int width = (int) (startWidth + interpolatedTime * (targetWidth - startWidth));
                     if (viewMaskStart != null) {
+                        Log.d(TAG, "onAnimationUpdate() called with: " + "viewMaskEnd = [" + (viewParent.getWidth() - width - translationX) + "]");
                         viewMaskStart.getLayoutParams().width = translationX;
                         viewMaskEnd.getLayoutParams().width = viewParent.getWidth() - width - translationX;
                     }
+
                     view.getLayoutParams().width = width;
                     view.setTranslationX(translationX);
+                    view.requestLayout();
                 }
-
-                view.requestLayout();
             }
 
-            @Override
-            public boolean willChangeBounds() {
-                return true;
-            }
-        };
-
-        animationExpand.setAnimationListener(new Animation.AnimationListener() {
-            @Override
-            public void onAnimationStart(Animation animation) {
-
-            }
-
-            @Override
-            public void onAnimationEnd(Animation animation) {
+            private void resetValues() {
                 if (viewMaskStart != null) {
+                    Log.d(TAG, "resetValues() called with: " + "viewMaskEnd = [" + 0 + "]");
                     viewMaskStart.getLayoutParams().width = 0;
                     viewMaskEnd.getLayoutParams().width = 0;
                 }
+
+                view.getLayoutParams().width = ViewGroup.LayoutParams.WRAP_CONTENT;
+                view.setTranslationX(0);
+                view.requestLayout();
+
+                view.setTag(R.id.key_value_animator, null);
+            }
+        });
+
+        valueAnimator.addListener(new AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                onEnd();
+            }
+
+            @Override
+            public void onAnimationCancel(Animator animation) {
+                onEnd();
+            }
+
+            private void onEnd() {
+                if (viewMaskStart != null) {
+                    Log.d(TAG, "onEnd() called with: " + "viewMaskEnd = [" + 0 + "]");
+                    viewMaskStart.getLayoutParams().width = 0;
+                    viewMaskEnd.getLayoutParams().width = 0;
+                }
+
                 view.getLayoutParams().width = ViewGroup.LayoutParams.WRAP_CONTENT;
                 view.setTranslationX(0);
                 view.requestLayout();
@@ -396,22 +406,16 @@ public class UtilsAnimation {
                 if (callback != null) {
                     callback.onAnimationEnd();
                 }
-            }
 
-            @Override
-            public void onAnimationRepeat(Animation animation) {
-
+                view.setTag(R.id.key_value_animator, null);
             }
         });
 
-        if (view.getVisibility() == View.GONE) {
-            view.getLayoutParams().width = 0;
-        }
-        view.setVisibility(View.VISIBLE);
+        valueAnimator.setDuration(duration > 0 ? duration : (long) ((targetWidth - startWidth) / speed * 2));
 
-        animationExpand.setDuration(duration > 0 ? duration : (long) ((targetWidth - startWidth) / speed * 2));
+        view.setTag(R.id.key_value_animator, valueAnimator);
 
-        return animationExpand;
+        return valueAnimator;
     }
 
     /**

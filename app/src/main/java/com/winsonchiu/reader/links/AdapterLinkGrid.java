@@ -144,7 +144,7 @@ public class AdapterLinkGrid extends AdapterLink {
         private final int thumbnailSize;
         protected ImageView imageSquare;
         private int colorBackgroundDefault;
-        private ValueAnimator valueAnimatorBackground;
+        protected ValueAnimator valueAnimatorBackground;
 
         public ViewHolder(FragmentActivity activity,
                 View itemView,
@@ -222,13 +222,6 @@ public class AdapterLinkGrid extends AdapterLink {
                 viewOverlay.setBackgroundColor(ColorUtils.setAlphaComponent(link.getBackgroundColor(), ALPHA_OVERLAY));
             }
 
-            buttonComments.setColorFilter(colorFilterIconDefault);
-            imagePlay.setColorFilter(colorFilterIconDefault);
-            textThreadInfo.setTextColor(colorTextSecondaryDefault);
-            textHidden.setTextColor(colorTextSecondaryDefault);
-
-            imagePlay.setVisibility(View.GONE);
-
             Drawable drawable = UtilsImage.getDrawableForLink(itemView.getContext(), link);
             if (drawable != null) {
                 imageSquare.setVisibility(View.GONE);
@@ -258,10 +251,6 @@ public class AdapterLinkGrid extends AdapterLink {
                     imageThumbnail.clearColorFilter();
                     showThumbnail(true);
 
-//                    recyclerCallback.getRequestManager()
-//                            .load(thumbnail)
-//                            .priority(Priority.HIGH)
-//                            .into(new GlideDrawableImageViewTarget(imageThumbnail));
                     picasso.load(thumbnail)
                             .tag(TAG_PICASSO)
                             .priority(Picasso.Priority.HIGH)
@@ -277,20 +266,35 @@ public class AdapterLinkGrid extends AdapterLink {
         }
 
         @Override
-        public void expandFull(boolean expand) {
-            int offset = itemView.getTop();
+        public void onRecycle() {
+            super.onRecycle();
+            expandFull(false);
+            if (valueAnimatorBackground != null) {
+                valueAnimatorBackground.cancel();
+            }
 
+            buttonComments.setColorFilter(colorFilterIconDefault);
+            imagePlay.setColorFilter(colorFilterIconDefault);
+            textThreadInfo.setTextColor(colorTextSecondaryDefault);
+            textHidden.setTextColor(colorTextSecondaryDefault);
+
+            imagePlay.setVisibility(View.GONE);
+        }
+
+        @Override
+        public void expandFull(boolean expand) {
             super.expandFull(expand);
 
-            if (itemView.getLayoutParams() instanceof StaggeredGridLayoutManager.LayoutParams) {
-                ((StaggeredGridLayoutManager.LayoutParams) itemView.getLayoutParams())
-                        .setFullSpan(expand);
-            }
-            if (expand) {
-                if (recyclerCallback.getLayoutManager() instanceof StaggeredGridLayoutManager) {
-                    ((StaggeredGridLayoutManager) recyclerCallback.getLayoutManager())
-                            .invalidateSpanAssignments();
+            itemView.postOnAnimation(() -> {
+                if (itemView.getLayoutParams() instanceof StaggeredGridLayoutManager.LayoutParams) {
+                    ((StaggeredGridLayoutManager.LayoutParams) itemView.getLayoutParams())
+                            .setFullSpan(expand);
                 }
+                if (expand) {
+                    if (recyclerCallback.getLayoutManager() instanceof StaggeredGridLayoutManager) {
+                        ((StaggeredGridLayoutManager) recyclerCallback.getLayoutManager())
+                                .invalidateSpanAssignments();
+                    }
 
 //                recyclerCallback.getLayoutManager().postOnAnimation(() -> {
 //                    itemView.postOnAnimation(() -> {
@@ -300,7 +304,8 @@ public class AdapterLinkGrid extends AdapterLink {
 //                        }
 //                    });
 //                });
-            }
+                }
+            });
         }
 
         @Override
@@ -764,15 +769,6 @@ public class AdapterLinkGrid extends AdapterLink {
 
             textThreadTitle.setText(link.getTitle());
             textThreadTitle.requestLayout();
-        }
-
-        @Override
-        public void onRecycle() {
-            super.onRecycle();
-            expandFull(false);
-            if (valueAnimatorBackground != null) {
-                valueAnimatorBackground.cancel();
-            }
         }
 
         @Override

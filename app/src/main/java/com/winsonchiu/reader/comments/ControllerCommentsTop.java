@@ -18,6 +18,8 @@ import java.util.Set;
 import javax.inject.Inject;
 
 import rx.Observer;
+import rx.android.schedulers.AndroidSchedulers;
+import rx.schedulers.Schedulers;
 
 /**
  * Created by TheKeeperOfPie on 3/20/2015.
@@ -83,12 +85,14 @@ public class ControllerCommentsTop {
 
     public void editComment(String name, final int level, String text) {
         reddit.editUserText(name, text)
+                .observeOn(Schedulers.computation())
                 .flatMap(UtilsRx.flatMapWrapError(response -> Comment.fromJson(ComponentStatic.getObjectMapper()
                         .readValue(response, JsonNode.class)
                         .get("json")
                         .get("data")
                         .get("things")
                         .get(0), level)))
+                .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(new Observer<Comment>() {
                     @Override
                     public void onCompleted() {
