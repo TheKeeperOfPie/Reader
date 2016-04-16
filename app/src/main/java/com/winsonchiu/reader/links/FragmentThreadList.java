@@ -12,7 +12,6 @@ import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.annotation.Nullable;
-import android.support.annotation.StyleRes;
 import android.support.design.widget.AppBarLayout;
 import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.FloatingActionButton;
@@ -48,7 +47,6 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.bumptech.glide.RequestManager;
 import com.squareup.picasso.Picasso;
 import com.winsonchiu.reader.ActivityMain;
 import com.winsonchiu.reader.AppSettings;
@@ -58,7 +56,9 @@ import com.winsonchiu.reader.FragmentBase;
 import com.winsonchiu.reader.FragmentListenerBase;
 import com.winsonchiu.reader.FragmentNewPost;
 import com.winsonchiu.reader.R;
+import com.winsonchiu.reader.adapter.AdapterListener;
 import com.winsonchiu.reader.data.reddit.Link;
+import com.winsonchiu.reader.data.reddit.Listing;
 import com.winsonchiu.reader.data.reddit.Reddit;
 import com.winsonchiu.reader.data.reddit.Sort;
 import com.winsonchiu.reader.data.reddit.Subreddit;
@@ -66,21 +66,22 @@ import com.winsonchiu.reader.data.reddit.Thing;
 import com.winsonchiu.reader.data.reddit.Time;
 import com.winsonchiu.reader.data.reddit.User;
 import com.winsonchiu.reader.history.Historian;
+import com.winsonchiu.reader.rx.FinalizingSubscriber;
+import com.winsonchiu.reader.rx.ObserverError;
 import com.winsonchiu.reader.search.ControllerSearch;
 import com.winsonchiu.reader.search.FragmentSearch;
 import com.winsonchiu.reader.theme.ThemeWrapper;
 import com.winsonchiu.reader.utils.CustomColorFilter;
 import com.winsonchiu.reader.utils.CustomItemTouchHelper;
-import com.winsonchiu.reader.utils.DisallowListener;
-import com.winsonchiu.reader.rx.FinalizingSubscriber;
 import com.winsonchiu.reader.utils.ItemDecorationDivider;
-import com.winsonchiu.reader.utils.RecyclerCallback;
 import com.winsonchiu.reader.utils.ScrollAwareFloatingActionButtonBehavior;
 import com.winsonchiu.reader.utils.UtilsAnimation;
 import com.winsonchiu.reader.utils.UtilsColor;
 import com.winsonchiu.reader.utils.UtilsReddit;
 
 import javax.inject.Inject;
+
+import rx.android.schedulers.AndroidSchedulers;
 
 public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuItemClickListener {
 
@@ -110,8 +111,6 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
     private CoordinatorLayout layoutCoordinator;
     private AppBarLayout layoutAppBar;
     private AdapterLink.ViewHolderHeader.EventListener eventListenerHeader;
-    private DisallowListener disallowListener;
-    private RecyclerCallback recyclerCallback;
     private ControllerLinks.Listener listenerLinks;
     private ControllerUser.Listener listenerUser;
     private Snackbar snackbar;
@@ -155,21 +154,11 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
 
         if (getFragmentManager().getBackStackEntryCount() <= 1) {
             toolbar.setNavigationIcon(R.drawable.ic_menu_white_24dp);
-            toolbar.setNavigationOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    mListener.openDrawer();
-                }
-            });
+            toolbar.setNavigationOnClickListener(v -> mListener.openDrawer());
         }
         else {
             toolbar.setNavigationIcon(R.drawable.ic_arrow_back_white_24dp);
-            toolbar.setNavigationOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    mListener.onNavigationBackClick();
-                }
-            });
+            toolbar.setNavigationOnClickListener(v -> mListener.onNavigationBackClick());
         }
         toolbar.getNavigationIcon().mutate().setColorFilter(colorFilterPrimary);
         toolbar.inflateMenu(R.menu.menu_thread_list);
@@ -249,6 +238,7 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
         ((ActivityMain) getActivity()).getComponentActivity().inject(this);
     }
 
+    @SuppressWarnings("ResourceType")
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         initialize();
@@ -390,21 +380,65 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
                 controllerLinks.reloadSubreddit();
             }
         });
+
+        AdapterListener adapterListener = new AdapterListener() {
+
+            @Override
+            public void requestMore() {
+                controllerLinks.loadMoreLinks()
+                        .observeOn(AndroidSchedulers.mainThread())
+                        .subscribe(new ObserverError<Listing>() {
+                            @Override
+                            public void onError(Throwable e) {
+                                Toast.makeText(getContext(), getString(R.string.error_loading_links), Toast.LENGTH_SHORT).show();
+                            }
+                        });
+            }
+
+            @Override
+            public void scrollAndCenter(int position, int height) {
+                UtilsAnimation.scrollToPositionWithCentering(position, recyclerThreadList, height, 0, 0, false);
+            }
+
+            @Override
+            public void hideToolbar() {
+                AppBarLayout.Behavior behaviorAppBar = (AppBarLayout.Behavior) ((CoordinatorLayout.LayoutParams) layoutAppBar.getLayoutParams()).getBehavior();
+                behaviorAppBar.onNestedFling(layoutCoordinator, layoutAppBar, null, 0, 1000, true);
+            }
+
+            @Override
+            public void clearDecoration() {
+                behaviorButtonExpandActions.animateOut(buttonExpandActions);
+                AppBarLayout.Behavior behaviorAppBar = (AppBarLayout.Behavior) ((CoordinatorLayout.LayoutParams) layoutAppBar.getLayoutParams()).getBehavior();
+                behaviorAppBar.onNestedFling(layoutCoordinator, layoutAppBar, null, 0, 1000, true);
+            }
+
+            @Override
+            public void requestDisallowInterceptTouchEventVertical(boolean disallow) {
+                recyclerThreadList.requestDisallowInterceptTouchEvent(disallow);
+                swipeRefreshThreadList.requestDisallowInterceptTouchEvent(disallow);
+                itemTouchHelper.select(null, CustomItemTouchHelper.ACTION_STATE_IDLE);
+            }
+
+            @Override
+            public void requestDisallowInterceptTouchEventHorizontal(boolean disallow) {
+                itemTouchHelper.setDisallow(disallow);
+            }
+        };
+
         if (adapterLinkList == null) {
             adapterLinkList = new AdapterLinkList(getActivity(),
                     controllerLinks,
+                    adapterListener,
                     eventListenerHeader,
-                    mListener.getEventListenerBase(),
-                    disallowListener,
-                    recyclerCallback);
+                    mListener.getEventListenerBase());
         }
         if (adapterLinkGrid == null) {
             adapterLinkGrid = new AdapterLinkGrid(getActivity(),
                     controllerLinks,
+                    adapterListener,
                     eventListenerHeader,
-                    mListener.getEventListenerBase(),
-                    disallowListener,
-                    recyclerCallback);
+                    mListener.getEventListenerBase());
         }
 
         if (AppSettings.MODE_LIST.equals(preferences.getString(AppSettings.INTERFACE_MODE,
@@ -609,61 +643,6 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
             @Override
             public void showSidebar() {
                 drawerLayout.openDrawer(GravityCompat.END);
-            }
-        };
-
-        disallowListener = new DisallowListener() {
-            @Override
-            public void requestDisallowInterceptTouchEventVertical(boolean disallow) {
-                recyclerThreadList.requestDisallowInterceptTouchEvent(disallow);
-                swipeRefreshThreadList.requestDisallowInterceptTouchEvent(disallow);
-                itemTouchHelper.select(null, CustomItemTouchHelper.ACTION_STATE_IDLE);
-            }
-
-            @Override
-            public void requestDisallowInterceptTouchEventHorizontal(boolean disallow) {
-                itemTouchHelper.setDisallow(disallow);
-            }
-        };
-
-        recyclerCallback = new RecyclerCallback() {
-
-            @Override
-            public int getRecyclerHeight() {
-                return recyclerThreadList.getHeight();
-            }
-
-            @Override
-            public RecyclerView.LayoutManager getLayoutManager() {
-                return layoutManager;
-            }
-
-            @Override
-            public void scrollTo(final int position) {
-                UtilsAnimation.scrollToPositionWithCentering(position, recyclerThreadList, false);
-            }
-
-            @Override
-            public void scrollAndCenter(int position, int height) {
-                UtilsAnimation.scrollToPositionWithCentering(position, recyclerThreadList, height, 0, 0, false);
-            }
-
-            @Override
-            public void hideToolbar() {
-                AppBarLayout.Behavior behaviorAppBar = (AppBarLayout.Behavior) ((CoordinatorLayout.LayoutParams) layoutAppBar.getLayoutParams()).getBehavior();
-                behaviorAppBar.onNestedFling(layoutCoordinator, layoutAppBar, null, 0, 1000, true);
-            }
-
-            @Override
-            public void clearDecoration() {
-                behaviorButtonExpandActions.animateOut(buttonExpandActions);
-                AppBarLayout.Behavior behaviorAppBar = (AppBarLayout.Behavior) ((CoordinatorLayout.LayoutParams) layoutAppBar.getLayoutParams()).getBehavior();
-                behaviorAppBar.onNestedFling(layoutCoordinator, layoutAppBar, null, 0, 1000, true);
-            }
-
-            @Override
-            public RequestManager getRequestManager() {
-                return getGlideRequestManager();
             }
         };
 

@@ -29,14 +29,13 @@ import com.squareup.picasso.Callback;
 import com.squareup.picasso.Picasso;
 import com.winsonchiu.reader.AppSettings;
 import com.winsonchiu.reader.R;
+import com.winsonchiu.reader.adapter.AdapterCallback;
+import com.winsonchiu.reader.adapter.AdapterListener;
 import com.winsonchiu.reader.comments.Source;
 import com.winsonchiu.reader.data.imgur.Album;
 import com.winsonchiu.reader.data.reddit.Link;
 import com.winsonchiu.reader.data.reddit.Reddit;
-import com.winsonchiu.reader.utils.AdapterCallback;
 import com.winsonchiu.reader.utils.CallbackYouTubeDestruction;
-import com.winsonchiu.reader.utils.DisallowListener;
-import com.winsonchiu.reader.utils.RecyclerCallback;
 import com.winsonchiu.reader.utils.UtilsAnimation;
 import com.winsonchiu.reader.utils.UtilsColor;
 import com.winsonchiu.reader.utils.UtilsImage;
@@ -58,11 +57,10 @@ public class AdapterLinkGrid extends AdapterLink {
 
     public AdapterLinkGrid(FragmentActivity activity,
             ControllerLinksBase controllerLinks,
+            AdapterListener adapterListener,
             ViewHolderHeader.EventListener eventListenerHeader,
-            ViewHolderLink.EventListener eventListenerBase,
-            DisallowListener disallowListener,
-            RecyclerCallback recyclerCallback) {
-        super(activity, eventListenerHeader, eventListenerBase, disallowListener, recyclerCallback);
+            ViewHolderLink.EventListener eventListenerBase) {
+        super(activity, adapterListener, eventListenerHeader, eventListenerBase);
         setController(controllerLinks);
     }
 
@@ -112,10 +110,9 @@ public class AdapterLinkGrid extends AdapterLink {
                 LayoutInflater.from(viewGroup.getContext())
                 .inflate(R.layout.cell_link, viewGroup, false),
                 adapterCallback,
+                adapterListener,
                 eventListenerBase,
                 Source.LINKS,
-                disallowListener,
-                recyclerCallback,
                 this,
                 thumbnailSize);
     }
@@ -149,13 +146,12 @@ public class AdapterLinkGrid extends AdapterLink {
         public ViewHolder(FragmentActivity activity,
                 View itemView,
                 AdapterCallback adapterCallback,
+                AdapterListener adapterListener,
                 EventListener eventListener,
                 Source source,
-                DisallowListener disallowListener,
-                RecyclerCallback recyclerCallback,
                 CallbackYouTubeDestruction callbackYouTubeDestruction,
                 int thumbnailSize) {
-            super(activity, itemView, adapterCallback, eventListener, source, disallowListener, recyclerCallback, callbackYouTubeDestruction);
+            super(activity, itemView, adapterCallback, adapterListener, eventListener, source, callbackYouTubeDestruction);
             this.thumbnailSize = thumbnailSize;
 
         }
@@ -287,8 +283,8 @@ public class AdapterLinkGrid extends AdapterLink {
                             .setFullSpan(expand);
                 }
                 if (expand) {
-                    if (recyclerCallback.getLayoutManager() instanceof StaggeredGridLayoutManager) {
-                        ((StaggeredGridLayoutManager) recyclerCallback.getLayoutManager())
+                    if (adapterCallback.getRecyclerView().getLayoutManager() instanceof StaggeredGridLayoutManager) {
+                        ((StaggeredGridLayoutManager) adapterCallback.getRecyclerView().getLayoutManager())
                                 .invalidateSpanAssignments();
                     }
 
@@ -597,7 +593,7 @@ public class AdapterLinkGrid extends AdapterLink {
             if (URLUtil.isNetworkUrl(url)) {
                 imageFull.setVisibility(View.VISIBLE);
                 expandFull(true);
-                recyclerCallback.getLayoutManager().requestLayout();
+                adapterCallback.getRecyclerView().getLayoutManager().requestLayout();
                 itemView.invalidate();
                 itemView.post(() -> {
 //                        recyclerCallback.getRequestManager()

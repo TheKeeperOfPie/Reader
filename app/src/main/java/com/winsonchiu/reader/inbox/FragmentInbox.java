@@ -33,7 +33,6 @@ import android.widget.AdapterView;
 import android.widget.Spinner;
 import android.widget.Toast;
 
-import com.bumptech.glide.RequestManager;
 import com.winsonchiu.reader.ActivityMain;
 import com.winsonchiu.reader.AppSettings;
 import com.winsonchiu.reader.CustomApplication;
@@ -41,6 +40,7 @@ import com.winsonchiu.reader.FragmentBase;
 import com.winsonchiu.reader.FragmentListenerBase;
 import com.winsonchiu.reader.FragmentNewMessage;
 import com.winsonchiu.reader.R;
+import com.winsonchiu.reader.adapter.AdapterListener;
 import com.winsonchiu.reader.comments.AdapterCommentList;
 import com.winsonchiu.reader.data.Page;
 import com.winsonchiu.reader.data.reddit.Comment;
@@ -48,11 +48,9 @@ import com.winsonchiu.reader.data.reddit.Reddit;
 import com.winsonchiu.reader.data.reddit.Sort;
 import com.winsonchiu.reader.data.reddit.Time;
 import com.winsonchiu.reader.profile.ControllerProfile;
-import com.winsonchiu.reader.theme.ThemeWrapper;
-import com.winsonchiu.reader.utils.DisallowListener;
 import com.winsonchiu.reader.rx.FinalizingSubscriber;
+import com.winsonchiu.reader.theme.ThemeWrapper;
 import com.winsonchiu.reader.utils.ItemDecorationDivider;
-import com.winsonchiu.reader.utils.RecyclerCallback;
 import com.winsonchiu.reader.utils.ScrollAwareFloatingActionButtonBehavior;
 import com.winsonchiu.reader.utils.UtilsAnimation;
 import com.winsonchiu.reader.utils.UtilsColor;
@@ -113,6 +111,7 @@ public class FragmentInbox extends FragmentBase implements Toolbar.OnMenuItemCli
         ((ActivityMain) getActivity()).getComponentActivity().inject(this);
     }
 
+    @SuppressWarnings("ResourceType")
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_inbox, container, false);
@@ -242,8 +241,46 @@ public class FragmentInbox extends FragmentBase implements Toolbar.OnMenuItemCli
         recyclerInbox.setLayoutManager(linearLayoutManager);
         recyclerInbox.addItemDecoration(new ItemDecorationDivider(activity, ItemDecorationDivider.VERTICAL_LIST));
 
+        AdapterListener adapterListener = new AdapterListener() {
+
+            @Override
+            public void scrollAndCenter(int position, int height) {
+                linearLayoutManager.scrollToPositionWithOffset(position, 0);
+            }
+
+            @Override
+            public void hideToolbar() {
+                AppBarLayout.Behavior behaviorAppBar = (AppBarLayout.Behavior) ((CoordinatorLayout.LayoutParams) layoutAppBar.getLayoutParams()).getBehavior();
+                behaviorAppBar.onNestedFling(layoutCoordinator, layoutAppBar, null, 0, 1000, true);
+            }
+
+            @Override
+            public void clearDecoration() {
+                behaviorFloatingActionButton.animateOut(floatingActionButtonNewMessage);
+                AppBarLayout.Behavior behaviorAppBar = (AppBarLayout.Behavior) ((CoordinatorLayout.LayoutParams) layoutAppBar.getLayoutParams()).getBehavior();
+                behaviorAppBar.onNestedFling(layoutCoordinator, layoutAppBar, null, 0, 1000, true);
+            }
+
+            @Override
+            public void requestMore() {
+
+            }
+
+            @Override
+            public void requestDisallowInterceptTouchEventVertical(boolean disallow) {
+                recyclerInbox.requestDisallowInterceptTouchEvent(disallow);
+                swipeRefreshInbox.requestDisallowInterceptTouchEvent(disallow);
+            }
+
+            @Override
+            public void requestDisallowInterceptTouchEventHorizontal(boolean disallow) {
+
+            }
+        };
+
         if (adapterInbox == null) {
             adapterInbox = new AdapterInbox(controllerInbox,
+                    adapterListener,
                     mListener.getEventListenerBase(),
                     new AdapterCommentList.ViewHolderComment.EventListenerComment() {
                         @Override
@@ -288,57 +325,7 @@ public class FragmentInbox extends FragmentBase implements Toolbar.OnMenuItemCli
                             return "";
                         }
                     },
-                    mListener.getEventListener(),
-                    new DisallowListener() {
-                        @Override
-                        public void requestDisallowInterceptTouchEventVertical(boolean disallow) {
-                            recyclerInbox.requestDisallowInterceptTouchEvent(disallow);
-                            swipeRefreshInbox.requestDisallowInterceptTouchEvent(disallow);
-                        }
-
-                        @Override
-                        public void requestDisallowInterceptTouchEventHorizontal(boolean disallow) {
-
-                        }
-                    }, new RecyclerCallback() {
-                @Override
-                public int getRecyclerHeight() {
-                    return recyclerInbox.getHeight();
-                }
-
-                @Override
-                public RecyclerView.LayoutManager getLayoutManager() {
-                    return linearLayoutManager;
-                }
-
-                @Override
-                public void scrollTo(int position) {
-                    linearLayoutManager.scrollToPositionWithOffset(position, 0);
-                }
-
-                @Override
-                public void scrollAndCenter(int position, int height) {
-
-                }
-
-                @Override
-                public void hideToolbar() {
-                    AppBarLayout.Behavior behaviorAppBar = (AppBarLayout.Behavior) ((CoordinatorLayout.LayoutParams) layoutAppBar.getLayoutParams()).getBehavior();
-                    behaviorAppBar.onNestedFling(layoutCoordinator, layoutAppBar, null, 0, 1000, true);
-                }
-
-                @Override
-                public void clearDecoration() {
-                    behaviorFloatingActionButton.animateOut(floatingActionButtonNewMessage);
-                    AppBarLayout.Behavior behaviorAppBar = (AppBarLayout.Behavior) ((CoordinatorLayout.LayoutParams) layoutAppBar.getLayoutParams()).getBehavior();
-                    behaviorAppBar.onNestedFling(layoutCoordinator, layoutAppBar, null, 0, 1000, true);
-                }
-
-                @Override
-                public RequestManager getRequestManager() {
-                    return getGlideRequestManager();
-                }
-            }, new ControllerProfile.Listener() {
+                    mListener.getEventListener(), new ControllerProfile.Listener() {
                 @Override
                 public void setSortAndTime(Sort sort, Time time) {
 

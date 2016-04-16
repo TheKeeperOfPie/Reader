@@ -9,11 +9,10 @@ import android.view.LayoutInflater;
 import android.view.ViewGroup;
 
 import com.winsonchiu.reader.R;
+import com.winsonchiu.reader.adapter.AdapterListener;
 import com.winsonchiu.reader.comments.Source;
 import com.winsonchiu.reader.links.AdapterLinkList;
 import com.winsonchiu.reader.links.ControllerLinksBase;
-import com.winsonchiu.reader.utils.DisallowListener;
-import com.winsonchiu.reader.utils.RecyclerCallback;
 import com.winsonchiu.reader.utils.ViewHolderBase;
 
 /**
@@ -22,13 +21,11 @@ import com.winsonchiu.reader.utils.ViewHolderBase;
 public class AdapterHistoryLinkList extends AdapterLinkList {
 
     public AdapterHistoryLinkList(FragmentActivity activity,
-                                  ControllerLinksBase controllerLinks,
-                                  ViewHolderHeader.EventListener eventListenerHeader,
-                                  ViewHolderLink.EventListener eventListenerBase,
-                                  DisallowListener disallowListener,
-                                  RecyclerCallback recyclerCallback) {
-        super(activity, controllerLinks, eventListenerHeader, eventListenerBase,
-                disallowListener, recyclerCallback);
+            ControllerLinksBase controllerLinks,
+            AdapterListener adapterListener,
+            ViewHolderHeader.EventListener eventListenerHeader,
+            ViewHolderLink.EventListener eventListenerBase) {
+        super(activity, controllerLinks, adapterListener, eventListenerHeader, eventListenerBase);
     }
 
     @Override
@@ -40,12 +37,11 @@ public class AdapterHistoryLinkList extends AdapterLinkList {
 
         return new AdapterLinkList.ViewHolder(activity,
                 LayoutInflater.from(viewGroup.getContext())
-                .inflate(R.layout.row_link, viewGroup, false),
+                        .inflate(R.layout.row_link, viewGroup, false),
                 adapterCallback,
+                adapterListener,
                 eventListenerBase,
                 Source.HISTORY,
-                disallowListener,
-                recyclerCallback,
                 this) {
             @Override
             public boolean isInHistory() {

@@ -43,12 +43,12 @@ import android.view.ViewGroup;
 import android.widget.DatePicker;
 import android.widget.ImageView;
 
-import com.bumptech.glide.RequestManager;
 import com.winsonchiu.reader.ActivityMain;
 import com.winsonchiu.reader.AppSettings;
 import com.winsonchiu.reader.FragmentBase;
 import com.winsonchiu.reader.FragmentListenerBase;
 import com.winsonchiu.reader.R;
+import com.winsonchiu.reader.adapter.AdapterListener;
 import com.winsonchiu.reader.data.reddit.Link;
 import com.winsonchiu.reader.data.reddit.Reddit;
 import com.winsonchiu.reader.data.reddit.Thing;
@@ -58,9 +58,7 @@ import com.winsonchiu.reader.links.AdapterLinkList;
 import com.winsonchiu.reader.theme.ThemeWrapper;
 import com.winsonchiu.reader.utils.CustomColorFilter;
 import com.winsonchiu.reader.utils.CustomItemTouchHelper;
-import com.winsonchiu.reader.utils.DisallowListener;
 import com.winsonchiu.reader.utils.ItemDecorationDivider;
-import com.winsonchiu.reader.utils.RecyclerCallback;
 import com.winsonchiu.reader.utils.UtilsAnimation;
 import com.winsonchiu.reader.utils.UtilsColor;
 
@@ -277,40 +275,16 @@ public class FragmentHistory extends FragmentBase implements Toolbar.OnMenuItemC
             }
         };
 
-        DisallowListener disallowListener = new DisallowListener() {
-            @Override
-            public void requestDisallowInterceptTouchEventVertical(boolean disallow) {
-                swipeRefreshHistory.requestDisallowInterceptTouchEvent(disallow);
-                recyclerHistory.requestDisallowInterceptTouchEvent(disallow);
-                itemTouchHelper.select(null, CustomItemTouchHelper.ACTION_STATE_IDLE);
-            }
+        AdapterListener adapterListener = new AdapterListener() {
 
             @Override
-            public void requestDisallowInterceptTouchEventHorizontal(boolean disallow) {
-                itemTouchHelper.setDisallow(disallow);
-            }
-        };
+            public void requestMore() {
 
-        RecyclerCallback recyclerCallback = new RecyclerCallback() {
-
-            @Override
-            public int getRecyclerHeight() {
-                return recyclerHistory.getHeight();
-            }
-
-            @Override
-            public LayoutManager getLayoutManager() {
-                return layoutManager;
-            }
-
-            @Override
-            public void scrollTo(final int position) {
-                UtilsAnimation.scrollToPositionWithCentering(position, recyclerHistory, false);
             }
 
             @Override
             public void scrollAndCenter(int position, int height) {
-
+                UtilsAnimation.scrollToPositionWithCentering(position, recyclerHistory, false);
             }
 
             @Override
@@ -326,26 +300,31 @@ public class FragmentHistory extends FragmentBase implements Toolbar.OnMenuItemC
             }
 
             @Override
-            public RequestManager getRequestManager() {
-                return getGlideRequestManager();
+            public void requestDisallowInterceptTouchEventVertical(boolean disallow) {
+                swipeRefreshHistory.requestDisallowInterceptTouchEvent(disallow);
+                recyclerHistory.requestDisallowInterceptTouchEvent(disallow);
+                itemTouchHelper.select(null, CustomItemTouchHelper.ACTION_STATE_IDLE);
+            }
+
+            @Override
+            public void requestDisallowInterceptTouchEventHorizontal(boolean disallow) {
+                itemTouchHelper.setDisallow(disallow);
             }
         };
 
         if (adapterLinkList == null) {
             adapterLinkList = new AdapterHistoryLinkList(getActivity(),
                     controllerHistory,
+                    adapterListener,
                     eventListenerHeader,
-                    mListener.getEventListenerBase(),
-                    disallowListener,
-                    recyclerCallback);
+                    mListener.getEventListenerBase());
         }
         if (adapterLinkGrid == null) {
             adapterLinkGrid = new AdapterHistoryLinkGrid(getActivity(),
                     controllerHistory,
+                    adapterListener,
                     eventListenerHeader,
-                    mListener.getEventListenerBase(),
-                    disallowListener,
-                    recyclerCallback);
+                    mListener.getEventListenerBase());
         }
 
         if (AppSettings.MODE_LIST.equals(preferences.getString(AppSettings.INTERFACE_MODE,

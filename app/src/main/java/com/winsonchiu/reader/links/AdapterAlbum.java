@@ -17,7 +17,7 @@ import android.widget.ImageButton;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
-import com.bumptech.glide.RequestManager;
+import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.resource.drawable.GlideDrawable;
 import com.bumptech.glide.request.target.GlideDrawableImageViewTarget;
 import com.bumptech.glide.request.target.Target;
@@ -47,16 +47,13 @@ public class AdapterAlbum extends PagerAdapter {
     private Album album = new Album();
     private Stack<View> recycledViews = new Stack<>();
 
-    private RequestManager requestManager;
     private DisallowListener disallowListener;
     private EventListener eventListener;
     private CustomColorFilter colorFilterIcon;
 
-    public AdapterAlbum(RequestManager requestManager,
-            DisallowListener disallowListener,
+    public AdapterAlbum(DisallowListener disallowListener,
             EventListener eventListener,
             CustomColorFilter colorFilterIcon) {
-        this.requestManager = requestManager;
         this.disallowListener = disallowListener;
         this.eventListener = eventListener;
         this.colorFilterIcon = colorFilterIcon;
@@ -75,7 +72,7 @@ public class AdapterAlbum extends PagerAdapter {
         if (recycledViews.isEmpty()) {
             view = LayoutInflater.from(container.getContext())
                     .inflate(R.layout.view_image, container, false);
-            view.setTag(new ViewHolder(view, eventListener, requestManager, disallowListener, colorFilterIcon));
+            view.setTag(new ViewHolder(view, eventListener, disallowListener, colorFilterIcon));
         }
         else {
             view = recycledViews.pop();
@@ -128,7 +125,6 @@ public class AdapterAlbum extends PagerAdapter {
 
         private Image image;
         private EventListener eventListener;
-        private RequestManager requestManager;
 
         private View view;
         @Bind(R.id.scroll_image) CustomScrollView scrollImage;
@@ -143,12 +139,10 @@ public class AdapterAlbum extends PagerAdapter {
 
         public ViewHolder(View view,
                 EventListener listener,
-                RequestManager requestManager,
                 DisallowListener disallowListener,
                 CustomColorFilter colorFilterIcon) {
             this.view = view;
             this.eventListener = listener;
-            this.requestManager = requestManager;
             ButterKnife.bind(this, view);
 
             textError.setTextColor(colorFilterIcon.getColor());
@@ -263,7 +257,8 @@ public class AdapterAlbum extends PagerAdapter {
 
         public void refreshImage() {
             progressImage.setVisibility(View.VISIBLE);
-            requestManager.load(image.getLink())
+            Glide.with(view.getContext())
+                    .load(image.getLink())
                     .listener(new RequestListenerCompletion<String, GlideDrawable>() {
                         @Override
                         public boolean onException(Exception e, String s, Target<GlideDrawable> target, boolean isFirstResource) {

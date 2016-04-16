@@ -18,6 +18,9 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import com.winsonchiu.reader.R;
+import com.winsonchiu.reader.adapter.AdapterBase;
+import com.winsonchiu.reader.adapter.AdapterCallback;
+import com.winsonchiu.reader.adapter.AdapterListener;
 import com.winsonchiu.reader.comments.AdapterCommentList;
 import com.winsonchiu.reader.comments.Source;
 import com.winsonchiu.reader.data.reddit.Thing;
@@ -25,11 +28,7 @@ import com.winsonchiu.reader.data.reddit.User;
 import com.winsonchiu.reader.links.AdapterLink;
 import com.winsonchiu.reader.links.AdapterLinkList;
 import com.winsonchiu.reader.links.ControllerLinksBase;
-import com.winsonchiu.reader.utils.AdapterBase;
-import com.winsonchiu.reader.utils.AdapterCallback;
 import com.winsonchiu.reader.utils.CallbackYouTubeDestruction;
-import com.winsonchiu.reader.utils.DisallowListener;
-import com.winsonchiu.reader.utils.RecyclerCallback;
 import com.winsonchiu.reader.utils.ViewHolderBase;
 
 import java.util.ArrayList;
@@ -43,31 +42,28 @@ public class AdapterProfile extends AdapterBase<RecyclerView.ViewHolder> impleme
     private static final String TAG = AdapterProfile.class.getCanonicalName();;
 
     private FragmentActivity activity;
+    private AdapterListener adapterListener;
     protected ControllerProfile controllerProfile;
     protected ControllerLinksBase controllerLinks;
     private AdapterLink.ViewHolderLink.EventListener eventListenerBase;
     private AdapterCommentList.ViewHolderComment.EventListenerComment eventListenerComment;
     private final AdapterCommentList.ViewHolderComment.EventListener eventListener;
-    private DisallowListener disallowListener;
-    private RecyclerCallback recyclerCallback;
     private ControllerProfile.Listener listener;
     private List<RecyclerView.ViewHolder> viewHolders;
 
     public AdapterProfile(FragmentActivity activity,
             ControllerProfile controllerProfile,
             ControllerLinksBase controllerLinks,
+            AdapterListener adapterListener,
             AdapterLink.ViewHolderLink.EventListener eventListenerBase,
             AdapterCommentList.ViewHolderComment.EventListenerComment eventListenerComment,
             AdapterCommentList.ViewHolderComment.EventListener eventListener,
-            DisallowListener disallowListener,
-            RecyclerCallback recyclerCallback,
             ControllerProfile.Listener listener) {
         this.activity = activity;
+        this.adapterListener = adapterListener;
         this.eventListenerBase = eventListenerBase;
         this.eventListenerComment = eventListenerComment;
         this.eventListener = eventListener;
-        this.disallowListener = disallowListener;
-        this.recyclerCallback = recyclerCallback;
         this.listener = listener;
         this.controllerProfile = controllerProfile;
         this.controllerLinks = controllerLinks;
@@ -111,10 +107,9 @@ public class AdapterProfile extends AdapterBase<RecyclerView.ViewHolder> impleme
                         LayoutInflater.from(parent.getContext())
                                 .inflate(R.layout.row_link, parent, false),
                         adapterCallback,
+                        adapterListener,
                         eventListenerBase,
                         Source.PROFILE,
-                        disallowListener,
-                        recyclerCallback,
                         this);
                 viewHolders.add(viewHolder);
                 viewHolder.toolbarActions.getMenu().findItem(R.id.item_view_profile)
@@ -129,11 +124,10 @@ public class AdapterProfile extends AdapterBase<RecyclerView.ViewHolder> impleme
                 return new AdapterCommentList.ViewHolderComment(
                         LayoutInflater.from(parent.getContext()).inflate(R.layout.row_comment, parent, false),
                         adapterCallback,
+                        adapterListener,
                         eventListenerBase,
                         eventListenerComment,
                         eventListener,
-                        disallowListener,
-                        recyclerCallback,
                         listener);
 
         }
@@ -143,7 +137,7 @@ public class AdapterProfile extends AdapterBase<RecyclerView.ViewHolder> impleme
 
     @Override
     public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
-
+        super.onBindViewHolder(holder, position);
         holder.itemView.setVisibility(View.VISIBLE);
 
         if (!controllerProfile.isLoading() && position > controllerProfile.sizeLinks() - 5) {

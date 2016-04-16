@@ -37,7 +37,6 @@ import android.widget.ImageView;
 import android.widget.Spinner;
 import android.widget.Toast;
 
-import com.bumptech.glide.RequestManager;
 import com.winsonchiu.reader.ActivityMain;
 import com.winsonchiu.reader.AppSettings;
 import com.winsonchiu.reader.ControllerUser;
@@ -46,6 +45,7 @@ import com.winsonchiu.reader.FragmentBase;
 import com.winsonchiu.reader.FragmentListenerBase;
 import com.winsonchiu.reader.FragmentNewMessage;
 import com.winsonchiu.reader.R;
+import com.winsonchiu.reader.adapter.AdapterListener;
 import com.winsonchiu.reader.comments.AdapterCommentList;
 import com.winsonchiu.reader.data.Page;
 import com.winsonchiu.reader.data.reddit.Comment;
@@ -57,13 +57,11 @@ import com.winsonchiu.reader.data.reddit.Thing;
 import com.winsonchiu.reader.data.reddit.Time;
 import com.winsonchiu.reader.data.reddit.User;
 import com.winsonchiu.reader.links.ControllerLinks;
+import com.winsonchiu.reader.rx.FinalizingSubscriber;
 import com.winsonchiu.reader.theme.ThemeWrapper;
 import com.winsonchiu.reader.utils.CustomColorFilter;
 import com.winsonchiu.reader.utils.CustomItemTouchHelper;
-import com.winsonchiu.reader.utils.DisallowListener;
-import com.winsonchiu.reader.rx.FinalizingSubscriber;
 import com.winsonchiu.reader.utils.ItemDecorationDivider;
-import com.winsonchiu.reader.utils.RecyclerCallback;
 import com.winsonchiu.reader.utils.UtilsAnimation;
 import com.winsonchiu.reader.utils.UtilsColor;
 
@@ -346,10 +344,48 @@ public class FragmentProfile extends FragmentBase implements Toolbar.OnMenuItemC
         recyclerProfile.setLayoutManager(linearLayoutManager);
         recyclerProfile.addItemDecoration(new ItemDecorationDivider(activity, ItemDecorationDivider.VERTICAL_LIST));
 
+        AdapterListener adapterListener = new AdapterListener() {
+
+            @Override
+            public void scrollAndCenter(int position, int height) {
+                UtilsAnimation.scrollToPositionWithCentering(position, recyclerProfile, false);
+            }
+
+            @Override
+            public void hideToolbar() {
+                AppBarLayout.Behavior behaviorAppBar = (AppBarLayout.Behavior) ((CoordinatorLayout.LayoutParams) layoutAppBar.getLayoutParams()).getBehavior();
+                behaviorAppBar.onNestedFling(layoutCoordinator, layoutAppBar, null, 0, 1000, true);
+            }
+
+            @Override
+            public void clearDecoration() {
+                AppBarLayout.Behavior behaviorAppBar = (AppBarLayout.Behavior) ((CoordinatorLayout.LayoutParams) layoutAppBar.getLayoutParams()).getBehavior();
+                behaviorAppBar.onNestedFling(layoutCoordinator, layoutAppBar, null, 0, 1000, true);
+            }
+
+            @Override
+            public void requestMore() {
+
+            }
+
+            @Override
+            public void requestDisallowInterceptTouchEventVertical(boolean disallow) {
+                recyclerProfile.requestDisallowInterceptTouchEvent(disallow);
+                swipeRefreshProfile.requestDisallowInterceptTouchEvent(disallow);
+                itemTouchHelper.select(null, CustomItemTouchHelper.ACTION_STATE_IDLE);
+            }
+
+            @Override
+            public void requestDisallowInterceptTouchEventHorizontal(boolean disallow) {
+                itemTouchHelper.setDisallow(disallow);
+            }
+        };
+
         if (adapterProfile == null) {
             adapterProfile = new AdapterProfile(getActivity(),
                     controllerProfile,
                     controllerLinks,
+                    adapterListener,
                     mListener.getEventListenerBase(),
                     new AdapterCommentList.ViewHolderComment.EventListenerComment() {
                         @Override
@@ -395,58 +431,7 @@ public class FragmentProfile extends FragmentBase implements Toolbar.OnMenuItemC
                         }
 
                     },
-                    mListener.getEventListener(),
-                    new DisallowListener() {
-                        @Override
-                        public void requestDisallowInterceptTouchEventVertical(boolean disallow) {
-                            recyclerProfile.requestDisallowInterceptTouchEvent(disallow);
-                            swipeRefreshProfile.requestDisallowInterceptTouchEvent(disallow);
-                            itemTouchHelper.select(null, CustomItemTouchHelper.ACTION_STATE_IDLE);
-                        }
-
-                        @Override
-                        public void requestDisallowInterceptTouchEventHorizontal(boolean disallow) {
-                            itemTouchHelper.setDisallow(disallow);
-                        }
-                    }, new RecyclerCallback() {
-                @Override
-                public int getRecyclerHeight() {
-                    return recyclerProfile.getHeight();
-                }
-
-                @Override
-                public RecyclerView.LayoutManager getLayoutManager() {
-                    return linearLayoutManager;
-                }
-
-                @Override
-                public void scrollTo(final int position) {
-                    UtilsAnimation.scrollToPositionWithCentering(position, recyclerProfile, false);
-                }
-
-                @Override
-                public void scrollAndCenter(int position, int height) {
-
-                }
-
-                @Override
-                public void hideToolbar() {
-                    AppBarLayout.Behavior behaviorAppBar = (AppBarLayout.Behavior) ((CoordinatorLayout.LayoutParams) layoutAppBar.getLayoutParams()).getBehavior();
-                    behaviorAppBar.onNestedFling(layoutCoordinator, layoutAppBar, null, 0, 1000, true);
-                }
-
-                @Override
-                public void clearDecoration() {
-                    AppBarLayout.Behavior behaviorAppBar = (AppBarLayout.Behavior) ((CoordinatorLayout.LayoutParams) layoutAppBar.getLayoutParams()).getBehavior();
-                    behaviorAppBar.onNestedFling(layoutCoordinator, layoutAppBar, null, 0, 1000, true);
-                }
-
-                @Override
-                public RequestManager getRequestManager() {
-                    return getGlideRequestManager();
-                }
-
-            }, listener);
+                    mListener.getEventListener(), listener);
         }
 
         recyclerProfile.setAdapter(adapterProfile);

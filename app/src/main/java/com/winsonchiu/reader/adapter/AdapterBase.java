@@ -2,8 +2,9 @@
  * Copyright 2015 Winson Chiu
  */
 
-package com.winsonchiu.reader.utils;
+package com.winsonchiu.reader.adapter;
 
+import android.support.annotation.CallSuper;
 import android.support.annotation.Nullable;
 import android.support.v7.widget.RecyclerView;
 
@@ -21,15 +22,24 @@ public abstract class AdapterBase<ViewHolderType extends RecyclerView.ViewHolder
         }
     };
 
+    protected int loadMoreThreshold = 5;
+    protected AdapterLoadMoreListener loadMoreListener;
+
+    @Override
+    @CallSuper
+    public void onBindViewHolder(ViewHolderType holder, int position) {
+        if (position > getItemCount() - loadMoreThreshold && loadMoreListener != null) {
+            loadMoreListener.requestMore();
+        }
+    }
+
     @Override
     public void onAttachedToRecyclerView(RecyclerView recyclerView) {
         super.onAttachedToRecyclerView(recyclerView);
         this.recyclerView = recyclerView;
     }
 
-    @Override
-    public void onDetachedFromRecyclerView(RecyclerView recyclerView) {
-        this.recyclerView = null;
-        super.onDetachedFromRecyclerView(recyclerView);
+    public void setAdapterLoadMoreListener(AdapterLoadMoreListener loadMoreListener) {
+        this.loadMoreListener = loadMoreListener;
     }
 }

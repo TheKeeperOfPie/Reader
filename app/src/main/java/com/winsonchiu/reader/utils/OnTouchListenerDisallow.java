@@ -13,7 +13,7 @@ import android.view.View;
  */
 public class OnTouchListenerDisallow implements View.OnTouchListener {
 
-    private final DisallowListener disallowListener;
+    protected final DisallowListener disallowListener;
     protected float startY;
 
     public OnTouchListenerDisallow(DisallowListener disallowListener) {

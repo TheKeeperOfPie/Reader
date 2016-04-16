@@ -55,6 +55,9 @@ import android.widget.Toast;
 import com.winsonchiu.reader.ActivityMain;
 import com.winsonchiu.reader.AppSettings;
 import com.winsonchiu.reader.R;
+import com.winsonchiu.reader.adapter.AdapterBase;
+import com.winsonchiu.reader.adapter.AdapterCallback;
+import com.winsonchiu.reader.adapter.AdapterListener;
 import com.winsonchiu.reader.data.reddit.Comment;
 import com.winsonchiu.reader.data.reddit.Link;
 import com.winsonchiu.reader.links.AdapterLink;
@@ -62,12 +65,8 @@ import com.winsonchiu.reader.links.AdapterLinkGrid;
 import com.winsonchiu.reader.links.AdapterLinkList;
 import com.winsonchiu.reader.profile.ControllerProfile;
 import com.winsonchiu.reader.rx.FinalizingSubscriber;
-import com.winsonchiu.reader.utils.AdapterBase;
-import com.winsonchiu.reader.utils.AdapterCallback;
 import com.winsonchiu.reader.utils.CallbackYouTubeDestruction;
-import com.winsonchiu.reader.utils.DisallowListener;
 import com.winsonchiu.reader.utils.OnTouchListenerDisallow;
-import com.winsonchiu.reader.utils.RecyclerCallback;
 import com.winsonchiu.reader.utils.UtilsAnimation;
 import com.winsonchiu.reader.utils.UtilsInput;
 import com.winsonchiu.reader.utils.UtilsReddit;
@@ -102,8 +101,6 @@ public class AdapterCommentList extends AdapterBase<RecyclerView.ViewHolder> imp
     private FragmentActivity activity;
     private AdapterLink.ViewHolderLink.EventListener eventListenerBase;
     private ViewHolderComment.EventListener eventListener;
-    private DisallowListener disallowListener;
-    private RecyclerCallback recyclerCallback;
     private YouTubeListener youTubeListener;
     private CallbackYouTubeDestruction callbackYouTubeDestruction;
     protected List<RecyclerView.ViewHolder> viewHolders;
@@ -116,13 +113,13 @@ public class AdapterCommentList extends AdapterBase<RecyclerView.ViewHolder> imp
     private boolean animationFinished;
 
     private ControllerComments controllerComments;
+    private AdapterListener adapterListener;
 
     public AdapterCommentList(FragmentActivity activity,
             ControllerComments controllerComments,
+            AdapterListener adapterListener,
             AdapterLink.ViewHolderLink.EventListener eventListenerBase,
             ViewHolderComment.EventListener eventListener,
-            DisallowListener disallowListener,
-            RecyclerCallback recyclerCallback,
             YouTubeListener youTubeListener,
             CallbackYouTubeDestruction callbackYouTubeDestruction,
             boolean isGrid,
@@ -131,10 +128,9 @@ public class AdapterCommentList extends AdapterBase<RecyclerView.ViewHolder> imp
             boolean actionsExpanded) {
         this.activity = activity;
         this.controllerComments = controllerComments;
+        this.adapterListener = adapterListener;
         this.eventListenerBase = eventListenerBase;
         this.eventListener = eventListener;
-        this.disallowListener = disallowListener;
-        this.recyclerCallback = recyclerCallback;
         this.youTubeListener = youTubeListener;
         this.callbackYouTubeDestruction = callbackYouTubeDestruction;
         this.isGrid = isGrid;
@@ -161,10 +157,9 @@ public class AdapterCommentList extends AdapterBase<RecyclerView.ViewHolder> imp
                         LayoutInflater.from(parent.getContext())
                                 .inflate(R.layout.cell_link, parent, false),
                         adapterCallback,
+                        adapterListener,
                         eventListenerBase,
                         Source.NONE,
-                        disallowListener,
-                        recyclerCallback,
                         callbackYouTubeDestruction,
                         thumbnailSize) {
 
@@ -200,7 +195,7 @@ public class AdapterCommentList extends AdapterBase<RecyclerView.ViewHolder> imp
                         }
                         if (animationFinished) {
                             if (!TextUtils.isEmpty(link.getSelfText()) && textThreadSelf.getVisibility() != View.VISIBLE) {
-                                UtilsAnimation.animateExpandHeight(textThreadSelf, UtilsView.getContentWidth(recyclerCallback.getLayoutManager()), 0, null);
+                                UtilsAnimation.animateExpandHeight(textThreadSelf, UtilsView.getContentWidth(adapterCallback.getRecyclerView().getLayoutManager()), 0, null);
                             }
                         }
                     }
@@ -233,10 +228,9 @@ public class AdapterCommentList extends AdapterBase<RecyclerView.ViewHolder> imp
                         LayoutInflater.from(parent.getContext())
                                 .inflate(R.layout.row_link, parent, false),
                         adapterCallback,
+                        adapterListener,
                         eventListenerBase,
                         Source.NONE,
-                        disallowListener,
-                        recyclerCallback,
                         callbackYouTubeDestruction) {
 
                     @Override
@@ -259,7 +253,7 @@ public class AdapterCommentList extends AdapterBase<RecyclerView.ViewHolder> imp
                         }
                         if (animationFinished) {
                             if (!TextUtils.isEmpty(link.getSelfText()) && textThreadSelf.getVisibility() != View.VISIBLE) {
-                                UtilsAnimation.animateExpandHeight(textThreadSelf, UtilsView.getContentWidth(recyclerCallback.getLayoutManager()), 0, null);
+                                UtilsAnimation.animateExpandHeight(textThreadSelf, UtilsView.getContentWidth(adapterCallback.getRecyclerView().getLayoutManager()), 0, null);
                             }
                         }
                     }
@@ -295,16 +289,15 @@ public class AdapterCommentList extends AdapterBase<RecyclerView.ViewHolder> imp
         return new ViewHolderComment(LayoutInflater.from(parent.getContext())
                 .inflate(R.layout.row_comment, parent, false),
                 adapterCallback,
+                adapterListener,
                 eventListenerBase,
                 controllerComments,
-                eventListener,
-                disallowListener,
-                recyclerCallback);
+                eventListener);
     }
 
     @Override
     public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
-
+        super.onBindViewHolder(holder, position);
         if (!controllerComments.isRefreshing() && position > controllerComments.getItemCount() - 5) {
             controllerComments.loadMoreComments();
         }
@@ -423,8 +416,9 @@ public class AdapterCommentList extends AdapterBase<RecyclerView.ViewHolder> imp
 
     public static class ViewHolderComment extends ViewHolderBase
             implements Toolbar.OnMenuItemClickListener {
-        ;
+
         private final EventListenerComment eventListenerComment;
+        private final AdapterListener adapterListener;
         protected Comment comment;
 
         protected View viewIndent;
@@ -463,8 +457,6 @@ public class AdapterCommentList extends AdapterBase<RecyclerView.ViewHolder> imp
 
         protected AdapterLink.ViewHolderLink.EventListener eventListenerBase;
         protected EventListener eventListener;
-        protected DisallowListener disallowListener;
-        protected RecyclerCallback recyclerCallback;
         protected int indentWidth;
         protected int toolbarItemWidth;
         protected SharedPreferences preferences;
@@ -478,40 +470,36 @@ public class AdapterCommentList extends AdapterBase<RecyclerView.ViewHolder> imp
 
         public ViewHolderComment(View itemView,
                 AdapterCallback adapterCallback,
+                AdapterListener adapterListener,
                 AdapterLink.ViewHolderLink.EventListener eventListenerBase,
                 EventListenerComment eventListenerComment,
                 EventListener eventListener,
-                DisallowListener disallowListener,
-                RecyclerCallback recyclerCallback,
                 final ControllerProfile.Listener listener) {
-            this(itemView, adapterCallback, eventListenerBase, eventListenerComment, eventListener, disallowListener, recyclerCallback);
+            this(itemView, adapterCallback, adapterListener, eventListenerBase, eventListenerComment, eventListener);
+
             itemViewLink.setVisible(true);
             itemViewLink.setEnabled(true);
             itemViewLink.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
             itemViewLink.setOnMenuItemClickListener(
-                    new MenuItem.OnMenuItemClickListener() {
-                        @Override
-                        public boolean onMenuItemClick(MenuItem item) {
-                            listener.loadLink(comment);
-                            return true;
-                        }
+                    item -> {
+                        listener.loadLink(comment);
+                        return true;
                     });
         }
 
         public ViewHolderComment(final View itemView,
                 AdapterCallback adapterCallback,
+                AdapterListener adapterListener,
                 AdapterLink.ViewHolderLink.EventListener eventListenerBase,
                 EventListenerComment eventListenerComment,
-                EventListener eventListener,
-                DisallowListener disallowListener,
-                RecyclerCallback recyclerCallback) {
+                EventListener eventListener) {
             super(itemView, adapterCallback);
+
+            this.adapterListener = adapterListener;
 
             this.eventListenerComment = eventListenerComment;
             this.eventListenerBase = eventListenerBase;
             this.eventListener = eventListener;
-            this.disallowListener = disallowListener;
-            this.recyclerCallback = recyclerCallback;
 
             initialize();
             initializeToolbar();
@@ -565,8 +553,8 @@ public class AdapterCommentList extends AdapterBase<RecyclerView.ViewHolder> imp
         private void initializeListeners() {
 
             textComment.setMovementMethod(LinkMovementMethod.getInstance());
-            textComment.setOnTouchListener(new OnTouchListenerDisallow(disallowListener));
-            editTextReply.setOnTouchListener(new OnTouchListenerDisallow(disallowListener));
+            textComment.setOnTouchListener(new OnTouchListenerDisallow(adapterListener));
+            editTextReply.setOnTouchListener(new OnTouchListenerDisallow(adapterListener));
             buttonSendReply.setOnClickListener(v -> {
                 if (!TextUtils.isEmpty(editTextReply.getText())) {
                     sendReply();
@@ -982,7 +970,7 @@ public class AdapterCommentList extends AdapterBase<RecyclerView.ViewHolder> imp
                     comment.isReplyExpanded() ? View.VISIBLE : View.GONE);
             if (comment.isReplyExpanded()) {
                 textUsername.setText("- " + eventListenerBase.getUser().getName());
-                recyclerCallback.clearDecoration();
+                adapterListener.clearDecoration();
                 editTextReply.setText(comment.getReplyText());
                 editTextReply.clearFocus();
                 editTextReply.requestFocus();

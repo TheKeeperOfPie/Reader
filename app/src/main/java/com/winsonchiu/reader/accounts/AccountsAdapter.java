@@ -13,8 +13,8 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.winsonchiu.reader.R;
-import com.winsonchiu.reader.utils.AdapterBase;
-import com.winsonchiu.reader.utils.AdapterCallback;
+import com.winsonchiu.reader.adapter.AdapterBase;
+import com.winsonchiu.reader.adapter.AdapterCallback;
 import com.winsonchiu.reader.utils.CustomColorFilter;
 import com.winsonchiu.reader.utils.ViewHolderBase;
 

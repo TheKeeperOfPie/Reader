@@ -61,6 +61,7 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.bumptech.glide.Glide;
 import com.bumptech.glide.Priority;
 import com.bumptech.glide.load.resource.drawable.GlideDrawable;
 import com.bumptech.glide.request.target.GlideDrawableImageViewTarget;
@@ -74,6 +75,9 @@ import com.winsonchiu.reader.AppSettings;
 import com.winsonchiu.reader.ControllerUser;
 import com.winsonchiu.reader.CustomApplication;
 import com.winsonchiu.reader.R;
+import com.winsonchiu.reader.adapter.AdapterBase;
+import com.winsonchiu.reader.adapter.AdapterCallback;
+import com.winsonchiu.reader.adapter.AdapterListener;
 import com.winsonchiu.reader.comments.Source;
 import com.winsonchiu.reader.data.imgur.Album;
 import com.winsonchiu.reader.data.imgur.Image;
@@ -90,15 +94,11 @@ import com.winsonchiu.reader.history.Historian;
 import com.winsonchiu.reader.rx.FinalizingSubscriber;
 import com.winsonchiu.reader.rx.ObserverEmpty;
 import com.winsonchiu.reader.rx.ObserverError;
-import com.winsonchiu.reader.utils.AdapterBase;
-import com.winsonchiu.reader.utils.AdapterCallback;
 import com.winsonchiu.reader.utils.BaseMediaPlayerControl;
 import com.winsonchiu.reader.utils.BaseTextWatcher;
 import com.winsonchiu.reader.utils.CallbackYouTubeDestruction;
 import com.winsonchiu.reader.utils.CustomColorFilter;
-import com.winsonchiu.reader.utils.DisallowListener;
 import com.winsonchiu.reader.utils.OnTouchListenerDisallow;
-import com.winsonchiu.reader.utils.RecyclerCallback;
 import com.winsonchiu.reader.utils.SimplePlayerStateChangeListener;
 import com.winsonchiu.reader.utils.Utils;
 import com.winsonchiu.reader.utils.UtilsAnimation;
@@ -152,6 +152,7 @@ public abstract class AdapterLink extends AdapterBase<ViewHolderBase> implements
     public static final String TAG_PICASSO = "picassoAdapterLink";
 
     protected FragmentActivity activity;
+    protected AdapterListener adapterListener;
     protected SharedPreferences preferences;
     protected LayoutManager layoutManager;
     protected ControllerLinksBase controllerLinks;
@@ -159,18 +160,17 @@ public abstract class AdapterLink extends AdapterBase<ViewHolderBase> implements
 
     protected ViewHolderHeader.EventListener eventListenerHeader;
     protected ViewHolderLink.EventListener eventListenerBase;
-    protected DisallowListener disallowListener;
-    protected RecyclerCallback recyclerCallback;
 
     @Inject ControllerUser controllerUser;
 
-    public AdapterLink(FragmentActivity activity, ViewHolderHeader.EventListener eventListenerHeader,
-            ViewHolderLink.EventListener eventListenerBase,
-            DisallowListener disallowListener, RecyclerCallback recyclerCallback) {
+    public AdapterLink(FragmentActivity activity,
+            AdapterListener adapterListener,
+            ViewHolderHeader.EventListener eventListenerHeader,
+            ViewHolderLink.EventListener eventListenerBase) {
+        setAdapterLoadMoreListener(adapterListener);
+        this.adapterListener = adapterListener;
         this.eventListenerHeader = eventListenerHeader;
         this.eventListenerBase = eventListenerBase;
-        this.disallowListener = disallowListener;
-        this.recyclerCallback = recyclerCallback;
         viewHolders = new ArrayList<>();
 
         ((ActivityMain) activity).getComponentActivity().inject(this);
@@ -203,6 +203,7 @@ public abstract class AdapterLink extends AdapterBase<ViewHolderBase> implements
     @Override
     @CallSuper
     public void onBindViewHolder(ViewHolderBase holder, int position) {
+        super.onBindViewHolder(holder, position);
         if (!controllerLinks.isLoading() && position > controllerLinks.sizeLinks() - 5) {
             controllerLinks.loadMoreLinks()
                     .observeOn(AndroidSchedulers.mainThread())
@@ -446,6 +447,7 @@ public abstract class AdapterLink extends AdapterBase<ViewHolderBase> implements
         @Inject protected Reddit reddit;
         @Inject protected SharedPreferences sharedPreferences;
 
+        private final AdapterListener adapterListener;
         private final FragmentActivity activity;
         public Link link;
         public boolean showSubreddit;
@@ -460,8 +462,6 @@ public abstract class AdapterLink extends AdapterBase<ViewHolderBase> implements
         public int youTubeViewId = View.generateViewId();
 
         public EventListener eventListener;
-        public DisallowListener disallowListener;
-        public RecyclerCallback recyclerCallback;
         public CallbackYouTubeDestruction callbackYouTubeDestruction;
 
         public MenuItem itemUpvote;
@@ -528,17 +528,15 @@ public abstract class AdapterLink extends AdapterBase<ViewHolderBase> implements
         public ViewHolderLink(FragmentActivity activity,
                 View itemView,
                 AdapterCallback adapterCallback,
+                AdapterListener adapterListener,
                 EventListener eventListener,
                 Source source,
-                DisallowListener disallowListener,
-                RecyclerCallback recyclerCallback,
                 CallbackYouTubeDestruction callbackYouTubeDestruction) {
             super(itemView, adapterCallback);
+            this.adapterListener = adapterListener;
             this.activity = activity;
             this.eventListener = eventListener;
             this.source = source;
-            this.disallowListener = disallowListener;
-            this.recyclerCallback = recyclerCallback;
             this.callbackYouTubeDestruction = callbackYouTubeDestruction;
 
             ButterKnife.bind(this, itemView);
@@ -633,8 +631,7 @@ public abstract class AdapterLink extends AdapterBase<ViewHolderBase> implements
 
             mediaController = new MediaController(context);
             adapterAlbum = new AdapterAlbum(
-                    recyclerCallback.getRequestManager(),
-                    disallowListener,
+                    adapterListener,
                     (title, fileName, url) -> eventListener.downloadImage(title, fileName, url),
                     colorFilterMenuItem
             );
@@ -661,7 +658,7 @@ public abstract class AdapterLink extends AdapterBase<ViewHolderBase> implements
         protected void initializeListeners() {
             textThreadSelf.setMovementMethod(LinkMovementMethod.getInstance());
 
-            imageFull.setOnTouchListener(new OnTouchListenerDisallow(disallowListener) {
+            imageFull.setOnTouchListener(new OnTouchListenerDisallow(adapterListener) {
                 @Override
                 public boolean onTouch(View view, MotionEvent event) {
                     if (event.getPointerCount() > 1) {
@@ -710,7 +707,7 @@ public abstract class AdapterLink extends AdapterBase<ViewHolderBase> implements
 
                 @Override
                 public void onBeforeContentLoad(int width, int height) {
-                    recyclerCallback.scrollAndCenter(getAdapterPosition(), height);
+                    adapterListener.scrollAndCenter(getAdapterPosition(), height);
                 }
             });
 
@@ -726,7 +723,7 @@ public abstract class AdapterLink extends AdapterBase<ViewHolderBase> implements
                 }
             });
 
-            editTextReply.setOnTouchListener(new OnTouchListenerDisallow(disallowListener));
+            editTextReply.setOnTouchListener(new OnTouchListenerDisallow(adapterListener));
             editTextReply.addTextChangedListener(new BaseTextWatcher() {
                 @Override
                 public void afterTextChanged(Editable s) {
@@ -902,7 +899,7 @@ public abstract class AdapterLink extends AdapterBase<ViewHolderBase> implements
 
         // TODO: Improve scrolling/centering logic
         protected void scrollToSelf() {
-            recyclerCallback.scrollTo(getAdapterPosition());
+            adapterListener.scrollAndCenter(getAdapterPosition(), 0);
         }
 
         private void requestReport(final String reason) {
@@ -930,7 +927,7 @@ public abstract class AdapterLink extends AdapterBase<ViewHolderBase> implements
 
             if (link.isReplyExpanded()) {
                 textUsername.setText(resources.getString(R.string.as_author, eventListener.getUser().getName()));
-                recyclerCallback.clearDecoration();
+                adapterListener.clearDecoration();
                 editTextReply.setText(link.getReplyText());
                 editTextReply.requestFocus();
                 UtilsInput.showKeyboard(editTextReply);
@@ -966,7 +963,7 @@ public abstract class AdapterLink extends AdapterBase<ViewHolderBase> implements
                 }
             }
             else {
-                recyclerCallback.hideToolbar();
+                adapterListener.hideToolbar();
 
                 String urlString = link.getUrl();
                 if (!TextUtils.isEmpty(urlString)) {
@@ -983,7 +980,7 @@ public abstract class AdapterLink extends AdapterBase<ViewHolderBase> implements
             }
             else {
                 expandFull(true);
-                UtilsAnimation.animateExpandHeight(textThreadSelf, UtilsView.getContentWidth(recyclerCallback.getLayoutManager()), 0, null);
+                UtilsAnimation.animateExpandHeight(textThreadSelf, UtilsView.getContentWidth(adapterCallback.getRecyclerView().getLayoutManager()), 0, null);
             }
         }
 
@@ -1007,7 +1004,7 @@ public abstract class AdapterLink extends AdapterBase<ViewHolderBase> implements
                     return;
                 }
 
-                float startX = itemView.getX() - recyclerCallback.getLayoutManager().getPaddingStart();
+                float startX = itemView.getX() - adapterCallback.getRecyclerView().getLayoutManager().getPaddingStart();
 
                 layoutInner.getLayoutParams().width = itemView.getWidth();
                 layoutInner.setTranslationX((int) startX);
@@ -1017,13 +1014,13 @@ public abstract class AdapterLink extends AdapterBase<ViewHolderBase> implements
                     viewMaskStart.getLayoutParams().width = (int) startX;
                 }
 
-                if (viewMaskEnd != null && adapterCallback.getRecyclerView() != null) {
+                if (viewMaskEnd != null) {
                     viewMaskEnd.getLayoutParams().width = (int) (adapterCallback.getRecyclerView().getWidth() - itemView.getWidth() - startX);
                 }
 
                 itemView.requestLayout();
 
-                int targetWidth = UtilsView.getContentWidth(recyclerCallback.getLayoutManager());
+                int targetWidth = UtilsView.getContentWidth(adapterCallback.getRecyclerView().getLayoutManager());
                 itemView.postOnAnimation(() -> {
                     Log.d(TAG, "run() called with with: " + layoutInner.getLayoutParams().width);
                     UtilsAnimation.animateExpandRecyclerItemView(layoutInner, layoutRoot, viewMaskStart, viewMaskEnd, targetWidth, 0, null);
@@ -1136,18 +1133,16 @@ public abstract class AdapterLink extends AdapterBase<ViewHolderBase> implements
                 imageFull.setVisibility(View.VISIBLE);
                 progressImage.setVisibility(View.VISIBLE);
                 expandFull(true);
-                recyclerCallback.getLayoutManager().requestLayout();
+                adapterCallback.getRecyclerView().getLayoutManager().requestLayout();
                 itemView.invalidate();
-                itemView.post(() -> recyclerCallback.getRequestManager()
+                itemView.post(() -> Glide.with(itemView.getContext())
                         .load(link.getUrl())
                         .priority(Priority.IMMEDIATE)
                         .listener(new RequestListenerCompletion<String, GlideDrawable>() {
                             @Override
                             protected void onCompleted() {
                                 progressImage.setVisibility(View.GONE);
-                                if (adapterCallback.getRecyclerView() != null) {
-                                    UtilsAnimation.scrollToPositionWithCentering(getAdapterPosition(), adapterCallback.getRecyclerView(), 0, 0, 0, false);
-                                }
+                                UtilsAnimation.scrollToPositionWithCentering(getAdapterPosition(), adapterCallback.getRecyclerView(), 0, 0, 0, false);
                             }
                         })
                         .into(new GlideDrawableImageViewTarget(imageFull)));
@@ -1182,7 +1177,7 @@ public abstract class AdapterLink extends AdapterBase<ViewHolderBase> implements
         public void setAlbum(Link link, Album album) {
             link.setAlbum(album);
             ViewGroup.LayoutParams layoutParams = viewPagerFull.getLayoutParams();
-            layoutParams.height = recyclerCallback.getRecyclerHeight();
+            layoutParams.height = adapterCallback.getRecyclerView().getHeight();
             viewPagerFull.setLayoutParams(layoutParams);
             viewPagerFull.setVisibility(View.VISIBLE);
             viewPagerFull.requestLayout();

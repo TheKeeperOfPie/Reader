@@ -38,14 +38,13 @@ import android.widget.TextView;
 import com.winsonchiu.reader.ActivityMain;
 import com.winsonchiu.reader.AppSettings;
 import com.winsonchiu.reader.R;
+import com.winsonchiu.reader.adapter.AdapterBase;
+import com.winsonchiu.reader.adapter.AdapterCallback;
+import com.winsonchiu.reader.adapter.AdapterListener;
 import com.winsonchiu.reader.comments.AdapterCommentList;
 import com.winsonchiu.reader.data.reddit.Message;
 import com.winsonchiu.reader.links.AdapterLink;
 import com.winsonchiu.reader.profile.ControllerProfile;
-import com.winsonchiu.reader.utils.AdapterBase;
-import com.winsonchiu.reader.utils.AdapterCallback;
-import com.winsonchiu.reader.utils.DisallowListener;
-import com.winsonchiu.reader.utils.RecyclerCallback;
 import com.winsonchiu.reader.utils.UtilsAnimation;
 import com.winsonchiu.reader.utils.UtilsInput;
 import com.winsonchiu.reader.utils.ViewHolderBase;
@@ -61,27 +60,24 @@ public class AdapterInbox extends AdapterBase<RecyclerView.ViewHolder> {
     private static final String TAG = AdapterInbox.class.getCanonicalName();
 
     private ControllerInbox controllerInbox;
+    private AdapterListener adapterListener;
     private AdapterLink.ViewHolderLink.EventListener eventListenerBase;
     private AdapterCommentList.ViewHolderComment.EventListenerComment eventListenerComment;
     private AdapterCommentList.ViewHolderComment.EventListener eventListener;
-    private DisallowListener disallowListener;
-    private RecyclerCallback recyclerCallback;
     private ControllerProfile.Listener listener;
     private List<RecyclerView.ViewHolder> viewHolders;
 
     public AdapterInbox(ControllerInbox controllerInbox,
-                        AdapterLink.ViewHolderLink.EventListener eventListenerBase,
-                        AdapterCommentList.ViewHolderComment.EventListenerComment eventListenerComment,
-                        AdapterCommentList.ViewHolderComment.EventListener eventListener,
-                        DisallowListener disallowListener,
-                        RecyclerCallback recyclerCallback,
-                        ControllerProfile.Listener listener) {
+            AdapterListener adapterListener,
+            AdapterLink.ViewHolderLink.EventListener eventListenerBase,
+            AdapterCommentList.ViewHolderComment.EventListenerComment eventListenerComment,
+            AdapterCommentList.ViewHolderComment.EventListener eventListener,
+            ControllerProfile.Listener listener) {
         this.controllerInbox = controllerInbox;
+        this.adapterListener = adapterListener;
         this.eventListenerBase = eventListenerBase;
         this.eventListenerComment = eventListenerComment;
         this.eventListener = eventListener;
-        this.disallowListener = disallowListener;
-        this.recyclerCallback = recyclerCallback;
         this.listener = listener;
         this.viewHolders = new ArrayList<>();
     }
@@ -101,18 +97,17 @@ public class AdapterInbox extends AdapterBase<RecyclerView.ViewHolder> {
                         LayoutInflater.from(parent.getContext())
                                 .inflate(R.layout.row_message, parent, false),
                         adapterCallback,
-                        eventListenerBase,
-                        recyclerCallback);
+                        adapterListener,
+                        eventListenerBase);
             case ControllerInbox.VIEW_TYPE_COMMENT:
                 // TODO: Move to different ViewHolderComment constructor
                 return new AdapterCommentList.ViewHolderComment(LayoutInflater.from(parent.getContext()).inflate(
                         R.layout.row_comment, parent, false),
                         adapterCallback,
+                        adapterListener,
                         eventListenerBase,
                         eventListenerComment,
                         eventListener,
-                        disallowListener,
-                        recyclerCallback,
                         listener);
 
         }
@@ -122,6 +117,7 @@ public class AdapterInbox extends AdapterBase<RecyclerView.ViewHolder> {
 
     @Override
     public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
+        super.onBindViewHolder(holder, position);
 
         if (!controllerInbox.isLoading() && position > controllerInbox.getItemCount() - 5) {
             controllerInbox.loadMore();
@@ -161,6 +157,8 @@ public class AdapterInbox extends AdapterBase<RecyclerView.ViewHolder> {
     protected static class ViewHolderMessage extends ViewHolderBase
             implements Toolbar.OnMenuItemClickListener {
 
+        protected AdapterListener adapterListener;
+
         protected Message message;
 
         protected TextView textSubject;
@@ -173,17 +171,16 @@ public class AdapterInbox extends AdapterBase<RecyclerView.ViewHolder> {
         protected ImageButton buttonReplyEditor;
         protected Toolbar toolbarActions;
         protected AdapterLink.ViewHolderLink.EventListener eventListener;
-        protected RecyclerCallback recyclerCallback;
         private View.OnClickListener clickListenerLink;
 
         protected SharedPreferences preferences;
         protected int toolbarItemWidth;
         private Resources resources;
 
-        public ViewHolderMessage(View itemView, AdapterCallback adapterCallback, final AdapterLink.ViewHolderLink.EventListener listener, RecyclerCallback recyclerCallback) {
+        public ViewHolderMessage(View itemView, AdapterCallback adapterCallback, AdapterListener adapterListener, final AdapterLink.ViewHolderLink.EventListener listener) {
             super(itemView, adapterCallback);
+            this.adapterListener = adapterListener;
             this.eventListener = listener;
-            this.recyclerCallback = recyclerCallback;
 
             resources = itemView.getResources();
             toolbarItemWidth = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 48,
@@ -238,7 +235,7 @@ public class AdapterInbox extends AdapterBase<RecyclerView.ViewHolder> {
             toolbarActions.setOnMenuItemClickListener(this);
 
             Menu menu = toolbarActions.getMenu();
-            TypedArray typedArray = itemView.getContext().getTheme().obtainStyledAttributes(new int[] {R.attr.colorIconFilter});
+            TypedArray typedArray = itemView.getContext().getTheme().obtainStyledAttributes(new int[]{R.attr.colorIconFilter});
             int colorIconFilter = typedArray.getColor(0, 0xFFFFFFFF);
             typedArray.recycle();
 
@@ -329,7 +326,7 @@ public class AdapterInbox extends AdapterBase<RecyclerView.ViewHolder> {
 
             textInfo.setText(spannableInfo);
 
-            TypedArray typedArray = itemView.getContext().getTheme().obtainStyledAttributes(new int[] {android.R.attr.textColorSecondary});
+            TypedArray typedArray = itemView.getContext().getTheme().obtainStyledAttributes(new int[]{android.R.attr.textColorSecondary});
             textInfo.setTextColor(message.isNew() ? itemView.getResources()
                     .getColor(R.color.textColorAlert) : typedArray.getColor(0, itemView.getResources().getColor(R.color.darkThemeTextColorMuted)));
             typedArray.recycle();
@@ -372,7 +369,7 @@ public class AdapterInbox extends AdapterBase<RecyclerView.ViewHolder> {
                     message.isReplyExpanded() ? View.VISIBLE : View.GONE);
             if (message.isReplyExpanded()) {
                 textUsername.setText("- " + eventListener.getUser().getName());
-                recyclerCallback.clearDecoration();
+                adapterListener.clearDecoration();
                 editTextReply.setText(message.getReplyText());
                 editTextReply.clearFocus();
                 editTextReply.requestFocus();

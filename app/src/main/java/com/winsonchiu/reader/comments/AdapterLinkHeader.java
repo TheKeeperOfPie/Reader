@@ -13,14 +13,13 @@ import android.view.MotionEvent;
 import android.view.ViewGroup;
 
 import com.winsonchiu.reader.R;
+import com.winsonchiu.reader.adapter.AdapterBase;
+import com.winsonchiu.reader.adapter.AdapterListener;
 import com.winsonchiu.reader.data.reddit.Link;
 import com.winsonchiu.reader.links.AdapterLink;
 import com.winsonchiu.reader.links.AdapterLinkGrid;
 import com.winsonchiu.reader.links.AdapterLinkList;
-import com.winsonchiu.reader.utils.AdapterBase;
 import com.winsonchiu.reader.utils.CallbackYouTubeDestruction;
-import com.winsonchiu.reader.utils.DisallowListener;
-import com.winsonchiu.reader.utils.RecyclerCallback;
 import com.winsonchiu.reader.utils.UtilsAnimation;
 import com.winsonchiu.reader.utils.UtilsReddit;
 import com.winsonchiu.reader.utils.UtilsView;
@@ -38,9 +37,8 @@ public class AdapterLinkHeader extends AdapterBase<AdapterLink.ViewHolderLink> i
     private int colorLink;
     private boolean actionsExpanded;
     private AdapterLink.ViewHolderLink viewHolderLink;
+    private AdapterListener adapterListener;
     private final AdapterLink.ViewHolderLink.EventListener eventListenerBase;
-    private final DisallowListener disallowListener;
-    private final RecyclerCallback recyclerCallback;
     private final YouTubeListener youTubeListener;
     private CallbackYouTubeDestruction callbackYouTubeDestruction;
     private boolean animationFinished;
@@ -49,8 +47,8 @@ public class AdapterLinkHeader extends AdapterBase<AdapterLink.ViewHolderLink> i
 
     public AdapterLinkHeader(FragmentActivity activity,
             ControllerComments controllerComments,
+            AdapterListener adapterListener,
             AdapterLink.ViewHolderLink.EventListener eventListenerBase,
-            DisallowListener disallowListener, RecyclerCallback recyclerCallback,
             YouTubeListener youTubeListener,
             CallbackYouTubeDestruction callbackYouTubeDestruction,
             boolean isGrid,
@@ -59,9 +57,8 @@ public class AdapterLinkHeader extends AdapterBase<AdapterLink.ViewHolderLink> i
             boolean actionsExpanded) {
         this.activity = activity;
         this.controllerComments = controllerComments;
+        this.adapterListener = adapterListener;
         this.eventListenerBase = eventListenerBase;
-        this.disallowListener = disallowListener;
-        this.recyclerCallback = recyclerCallback;
         this.youTubeListener = youTubeListener;
         this.callbackYouTubeDestruction = callbackYouTubeDestruction;
         this.isGrid = isGrid;
@@ -79,10 +76,9 @@ public class AdapterLinkHeader extends AdapterBase<AdapterLink.ViewHolderLink> i
                     activity,
                     LayoutInflater.from(parent.getContext()).inflate(R.layout.cell_link, parent, false),
                     adapterCallback,
+                    adapterListener,
                     eventListenerBase,
                     Source.NONE,
-                    disallowListener,
-                    recyclerCallback,
                     callbackYouTubeDestruction,
                     thumbnailSize) {
 
@@ -121,7 +117,7 @@ public class AdapterLinkHeader extends AdapterBase<AdapterLink.ViewHolderLink> i
                     }
                     if (animationFinished) {
                         if (!TextUtils.isEmpty(link.getSelfText())) {
-                            UtilsAnimation.animateExpandHeight(textThreadSelf, UtilsView.getContentWidth(recyclerCallback.getLayoutManager()), 0, null);
+                            UtilsAnimation.animateExpandHeight(textThreadSelf, UtilsView.getContentWidth(adapterCallback.getRecyclerView().getLayoutManager()), 0, null);
                         }
                     }
                 }
@@ -148,10 +144,9 @@ public class AdapterLinkHeader extends AdapterBase<AdapterLink.ViewHolderLink> i
                     activity,
                     LayoutInflater.from(parent.getContext()).inflate(R.layout.row_link, parent, false),
                     adapterCallback,
+                    adapterListener,
                     eventListenerBase,
                     Source.NONE,
-                    disallowListener,
-                    recyclerCallback,
                     callbackYouTubeDestruction) {
 
                 @Override
@@ -174,7 +169,7 @@ public class AdapterLinkHeader extends AdapterBase<AdapterLink.ViewHolderLink> i
                     }
                     if (animationFinished) {
                         if (!TextUtils.isEmpty(link.getSelfText())) {
-                            UtilsAnimation.animateExpandHeight(textThreadSelf, UtilsView.getContentWidth(recyclerCallback.getLayoutManager()), 0, null);
+                            UtilsAnimation.animateExpandHeight(textThreadSelf, UtilsView.getContentWidth(adapterCallback.getRecyclerView().getLayoutManager()), 0, null);
                         }
                     }
                 }
@@ -204,6 +199,7 @@ public class AdapterLinkHeader extends AdapterBase<AdapterLink.ViewHolderLink> i
 
     @Override
     public void onBindViewHolder(AdapterLink.ViewHolderLink holder, int position) {
+        super.onBindViewHolder(holder, position);
         holder.onBind(controllerComments.getLink(), true);
     }
 

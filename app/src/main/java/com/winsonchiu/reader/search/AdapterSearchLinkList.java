@@ -9,11 +9,10 @@ import android.view.LayoutInflater;
 import android.view.ViewGroup;
 
 import com.winsonchiu.reader.R;
+import com.winsonchiu.reader.adapter.AdapterListener;
 import com.winsonchiu.reader.comments.Source;
 import com.winsonchiu.reader.links.AdapterLinkList;
 import com.winsonchiu.reader.links.ControllerLinksBase;
-import com.winsonchiu.reader.utils.DisallowListener;
-import com.winsonchiu.reader.utils.RecyclerCallback;
 import com.winsonchiu.reader.utils.ViewHolderBase;
 
 /**
@@ -25,13 +24,11 @@ public class AdapterSearchLinkList extends AdapterLinkList {
 
     public AdapterSearchLinkList(FragmentActivity activity,
             ControllerLinksBase controllerLinks,
+            AdapterListener adapterListener,
             ViewHolderHeader.EventListener eventListenerHeader,
             ViewHolderLink.EventListener eventListenerBase,
-            Source source,
-            DisallowListener disallowListener,
-            RecyclerCallback recyclerCallback) {
-        super(activity, controllerLinks, eventListenerHeader, eventListenerBase, disallowListener,
-                recyclerCallback);
+            Source source) {
+        super(activity, controllerLinks, adapterListener, eventListenerHeader, eventListenerBase);
         this.source = source;
     }
 
@@ -46,10 +43,9 @@ public class AdapterSearchLinkList extends AdapterLinkList {
                 LayoutInflater.from(viewGroup.getContext())
                 .inflate(R.layout.row_link, viewGroup, false),
                 adapterCallback,
+                adapterListener,
                 eventListenerBase,
                 source,
-                disallowListener,
-                recyclerCallback,
                 this);
     }
 }

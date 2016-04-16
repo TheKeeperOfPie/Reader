@@ -30,13 +30,13 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.Toast;
 
-import com.bumptech.glide.RequestManager;
 import com.winsonchiu.reader.ActivityMain;
 import com.winsonchiu.reader.AppSettings;
 import com.winsonchiu.reader.CustomApplication;
 import com.winsonchiu.reader.FragmentBase;
 import com.winsonchiu.reader.FragmentListenerBase;
 import com.winsonchiu.reader.R;
+import com.winsonchiu.reader.adapter.AdapterListener;
 import com.winsonchiu.reader.comments.Source;
 import com.winsonchiu.reader.data.reddit.Link;
 import com.winsonchiu.reader.data.reddit.Listing;
@@ -53,7 +53,6 @@ import com.winsonchiu.reader.theme.ThemeWrapper;
 import com.winsonchiu.reader.utils.CustomColorFilter;
 import com.winsonchiu.reader.utils.DisallowListener;
 import com.winsonchiu.reader.utils.ItemDecorationDivider;
-import com.winsonchiu.reader.utils.RecyclerCallback;
 import com.winsonchiu.reader.utils.SimpleCallbackBackground;
 import com.winsonchiu.reader.utils.UtilsAnimation;
 import com.winsonchiu.reader.utils.UtilsColor;
@@ -246,6 +245,8 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
         ((ActivityMain) getActivity()).getComponentActivity().inject(this);
     }
 
+    // TODO: Remove/fix ResourceType warning
+    @SuppressWarnings("ResourceType")
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         view = inflater.inflate(R.layout.fragment_search, container, false);
@@ -484,6 +485,39 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
                 controllerSearch.setNsfwLinks(name, over18);
             }
 
+        }, new AdapterListener() {
+            @Override
+            public void requestMore() {
+
+            }
+
+            @Override
+            public void scrollAndCenter(int position, int height) {
+                UtilsAnimation.scrollToPositionWithCentering(position, recyclerSearchLinks, false);
+            }
+
+            @Override
+            public void hideToolbar() {
+                AppBarLayout.Behavior behaviorAppBar = (AppBarLayout.Behavior) ((CoordinatorLayout.LayoutParams) layoutAppBar.getLayoutParams()).getBehavior();
+                behaviorAppBar.onNestedFling(layoutCoordinator, layoutAppBar, null, 0, 1000,
+                        true);
+            }
+
+            @Override
+            public void clearDecoration() {
+                AppBarLayout.Behavior behaviorAppBar = (AppBarLayout.Behavior) ((CoordinatorLayout.LayoutParams) layoutAppBar.getLayoutParams()).getBehavior();
+                behaviorAppBar.onNestedFling(layoutCoordinator, layoutAppBar, null, 0, 1000, true);
+            }
+
+            @Override
+            public void requestDisallowInterceptTouchEventVertical(boolean disallow) {
+
+            }
+
+            @Override
+            public void requestDisallowInterceptTouchEventHorizontal(boolean disallow) {
+
+            }
         }, new AdapterLink.ViewHolderHeader.EventListener() {
             @Override
             public void onClickSubmit(Reddit.PostType postType) {
@@ -495,48 +529,7 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
 
             }
         }, mListener.getEventListenerBase(),
-                Source.SEARCH_LINKS,
-                disallowListener,
-                new RecyclerCallback() {
-                    @Override
-                    public int getRecyclerHeight() {
-                        return recyclerSearchLinks.getHeight();
-                    }
-
-                    @Override
-                    public RecyclerView.LayoutManager getLayoutManager() {
-                        return layoutManagerLinks;
-                    }
-
-                    @Override
-                    public void scrollTo(final int position) {
-                        UtilsAnimation.scrollToPositionWithCentering(position, recyclerSearchLinks, false);
-                    }
-
-                    @Override
-                    public void scrollAndCenter(int position, int height) {
-
-                    }
-
-                    @Override
-                    public void hideToolbar() {
-                        AppBarLayout.Behavior behaviorAppBar = (AppBarLayout.Behavior) ((CoordinatorLayout.LayoutParams) layoutAppBar.getLayoutParams()).getBehavior();
-                        behaviorAppBar.onNestedFling(layoutCoordinator, layoutAppBar, null, 0, 1000,
-                                true);
-                    }
-
-                    @Override
-                    public void clearDecoration() {
-                        AppBarLayout.Behavior behaviorAppBar = (AppBarLayout.Behavior) ((CoordinatorLayout.LayoutParams) layoutAppBar.getLayoutParams()).getBehavior();
-                        behaviorAppBar.onNestedFling(layoutCoordinator, layoutAppBar, null, 0, 1000, true);
-                    }
-
-                    @Override
-                    public RequestManager getRequestManager() {
-                        return getGlideRequestManager();
-                    }
-
-                });
+                Source.SEARCH_LINKS);
 
         adapterLinksSubreddit = new AdapterSearchLinkList(getActivity(), new ControllerLinksBase() {
             @Override
@@ -582,6 +575,38 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
                 controllerSearch.setNsfwLinksSubreddit(name, over18);
             }
 
+        }, new AdapterListener() {
+            @Override
+            public void requestMore() {
+
+            }
+
+            @Override
+            public void scrollAndCenter(int position, int height) {
+                UtilsAnimation.scrollToPositionWithCentering(position, recyclerSearchLinksSubreddit, false);
+            }
+
+            @Override
+            public void hideToolbar() {
+                AppBarLayout.Behavior behaviorAppBar = (AppBarLayout.Behavior) ((CoordinatorLayout.LayoutParams) layoutAppBar.getLayoutParams()).getBehavior();
+                behaviorAppBar.onNestedFling(layoutCoordinator, layoutAppBar, null, 0, 1000, true);
+            }
+
+            @Override
+            public void clearDecoration() {
+                AppBarLayout.Behavior behaviorAppBar = (AppBarLayout.Behavior) ((CoordinatorLayout.LayoutParams) layoutAppBar.getLayoutParams()).getBehavior();
+                behaviorAppBar.onNestedFling(layoutCoordinator, layoutAppBar, null, 0, 1000, true);
+            }
+
+            @Override
+            public void requestDisallowInterceptTouchEventVertical(boolean disallow) {
+
+            }
+
+            @Override
+            public void requestDisallowInterceptTouchEventHorizontal(boolean disallow) {
+
+            }
         }, new AdapterLink.ViewHolderHeader.EventListener() {
             @Override
             public void onClickSubmit(Reddit.PostType postType) {
@@ -593,47 +618,7 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
 
             }
         }, mListener.getEventListenerBase(),
-                Source.SEARCH_LINKS_SUBREDDIT,
-                disallowListener,
-                new RecyclerCallback() {
-                    @Override
-                    public int getRecyclerHeight() {
-                        return recyclerSearchLinksSubreddit.getHeight();
-                    }
-
-                    @Override
-                    public RecyclerView.LayoutManager getLayoutManager() {
-                        return layoutManagerLinksSubreddit;
-                    }
-
-                    @Override
-                    public void scrollTo(final int position) {
-                        UtilsAnimation.scrollToPositionWithCentering(position, recyclerSearchLinksSubreddit, false);
-                    }
-
-                    @Override
-                    public void scrollAndCenter(int position, int height) {
-
-                    }
-
-                    @Override
-                    public void hideToolbar() {
-                        AppBarLayout.Behavior behaviorAppBar = (AppBarLayout.Behavior) ((CoordinatorLayout.LayoutParams) layoutAppBar.getLayoutParams()).getBehavior();
-                        behaviorAppBar.onNestedFling(layoutCoordinator, layoutAppBar, null, 0, 1000, true);
-                    }
-
-                    @Override
-                    public void clearDecoration() {
-                        AppBarLayout.Behavior behaviorAppBar = (AppBarLayout.Behavior) ((CoordinatorLayout.LayoutParams) layoutAppBar.getLayoutParams()).getBehavior();
-                        behaviorAppBar.onNestedFling(layoutCoordinator, layoutAppBar, null, 0, 1000, true);
-                    }
-
-                    @Override
-                    public RequestManager getRequestManager() {
-                        return getGlideRequestManager();
-                    }
-
-                });
+                Source.SEARCH_LINKS_SUBREDDIT);
 
         layoutManagerLinks = new LinearLayoutManager(getActivity(), LinearLayoutManager.VERTICAL, false);
         recyclerSearchLinks = (RecyclerView) view.findViewById(R.id.recycler_search_links);

@@ -11,9 +11,7 @@ import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
 
 import com.bumptech.glide.Glide;
-import com.bumptech.glide.GlideBuilder;
 import com.bumptech.glide.RequestManager;
-import com.bumptech.glide.load.engine.cache.InternalCacheDiskCacheFactory;
 import com.jakewharton.picasso.OkHttp3Downloader;
 import com.squareup.picasso.Picasso;
 import com.winsonchiu.reader.BuildConfig;

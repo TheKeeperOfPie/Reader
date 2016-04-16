@@ -29,20 +29,18 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 
-import com.bumptech.glide.RequestManager;
 import com.winsonchiu.reader.ActivityMain;
 import com.winsonchiu.reader.CustomApplication;
 import com.winsonchiu.reader.FragmentBase;
 import com.winsonchiu.reader.FragmentListenerBase;
 import com.winsonchiu.reader.R;
+import com.winsonchiu.reader.adapter.AdapterListener;
 import com.winsonchiu.reader.data.reddit.Comment;
 import com.winsonchiu.reader.data.reddit.Link;
 import com.winsonchiu.reader.data.reddit.Sort;
 import com.winsonchiu.reader.utils.CallbackYouTubeDestruction;
 import com.winsonchiu.reader.utils.DisallowListener;
 import com.winsonchiu.reader.utils.LinearLayoutManagerWrapHeight;
-import com.winsonchiu.reader.utils.OnSizeChangedListener;
-import com.winsonchiu.reader.utils.RecyclerCallback;
 import com.winsonchiu.reader.utils.UtilsAnimation;
 import com.winsonchiu.reader.utils.YouTubeListener;
 import com.winsonchiu.reader.views.CustomFrameLayout;
@@ -316,25 +314,11 @@ public class FragmentCommentsInner extends FragmentBase {
         recyclerCommentList.setHasFixedSize(true);
         recyclerCommentList.setItemAnimator(null);
 
-        final RecyclerCallback recyclerCallback = new RecyclerCallback() {
-            @Override
-            public int getRecyclerHeight() {
-                return recyclerCommentList.getHeight();
-            }
-
-            @Override
-            public RecyclerView.LayoutManager getLayoutManager() {
-                return linearLayoutManager;
-            }
-
-            @Override
-            public void scrollTo(int position) {
-                linearLayoutManager.scrollToPositionWithOffset(position, 0);
-            }
+        AdapterListener adapterListenerComment = new AdapterListener() {
 
             @Override
             public void scrollAndCenter(int position, int height) {
-
+                linearLayoutManager.scrollToPositionWithOffset(position, 0);
             }
 
             @Override
@@ -348,17 +332,27 @@ public class FragmentCommentsInner extends FragmentBase {
             }
 
             @Override
-            public RequestManager getRequestManager() {
-                return getGlideRequestManager();
+            public void requestMore() {
+
+            }
+
+            @Override
+            public void requestDisallowInterceptTouchEventVertical(boolean disallow) {
+                recyclerCommentList.requestDisallowInterceptTouchEvent(disallow);
+                swipeRefreshCommentList.requestDisallowInterceptTouchEvent(disallow);
+            }
+
+            @Override
+            public void requestDisallowInterceptTouchEventHorizontal(boolean disallow) {
+
             }
         };
 
         adapterCommentList = new AdapterCommentList(getActivity(),
                 controllerComments,
+                adapterListenerComment,
                 mListener.getEventListenerBase(),
                 mListener.getEventListener(),
-                disallowListener,
-                recyclerCallback,
                 youTubeListener,
                 callbackYouTubeDestruction,
                 getArguments().getBoolean(ARG_IS_GRID, false),
@@ -380,48 +374,18 @@ public class FragmentCommentsInner extends FragmentBase {
         recyclerCommentList.setAdapter(adapterCommentList);
 
         layoutManagerLink = new LinearLayoutManagerWrapHeight(getActivity(), LinearLayoutManager.VERTICAL, false);
-        layoutManagerLink.setOnSizeChangedListener(new OnSizeChangedListener() {
-            @Override
-            public void onSizeChanged(int width, int height, int oldWidth, int oldHeight) {
-                if (postExpanded && targetExpandPostHeight == 0) {
-                    targetExpandPostHeight = height + heightExpandHandle;
-                    postExpanded = false;
-                    expandPost(true);
-                }
+        layoutManagerLink.setOnSizeChangedListener((width, height, oldWidth, oldHeight) -> {
+            if (postExpanded && targetExpandPostHeight == 0) {
+                targetExpandPostHeight = height + heightExpandHandle;
+                postExpanded = false;
+                expandPost(true);
             }
         });
 
-        final DisallowListener disallowListenerLink = new DisallowListener() {
-            @Override
-            public void requestDisallowInterceptTouchEventVertical(boolean disallow) {
-                recyclerLink.requestDisallowInterceptTouchEvent(disallow);
-            }
-
-            @Override
-            public void requestDisallowInterceptTouchEventHorizontal(boolean disallow) {
-
-            }
-        };
-
-        final RecyclerCallback recyclerCallbackLink = new RecyclerCallback() {
-            @Override
-            public int getRecyclerHeight() {
-                return recyclerCommentList.getHeight();
-            }
-
-            @Override
-            public RecyclerView.LayoutManager getLayoutManager() {
-                return layoutManagerLink;
-            }
-
-            @Override
-            public void scrollTo(int position) {
-                layoutManagerLink.scrollToPositionWithOffset(position, 0);
-            }
-
+        AdapterListener adapterListenerLink = new AdapterListener() {
             @Override
             public void scrollAndCenter(int position, int height) {
-
+                layoutManagerLink.scrollToPositionWithOffset(position, 0);
             }
 
             @Override
@@ -435,16 +399,26 @@ public class FragmentCommentsInner extends FragmentBase {
             }
 
             @Override
-            public RequestManager getRequestManager() {
-                return getGlideRequestManager();
+            public void requestMore() {
+
+            }
+
+            @Override
+            public void requestDisallowInterceptTouchEventVertical(boolean disallow) {
+                recyclerLink.requestDisallowInterceptTouchEvent(disallow);
+
+            }
+
+            @Override
+            public void requestDisallowInterceptTouchEventHorizontal(boolean disallow) {
+
             }
         };
 
         adapterLink = new AdapterLinkHeader(getActivity(),
                 controllerComments,
+                adapterListenerLink,
                 mListener.getEventListenerBase(),
-                disallowListenerLink,
-                recyclerCallbackLink,
                 youTubeListener,
                 callbackYouTubeDestruction,
                 getArguments().getBoolean(ARG_IS_GRID, false),
