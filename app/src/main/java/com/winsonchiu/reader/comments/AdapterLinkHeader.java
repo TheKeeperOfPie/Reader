@@ -21,7 +21,9 @@ import com.winsonchiu.reader.utils.AdapterBase;
 import com.winsonchiu.reader.utils.CallbackYouTubeDestruction;
 import com.winsonchiu.reader.utils.DisallowListener;
 import com.winsonchiu.reader.utils.RecyclerCallback;
+import com.winsonchiu.reader.utils.UtilsAnimation;
 import com.winsonchiu.reader.utils.UtilsReddit;
+import com.winsonchiu.reader.utils.UtilsView;
 import com.winsonchiu.reader.utils.YouTubeListener;
 
 /**
@@ -119,7 +121,7 @@ public class AdapterLinkHeader extends AdapterBase<AdapterLink.ViewHolderLink> i
                     }
                     if (animationFinished) {
                         if (!TextUtils.isEmpty(link.getSelfText())) {
-                            loadSelfText();
+                            UtilsAnimation.animateExpandHeight(textThreadSelf, UtilsView.getContentWidth(recyclerCallback.getLayoutManager()), 0, null);
                         }
                     }
                 }
@@ -131,15 +133,8 @@ public class AdapterLinkHeader extends AdapterBase<AdapterLink.ViewHolderLink> i
                 }
 
                 @Override
-                public void loadComments() {
+                public void onClickComments() {
                     controllerComments.loadLinkComments();
-                }
-
-                @Override
-                public void onClickThumbnail() {
-                    if (youTubeListener.hideYouTube()) {
-                        super.onClickThumbnail();
-                    }
                 }
 
                 @Override
@@ -179,7 +174,7 @@ public class AdapterLinkHeader extends AdapterBase<AdapterLink.ViewHolderLink> i
                     }
                     if (animationFinished) {
                         if (!TextUtils.isEmpty(link.getSelfText())) {
-                            loadSelfText();
+                            UtilsAnimation.animateExpandHeight(textThreadSelf, UtilsView.getContentWidth(recyclerCallback.getLayoutManager()), 0, null);
                         }
                     }
                 }
@@ -191,15 +186,8 @@ public class AdapterLinkHeader extends AdapterBase<AdapterLink.ViewHolderLink> i
                 }
 
                 @Override
-                public void loadComments() {
+                public void onClickComments() {
                     controllerComments.loadLinkComments();
-                }
-
-                @Override
-                public void onClickThumbnail() {
-                    if (youTubeListener.hideYouTube()) {
-                        super.onClickThumbnail();
-                    }
                 }
 
                 @Override

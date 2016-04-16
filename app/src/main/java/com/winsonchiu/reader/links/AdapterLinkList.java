@@ -106,16 +106,9 @@ public class AdapterLinkList extends AdapterLink {
                         destroySurfaceView();
                         imagePlay.setVisibility(View.VISIBLE);
                     }
-                    loadComments();
-                    break;
                 default:
                     super.onClick(v);
             }
-        }
-
-        @Override
-        public float getRatio() {
-            return 1f;
         }
 
         @Override

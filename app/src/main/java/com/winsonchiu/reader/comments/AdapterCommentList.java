@@ -35,7 +35,6 @@ import android.text.method.LinkMovementMethod;
 import android.text.style.ForegroundColorSpan;
 import android.text.util.Linkify;
 import android.util.DisplayMetrics;
-import android.util.Log;
 import android.util.TypedValue;
 import android.view.GestureDetector;
 import android.view.LayoutInflater;
@@ -72,6 +71,7 @@ import com.winsonchiu.reader.utils.RecyclerCallback;
 import com.winsonchiu.reader.utils.UtilsAnimation;
 import com.winsonchiu.reader.utils.UtilsInput;
 import com.winsonchiu.reader.utils.UtilsReddit;
+import com.winsonchiu.reader.utils.UtilsView;
 import com.winsonchiu.reader.utils.ViewHolderBase;
 import com.winsonchiu.reader.utils.YouTubeListener;
 
@@ -200,7 +200,7 @@ public class AdapterCommentList extends AdapterBase<RecyclerView.ViewHolder> imp
                         }
                         if (animationFinished) {
                             if (!TextUtils.isEmpty(link.getSelfText()) && textThreadSelf.getVisibility() != View.VISIBLE) {
-                                loadSelfText();
+                                UtilsAnimation.animateExpandHeight(textThreadSelf, UtilsView.getContentWidth(recyclerCallback.getLayoutManager()), 0, null);
                             }
                         }
                     }
@@ -217,15 +217,8 @@ public class AdapterCommentList extends AdapterBase<RecyclerView.ViewHolder> imp
                     }
 
                     @Override
-                    public void loadComments() {
+                    public void onClickComments() {
                         controllerComments.loadLinkComments();
-                    }
-
-                    @Override
-                    public void onClickThumbnail() {
-                        if (youTubeListener.hideYouTube()) {
-                            super.onClickThumbnail();
-                        }
                     }
 
                     @Override
@@ -266,7 +259,7 @@ public class AdapterCommentList extends AdapterBase<RecyclerView.ViewHolder> imp
                         }
                         if (animationFinished) {
                             if (!TextUtils.isEmpty(link.getSelfText()) && textThreadSelf.getVisibility() != View.VISIBLE) {
-                                loadSelfText();
+                                UtilsAnimation.animateExpandHeight(textThreadSelf, UtilsView.getContentWidth(recyclerCallback.getLayoutManager()), 0, null);
                             }
                         }
                     }
@@ -283,15 +276,8 @@ public class AdapterCommentList extends AdapterBase<RecyclerView.ViewHolder> imp
                     }
 
                     @Override
-                    public void loadComments() {
+                    public void onClickComments() {
                         controllerComments.loadLinkComments();
-                    }
-
-                    @Override
-                    public void onClickThumbnail() {
-                        if (youTubeListener.hideYouTube()) {
-                            super.onClickThumbnail();
-                        }
                     }
 
                     @Override
@@ -527,13 +513,13 @@ public class AdapterCommentList extends AdapterBase<RecyclerView.ViewHolder> imp
             this.disallowListener = disallowListener;
             this.recyclerCallback = recyclerCallback;
 
-            intiialize();
+            initialize();
             initializeToolbar();
             initializeListeners();
         }
 
-        private void intiialize() {
-
+        @SuppressWarnings("ResourceType")
+        private void initialize() {
             resources = itemView.getResources();
             preferences = PreferenceManager.getDefaultSharedPreferences(itemView.getContext());
             TypedArray typedArray = itemView.getContext().getTheme().obtainStyledAttributes(new int[] {R.attr.colorPrimary, android.R.attr.textColor, android.R.attr.textColorSecondary, R.attr.colorAccent, R.attr.colorIconFilter, R.attr.colorGold});

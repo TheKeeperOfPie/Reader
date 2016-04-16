@@ -137,6 +137,7 @@ import rx.Observable;
 import rx.Observer;
 import rx.Subscription;
 import rx.android.schedulers.AndroidSchedulers;
+import rx.schedulers.Schedulers;
 
 /**
  * Created by TheKeeperOfPie on 3/14/2015.
@@ -551,15 +552,21 @@ public abstract class AdapterLink extends AdapterBase<ViewHolderBase> implements
         protected void toggleToolbarActions() {
             setToolbarValues();
 
-            toolbarActions.post(() -> UtilsAnimation.animateExpand(layoutContainerExpand,
-                    getRatio(), null));
+            itemView.postOnAnimation(() -> {
+                if (toolbarActions.isShown()) {
+                    UtilsAnimation.animateCollapseHeight(layoutContainerExpand, 0, null);
+                }
+                else {
+                    UtilsAnimation.animateExpandHeight(layoutContainerExpand, itemView.getWidth(), 0, null);
+                }
+            });
         }
 
         public void showToolbarActionsInstant() {
             setToolbarValues();
 
             layoutContainerExpand.setVisibility(View.VISIBLE);
-            layoutContainerExpand.getLayoutParams().height = UtilsAnimation.getMeasuredHeight(layoutContainerExpand, getRatio());
+            layoutContainerExpand.getLayoutParams().height = ViewGroup.LayoutParams.WRAP_CONTENT;
             layoutContainerExpand.requestLayout();
         }
 
@@ -746,7 +753,7 @@ public abstract class AdapterLink extends AdapterBase<ViewHolderBase> implements
         public void onClick(View v) {
             switch (v.getId()) {
                 case R.id.button_comments:
-                    loadComments();
+                    onClickComments();
                     break;
                 case R.id.image_thumbnail:
                     onClickThumbnail();
@@ -933,70 +940,51 @@ public abstract class AdapterLink extends AdapterBase<ViewHolderBase> implements
             }
         }
 
-        public abstract float getRatio();
-
-        public void loadFull() {
-            recyclerCallback.hideToolbar();
-
-            addToHistory();
+        public void onClickComments() {
             clearOverlay();
 
-            // TODO: Toggle visibility of web and video views
-
-            String urlString = link.getUrl();
-            if (!TextUtils.isEmpty(urlString)) {
-                if (!checkLinkUrl()) {
-                    attemptLoadImage();
-                }
-            }
-        }
-
-        public void onClickThumbnail() {
-            if (!loadSelfText()) {
-                loadFull();
-            }
-        }
-
-        public void loadComments() {
             link.setYouTubeTime(youTubePlayer == null ? -1 : youTubePlayer.getCurrentTimeMillis());
 
-            callbackYouTubeDestruction.destroyYouTubePlayerFragments();
-            layoutYouTube.setVisibility(View.GONE);
-            addToHistory();
-            clearOverlay();
-            if (mediaPlayer != null) {
-                mediaPlayer.stop();
-            }
+            destroyYouTube();
+            destroySurfaceView();
 
             itemView.post(() -> eventListener.onClickComments(link, ViewHolderLink.this, source));
         }
 
-        /**
-         *
-         * @return true if link is self text, false otherwise
-         */
-        public boolean loadSelfText() {
-            addToHistory();
+        public void onClickThumbnail() {
             clearOverlay();
 
-            if (!link.isSelf()) {
-                return false;
+            if (youTubeListener != null && !youTubeListener.hideYouTube()) {
+                return;
             }
+            else if (link.isSelf()) {
+                if (TextUtils.isEmpty(link.getSelfText())) {
+                    onClickComments();
+                }
+                else {
+                    toggleSelfText();
+                }
+            }
+            else {
+                recyclerCallback.hideToolbar();
 
-            if (textThreadSelf.isShown()) {
-                textThreadSelf.setVisibility(View.GONE);
-                UtilsAnimation.animateCollapseHeight(textThreadSelf, 0, null);
+                String urlString = link.getUrl();
+                if (!TextUtils.isEmpty(urlString)) {
+                    if (!checkLinkUrl()) {
+                        attemptLoadImage();
+                    }
+                }
             }
-            else if (TextUtils.isEmpty(link.getSelfText())) {
-                loadComments();
+        }
+
+        public void toggleSelfText() {
+            if (textThreadSelf.isShown()) {
+                UtilsAnimation.animateCollapseHeight(textThreadSelf, 0, null);
             }
             else {
                 expandFull(true);
                 UtilsAnimation.animateExpandHeight(textThreadSelf, UtilsView.getContentWidth(recyclerCallback.getLayoutManager()), 0, null);
-                textThreadSelf.setVisibility(View.VISIBLE);
             }
-
-            return true;
         }
 
         public void addToHistory() {
@@ -1013,19 +1001,12 @@ public abstract class AdapterLink extends AdapterBase<ViewHolderBase> implements
 
             if (expand) {
                 ViewGroup.LayoutParams layoutParams = itemView.getLayoutParams();
-                if (layoutParams instanceof StaggeredGridLayoutManager.LayoutParams) {
-                    if (((StaggeredGridLayoutManager.LayoutParams) layoutParams).isFullSpan() && (layoutParams.width == ViewGroup.LayoutParams.WRAP_CONTENT || layoutParams.width == ViewGroup.LayoutParams.MATCH_PARENT)) {
-                        setToolbarMenuVisibility();
-                        return;
-                    }
-                }
-                else if (layoutParams.width == ViewGroup.LayoutParams.WRAP_CONTENT || layoutParams.width == ViewGroup.LayoutParams.MATCH_PARENT) {
+                if ((layoutParams.width == ViewGroup.LayoutParams.WRAP_CONTENT || layoutParams.width == ViewGroup.LayoutParams.MATCH_PARENT)
+                        && (!(layoutParams instanceof StaggeredGridLayoutManager.LayoutParams) || ((StaggeredGridLayoutManager.LayoutParams) layoutParams).isFullSpan())) {
                     setToolbarMenuVisibility();
                     return;
                 }
-            }
 
-            if (expand) {
                 float startX = itemView.getX() - recyclerCallback.getLayoutManager().getPaddingStart();
 
                 layoutInner.getLayoutParams().width = itemView.getWidth();
@@ -1046,12 +1027,12 @@ public abstract class AdapterLink extends AdapterBase<ViewHolderBase> implements
                 itemView.postOnAnimation(() -> {
                     Log.d(TAG, "run() called with with: " + layoutInner.getLayoutParams().width);
                     UtilsAnimation.animateExpandRecyclerItemView(layoutInner, layoutRoot, viewMaskStart, viewMaskEnd, targetWidth, 0, null);
+
+                    setToolbarMenuVisibility();
                 });
 
                 scrollToSelf();
             }
-
-            setToolbarMenuVisibility();
         }
 
         public void setVoteColors() {
@@ -1151,7 +1132,6 @@ public abstract class AdapterLink extends AdapterBase<ViewHolderBase> implements
         }
 
         public void attemptLoadImage() {
-            Log.d(TAG, "attemptLoadImage() called with: " + link.getUrl());
             if (UtilsImage.placeImageUrl(link)) {
                 imageFull.setVisibility(View.VISIBLE);
                 progressImage.setVisibility(View.VISIBLE);
@@ -1238,81 +1218,6 @@ public abstract class AdapterLink extends AdapterBase<ViewHolderBase> implements
             return false;
         }
 
-        public boolean loadYouTube() {
-
-            if (layoutYouTube.isShown()) {
-                hideYouTube();
-                return true;
-            }
-
-            if (youTubePlayer != null) {
-                layoutYouTube.setVisibility(View.VISIBLE);
-                return true;
-            }
-            /*
-                Regex taken from Gubatron at
-                http://stackoverflow.com/questions/24048308/how-to-get-the-video-id-from-a-youtube-url-with-regex-in-java
-            */
-            Pattern pattern = Pattern.compile(
-                    ".*(?:youtu.be/|v/|u/\\w/|embed/|watch\\?v=)([^#&\\?]*).*");
-            final Matcher matcher = pattern.matcher(link.getUrl());
-            if (matcher.matches()) {
-                int time = 0;
-                Uri uri = Uri.parse(link.getUrl());
-                String timeQuery = uri.getQueryParameter("t");
-                if (!TextUtils.isEmpty(timeQuery)) {
-                    try {
-                        // YouTube query provides time in seconds, but we need milliseconds
-                        time = Integer.parseInt(timeQuery) * 1000;
-                    }
-                    catch (NumberFormatException e) {
-                        time = 0;
-                    }
-                }
-
-                if (youTubeListener == null) {
-                    loadYouTubeVideo(matcher.group(1), time);
-                }
-                else {
-                    youTubeListener.loadYouTubeVideo(link, matcher.group(1), time);
-                }
-                return true;
-            }
-
-            return false;
-        }
-
-        private boolean loadGfycat() {
-            String gfycatId = Reddit.parseUrlId(link.getUrl(), Reddit.GFYCAT_PREFIX, ".");
-            progressImage.setVisibility(View.VISIBLE);
-
-            subscription = reddit.loadGfycat(gfycatId)
-                    .flatMap(UtilsRx.flatMapWrapError(response -> new JSONObject(response).getJSONObject(Reddit.GFYCAT_ITEM)))
-                    .subscribe(new FinalizingSubscriber<JSONObject>() {
-                        @Override
-                        public void error(Throwable e) {
-                            progressImage.setVisibility(View.GONE);
-                        }
-
-                        @Override
-                        public void next(JSONObject jsonObject) {
-                            try {
-                                loadVideo(jsonObject.getString(Reddit.GFYCAT_MP4),
-                                        (float) jsonObject.getInt(
-                                                "height") / jsonObject.getInt(
-                                                "width"));
-                            }
-                            catch (JSONException e) {
-                                error(e);
-                            }
-                        }
-                    });
-            return true;
-        }
-
-        /**
-         * @return true if Link loading has been handled, false otherwise
-         */
         private boolean loadImgur() {
             // TODO: Use regex or better parsing system
             if (link.getUrl().contains(Reddit.IMGUR_PREFIX_ALBUM)) {
@@ -1334,21 +1239,112 @@ public abstract class AdapterLink extends AdapterBase<ViewHolderBase> implements
             return true;
         }
 
+        private boolean loadGfycat() {
+            String gfycatId = Reddit.parseUrlId(link.getUrl(), Reddit.GFYCAT_PREFIX, ".");
+            progressImage.setVisibility(View.VISIBLE);
+
+            subscription = reddit.loadGfycat(gfycatId)
+                    .observeOn(Schedulers.computation())
+                    .flatMap(UtilsRx.flatMapWrapError(response -> new JSONObject(response).getJSONObject(Reddit.GFYCAT_ITEM)))
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .subscribe(new FinalizingSubscriber<JSONObject>() {
+
+                        @Override
+                        public void next(JSONObject jsonObject) {
+                            try {
+                                loadVideo(jsonObject.getString(Reddit.GFYCAT_MP4),
+                                        (float) jsonObject.getInt(
+                                                "height") / jsonObject.getInt(
+                                                "width"));
+                            }
+                            catch (JSONException e) {
+                                error(e);
+                            }
+                        }
+
+                        @Override
+                        public void finish() {
+                            progressImage.setVisibility(View.GONE);
+                        }
+                    });
+            return true;
+        }
+
+        public boolean loadYouTube() {
+
+            if (layoutYouTube.isShown()) {
+                hideYouTube();
+                return true;
+            }
+
+            if (youTubePlayer != null) {
+                layoutYouTube.setVisibility(View.VISIBLE);
+                return true;
+            }
+
+            Uri uri = Uri.parse(link.getUrl());
+            String host = uri.getHost();
+
+            if (host.equalsIgnoreCase("youtube.com")
+                    || host.equalsIgnoreCase("youtu.be")) {
+                String id = uri.getQueryParameter("v");
+                if (TextUtils.isEmpty(id)) {
+                    /*
+                        Regex taken from Gubatron at
+                        http://stackoverflow.com/questions/24048308/how-to-get-the-video-id-from-a-youtube-url-with-regex-in-java
+                    */
+                    Pattern pattern = Pattern.compile(".*(?:youtu.be/|v/|u/\\w/|embed/|watch\\?v=)([^#&\\?]*).*");
+                    final Matcher matcher = pattern.matcher(link.getUrl());
+
+                    if (matcher.matches()) {
+                        id = matcher.group(1);
+                    }
+                }
+
+                if (TextUtils.isEmpty(id)) {
+                    return false;
+                }
+
+                int time = 0;
+                String timeQuery = uri.getQueryParameter("t");
+                if (!TextUtils.isEmpty(timeQuery)) {
+                    try {
+                        // YouTube query provides time in seconds, but we need milliseconds
+                        time = Integer.parseInt(timeQuery) * 1000;
+                    }
+                    catch (NumberFormatException e) {
+                        time = 0;
+                    }
+                }
+
+                loadYouTubeVideo(id, time);
+                return true;
+            }
+
+            return false;
+        }
+
         private void loadGallery(String id, final Link link) {
             subscription = reddit.loadImgurGallery(id)
+                    .observeOn(Schedulers.computation())
                     .flatMap(UtilsRx.flatMapWrapError(response -> Album.fromJson(new JSONObject(response).getJSONObject("data"))))
+                    .observeOn(AndroidSchedulers.mainThread())
                     .subscribe(getObserverAlbum(link));
         }
 
         private void loadAlbum(String id, final Link link) {
             subscription = reddit.loadImgurAlbum(id)
+                    .observeOn(Schedulers.computation())
                     .flatMap(UtilsRx.flatMapWrapError(response -> Album.fromJson(new JSONObject(response).getJSONObject("data"))))
+                    .observeOn(AndroidSchedulers.mainThread())
                     .subscribe(getObserverAlbum(link));
         }
 
         private void loadGifv(String id) {
             reddit.loadImgurImage(id)
+                    .observeOn(Schedulers.computation())
                     .flatMap(UtilsRx.flatMapWrapError(response -> Image.fromJson(new JSONObject(response).getJSONObject("data"))))
+                    .observeOn(AndroidSchedulers.mainThread())
                     .subscribe(new FinalizingSubscriber<Image>() {
                         @Override
                         public void start() {
@@ -1358,12 +1354,10 @@ public abstract class AdapterLink extends AdapterBase<ViewHolderBase> implements
                         @Override
                         public void next(Image image) {
                             if (!TextUtils.isEmpty(image.getMp4())) {
-                                loadVideo(image.getMp4(),
-                                        (float) image.getHeight() / image.getWidth());
+                                loadVideo(image.getMp4(), (float) image.getHeight() / image.getWidth());
                             }
                             else if (!TextUtils.isEmpty(image.getWebm())) {
-                                loadVideo(image.getWebm(),
-                                        (float) image.getHeight() / image.getWidth());
+                                loadVideo(image.getWebm(), (float) image.getHeight() / image.getWidth());
                             }
                         }
 
@@ -1403,6 +1397,7 @@ public abstract class AdapterLink extends AdapterBase<ViewHolderBase> implements
             surfaceVideo.requestLayout();
             surfaceVideo.setVisibility(View.GONE);
             surfaceVideo.setVisibility(View.VISIBLE);
+
             surfaceHolder = surfaceVideo.getHolder();
             surfaceHolder.addCallback(ViewHolderLink.this);
             surfaceHolder.setSizeFromLayout();
@@ -1410,9 +1405,14 @@ public abstract class AdapterLink extends AdapterBase<ViewHolderBase> implements
         }
 
         public void loadYouTubeVideo(final String id, final int timeInMillis) {
+            if (youTubeListener != null) {
+                youTubeListener.loadYouTubeVideo(link, id, timeInMillis);
+                return;
+            }
+
             link.setYouTubeId(id);
             callbackYouTubeDestruction.destroyYouTubePlayerFragments();
-            layoutYouTube.postOnAnimationDelayed(() -> {
+            layoutYouTube.postOnAnimation(() -> {
                 youTubeFragment = new YouTubePlayerSupportFragment();
                 layoutYouTube.setId(youTubeViewId);
                 activity.getSupportFragmentManager()
@@ -1425,23 +1425,23 @@ public abstract class AdapterLink extends AdapterBase<ViewHolderBase> implements
                             public void onInitializationSuccess(YouTubePlayer.Provider provider,
                                     final YouTubePlayer youTubePlayer1,
                                     boolean b) {
-                                ViewHolderLink.this.youTubePlayer = youTubePlayer1;
-                                youTubePlayer1.setFullscreenControlFlags(
+                                youTubePlayer = youTubePlayer1;
+                                youTubePlayer.setFullscreenControlFlags(
                                         YouTubePlayer.FULLSCREEN_FLAG_CONTROL_SYSTEM_UI);
-                                youTubePlayer1.setManageAudioFocus(false);
-                                youTubePlayer1.setOnFullscreenListener(
+                                youTubePlayer.setManageAudioFocus(false);
+                                youTubePlayer.setOnFullscreenListener(
                                         fullscreen -> {
                                             isYouTubeFullscreen = fullscreen;
-                                            youTubePlayer1.setFullscreen(fullscreen);
+                                            youTubePlayer.setFullscreen(fullscreen);
                                         });
-                                youTubePlayer1.setPlayerStateChangeListener(new SimplePlayerStateChangeListener() {
+                                youTubePlayer.setPlayerStateChangeListener(new SimplePlayerStateChangeListener() {
                                     @Override
                                     public void onVideoStarted() {
-                                        youTubePlayer1.seekToMillis(timeInMillis);
-                                        youTubePlayer1.setPlayerStateChangeListener(new SimplePlayerStateChangeListener());
+                                        youTubePlayer.seekToMillis(timeInMillis);
+                                        youTubePlayer.setPlayerStateChangeListener(new SimplePlayerStateChangeListener());
                                     }
                                 });
-                                youTubePlayer1.loadVideo(id);
+                                youTubePlayer.loadVideo(id);
                                 layoutYouTube.setVisibility(View.VISIBLE);
                                 scrollToSelf();
                             }
@@ -1449,11 +1449,10 @@ public abstract class AdapterLink extends AdapterBase<ViewHolderBase> implements
                             @Override
                             public void onInitializationFailure(YouTubePlayer.Provider provider,
                                     YouTubeInitializationResult youTubeInitializationResult) {
-                                eventListener.toast(resources
-                                        .getString(R.string.error_youtube));
+                                eventListener.toast(resources.getString(R.string.error_youtube));
                             }
                         });
-            }, 150);
+            });
         }
 
         private void hideYouTube() {
@@ -1622,6 +1621,7 @@ public abstract class AdapterLink extends AdapterBase<ViewHolderBase> implements
         }
 
         public void clearOverlay() {
+            addToHistory();
             viewOverlay.setVisibility(View.GONE);
         }
 

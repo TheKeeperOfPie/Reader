@@ -14,7 +14,6 @@ import com.winsonchiu.reader.links.AdapterLinkList;
 import com.winsonchiu.reader.links.ControllerLinksBase;
 import com.winsonchiu.reader.utils.DisallowListener;
 import com.winsonchiu.reader.utils.RecyclerCallback;
-import com.winsonchiu.reader.utils.UtilsInput;
 import com.winsonchiu.reader.utils.ViewHolderBase;
 
 /**
@@ -51,12 +50,6 @@ public class AdapterSearchLinkList extends AdapterLinkList {
                 source,
                 disallowListener,
                 recyclerCallback,
-                this) {
-            @Override
-            public void onClickThumbnail() {
-                UtilsInput.hideKeyboard(itemView);
-                super.onClickThumbnail();
-            }
-        };
+                this);
     }
 }

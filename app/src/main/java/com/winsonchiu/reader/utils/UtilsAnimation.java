@@ -35,12 +35,15 @@ import java.util.List;
  */
 public class UtilsAnimation {
 
+    public static final String TAG = UtilsAnimation.class.getCanonicalName();
+
     public static final int SNACKBAR_DURATION = 2000;
     public static final long EXPAND_ACTION_DURATION = 150;
     public static final long ALPHA_DURATION = 500;
     public static final long BACKGROUND_DURATION = 500;
 
-    private static final String TAG = UtilsAnimation.class.getCanonicalName();
+    private static final double ANIMATION_MIN_DURATION = 150;
+    private static final double ANIMATION_MAX_DURATION = 1000;
 
     public static ValueAnimator animateBackgroundColor(final View view, final int start, final int end) {
 
@@ -507,7 +510,7 @@ public class UtilsAnimation {
         }
         view.setVisibility(View.VISIBLE);
 
-        animationExpand.setDuration(duration > 0 ? duration : (long) ((targetHeight - startHeight) / speed * 2));
+        animationExpand.setDuration(duration > 0 ? duration : calculateDuration(targetHeight - startHeight, speed));
 
         return animationExpand;
     }
@@ -592,11 +595,15 @@ public class UtilsAnimation {
             }
         });
 
-        animationCollapse.setDuration(duration > 0 ? duration : (long) (height / speed * 2));
+        animationCollapse.setDuration(duration > 0 ? duration : calculateDuration(height, speed));
 
         view.setVisibility(View.VISIBLE);
 
         return animationCollapse;
+    }
+
+    private static long calculateDuration(int height, float speed) {
+        return (long) Math.max(0, Math.min(Math.max(height / speed * 2, ANIMATION_MIN_DURATION), ANIMATION_MAX_DURATION));
     }
 
     public static int getMeasuredHeightWithWidth(View view, int width) {

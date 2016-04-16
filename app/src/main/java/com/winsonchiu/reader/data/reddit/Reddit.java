@@ -46,8 +46,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import javax.inject.Inject;
 
 import okhttp3.Authenticator;
-import okhttp3.Call;
-import okhttp3.Callback;
 import okhttp3.FormBody;
 import okhttp3.Interceptor;
 import okhttp3.OkHttpClient;
@@ -59,7 +57,6 @@ import okhttp3.logging.HttpLoggingInterceptor;
 import retrofit2.Retrofit;
 import retrofit2.adapter.rxjava.RxJavaCallAdapterFactory;
 import rx.Observable;
-import rx.Subscriber;
 import rx.android.schedulers.AndroidSchedulers;
 import rx.schedulers.Schedulers;
 
@@ -525,28 +522,10 @@ public class Reddit {
     }
 
     public Observable<String> load(final okhttp3.Request request) {
-        return Observable.create(new Observable.OnSubscribe<String>() {
-            @Override
-            public void call(final Subscriber<? super String> subscriber) {
-                okHttpClient.newCall(request).enqueue(new Callback() {
-                    @Override
-                    public void onFailure(Call call, IOException e) {
-                        subscriber.onError(e);
-                    }
+        return Observable.fromCallable(() -> {
+            Response response = okHttpClient.newCall(request).execute();
 
-                    @Override
-                    public void onResponse(Call call, Response response) throws IOException {
-                        if (response.body() == null) {
-                            subscriber.onError(new IOException("Response body null"));
-                        }
-                        else {
-                            subscriber.onNext(response.body().string());
-                            subscriber.onCompleted();
-                        }
-                    }
-                });
-
-            }
+            return response.body().string();
         })
                 .compose(TRANSFORMER);
     }

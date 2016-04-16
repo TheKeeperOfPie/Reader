@@ -179,11 +179,9 @@ public class AdapterLinkGrid extends AdapterLink {
 
                 if (link.isSelf()) {
                     attemptLoadImageSelfPost();
-                    loadSelfText();
                 }
-                else {
-                    loadFull();
-                }
+
+                onClickThumbnail();
             });
         }
 
@@ -196,8 +194,6 @@ public class AdapterLinkGrid extends AdapterLink {
                         imageSquare.setVisibility(View.VISIBLE);
                         imagePlay.setVisibility(View.VISIBLE);
                     }
-                    loadComments();
-                    break;
                 default:
                     super.onClick(v);
             }
@@ -717,19 +713,6 @@ public class AdapterLinkGrid extends AdapterLink {
                 ImageView imageOverflow = (ImageView) views.get(0);
                 imageOverflow.setColorFilter(colorFilterMenuItem);
             }
-        }
-
-        @Override
-        public float getRatio() {
-            if (itemView.getLayoutParams() instanceof StaggeredGridLayoutManager.LayoutParams) {
-                float width = itemView.getResources().getDisplayMetrics().widthPixels;
-
-                return ((StaggeredGridLayoutManager.LayoutParams) itemView.getLayoutParams())
-                        .isFullSpan() ?
-                        1f : itemView.getWidth() / width;
-            }
-
-            return 1f;
         }
 
         @Override
