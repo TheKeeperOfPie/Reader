@@ -1,4 +1,4 @@
-<RelativeLayout
+<android.support.design.widget.CoordinatorLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -9,30 +9,43 @@
     tools:context="com.winsonchiu.reader.auth.ActivityLogin"
     >
 
-    <android.support.v7.widget.Toolbar
-        android:id="@+id/toolbar"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_alignParentTop="true"
-        android:background="?attr/colorPrimary"
-        app:layout_scrollFlags="scroll|enterAlways"
-        />
-
-    <WebView
-        android:id="@+id/web_auth"
+    <android.support.v4.widget.NestedScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_below="@id/toolbar"
-        />
+        app:layout_behavior="@string/appbar_scrolling_view_behavior"
+        >
+        
+        <WebView
+            android:id="@+id/web_auth"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            />
 
-    <ProgressBar
-        style="?android:attr/progressBarStyleHorizontal"
-        android:id="@+id/progress_auth"
+    </android.support.v4.widget.NestedScrollView>
+
+    <android.support.design.widget.AppBarLayout
+        android:id="@+id/layout_app_bar"
         android:layout_width="match_parent"
-        android:layout_height="6dp"
-        android:layout_below="@+id/toolbar"
-        android:background="@android:color/transparent"
-        android:progressDrawable="@drawable/progress_horizontal"
-        />
+        android:layout_height="wrap_content"
+        >
 
-</RelativeLayout>
+        <include
+            layout="@layout/toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="?attr/colorPrimary"
+            app:layout_scrollFlags="scroll|enterAlways"
+            />
+
+        <ProgressBar
+            style="?android:attr/progressBarStyleHorizontal"
+            android:id="@+id/progress_auth"
+            android:layout_width="match_parent"
+            android:layout_height="6dp"
+            android:background="@android:color/transparent"
+            android:progressDrawable="@drawable/progress_horizontal"
+            />
+
+    </android.support.design.widget.AppBarLayout>
+
+</android.support.design.widget.CoordinatorLayout>

@@ -6,6 +6,7 @@
     </CLASSES>
     <JAVADOC />
     <SOURCES>
+      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/com.jakewharton/butterknife/8.0.0-SNAPSHOT/5fa39f06549de06e9b071c486c3f4556641d23cc/butterknife-8.0.0-SNAPSHOT-sources.jar!/" />
       <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/com.jakewharton/butterknife/8.0.0-SNAPSHOT/d78e1cf0fc4ab2d4e2027f0431cbd2d15a296521/butterknife-8.0.0-SNAPSHOT-sources.jar!/" />
     </SOURCES>
   </library>

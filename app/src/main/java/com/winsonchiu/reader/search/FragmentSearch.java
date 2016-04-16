@@ -488,7 +488,8 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
         }, new AdapterListener() {
             @Override
             public void requestMore() {
-
+                controllerSearch.loadMoreLinks()
+                        .subscribe(getReloadObserver());
             }
 
             @Override
@@ -578,7 +579,8 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
         }, new AdapterListener() {
             @Override
             public void requestMore() {
-
+                controllerSearch.loadMoreLinksSubreddit()
+                        .subscribe(getReloadObserver());
             }
 
             @Override

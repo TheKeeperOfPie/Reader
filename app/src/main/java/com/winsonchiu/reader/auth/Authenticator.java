@@ -55,8 +55,13 @@ public class Authenticator extends AbstractAccountAuthenticator {
         intent.putExtra(ActivityLogin.KEY_IS_NEW_ACCOUNT, true);
         intent.putExtra(AccountManager.KEY_ACCOUNT_AUTHENTICATOR_RESPONSE, response);
 
+//        Intent intent = new Intent(Intent.ACTION_VIEW, UtilsReddit.getUserAuthUri(UUID.randomUUID()));
+//        intent.putExtra(AccountManager.KEY_ACCOUNT_AUTHENTICATOR_RESPONSE, response);
+
         Bundle bundle = new Bundle();
         bundle.putParcelable(AccountManager.KEY_INTENT, intent);
+
+        CustomApplication.getApplication().sendBroadcast(intent);
 
         return bundle;
     }
@@ -127,6 +132,9 @@ public class Authenticator extends AbstractAccountAuthenticator {
         Intent intent = new Intent(context, ActivityLogin.class);
         intent.putExtra(ActivityLogin.KEY_IS_NEW_ACCOUNT, true);
         intent.putExtra(AccountManager.KEY_ACCOUNT_AUTHENTICATOR_RESPONSE, response);
+
+//        Intent intent = new Intent(Intent.ACTION_VIEW, UtilsReddit.getUserAuthUri(UUID.randomUUID()));
+//        intent.putExtra(AccountManager.KEY_ACCOUNT_AUTHENTICATOR_RESPONSE, response);
 
         Bundle bundle = new Bundle();
         bundle.putParcelable(AccountManager.KEY_INTENT, intent);

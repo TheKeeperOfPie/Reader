@@ -27,7 +27,6 @@ import com.winsonchiu.reader.data.reddit.Thing;
 import com.winsonchiu.reader.data.reddit.User;
 import com.winsonchiu.reader.links.AdapterLink;
 import com.winsonchiu.reader.links.AdapterLinkList;
-import com.winsonchiu.reader.links.ControllerLinksBase;
 import com.winsonchiu.reader.utils.CallbackYouTubeDestruction;
 import com.winsonchiu.reader.utils.ViewHolderBase;
 
@@ -44,7 +43,6 @@ public class AdapterProfile extends AdapterBase<RecyclerView.ViewHolder> impleme
     private FragmentActivity activity;
     private AdapterListener adapterListener;
     protected ControllerProfile controllerProfile;
-    protected ControllerLinksBase controllerLinks;
     private AdapterLink.ViewHolderLink.EventListener eventListenerBase;
     private AdapterCommentList.ViewHolderComment.EventListenerComment eventListenerComment;
     private final AdapterCommentList.ViewHolderComment.EventListener eventListener;
@@ -53,7 +51,6 @@ public class AdapterProfile extends AdapterBase<RecyclerView.ViewHolder> impleme
 
     public AdapterProfile(FragmentActivity activity,
             ControllerProfile controllerProfile,
-            ControllerLinksBase controllerLinks,
             AdapterListener adapterListener,
             AdapterLink.ViewHolderLink.EventListener eventListenerBase,
             AdapterCommentList.ViewHolderComment.EventListenerComment eventListenerComment,
@@ -66,7 +63,6 @@ public class AdapterProfile extends AdapterBase<RecyclerView.ViewHolder> impleme
         this.eventListener = eventListener;
         this.listener = listener;
         this.controllerProfile = controllerProfile;
-        this.controllerLinks = controllerLinks;
         viewHolders = new ArrayList<>();
     }
     @Override
@@ -161,7 +157,7 @@ public class AdapterProfile extends AdapterBase<RecyclerView.ViewHolder> impleme
                 if (holder.getItemViewType() == ControllerProfile.VIEW_TYPE_LINK) {
                     AdapterLinkList.ViewHolder viewHolderLinkTop = (AdapterLinkList.ViewHolder) holder;
                     viewHolderLinkTop.onRecycle();
-                    viewHolderLinkTop.onBind(controllerProfile.getTopLink(), controllerLinks.showSubreddit());
+                    viewHolderLinkTop.onBind(controllerProfile.getTopLink(), true);
                 }
                 else {
                     ViewHolderText viewHolderText = (ViewHolderText) holder;
@@ -195,7 +191,7 @@ public class AdapterProfile extends AdapterBase<RecyclerView.ViewHolder> impleme
                 if (holder instanceof AdapterLinkList.ViewHolder) {
 
                     AdapterLinkList.ViewHolder viewHolderLink = (AdapterLinkList.ViewHolder) holder;
-                    viewHolderLink.onBind(controllerProfile.getLink(position), controllerLinks.showSubreddit());
+                    viewHolderLink.onBind(controllerProfile.getLink(position), true);
 
                 }
                 else if (holder instanceof AdapterCommentList.ViewHolderComment) {

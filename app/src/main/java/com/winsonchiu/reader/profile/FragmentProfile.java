@@ -56,8 +56,8 @@ import com.winsonchiu.reader.data.reddit.Sort;
 import com.winsonchiu.reader.data.reddit.Thing;
 import com.winsonchiu.reader.data.reddit.Time;
 import com.winsonchiu.reader.data.reddit.User;
-import com.winsonchiu.reader.links.ControllerLinks;
 import com.winsonchiu.reader.rx.FinalizingSubscriber;
+import com.winsonchiu.reader.rx.ObserverError;
 import com.winsonchiu.reader.theme.ThemeWrapper;
 import com.winsonchiu.reader.utils.CustomColorFilter;
 import com.winsonchiu.reader.utils.CustomItemTouchHelper;
@@ -69,6 +69,7 @@ import javax.inject.Inject;
 
 import rx.Observable;
 import rx.Observer;
+import rx.android.schedulers.AndroidSchedulers;
 
 public class FragmentProfile extends FragmentBase implements Toolbar.OnMenuItemClickListener {
 
@@ -95,7 +96,6 @@ public class FragmentProfile extends FragmentBase implements Toolbar.OnMenuItemC
     private View view;
     private CustomColorFilter colorFilterPrimary;
 
-    @Inject ControllerLinks controllerLinks;
     @Inject ControllerUser controllerUser;
     @Inject ControllerProfile controllerProfile;
 
@@ -216,8 +216,7 @@ public class FragmentProfile extends FragmentBase implements Toolbar.OnMenuItemC
                 menu.findItem(time.getMenuId()).setChecked(true);
                 itemSortTime.setTitle(
                         getString(R.string.time) + Reddit.TIME_SEPARATOR + menu
-                                .findItem(controllerLinks
-                                        .getTime().getMenuId()).toString());
+                                .findItem(controllerProfile.getTime().getMenuId()).toString());
             }
 
             @Override
@@ -365,7 +364,14 @@ public class FragmentProfile extends FragmentBase implements Toolbar.OnMenuItemC
 
             @Override
             public void requestMore() {
-
+                controllerProfile.loadMoreLinks()
+                        .observeOn(AndroidSchedulers.mainThread())
+                        .subscribe(new ObserverError<Listing>() {
+                            @Override
+                            public void onError(Throwable e) {
+                                Toast.makeText(getContext(), getString(R.string.error_loading_links), Toast.LENGTH_SHORT).show();
+                            }
+                        });
             }
 
             @Override
@@ -384,7 +390,6 @@ public class FragmentProfile extends FragmentBase implements Toolbar.OnMenuItemC
         if (adapterProfile == null) {
             adapterProfile = new AdapterProfile(getActivity(),
                     controllerProfile,
-                    controllerLinks,
                     adapterListener,
                     mListener.getEventListenerBase(),
                     new AdapterCommentList.ViewHolderComment.EventListenerComment() {

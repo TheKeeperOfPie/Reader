@@ -57,6 +57,8 @@ import com.winsonchiu.reader.FragmentListenerBase;
 import com.winsonchiu.reader.FragmentNewPost;
 import com.winsonchiu.reader.R;
 import com.winsonchiu.reader.adapter.AdapterListener;
+import com.winsonchiu.reader.adapter.AdapterNotifySubscriber;
+import com.winsonchiu.reader.adapter.RxAdapterEvent;
 import com.winsonchiu.reader.data.reddit.Link;
 import com.winsonchiu.reader.data.reddit.Listing;
 import com.winsonchiu.reader.data.reddit.Reddit;
@@ -78,10 +80,16 @@ import com.winsonchiu.reader.utils.ScrollAwareFloatingActionButtonBehavior;
 import com.winsonchiu.reader.utils.UtilsAnimation;
 import com.winsonchiu.reader.utils.UtilsColor;
 import com.winsonchiu.reader.utils.UtilsReddit;
+import com.winsonchiu.reader.utils.UtilsRx;
+
+import java.util.List;
 
 import javax.inject.Inject;
 
+import rx.Observable;
+import rx.Subscription;
 import rx.android.schedulers.AndroidSchedulers;
+import rx.schedulers.Schedulers;
 
 public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuItemClickListener {
 
@@ -111,7 +119,6 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
     private CoordinatorLayout layoutCoordinator;
     private AppBarLayout layoutAppBar;
     private AdapterLink.ViewHolderHeader.EventListener eventListenerHeader;
-    private ControllerLinks.Listener listenerLinks;
     private ControllerUser.Listener listenerUser;
     private Snackbar snackbar;
     private CustomItemTouchHelper itemTouchHelper;
@@ -126,6 +133,13 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
     private CustomColorFilter colorFilterAccent;
     private ItemDecorationDivider itemDecorationDivider;
     private boolean isFinished;
+
+    private Subscription subscriptionData;
+    private Subscription subscriptionLoading;
+    private Subscription subscriptionSort;
+    private Subscription subscriptionTime;
+    private Subscription subscriptionTitle;
+    private Subscription subscriptionSubreddit;
 
     @Inject Historian historian;
     @Inject ControllerLinks controllerLinks;
@@ -646,80 +660,6 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
             }
         };
 
-        listenerLinks = new ControllerLinks.Listener() {
-
-            @Override
-            public void setSortAndTime(Sort sort, Time time) {
-                menu.findItem(sort.getMenuId()).setChecked(true);
-                menu.findItem(time.getMenuId()).setChecked(true);
-                itemSortTime.setTitle(
-                        getString(R.string.time) + Reddit.TIME_SEPARATOR + menu
-                                .findItem(time.getMenuId()).toString());
-            }
-
-            @Override
-            public void showEmptyView(boolean isEmpty) {
-                textEmpty.setVisibility(isEmpty ? View.VISIBLE : View.GONE);
-            }
-
-            @Override
-            public void loadSideBar(Subreddit subreddit) {
-                if (subreddit.getUrl().equals("/") || "/r/all/"
-                        .equalsIgnoreCase(subreddit.getUrl())) {
-                    drawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED,
-                            GravityCompat.END);
-                    return;
-                }
-
-                drawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED, GravityCompat.END);
-                textSidebar.setText(UtilsReddit.getFormattedHtml(subreddit.getDescriptionHtml()));
-                drawerLayout.setDrawerLockMode(
-                        DrawerLayout.LOCK_MODE_UNLOCKED);
-                if (subreddit.isUserIsSubscriber()) {
-                    buttonSubscribe.setText(R.string.unsubscribe);
-                }
-                else {
-                    buttonSubscribe.setText(R.string.subscribe);
-                }
-                buttonSubscribe.setVisibility(controllerUser.hasUser() ? View.VISIBLE : View.GONE);
-            }
-
-            @Override
-            public void scrollTo(int position) {
-                scrollToPositionWithOffset(position, 0);
-            }
-
-            @Override
-            public void setSubscribed(boolean subscribed) {
-                if (subscribed) {
-                    buttonSubscribe.setText(R.string.unsubscribe);
-                }
-                else {
-                    buttonSubscribe.setText(R.string.subscribe);
-                }
-            }
-
-            @Override
-            public void post(Runnable runnable) {
-                recyclerThreadList.post(runnable);
-            }
-
-            @Override
-            public RecyclerView.Adapter getAdapter() {
-                return adapterLink;
-            }
-
-            @Override
-            public void setToolbarTitle(CharSequence title) {
-                toolbar.setTitle(title);
-            }
-
-            @Override
-            public void setRefreshing(boolean refreshing) {
-                swipeRefreshThreadList.setRefreshing(refreshing);
-            }
-        };
-
         listenerUser = new ControllerUser.Listener() {
             @Override
             public void onUserLoaded(@Nullable User user) {
@@ -867,13 +807,66 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
     @Override
     public void onResume() {
         super.onResume();
-        controllerLinks.addListener(listenerLinks);
+        ControllerLinks.EventHolder eventHolder = controllerLinks.getEventHolder();
+        subscriptionData = eventHolder.getData()
+                .observeOn(Schedulers.computation())
+                .flatMap(event -> Observable.from(event.getData())
+                        .ofType(Link.class)
+                        .toList()
+                        .map(links -> new RxAdapterEvent<>(links, event.getType(), event.getPositionStart(), event.getSize(), event.getPayload())))
+                .observeOn(AndroidSchedulers.mainThread())
+                .doOnNext(new AdapterNotifySubscriber<List<Link>, AdapterLink>(adapterLinkGrid))
+                .doOnNext(new AdapterNotifySubscriber<List<Link>, AdapterLink>(adapterLinkList))
+                .map(event -> event.getData().isEmpty())
+                .subscribe(empty -> textEmpty.setVisibility(empty ? View.VISIBLE : View.GONE));
+
+        subscriptionLoading = eventHolder.getLoading()
+                .subscribe(swipeRefreshThreadList::setRefreshing);
+
+        subscriptionSort = eventHolder.getSort()
+                .subscribe(sort -> menu.findItem(sort.getMenuId()).setChecked(true));
+
+        subscriptionTime = eventHolder.getTime()
+                .subscribe(time -> {
+                    menu.findItem(time.getMenuId()).setChecked(true);
+                    itemSortTime.setTitle(getString(R.string.time) + Reddit.TIME_SEPARATOR + menu.findItem(time.getMenuId()).toString());
+                });
+
+        subscriptionTitle = eventHolder.getTitle()
+                .subscribe(title -> toolbar.setTitle(title));
+
+        subscriptionSubreddit = eventHolder.getSubreddit()
+                .subscribe(subreddit -> {
+                    if (subreddit.getUrl().equals("/") || "/r/all/"
+                            .equalsIgnoreCase(subreddit.getUrl())) {
+                        drawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED,
+                                GravityCompat.END);
+                        return;
+                    }
+
+                    drawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED, GravityCompat.END);
+                    textSidebar.setText(UtilsReddit.getFormattedHtml(subreddit.getDescriptionHtml()));
+
+                    if (subreddit.isUserIsSubscriber()) {
+                        buttonSubscribe.setText(R.string.unsubscribe);
+                    }
+                    else {
+                        buttonSubscribe.setText(R.string.subscribe);
+                    }
+                    buttonSubscribe.setVisibility(controllerUser.hasUser() ? View.VISIBLE : View.GONE);
+                });
+
         controllerUser.addListener(listenerUser);
     }
 
     @Override
     public void onPause() {
-        controllerLinks.removeListener(listenerLinks);
+        UtilsRx.unsubscribe(subscriptionData);
+        UtilsRx.unsubscribe(subscriptionLoading);
+        UtilsRx.unsubscribe(subscriptionSort);
+        UtilsRx.unsubscribe(subscriptionTime);
+        UtilsRx.unsubscribe(subscriptionTitle);
+        UtilsRx.unsubscribe(subscriptionSubreddit);
         controllerUser.removeListener(listenerUser);
         super.onPause();
     }

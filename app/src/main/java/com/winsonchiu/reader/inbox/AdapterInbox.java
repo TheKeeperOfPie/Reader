@@ -65,7 +65,8 @@ public class AdapterInbox extends AdapterBase<RecyclerView.ViewHolder> {
     private AdapterCommentList.ViewHolderComment.EventListenerComment eventListenerComment;
     private AdapterCommentList.ViewHolderComment.EventListener eventListener;
     private ControllerProfile.Listener listener;
-    private List<RecyclerView.ViewHolder> viewHolders;
+
+    private List<RecyclerView.ViewHolder> viewHolders = new ArrayList<>();
 
     public AdapterInbox(ControllerInbox controllerInbox,
             AdapterListener adapterListener,
@@ -79,7 +80,7 @@ public class AdapterInbox extends AdapterBase<RecyclerView.ViewHolder> {
         this.eventListenerComment = eventListenerComment;
         this.eventListener = eventListener;
         this.listener = listener;
-        this.viewHolders = new ArrayList<>();
+        setAdapterLoadMoreListener(adapterListener);
     }
 
     @Override
@@ -118,10 +119,6 @@ public class AdapterInbox extends AdapterBase<RecyclerView.ViewHolder> {
     @Override
     public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
         super.onBindViewHolder(holder, position);
-
-        if (!controllerInbox.isLoading() && position > controllerInbox.getItemCount() - 5) {
-            controllerInbox.loadMore();
-        }
 
         switch (holder.getItemViewType()) {
             case ControllerInbox.VIEW_TYPE_MESSAGE:

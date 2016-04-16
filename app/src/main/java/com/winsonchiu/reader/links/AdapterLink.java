@@ -59,7 +59,6 @@ import android.widget.MediaController;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.Priority;
@@ -72,18 +71,17 @@ import com.squareup.picasso.Picasso;
 import com.winsonchiu.reader.ActivityMain;
 import com.winsonchiu.reader.ApiKeys;
 import com.winsonchiu.reader.AppSettings;
-import com.winsonchiu.reader.ControllerUser;
 import com.winsonchiu.reader.CustomApplication;
 import com.winsonchiu.reader.R;
 import com.winsonchiu.reader.adapter.AdapterBase;
 import com.winsonchiu.reader.adapter.AdapterCallback;
+import com.winsonchiu.reader.adapter.AdapterDataListener;
 import com.winsonchiu.reader.adapter.AdapterListener;
 import com.winsonchiu.reader.comments.Source;
 import com.winsonchiu.reader.data.imgur.Album;
 import com.winsonchiu.reader.data.imgur.Image;
 import com.winsonchiu.reader.data.reddit.Comment;
 import com.winsonchiu.reader.data.reddit.Link;
-import com.winsonchiu.reader.data.reddit.Listing;
 import com.winsonchiu.reader.data.reddit.Reddit;
 import com.winsonchiu.reader.data.reddit.Replyable;
 import com.winsonchiu.reader.data.reddit.Subreddit;
@@ -93,7 +91,6 @@ import com.winsonchiu.reader.glide.RequestListenerCompletion;
 import com.winsonchiu.reader.history.Historian;
 import com.winsonchiu.reader.rx.FinalizingSubscriber;
 import com.winsonchiu.reader.rx.ObserverEmpty;
-import com.winsonchiu.reader.rx.ObserverError;
 import com.winsonchiu.reader.utils.BaseMediaPlayerControl;
 import com.winsonchiu.reader.utils.BaseTextWatcher;
 import com.winsonchiu.reader.utils.CallbackYouTubeDestruction;
@@ -142,7 +139,7 @@ import rx.schedulers.Schedulers;
 /**
  * Created by TheKeeperOfPie on 3/14/2015.
  */
-public abstract class AdapterLink extends AdapterBase<ViewHolderBase> implements CallbackYouTubeDestruction {
+public abstract class AdapterLink extends AdapterBase<ViewHolderBase> implements CallbackYouTubeDestruction, AdapterDataListener<List<Link>> {
 
     public static final int TYPE_HEADER = 0;
     public static final int TYPE_LINK = 1;
@@ -158,10 +155,10 @@ public abstract class AdapterLink extends AdapterBase<ViewHolderBase> implements
     protected ControllerLinksBase controllerLinks;
     protected List<ViewHolderBase> viewHolders;
 
+    protected List<Link> data = new ArrayList<>();
+
     protected ViewHolderHeader.EventListener eventListenerHeader;
     protected ViewHolderLink.EventListener eventListenerBase;
-
-    @Inject ControllerUser controllerUser;
 
     public AdapterLink(FragmentActivity activity,
             AdapterListener adapterListener,
@@ -186,6 +183,11 @@ public abstract class AdapterLink extends AdapterBase<ViewHolderBase> implements
         this.controllerLinks = controllerLinks;
     }
 
+    public void setData(List<Link> data) {
+        this.data.clear();
+        this.data.addAll(data);
+    }
+
     public LayoutManager getLayoutManager() {
         return layoutManager;
     }
@@ -197,23 +199,13 @@ public abstract class AdapterLink extends AdapterBase<ViewHolderBase> implements
 
     @Override
     public int getItemCount() {
-        return controllerLinks.sizeLinks() + 1;
+        return data.size() + 1;
     }
 
     @Override
     @CallSuper
     public void onBindViewHolder(ViewHolderBase holder, int position) {
         super.onBindViewHolder(holder, position);
-        if (!controllerLinks.isLoading() && position > controllerLinks.sizeLinks() - 5) {
-            controllerLinks.loadMoreLinks()
-                    .observeOn(AndroidSchedulers.mainThread())
-                    .subscribe(new ObserverError<Listing>() {
-                        @Override
-                        public void onError(Throwable e) {
-                            Toast.makeText(activity, activity.getString(R.string.error_loading_links), Toast.LENGTH_SHORT).show();
-                        }
-                    });
-        }
         Reddit.incrementBind();
         viewHolders.add(holder);
     }

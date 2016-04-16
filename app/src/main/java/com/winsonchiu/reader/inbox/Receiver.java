@@ -49,7 +49,7 @@ import okhttp3.Request;
  */
 public class Receiver extends BroadcastReceiver {
 
-    public static final String INTENT_INBOX = "com.winsonchiu.reader.inbox.Receiver.INTENT_INBOX";
+    public static final String INTENT_INBOX = "com.winsonchiu.reader.INTENT_INBOX";
     public static final String READ_NAMES = "readNames";
 
     private static final int NOTIFICATION_INBOX = 0;

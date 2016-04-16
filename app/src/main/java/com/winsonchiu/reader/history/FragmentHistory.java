@@ -42,6 +42,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.DatePicker;
 import android.widget.ImageView;
+import android.widget.Toast;
 
 import com.winsonchiu.reader.ActivityMain;
 import com.winsonchiu.reader.AppSettings;
@@ -50,11 +51,13 @@ import com.winsonchiu.reader.FragmentListenerBase;
 import com.winsonchiu.reader.R;
 import com.winsonchiu.reader.adapter.AdapterListener;
 import com.winsonchiu.reader.data.reddit.Link;
+import com.winsonchiu.reader.data.reddit.Listing;
 import com.winsonchiu.reader.data.reddit.Reddit;
 import com.winsonchiu.reader.data.reddit.Thing;
 import com.winsonchiu.reader.links.AdapterLink;
 import com.winsonchiu.reader.links.AdapterLinkGrid;
 import com.winsonchiu.reader.links.AdapterLinkList;
+import com.winsonchiu.reader.rx.ObserverError;
 import com.winsonchiu.reader.theme.ThemeWrapper;
 import com.winsonchiu.reader.utils.CustomColorFilter;
 import com.winsonchiu.reader.utils.CustomItemTouchHelper;
@@ -66,6 +69,8 @@ import java.util.Calendar;
 import java.util.TimeZone;
 
 import javax.inject.Inject;
+
+import rx.android.schedulers.AndroidSchedulers;
 
 import static android.support.v7.widget.RecyclerView.Adapter;
 import static android.support.v7.widget.RecyclerView.LayoutManager;
@@ -235,33 +240,18 @@ public class FragmentHistory extends FragmentBase implements Toolbar.OnMenuItemC
 
         if (getFragmentManager().getBackStackEntryCount() <= 1) {
             toolbar.setNavigationIcon(R.drawable.ic_menu_white_24dp);
-            toolbar.setNavigationOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    mListener.openDrawer();
-                }
-            });
+            toolbar.setNavigationOnClickListener(v -> mListener.openDrawer());
         }
         else {
             toolbar.setNavigationIcon(R.drawable.ic_arrow_back_white_24dp);
-            toolbar.setNavigationOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    mListener.onNavigationBackClick();
-                }
-            });
+            toolbar.setNavigationOnClickListener(v -> mListener.onNavigationBackClick());
         }
         toolbar.getNavigationIcon().mutate().setColorFilter(colorFilterPrimary);
         toolbar.setTitleTextColor(getResources().getColor(colorResourcePrimary));
         setUpOptionsMenu();
 
         swipeRefreshHistory = (SwipeRefreshLayout) view.findViewById(R.id.swipe_refresh_history);
-        swipeRefreshHistory.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
-            @Override
-            public void onRefresh() {
-                controllerHistory.reload();
-            }
-        });
+        swipeRefreshHistory.setOnRefreshListener(() -> controllerHistory.reload());
 
         AdapterLink.ViewHolderHeader.EventListener eventListenerHeader = new AdapterLink.ViewHolderHeader.EventListener() {
             @Override
@@ -279,7 +269,14 @@ public class FragmentHistory extends FragmentBase implements Toolbar.OnMenuItemC
 
             @Override
             public void requestMore() {
-
+                controllerHistory.loadMoreLinks()
+                        .observeOn(AndroidSchedulers.mainThread())
+                        .subscribe(new ObserverError<Listing>() {
+                            @Override
+                            public void onError(Throwable e) {
+                                Toast.makeText(getContext(), getContext().getString(R.string.error_loading_links), Toast.LENGTH_SHORT).show();
+                            }
+                        });
             }
 
             @Override

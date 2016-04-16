@@ -114,6 +114,7 @@ public class ActivityLogin extends AccountAuthenticatorActivity {
         webAuth.setWebViewClient(new WebViewClient() {
             @Override
             public void onPageStarted(WebView view, String url, Bitmap favicon) {
+                Log.d(TAG, "onPageStarted() called with: " + "view = [" + view + "], url = [" + url + "], favicon = [" + favicon + "]");
                 progressAuth.setIndeterminate(true);
                 progressAuth.setVisibility(View.VISIBLE);
                 Uri uri = Uri.parse(url);

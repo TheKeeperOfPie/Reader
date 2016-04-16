@@ -263,7 +263,7 @@ public class FragmentInbox extends FragmentBase implements Toolbar.OnMenuItemCli
 
             @Override
             public void requestMore() {
-
+                controllerInbox.loadMore();
             }
 
             @Override

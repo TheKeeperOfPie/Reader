@@ -6,21 +6,44 @@ package com.winsonchiu.reader.utils;
 
 import android.content.Context;
 import android.content.Intent;
+import android.net.Uri;
 import android.support.annotation.Nullable;
 import android.text.Html;
 import android.text.SpannedString;
 import android.text.TextUtils;
+import android.util.Log;
 
 import com.winsonchiu.reader.ActivityMain;
+import com.winsonchiu.reader.ApiKeys;
 import com.winsonchiu.reader.data.reddit.Link;
 import com.winsonchiu.reader.data.reddit.Reddit;
 import com.winsonchiu.reader.data.reddit.Subreddit;
 import com.winsonchiu.reader.data.reddit.TagHandlerReddit;
 
+import java.util.UUID;
+
 /**
  * Created by TheKeeperOfPie on 2/6/2016.
  */
 public class UtilsReddit {
+
+    private static final String TAG = UtilsReddit.class.getCanonicalName();
+
+    public static Uri getUserAuthUri(UUID state) {
+        Uri uri = new Uri.Builder()
+                .scheme("https")
+                .authority("www.reddit.com")
+                .path("/api/v1/authorize.compact")
+                .appendQueryParameter("client_id", ApiKeys.REDDIT_CLIENT_ID)
+                .appendQueryParameter("response_type", "code")
+                .appendQueryParameter("state", String.valueOf(state))
+                .appendQueryParameter("redirect_uri", "com.winsonchiu.reader://reddit")
+                .appendQueryParameter("duration", "permanent")
+                .appendQueryParameter("scope", Reddit.AUTH_SCOPES)
+                .build();
+        Log.d(TAG, "getUserAuthUri() called with: " + "uri = [" + uri + "]");
+        return uri;
+    }
 
     @Nullable
     public static String parseRawSubredditString(@Nullable String input) {

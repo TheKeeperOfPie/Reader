@@ -129,7 +129,7 @@ public class AdapterLinkGrid extends AdapterLink {
                 break;
             case TYPE_LINK:
                 ViewHolder viewHolder = (ViewHolder) holder;
-                viewHolder.onBind(controllerLinks.getLink(position), controllerLinks.showSubreddit());
+                viewHolder.onBind(data.get(position - 1), controllerLinks.showSubreddit());
                 break;
         }
     }

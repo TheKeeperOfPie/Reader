@@ -134,8 +134,8 @@ public class Reddit {
     public static final String ACCESS_URL = "https://www.reddit.com/api/v1/access_token";
     public static final String REVOKE_URL = "https://www.reddit.com/api/v1/revoke_token";
 
-    private static final String USER_AUTHENTICATION_URL = "https://www.reddit.com/api/v1/authorize.compact?";
-    private static final String AUTH_SCOPES = "account,creddits,edit,flair,history,identity,livemanage,modconfig,modflair,modlog,modothers,modposts,modself,modwiki,mysubreddits,privatemessages,read,report,save,submit,subscribe,vote,wikiedit,wikiread";
+    public static final String USER_AUTHENTICATION_URL = "https://www.reddit.com/api/v1/authorize.compact?";
+    public static final String AUTH_SCOPES = "account,creddits,edit,flair,history,identity,livemanage,modconfig,modflair,modlog,modothers,modposts,modself,modwiki,mysubreddits,privatemessages,read,report,save,submit,subscribe,vote,wikiedit,wikiread";
 
     // Query fields
     public static final String INSTALLED_CLIENT_GRANT = Html.escapeHtml(Reddit.OAUTH_URL + "/grants/installed_client");
@@ -281,7 +281,6 @@ public class Reddit {
     }
 
     public static String getUserAuthUrl(String state) {
-
         return USER_AUTHENTICATION_URL + QUERY_CLIENT_ID + "=" + ApiKeys.REDDIT_CLIENT_ID + "&response_type=code&state=" + state + "&" + QUERY_REDIRECT_URI + "=" + REDIRECT_URI + "&" + QUERY_DURATION + "=permanent&scope=" + AUTH_SCOPES;
     }
 

@@ -5,4 +5,5 @@
     android:icon="@mipmap/app_icon"
     android:smallIcon="@mipmap/app_icon"
     android:label="@string/reddit"
+    android:customTokens="true"
     />

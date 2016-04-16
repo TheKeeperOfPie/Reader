@@ -11,6 +11,7 @@
     <uses-permission android:name="android.permission.USE_CREDENTIALS" android:maxSdkVersion="22" />
     <uses-permission android:name="android.permission.AUTHENTICATE_ACCOUNTS" android:maxSdkVersion="22" />
     <uses-permission android:name="android.permission.GET_ACCOUNTS" android:maxSdkVersion="22" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
 
     <!-- TODO: Add RTL support (mostly animations)-->
     <application
@@ -305,6 +306,19 @@
         </activity>
 
         <receiver
+            android:name=".auth.AuthReceiver"
+            android:exported="true" >
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+
+                <data
+                    android:scheme="com.winsonchiu.reader"
+                    android:host="reddit"
+                    />
+            </intent-filter>
+        </receiver>
+
+        <receiver
             android:name=".inbox.Receiver"
             android:exported="false" >
             <intent-filter>
@@ -335,6 +349,15 @@
 
             <intent-filter>
                 <action android:name="android.accounts.AccountAuthenticator" />
+            </intent-filter>
+
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+
+                <data
+                    android:scheme="com.winsonchiu.reader"
+                    android:host="reddit"
+                    />
             </intent-filter>
 
             <meta-data

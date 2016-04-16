@@ -5,6 +5,7 @@
 package com.winsonchiu.reader.inbox;
 
 import android.content.Context;
+import android.text.TextUtils;
 import android.util.Log;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -330,6 +331,9 @@ public class ControllerInbox {
     }
 
     public void loadMore() {
+        if (isLoading || TextUtils.isEmpty(data.getAfter())) {
+            return;
+        }
 
         reddit.message(page.getPage(), data.getAfter())
                 .flatMap(UtilsRx.flatMapWrapError(response -> Listing.fromJson(ComponentStatic.getObjectMapper().readValue(response, JsonNode.class))))

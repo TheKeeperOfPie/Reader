@@ -10,7 +10,6 @@ import com.winsonchiu.reader.ControllerUser;
 import com.winsonchiu.reader.comments.ControllerComments;
 import com.winsonchiu.reader.comments.ControllerCommentsTop;
 import com.winsonchiu.reader.dagger.ScopeActivity;
-import com.winsonchiu.reader.data.reddit.Sort;
 import com.winsonchiu.reader.history.ControllerHistory;
 import com.winsonchiu.reader.inbox.ControllerInbox;
 import com.winsonchiu.reader.links.ControllerLinks;
@@ -31,7 +30,7 @@ public class ModuleReddit {
     @ScopeActivity
     @Provides
     public ControllerLinks provideControllerLinks() {
-        return new ControllerLinks("", Sort.HOT);
+        return new ControllerLinks();
     }
 
     @ScopeActivity
