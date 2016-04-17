@@ -100,8 +100,7 @@ public class AdapterProfile extends AdapterBase<RecyclerView.ViewHolder> impleme
             case ControllerProfile.VIEW_TYPE_LINK:
                 AdapterLink.ViewHolderLink viewHolder = new AdapterLinkList.ViewHolder(
                         activity,
-                        LayoutInflater.from(parent.getContext())
-                                .inflate(R.layout.row_link, parent, false),
+                        parent,
                         adapterCallback,
                         adapterListener,
                         eventListenerBase,

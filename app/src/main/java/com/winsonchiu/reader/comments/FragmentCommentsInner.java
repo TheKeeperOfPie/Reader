@@ -239,7 +239,6 @@ public class FragmentCommentsInner extends FragmentBase {
     }
 
     public static FragmentCommentsInner newInstance(boolean isGrid, String firstLinkId, int colorLink) {
-        Log.d(TAG, "newInstance() called with: " + "isGrid = [" + isGrid + "], firstLinkId = [" + firstLinkId + "], colorLink = [" + colorLink + "]", new Exception());
         FragmentCommentsInner fragment = new FragmentCommentsInner();
         Bundle args = new Bundle();
         args.putBoolean(ARG_IS_GRID, isGrid);

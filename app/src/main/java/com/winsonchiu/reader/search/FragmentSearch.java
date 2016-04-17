@@ -12,6 +12,7 @@ import android.support.annotation.Nullable;
 import android.support.design.widget.AppBarLayout;
 import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.TabLayout;
+import android.support.v4.util.Pair;
 import android.support.v4.view.MenuItemCompat;
 import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
@@ -37,6 +38,8 @@ import com.winsonchiu.reader.FragmentBase;
 import com.winsonchiu.reader.FragmentListenerBase;
 import com.winsonchiu.reader.R;
 import com.winsonchiu.reader.adapter.AdapterListener;
+import com.winsonchiu.reader.adapter.AdapterNotifySubscriber;
+import com.winsonchiu.reader.adapter.RxAdapterEvent;
 import com.winsonchiu.reader.comments.Source;
 import com.winsonchiu.reader.data.reddit.Link;
 import com.winsonchiu.reader.data.reddit.Listing;
@@ -47,21 +50,23 @@ import com.winsonchiu.reader.data.reddit.Thing;
 import com.winsonchiu.reader.data.reddit.Time;
 import com.winsonchiu.reader.links.AdapterLink;
 import com.winsonchiu.reader.links.ControllerLinks;
-import com.winsonchiu.reader.links.ControllerLinksBase;
 import com.winsonchiu.reader.rx.FinalizingSubscriber;
 import com.winsonchiu.reader.theme.ThemeWrapper;
 import com.winsonchiu.reader.utils.CustomColorFilter;
-import com.winsonchiu.reader.utils.DisallowListener;
 import com.winsonchiu.reader.utils.ItemDecorationDivider;
 import com.winsonchiu.reader.utils.SimpleCallbackBackground;
 import com.winsonchiu.reader.utils.UtilsAnimation;
 import com.winsonchiu.reader.utils.UtilsColor;
 import com.winsonchiu.reader.utils.UtilsInput;
+import com.winsonchiu.reader.utils.UtilsRx;
 
 import javax.inject.Inject;
 
 import rx.Observable;
 import rx.Observer;
+import rx.Subscription;
+import rx.android.schedulers.AndroidSchedulers;
+import rx.schedulers.Schedulers;
 
 public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemClickListener {
 
@@ -95,6 +100,12 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
     private View view;
     private CustomColorFilter colorFilterPrimary;
     private ItemTouchHelper itemTouchHelperSubreddits;
+
+    private Subscription subscriptionLinks;
+    private Subscription subscriptionLinksSubreddit;
+    private Subscription subscriptionSort;
+    private Subscription subscriptionTime;
+    private Subscription subscriptionCurrentPage;
 
     @Inject ControllerLinks controllerLinks;
     @Inject ControllerSearch controllerSearch;
@@ -264,45 +275,6 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
             }
 
             @Override
-            public AdapterLink getAdapterLinks() {
-                return adapterLinks;
-            }
-
-            @Override
-            public AdapterLink getAdapterLinksSubreddit() {
-                return adapterLinksSubreddit;
-            }
-
-            @Override
-            public RecyclerView.Adapter getAdapter() {
-                return null;
-            }
-
-            @Override
-            public void setToolbarTitle(CharSequence title) {
-                toolbar.setTitle(title);
-            }
-
-            @Override
-            public void setSortAndTime(Sort sort, Time time) {
-                menu.findItem(sort.getMenuId()).setChecked(true);
-                menu.findItem(time.getMenuId()).setChecked(true);
-                itemSortTime.setTitle(
-                        getString(R.string.time) + Reddit.TIME_SEPARATOR + menu
-                                .findItem(time.getMenuId()).toString());
-            }
-
-            @Override
-            public void setRefreshing(boolean refreshing) {
-
-            }
-
-            @Override
-            public void post(Runnable runnable) {
-                view.post(runnable);
-            }
-
-            @Override
             public void scrollToLinks(int position) {
                 layoutManagerLinks.scrollToPositionWithOffset(0, 0);
             }
@@ -310,25 +282,6 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
             @Override
             public void scrollToLinksSubreddit(int position) {
                 layoutManagerLinksSubreddit.scrollToPositionWithOffset(0, 0);
-            }
-
-            @Override
-            public void setPage(int page) {
-                viewPager.setCurrentItem(page);
-            }
-        };
-
-        DisallowListener disallowListener = new DisallowListener() {
-            @Override
-            public void requestDisallowInterceptTouchEventVertical(boolean disallow) {
-                recyclerSearchLinks.requestDisallowInterceptTouchEvent(disallow);
-                recyclerSearchLinksSubreddit.requestDisallowInterceptTouchEvent(disallow);
-                viewPager.requestDisallowInterceptTouchEvent(disallow);
-            }
-
-            @Override
-            public void requestDisallowInterceptTouchEventHorizontal(boolean disallow) {
-
             }
         };
 
@@ -442,50 +395,7 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
         });
         itemTouchHelperSubreddits.attachToRecyclerView(recyclerSearchSubreddits);
 
-        adapterLinks = new AdapterSearchLinkList(getActivity(), new ControllerLinksBase() {
-            @Override
-            public Link getLink(int position) {
-                return controllerSearch.getLink(position);
-            }
-
-            @Override
-            public int sizeLinks() {
-                return controllerSearch.sizeLinks();
-            }
-
-            @Override
-            public boolean isLoading() {
-                return controllerSearch.isLoadingLinks();
-            }
-
-            @Override
-            public Observable<Listing> loadMoreLinks() {
-                Observable<Listing> observable = controllerSearch.loadMoreLinks();
-                observable.subscribe(getReloadObserver());
-                return observable;
-            }
-
-            @Override
-            public Subreddit getSubreddit() {
-                return new Subreddit();
-            }
-
-            @Override
-            public boolean showSubreddit() {
-                return true;
-            }
-
-            @Override
-            public boolean setReplyText(String name, String text, boolean collapsed) {
-                return controllerSearch.setReplyTextLinks(name, text, collapsed);
-            }
-
-            @Override
-            public void setNsfw(String name, boolean over18) {
-                controllerSearch.setNsfwLinks(name, over18);
-            }
-
-        }, new AdapterListener() {
+        adapterLinks = new AdapterSearchLinkList(getActivity(), new AdapterListener() {
             @Override
             public void requestMore() {
                 controllerSearch.loadMoreLinks()
@@ -512,7 +422,9 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
 
             @Override
             public void requestDisallowInterceptTouchEventVertical(boolean disallow) {
-
+                recyclerSearchLinks.requestDisallowInterceptTouchEvent(disallow);
+                recyclerSearchLinksSubreddit.requestDisallowInterceptTouchEvent(disallow);
+                viewPager.requestDisallowInterceptTouchEvent(disallow);
             }
 
             @Override
@@ -532,51 +444,7 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
         }, mListener.getEventListenerBase(),
                 Source.SEARCH_LINKS);
 
-        adapterLinksSubreddit = new AdapterSearchLinkList(getActivity(), new ControllerLinksBase() {
-            @Override
-            public Link getLink(int position) {
-                return controllerSearch.getLinkSubreddit(position);
-            }
-
-            @Override
-            public int sizeLinks() {
-                return controllerSearch.sizeLinksSubreddit();
-            }
-
-            @Override
-            public boolean isLoading() {
-                return controllerSearch.isLoadingLinksSubreddit();
-            }
-
-            @Override
-            public Observable<Listing> loadMoreLinks() {
-                Observable<Listing> observable = controllerSearch.loadMoreLinksSubreddit();
-                observable.subscribe(getReloadObserver());
-                return observable;
-            }
-
-            @Override
-            public Subreddit getSubreddit() {
-                return new Subreddit();
-            }
-
-            @Override
-            public boolean showSubreddit() {
-                return true;
-            }
-
-            @Override
-            public boolean setReplyText(String name, String text, boolean collapsed) {
-                return controllerSearch.setReplyTextLinksSubreddit(name, text,
-                        collapsed);
-            }
-
-            @Override
-            public void setNsfw(String name, boolean over18) {
-                controllerSearch.setNsfwLinksSubreddit(name, over18);
-            }
-
-        }, new AdapterListener() {
+        adapterLinksSubreddit = new AdapterSearchLinkList(getActivity(), new AdapterListener() {
             @Override
             public void requestMore() {
                 controllerSearch.loadMoreLinksSubreddit()
@@ -602,7 +470,9 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
 
             @Override
             public void requestDisallowInterceptTouchEventVertical(boolean disallow) {
-
+                recyclerSearchLinks.requestDisallowInterceptTouchEvent(disallow);
+                recyclerSearchLinksSubreddit.requestDisallowInterceptTouchEvent(disallow);
+                viewPager.requestDisallowInterceptTouchEvent(disallow);
             }
 
             @Override
@@ -779,10 +649,49 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
     public void onResume() {
         super.onResume();
         controllerSearch.addListener(listenerSearch);
+
+        ControllerSearch.EventHolder eventHolder = controllerSearch.getEventHolder();
+
+        subscriptionLinks = eventHolder.getLinks()
+                .observeOn(Schedulers.computation())
+                .flatMap(event -> Observable.from(event.getData())
+                        .ofType(Link.class)
+                        .toList()
+                        .map(links -> new RxAdapterEvent<>(Pair.create(new Subreddit(), links), event)))
+                .observeOn(AndroidSchedulers.mainThread())
+                .doOnNext(new AdapterNotifySubscriber<>(adapterLinks))
+                .subscribe();
+
+        subscriptionLinksSubreddit = eventHolder.getLinksSubreddit()
+                .observeOn(Schedulers.computation())
+                .flatMap(event -> Observable.from(event.getData())
+                        .ofType(Link.class)
+                        .toList()
+                        .map(links -> new RxAdapterEvent<>(Pair.create(new Subreddit(), links), event)))
+                .observeOn(AndroidSchedulers.mainThread())
+                .doOnNext(new AdapterNotifySubscriber<>(adapterLinksSubreddit))
+                .subscribe();
+
+        subscriptionSort = eventHolder.getSort()
+                .subscribe(sort -> menu.findItem(sort.getMenuId()).setChecked(true));
+
+        subscriptionTime = eventHolder.getTime()
+                .subscribe(time -> {
+                    menu.findItem(time.getMenuId()).setChecked(true);
+                    itemSortTime.setTitle(getString(R.string.time) + Reddit.TIME_SEPARATOR + menu.findItem(time.getMenuId()).toString());
+                });
+
+        subscriptionCurrentPage = eventHolder.getCurrentPage()
+                .subscribe(page -> viewPager.setCurrentItem(page));
     }
 
     @Override
     public void onPause() {
+        UtilsRx.unsubscribe(subscriptionLinks);
+        UtilsRx.unsubscribe(subscriptionLinksSubreddit);
+        UtilsRx.unsubscribe(subscriptionSort);
+        UtilsRx.unsubscribe(subscriptionTime);
+        UtilsRx.unsubscribe(subscriptionCurrentPage);
         controllerSearch.removeListener(listenerSearch);
         controllerSearch.saveSubscriptions();
         super.onPause();
@@ -802,7 +711,6 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
 
     @Override
     public void onDetach() {
-        controllerLinks.setTitle();
         mListener = null;
         super.onDetach();
     }

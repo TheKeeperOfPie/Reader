@@ -32,12 +32,10 @@ public class AdapterLinkList extends AdapterLink {
     private static final String TAG = AdapterLinkList.class.getCanonicalName();
 
     public AdapterLinkList(FragmentActivity activity,
-            ControllerLinksBase controllerLinks,
             AdapterListener adapterListener,
             ViewHolderHeader.EventListener eventListenerHeader,
             ViewHolderLink.EventListener eventListenerBase) {
         super(activity, adapterListener, eventListenerHeader, eventListenerBase);
-        setController(controllerLinks);
     }
 
     @Override
@@ -47,17 +45,15 @@ public class AdapterLinkList extends AdapterLink {
     }
 
     @Override
-    public ViewHolderBase onCreateViewHolder(ViewGroup viewGroup, int viewType) {
-
+    public ViewHolderBase onCreateViewHolder(ViewGroup parent, int viewType) {
         if (viewType == TYPE_HEADER) {
-            return new ViewHolderHeader(LayoutInflater.from(viewGroup.getContext()).inflate(R.layout.header_subreddit, viewGroup, false),
+            return new ViewHolderHeader(LayoutInflater.from(parent.getContext()).inflate(R.layout.header_subreddit, parent, false),
                     adapterCallback,
                     eventListenerHeader);
         }
 
         return new ViewHolder(activity,
-                LayoutInflater.from(viewGroup.getContext())
-                .inflate(R.layout.row_link, viewGroup, false),
+                parent,
                 adapterCallback,
                 adapterListener,
                 eventListenerBase,
@@ -73,11 +69,11 @@ public class AdapterLinkList extends AdapterLink {
         switch (holder.getItemViewType()) {
             case TYPE_HEADER:
                 ViewHolderHeader viewHolderHeader = (ViewHolderHeader) holder;
-                viewHolderHeader.onBind(controllerLinks.getSubreddit());
+                viewHolderHeader.onBind(subreddit);
                 break;
             case TYPE_LINK:
                 ViewHolder viewHolder = (ViewHolder) holder;
-                viewHolder.onBind(data.get(position - 1), controllerLinks.showSubreddit());
+                viewHolder.onBind(data.get(position - 1), showSubreddit);
                 break;
         }
     }
@@ -85,13 +81,13 @@ public class AdapterLinkList extends AdapterLink {
     public static class ViewHolder extends ViewHolderLink {
 
         public ViewHolder(FragmentActivity activity,
-                View itemView,
+                ViewGroup parent,
                 AdapterCallback adapterCallback,
                 AdapterListener adapterListener,
                 EventListener eventListener,
                 Source source,
                 CallbackYouTubeDestruction callbackYouTubeDestruction) {
-            super(activity, itemView, adapterCallback, adapterListener, eventListener, source, callbackYouTubeDestruction);
+            super(activity, parent, R.layout.row_link, adapterCallback, adapterListener, eventListener, source, callbackYouTubeDestruction);
         }
 
         @Override

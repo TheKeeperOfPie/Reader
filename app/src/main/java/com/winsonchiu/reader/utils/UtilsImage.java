@@ -5,7 +5,6 @@
 package com.winsonchiu.reader.utils;
 
 import android.content.Context;
-import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.opengl.EGL14;
@@ -16,7 +15,6 @@ import android.opengl.EGLSurface;
 import android.opengl.GLES10;
 import android.os.Handler;
 import android.support.annotation.Nullable;
-import android.text.Html;
 import android.text.TextUtils;
 import android.util.Log;
 import android.webkit.URLUtil;
@@ -301,60 +299,10 @@ public class UtilsImage {
         return true;
     }
 
-    public static String getImageHtml(String src) {
-        return "<html>" +
-                "<head>" +
-                "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1, minimum-scale=0.1\">" +
-                "<style>" +
-                "    img {" +
-                "        width:100%;" +
-                "    }" +
-                "    body {" +
-                "        margin:0px;" +
-                "    }" +
-                "</style>" +
-                "</head>" +
-                "<body>" +
-                "<img src=\"" + src + "\"/>" +
-                "</body>" +
-                "</html>";
-    }
-
-    public static String getImageHtmlForAlbum(String src, CharSequence title, CharSequence description, int textColor, int margin) {
-
-        String rgbText = "rgb(" + Color.red(textColor) + ", " + Color.green(textColor) + ", " + Color.blue(textColor) + ")";
-
-        String htmlTitle = TextUtils.isEmpty(title) ? "" : "<h2>" + title + "</h2>";
-        String htmlDescription = TextUtils.isEmpty(description) ? "" : "<p>" + Html.escapeHtml(description) + "</p>";
-
-        return "<html>" +
-                "<head>" +
-                "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1, minimum-scale=0.1\">" +
-                "<style>" +
-                "    img {" +
-                "        width:100%;" +
-                "    }" +
-                "    body {" +
-                "        color: " + rgbText + ";" +
-                "        margin:0px;" +
-                "    }" +
-                "    h2 {" +
-                "        margin-left:" + margin + "px;" +
-                "        margin-right:" + margin + "px;" +
-                "    }" +
-                "    p {" +
-                "        margin-left:" + margin + "px;" +
-                "        margin-right:" + margin + "px;" +
-                "        margin-bottom:" + margin + "px;" +
-                "    }" +
-                "</style>" +
-                "</head>" +
-                "<body>" +
-                "<img src=\"" + src + "\"/>" +
-                htmlTitle +
-                htmlDescription +
-                "</body>" +
-                "</html>";
+    public static boolean isAlbum(Link link) {
+        return link.getDomain().contains("imgur")
+                && (link.getUrl().contains(Reddit.IMGUR_PREFIX_ALBUM)
+                || link.getUrl().contains(Reddit.IMGUR_PREFIX_GALLERY));
     }
 
 }

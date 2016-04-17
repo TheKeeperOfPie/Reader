@@ -7,12 +7,9 @@ package com.winsonchiu.reader.comments;
 import android.content.Intent;
 import android.support.v4.app.FragmentActivity;
 import android.text.TextUtils;
-import android.util.DisplayMetrics;
-import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.ViewGroup;
 
-import com.winsonchiu.reader.R;
 import com.winsonchiu.reader.adapter.AdapterBase;
 import com.winsonchiu.reader.adapter.AdapterListener;
 import com.winsonchiu.reader.data.reddit.Link;
@@ -30,7 +27,6 @@ import com.winsonchiu.reader.utils.YouTubeListener;
  */
 public class AdapterLinkHeader extends AdapterBase<AdapterLink.ViewHolderLink> implements CallbackYouTubeDestruction {
 
-    private int thumbnailSize;
     private FragmentActivity activity;
     private boolean isGrid;
     private String firstLinkName;
@@ -65,8 +61,6 @@ public class AdapterLinkHeader extends AdapterBase<AdapterLink.ViewHolderLink> i
         this.firstLinkName = firstLinkName;
         this.colorLink = colorLink;
         this.actionsExpanded = actionsExpanded;
-        DisplayMetrics displayMetrics = activity.getResources().getDisplayMetrics();
-        thumbnailSize = displayMetrics.widthPixels / 2;
     }
 
     @Override
@@ -74,13 +68,12 @@ public class AdapterLinkHeader extends AdapterBase<AdapterLink.ViewHolderLink> i
         if (isGrid) {
             viewHolderLink = new AdapterLinkGrid.ViewHolder(
                     activity,
-                    LayoutInflater.from(parent.getContext()).inflate(R.layout.cell_link, parent, false),
+                    parent,
                     adapterCallback,
                     adapterListener,
                     eventListenerBase,
                     Source.NONE,
-                    callbackYouTubeDestruction,
-                    thumbnailSize) {
+                    callbackYouTubeDestruction) {
 
                 @Override
                 protected Intent getShareIntent() {
@@ -142,7 +135,7 @@ public class AdapterLinkHeader extends AdapterBase<AdapterLink.ViewHolderLink> i
         else {
             viewHolderLink = new AdapterLinkList.ViewHolder(
                     activity,
-                    LayoutInflater.from(parent.getContext()).inflate(R.layout.row_link, parent, false),
+                    parent,
                     adapterCallback,
                     adapterListener,
                     eventListenerBase,

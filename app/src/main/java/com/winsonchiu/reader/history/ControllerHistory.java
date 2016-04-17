@@ -4,13 +4,13 @@
 
 package com.winsonchiu.reader.history;
 
-import android.content.Context;
 import android.support.annotation.Nullable;
 import android.text.TextUtils;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.jakewharton.rxrelay.BehaviorRelay;
 import com.winsonchiu.reader.CustomApplication;
-import com.winsonchiu.reader.R;
+import com.winsonchiu.reader.adapter.RxAdapterEvent;
 import com.winsonchiu.reader.dagger.components.ComponentStatic;
 import com.winsonchiu.reader.data.reddit.Link;
 import com.winsonchiu.reader.data.reddit.Listing;
@@ -20,7 +20,6 @@ import com.winsonchiu.reader.data.reddit.Subreddit;
 import com.winsonchiu.reader.data.reddit.Thing;
 import com.winsonchiu.reader.links.ControllerLinksBase;
 import com.winsonchiu.reader.rx.FinalizingSubscriber;
-import com.winsonchiu.reader.utils.ControllerListener;
 import com.winsonchiu.reader.utils.UtilsRx;
 
 import java.util.ArrayList;
@@ -29,6 +28,7 @@ import java.util.List;
 import javax.inject.Inject;
 
 import rx.Observable;
+import rx.functions.Action1;
 
 /**
  * Created by TheKeeperOfPie on 7/8/2015.
@@ -41,52 +41,32 @@ public class ControllerHistory implements ControllerLinksBase {
     @Inject Reddit reddit;
     @Inject Historian historian;
 
-    private Context context;
-    private ArrayList<Listener> listeners;
-    private String title;
     private boolean isLoading;
-    private Subreddit subreddit;
-    private Listing history;
-    private String query;
-    private List<String> namesToFetch;
     private int lastIndex;
     private Thread threadSearch;
     private long timeStart;
-    private long timeEnd;
+    private long timeEnd = Long.MAX_VALUE;
 
-    public ControllerHistory(Context context) {
+    private String query = "";
+    private Listing history = new Listing();
+    private Subreddit subreddit = new Subreddit();
+    private List<String> namesToFetch = new ArrayList<>();
+
+    private EventHolder eventHolder = new EventHolder();
+
+    public ControllerHistory() {
         CustomApplication.getComponentMain().inject(this);
-        this.context = context.getApplicationContext();
-        subreddit = new Subreddit();
-        listeners = new ArrayList<>();
-        history = new Listing();
-        namesToFetch = new ArrayList<>();
-        query = "";
-        timeEnd = Long.MAX_VALUE;
-        title = context.getString(R.string.history);
     }
 
-    public void addListener(Listener listener) {
-        listeners.add(listener);
-        listener.setToolbarTitle(title);
-        listener.getAdapter().notifyDataSetChanged();
-        listener.setRefreshing(isLoading());
+    public EventHolder getEventHolder() {
         if (!isLoading() && history.getChildren().isEmpty()) {
             reload();
         }
-    }
 
-    public void removeListener(Listener listener) {
-        listeners.remove(listener);
-        historian.saveToFile(context);
-    }
-
-    public int getSize() {
-        return historian.getSize();
+        return eventHolder;
     }
 
     public void reload() {
-
         lastIndex = 0;
 
         if (TextUtils.isEmpty(query)) {
@@ -103,9 +83,7 @@ public class ControllerHistory implements ControllerLinksBase {
 
         if (namesToFetch.isEmpty()) {
             history = new Listing();
-            for (Listener listener : listeners) {
-                listener.getAdapter().notifyDataSetChanged();
-            }
+            eventHolder.call(new RxAdapterEvent<>(new ArrayList<>()));
             setIsLoading(false);
             return;
         }
@@ -133,9 +111,7 @@ public class ControllerHistory implements ControllerLinksBase {
                     @Override
                     public void next(Listing listing) {
                         history = listing;
-                        for (Listener listener : listeners) {
-                            listener.getAdapter().notifyDataSetChanged();
-                        }
+                        eventHolder.call(new RxAdapterEvent<>(history.getChildren()));
                     }
 
                     @Override
@@ -162,9 +138,7 @@ public class ControllerHistory implements ControllerLinksBase {
 
     public void setIsLoading(boolean isLoading) {
         this.isLoading = isLoading;
-        for (Listener listener : listeners) {
-            listener.setRefreshing(isLoading);
-        }
+        eventHolder.getLoading().call(isLoading);
     }
 
     @Override
@@ -188,11 +162,10 @@ public class ControllerHistory implements ControllerLinksBase {
                 .doOnNext(listing -> {
                     int startPosition = history.getChildren().size();
                     history.addChildren(listing.getChildren());
-                    for (Listener listener : listeners) {
-                        listener.getAdapter()
-                                .notifyItemRangeInserted(startPosition + 1, history
-                                        .getChildren().size() - startPosition);
-                    }
+                    eventHolder.call(new RxAdapterEvent<>(history.getChildren(),
+                            RxAdapterEvent.Type.INSERT,
+                            startPosition + 1,
+                            history.getChildren().size() - startPosition));
                 })
                 .doOnSubscribe(() -> setIsLoading(true))
                 .doOnTerminate(() -> setIsLoading(false));
@@ -216,9 +189,7 @@ public class ControllerHistory implements ControllerLinksBase {
             if (thing.getName().equals(name)) {
                 ((Replyable) thing).setReplyText(text);
                 ((Replyable) thing).setReplyExpanded(!collapsed);
-                for (Listener listener : listeners) {
-                    listener.getAdapter().notifyItemChanged(index + 1);
-                }
+                eventHolder.call(new RxAdapterEvent<>(history.getChildren(), RxAdapterEvent.Type.CHANGE, index + 1));
                 return true;
             }
         }
@@ -233,9 +204,7 @@ public class ControllerHistory implements ControllerLinksBase {
             Thing thing = history.getChildren().get(index);
             if (thing.getName().equals(name)) {
                 ((Link) thing).setOver18(over18);
-                for (Listener listener : listeners) {
-                    listener.getAdapter().notifyItemChanged(index + 1);
-                }
+                eventHolder.call(new RxAdapterEvent<>(history.getChildren(), RxAdapterEvent.Type.CHANGE, index + 1));
                 return;
             }
         }
@@ -255,23 +224,12 @@ public class ControllerHistory implements ControllerLinksBase {
 
                 // TODO: Figure out if this is a good way of doing active search
                 threadSearch = new ThreadHistorySearch(historian.getFirst(), query,
-                        new ThreadHistorySearch.Callback() {
-                            @Override
-                            public void onFinished(List<String> names) {
-                                namesToFetch = names;
-                                for (Listener listener : listeners) {
-                                    listener.post(new Runnable() {
-                                        @Override
-                                        public void run() {
-                                            reload();
-                                        }
-                                    });
-                                }
-                            }
+                        names -> {
+                            namesToFetch = names;
+                            reload();
                         });
 
                 threadSearch.start();
-
             }
             else {
                 reload();
@@ -283,9 +241,7 @@ public class ControllerHistory implements ControllerLinksBase {
         Link link = getLink(position);
         history.getChildren().remove(link);
         historian.getEntry(link).setRemoved(true);
-        for (Listener listener : listeners) {
-            listener.getAdapter().notifyItemRemoved(position);
-        }
+        eventHolder.call(new RxAdapterEvent<>(history.getChildren(), RxAdapterEvent.Type.REMOVE, position));
         return link;
     }
 
@@ -296,9 +252,7 @@ public class ControllerHistory implements ControllerLinksBase {
     public void add(int position, Link link) {
         historian.getEntry(link).setRemoved(false);
         history.getChildren().add(position - 1, link);
-        for (Listener listener : listeners) {
-            listener.getAdapter().notifyItemInserted(position);
-        }
+        eventHolder.call(new RxAdapterEvent<>(history.getChildren(), RxAdapterEvent.Type.INSERT, position));
     }
 
     public void setTimeStart(long timeStart) {
@@ -341,8 +295,26 @@ public class ControllerHistory implements ControllerLinksBase {
         return null;
     }
 
-    public interface Listener extends ControllerListener {
+    public static class EventHolder implements Action1<RxAdapterEvent<List<Thing>>> {
 
+        private BehaviorRelay<RxAdapterEvent<List<Thing>>> relayData = BehaviorRelay.create(new RxAdapterEvent<>(new ArrayList<>()));
+        private BehaviorRelay<Boolean> relayLoading = BehaviorRelay.create(false);
+
+        @Override
+        public void call(RxAdapterEvent<List<Thing>> event) {
+            relayData.call(event);
+        }
+
+        public Observable<RxAdapterEvent<List<Thing>>> getData() {
+            List<Thing> data = relayData.hasValue() ? relayData.getValue().getData() : new ArrayList<>();
+
+            return Observable.just(new RxAdapterEvent<>(data))
+                    .mergeWith(relayData.skip(1));
+        }
+
+        public BehaviorRelay<Boolean> getLoading() {
+            return relayLoading;
+        }
     }
 
 }

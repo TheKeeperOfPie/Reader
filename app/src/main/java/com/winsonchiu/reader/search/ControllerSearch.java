@@ -14,9 +14,11 @@ import android.util.Log;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.jakewharton.rxrelay.BehaviorRelay;
 import com.winsonchiu.reader.AppSettings;
 import com.winsonchiu.reader.ControllerUser;
 import com.winsonchiu.reader.CustomApplication;
+import com.winsonchiu.reader.adapter.RxAdapterEvent;
 import com.winsonchiu.reader.dagger.components.ComponentStatic;
 import com.winsonchiu.reader.data.reddit.Link;
 import com.winsonchiu.reader.data.reddit.Listing;
@@ -26,10 +28,8 @@ import com.winsonchiu.reader.data.reddit.Sort;
 import com.winsonchiu.reader.data.reddit.Subreddit;
 import com.winsonchiu.reader.data.reddit.Thing;
 import com.winsonchiu.reader.data.reddit.Time;
-import com.winsonchiu.reader.links.AdapterLink;
 import com.winsonchiu.reader.links.ControllerLinks;
 import com.winsonchiu.reader.rx.FinalizingSubscriber;
-import com.winsonchiu.reader.utils.ControllerListener;
 import com.winsonchiu.reader.utils.UtilsRx;
 
 import org.json.JSONArray;
@@ -89,6 +89,8 @@ public class ControllerSearch {
     private List<Subscription> subscriptionsSubredditsRecommended = new ArrayList<>();
     private String currentSubreddit;
 
+    private EventHolder eventHolder = new EventHolder();
+
     @Inject AccountManager accountManager;
     @Inject Reddit reddit;
 
@@ -100,12 +102,13 @@ public class ControllerSearch {
                 context.getApplicationContext());
     }
 
+    public EventHolder getEventHolder() {
+        return eventHolder;
+    }
+
     public void addListener(Listener listener) {
         listeners.add(listener);
-        setTitle();
         listener.getAdapterSearchSubreddits().notifyDataSetChanged();
-        listener.setSortAndTime(sort, time);
-        listener.setPage(getCurrentPage());
     }
 
     public void removeListener(Listener listener) {
@@ -121,7 +124,6 @@ public class ControllerSearch {
 
     public Observable<Listing> setQuery(String query) {
         this.query = query;
-        setTitle();
         if ((TextUtils.isEmpty(query) || query.length() < 2) && currentPage == PAGE_SUBREDDITS) {
             if (subscriptionSubreddits != null && !subscriptionSubreddits.isUnsubscribed()) {
                 subscriptionSubreddits.unsubscribe();
@@ -137,12 +139,6 @@ public class ControllerSearch {
             return reloadCurrentPage();
         }
         return Observable.empty();
-    }
-
-    public void setTitle() {
-        for (Listener listener : listeners) {
-            listener.setToolbarTitle(query);
-        }
     }
 
     public void reloadSubscriptionList() {
@@ -582,8 +578,9 @@ public class ControllerSearch {
                         @Override
                         public void next(Listing listing) {
                             links = listing;
+                            eventHolder.callLinks(new RxAdapterEvent<>(links.getChildren()));
+
                             for (Listener listener : listeners) {
-                                listener.getAdapterLinks().notifyDataSetChanged();
                                 listener.scrollToLinks(0);
                             }
                             setLoadingLinks(false);
@@ -628,8 +625,8 @@ public class ControllerSearch {
                     @Override
                     public void next(Listing listing) {
                         linksSubreddit = listing;
+                        eventHolder.callLinksSubreddit(new RxAdapterEvent<>(linksSubreddit.getChildren()));
                         for (Listener listener : listeners) {
-                            listener.getAdapterLinksSubreddit().notifyDataSetChanged();
                             listener.scrollToLinksSubreddit(0);
                         }
                     }
@@ -705,9 +702,7 @@ public class ControllerSearch {
                         int startSize = links.getChildren().size();
                         links.addChildren(listing.getChildren());
                         links.setAfter(listing.getAfter());
-                        for (Listener listener : listeners) {
-                            listener.getAdapterLinks().notifyItemRangeInserted(positionStart, links.getChildren().size() - startSize);
-                        }
+                        eventHolder.callLinks(new RxAdapterEvent<>(links.getChildren(), RxAdapterEvent.Type.INSERT, positionStart, links.getChildren().size() - startSize));
                     }
 
                     @Override
@@ -771,9 +766,8 @@ public class ControllerSearch {
 
                         linksSubreddit.addChildren(listing.getChildren());
                         linksSubreddit.setAfter(listing.getAfter());
-                        for (Listener listener : listeners) {
-                            listener.getAdapterLinksSubreddit().notifyItemRangeInserted(positionStart, linksSubreddit.getChildren().size() - startSize);
-                        }
+
+                        eventHolder.callLinksSubreddit(new RxAdapterEvent<>(linksSubreddit.getChildren(), RxAdapterEvent.Type.INSERT, positionStart, linksSubreddit.getChildren().size() - startSize));
                     }
 
                     @Override
@@ -873,9 +867,7 @@ public class ControllerSearch {
         }
         else if (this.sort != sort) {
             this.sort = sort;
-            for (Listener listener : listeners) {
-                listener.setSortAndTime(sort, time);
-            }
+            eventHolder.getSort().call(sort);
             return reloadCurrentPage();
         }
         return Observable.empty();
@@ -884,6 +876,7 @@ public class ControllerSearch {
     public Observable<Listing> setTime(Time time) {
         if (this.time != time) {
             this.time = time;
+            eventHolder.getTime().call(time);
             return reloadCurrentPage();
         }
         return Observable.empty();
@@ -895,6 +888,7 @@ public class ControllerSearch {
 
     public Observable<Listing> setCurrentPage(int currentPage) {
         this.currentPage = currentPage;
+        eventHolder.getCurrentPage().call(currentPage);
         return reloadCurrentPage();
     }
 
@@ -917,9 +911,7 @@ public class ControllerSearch {
             if (thing.getName().equals(name)) {
                 ((Replyable) thing).setReplyText(text);
                 ((Replyable) thing).setReplyExpanded(!collapsed);
-                for (Listener listener : listeners) {
-                    listener.getAdapterLinks().notifyItemChanged(index + 1);
-                }
+                eventHolder.callLinks(new RxAdapterEvent<>(links.getChildren(), RxAdapterEvent.Type.CHANGE, index + 1));
                 return true;
             }
         }
@@ -934,9 +926,7 @@ public class ControllerSearch {
             if (thing.getName().equals(name)) {
                 ((Replyable) thing).setReplyText(text);
                 ((Replyable) thing).setReplyExpanded(!collapsed);
-                for (Listener listener : listeners) {
-                    listener.getAdapterLinks().notifyItemChanged(index + 1);
-                }
+                eventHolder.callLinksSubreddit(new RxAdapterEvent<>(linksSubreddit.getChildren(), RxAdapterEvent.Type.CHANGE, index + 1));
                 return true;
             }
         }
@@ -950,9 +940,7 @@ public class ControllerSearch {
             Thing thing = links.getChildren().get(index);
             if (thing.getName().equals(name)) {
                 ((Link) thing).setOver18(over18);
-                for (Listener listener : listeners) {
-                    listener.getAdapterLinks().notifyItemChanged(index + 1);
-                }
+                eventHolder.callLinks(new RxAdapterEvent<>(links.getChildren(), RxAdapterEvent.Type.CHANGE, index + 1));
                 return;
             }
         }
@@ -965,9 +953,7 @@ public class ControllerSearch {
             Thing thing = linksSubreddit.getChildren().get(index);
             if (thing.getName().equals(name)) {
                 ((Link) thing).setOver18(over18);
-                for (Listener listener : listeners) {
-                    listener.getAdapterLinks().notifyItemChanged(index + 1);
-                }
+                eventHolder.callLinksSubreddit(new RxAdapterEvent<>(linksSubreddit.getChildren(), RxAdapterEvent.Type.CHANGE, index + 1));
                 return;
             }
         }
@@ -1053,16 +1039,54 @@ public class ControllerSearch {
         return null;
     }
 
-    public interface Listener extends ControllerListener {
+    public interface Listener {
         AdapterSearchSubreddits getAdapterSearchSubreddits();
         AdapterSearchSubreddits getAdapterSearchSubredditsRecommended();
-        AdapterLink getAdapterLinks();
-        AdapterLink getAdapterLinksSubreddit();
-        void setToolbarTitle(CharSequence title);
-        void setSortAndTime(Sort sort, Time time);
         void scrollToLinks(int position);
         void scrollToLinksSubreddit(int position);
-        void setPage(int page);
+    }
+
+    public static class EventHolder {
+
+        private BehaviorRelay<RxAdapterEvent<List<Thing>>> relayLinks = BehaviorRelay.create(new RxAdapterEvent<>(new ArrayList<>()));
+        private BehaviorRelay<RxAdapterEvent<List<Thing>>> relayLinksSubreddit = BehaviorRelay.create(new RxAdapterEvent<>(new ArrayList<>()));
+        private BehaviorRelay<Sort> relaySort = BehaviorRelay.create(Sort.RELEVANCE);
+        private BehaviorRelay<Time> relayTime = BehaviorRelay.create(Time.ALL);
+        private BehaviorRelay<Integer> relayCurrentPage = BehaviorRelay.create(0);
+
+        public void callLinks(RxAdapterEvent<List<Thing>> event) {
+            relayLinks.call(event);
+        }
+
+        public void callLinksSubreddit(RxAdapterEvent<List<Thing>> event) {
+            relayLinksSubreddit.call(event);
+        }
+
+        public Observable<RxAdapterEvent<List<Thing>>> getLinks() {
+            List<Thing> data = relayLinks.hasValue() ? relayLinks.getValue().getData() : new ArrayList<>();
+
+            return Observable.just(new RxAdapterEvent<>(data))
+                    .mergeWith(relayLinks.skip(1));
+        }
+
+        public Observable<RxAdapterEvent<List<Thing>>> getLinksSubreddit() {
+            List<Thing> data = relayLinksSubreddit.hasValue() ? relayLinksSubreddit.getValue().getData() : new ArrayList<>();
+
+            return Observable.just(new RxAdapterEvent<>(data))
+                    .mergeWith(relayLinksSubreddit.skip(1));
+        }
+
+        public BehaviorRelay<Sort> getSort() {
+            return relaySort;
+        }
+
+        public BehaviorRelay<Time> getTime() {
+            return relayTime;
+        }
+
+        public BehaviorRelay<Integer> getCurrentPage() {
+            return relayCurrentPage;
+        }
     }
 
 }

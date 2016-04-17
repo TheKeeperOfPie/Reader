@@ -486,11 +486,13 @@ public class ActivityMain extends AppCompatActivity
                     Log.d(TAG, "Not valid URL: " + urlString);
                     selectNavigationItem(getIntent().getIntExtra(NAV_ID, R.id.item_home), getIntent().getStringExtra(
                             NAV_PAGE), false);
+                    loadHomeSubreddit();
                 }
             }
             else {
                 selectNavigationItem(getIntent().getIntExtra(NAV_ID, R.id.item_home), getIntent().getStringExtra(
                         NAV_PAGE), false);
+                loadHomeSubreddit();
             }
         }
     }
@@ -1000,14 +1002,14 @@ public class ActivityMain extends AppCompatActivity
                 fragmentThreadList = (FragmentBase) getSupportFragmentManager().findFragmentByTag(FragmentThreadList.TAG);
                 if (fragmentThreadList != null) {
                     fragmentThreadList.onHiddenChanged(false);
+
+                    loadHomeSubreddit();
                 }
                 else {
                     fragmentTransaction.replace(R.id.frame_fragment,
                             FragmentThreadList.newInstance(),
                             FragmentThreadList.TAG);
                 }
-
-                loadHomeSubreddit();
                 break;
             case R.id.item_front_page:
                 controllerLinks.loadFrontPage(Sort.HOT, false);

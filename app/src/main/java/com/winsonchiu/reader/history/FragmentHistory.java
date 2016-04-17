@@ -17,6 +17,7 @@ import android.support.design.widget.AppBarLayout;
 import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.Snackbar;
 import android.support.design.widget.TabLayout;
+import android.support.v4.util.Pair;
 import android.support.v4.view.MenuItemCompat;
 import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
@@ -50,9 +51,12 @@ import com.winsonchiu.reader.FragmentBase;
 import com.winsonchiu.reader.FragmentListenerBase;
 import com.winsonchiu.reader.R;
 import com.winsonchiu.reader.adapter.AdapterListener;
+import com.winsonchiu.reader.adapter.AdapterNotifySubscriber;
+import com.winsonchiu.reader.adapter.RxAdapterEvent;
 import com.winsonchiu.reader.data.reddit.Link;
 import com.winsonchiu.reader.data.reddit.Listing;
 import com.winsonchiu.reader.data.reddit.Reddit;
+import com.winsonchiu.reader.data.reddit.Subreddit;
 import com.winsonchiu.reader.data.reddit.Thing;
 import com.winsonchiu.reader.links.AdapterLink;
 import com.winsonchiu.reader.links.AdapterLinkGrid;
@@ -64,15 +68,18 @@ import com.winsonchiu.reader.utils.CustomItemTouchHelper;
 import com.winsonchiu.reader.utils.ItemDecorationDivider;
 import com.winsonchiu.reader.utils.UtilsAnimation;
 import com.winsonchiu.reader.utils.UtilsColor;
+import com.winsonchiu.reader.utils.UtilsRx;
 
 import java.util.Calendar;
 import java.util.TimeZone;
 
 import javax.inject.Inject;
 
+import rx.Observable;
+import rx.Subscription;
 import rx.android.schedulers.AndroidSchedulers;
+import rx.schedulers.Schedulers;
 
-import static android.support.v7.widget.RecyclerView.Adapter;
 import static android.support.v7.widget.RecyclerView.LayoutManager;
 
 public class FragmentHistory extends FragmentBase implements Toolbar.OnMenuItemClickListener {
@@ -84,7 +91,6 @@ public class FragmentHistory extends FragmentBase implements Toolbar.OnMenuItemC
     private SwipeRefreshLayout swipeRefreshHistory;
     private LayoutManager layoutManager;
     private RecyclerView recyclerHistory;
-    private ControllerHistory.Listener listener;
     private CustomItemTouchHelper itemTouchHelper;
     private AdapterLink adapterLink;
     private Snackbar snackbar;
@@ -99,6 +105,9 @@ public class FragmentHistory extends FragmentBase implements Toolbar.OnMenuItemC
     private View view;
     private CustomColorFilter colorFilterPrimary;
     private ItemDecorationDivider itemDecorationDivider;
+
+    private Subscription subscriptionData;
+    private Subscription subscriptionLoading;
 
     @Inject ControllerHistory controllerHistory;
 
@@ -199,28 +208,6 @@ public class FragmentHistory extends FragmentBase implements Toolbar.OnMenuItemC
         layoutCoordinator = (CoordinatorLayout) view.findViewById(R.id.layout_coordinator);
         layoutAppBar = (AppBarLayout) view.findViewById(R.id.layout_app_bar);
 
-        listener = new ControllerHistory.Listener() {
-            @Override
-            public Adapter getAdapter() {
-                return adapterLink;
-            }
-
-            @Override
-            public void setToolbarTitle(CharSequence title) {
-                toolbar.setTitle(title);
-            }
-
-            @Override
-            public void setRefreshing(boolean refreshing) {
-                swipeRefreshHistory.setRefreshing(refreshing);
-            }
-
-            @Override
-            public void post(Runnable runnable) {
-                recyclerHistory.post(runnable);
-            }
-        };
-
         TypedArray typedArray = getActivity().getTheme().obtainStyledAttributes(
                 new int[]{R.attr.colorPrimary});
         final int colorPrimary = typedArray.getColor(0, getResources().getColor(R.color.colorPrimary));
@@ -248,6 +235,7 @@ public class FragmentHistory extends FragmentBase implements Toolbar.OnMenuItemC
         }
         toolbar.getNavigationIcon().mutate().setColorFilter(colorFilterPrimary);
         toolbar.setTitleTextColor(getResources().getColor(colorResourcePrimary));
+        toolbar.setTitle(R.string.history);
         setUpOptionsMenu();
 
         swipeRefreshHistory = (SwipeRefreshLayout) view.findViewById(R.id.swipe_refresh_history);
@@ -311,14 +299,12 @@ public class FragmentHistory extends FragmentBase implements Toolbar.OnMenuItemC
 
         if (adapterLinkList == null) {
             adapterLinkList = new AdapterHistoryLinkList(getActivity(),
-                    controllerHistory,
                     adapterListener,
                     eventListenerHeader,
                     mListener.getEventListenerBase());
         }
         if (adapterLinkGrid == null) {
             adapterLinkGrid = new AdapterHistoryLinkGrid(getActivity(),
-                    controllerHistory,
                     adapterListener,
                     eventListenerHeader,
                     mListener.getEventListenerBase());
@@ -453,12 +439,27 @@ public class FragmentHistory extends FragmentBase implements Toolbar.OnMenuItemC
     @Override
     public void onResume() {
         super.onResume();
-        controllerHistory.addListener(listener);
+        ControllerHistory.EventHolder eventHolder = controllerHistory.getEventHolder();
+
+        subscriptionData = eventHolder.getData()
+                .observeOn(Schedulers.computation())
+                .flatMap(event -> Observable.from(event.getData())
+                        .ofType(Link.class)
+                        .toList()
+                        .map(links -> new RxAdapterEvent<>(Pair.create(new Subreddit(), links), event)))
+                .observeOn(AndroidSchedulers.mainThread())
+                .doOnNext(new AdapterNotifySubscriber<>(adapterLinkGrid))
+                .doOnNext(new AdapterNotifySubscriber<>(adapterLinkList))
+                .subscribe();
+
+        subscriptionLoading = eventHolder.getLoading()
+                .subscribe(swipeRefreshHistory::setRefreshing);
     }
 
     @Override
     public void onPause() {
-        controllerHistory.removeListener(listener);
+        UtilsRx.unsubscribe(subscriptionData);
+        UtilsRx.unsubscribe(subscriptionLoading);
         super.onPause();
     }
 

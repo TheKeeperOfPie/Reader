@@ -21,6 +21,7 @@ import android.support.annotation.CallSuper;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.FragmentActivity;
+import android.support.v4.util.Pair;
 import android.support.v4.view.GestureDetectorCompat;
 import android.support.v4.view.MenuItemCompat;
 import android.support.v4.view.MotionEventCompat;
@@ -139,7 +140,7 @@ import rx.schedulers.Schedulers;
 /**
  * Created by TheKeeperOfPie on 3/14/2015.
  */
-public abstract class AdapterLink extends AdapterBase<ViewHolderBase> implements CallbackYouTubeDestruction, AdapterDataListener<List<Link>> {
+public abstract class AdapterLink extends AdapterBase<ViewHolderBase> implements CallbackYouTubeDestruction, AdapterDataListener<Pair<Subreddit, List<Link>>> {
 
     public static final int TYPE_HEADER = 0;
     public static final int TYPE_LINK = 1;
@@ -152,10 +153,11 @@ public abstract class AdapterLink extends AdapterBase<ViewHolderBase> implements
     protected AdapterListener adapterListener;
     protected SharedPreferences preferences;
     protected LayoutManager layoutManager;
-    protected ControllerLinksBase controllerLinks;
     protected List<ViewHolderBase> viewHolders;
 
+    protected Subreddit subreddit = new Subreddit();
     protected List<Link> data = new ArrayList<>();
+    protected boolean showSubreddit;
 
     protected ViewHolderHeader.EventListener eventListenerHeader;
     protected ViewHolderLink.EventListener eventListenerBase;
@@ -179,13 +181,12 @@ public abstract class AdapterLink extends AdapterBase<ViewHolderBase> implements
         this.preferences = PreferenceManager.getDefaultSharedPreferences(activity);
     }
 
-    public void setController(ControllerLinksBase controllerLinks) {
-        this.controllerLinks = controllerLinks;
-    }
-
-    public void setData(List<Link> data) {
+    @Override
+    public void setData(Pair<Subreddit, List<Link>> data) {
+        this.subreddit = data.first;
+        this.showSubreddit = "/".equals(subreddit.getUrl()) || "/r/all/".equals(subreddit.getUrl());
         this.data.clear();
-        this.data.addAll(data);
+        this.data.addAll(data.second);
     }
 
     public LayoutManager getLayoutManager() {
@@ -518,13 +519,14 @@ public abstract class AdapterLink extends AdapterBase<ViewHolderBase> implements
         private boolean expanded;
 
         public ViewHolderLink(FragmentActivity activity,
-                View itemView,
+                ViewGroup parent,
+                int layoutResourceId,
                 AdapterCallback adapterCallback,
                 AdapterListener adapterListener,
                 EventListener eventListener,
                 Source source,
                 CallbackYouTubeDestruction callbackYouTubeDestruction) {
-            super(itemView, adapterCallback);
+            super(LayoutInflater.from(parent.getContext()).inflate(layoutResourceId, parent, false), adapterCallback);
             this.adapterListener = adapterListener;
             this.activity = activity;
             this.eventListener = eventListener;
@@ -1540,13 +1542,13 @@ public abstract class AdapterLink extends AdapterBase<ViewHolderBase> implements
 
             destroyWebViews();
             destroySurfaceView();
-
-            if (subscription != null && !subscription.isUnsubscribed()) {
-                subscription.unsubscribe();
-                subscription = null;
-            }
-
             destroyYouTube();
+
+            UtilsRx.unsubscribe(subscription);
+            subscription = null;
+
+            picasso.cancelRequest(imageThumbnail);
+            picasso.cancelRequest(imageFull);
 
             layoutYouTube.setVisibility(View.GONE);
             viewPagerFull.setVisibility(View.GONE);
@@ -1554,7 +1556,6 @@ public abstract class AdapterLink extends AdapterBase<ViewHolderBase> implements
             imageThumbnail.setVisibility(View.VISIBLE);
             progressImage.setVisibility(View.GONE);
             textThreadSelf.setVisibility(View.GONE);
-            picasso.cancelRequest(imageThumbnail);
             imageThumbnail.setImageDrawable(null);
             imageFull.setImageDrawable(null);
             imageFull.getLayoutParams().height = ViewGroup.LayoutParams.WRAP_CONTENT;

@@ -77,8 +77,8 @@ public class ModuleReddit {
 
     @ScopeActivity
     @Provides
-    public ControllerHistory provideControllerHistory(Context context) {
-        return new ControllerHistory(context);
+    public ControllerHistory provideControllerHistory() {
+        return new ControllerHistory();
     }
 
 }

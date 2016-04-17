@@ -34,7 +34,6 @@ import android.text.format.DateUtils;
 import android.text.method.LinkMovementMethod;
 import android.text.style.ForegroundColorSpan;
 import android.text.util.Linkify;
-import android.util.DisplayMetrics;
 import android.util.TypedValue;
 import android.view.GestureDetector;
 import android.view.LayoutInflater;
@@ -106,7 +105,6 @@ public class AdapterCommentList extends AdapterBase<RecyclerView.ViewHolder> imp
     protected List<RecyclerView.ViewHolder> viewHolders;
 
     private AdapterLink.ViewHolderLink viewHolderLink;
-    private int thumbnailSize;
     private boolean isGrid;
     private String firstLinkName;
     private int colorLink;
@@ -137,8 +135,6 @@ public class AdapterCommentList extends AdapterBase<RecyclerView.ViewHolder> imp
         this.firstLinkName = firstLinkName;
         this.colorLink = colorLink;
         this.actionsExpanded = actionsExpanded;
-        DisplayMetrics displayMetrics = activity.getResources().getDisplayMetrics();
-        this.thumbnailSize = displayMetrics.widthPixels / 2;
         viewHolders = new ArrayList<>();
     }
 
@@ -154,14 +150,12 @@ public class AdapterCommentList extends AdapterBase<RecyclerView.ViewHolder> imp
             if (isGrid) {
                 viewHolderLink = new AdapterLinkGrid.ViewHolder(
                         activity,
-                        LayoutInflater.from(parent.getContext())
-                                .inflate(R.layout.cell_link, parent, false),
+                        parent,
                         adapterCallback,
                         adapterListener,
                         eventListenerBase,
                         Source.NONE,
-                        callbackYouTubeDestruction,
-                        thumbnailSize) {
+                        callbackYouTubeDestruction) {
 
                     @Override
                     protected Intent getShareIntent() {
@@ -225,8 +219,7 @@ public class AdapterCommentList extends AdapterBase<RecyclerView.ViewHolder> imp
             else {
                 viewHolderLink = new AdapterLinkList.ViewHolder(
                         activity,
-                        LayoutInflater.from(parent.getContext())
-                                .inflate(R.layout.row_link, parent, false),
+                        parent,
                         adapterCallback,
                         adapterListener,
                         eventListenerBase,

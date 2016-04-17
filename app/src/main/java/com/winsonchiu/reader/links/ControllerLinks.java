@@ -5,6 +5,7 @@
 package com.winsonchiu.reader.links;
 
 import android.support.annotation.Nullable;
+import android.support.v4.util.Pair;
 import android.text.TextUtils;
 import android.util.Log;
 
@@ -28,7 +29,6 @@ import com.winsonchiu.reader.rx.ObserverEmpty;
 import com.winsonchiu.reader.utils.UtilsRx;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 import javax.inject.Inject;
@@ -46,9 +46,9 @@ public class ControllerLinks implements ControllerLinksBase {
     private static final String TAG = ControllerLinks.class.getCanonicalName();
     public static final int LIMIT = 25;
 
-    private Listing listingLinks;
-    private Subreddit subreddit;
     private boolean isLoading;
+    private Listing listingLinks = new Listing();
+    private Subreddit subreddit = new Subreddit();
     private Sort sort = Sort.HOT;
     private Time time = Time.ALL;
 
@@ -59,8 +59,6 @@ public class ControllerLinks implements ControllerLinksBase {
 
     public ControllerLinks() {
         CustomApplication.getComponentMain().inject(this);
-        listingLinks = new Listing();
-        subreddit = new Subreddit();
         subreddit.setUrl("/");
     }
 
@@ -81,7 +79,7 @@ public class ControllerLinks implements ControllerLinksBase {
             subreddit.setUrl("/r/" + subredditName + "/");
             int size = sizeLinks();
             listingLinks = new Listing();
-            eventHolder.call(new RxAdapterEvent<>(listingLinks.getChildren(), RxAdapterEvent.Type.REMOVE, 0, size + 1));
+            eventHolder.call(new RxAdapterEvent<>(getData(), RxAdapterEvent.Type.REMOVE, 0, size + 1));
 
             eventHolder.getSort().call(sort);
             eventHolder.getTime().call(time);
@@ -111,8 +109,7 @@ public class ControllerLinks implements ControllerLinksBase {
                     public void next(Subreddit next) {
                         ControllerLinks.this.subreddit = next;
                         listingLinks = new Listing();
-                        eventHolder.call(new RxAdapterEvent<>(Collections.emptyList()));
-                        eventHolder.getSubreddit().call(subreddit);
+                        eventHolder.call(new RxAdapterEvent<>(getData()));
                     }
 
                     @Override
@@ -152,6 +149,7 @@ public class ControllerLinks implements ControllerLinksBase {
             @Override
             public void next(Subreddit next) {
                 ControllerLinks.this.subreddit = next;
+                eventHolder.call(new RxAdapterEvent<>(getData(), RxAdapterEvent.Type.CHANGE, 0));
             }
 
             @Override
@@ -168,6 +166,7 @@ public class ControllerLinks implements ControllerLinksBase {
             this.sort = sort;
             subreddit = new Subreddit();
             subreddit.setUrl("/");
+            eventHolder.call(new RxAdapterEvent<>(getData(), RxAdapterEvent.Type.CHANGE, 0));
             reloadAllLinks(true)
                     .subscribe(new ObserverEmpty<>());
         }
@@ -189,18 +188,6 @@ public class ControllerLinks implements ControllerLinksBase {
             reloadAllLinks(true)
                     .subscribe(new ObserverEmpty<>());
         }
-    }
-
-    public void setTitle() {
-        final String subredditName;
-        if (!TextUtils.isEmpty(subreddit.getDisplayName())) {
-            subredditName = "/r/" + subreddit.getDisplayName();
-        }
-        else {
-            subredditName = Reddit.FRONT_PAGE;
-        }
-
-        eventHolder.getTitle().call(subredditName);
     }
 
     public Link getLink(int position) {
@@ -235,9 +222,7 @@ public class ControllerLinks implements ControllerLinksBase {
                 .doOnNext(listing -> {
                     listingLinks = listing;
 
-                    eventHolder.call(new RxAdapterEvent<>(listingLinks.getChildren()));
-
-                    setTitle();
+                    eventHolder.call(new RxAdapterEvent<>(getData()));
                 })
                 .doOnTerminate(() -> setLoading(false));
 
@@ -264,7 +249,7 @@ public class ControllerLinks implements ControllerLinksBase {
                             .size();
                     listingLinks.addChildren(listing.getChildren());
                     listingLinks.setAfter(listing.getAfter());
-                    eventHolder.call(new RxAdapterEvent<>(listingLinks.getChildren(),
+                    eventHolder.call(new RxAdapterEvent<>(getData(),
                             RxAdapterEvent.Type.INSERT,
                             positionStart + 1,
                             listingLinks.getChildren().size() - positionStart));
@@ -289,7 +274,7 @@ public class ControllerLinks implements ControllerLinksBase {
         listingLinks.getChildren()
                 .remove(index);
 
-        eventHolder.call(new RxAdapterEvent<>(listingLinks.getChildren(), RxAdapterEvent.Type.REMOVE, index + 1));
+        eventHolder.call(new RxAdapterEvent<>(getData(), RxAdapterEvent.Type.REMOVE, index + 1));
 
 
         return reddit.delete(link);
@@ -340,7 +325,7 @@ public class ControllerLinks implements ControllerLinksBase {
                 ((Replyable) thing).setReplyExpanded(!collapsed);
 
 
-                eventHolder.call(new RxAdapterEvent<>(listingLinks.getChildren(), RxAdapterEvent.Type.CHANGE, index + 1));
+                eventHolder.call(new RxAdapterEvent<>(getData(), RxAdapterEvent.Type.CHANGE, index + 1));
                 return true;
             }
         }
@@ -355,7 +340,7 @@ public class ControllerLinks implements ControllerLinksBase {
             if (thing.getName().equals(name)) {
                 ((Link) thing).setOver18(over18);
 
-                eventHolder.call(new RxAdapterEvent<>(listingLinks.getChildren(), RxAdapterEvent.Type.CHANGE, index + 1));
+                eventHolder.call(new RxAdapterEvent<>(getData(), RxAdapterEvent.Type.CHANGE, index + 1));
                 return;
             }
         }
@@ -363,7 +348,7 @@ public class ControllerLinks implements ControllerLinksBase {
 
     public Link remove(int position) {
         Link link = (Link) listingLinks.getChildren().remove(position);
-        eventHolder.call(new RxAdapterEvent<>(listingLinks.getChildren(), RxAdapterEvent.Type.REMOVE, position + 1));
+        eventHolder.call(new RxAdapterEvent<>(getData(), RxAdapterEvent.Type.REMOVE, position + 1));
         return link;
     }
 
@@ -371,14 +356,13 @@ public class ControllerLinks implements ControllerLinksBase {
         final boolean subscribed = subreddit.isUserIsSubscriber();
         subreddit.setUserIsSubscriber(!subreddit.isUserIsSubscriber());
         reddit.subscribe(subreddit.isUserIsSubscriber(), subreddit.getName())
-                .doOnError((throwable -> subreddit.setUserIsSubscriber(subscribed)))
-                .map(s1 -> subreddit)
-                .subscribe(eventHolder.getSubreddit());
+                .doOnError(throwable -> subreddit.setUserIsSubscriber(subscribed))
+                .subscribe(subreddit -> eventHolder.call(new RxAdapterEvent<>(getData(), RxAdapterEvent.Type.CHANGE, 0)));
     }
 
     public void add(int position, Link link) {
         listingLinks.getChildren().add(position, link);
-        eventHolder.call(new RxAdapterEvent<>(listingLinks.getChildren(), RxAdapterEvent.Type.INSERT, position + 1));
+        eventHolder.call(new RxAdapterEvent<>(getData(), RxAdapterEvent.Type.INSERT, position + 1));
     }
 
     public void clearViewed(Historian historian) {
@@ -395,7 +379,7 @@ public class ControllerLinks implements ControllerLinksBase {
         for (int index : indexesToRemove) {
             listingLinks.getChildren().remove(index);
             // Offset 1 for subreddit header
-            eventHolder.call(new RxAdapterEvent<>(listingLinks.getChildren(), RxAdapterEvent.Type.REMOVE, index + 1));
+            eventHolder.call(new RxAdapterEvent<>(getData(), RxAdapterEvent.Type.REMOVE, index + 1));
         }
 
     }
@@ -429,22 +413,24 @@ public class ControllerLinks implements ControllerLinksBase {
         return null;
     }
 
-    public static class EventHolder implements Action1<RxAdapterEvent<List<Thing>>> {
+    public Pair<Subreddit, List<Thing>> getData() {
+        return Pair.create(subreddit, listingLinks.getChildren());
+    }
 
-        private BehaviorRelay<RxAdapterEvent<List<Thing>>> relayData = BehaviorRelay.create(new RxAdapterEvent<>(new ArrayList<>()));
+    public static class EventHolder implements Action1<RxAdapterEvent<Pair<Subreddit, List<Thing>>>> {
+
+        private BehaviorRelay<RxAdapterEvent<Pair<Subreddit, List<Thing>>>> relayData = BehaviorRelay.create(new RxAdapterEvent<>(Pair.create(new Subreddit(), new ArrayList<>())));
         private BehaviorRelay<Boolean> relayLoading = BehaviorRelay.create(false);
-        private BehaviorRelay<String> relayTitle = BehaviorRelay.create();
         private BehaviorRelay<Sort> relaySort = BehaviorRelay.create(Sort.HOT);
         private BehaviorRelay<Time> relayTime = BehaviorRelay.create(Time.ALL);
-        private BehaviorRelay<Subreddit> relaySubreddit = BehaviorRelay.create();
 
         @Override
-        public void call(RxAdapterEvent<List<Thing>> event) {
+        public void call(RxAdapterEvent<Pair<Subreddit, List<Thing>>> event) {
             relayData.call(event);
         }
 
-        public Observable<RxAdapterEvent<List<Thing>>> getData() {
-            List<Thing> data = relayData.hasValue() ? relayData.getValue().getData() : new ArrayList<>();
+        public Observable<RxAdapterEvent<Pair<Subreddit, List<Thing>>>> getData() {
+            Pair<Subreddit, List<Thing>> data = relayData.hasValue() ? relayData.getValue().getData() : Pair.create(new Subreddit(), new ArrayList<>());
 
             return Observable.just(new RxAdapterEvent<>(data))
                     .mergeWith(relayData.skip(1));
@@ -454,20 +440,12 @@ public class ControllerLinks implements ControllerLinksBase {
             return relayLoading;
         }
 
-        public BehaviorRelay<String> getTitle() {
-            return relayTitle;
-        }
-
         public BehaviorRelay<Sort> getSort() {
             return relaySort;
         }
 
         public BehaviorRelay<Time> getTime() {
             return relayTime;
-        }
-
-        public BehaviorRelay<Subreddit> getSubreddit() {
-            return relaySubreddit;
         }
     }
 }

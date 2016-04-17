@@ -36,7 +36,7 @@
             android:title="@string/pref_grid_thumbnail_size"
             android:entries="@array/pref_grid_thumbnail_size_entries"
             android:entryValues="@array/pref_grid_thumbnail_size_values"
-            android:defaultValue="0.75"
+            android:defaultValue="0.5"
             android:negativeButtonText="@null"
             android:positiveButtonText="@null"
             />

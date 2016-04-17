@@ -45,6 +45,14 @@ public class RxAdapterEvent<Data> {
         this.positionStart = positionStart;
     }
 
+    public RxAdapterEvent(Data data, RxAdapterEvent event) {
+        this.data = data;
+        this.type = event.getType();
+        this.positionStart = event.getPositionStart();
+        this.size = event.getSize();
+        this.payload = event.getPayload();
+    }
+
     public RxAdapterEvent(Data data) {
         this.data = data;
     }
