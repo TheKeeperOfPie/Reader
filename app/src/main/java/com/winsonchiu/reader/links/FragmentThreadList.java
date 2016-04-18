@@ -85,6 +85,8 @@ import com.winsonchiu.reader.utils.UtilsRx;
 
 import javax.inject.Inject;
 
+import butterknife.Bind;
+import butterknife.ButterKnife;
 import rx.Observable;
 import rx.Subscription;
 import rx.android.schedulers.AndroidSchedulers;
@@ -93,50 +95,59 @@ import rx.schedulers.Schedulers;
 public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuItemClickListener {
 
     public static final String TAG = FragmentThreadList.class.getCanonicalName();
+
     private static final long DURATION_TRANSITION = 150;
     private static final long DURATION_ACTIONS_FADE = 150;
     private static final float OFFSET_MODIFIER = 0.5f;
+
     private FragmentListenerBase mListener;
 
     private SharedPreferences preferences;
-    private RecyclerView recyclerThreadList;
-    private AdapterLink adapterLink;
-    private SwipeRefreshLayout swipeRefreshThreadList;
-    private RecyclerView.LayoutManager layoutManager;
+
+    private Toolbar toolbar;
+    private Menu menu;
+    private MenuItem itemSearch;
+    private MenuItem itemSortTime;
     private MenuItem itemInterface;
 
-    private MenuItem itemSearch;
-    private TextView textSidebar;
-    private DrawerLayout drawerLayout;
-    private TextView textEmpty;
-    private Menu menu;
-    private MenuItem itemSortTime;
-    private Toolbar toolbar;
     private AdapterLinkList adapterLinkList;
     private AdapterLinkGrid adapterLinkGrid;
-    private Button buttonSubscribe;
-    private CoordinatorLayout layoutCoordinator;
-    private AppBarLayout layoutAppBar;
     private AdapterLink.ViewHolderHeader.EventListener eventListenerHeader;
     private ControllerUser.Listener listenerUser;
+
     private Snackbar snackbar;
     private CustomItemTouchHelper itemTouchHelper;
-    private FloatingActionButton buttonExpandActions;
     private FastOutSlowInInterpolator fastOutSlowInInterpolator = new FastOutSlowInInterpolator();
-    private LinearLayout layoutActions;
-    private FloatingActionButton buttonClearViewed;
-    private FloatingActionButton buttonJumpTop;
+
     private ScrollAwareFloatingActionButtonBehavior behaviorButtonExpandActions;
-    private View view;
     private CustomColorFilter colorFilterPrimary;
     private CustomColorFilter colorFilterAccent;
     private ItemDecorationDivider itemDecorationDivider;
+
+    private View view;
+    private AdapterLink adapterLink;
+    private RecyclerView.LayoutManager layoutManager;
+
     private boolean isFinished;
+    private Subreddit subreddit = new Subreddit();
 
     private Subscription subscriptionData;
     private Subscription subscriptionLoading;
     private Subscription subscriptionSort;
     private Subscription subscriptionTime;
+
+    @Bind(R.id.layout_coordinator) CoordinatorLayout layoutCoordinator;
+    @Bind(R.id.layout_app_bar) AppBarLayout layoutAppBar;
+    @Bind(R.id.recycler_thread_list) RecyclerView recyclerThreadList;
+    @Bind(R.id.layout_actions) ViewGroup layoutActions;
+    @Bind(R.id.button_expand_actions) FloatingActionButton buttonExpandActions;
+    @Bind(R.id.button_clear_viewed) FloatingActionButton buttonClearViewed;
+    @Bind(R.id.button_jump_top) FloatingActionButton buttonJumpTop;
+    @Bind(R.id.swipe_refresh_thread_list) SwipeRefreshLayout swipeRefreshThreadList;
+    @Bind(R.id.layout_drawer) DrawerLayout layoutDrawer;
+    @Bind(R.id.text_sidebar) TextView textSidebar;
+    @Bind(R.id.text_empty) TextView textEmpty;
+    @Bind(R.id.button_subscribe) Button buttonSubscribe;
 
     @Inject Historian historian;
     @Inject ControllerLinks controllerLinks;
@@ -174,9 +185,11 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
         toolbar.getNavigationIcon().mutate().setColorFilter(colorFilterPrimary);
         toolbar.inflateMenu(R.menu.menu_thread_list);
         toolbar.setOnMenuItemClickListener(this);
+
         menu = toolbar.getMenu();
 
         itemInterface = menu.findItem(R.id.item_interface);
+
         switch (preferences.getString(AppSettings.INTERFACE_MODE, AppSettings.MODE_GRID)) {
             case AppSettings.MODE_LIST:
                 itemInterface.setIcon(R.drawable.ic_view_module_white_24dp);
@@ -189,16 +202,7 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
         itemSortTime = menu.findItem(R.id.item_sort_time);
         itemSearch = menu.findItem(R.id.item_search);
 
-        menu.findItem(controllerLinks.getSort().getMenuId()).setChecked(true);
-        menu.findItem(controllerLinks.getTime().getMenuId()).setChecked(true);
-        itemSortTime.setTitle(
-                getString(R.string.time) + Reddit.TIME_SEPARATOR + menu
-                        .findItem(controllerLinks.getTime().getMenuId()).toString());
-
-        for (int index = 0; index < menu.size(); index++) {
-            menu.getItem(index).getIcon().mutate().setColorFilter(colorFilterPrimary);
-        }
-
+        UtilsColor.tintMenu(menu, colorFilterPrimary);
     }
 
     private void resetAdapter(AdapterLink newAdapter) {
@@ -256,8 +260,7 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
 
         view = inflater.inflate(R.layout.fragment_thread_list, container, false);
 
-        layoutCoordinator = (CoordinatorLayout) view.findViewById(R.id.layout_coordinator);
-        layoutAppBar = (AppBarLayout) view.findViewById(R.id.layout_app_bar);
+        ButterKnife.bind(this, view);
 
         TypedArray typedArray = getActivity().getTheme().obtainStyledAttributes(
                 new int[] {R.attr.colorPrimary, R.attr.colorAccent});
@@ -279,28 +282,16 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
         layoutAppBar.addView(toolbar);
         ((AppBarLayout.LayoutParams) toolbar.getLayoutParams()).setScrollFlags(AppBarLayout.LayoutParams.SCROLL_FLAG_SCROLL | AppBarLayout.LayoutParams.SCROLL_FLAG_ENTER_ALWAYS);
         toolbar.setTitleTextColor(getResources().getColor(colorResourcePrimary));
-        toolbar.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
+        toolbar.setOnClickListener(v ->
                 getFragmentManager().beginTransaction()
                         .hide(FragmentThreadList.this)
                         .add(R.id.frame_fragment, FragmentSearch.newInstance(true),
                                 FragmentSearch.TAG)
                         .addToBackStack(null)
-                        .commit();
-            }
-        });
+                        .commit());
         setUpToolbar();
 
-        layoutActions = (LinearLayout) view.findViewById(R.id.layout_actions);
-
-        buttonExpandActions = (FloatingActionButton) view.findViewById(R.id.button_expand_actions);
-        buttonExpandActions.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                toggleLayoutActions();
-            }
-        });
+        buttonExpandActions.setOnClickListener(v -> toggleLayoutActions());
 
         behaviorButtonExpandActions = new ScrollAwareFloatingActionButtonBehavior(
                 getActivity(), null,
@@ -321,37 +312,19 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
                 .setBehavior(behaviorButtonExpandActions);
 
 
-        buttonJumpTop = (FloatingActionButton) view.findViewById(R.id.button_jump_top);
-        buttonJumpTop.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                scrollToPositionWithOffset(0, 0);
-            }
-        });
-        buttonJumpTop.setOnLongClickListener(new View.OnLongClickListener() {
-            @Override
-            public boolean onLongClick(View v) {
-                Toast.makeText(getActivity(), getString(R.string.content_description_button_jump_top),
-                        Toast.LENGTH_SHORT).show();
-                return false;
-            }
+        buttonJumpTop.setOnClickListener(v -> scrollToPositionWithOffset(0, 0));
+        buttonJumpTop.setOnLongClickListener(v -> {
+            Toast.makeText(getActivity(), getString(R.string.content_description_button_jump_top),
+                    Toast.LENGTH_SHORT).show();
+            return false;
         });
 
-        buttonClearViewed = (FloatingActionButton) view.findViewById(R.id.button_clear_viewed);
-        buttonClearViewed.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                controllerLinks.clearViewed(historian);
-            }
-        });
-        buttonClearViewed.setOnLongClickListener(new View.OnLongClickListener() {
-            @Override
-            public boolean onLongClick(View v) {
-                Toast.makeText(getActivity(),
-                        getString(R.string.content_description_button_clear_viewed),
-                        Toast.LENGTH_SHORT).show();
-                return false;
-            }
+        buttonClearViewed.setOnClickListener(v -> controllerLinks.clearViewed(historian));
+        buttonClearViewed.setOnLongClickListener(v -> {
+            Toast.makeText(getActivity(),
+                    getString(R.string.content_description_button_clear_viewed),
+                    Toast.LENGTH_SHORT).show();
+            return false;
         });
 
         // Margin is included within shadow margin on pre-Lollipop, so remove all regular margin
@@ -383,14 +356,7 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
         buttonJumpTop.setColorFilter(colorFilterAccent);
         buttonClearViewed.setColorFilter(colorFilterAccent);
 
-        swipeRefreshThreadList = (SwipeRefreshLayout) view.findViewById(
-                R.id.swipe_refresh_thread_list);
-        swipeRefreshThreadList.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
-            @Override
-            public void onRefresh() {
-                controllerLinks.reloadSubreddit();
-            }
-        });
+        swipeRefreshThreadList.setOnRefreshListener(() -> controllerLinks.reloadSubreddit());
 
         AdapterListener adapterListener = new AdapterListener() {
 
@@ -463,7 +429,6 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
 
         itemDecorationDivider = new ItemDecorationDivider(getActivity(), ItemDecorationDivider.VERTICAL_LIST);
 
-        recyclerThreadList = (RecyclerView) view.findViewById(R.id.recycler_thread_list);
         recyclerThreadList.setItemAnimator(null);
         resetAdapter(adapterLink);
 
@@ -544,8 +509,7 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
                     @Override
                     public void onSwiped(final RecyclerView.ViewHolder viewHolder, int direction) {
                         // Offset by 1 due to subreddit header
-                        final int position = viewHolder.getAdapterPosition() - 1;
-                        final Link link = controllerLinks.remove(position);
+                        Link link = controllerLinks.hideLink(viewHolder.getAdapterPosition());
                         mListener.getEventListenerBase().hide(link);
 
                         if (snackbar != null) {
@@ -559,14 +523,9 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
                         snackbar = Snackbar.make(recyclerThreadList, text,
                                 UtilsAnimation.SNACKBAR_DURATION)
                                 .setActionTextColor(colorFilterPrimary.getColor())
-                                .setAction(
-                                        R.string.undo, new View.OnClickListener() {
-                                            @Override
-                                            public void onClick(View v) {
-                                                mListener.getEventListenerBase().hide(link);
-                                                controllerLinks.add(position, link);
-                                                recyclerThreadList.invalidate();
-                                            }
+                                .setAction(R.string.undo, v -> {
+                                            mListener.getEventListenerBase().hide(link);
+                                            controllerLinks.reshowLastHiddenLink();
                                         });
                         snackbar.getView().setBackgroundColor(colorPrimary);
                         snackbar.show();
@@ -601,26 +560,9 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
             recyclerThreadList.setPadding(padding, 0, padding, 0);
         }
 
-        drawerLayout = (DrawerLayout) view.findViewById(R.id.layout_drawer);
-
-        textSidebar = (TextView) view.findViewById(R.id.text_sidebar);
         textSidebar.setMovementMethod(LinkMovementMethod.getInstance());
 
-        buttonSubscribe = (Button) view.findViewById(R.id.button_subscribe);
-        buttonSubscribe.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                buttonSubscribe.setText(
-                        controllerLinks.getSubreddit().isUserIsSubscriber() ?
-                                R.string.subscribe : R.string.unsubscribe);
-                controllerLinks.subscribe();
-                if (controllerLinks.getSubreddit().isUserIsSubscriber()) {
-                    controllerSearch.addSubreddit(controllerLinks.getSubreddit());
-                }
-            }
-        });
-
-        textEmpty = (TextView) view.findViewById(R.id.text_empty);
+        buttonSubscribe.setOnClickListener(v -> controllerLinks.subscribe());
 
         return view;
     }
@@ -638,9 +580,9 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
 
                 FragmentNewPost fragmentNewPost = FragmentNewPost.newInstance(
                         controllerUser.getUser().getName(),
-                        controllerLinks.getSubreddit().getUrl(),
+                        subreddit.getUrl(),
                         postType,
-                        controllerLinks.getSubreddit().getSubmitTextHtml());
+                        subreddit.getSubmitTextHtml());
 
                 getFragmentManager().beginTransaction()
                         .hide(FragmentThreadList.this)
@@ -651,7 +593,7 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
 
             @Override
             public void showSidebar() {
-                drawerLayout.openDrawer(GravityCompat.END);
+                layoutDrawer.openDrawer(GravityCompat.END);
             }
         };
 
@@ -815,7 +757,9 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
                 .doOnNext(event -> textEmpty.setVisibility(event.getData().second.isEmpty() ? View.VISIBLE : View.GONE))
                 .map(event -> event.getData().first)
                 .subscribe(subreddit -> {
-                    drawerLayout.setDrawerLockMode(TextUtils.isEmpty(subreddit.getDescription())
+                    this.subreddit = subreddit;
+
+                    layoutDrawer.setDrawerLockMode(TextUtils.isEmpty(subreddit.getDescription())
                             ? DrawerLayout.LOCK_MODE_LOCKED_CLOSED
                             : DrawerLayout.LOCK_MODE_UNLOCKED, GravityCompat.END);
 
@@ -834,7 +778,7 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
         subscriptionTime = eventHolder.getTime()
                 .subscribe(time -> {
                     menu.findItem(time.getMenuId()).setChecked(true);
-                    itemSortTime.setTitle(getString(R.string.time) + Reddit.TIME_SEPARATOR + menu.findItem(time.getMenuId()).toString());
+                    itemSortTime.setTitle(getString(R.string.time_description, menu.findItem(time.getMenuId()).toString()));
                 });
 
         controllerUser.addListener(listenerUser);
@@ -907,8 +851,7 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
         Time time = Time.fromMenuId(item.getItemId());
         if (time != null) {
             controllerLinks.setTime(time);
-            itemSortTime.setTitle(
-                    getString(R.string.time) + Reddit.TIME_SEPARATOR + item.toString());
+            itemSortTime.setTitle(getString(R.string.time_description, item.toString()));
             scrollToPositionWithOffset(0, 0);
             return true;
         }
@@ -954,8 +897,8 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
 
     @Override
     public void navigateBack() {
-        if (drawerLayout.isDrawerOpen(GravityCompat.END)) {
-            drawerLayout.closeDrawer(GravityCompat.END);
+        if (layoutDrawer.isDrawerOpen(GravityCompat.END)) {
+            layoutDrawer.closeDrawer(GravityCompat.END);
             return;
         }
 
