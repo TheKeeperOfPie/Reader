@@ -111,13 +111,4 @@ public class Thing implements Parcelable {
         this.json = in.readString();
     }
 
-    public static final Creator<Thing> CREATOR = new Creator<Thing>() {
-        public Thing createFromParcel(Parcel source) {
-            return new Thing(source);
-        }
-
-        public Thing[] newArray(int size) {
-            return new Thing[size];
-        }
-    };
 }

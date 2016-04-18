@@ -6,8 +6,11 @@ import android.graphics.Color;
 import android.graphics.ColorFilter;
 import android.graphics.drawable.Drawable;
 import android.support.annotation.ColorInt;
+import android.support.annotation.Nullable;
 import android.support.v4.util.LruCache;
 import android.support.v4.util.Pair;
+import android.support.v7.graphics.Palette;
+import android.support.v7.graphics.Target;
 import android.util.TypedValue;
 import android.view.Menu;
 
@@ -129,6 +132,18 @@ public class UtilsColor {
         }
 
         return theme;
+    }
+
+    @Nullable
+    public static Palette.Swatch getSwatch(Palette palette, Target... targets) {
+        for (Target target : targets) {
+            Palette.Swatch swatch = palette.getSwatchForTarget(target);
+            if (swatch != null) {
+                return swatch;
+            }
+        }
+
+        return null;
     }
 
 }

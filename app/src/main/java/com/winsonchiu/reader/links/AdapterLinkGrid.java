@@ -12,6 +12,7 @@ import android.graphics.drawable.Drawable;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.graphics.ColorUtils;
 import android.support.v7.graphics.Palette;
+import android.support.v7.graphics.Target;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.StaggeredGridLayoutManager;
 import android.text.TextUtils;
@@ -478,8 +479,19 @@ public class AdapterLinkGrid extends AdapterLink {
                 Palette.from(((BitmapDrawable) drawable).getBitmap())
                         .generate(palette -> {
                             if (position == getAdapterPosition()) {
-                                linkSaved.setBackgroundColor(palette.getDarkVibrantColor(
-                                        palette.getMutedColor(colorBackgroundDefault)));
+                                Palette.Swatch swatch = UtilsColor.getSwatch(palette, Target.DARK_VIBRANT, Target.MUTED, Target.DARK_MUTED);
+
+                                if (swatch == null) {
+                                    linkSaved.setBackgroundColor(colorBackgroundDefault);
+                                    linkSaved.setTextTitleColor(colorTextPrimaryDefault);
+                                    linkSaved.setTextBodyColor(colorTextPrimaryDefault);
+                                }
+                                else {
+                                    linkSaved.setBackgroundColor(swatch.getRgb());
+                                    linkSaved.setTextTitleColor(swatch.getTitleTextColor());
+                                    linkSaved.setTextBodyColor(swatch.getBodyTextColor());
+                                }
+
                                 syncBackgroundColor();
                             }
                         });
@@ -499,7 +511,7 @@ public class AdapterLinkGrid extends AdapterLink {
                             color);
                 }
 
-                setTextColors(color);
+                setTextColors(color, link.getTextTitleColor(), link.getTextBodyColor());
             }
             else {
                 color = ColorUtils.setAlphaComponent(color, ALPHA_OVERLAY_IMAGE);
@@ -520,7 +532,7 @@ public class AdapterLinkGrid extends AdapterLink {
             }
         }
 
-        public void setTextColors(int color) {
+        public void setTextColors(int color, int colorTitle, int colorBody) {
             Menu menu = toolbarActions.getMenu();
 
             boolean showOnWhite = UtilsColor.showOnWhite(color);
@@ -534,7 +546,6 @@ public class AdapterLinkGrid extends AdapterLink {
                 titleTextColorAlert = getColor(R.color.textColorAlert);
                 titleTextColor = getColor(R.color.darkThemeTextColor);
                 colorFilterMenuItem = colorFilterIconLight;
-
             }
             else {
                 imagePlay.setColorFilter(colorFilterIconDark);
@@ -546,6 +557,14 @@ public class AdapterLinkGrid extends AdapterLink {
                 titleTextColor = getColor(R.color.lightThemeTextColor);
                 colorFilterMenuItem = colorFilterIconDark;
             }
+
+            if (colorBody != 0) {
+                titleTextColor = colorBody;
+                colorTextSecondary = colorBody;
+                textThreadInfo.setTextColor(colorBody);
+                textHidden.setTextColor(colorBody);
+            }
+
             syncTitleColor();
 
             setOverflowColorFilter();
@@ -608,7 +627,7 @@ public class AdapterLinkGrid extends AdapterLink {
         @Override
         public void clearOverlay() {
             layoutBackground.setBackgroundColor(link.getBackgroundColor());
-            setTextColors(link.getBackgroundColor());
+            setTextColors(link.getBackgroundColor(), link.getTextTitleColor(), link.getTextBodyColor());
             viewOverlay.setVisibility(View.GONE);
         }
 

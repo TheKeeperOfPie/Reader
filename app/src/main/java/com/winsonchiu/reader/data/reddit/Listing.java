@@ -12,6 +12,7 @@ import com.winsonchiu.reader.utils.UtilsJson;
 
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
+import java.util.LinkedList;
 import java.util.List;
 
 /**
@@ -23,7 +24,7 @@ public class Listing implements Parcelable {
     private String before;
     private String after;
     private String modHash;
-    private List<Thing> children = new ArrayList<>();
+    private List<Thing> children = new LinkedList<>();
 
     public Listing() {
 

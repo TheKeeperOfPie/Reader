@@ -92,7 +92,7 @@ public class AdapterLinkHeader extends AdapterBase<AdapterLink.ViewHolderLink> i
                         if (link.getName().equals(firstLinkName)) {
                             link.setBackgroundColor(colorLink);
                             itemView.setBackgroundColor(colorLink);
-                            setTextColors(colorLink);
+                            setTextColors(colorLink, link.getTextTitleColor(), link.getTextBodyColor());
                         }
                         colorLink = 0;
                     } else {

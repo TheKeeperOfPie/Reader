@@ -169,9 +169,9 @@ public class AdapterCommentList extends AdapterBase<RecyclerView.ViewHolder> imp
                     @Override
                     public void loadBackgroundColor() {
                         if (colorLink != 0 && (link.getName().equals(firstLinkName))) {
-                                link.setBackgroundColor(colorLink);
-                                itemView.setBackgroundColor(colorLink);
-                                setTextColors(colorLink);
+                            link.setBackgroundColor(colorLink);
+                            itemView.setBackgroundColor(colorLink);
+                            setTextColors(colorLink, link.getTextTitleColor(), link.getTextBodyColor());
                         }
                         else {
                             super.loadBackgroundColor();

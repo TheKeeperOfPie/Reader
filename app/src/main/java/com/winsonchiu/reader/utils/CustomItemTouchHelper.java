@@ -40,6 +40,7 @@ import android.support.v4.animation.AnimatorCompatHelper;
 import android.support.v4.animation.AnimatorListenerCompat;
 import android.support.v4.animation.AnimatorUpdateListenerCompat;
 import android.support.v4.animation.ValueAnimatorCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v4.view.GestureDetectorCompat;
 import android.support.v4.view.MotionEventCompat;
 import android.support.v4.view.VelocityTrackerCompat;
@@ -2269,15 +2270,17 @@ public class CustomItemTouchHelper extends RecyclerView.ItemDecoration
                     context.getResources().getDisplayMetrics());
 
             TypedArray typedArray = context.getTheme().obtainStyledAttributes(
-                    new int[]{R.attr.colorPrimary, R.attr.colorIconFilter});
-            int colorPrimary = typedArray.getColor(0, context.getResources().getColor(R.color.colorPrimary));
-            int colorIconFilter = typedArray.getColor(1, 0xFFFFFFFF);
+                    new int[]{R.attr.colorPrimaryDark});
+            int colorPrimaryDark = typedArray.getColor(0, context.getResources().getColor(R.color.colorPrimaryDark));
             typedArray.recycle();
 
+            int iconFilterResource = UtilsColor.showOnWhite(colorPrimaryDark) ? R.color.darkThemeIconFilter : R.color.lightThemeIconFilter;
+            int colorIconFilter = ContextCompat.getColor(context, iconFilterResource);
+
             paintUnder = new Paint();
-            paintUnder.setColor(colorPrimary);
-            iconUnder = context.getResources().getDrawable(iconUnderResource);
-            iconUnder.setColorFilter(colorIconFilter, PorterDuff.Mode.MULTIPLY);
+            paintUnder.setColor(colorPrimaryDark);
+            iconUnder = ContextCompat.getDrawable(context, iconUnderResource);
+            iconUnder.setColorFilter(colorIconFilter, PorterDuff.Mode.SRC_IN);
         }
 
         public void setDrawable(Drawable drawable) {

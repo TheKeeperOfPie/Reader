@@ -63,6 +63,8 @@ public class Link extends Replyable implements Parcelable {
     private Listing comments = new Listing();
     private Album album;
     private int backgroundColor;
+    private int textTitleColor;
+    private int textBodyColor;
 
     private int contextLevel;
     private String commentId;
@@ -470,45 +472,6 @@ public class Link extends Replyable implements Parcelable {
         this.suggestedSort = suggestedSort;
     }
 
-    @Override
-    public String toString() {
-        return "Link{" +
-                "album=" + album +
-                ", author='" + author + '\'' +
-                ", authorFlairCssClass='" + authorFlairCssClass + '\'' +
-                ", authorFlairText='" + authorFlairText + '\'' +
-                ", clicked=" + clicked +
-                ", domain='" + domain + '\'' +
-                ", hidden=" + hidden +
-                ", isSelf=" + isSelf +
-                ", likes=" + likes +
-                ", linkFlairCssClass='" + linkFlairCssClass + '\'' +
-                ", linkFlairText='" + linkFlairText + '\'' +
-                ", media='" + media + '\'' +
-                ", mediaEmbed='" + mediaEmbed + '\'' +
-                ", numComments=" + numComments +
-                ", over18=" + over18 +
-                ", permalink='" + permalink + '\'' +
-                ", saved=" + saved +
-                ", score=" + score +
-                ", selfText=" + selfText +
-                ", selfTextHtml=" + selfTextHtml +
-                ", subreddit='" + subreddit + '\'' +
-                ", subredditId='" + subredditId + '\'' +
-                ", suggestedSort=" + suggestedSort +
-                ", thumbnail='" + thumbnail + '\'' +
-                ", title='" + title + '\'' +
-                ", url='" + url + '\'' +
-                ", edited=" + edited +
-                ", distinguished=" + distinguished +
-                ", stickied=" + stickied +
-                ", created=" + created +
-                ", createdUtc=" + createdUtc +
-                ", comments=" + comments +
-                ", backgroundColor=" + backgroundColor +
-                '}';
-    }
-
     public int getContextLevel() {
         return contextLevel;
     }
@@ -547,6 +510,22 @@ public class Link extends Replyable implements Parcelable {
 
     public void setJsonComments(String jsonComments) {
         this.jsonComments = jsonComments;
+    }
+
+    public int getTextTitleColor() {
+        return textTitleColor;
+    }
+
+    public void setTextTitleColor(int textTitleColor) {
+        this.textTitleColor = textTitleColor;
+    }
+
+    public int getTextBodyColor() {
+        return textBodyColor;
+    }
+
+    public void setTextBodyColor(int textBodyColor) {
+        this.textBodyColor = textBodyColor;
     }
 
     public static class Media implements Parcelable {
@@ -1052,6 +1031,53 @@ public class Link extends Replyable implements Parcelable {
     }
 
     @Override
+    public String toString() {
+        return "Link{" +
+                "author='" + author + '\'' +
+                ", authorFlairCssClass='" + authorFlairCssClass + '\'' +
+                ", authorFlairText='" + authorFlairText + '\'' +
+                ", clicked=" + clicked +
+                ", domain='" + domain + '\'' +
+                ", hidden=" + hidden +
+                ", isSelf=" + isSelf +
+                ", likes=" + likes +
+                ", linkFlairCssClass='" + linkFlairCssClass + '\'' +
+                ", linkFlairText='" + linkFlairText + '\'' +
+                ", media=" + media +
+                ", mediaEmbed='" + mediaEmbed + '\'' +
+                ", numComments=" + numComments +
+                ", over18=" + over18 +
+                ", permalink='" + permalink + '\'' +
+                ", preview=" + preview +
+                ", saved=" + saved +
+                ", score=" + score +
+                ", selfText=" + selfText +
+                ", selfTextHtml=" + selfTextHtml +
+                ", subreddit='" + subreddit + '\'' +
+                ", subredditId='" + subredditId + '\'' +
+                ", suggestedSort=" + suggestedSort +
+                ", thumbnail='" + thumbnail + '\'' +
+                ", title='" + title + '\'' +
+                ", url='" + url + '\'' +
+                ", edited=" + edited +
+                ", distinguished=" + distinguished +
+                ", stickied=" + stickied +
+                ", created=" + created +
+                ", createdUtc=" + createdUtc +
+                ", comments=" + comments +
+                ", album=" + album +
+                ", backgroundColor=" + backgroundColor +
+                ", textTitleColor=" + textTitleColor +
+                ", textBodyColor=" + textBodyColor +
+                ", contextLevel=" + contextLevel +
+                ", commentId='" + commentId + '\'' +
+                ", youTubeId='" + youTubeId + '\'' +
+                ", youTubeTime=" + youTubeTime +
+                ", jsonComments='" + jsonComments + '\'' +
+                '}';
+    }
+
+    @Override
     public int describeContents() {
         return 0;
     }
@@ -1090,11 +1116,16 @@ public class Link extends Replyable implements Parcelable {
         dest.writeByte(stickied ? (byte) 1 : (byte) 0);
         dest.writeLong(this.created);
         dest.writeLong(this.createdUtc);
-        dest.writeParcelable(this.comments, 0);
-        dest.writeParcelable(this.album, 0);
+        dest.writeParcelable(this.comments, flags);
+        dest.writeParcelable(this.album, flags);
         dest.writeInt(this.backgroundColor);
+        dest.writeInt(this.textTitleColor);
+        dest.writeInt(this.textBodyColor);
         dest.writeInt(this.contextLevel);
         dest.writeString(this.commentId);
+        dest.writeString(this.youTubeId);
+        dest.writeInt(this.youTubeTime);
+        dest.writeString(this.jsonComments);
     }
 
     protected Link(Parcel in) {
@@ -1134,15 +1165,22 @@ public class Link extends Replyable implements Parcelable {
         this.comments = in.readParcelable(Listing.class.getClassLoader());
         this.album = in.readParcelable(Album.class.getClassLoader());
         this.backgroundColor = in.readInt();
+        this.textTitleColor = in.readInt();
+        this.textBodyColor = in.readInt();
         this.contextLevel = in.readInt();
         this.commentId = in.readString();
+        this.youTubeId = in.readString();
+        this.youTubeTime = in.readInt();
+        this.jsonComments = in.readString();
     }
 
     public static final Creator<Link> CREATOR = new Creator<Link>() {
+        @Override
         public Link createFromParcel(Parcel source) {
             return new Link(source);
         }
 
+        @Override
         public Link[] newArray(int size) {
             return new Link[size];
         }

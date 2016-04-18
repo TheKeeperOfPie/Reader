@@ -204,8 +204,8 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
         menu.findItem(R.id.item_sort_all)
                 .setChecked(true);
         itemSortTime.setTitle(
-                getString(R.string.time) + Reddit.TIME_SEPARATOR + getString(
-                        R.string.item_sort_all));
+                getString(R.string.time_description, getString(
+                        R.string.item_sort_all)));
 
         if (getArguments().getBoolean(ARG_HIDE_KEYBOARD)) {
             searchView.clearFocus();
@@ -678,7 +678,7 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
         subscriptionTime = eventHolder.getTime()
                 .subscribe(time -> {
                     menu.findItem(time.getMenuId()).setChecked(true);
-                    itemSortTime.setTitle(getString(R.string.time) + Reddit.TIME_SEPARATOR + menu.findItem(time.getMenuId()).toString());
+                    itemSortTime.setTitle(getString(R.string.time_description, menu.findItem(time.getMenuId()).toString()));
                 });
 
         subscriptionCurrentPage = eventHolder.getCurrentPage()

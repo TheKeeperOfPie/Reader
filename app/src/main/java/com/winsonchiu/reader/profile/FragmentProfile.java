@@ -163,8 +163,8 @@ public class FragmentProfile extends FragmentBase implements Toolbar.OnMenuItemC
 
         menu.findItem(R.id.item_sort_hot).setChecked(true);
         menu.findItem(R.id.item_sort_time).setTitle(
-                getString(R.string.time) + Reddit.TIME_SEPARATOR + getString(
-                        R.string.item_sort_all));
+                getString(R.string.time_description, getString(
+                        R.string.item_sort_all)));
 
         if (TextUtils.isEmpty(controllerUser.getUser().getName()) && !controllerProfile.isLoading()) {
             itemSearch.expandActionView();
@@ -215,8 +215,7 @@ public class FragmentProfile extends FragmentBase implements Toolbar.OnMenuItemC
                 menu.findItem(sort.getMenuId()).setChecked(true);
                 menu.findItem(time.getMenuId()).setChecked(true);
                 itemSortTime.setTitle(
-                        getString(R.string.time) + Reddit.TIME_SEPARATOR + menu
-                                .findItem(controllerProfile.getTime().getMenuId()).toString());
+                        getString(R.string.time_description, menu.findItem(controllerProfile.getTime().getMenuId()).toString()));
             }
 
             @Override
@@ -606,7 +605,7 @@ public class FragmentProfile extends FragmentBase implements Toolbar.OnMenuItemC
             controllerProfile.setTime(time)
                     .subscribe(getReloadObserver());
             itemSortTime.setTitle(
-                    getString(R.string.time) + Reddit.TIME_SEPARATOR + item.toString());
+                    getString(R.string.time_description, item.toString()));
             flashSearchView();
             return true;
         }

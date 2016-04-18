@@ -280,6 +280,8 @@
     <string name="need_permission_download_image">Need storage permission to download image</string>
     <string name="error_marking_read">Error marking all read</string>
 
+    <string name="time_description">Time - %1$s</string>
+
     <string name="subreddit_info">%1$s subscribers\ncreated %2$s</string>
     <string name="subreddit_reader">/r/ReaderForReddit</string>
     <string name="report">Report "%1$s" by /u/%2$s for %3$s?</string>
