@@ -17,6 +17,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
+import com.winsonchiu.reader.ActivityMain;
+import com.winsonchiu.reader.ControllerUser;
 import com.winsonchiu.reader.R;
 import com.winsonchiu.reader.adapter.AdapterBase;
 import com.winsonchiu.reader.adapter.AdapterCallback;
@@ -33,6 +35,8 @@ import com.winsonchiu.reader.utils.ViewHolderBase;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.inject.Inject;
+
 /**
  * Created by TheKeeperOfPie on 5/15/2015.
  */
@@ -42,23 +46,29 @@ public class AdapterProfile extends AdapterBase<RecyclerView.ViewHolder> impleme
 
     private FragmentActivity activity;
     private AdapterListener adapterListener;
-    protected ControllerProfile controllerProfile;
     private AdapterLink.ViewHolderLink.EventListener eventListenerBase;
+    private AdapterLink.ViewHolderLink.Listener listenerLink;
     private AdapterCommentList.ViewHolderComment.EventListenerComment eventListenerComment;
-    private final AdapterCommentList.ViewHolderComment.EventListener eventListener;
+    private AdapterCommentList.ViewHolderComment.EventListener eventListener;
     private ControllerProfile.Listener listener;
     private List<RecyclerView.ViewHolder> viewHolders;
+
+    protected ControllerProfile controllerProfile;
+    @Inject ControllerUser controllerUser;
 
     public AdapterProfile(FragmentActivity activity,
             ControllerProfile controllerProfile,
             AdapterListener adapterListener,
             AdapterLink.ViewHolderLink.EventListener eventListenerBase,
+            AdapterLink.ViewHolderLink.Listener listenerLink,
             AdapterCommentList.ViewHolderComment.EventListenerComment eventListenerComment,
             AdapterCommentList.ViewHolderComment.EventListener eventListener,
             ControllerProfile.Listener listener) {
+        ((ActivityMain) activity).getComponentActivity().inject(this);
         this.activity = activity;
         this.adapterListener = adapterListener;
         this.eventListenerBase = eventListenerBase;
+        this.listenerLink = listenerLink;
         this.eventListenerComment = eventListenerComment;
         this.eventListener = eventListener;
         this.listener = listener;
@@ -103,7 +113,7 @@ public class AdapterProfile extends AdapterBase<RecyclerView.ViewHolder> impleme
                         parent,
                         adapterCallback,
                         adapterListener,
-                        eventListenerBase,
+                        listenerLink,
                         Source.PROFILE,
                         this);
                 viewHolders.add(viewHolder);
@@ -156,7 +166,7 @@ public class AdapterProfile extends AdapterBase<RecyclerView.ViewHolder> impleme
                 if (holder.getItemViewType() == ControllerProfile.VIEW_TYPE_LINK) {
                     AdapterLinkList.ViewHolder viewHolderLinkTop = (AdapterLinkList.ViewHolder) holder;
                     viewHolderLinkTop.onRecycle();
-                    viewHolderLinkTop.onBind(controllerProfile.getTopLink(), true);
+                    viewHolderLinkTop.onBind(controllerProfile.getTopLink(), controllerUser.getUser(), true);
                 }
                 else {
                     ViewHolderText viewHolderText = (ViewHolderText) holder;
@@ -190,7 +200,7 @@ public class AdapterProfile extends AdapterBase<RecyclerView.ViewHolder> impleme
                 if (holder instanceof AdapterLinkList.ViewHolder) {
 
                     AdapterLinkList.ViewHolder viewHolderLink = (AdapterLinkList.ViewHolder) holder;
-                    viewHolderLink.onBind(controllerProfile.getLink(position), true);
+                    viewHolderLink.onBind(controllerProfile.getLink(position), controllerUser.getUser(), true);
 
                 }
                 else if (holder instanceof AdapterCommentList.ViewHolderComment) {

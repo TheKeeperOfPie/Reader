@@ -16,12 +16,10 @@ import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Parcel;
 import android.os.Parcelable;
-import android.preference.PreferenceManager;
 import android.support.annotation.CallSuper;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.FragmentActivity;
-import android.support.v4.util.Pair;
 import android.support.v4.view.GestureDetectorCompat;
 import android.support.v4.view.MenuItemCompat;
 import android.support.v4.view.MotionEventCompat;
@@ -33,7 +31,6 @@ import android.support.v7.widget.StaggeredGridLayoutManager;
 import android.support.v7.widget.Toolbar;
 import android.text.Editable;
 import android.text.Html;
-import android.text.InputFilter;
 import android.text.Spannable;
 import android.text.SpannableString;
 import android.text.Spanned;
@@ -41,6 +38,7 @@ import android.text.TextUtils;
 import android.text.format.DateUtils;
 import android.text.method.LinkMovementMethod;
 import android.text.style.ForegroundColorSpan;
+import android.text.util.Linkify;
 import android.util.Log;
 import android.view.GestureDetector;
 import android.view.LayoutInflater;
@@ -91,7 +89,6 @@ import com.winsonchiu.reader.data.reddit.User;
 import com.winsonchiu.reader.glide.RequestListenerCompletion;
 import com.winsonchiu.reader.history.Historian;
 import com.winsonchiu.reader.rx.FinalizingSubscriber;
-import com.winsonchiu.reader.rx.ObserverEmpty;
 import com.winsonchiu.reader.utils.BaseMediaPlayerControl;
 import com.winsonchiu.reader.utils.BaseTextWatcher;
 import com.winsonchiu.reader.utils.CallbackYouTubeDestruction;
@@ -123,11 +120,11 @@ import java.util.regex.Pattern;
 
 import javax.inject.Inject;
 
-import butterknife.Bind;
 import butterknife.BindColor;
 import butterknife.BindDimen;
 import butterknife.BindDrawable;
 import butterknife.BindString;
+import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
 import butterknife.OnTouch;
@@ -140,7 +137,7 @@ import rx.schedulers.Schedulers;
 /**
  * Created by TheKeeperOfPie on 3/14/2015.
  */
-public abstract class AdapterLink extends AdapterBase<ViewHolderBase> implements CallbackYouTubeDestruction, AdapterDataListener<Pair<Subreddit, List<Link>>> {
+public abstract class AdapterLink extends AdapterBase<ViewHolderBase> implements CallbackYouTubeDestruction, AdapterDataListener<LinksModel> {
 
     public static final int TYPE_HEADER = 0;
     public static final int TYPE_LINK = 1;
@@ -151,42 +148,33 @@ public abstract class AdapterLink extends AdapterBase<ViewHolderBase> implements
 
     protected FragmentActivity activity;
     protected AdapterListener adapterListener;
-    protected SharedPreferences preferences;
     protected LayoutManager layoutManager;
-    protected List<ViewHolderBase> viewHolders;
+    protected List<ViewHolderBase> viewHolders = new ArrayList<>();
 
-    protected Subreddit subreddit = new Subreddit();
-    protected List<Link> data = new ArrayList<>();
-    protected boolean showSubreddit;
+    protected LinksModel data = new LinksModel();
 
     protected ViewHolderHeader.EventListener eventListenerHeader;
-    protected ViewHolderLink.EventListener eventListenerBase;
+    protected ViewHolderLink.Listener listenerLink;
+
+    @Inject SharedPreferences preferences;
 
     public AdapterLink(FragmentActivity activity,
             AdapterListener adapterListener,
             ViewHolderHeader.EventListener eventListenerHeader,
-            ViewHolderLink.EventListener eventListenerBase) {
+            ViewHolderLink.Listener listenerLink) {
         setAdapterLoadMoreListener(adapterListener);
+        this.activity = activity;
         this.adapterListener = adapterListener;
         this.eventListenerHeader = eventListenerHeader;
-        this.eventListenerBase = eventListenerBase;
+        this.listenerLink = listenerLink;
         viewHolders = new ArrayList<>();
 
         ((ActivityMain) activity).getComponentActivity().inject(this);
-        setActivity(activity);
-    }
-
-    public void setActivity(FragmentActivity activity) {
-        this.activity = activity;
-        this.preferences = PreferenceManager.getDefaultSharedPreferences(activity);
     }
 
     @Override
-    public void setData(Pair<Subreddit, List<Link>> data) {
-        this.subreddit = data.first;
-        this.showSubreddit = "/".equals(subreddit.getUrl()) || "/r/all/".equals(subreddit.getUrl());
-        this.data.clear();
-        this.data.addAll(data.second);
+    public void setData(LinksModel data) {
+        this.data = data;
     }
 
     public LayoutManager getLayoutManager() {
@@ -200,7 +188,7 @@ public abstract class AdapterLink extends AdapterBase<ViewHolderBase> implements
 
     @Override
     public int getItemCount() {
-        return data.size() + 1;
+        return data.getLinks().size() + 1;
     }
 
     @Override
@@ -285,15 +273,15 @@ public abstract class AdapterLink extends AdapterBase<ViewHolderBase> implements
 
     public static class ViewHolderHeader extends ViewHolderBase implements View.OnClickListener {
 
-        @Bind(R.id.text_name) TextView textName;
-        @Bind(R.id.text_title) TextView textTitle;
-        @Bind(R.id.text_description) TextView textDescription;
-        @Bind(R.id.layout_buttons) LinearLayout layoutButtons;
-        @Bind(R.id.button_submit_link) Button buttonSubmitLink;
-        @Bind(R.id.button_submit_self) Button buttonSubmitSelf;
-        @Bind(R.id.layout_container_expand) RelativeLayout layoutContainerExpand;
-        @Bind(R.id.text_hidden) TextView textHidden;
-        @Bind(R.id.button_show_sidebar) ImageButton buttonShowSidebar;
+        @BindView(R.id.text_name) TextView textName;
+        @BindView(R.id.text_title) TextView textTitle;
+        @BindView(R.id.text_description) TextView textDescription;
+        @BindView(R.id.layout_buttons) LinearLayout layoutButtons;
+        @BindView(R.id.button_submit_link) Button buttonSubmitLink;
+        @BindView(R.id.button_submit_self) Button buttonSubmitSelf;
+        @BindView(R.id.layout_container_expand) RelativeLayout layoutContainerExpand;
+        @BindView(R.id.text_hidden) TextView textHidden;
+        @BindView(R.id.button_show_sidebar) ImageButton buttonShowSidebar;
 
         @BindString(R.string.submit_link) String defaultTextSubmitLink;
         @BindString(R.string.submit_text) String defaultTextSubmitText;
@@ -402,33 +390,33 @@ public abstract class AdapterLink extends AdapterBase<ViewHolderBase> implements
             implements Toolbar.OnMenuItemClickListener, View.OnClickListener,
             View.OnLongClickListener, SurfaceHolder.Callback {
 
-        @Bind(R.id.layout_root) ViewGroup layoutRoot;
-        @Bind(R.id.layout_inner) ViewGroup layoutInner;
-        @Bind(R.id.layout_full) public ViewGroup layoutFull;
-        @Bind(R.id.progress_image) public ProgressBar progressImage;
-        @Bind(R.id.view_pager_full) public ViewPager viewPagerFull;
-        @Bind(R.id.image_play) public ImageView imagePlay;
-        @Bind(R.id.image_thumbnail) public ImageView imageThumbnail;
-        @Bind(R.id.image_full) public ImageViewZoom imageFull;
-        @Bind(R.id.view_margin) public View viewMargin;
-        @Bind(R.id.button_comments) public ImageView buttonComments;
-        @Bind(R.id.text_thread_flair) public TextView textThreadFlair;
-        @Bind(R.id.text_thread_title) public TextView textThreadTitle;
-        @Bind(R.id.text_thread_self) public TextView textThreadSelf;
-        @Bind(R.id.text_thread_info) public TextView textThreadInfo;
-        @Bind(R.id.text_hidden) public TextView textHidden;
-        @Bind(R.id.layout_container_expand) public ViewGroup layoutContainerExpand;
-        @Bind(R.id.toolbar_actions) public Toolbar toolbarActions;
-        @Bind(R.id.layout_container_reply) public ViewGroup layoutContainerReply;
-        @Bind(R.id.edit_text_reply) public EditText editTextReply;
-        @Bind(R.id.text_username) public TextView textUsername;
-        @Bind(R.id.button_send_reply) public Button buttonSendReply;
-        @Bind(R.id.button_reply_editor) public ImageButton buttonReplyEditor;
-        @Bind(R.id.view_overlay) public View viewOverlay;
-        @Bind(R.id.layout_youtube) public ViewGroup layoutYouTube;
+        @BindView(R.id.layout_root) ViewGroup layoutRoot;
+        @BindView(R.id.layout_inner) ViewGroup layoutInner;
+        @BindView(R.id.layout_full) public ViewGroup layoutFull;
+        @BindView(R.id.progress_image) public ProgressBar progressImage;
+        @BindView(R.id.view_pager_full) public ViewPager viewPagerFull;
+        @BindView(R.id.image_play) public ImageView imagePlay;
+        @BindView(R.id.image_thumbnail) public ImageView imageThumbnail;
+        @BindView(R.id.image_full) public ImageViewZoom imageFull;
+        @BindView(R.id.view_margin) public View viewMargin;
+        @BindView(R.id.button_comments) public ImageView buttonComments;
+        @BindView(R.id.text_thread_flair) public TextView textThreadFlair;
+        @BindView(R.id.text_thread_title) public TextView textThreadTitle;
+        @BindView(R.id.text_thread_self) public TextView textThreadSelf;
+        @BindView(R.id.text_thread_info) public TextView textThreadInfo;
+        @BindView(R.id.text_hidden) public TextView textHidden;
+        @BindView(R.id.layout_container_expand) public ViewGroup layoutContainerExpand;
+        @BindView(R.id.toolbar_actions) public Toolbar toolbarActions;
+        @BindView(R.id.layout_container_reply) public ViewGroup layoutContainerReply;
+        @BindView(R.id.edit_text_reply) public EditText editTextReply;
+        @BindView(R.id.text_username) public TextView textUsername;
+        @BindView(R.id.button_send_reply) public Button buttonSendReply;
+        @BindView(R.id.button_reply_editor) public ImageButton buttonReplyEditor;
+        @BindView(R.id.view_overlay) public View viewOverlay;
+        @BindView(R.id.layout_youtube) public ViewGroup layoutYouTube;
 
-        @Nullable @Bind(R.id.view_mask_start) View viewMaskStart;
-        @Nullable @Bind(R.id.view_mask_end) View viewMaskEnd;
+        @Nullable @BindView(R.id.view_mask_start) View viewMaskStart;
+        @Nullable @BindView(R.id.view_mask_end) View viewMaskEnd;
 
         @BindDimen(R.dimen.touch_target_size) public int toolbarItemWidth;
         @BindDimen(R.dimen.activity_horizontal_margin) public int titleMargin;
@@ -443,6 +431,7 @@ public abstract class AdapterLink extends AdapterBase<ViewHolderBase> implements
         private final AdapterListener adapterListener;
         private final FragmentActivity activity;
         public Link link;
+        public User user;
         public boolean showSubreddit;
 
         public Subscription subscription;
@@ -454,7 +443,6 @@ public abstract class AdapterLink extends AdapterBase<ViewHolderBase> implements
         public YouTubePlayerSupportFragment youTubeFragment;
         public int youTubeViewId = View.generateViewId();
 
-        public EventListener eventListener;
         public CallbackYouTubeDestruction callbackYouTubeDestruction;
 
         public MenuItem itemUpvote;
@@ -492,8 +480,8 @@ public abstract class AdapterLink extends AdapterBase<ViewHolderBase> implements
 
             @Override
             public boolean onDoubleTap(MotionEvent e) {
-                if (!TextUtils.isEmpty(eventListener.getUser().getName())) {
-                    eventListener.voteLink(ViewHolderLink.this, link, 1);
+                if (user != null) {
+                    listener.onVote(link, ViewHolderLink.this, 1);
                 }
                 if (layoutContainerExpand.getVisibility() == View.VISIBLE) {
                     layoutContainerExpand.clearAnimation();
@@ -518,18 +506,20 @@ public abstract class AdapterLink extends AdapterBase<ViewHolderBase> implements
         private Source source;
         private boolean expanded;
 
+        private Listener listener;
+
         public ViewHolderLink(FragmentActivity activity,
                 ViewGroup parent,
                 int layoutResourceId,
                 AdapterCallback adapterCallback,
                 AdapterListener adapterListener,
-                EventListener eventListener,
+                Listener listener,
                 Source source,
                 CallbackYouTubeDestruction callbackYouTubeDestruction) {
             super(LayoutInflater.from(parent.getContext()).inflate(layoutResourceId, parent, false), adapterCallback);
             this.adapterListener = adapterListener;
             this.activity = activity;
-            this.eventListener = eventListener;
+            this.listener = listener;
             this.source = source;
             this.callbackYouTubeDestruction = callbackYouTubeDestruction;
 
@@ -589,7 +579,7 @@ public abstract class AdapterLink extends AdapterBase<ViewHolderBase> implements
         private void sendComment() {
             // TODO: Move add to immediate on button click, check if failed afterwards
 
-            eventListener.sendComment(link.getName(), editTextReply.getText().toString());
+            listener.onSubmitComment(link, editTextReply.getText().toString());
             link.setReplyExpanded(false);
             layoutContainerReply.setVisibility(View.GONE);
         }
@@ -626,7 +616,7 @@ public abstract class AdapterLink extends AdapterBase<ViewHolderBase> implements
             mediaController = new MediaController(context);
             adapterAlbum = new AdapterAlbum(
                     adapterListener,
-                    (title, fileName, url) -> eventListener.downloadImage(title, fileName, url),
+                    (title, fileName, url) -> listener.onDownloadImage(link, title, fileName, url),
                     colorFilterMenuItem
             );
 
@@ -696,7 +686,7 @@ public abstract class AdapterLink extends AdapterBase<ViewHolderBase> implements
             imageFull.setListener(new ImageViewZoom.Listener() {
                 @Override
                 public void onTextureSizeExceeded() {
-                    eventListener.loadUrl(link.getUrl());
+                    listener.onLoadUrl(link, true);
                 }
 
                 @Override
@@ -755,7 +745,7 @@ public abstract class AdapterLink extends AdapterBase<ViewHolderBase> implements
                     }
                     break;
                 case R.id.button_reply_editor:
-                    eventListener.showReplyEditor(link);
+                    listener.onShowFullEditor(link);
                     break;
                 case R.id.text_thread_self:
                     toggleToolbarActions();
@@ -767,7 +757,7 @@ public abstract class AdapterLink extends AdapterBase<ViewHolderBase> implements
         public boolean onLongClick(View v) {
             switch (v.getId()) {
                 default:
-                    eventListener.voteLink(ViewHolderLink.this, link, 1);
+                    listener.onVote(link, this, 1);
                     clearOverlay();
                     return true;
             }
@@ -800,18 +790,18 @@ public abstract class AdapterLink extends AdapterBase<ViewHolderBase> implements
         public boolean onMenuItemClick(MenuItem menuItem) {
             switch (menuItem.getItemId()) {
                 case R.id.item_upvote:
-                    eventListener.voteLink(ViewHolderLink.this, link, 1);
+                    listener.onVote(link, this, 1);
                     break;
                 case R.id.item_downvote:
-                    eventListener.voteLink(ViewHolderLink.this, link, -1);
+                    listener.onVote(link, this, -1);
                     break;
                 case R.id.item_share:
                     break;
                 case R.id.item_download_image:
-                    eventListener.downloadImage(link.getTitle(), link.getId(), link.getUrl());
+                    listener.onDownloadImage(link);
                     break;
                 case R.id.item_web:
-                    eventListener.loadWebFragment(link.getUrl());
+                    listener.onLoadUrl(link, true);
                     break;
                 case R.id.item_reply:
                     toggleReply();
@@ -823,6 +813,7 @@ public abstract class AdapterLink extends AdapterBase<ViewHolderBase> implements
                     UtilsReddit.launchScreenProfile(itemView.getContext(), link);
                     break;
                 case R.id.item_copy_text:
+                    listener.onCopyText(link);
                     ClipboardManager clipboard = (ClipboardManager) itemView.getContext()
                             .getSystemService(
                                     Context.CLIPBOARD_SERVICE);
@@ -830,21 +821,22 @@ public abstract class AdapterLink extends AdapterBase<ViewHolderBase> implements
                             resources.getString(R.string.comment),
                             link.getSelfText());
                     clipboard.setPrimaryClip(clip);
-                    eventListener.toast(resources.getString(R.string.copied));
+//                    eventListener.toast();
                     break;
                 case R.id.item_edit:
-                    eventListener.editLink(link);
+                    listener.onEdit(link);
                     break;
                 case R.id.item_mark_nsfw:
                     markNsfw();
                     break;
                 case R.id.item_delete:
+                    listener.onDelete(link);
                     new AlertDialog.Builder(itemView.getContext())
                             .setTitle("Delete post?")
                             .setMessage(link.getTitle())
                             .setPositiveButton("Yes",
                                     (dialog, which) -> {
-                                        eventListener.deletePost(link);
+//                                        eventListener.deletePost(link);
                                     })
                             .setNegativeButton("No", null)
                             .show();
@@ -854,34 +846,8 @@ public abstract class AdapterLink extends AdapterBase<ViewHolderBase> implements
                     break;
                 // Reporting
                 // TODO: Use report reasons from subreddit rules
-                case R.id.item_report_spam:
-                    requestReport("spam");
-                    break;
-                case R.id.item_report_vote_manipulation:
-                    requestReport("vote manipulation");
-                    break;
-                case R.id.item_report_personal_information:
-                    requestReport("personal information");
-                    break;
-                case R.id.item_report_sexualizing_minors:
-                    requestReport("sexualizing minors");
-                    break;
-                case R.id.item_report_breaking_reddit:
-                    requestReport("breaking reddit");
-                    break;
-                case R.id.item_report_other:
-                    View viewDialog = LayoutInflater.from(itemView.getContext())
-                            .inflate(R.layout.dialog_text_input, null, false);
-                    final EditText editText = (EditText) viewDialog.findViewById(R.id.edit_text);
-                    editText.setFilters(new InputFilter[] {new InputFilter.LengthFilter(100)});
-                    new AlertDialog.Builder(itemView.getContext())
-                            .setView(viewDialog)
-                            .setTitle(R.string.item_report)
-                            .setPositiveButton(R.string.ok, (dialog, which) -> {
-                                eventListener.report(link, "other", editText.getText().toString());
-                            })
-                            .setNegativeButton(R.string.cancel, (dialog, which) -> {})
-                            .show();
+                case R.id.item_report:
+                    listener.onReport(link);
                     break;
             }
             return true;
@@ -896,21 +862,8 @@ public abstract class AdapterLink extends AdapterBase<ViewHolderBase> implements
             adapterListener.scrollAndCenter(getAdapterPosition(), 0);
         }
 
-        private void requestReport(final String reason) {
-            String author = link.getAuthor();
-            String title = link.getTitle();
-
-            new AlertDialog.Builder(itemView.getContext())
-                    .setMessage(resources.getString(R.string.report, title, author, reason))
-                    .setPositiveButton(R.string.ok, (dialog, which) -> {
-                        eventListener.report(link, reason, null);
-                    })
-                    .setNegativeButton(R.string.cancel, null)
-                    .show();
-        }
-
         private void saveLink() {
-            eventListener.save(link);
+            listener.onSave(link);
             syncSaveIcon();
         }
 
@@ -920,7 +873,7 @@ public abstract class AdapterLink extends AdapterBase<ViewHolderBase> implements
             layoutContainerReply.setVisibility(link.isReplyExpanded() ? View.VISIBLE : View.GONE);
 
             if (link.isReplyExpanded()) {
-                textUsername.setText(resources.getString(R.string.as_author, eventListener.getUser().getName()));
+                textUsername.setText(resources.getString(R.string.as_author, user.getName()));
                 adapterListener.clearDecoration();
                 editTextReply.setText(link.getReplyText());
                 editTextReply.requestFocus();
@@ -939,7 +892,7 @@ public abstract class AdapterLink extends AdapterBase<ViewHolderBase> implements
             destroyYouTube();
             destroySurfaceView();
 
-            itemView.post(() -> eventListener.onClickComments(link, ViewHolderLink.this, source));
+            itemView.post(() -> listener.onShowComments(link, ViewHolderLink.this, source));
         }
 
         public void onClickThumbnail() {
@@ -1049,19 +1002,29 @@ public abstract class AdapterLink extends AdapterBase<ViewHolderBase> implements
         }
 
         public void setTextValues(Link link) {
-
-            if (!TextUtils.isEmpty(link.getLinkFlairText())) {
-                textThreadFlair.setVisibility(View.VISIBLE);
-                textThreadFlair.setText(link.getLinkFlairText());
+            if (TextUtils.isEmpty(link.getLinkFlairText())) {
+                textThreadFlair.setVisibility(View.GONE);
             }
             else {
-                textThreadFlair.setVisibility(View.GONE);
+                textThreadFlair.setVisibility(View.VISIBLE);
+                textThreadFlair.setText(link.getLinkFlairText());
             }
 
             textThreadTitle.setText(link.getTitle());
             syncTitleColor();
 
             textThreadSelf.setText(link.getSelfTextHtml());
+
+            if (showSubreddit) {
+                textThreadInfo.setText(TextUtils.concat(getSubredditString(), getSpannableScore(), link.getAuthor(), getFlairString()));
+            }
+            else {
+                textThreadInfo.setText(TextUtils.concat(getSpannableScore(), link.getAuthor(), getFlairString()));
+            }
+
+            Linkify.addLinks(textThreadInfo, Linkify.WEB_URLS);
+
+            textHidden.setText(resources.getString(R.string.hidden_description, getTimestamp(), link.getNumComments()));
         }
 
         public String getFlairString() {
@@ -1070,7 +1033,7 @@ public abstract class AdapterLink extends AdapterBase<ViewHolderBase> implements
         }
 
         public String getSubredditString() {
-            return showSubreddit ? "/r/" + link.getSubreddit() : "";
+            return showSubreddit ? "/r/" + link.getSubreddit() + "\n" : "";
         }
 
         public CharSequence getSpannableScore() {
@@ -1103,19 +1066,19 @@ public abstract class AdapterLink extends AdapterBase<ViewHolderBase> implements
         }
 
         public CharSequence getTimestamp() {
+            CharSequence timeCreated = sharedPreferences.getBoolean(AppSettings.PREF_FULL_TIMESTAMPS, false)
+                    ? DateUtils.formatDateTime(itemView.getContext(), link.getCreatedUtc(), TIMESTAMP_BITMASK)
+                    : DateUtils.getRelativeTimeSpanString(link.getCreatedUtc());
 
-            if (sharedPreferences.getBoolean(AppSettings.PREF_FULL_TIMESTAMPS, false)) {
-                String editTimestamp = link.getEdited() > 1 ? "Edited " + DateUtils.formatDateTime(
-                        itemView.getContext(), link.getEdited(),
-                        TIMESTAMP_BITMASK) + "\n" : "";
+            if (link.getEdited() > 1) {
+                CharSequence timeEdited = sharedPreferences.getBoolean(AppSettings.PREF_FULL_TIMESTAMPS, false)
+                        ? DateUtils.formatDateTime(itemView.getContext(), link.getEdited(), TIMESTAMP_BITMASK)
+                        : DateUtils.getRelativeTimeSpanString(link.getEdited());
 
-                return editTimestamp + DateUtils.formatDateTime(itemView.getContext(), link.getCreatedUtc(),
-                        TIMESTAMP_BITMASK);
+                return resources.getString(R.string.link_timestamp_edited, timeEdited, timeCreated);
             }
 
-            String editTimestamp = link.getEdited() > 1 ? "Edited " + DateUtils.getRelativeTimeSpanString(link.getEdited()) + "\n" : "";
-
-            return editTimestamp + DateUtils.getRelativeTimeSpanString(link.getCreatedUtc());
+            return timeCreated;
         }
 
         public boolean isInHistory() {
@@ -1142,7 +1105,7 @@ public abstract class AdapterLink extends AdapterBase<ViewHolderBase> implements
                         .into(new GlideDrawableImageViewTarget(imageFull)));
             }
             else {
-                eventListener.loadUrl(link.getUrl());
+                listener.onLoadUrl(link, true);
             }
         }
 
@@ -1438,7 +1401,7 @@ public abstract class AdapterLink extends AdapterBase<ViewHolderBase> implements
                             @Override
                             public void onInitializationFailure(YouTubePlayer.Provider provider,
                                     YouTubeInitializationResult youTubeInitializationResult) {
-                                eventListener.toast(resources.getString(R.string.error_youtube));
+                                listener.onShowError(resources.getString(R.string.error_youtube));
                             }
                         });
             });
@@ -1449,8 +1412,8 @@ public abstract class AdapterLink extends AdapterBase<ViewHolderBase> implements
         }
 
         public void setToolbarMenuVisibility() {
-            boolean loggedIn = eventListener.isUserLoggedIn();
-            boolean isAuthor = link.getAuthor().equals(eventListener.getUser().getName());
+            boolean loggedIn = user != null;
+            boolean isAuthor = loggedIn && link.getAuthor().equals(user.getName());
 
             itemEdit.setVisible(link.isSelf() && isAuthor);
             itemEdit.setEnabled(link.isSelf() && isAuthor);
@@ -1497,8 +1460,9 @@ public abstract class AdapterLink extends AdapterBase<ViewHolderBase> implements
             }
         }
 
-        public void onBind(Link link, boolean showSubreddit) {
+        public void onBind(Link link, @Nullable User user, boolean showSubreddit) {
             this.link = link;
+            this.user = user;
             this.showSubreddit = showSubreddit;
 
             if (link.isReplyExpanded() && !TextUtils.isEmpty(link.getReplyText())) {
@@ -1574,7 +1538,7 @@ public abstract class AdapterLink extends AdapterBase<ViewHolderBase> implements
         }
 
         public void markNsfw() {
-            eventListener.markNsfw(link).subscribe(new ObserverEmpty<>());
+            listener.onMarkNsfw(link);
             syncTitleColor();
         }
 
@@ -1749,6 +1713,23 @@ public abstract class AdapterLink extends AdapterBase<ViewHolderBase> implements
                     return new State[size];
                 }
             };
+        }
+
+        public interface Listener {
+            void onSubmitComment(Link link, String text);
+            void onDownloadImage(Link link);
+            void onDownloadImage(Link link, String title, String fileName, String url);
+            void onLoadUrl(Link link, boolean forceExternal);
+            void onShowFullEditor(Link link);
+            void onVote(Link link, ViewHolderLink viewHolderLink, int vote);
+            void onCopyText(Link link);
+            void onEdit(Link link);
+            void onDelete(Link link);
+            void onReport(Link link);
+            void onSave(Link link);
+            void onShowComments(Link link, ViewHolderLink viewHolderLink, Source source);
+            void onShowError(String error);
+            void onMarkNsfw(Link link);
         }
 
         public interface EventListenerGeneral {

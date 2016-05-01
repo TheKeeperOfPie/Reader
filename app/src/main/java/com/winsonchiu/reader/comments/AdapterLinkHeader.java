@@ -5,14 +5,18 @@
 package com.winsonchiu.reader.comments;
 
 import android.content.Intent;
+import android.support.annotation.Nullable;
 import android.support.v4.app.FragmentActivity;
 import android.text.TextUtils;
 import android.view.MotionEvent;
 import android.view.ViewGroup;
 
+import com.winsonchiu.reader.ActivityMain;
+import com.winsonchiu.reader.ControllerUser;
 import com.winsonchiu.reader.adapter.AdapterBase;
 import com.winsonchiu.reader.adapter.AdapterListener;
 import com.winsonchiu.reader.data.reddit.Link;
+import com.winsonchiu.reader.data.reddit.User;
 import com.winsonchiu.reader.links.AdapterLink;
 import com.winsonchiu.reader.links.AdapterLinkGrid;
 import com.winsonchiu.reader.links.AdapterLinkList;
@@ -21,6 +25,8 @@ import com.winsonchiu.reader.utils.UtilsAnimation;
 import com.winsonchiu.reader.utils.UtilsReddit;
 import com.winsonchiu.reader.utils.UtilsView;
 import com.winsonchiu.reader.utils.YouTubeListener;
+
+import javax.inject.Inject;
 
 /**
  * Created by TheKeeperOfPie on 12/29/2015.
@@ -34,27 +40,30 @@ public class AdapterLinkHeader extends AdapterBase<AdapterLink.ViewHolderLink> i
     private boolean actionsExpanded;
     private AdapterLink.ViewHolderLink viewHolderLink;
     private AdapterListener adapterListener;
-    private final AdapterLink.ViewHolderLink.EventListener eventListenerBase;
-    private final YouTubeListener youTubeListener;
+    private AdapterLink.ViewHolderLink.Listener listenerLink;
+    private YouTubeListener youTubeListener;
     private CallbackYouTubeDestruction callbackYouTubeDestruction;
     private boolean animationFinished;
 
     private ControllerComments controllerComments;
 
+    @Inject ControllerUser controllerUser;
+
     public AdapterLinkHeader(FragmentActivity activity,
             ControllerComments controllerComments,
             AdapterListener adapterListener,
-            AdapterLink.ViewHolderLink.EventListener eventListenerBase,
+            AdapterLink.ViewHolderLink.Listener listenerLink,
             YouTubeListener youTubeListener,
             CallbackYouTubeDestruction callbackYouTubeDestruction,
             boolean isGrid,
             String firstLinkName,
             int colorLink,
             boolean actionsExpanded) {
+        ((ActivityMain) activity).getComponentActivity().inject(this);
         this.activity = activity;
         this.controllerComments = controllerComments;
         this.adapterListener = adapterListener;
-        this.eventListenerBase = eventListenerBase;
+        this.listenerLink = listenerLink;
         this.youTubeListener = youTubeListener;
         this.callbackYouTubeDestruction = callbackYouTubeDestruction;
         this.isGrid = isGrid;
@@ -71,7 +80,7 @@ public class AdapterLinkHeader extends AdapterBase<AdapterLink.ViewHolderLink> i
                     parent,
                     adapterCallback,
                     adapterListener,
-                    eventListenerBase,
+                    listenerLink,
                     Source.NONE,
                     callbackYouTubeDestruction) {
 
@@ -101,9 +110,8 @@ public class AdapterLinkHeader extends AdapterBase<AdapterLink.ViewHolderLink> i
                 }
 
                 @Override
-                public void onBind(Link link,
-                                   boolean showSubreddit) {
-                    super.onBind(link, showSubreddit);
+                public void onBind(Link link, @Nullable User user, boolean showSubreddit) {
+                    super.onBind(link, user, showSubreddit);
                     if (actionsExpanded) {
                         setToolbarMenuVisibility();
                         showToolbarActionsInstant();
@@ -138,7 +146,7 @@ public class AdapterLinkHeader extends AdapterBase<AdapterLink.ViewHolderLink> i
                     parent,
                     adapterCallback,
                     adapterListener,
-                    eventListenerBase,
+                    listenerLink,
                     Source.NONE,
                     callbackYouTubeDestruction) {
 
@@ -153,9 +161,8 @@ public class AdapterLinkHeader extends AdapterBase<AdapterLink.ViewHolderLink> i
                 }
 
                 @Override
-                public void onBind(Link link,
-                                   boolean showSubreddit) {
-                    super.onBind(link, showSubreddit);
+                public void onBind(Link link, User user, boolean showSubreddit) {
+                    super.onBind(link, user, showSubreddit);
                     if (actionsExpanded) {
                         setToolbarMenuVisibility();
                         showToolbarActionsInstant();
@@ -193,7 +200,7 @@ public class AdapterLinkHeader extends AdapterBase<AdapterLink.ViewHolderLink> i
     @Override
     public void onBindViewHolder(AdapterLink.ViewHolderLink holder, int position) {
         super.onBindViewHolder(holder, position);
-        holder.onBind(controllerComments.getLink(), true);
+        holder.onBind(controllerComments.getLink(), controllerUser.getUser(), true);
     }
 
     @Override
@@ -229,7 +236,7 @@ public class AdapterLinkHeader extends AdapterBase<AdapterLink.ViewHolderLink> i
     }
 
     public void onBind() {
-        viewHolderLink.onBind(controllerComments.getLink(), true);
+        viewHolderLink.onBind(controllerComments.getLink(), controllerUser.getUser(), true);
     }
 
     @Override

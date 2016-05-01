@@ -17,7 +17,6 @@ import android.support.design.widget.AppBarLayout;
 import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.Snackbar;
 import android.support.design.widget.TabLayout;
-import android.support.v4.util.Pair;
 import android.support.v4.view.MenuItemCompat;
 import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
@@ -52,11 +51,10 @@ import com.winsonchiu.reader.FragmentListenerBase;
 import com.winsonchiu.reader.R;
 import com.winsonchiu.reader.adapter.AdapterListener;
 import com.winsonchiu.reader.adapter.AdapterNotifySubscriber;
-import com.winsonchiu.reader.adapter.RxAdapterEvent;
+import com.winsonchiu.reader.comments.Source;
 import com.winsonchiu.reader.data.reddit.Link;
 import com.winsonchiu.reader.data.reddit.Listing;
 import com.winsonchiu.reader.data.reddit.Reddit;
-import com.winsonchiu.reader.data.reddit.Subreddit;
 import com.winsonchiu.reader.data.reddit.Thing;
 import com.winsonchiu.reader.links.AdapterLink;
 import com.winsonchiu.reader.links.AdapterLinkGrid;
@@ -75,10 +73,8 @@ import java.util.TimeZone;
 
 import javax.inject.Inject;
 
-import rx.Observable;
 import rx.Subscription;
 import rx.android.schedulers.AndroidSchedulers;
-import rx.schedulers.Schedulers;
 
 import static android.support.v7.widget.RecyclerView.LayoutManager;
 
@@ -297,17 +293,89 @@ public class FragmentHistory extends FragmentBase implements Toolbar.OnMenuItemC
             }
         };
 
+        AdapterLink.ViewHolderLink.Listener listenerLink = new AdapterLink.ViewHolderLink.Listener() {
+            @Override
+            public void onSubmitComment(Link link, String text) {
+
+            }
+
+            @Override
+            public void onDownloadImage(Link link) {
+
+            }
+
+            @Override
+            public void onDownloadImage(Link link, String title, String fileName, String url) {
+
+            }
+
+            @Override
+            public void onLoadUrl(Link link, boolean forceExternal) {
+
+            }
+
+            @Override
+            public void onShowFullEditor(Link link) {
+
+            }
+
+            @Override
+            public void onVote(Link link, AdapterLink.ViewHolderLink viewHolderLink, int vote) {
+
+            }
+
+            @Override
+            public void onCopyText(Link link) {
+
+            }
+
+            @Override
+            public void onEdit(Link link) {
+
+            }
+
+            @Override
+            public void onDelete(Link link) {
+
+            }
+
+            @Override
+            public void onReport(Link link) {
+
+            }
+
+            @Override
+            public void onSave(Link link) {
+
+            }
+
+            @Override
+            public void onShowComments(Link link, AdapterLink.ViewHolderLink viewHolderLink, Source source) {
+
+            }
+
+            @Override
+            public void onShowError(String error) {
+
+            }
+
+            @Override
+            public void onMarkNsfw(Link link) {
+
+            }
+        };
+
         if (adapterLinkList == null) {
             adapterLinkList = new AdapterHistoryLinkList(getActivity(),
                     adapterListener,
                     eventListenerHeader,
-                    mListener.getEventListenerBase());
+                    listenerLink);
         }
         if (adapterLinkGrid == null) {
             adapterLinkGrid = new AdapterHistoryLinkGrid(getActivity(),
                     adapterListener,
                     eventListenerHeader,
-                    mListener.getEventListenerBase());
+                    listenerLink);
         }
 
         if (AppSettings.MODE_LIST.equals(preferences.getString(AppSettings.INTERFACE_MODE,
@@ -442,11 +510,6 @@ public class FragmentHistory extends FragmentBase implements Toolbar.OnMenuItemC
         ControllerHistory.EventHolder eventHolder = controllerHistory.getEventHolder();
 
         subscriptionData = eventHolder.getData()
-                .observeOn(Schedulers.computation())
-                .flatMap(event -> Observable.from(event.getData())
-                        .ofType(Link.class)
-                        .toList()
-                        .map(links -> new RxAdapterEvent<>(Pair.create(new Subreddit(), links), event)))
                 .observeOn(AndroidSchedulers.mainThread())
                 .doOnNext(new AdapterNotifySubscriber<>(adapterLinkGrid))
                 .doOnNext(new AdapterNotifySubscriber<>(adapterLinkList))

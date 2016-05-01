@@ -53,8 +53,11 @@ android {
 }
 
 dependencies {
-    apt 'com.google.dagger:dagger-compiler:2.0.2'
-    apt 'com.jakewharton:butterknife-compiler:8.0.0-SNAPSHOT'
+    apt 'com.google.dagger:dagger-compiler:2.3'
+    compile 'com.google.dagger:dagger:2.3'
+
+    apt 'com.jakewharton:butterknife-compiler:8.0.0'
+    compile 'com.jakewharton:butterknife:8.0.0'
 
     compile fileTree(include: ['*.jar'], dir: 'libs')
 
@@ -75,14 +78,12 @@ dependencies {
     compile "com.android.support:recyclerview-v7:$versionSupportLibrary"
     compile 'com.facebook.stetho:stetho:1.3.0'
     compile 'com.facebook.stetho:stetho-okhttp3:1.3.0'
-    compile 'com.fasterxml.jackson.core:jackson-annotations:2.7.0'
-    compile 'com.fasterxml.jackson.core:jackson-core:2.7.0'
-    compile 'com.fasterxml.jackson.core:jackson-databind:2.7.0'
+    compile 'com.fasterxml.jackson.core:jackson-annotations:2.7.4'
+    compile 'com.fasterxml.jackson.core:jackson-core:2.7.4'
+    compile 'com.fasterxml.jackson.core:jackson-databind:2.7.4'
     compile 'com.github.bumptech.glide:glide:3.7.0'
     compile 'com.github.bumptech.glide:okhttp3-integration:1.4.0@aar'
     compile 'com.github.rjeschke:txtmark:0.13'
-    compile 'com.google.dagger:dagger:2.0.2'
-    compile 'com.jakewharton:butterknife:8.0.0-SNAPSHOT'
     compile 'com.jakewharton.picasso:picasso2-okhttp3-downloader:1.0.2'
     compile 'com.jakewharton.rxrelay:rxrelay:1.1.1-SNAPSHOT'
     compile 'com.squareup.picasso:picasso:2.5.2'
@@ -97,4 +98,6 @@ dependencies {
 
     debugCompile 'com.squareup.leakcanary:leakcanary-android-no-op:1.4-beta2'
     releaseCompile 'com.squareup.leakcanary:leakcanary-android-no-op:1.4-beta2'
+
+    retrolambdaConfig 'net.orfjackal.retrolambda:retrolambda:2.3.0'
 }

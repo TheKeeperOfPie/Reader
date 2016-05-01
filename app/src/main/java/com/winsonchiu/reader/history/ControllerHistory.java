@@ -9,6 +9,7 @@ import android.text.TextUtils;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.jakewharton.rxrelay.BehaviorRelay;
+import com.winsonchiu.reader.ControllerUser;
 import com.winsonchiu.reader.CustomApplication;
 import com.winsonchiu.reader.adapter.RxAdapterEvent;
 import com.winsonchiu.reader.dagger.components.ComponentStatic;
@@ -19,6 +20,7 @@ import com.winsonchiu.reader.data.reddit.Replyable;
 import com.winsonchiu.reader.data.reddit.Subreddit;
 import com.winsonchiu.reader.data.reddit.Thing;
 import com.winsonchiu.reader.links.ControllerLinksBase;
+import com.winsonchiu.reader.links.LinksModel;
 import com.winsonchiu.reader.rx.FinalizingSubscriber;
 import com.winsonchiu.reader.utils.UtilsRx;
 
@@ -40,6 +42,7 @@ public class ControllerHistory implements ControllerLinksBase {
 
     @Inject Reddit reddit;
     @Inject Historian historian;
+    private ControllerUser controllerUser;
 
     private boolean isLoading;
     private int lastIndex;
@@ -54,7 +57,8 @@ public class ControllerHistory implements ControllerLinksBase {
 
     private EventHolder eventHolder = new EventHolder();
 
-    public ControllerHistory() {
+    public ControllerHistory(ControllerUser controllerUser) {
+        this.controllerUser = controllerUser;
         CustomApplication.getComponentMain().inject(this);
     }
 
@@ -83,7 +87,7 @@ public class ControllerHistory implements ControllerLinksBase {
 
         if (namesToFetch.isEmpty()) {
             history = new Listing();
-            eventHolder.call(new RxAdapterEvent<>(new ArrayList<>()));
+            eventHolder.call(new RxAdapterEvent<>(getData()));
             setIsLoading(false);
             return;
         }
@@ -111,7 +115,7 @@ public class ControllerHistory implements ControllerLinksBase {
                     @Override
                     public void next(Listing listing) {
                         history = listing;
-                        eventHolder.call(new RxAdapterEvent<>(history.getChildren()));
+                        eventHolder.call(new RxAdapterEvent<>(getData()));
                     }
 
                     @Override
@@ -162,7 +166,7 @@ public class ControllerHistory implements ControllerLinksBase {
                 .doOnNext(listing -> {
                     int startPosition = history.getChildren().size();
                     history.addChildren(listing.getChildren());
-                    eventHolder.call(new RxAdapterEvent<>(history.getChildren(),
+                    eventHolder.call(new RxAdapterEvent<>(getData(),
                             RxAdapterEvent.Type.INSERT,
                             startPosition + 1,
                             history.getChildren().size() - startPosition));
@@ -189,7 +193,7 @@ public class ControllerHistory implements ControllerLinksBase {
             if (thing.getName().equals(name)) {
                 ((Replyable) thing).setReplyText(text);
                 ((Replyable) thing).setReplyExpanded(!collapsed);
-                eventHolder.call(new RxAdapterEvent<>(history.getChildren(), RxAdapterEvent.Type.CHANGE, index + 1));
+                eventHolder.call(new RxAdapterEvent<>(getData(), RxAdapterEvent.Type.CHANGE, index + 1));
                 return true;
             }
         }
@@ -204,7 +208,7 @@ public class ControllerHistory implements ControllerLinksBase {
             Thing thing = history.getChildren().get(index);
             if (thing.getName().equals(name)) {
                 ((Link) thing).setOver18(over18);
-                eventHolder.call(new RxAdapterEvent<>(history.getChildren(), RxAdapterEvent.Type.CHANGE, index + 1));
+                eventHolder.call(new RxAdapterEvent<>(getData(), RxAdapterEvent.Type.CHANGE, index + 1));
                 return;
             }
         }
@@ -241,7 +245,7 @@ public class ControllerHistory implements ControllerLinksBase {
         Link link = getLink(position);
         history.getChildren().remove(link);
         historian.getEntry(link).setRemoved(true);
-        eventHolder.call(new RxAdapterEvent<>(history.getChildren(), RxAdapterEvent.Type.REMOVE, position));
+        eventHolder.call(new RxAdapterEvent<>(getData(), RxAdapterEvent.Type.REMOVE, position));
         return link;
     }
 
@@ -252,7 +256,7 @@ public class ControllerHistory implements ControllerLinksBase {
     public void add(int position, Link link) {
         historian.getEntry(link).setRemoved(false);
         history.getChildren().add(position - 1, link);
-        eventHolder.call(new RxAdapterEvent<>(history.getChildren(), RxAdapterEvent.Type.INSERT, position));
+        eventHolder.call(new RxAdapterEvent<>(getData(), RxAdapterEvent.Type.INSERT, position));
     }
 
     public void setTimeStart(long timeStart) {
@@ -295,21 +299,30 @@ public class ControllerHistory implements ControllerLinksBase {
         return null;
     }
 
-    public static class EventHolder implements Action1<RxAdapterEvent<List<Thing>>> {
+    private LinksModel getData() {
+        List<Link> links = new ArrayList<>(history.getChildren().size());
 
-        private BehaviorRelay<RxAdapterEvent<List<Thing>>> relayData = BehaviorRelay.create(new RxAdapterEvent<>(new ArrayList<>()));
+        for (Thing thing : history.getChildren()) {
+            if (thing instanceof Link) {
+                links.add((Link) thing);
+            }
+        }
+
+        return new LinksModel(new Subreddit(), links, true, controllerUser.getUser());
+    }
+
+    public static class EventHolder implements Action1<RxAdapterEvent<LinksModel>> {
+
+        private BehaviorRelay<RxAdapterEvent<LinksModel>> relayData = BehaviorRelay.create(new RxAdapterEvent<>(new LinksModel()));
         private BehaviorRelay<Boolean> relayLoading = BehaviorRelay.create(false);
 
         @Override
-        public void call(RxAdapterEvent<List<Thing>> event) {
+        public void call(RxAdapterEvent<LinksModel> event) {
             relayData.call(event);
         }
 
-        public Observable<RxAdapterEvent<List<Thing>>> getData() {
-            List<Thing> data = relayData.hasValue() ? relayData.getValue().getData() : new ArrayList<>();
-
-            return Observable.just(new RxAdapterEvent<>(data))
-                    .mergeWith(relayData.skip(1));
+        public Observable<RxAdapterEvent<LinksModel>> getData() {
+            return relayData;
         }
 
         public BehaviorRelay<Boolean> getLoading() {

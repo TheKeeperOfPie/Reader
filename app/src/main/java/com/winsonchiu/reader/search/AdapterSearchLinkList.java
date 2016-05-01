@@ -22,9 +22,9 @@ public class AdapterSearchLinkList extends AdapterLinkList {
     public AdapterSearchLinkList(FragmentActivity activity,
             AdapterListener adapterListener,
             ViewHolderHeader.EventListener eventListenerHeader,
-            ViewHolderLink.EventListener eventListenerBase,
+            ViewHolderLink.Listener listenerLink,
             Source source) {
-        super(activity,  adapterListener, eventListenerHeader, eventListenerBase);
+        super(activity,  adapterListener, eventListenerHeader, listenerLink);
         this.source = source;
     }
 
@@ -39,7 +39,7 @@ public class AdapterSearchLinkList extends AdapterLinkList {
                 parent,
                 adapterCallback,
                 adapterListener,
-                eventListenerBase,
+                listenerLink,
                 source,
                 this);
     }

@@ -9,14 +9,13 @@ import android.content.res.Resources;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
+import android.support.annotation.Nullable;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.graphics.ColorUtils;
 import android.support.v7.graphics.Palette;
 import android.support.v7.graphics.Target;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.StaggeredGridLayoutManager;
-import android.text.TextUtils;
-import android.text.util.Linkify;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.View;
@@ -35,6 +34,7 @@ import com.winsonchiu.reader.adapter.AdapterListener;
 import com.winsonchiu.reader.comments.Source;
 import com.winsonchiu.reader.data.imgur.Album;
 import com.winsonchiu.reader.data.reddit.Link;
+import com.winsonchiu.reader.data.reddit.User;
 import com.winsonchiu.reader.utils.CallbackYouTubeDestruction;
 import com.winsonchiu.reader.utils.PicassoEndCallback;
 import com.winsonchiu.reader.utils.UtilsAnimation;
@@ -44,7 +44,7 @@ import com.winsonchiu.reader.utils.ViewHolderBase;
 
 import java.util.ArrayList;
 
-import butterknife.Bind;
+import butterknife.BindView;
 
 /**
  * Created by TheKeeperOfPie on 3/7/2015.
@@ -58,14 +58,13 @@ public class AdapterLinkGrid extends AdapterLink {
     public AdapterLinkGrid(FragmentActivity activity,
             AdapterListener adapterListener,
             ViewHolderHeader.EventListener eventListenerHeader,
-            ViewHolderLink.EventListener eventListenerBase) {
-        super(activity, adapterListener, eventListenerHeader, eventListenerBase);
+            ViewHolderLink.Listener listenerLink) {
+        super(activity, adapterListener, eventListenerHeader, listenerLink);
+
+        layoutManager = new StaggeredGridLayoutManager(getSpanCount(), StaggeredGridLayoutManager.VERTICAL);
     }
 
-    @Override
-    public void setActivity(FragmentActivity activity) {
-        super.setActivity(activity);
-
+    private int getSpanCount() {
         Resources resources = activity.getResources();
 
         int spanCount = 0;
@@ -84,7 +83,7 @@ public class AdapterLinkGrid extends AdapterLink {
             spanCount = Math.max(1, columns);
         }
 
-        layoutManager = new StaggeredGridLayoutManager(spanCount, StaggeredGridLayoutManager.VERTICAL);
+        return spanCount;
     }
 
     @Override
@@ -101,7 +100,7 @@ public class AdapterLinkGrid extends AdapterLink {
                 parent,
                 adapterCallback,
                 adapterListener,
-                eventListenerBase,
+                listenerLink,
                 Source.LINKS,
                 this);
     }
@@ -114,19 +113,19 @@ public class AdapterLinkGrid extends AdapterLink {
         switch (holder.getItemViewType()) {
             case TYPE_HEADER:
                 ViewHolderHeader viewHolderHeader = (ViewHolderHeader) holder;
-                viewHolderHeader.onBind(subreddit);
+                viewHolderHeader.onBind(data.getSubreddit());
                 break;
             case TYPE_LINK:
                 ViewHolder viewHolder = (ViewHolder) holder;
-                viewHolder.onBind(data.get(position - 1), showSubreddit);
+                viewHolder.onBind(data.getLinks().get(position - 1), data.getUser(), data.isShowSubreddit());
                 break;
         }
     }
 
     public static class ViewHolder extends ViewHolderLink {
 
-        @Bind(R.id.layout_background) ViewGroup layoutBackground;
-        @Bind(R.id.image_square) ImageView imageSquare;
+        @BindView(R.id.layout_background) ViewGroup layoutBackground;
+        @BindView(R.id.image_square) ImageView imageSquare;
 
         private int colorBackgroundDefault;
         protected ValueAnimator valueAnimatorBackground;
@@ -135,10 +134,10 @@ public class AdapterLinkGrid extends AdapterLink {
                 ViewGroup parent,
                 AdapterCallback adapterCallback,
                 AdapterListener adapterListener,
-                EventListener eventListener,
+                Listener listener,
                 Source source,
                 CallbackYouTubeDestruction callbackYouTubeDestruction) {
-            super(activity, parent, R.layout.cell_link, adapterCallback, adapterListener, eventListener, source, callbackYouTubeDestruction);
+            super(activity, parent, R.layout.cell_link, adapterCallback, adapterListener, listener, source, callbackYouTubeDestruction);
 
         }
 
@@ -183,8 +182,8 @@ public class AdapterLinkGrid extends AdapterLink {
         }
 
         @Override
-        public void onBind(Link link, boolean showSubreddit) {
-            super.onBind(link, showSubreddit);
+        public void onBind(Link link, @Nullable User user, boolean showSubreddit) {
+            super.onBind(link, user, showSubreddit);
 
             int position = getAdapterPosition();
 
@@ -590,14 +589,6 @@ public class AdapterLinkGrid extends AdapterLink {
             super.setTextValues(link);
 
             showThumbnail(imageThumbnail.getVisibility() == View.VISIBLE);
-
-            textThreadInfo.setText(TextUtils
-                    .concat(getSubredditString(), showSubreddit ? "\n" : "", getSpannableScore(),
-                            "by ", link.getAuthor(), " ", getFlairString()));
-
-            Linkify.addLinks(textThreadInfo, Linkify.WEB_URLS);
-
-            textHidden.setText(resources.getString(R.string.hidden_description, getTimestamp(), link.getNumComments()));
         }
 
         @Override

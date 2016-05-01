@@ -6,17 +6,13 @@ package com.winsonchiu.reader.links;
 
 import android.app.Activity;
 import android.content.SharedPreferences;
-import android.content.res.TypedArray;
-import android.graphics.PorterDuff;
 import android.os.Build;
 import android.os.Bundle;
-import android.preference.PreferenceManager;
 import android.support.annotation.Nullable;
 import android.support.design.widget.AppBarLayout;
 import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
-import android.support.v4.util.Pair;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.view.ViewCompat;
 import android.support.v4.view.ViewPropertyAnimatorListener;
@@ -35,7 +31,6 @@ import android.text.method.LinkMovementMethod;
 import android.text.style.ForegroundColorSpan;
 import android.util.Log;
 import android.util.TypedValue;
-import android.view.ContextThemeWrapper;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -52,14 +47,13 @@ import com.squareup.picasso.Picasso;
 import com.winsonchiu.reader.ActivityMain;
 import com.winsonchiu.reader.AppSettings;
 import com.winsonchiu.reader.ControllerUser;
-import com.winsonchiu.reader.CustomApplication;
 import com.winsonchiu.reader.FragmentBase;
 import com.winsonchiu.reader.FragmentListenerBase;
 import com.winsonchiu.reader.FragmentNewPost;
 import com.winsonchiu.reader.R;
 import com.winsonchiu.reader.adapter.AdapterListener;
 import com.winsonchiu.reader.adapter.AdapterNotifySubscriber;
-import com.winsonchiu.reader.adapter.RxAdapterEvent;
+import com.winsonchiu.reader.comments.Source;
 import com.winsonchiu.reader.data.reddit.Link;
 import com.winsonchiu.reader.data.reddit.Listing;
 import com.winsonchiu.reader.data.reddit.Reddit;
@@ -71,9 +65,8 @@ import com.winsonchiu.reader.data.reddit.User;
 import com.winsonchiu.reader.history.Historian;
 import com.winsonchiu.reader.rx.FinalizingSubscriber;
 import com.winsonchiu.reader.rx.ObserverError;
-import com.winsonchiu.reader.search.ControllerSearch;
 import com.winsonchiu.reader.search.FragmentSearch;
-import com.winsonchiu.reader.theme.ThemeWrapper;
+import com.winsonchiu.reader.theme.Themer;
 import com.winsonchiu.reader.utils.CustomColorFilter;
 import com.winsonchiu.reader.utils.CustomItemTouchHelper;
 import com.winsonchiu.reader.utils.ItemDecorationDivider;
@@ -82,12 +75,11 @@ import com.winsonchiu.reader.utils.UtilsAnimation;
 import com.winsonchiu.reader.utils.UtilsColor;
 import com.winsonchiu.reader.utils.UtilsReddit;
 import com.winsonchiu.reader.utils.UtilsRx;
+import com.winsonchiu.reader.utils.UtilsTheme;
 
 import javax.inject.Inject;
 
-import butterknife.Bind;
-import butterknife.ButterKnife;
-import rx.Observable;
+import butterknife.BindView;
 import rx.Subscription;
 import rx.android.schedulers.AndroidSchedulers;
 import rx.schedulers.Schedulers;
@@ -101,8 +93,6 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
     private static final float OFFSET_MODIFIER = 0.5f;
 
     private FragmentListenerBase mListener;
-
-    private SharedPreferences preferences;
 
     private Toolbar toolbar;
     private Menu menu;
@@ -136,24 +126,25 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
     private Subscription subscriptionSort;
     private Subscription subscriptionTime;
 
-    @Bind(R.id.layout_coordinator) CoordinatorLayout layoutCoordinator;
-    @Bind(R.id.layout_app_bar) AppBarLayout layoutAppBar;
-    @Bind(R.id.recycler_thread_list) RecyclerView recyclerThreadList;
-    @Bind(R.id.layout_actions) ViewGroup layoutActions;
-    @Bind(R.id.button_expand_actions) FloatingActionButton buttonExpandActions;
-    @Bind(R.id.button_clear_viewed) FloatingActionButton buttonClearViewed;
-    @Bind(R.id.button_jump_top) FloatingActionButton buttonJumpTop;
-    @Bind(R.id.swipe_refresh_thread_list) SwipeRefreshLayout swipeRefreshThreadList;
-    @Bind(R.id.layout_drawer) DrawerLayout layoutDrawer;
-    @Bind(R.id.text_sidebar) TextView textSidebar;
-    @Bind(R.id.text_empty) TextView textEmpty;
-    @Bind(R.id.button_subscribe) Button buttonSubscribe;
+    @BindView(R.id.layout_coordinator) CoordinatorLayout layoutCoordinator;
+    @BindView(R.id.layout_app_bar) AppBarLayout layoutAppBar;
+    @BindView(R.id.recycler_thread_list) RecyclerView recyclerThreadList;
+    @BindView(R.id.layout_actions) ViewGroup layoutActions;
+    @BindView(R.id.button_expand_actions) FloatingActionButton buttonExpandActions;
+    @BindView(R.id.button_clear_viewed) FloatingActionButton buttonClearViewed;
+    @BindView(R.id.button_jump_top) FloatingActionButton buttonJumpTop;
+    @BindView(R.id.swipe_refresh_thread_list) SwipeRefreshLayout swipeRefreshThreadList;
+    @BindView(R.id.layout_drawer) DrawerLayout layoutDrawer;
+    @BindView(R.id.text_sidebar) TextView textSidebar;
+    @BindView(R.id.text_empty) TextView textEmpty;
+    @BindView(R.id.button_subscribe) Button buttonSubscribe;
 
+
+    @Inject SharedPreferences preferences;
     @Inject Historian historian;
     @Inject ControllerLinks controllerLinks;
     @Inject Picasso picasso;
     @Inject ControllerUser controllerUser;
-    @Inject ControllerSearch controllerSearch;
 
     public static FragmentThreadList newInstance() {
         FragmentThreadList fragment = new FragmentThreadList();
@@ -167,90 +158,22 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
     }
 
     @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setHasOptionsMenu(true);
-    }
-
-    private void setUpToolbar() {
-
-        if (getFragmentManager().getBackStackEntryCount() <= 1) {
-            toolbar.setNavigationIcon(R.drawable.ic_menu_white_24dp);
-            toolbar.setNavigationOnClickListener(v -> mListener.openDrawer());
+    public void onAttach(Activity activity) {
+        super.onAttach(activity);
+        Log.d(TAG, "onAttach");
+        try {
+            mListener = (FragmentListenerBase) activity;
         }
-        else {
-            toolbar.setNavigationIcon(R.drawable.ic_arrow_back_white_24dp);
-            toolbar.setNavigationOnClickListener(v -> mListener.onNavigationBackClick());
-        }
-        toolbar.getNavigationIcon().mutate().setColorFilter(colorFilterPrimary);
-        toolbar.inflateMenu(R.menu.menu_thread_list);
-        toolbar.setOnMenuItemClickListener(this);
-
-        menu = toolbar.getMenu();
-
-        itemInterface = menu.findItem(R.id.item_interface);
-
-        switch (preferences.getString(AppSettings.INTERFACE_MODE, AppSettings.MODE_GRID)) {
-            case AppSettings.MODE_LIST:
-                itemInterface.setIcon(R.drawable.ic_view_module_white_24dp);
-                break;
-            case AppSettings.MODE_GRID:
-                itemInterface.setIcon(R.drawable.ic_view_list_white_24dp);
-                break;
-        }
-
-        itemSortTime = menu.findItem(R.id.item_sort_time);
-        itemSearch = menu.findItem(R.id.item_search);
-
-        UtilsColor.tintMenu(menu, colorFilterPrimary);
-    }
-
-    private void resetAdapter(AdapterLink newAdapter) {
-
-        RecyclerView.LayoutManager layoutManagerCurrent = recyclerThreadList.getLayoutManager();
-
-        int size = layoutManagerCurrent instanceof StaggeredGridLayoutManager ? ((StaggeredGridLayoutManager) layoutManagerCurrent).getSpanCount() : 1;
-
-        int[] currentPosition = new int[size];
-        if (layoutManagerCurrent instanceof LinearLayoutManager) {
-            currentPosition[0] = ((LinearLayoutManager) layoutManagerCurrent)
-                    .findFirstVisibleItemPosition();
-        }
-        else if (layoutManagerCurrent instanceof StaggeredGridLayoutManager) {
-            ((StaggeredGridLayoutManager) layoutManagerCurrent).findFirstCompletelyVisibleItemPositions(
-                    currentPosition);
-        }
-
-        adapterLink = newAdapter;
-        layoutManager = adapterLink.getLayoutManager();
-
-        if (layoutManager instanceof LinearLayoutManager) {
-            recyclerThreadList.setPadding(0, 0, 0, 0);
-        }
-        else {
-            int padding = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 2,
-                    getResources().getDisplayMetrics());
-            recyclerThreadList.setPadding(padding, 0, padding, 0);
-        }
-
-        /*
-            Note that we must call setAdapter before setLayoutManager or the ViewHolders
-            will not be properly recycled, leading to memory leaks.
-         */
-        recyclerThreadList.setAdapter(adapterLink);
-        recyclerThreadList.setLayoutManager(layoutManager);
-        recyclerThreadList.scrollToPosition(currentPosition[0]);
-        if (layoutManager instanceof LinearLayoutManager) {
-            recyclerThreadList.addItemDecoration(itemDecorationDivider);
-        }
-        else {
-            recyclerThreadList.removeItemDecoration(itemDecorationDivider);
+        catch (ClassCastException e) {
+            throw new ClassCastException(activity.toString()
+                    + " must implement OnFragmentInteractionListener");
         }
     }
 
     @Override
-    protected void inject() {
-        ((ActivityMain) getActivity()).getComponentActivity().inject(this);
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setHasOptionsMenu(true);
     }
 
     @SuppressWarnings("ResourceType")
@@ -258,37 +181,8 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         initialize();
 
-        view = inflater.inflate(R.layout.fragment_thread_list, container, false);
+        view = bind(inflater.inflate(R.layout.fragment_thread_list, container, false));
 
-        ButterKnife.bind(this, view);
-
-        TypedArray typedArray = getActivity().getTheme().obtainStyledAttributes(
-                new int[] {R.attr.colorPrimary, R.attr.colorAccent});
-        final int colorPrimary = typedArray.getColor(0, getResources().getColor(R.color.colorPrimary));
-        int colorAccent = typedArray.getColor(1, getResources().getColor(R.color.colorAccent));
-        typedArray.recycle();
-
-        int colorResourcePrimary = UtilsColor.showOnWhite(colorPrimary) ? R.color.darkThemeIconFilter : R.color.lightThemeIconFilter;
-        int colorResourceAccent = UtilsColor.showOnWhite(colorAccent) ? R.color.darkThemeIconFilter : R.color.lightThemeIconFilter;
-
-        colorFilterPrimary = new CustomColorFilter(getResources().getColor(colorResourcePrimary), PorterDuff.Mode.MULTIPLY);
-        colorFilterAccent = new CustomColorFilter(getResources().getColor(colorResourceAccent), PorterDuff.Mode.MULTIPLY);
-
-        int styleColorBackground = AppSettings.THEME_DARK.equals(mListener.getThemeBackground()) ? R.style.MenuDark : R.style.MenuLight;
-
-        ContextThemeWrapper contextThemeWrapper = new ContextThemeWrapper(new ThemeWrapper(getActivity(), UtilsColor.getThemeForColor(getResources(), colorPrimary, mListener)), styleColorBackground);
-
-        toolbar = (Toolbar) getActivity().getLayoutInflater().cloneInContext(contextThemeWrapper).inflate(R.layout.toolbar, layoutAppBar, false);
-        layoutAppBar.addView(toolbar);
-        ((AppBarLayout.LayoutParams) toolbar.getLayoutParams()).setScrollFlags(AppBarLayout.LayoutParams.SCROLL_FLAG_SCROLL | AppBarLayout.LayoutParams.SCROLL_FLAG_ENTER_ALWAYS);
-        toolbar.setTitleTextColor(getResources().getColor(colorResourcePrimary));
-        toolbar.setOnClickListener(v ->
-                getFragmentManager().beginTransaction()
-                        .hide(FragmentThreadList.this)
-                        .add(R.id.frame_fragment, FragmentSearch.newInstance(true),
-                                FragmentSearch.TAG)
-                        .addToBackStack(null)
-                        .commit());
         setUpToolbar();
 
         buttonExpandActions.setOnClickListener(v -> toggleLayoutActions());
@@ -403,29 +297,96 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
             }
         };
 
-        if (adapterLinkList == null) {
-            adapterLinkList = new AdapterLinkList(getActivity(),
-                    adapterListener,
-                    eventListenerHeader,
-                    mListener.getEventListenerBase());
-        }
-        if (adapterLinkGrid == null) {
-            adapterLinkGrid = new AdapterLinkGrid(getActivity(),
-                    adapterListener,
-                    eventListenerHeader,
-                    mListener.getEventListenerBase());
-        }
+        AdapterLink.ViewHolderLink.Listener listener = new AdapterLink.ViewHolderLink.Listener() {
+            @Override
+            public void onSubmitComment(Link link, String text) {
+                mListener.getEventListenerBase().sendComment(link.getName(), text);
+            }
 
-        if (AppSettings.MODE_LIST.equals(preferences.getString(AppSettings.INTERFACE_MODE,
-                AppSettings.MODE_GRID))) {
-            adapterLink = adapterLinkList;
-        }
-        else {
-            adapterLink = adapterLinkGrid;
-        }
+            @Override
+            public void onDownloadImage(Link link) {
 
-        adapterLinkList.setActivity(getActivity());
-        adapterLinkGrid.setActivity(getActivity());
+            }
+
+            @Override
+            public void onDownloadImage(Link link, String title, String fileName, String url) {
+
+            }
+
+            @Override
+            public void onLoadUrl(Link link, boolean forceExternal) {
+                if (forceExternal) {
+                    mListener.getEventListenerBase().loadWebFragment(link.getUrl());
+                }
+                else {
+                    mListener.getEventListenerBase().loadUrl(link.getUrl());
+                }
+            }
+
+            @Override
+            public void onShowFullEditor(Link link) {
+
+            }
+
+            @Override
+            public void onVote(Link link, AdapterLink.ViewHolderLink viewHolderLink, int vote) {
+
+            }
+
+            @Override
+            public void onCopyText(Link link) {
+
+            }
+
+            @Override
+            public void onEdit(Link link) {
+
+            }
+
+            @Override
+            public void onDelete(Link link) {
+
+            }
+
+            @Override
+            public void onReport(Link link) {
+
+            }
+
+            @Override
+            public void onSave(Link link) {
+
+            }
+
+            @Override
+            public void onShowComments(Link link, AdapterLink.ViewHolderLink viewHolderLink, Source source) {
+                mListener.getEventListenerBase().onClickComments(link, viewHolderLink, source);
+            }
+
+            @Override
+            public void onShowError(String error) {
+                Toast.makeText(getContext(), error, Toast.LENGTH_LONG).show();
+            }
+
+            @Override
+            public void onMarkNsfw(Link link) {
+
+            }
+        };
+
+        adapterLinkList = new AdapterLinkList(getActivity(),
+                adapterListener,
+                eventListenerHeader,
+                listener);
+
+        adapterLinkGrid = new AdapterLinkGrid(getActivity(),
+                adapterListener,
+                eventListenerHeader,
+                listener);
+
+        adapterLink = AppSettings.MODE_GRID.equals(preferences.getString(AppSettings.INTERFACE_MODE, AppSettings.MODE_GRID))
+                ? adapterLinkGrid
+                : adapterLinkList;
 
         itemDecorationDivider = new ItemDecorationDivider(getActivity(), ItemDecorationDivider.VERTICAL_LIST);
 
@@ -527,7 +488,7 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
                                             mListener.getEventListenerBase().hide(link);
                                             controllerLinks.reshowLastHiddenLink();
                                         });
-                        snackbar.getView().setBackgroundColor(colorPrimary);
+                        snackbar.getView().setBackgroundColor(themer.getColorPrimary());
                         snackbar.show();
                     }
                 });
@@ -565,6 +526,167 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
         buttonSubscribe.setOnClickListener(v -> controllerLinks.subscribe());
 
         return view;
+    }
+
+    @Override
+    public void onActivityCreated(Bundle savedInstanceState) {
+        super.onActivityCreated(savedInstanceState);
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        ControllerLinks.EventHolder eventHolder = controllerLinks.getEventHolder();
+        subscriptionData = eventHolder.getData()
+                .observeOn(Schedulers.computation())
+                .observeOn(AndroidSchedulers.mainThread())
+                .doOnNext(new AdapterNotifySubscriber<>(adapterLinkGrid))
+                .doOnNext(new AdapterNotifySubscriber<>(adapterLinkList))
+                .doOnNext(event -> textEmpty.setVisibility(event.getData().getLinks().isEmpty() ? View.VISIBLE : View.GONE))
+                .map(event -> event.getData().getSubreddit())
+                .subscribe(subreddit -> {
+                    this.subreddit = subreddit;
+
+                    layoutDrawer.setDrawerLockMode(TextUtils.isEmpty(subreddit.getDescription())
+                            ? DrawerLayout.LOCK_MODE_LOCKED_CLOSED
+                            : DrawerLayout.LOCK_MODE_UNLOCKED, GravityCompat.END);
+
+                    toolbar.setTitle(TextUtils.isEmpty(subreddit.getDisplayName()) ? Reddit.FRONT_PAGE : "/r/" + subreddit.getDisplayName());
+                    textSidebar.setText(UtilsReddit.getFormattedHtml(subreddit.getDescriptionHtml()));
+                    buttonSubscribe.setText(subreddit.isUserIsSubscriber() ? R.string.subscribe : R.string.unsubscribe);
+                    buttonSubscribe.setVisibility(controllerUser.hasUser() ? View.VISIBLE : View.GONE);
+                });
+
+        subscriptionLoading = eventHolder.getLoading()
+                .subscribe(swipeRefreshThreadList::setRefreshing);
+
+        subscriptionSort = eventHolder.getSort()
+                .subscribe(sort -> menu.findItem(sort.getMenuId()).setChecked(true));
+
+        subscriptionTime = eventHolder.getTime()
+                .subscribe(time -> {
+                    menu.findItem(time.getMenuId()).setChecked(true);
+                    itemSortTime.setTitle(getString(R.string.time_description, menu.findItem(time.getMenuId()).toString()));
+                });
+
+        controllerUser.addListener(listenerUser);
+    }
+
+    @Override
+    public void onPause() {
+        UtilsRx.unsubscribe(subscriptionData);
+        UtilsRx.unsubscribe(subscriptionLoading);
+        UtilsRx.unsubscribe(subscriptionSort);
+        UtilsRx.unsubscribe(subscriptionTime);
+        controllerUser.removeListener(listenerUser);
+        super.onPause();
+    }
+
+    @Override
+    public void onDestroyView() {
+        adapterLink.destroyViewHolders();
+        super.onDestroyView();
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+    }
+
+    @Override
+    public void onDetach() {
+        super.onDetach();
+        mListener = null;
+    }
+
+    private void setUpToolbar() {
+        toolbar = UtilsTheme.generateToolbar(getContext(), layoutAppBar, new Themer(getContext()), mListener);
+        toolbar.setOnClickListener(v ->
+                getFragmentManager().beginTransaction()
+                        .hide(FragmentThreadList.this)
+                        .add(R.id.frame_fragment, FragmentSearch.newInstance(true),
+                                FragmentSearch.TAG)
+                        .addToBackStack(null)
+                        .commit());
+
+        if (getFragmentManager().getBackStackEntryCount() <= 1) {
+            toolbar.setNavigationIcon(R.drawable.ic_menu_white_24dp);
+            toolbar.setNavigationOnClickListener(v -> mListener.openDrawer());
+        }
+        else {
+            toolbar.setNavigationIcon(R.drawable.ic_arrow_back_white_24dp);
+            toolbar.setNavigationOnClickListener(v -> mListener.onNavigationBackClick());
+        }
+
+        toolbar.getNavigationIcon().mutate().setColorFilter(colorFilterPrimary);
+        toolbar.inflateMenu(R.menu.menu_thread_list);
+        toolbar.setOnMenuItemClickListener(this);
+
+        menu = toolbar.getMenu();
+
+        itemInterface = menu.findItem(R.id.item_interface);
+
+        switch (preferences.getString(AppSettings.INTERFACE_MODE, AppSettings.MODE_GRID)) {
+            case AppSettings.MODE_LIST:
+                itemInterface.setIcon(R.drawable.ic_view_module_white_24dp);
+                break;
+            case AppSettings.MODE_GRID:
+                itemInterface.setIcon(R.drawable.ic_view_list_white_24dp);
+                break;
+        }
+
+        itemSortTime = menu.findItem(R.id.item_sort_time);
+        itemSearch = menu.findItem(R.id.item_search);
+
+        UtilsColor.tintMenu(menu, colorFilterPrimary);
+    }
+
+    private void resetAdapter(AdapterLink newAdapter) {
+
+        RecyclerView.LayoutManager layoutManagerCurrent = recyclerThreadList.getLayoutManager();
+
+        int size = layoutManagerCurrent instanceof StaggeredGridLayoutManager ? ((StaggeredGridLayoutManager) layoutManagerCurrent).getSpanCount() : 1;
+
+        int[] currentPosition = new int[size];
+        if (layoutManagerCurrent instanceof LinearLayoutManager) {
+            currentPosition[0] = ((LinearLayoutManager) layoutManagerCurrent)
+                    .findFirstVisibleItemPosition();
+        }
+        else if (layoutManagerCurrent instanceof StaggeredGridLayoutManager) {
+            ((StaggeredGridLayoutManager) layoutManagerCurrent).findFirstCompletelyVisibleItemPositions(
+                    currentPosition);
+        }
+
+        adapterLink = newAdapter;
+        layoutManager = adapterLink.getLayoutManager();
+
+        if (layoutManager instanceof LinearLayoutManager) {
+            recyclerThreadList.setPadding(0, 0, 0, 0);
+        }
+        else {
+            int padding = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 2,
+                    getResources().getDisplayMetrics());
+            recyclerThreadList.setPadding(padding, 0, padding, 0);
+        }
+
+        /*
+            Note that we must call setAdapter before setLayoutManager or the ViewHolders
+            will not be properly recycled, leading to memory leaks.
+         */
+        recyclerThreadList.setAdapter(adapterLink);
+        recyclerThreadList.setLayoutManager(layoutManager);
+        recyclerThreadList.scrollToPosition(currentPosition[0]);
+        if (layoutManager instanceof LinearLayoutManager) {
+            recyclerThreadList.addItemDecoration(itemDecorationDivider);
+        }
+        else {
+            recyclerThreadList.removeItemDecoration(itemDecorationDivider);
+        }
+    }
+
+    @Override
+    protected void inject() {
+        ((ActivityMain) getActivity()).getComponentActivity().inject(this);
     }
 
     private void initialize() {
@@ -713,97 +835,6 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
     @Override
     public void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
-    }
-
-    @Override
-    public void onActivityCreated(Bundle savedInstanceState) {
-        super.onActivityCreated(savedInstanceState);
-    }
-
-    @Override
-    public void onAttach(Activity activity) {
-        super.onAttach(activity);
-        Log.d(TAG, "onAttach");
-        this.preferences = PreferenceManager.getDefaultSharedPreferences(
-                activity.getApplicationContext());
-        try {
-            mListener = (FragmentListenerBase) activity;
-        }
-        catch (ClassCastException e) {
-            throw new ClassCastException(activity.toString()
-                    + " must implement OnFragmentInteractionListener");
-        }
-    }
-
-    @Override
-    public void onDetach() {
-        super.onDetach();
-        mListener = null;
-    }
-
-    @Override
-    public void onResume() {
-        super.onResume();
-        ControllerLinks.EventHolder eventHolder = controllerLinks.getEventHolder();
-        subscriptionData = eventHolder.getData()
-                .observeOn(Schedulers.computation())
-                .flatMap(event -> Observable.from(event.getData().second)
-                        .ofType(Link.class)
-                        .toList()
-                        .map(links -> new RxAdapterEvent<>(Pair.create(event.getData().first, links), event)))
-                .observeOn(AndroidSchedulers.mainThread())
-                .doOnNext(new AdapterNotifySubscriber<>(adapterLinkGrid))
-                .doOnNext(new AdapterNotifySubscriber<>(adapterLinkList))
-                .doOnNext(event -> textEmpty.setVisibility(event.getData().second.isEmpty() ? View.VISIBLE : View.GONE))
-                .map(event -> event.getData().first)
-                .subscribe(subreddit -> {
-                    this.subreddit = subreddit;
-
-                    layoutDrawer.setDrawerLockMode(TextUtils.isEmpty(subreddit.getDescription())
-                            ? DrawerLayout.LOCK_MODE_LOCKED_CLOSED
-                            : DrawerLayout.LOCK_MODE_UNLOCKED, GravityCompat.END);
-
-                    toolbar.setTitle(TextUtils.isEmpty(subreddit.getDisplayName()) ? Reddit.FRONT_PAGE : "/r/" + subreddit.getDisplayName());
-                    textSidebar.setText(UtilsReddit.getFormattedHtml(subreddit.getDescriptionHtml()));
-                    buttonSubscribe.setText(subreddit.isUserIsSubscriber() ? R.string.subscribe : R.string.unsubscribe);
-                    buttonSubscribe.setVisibility(controllerUser.hasUser() ? View.VISIBLE : View.GONE);
-                });
-
-        subscriptionLoading = eventHolder.getLoading()
-                .subscribe(swipeRefreshThreadList::setRefreshing);
-
-        subscriptionSort = eventHolder.getSort()
-                .subscribe(sort -> menu.findItem(sort.getMenuId()).setChecked(true));
-
-        subscriptionTime = eventHolder.getTime()
-                .subscribe(time -> {
-                    menu.findItem(time.getMenuId()).setChecked(true);
-                    itemSortTime.setTitle(getString(R.string.time_description, menu.findItem(time.getMenuId()).toString()));
-                });
-
-        controllerUser.addListener(listenerUser);
-    }
-
-    @Override
-    public void onPause() {
-        UtilsRx.unsubscribe(subscriptionData);
-        UtilsRx.unsubscribe(subscriptionLoading);
-        UtilsRx.unsubscribe(subscriptionSort);
-        UtilsRx.unsubscribe(subscriptionTime);
-        controllerUser.removeListener(listenerUser);
-        super.onPause();
-    }
-
-    @Override
-    public void onDestroyView() {
-        adapterLink.destroyViewHolders();
-        super.onDestroyView();
-    }
-
-    @Override
-    public void onDestroy() {
-        super.onDestroy();
-        CustomApplication.getRefWatcher(getActivity()).watch(this);
     }
 
     @Override

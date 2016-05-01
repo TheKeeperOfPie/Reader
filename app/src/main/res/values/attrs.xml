@@ -11,9 +11,15 @@
         <attr name="colorRowOverlay" format="color"/>
         <attr name="colorCellBackground" format="color"/>
         <attr name="colorCellOverlay" format="color"/>
-        <attr name="colorIconFilter" format="color"/>
         <attr name="colorGold" format="color"/>
         <attr name="colorAlert" format="color"/>
+    </declare-styleable>
+
+    <declare-styleable name="ThemeColors">
+        <attr name="colorPrimary"/>
+        <attr name="colorPrimaryDark"/>
+        <attr name="colorAccent"/>
+        <attr name="colorIconFilter" format="color"/>
     </declare-styleable>
 
 </resources>

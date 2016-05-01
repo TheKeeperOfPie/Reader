@@ -280,6 +280,10 @@
     <string name="need_permission_download_image">Need storage permission to download image</string>
     <string name="error_marking_read">Error marking all read</string>
 
+    <string name="link_timestamp_edited">Edited %1$s\n%2$s</string>
+    <string name="link_info">%1$s %2$s %3$s</string>
+    <string name="link_info_show_subreddit">%1$s\n%2$s %3$s %4$s</string>
+
     <string name="time_description">Time - %1$s</string>
 
     <string name="subreddit_info">%1$s subscribers\ncreated %2$s</string>
@@ -295,5 +299,12 @@
 
     <string name="as_author">as %1$s</string>
     <string name="submitting_post">Submitting to %1$s as /u/%2$s</string>
+
+    <string name="report_spam">Spam</string>
+    <string name="report_vote_manipulation">Vote manipulation</string>
+    <string name="report_personal_information">Personal information</string>
+    <string name="report_sexualizing_minors">Sexualizing minors</string>
+    <string name="report_breaking_reddit">Breaking Reddit</string>
+    <string name="report_other">Other</string>
 
 </resources>

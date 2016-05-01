@@ -7,8 +7,6 @@ package com.winsonchiu.reader.links;
 import android.graphics.drawable.Drawable;
 import android.support.v4.app.FragmentActivity;
 import android.support.v7.widget.LinearLayoutManager;
-import android.text.TextUtils;
-import android.text.util.Linkify;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -20,6 +18,7 @@ import com.winsonchiu.reader.adapter.AdapterCallback;
 import com.winsonchiu.reader.adapter.AdapterListener;
 import com.winsonchiu.reader.comments.Source;
 import com.winsonchiu.reader.data.reddit.Link;
+import com.winsonchiu.reader.data.reddit.User;
 import com.winsonchiu.reader.utils.CallbackYouTubeDestruction;
 import com.winsonchiu.reader.utils.UtilsImage;
 import com.winsonchiu.reader.utils.ViewHolderBase;
@@ -34,13 +33,8 @@ public class AdapterLinkList extends AdapterLink {
     public AdapterLinkList(FragmentActivity activity,
             AdapterListener adapterListener,
             ViewHolderHeader.EventListener eventListenerHeader,
-            ViewHolderLink.EventListener eventListenerBase) {
-        super(activity, adapterListener, eventListenerHeader, eventListenerBase);
-    }
-
-    @Override
-    public void setActivity(FragmentActivity activity) {
-        super.setActivity(activity);
+            ViewHolderLink.Listener listenerLink) {
+        super(activity, adapterListener, eventListenerHeader, listenerLink);
         layoutManager = new LinearLayoutManager(activity);
     }
 
@@ -56,7 +50,7 @@ public class AdapterLinkList extends AdapterLink {
                 parent,
                 adapterCallback,
                 adapterListener,
-                eventListenerBase,
+                listenerLink,
                 Source.LINKS,
                 this);
     }
@@ -69,11 +63,11 @@ public class AdapterLinkList extends AdapterLink {
         switch (holder.getItemViewType()) {
             case TYPE_HEADER:
                 ViewHolderHeader viewHolderHeader = (ViewHolderHeader) holder;
-                viewHolderHeader.onBind(subreddit);
+                viewHolderHeader.onBind(data.getSubreddit());
                 break;
             case TYPE_LINK:
                 ViewHolder viewHolder = (ViewHolder) holder;
-                viewHolder.onBind(data.get(position - 1), showSubreddit);
+                viewHolder.onBind(data.getLinks().get(position - 1), data.getUser(), data.isShowSubreddit());
                 break;
         }
     }
@@ -84,10 +78,10 @@ public class AdapterLinkList extends AdapterLink {
                 ViewGroup parent,
                 AdapterCallback adapterCallback,
                 AdapterListener adapterListener,
-                EventListener eventListener,
+                Listener listener,
                 Source source,
                 CallbackYouTubeDestruction callbackYouTubeDestruction) {
-            super(activity, parent, R.layout.row_link, adapterCallback, adapterListener, eventListener, source, callbackYouTubeDestruction);
+            super(activity, parent, R.layout.row_link, adapterCallback, adapterListener, listener, source, callbackYouTubeDestruction);
         }
 
         @Override
@@ -104,8 +98,8 @@ public class AdapterLinkList extends AdapterLink {
         }
 
         @Override
-        public void onBind(Link link, boolean showSubreddit) {
-            super.onBind(link, showSubreddit);
+        public void onBind(Link link, User user, boolean showSubreddit) {
+            super.onBind(link, user, showSubreddit);
 
             imageThumbnail.setVisibility(View.VISIBLE);
 
@@ -130,20 +124,6 @@ public class AdapterLinkList extends AdapterLink {
                 imageThumbnail.setColorFilter(colorFilterIconDefault);
                 imageThumbnail.setImageDrawable(drawable);
             }
-        }
-
-        @Override
-        public void setTextValues(Link link) {
-            super.setTextValues(link);
-
-            textThreadInfo.setText(TextUtils
-                    .concat(getSubredditString(), getSpannableScore(), "by ", link.getAuthor(),
-                            " ", getFlairString()));
-
-            Linkify.addLinks(textThreadInfo, Linkify.WEB_URLS);
-
-            textHidden.setText(resources.getString(R.string.hidden_description, getTimestamp(), link.getNumComments()));
-
         }
 
         @Override

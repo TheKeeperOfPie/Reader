@@ -20,8 +20,8 @@ public class AdapterHistoryLinkList extends AdapterLinkList {
     public AdapterHistoryLinkList(FragmentActivity activity,
             AdapterListener adapterListener,
             ViewHolderHeader.EventListener eventListenerHeader,
-            ViewHolderLink.EventListener eventListenerBase) {
-        super(activity, adapterListener, eventListenerHeader, eventListenerBase);
+            ViewHolderLink.Listener listenerLink) {
+        super(activity, adapterListener, eventListenerHeader, listenerLink);
     }
 
     @Override
@@ -35,7 +35,7 @@ public class AdapterHistoryLinkList extends AdapterLinkList {
                 parent,
                 adapterCallback,
                 adapterListener,
-                eventListenerBase,
+                listenerLink,
                 Source.HISTORY,
                 this) {
             @Override

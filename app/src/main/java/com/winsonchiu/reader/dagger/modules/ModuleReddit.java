@@ -29,8 +29,8 @@ public class ModuleReddit {
 
     @ScopeActivity
     @Provides
-    public ControllerLinks provideControllerLinks() {
-        return new ControllerLinks();
+    public ControllerLinks provideControllerLinks(ControllerUser controllerUser) {
+        return new ControllerLinks(controllerUser);
     }
 
     @ScopeActivity
@@ -77,8 +77,8 @@ public class ModuleReddit {
 
     @ScopeActivity
     @Provides
-    public ControllerHistory provideControllerHistory() {
-        return new ControllerHistory();
+    public ControllerHistory provideControllerHistory(ControllerUser controllerUser) {
+        return new ControllerHistory(controllerUser);
     }
 
 }

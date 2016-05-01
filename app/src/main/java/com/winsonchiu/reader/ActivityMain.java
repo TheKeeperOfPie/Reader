@@ -129,7 +129,7 @@ import java.util.List;
 
 import javax.inject.Inject;
 
-import butterknife.Bind;
+import butterknife.BindView;
 import butterknife.ButterKnife;
 import jp.wasabeef.takt.Seat;
 import jp.wasabeef.takt.Takt;
@@ -226,17 +226,17 @@ public class ActivityMain extends AppCompatActivity
     private AccountsAdapter adapterAccounts;
     private boolean accountsVisible;
 
-    @Bind(R.id.layout_drawer) DrawerLayout layoutDrawer;
-    @Bind(R.id.layout_navigation) RelativeLayout layoutNavigation;
-    @Bind(R.id.view_navigation) NavigationView viewNavigation;
+    @BindView(R.id.layout_drawer) DrawerLayout layoutDrawer;
+    @BindView(R.id.layout_navigation) RelativeLayout layoutNavigation;
+    @BindView(R.id.view_navigation) NavigationView viewNavigation;
 
-    @Bind(R.id.scroll_header_vertical) ScrollViewHeader scrollHeaderVertical;
-    @Bind(R.id.scroll_header_horizontal) HorizontalScrollView scrollHeaderHorizontal;
-    @Bind(R.id.image_header) ImageView imageHeader;
-    @Bind(R.id.text_account_name) TextView textAccountName;
-    @Bind(R.id.text_account_info) TextView textAccountInfo;
-    @Bind(R.id.button_accounts) ImageButton buttonAccounts;
-    @Bind(R.id.recycler_accounts) RecyclerView recyclerAccounts;
+    @BindView(R.id.scroll_header_vertical) ScrollViewHeader scrollHeaderVertical;
+    @BindView(R.id.scroll_header_horizontal) HorizontalScrollView scrollHeaderHorizontal;
+    @BindView(R.id.image_header) ImageView imageHeader;
+    @BindView(R.id.text_account_name) TextView textAccountName;
+    @BindView(R.id.text_account_info) TextView textAccountInfo;
+    @BindView(R.id.button_accounts) ImageButton buttonAccounts;
+    @BindView(R.id.recycler_accounts) RecyclerView recyclerAccounts;
 
     @Inject AccountManager accountManager;
     @Inject ControllerLinks controllerLinks;

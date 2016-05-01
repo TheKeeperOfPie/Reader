@@ -16,6 +16,7 @@ import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
 import android.graphics.drawable.Drawable;
 import android.preference.PreferenceManager;
+import android.support.annotation.Nullable;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.graphics.ColorUtils;
 import android.support.v4.view.GestureDetectorCompat;
@@ -53,12 +54,14 @@ import android.widget.Toast;
 
 import com.winsonchiu.reader.ActivityMain;
 import com.winsonchiu.reader.AppSettings;
+import com.winsonchiu.reader.ControllerUser;
 import com.winsonchiu.reader.R;
 import com.winsonchiu.reader.adapter.AdapterBase;
 import com.winsonchiu.reader.adapter.AdapterCallback;
 import com.winsonchiu.reader.adapter.AdapterListener;
 import com.winsonchiu.reader.data.reddit.Comment;
 import com.winsonchiu.reader.data.reddit.Link;
+import com.winsonchiu.reader.data.reddit.User;
 import com.winsonchiu.reader.links.AdapterLink;
 import com.winsonchiu.reader.links.AdapterLinkGrid;
 import com.winsonchiu.reader.links.AdapterLinkList;
@@ -75,6 +78,8 @@ import com.winsonchiu.reader.utils.YouTubeListener;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import javax.inject.Inject;
 
 import rx.Observable;
 
@@ -99,6 +104,7 @@ public class AdapterCommentList extends AdapterBase<RecyclerView.ViewHolder> imp
 
     private FragmentActivity activity;
     private AdapterLink.ViewHolderLink.EventListener eventListenerBase;
+    private AdapterLink.ViewHolderLink.Listener listenerLink;
     private ViewHolderComment.EventListener eventListener;
     private YouTubeListener youTubeListener;
     private CallbackYouTubeDestruction callbackYouTubeDestruction;
@@ -113,10 +119,13 @@ public class AdapterCommentList extends AdapterBase<RecyclerView.ViewHolder> imp
     private ControllerComments controllerComments;
     private AdapterListener adapterListener;
 
+    @Inject ControllerUser controllerUser;
+
     public AdapterCommentList(FragmentActivity activity,
             ControllerComments controllerComments,
             AdapterListener adapterListener,
             AdapterLink.ViewHolderLink.EventListener eventListenerBase,
+            AdapterLink.ViewHolderLink.Listener listenerLink,
             ViewHolderComment.EventListener eventListener,
             YouTubeListener youTubeListener,
             CallbackYouTubeDestruction callbackYouTubeDestruction,
@@ -124,10 +133,12 @@ public class AdapterCommentList extends AdapterBase<RecyclerView.ViewHolder> imp
             String firstLinkName,
             int colorLink,
             boolean actionsExpanded) {
+        ((ActivityMain) activity).getComponentActivity().inject(this);
         this.activity = activity;
         this.controllerComments = controllerComments;
         this.adapterListener = adapterListener;
         this.eventListenerBase = eventListenerBase;
+        this.listenerLink = listenerLink;
         this.eventListener = eventListener;
         this.youTubeListener = youTubeListener;
         this.callbackYouTubeDestruction = callbackYouTubeDestruction;
@@ -153,7 +164,7 @@ public class AdapterCommentList extends AdapterBase<RecyclerView.ViewHolder> imp
                         parent,
                         adapterCallback,
                         adapterListener,
-                        eventListenerBase,
+                        listenerLink,
                         Source.NONE,
                         callbackYouTubeDestruction) {
 
@@ -180,9 +191,8 @@ public class AdapterCommentList extends AdapterBase<RecyclerView.ViewHolder> imp
                     }
 
                     @Override
-                    public void onBind(Link link,
-                            boolean showSubreddit) {
-                        super.onBind(link, showSubreddit);
+                    public void onBind(Link link, @Nullable User user, boolean showSubreddit) {
+                        super.onBind(link, user, showSubreddit);
                         if (actionsExpanded) {
                             setToolbarMenuVisibility();
                             showToolbarActionsInstant();
@@ -222,7 +232,7 @@ public class AdapterCommentList extends AdapterBase<RecyclerView.ViewHolder> imp
                         parent,
                         adapterCallback,
                         adapterListener,
-                        eventListenerBase,
+                        listenerLink,
                         Source.NONE,
                         callbackYouTubeDestruction) {
 
@@ -237,9 +247,8 @@ public class AdapterCommentList extends AdapterBase<RecyclerView.ViewHolder> imp
                     }
 
                     @Override
-                    public void onBind(Link link,
-                            boolean showSubreddit) {
-                        super.onBind(link, showSubreddit);
+                    public void onBind(Link link, User user, boolean showSubreddit) {
+                        super.onBind(link, user, showSubreddit);
                         if (actionsExpanded) {
                             setToolbarMenuVisibility();
                             showToolbarActionsInstant();
@@ -298,8 +307,7 @@ public class AdapterCommentList extends AdapterBase<RecyclerView.ViewHolder> imp
         if (holder.getItemViewType() == VIEW_LINK) {
             AdapterLink.ViewHolderLink viewHolderLink = (AdapterLink.ViewHolderLink) holder;
 
-            viewHolderLink
-                    .onBind(controllerComments.getLink(), controllerComments.showSubreddit());
+            viewHolderLink.onBind(controllerComments.getLink(), controllerUser.getUser(), controllerComments.showSubreddit());
 
             viewHolderLink.itemView.invalidate();
 
@@ -343,8 +351,7 @@ public class AdapterCommentList extends AdapterBase<RecyclerView.ViewHolder> imp
         else {
             viewHolderLink.destroyWebViews();
             viewHolderLink.onRecycle();
-            viewHolderLink.onBind(controllerComments.getLink(),
-                    controllerComments.showSubreddit());
+            viewHolderLink.onBind(controllerComments.getLink(), controllerUser.getUser(), controllerComments.showSubreddit());
         }
 
         if (expandActions) {

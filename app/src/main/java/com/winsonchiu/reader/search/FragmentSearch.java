@@ -12,7 +12,6 @@ import android.support.annotation.Nullable;
 import android.support.design.widget.AppBarLayout;
 import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.TabLayout;
-import android.support.v4.util.Pair;
 import android.support.v4.view.MenuItemCompat;
 import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
@@ -39,7 +38,6 @@ import com.winsonchiu.reader.FragmentListenerBase;
 import com.winsonchiu.reader.R;
 import com.winsonchiu.reader.adapter.AdapterListener;
 import com.winsonchiu.reader.adapter.AdapterNotifySubscriber;
-import com.winsonchiu.reader.adapter.RxAdapterEvent;
 import com.winsonchiu.reader.comments.Source;
 import com.winsonchiu.reader.data.reddit.Link;
 import com.winsonchiu.reader.data.reddit.Listing;
@@ -62,11 +60,9 @@ import com.winsonchiu.reader.utils.UtilsRx;
 
 import javax.inject.Inject;
 
-import rx.Observable;
 import rx.Observer;
 import rx.Subscription;
 import rx.android.schedulers.AndroidSchedulers;
-import rx.schedulers.Schedulers;
 
 public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemClickListener {
 
@@ -395,6 +391,78 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
         });
         itemTouchHelperSubreddits.attachToRecyclerView(recyclerSearchSubreddits);
 
+        AdapterLink.ViewHolderLink.Listener listenerLink = new AdapterLink.ViewHolderLink.Listener() {
+            @Override
+            public void onSubmitComment(Link link, String text) {
+
+            }
+
+            @Override
+            public void onDownloadImage(Link link) {
+
+            }
+
+            @Override
+            public void onDownloadImage(Link link, String title, String fileName, String url) {
+
+            }
+
+            @Override
+            public void onLoadUrl(Link link, boolean forceExternal) {
+
+            }
+
+            @Override
+            public void onShowFullEditor(Link link) {
+
+            }
+
+            @Override
+            public void onVote(Link link, AdapterLink.ViewHolderLink viewHolderLink, int vote) {
+
+            }
+
+            @Override
+            public void onCopyText(Link link) {
+
+            }
+
+            @Override
+            public void onEdit(Link link) {
+
+            }
+
+            @Override
+            public void onDelete(Link link) {
+
+            }
+
+            @Override
+            public void onReport(Link link) {
+
+            }
+
+            @Override
+            public void onSave(Link link) {
+
+            }
+
+            @Override
+            public void onShowComments(Link link, AdapterLink.ViewHolderLink viewHolderLink, Source source) {
+
+            }
+
+            @Override
+            public void onShowError(String error) {
+
+            }
+
+            @Override
+            public void onMarkNsfw(Link link) {
+
+            }
+        };
+
         adapterLinks = new AdapterSearchLinkList(getActivity(), new AdapterListener() {
             @Override
             public void requestMore() {
@@ -441,7 +509,7 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
             public void showSidebar() {
 
             }
-        }, mListener.getEventListenerBase(),
+        }, listenerLink,
                 Source.SEARCH_LINKS);
 
         adapterLinksSubreddit = new AdapterSearchLinkList(getActivity(), new AdapterListener() {
@@ -489,7 +557,7 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
             public void showSidebar() {
 
             }
-        }, mListener.getEventListenerBase(),
+        }, listenerLink,
                 Source.SEARCH_LINKS_SUBREDDIT);
 
         layoutManagerLinks = new LinearLayoutManager(getActivity(), LinearLayoutManager.VERTICAL, false);
@@ -653,21 +721,11 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
         ControllerSearch.EventHolder eventHolder = controllerSearch.getEventHolder();
 
         subscriptionLinks = eventHolder.getLinks()
-                .observeOn(Schedulers.computation())
-                .flatMap(event -> Observable.from(event.getData())
-                        .ofType(Link.class)
-                        .toList()
-                        .map(links -> new RxAdapterEvent<>(Pair.create(new Subreddit(), links), event)))
                 .observeOn(AndroidSchedulers.mainThread())
                 .doOnNext(new AdapterNotifySubscriber<>(adapterLinks))
                 .subscribe();
 
         subscriptionLinksSubreddit = eventHolder.getLinksSubreddit()
-                .observeOn(Schedulers.computation())
-                .flatMap(event -> Observable.from(event.getData())
-                        .ofType(Link.class)
-                        .toList()
-                        .map(links -> new RxAdapterEvent<>(Pair.create(new Subreddit(), links), event)))
                 .observeOn(AndroidSchedulers.mainThread())
                 .doOnNext(new AdapterNotifySubscriber<>(adapterLinksSubreddit))
                 .subscribe();

@@ -38,6 +38,7 @@ import com.winsonchiu.reader.adapter.AdapterListener;
 import com.winsonchiu.reader.data.reddit.Comment;
 import com.winsonchiu.reader.data.reddit.Link;
 import com.winsonchiu.reader.data.reddit.Sort;
+import com.winsonchiu.reader.links.AdapterLink;
 import com.winsonchiu.reader.utils.CallbackYouTubeDestruction;
 import com.winsonchiu.reader.utils.DisallowListener;
 import com.winsonchiu.reader.utils.LinearLayoutManagerWrapHeight;
@@ -347,10 +348,83 @@ public class FragmentCommentsInner extends FragmentBase {
             }
         };
 
+        AdapterLink.ViewHolderLink.Listener listener = new AdapterLink.ViewHolderLink.Listener() {
+            @Override
+            public void onSubmitComment(Link link, String text) {
+
+            }
+
+            @Override
+            public void onDownloadImage(Link link) {
+
+            }
+
+            @Override
+            public void onDownloadImage(Link link, String title, String fileName, String url) {
+
+            }
+
+            @Override
+            public void onLoadUrl(Link link, boolean forceExternal) {
+
+            }
+
+            @Override
+            public void onShowFullEditor(Link link) {
+
+            }
+
+            @Override
+            public void onVote(Link link, AdapterLink.ViewHolderLink viewHolderLink, int vote) {
+
+            }
+
+            @Override
+            public void onCopyText(Link link) {
+
+            }
+
+            @Override
+            public void onEdit(Link link) {
+
+            }
+
+            @Override
+            public void onDelete(Link link) {
+
+            }
+
+            @Override
+            public void onReport(Link link) {
+
+            }
+
+            @Override
+            public void onSave(Link link) {
+
+            }
+
+            @Override
+            public void onShowComments(Link link, AdapterLink.ViewHolderLink viewHolderLink, Source source) {
+
+            }
+
+            @Override
+            public void onShowError(String error) {
+
+            }
+
+            @Override
+            public void onMarkNsfw(Link link) {
+
+            }
+        };
+
         adapterCommentList = new AdapterCommentList(getActivity(),
                 controllerComments,
                 adapterListenerComment,
                 mListener.getEventListenerBase(),
+                listener,
                 mListener.getEventListener(),
                 youTubeListener,
                 callbackYouTubeDestruction,
@@ -414,10 +488,82 @@ public class FragmentCommentsInner extends FragmentBase {
             }
         };
 
+        AdapterLink.ViewHolderLink.Listener listenerLink = new AdapterLink.ViewHolderLink.Listener() {
+            @Override
+            public void onSubmitComment(Link link, String text) {
+
+            }
+
+            @Override
+            public void onDownloadImage(Link link) {
+
+            }
+
+            @Override
+            public void onDownloadImage(Link link, String title, String fileName, String url) {
+
+            }
+
+            @Override
+            public void onLoadUrl(Link link, boolean forceExternal) {
+
+            }
+
+            @Override
+            public void onShowFullEditor(Link link) {
+
+            }
+
+            @Override
+            public void onVote(Link link, AdapterLink.ViewHolderLink viewHolderLink, int vote) {
+
+            }
+
+            @Override
+            public void onCopyText(Link link) {
+
+            }
+
+            @Override
+            public void onEdit(Link link) {
+
+            }
+
+            @Override
+            public void onDelete(Link link) {
+
+            }
+
+            @Override
+            public void onReport(Link link) {
+
+            }
+
+            @Override
+            public void onSave(Link link) {
+
+            }
+
+            @Override
+            public void onShowComments(Link link, AdapterLink.ViewHolderLink viewHolderLink, Source source) {
+
+            }
+
+            @Override
+            public void onShowError(String error) {
+
+            }
+
+            @Override
+            public void onMarkNsfw(Link link) {
+
+            }
+        };
+
         adapterLink = new AdapterLinkHeader(getActivity(),
                 controllerComments,
                 adapterListenerLink,
-                mListener.getEventListenerBase(),
+                listenerLink,
                 youTubeListener,
                 callbackYouTubeDestruction,
                 getArguments().getBoolean(ARG_IS_GRID, false),

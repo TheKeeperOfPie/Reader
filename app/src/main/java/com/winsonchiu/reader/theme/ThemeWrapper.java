@@ -15,7 +15,8 @@ import android.view.LayoutInflater;
 
 /**
  * A ContextWrapper that allows you to modify the theme from what is in the
- * wrapped context.
+ * wrapped context. Needed because Theme constructor for {@link android.view.ContextThemeWrapper}
+ * is API 23+.
  */
 public class ThemeWrapper extends ContextWrapper {
     private Resources.Theme theme;

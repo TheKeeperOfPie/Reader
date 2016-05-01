@@ -22,7 +22,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import butterknife.Bind;
+import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
 
@@ -98,9 +98,9 @@ public class AccountsAdapter extends AdapterBase<AccountsAdapter.ViewHolder> {
 
     public static abstract class ViewHolder extends ViewHolderBase {
 
-        @Bind(R.id.layout_account) ViewGroup layoutAccount;
-        @Bind(R.id.image_action) ImageView imageAction;
-        @Bind(R.id.text_account) TextView textAccount;
+        @BindView(R.id.layout_account) ViewGroup layoutAccount;
+        @BindView(R.id.image_action) ImageView imageAction;
+        @BindView(R.id.text_account) TextView textAccount;
 
         protected CustomColorFilter colorFilterPrimary;
         protected Listener listener;

@@ -33,7 +33,7 @@ import com.winsonchiu.reader.views.ImageViewZoom;
 
 import java.util.Stack;
 
-import butterknife.Bind;
+import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
 
@@ -127,15 +127,15 @@ public class AdapterAlbum extends PagerAdapter {
         private EventListener eventListener;
 
         private View view;
-        @Bind(R.id.scroll_image) CustomScrollView scrollImage;
-        @Bind(R.id.image_full) ImageViewZoom imageFull;
-        @Bind(R.id.progress_image) ProgressBar progressImage;
-        @Bind(R.id.text_error) TextView textError;
-        @Bind(R.id.text_title) TextView textTitle;
-        @Bind(R.id.text_description) TextView textDescription;
-        @Bind(R.id.layout_download) ViewGroup layoutDownload;
-        @Bind(R.id.button_download) ImageButton buttonDownload;
-        @Bind(R.id.text_album_indicator) TextView textAlbumIndicator;
+        @BindView(R.id.scroll_image) CustomScrollView scrollImage;
+        @BindView(R.id.image_full) ImageViewZoom imageFull;
+        @BindView(R.id.progress_image) ProgressBar progressImage;
+        @BindView(R.id.text_error) TextView textError;
+        @BindView(R.id.text_title) TextView textTitle;
+        @BindView(R.id.text_description) TextView textDescription;
+        @BindView(R.id.layout_download) ViewGroup layoutDownload;
+        @BindView(R.id.button_download) ImageButton buttonDownload;
+        @BindView(R.id.text_album_indicator) TextView textAlbumIndicator;
 
         public ViewHolder(View view,
                 EventListener listener,

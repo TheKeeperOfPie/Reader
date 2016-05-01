@@ -11,6 +11,7 @@ import android.util.Log;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.jakewharton.rxrelay.BehaviorRelay;
+import com.winsonchiu.reader.ControllerUser;
 import com.winsonchiu.reader.CustomApplication;
 import com.winsonchiu.reader.adapter.RxAdapterEvent;
 import com.winsonchiu.reader.dagger.components.ComponentStatic;
@@ -58,9 +59,11 @@ public class ControllerLinks {
 
     @Inject Reddit reddit;
     @Inject RedditDatabase redditDatabase;
+    ControllerUser controllerUser;
 
-    public ControllerLinks() {
+    public ControllerLinks(ControllerUser controllerUser) {
         CustomApplication.getComponentMain().inject(this);
+        this.controllerUser = controllerUser;
         subreddit.setUrl("/");
     }
 
@@ -399,8 +402,26 @@ public class ControllerLinks {
         return null;
     }
 
-    public Pair<Subreddit, List<Thing>> getData() {
-        return Pair.create(subreddit, listingLinks.getChildren());
+    public LinksModel getData() {
+        List<Link> links = new ArrayList<>(listingLinks.getChildren().size());
+
+        for (Thing thing : listingLinks.getChildren()) {
+            if (thing instanceof Link) {
+                links.add((Link) thing);
+            }
+        }
+
+        boolean showSubreddit = false;
+
+        if (!TextUtils.isEmpty(subreddit.getUrl())) {
+            switch (subreddit.getUrl()) {
+                case "/":
+                case "/r/all/":
+                    showSubreddit = true;
+            }
+        }
+
+        return new LinksModel(subreddit, links, showSubreddit, controllerUser.getUser());
     }
 
     public Subreddit getSubreddit() {
@@ -411,23 +432,50 @@ public class ControllerLinks {
         return listingLinks.getChildren() == null ? 0 : listingLinks.getChildren().size();
     }
 
-    public static class EventHolder implements Action1<RxAdapterEvent<Pair<Subreddit, List<Thing>>>> {
+//    public void report() {
+//
+//        View viewDialog = LayoutInflater.from(itemView.getContext())
+//                .inflate(R.layout.dialog_text_input, null, false);
+//        final EditText editText = (EditText) viewDialog.findViewById(R.id.edit_text);
+//        editText.setFilters(new InputFilter[] {new InputFilter.LengthFilter(100)});
+//        new AlertDialog.Builder(itemView.getContext())
+//                .setView(viewDialog)
+//                .setTitle(R.string.item_report)
+//                .setPositiveButton(R.string.ok, (dialog, which) -> {
+//                    eventListener.report(link, "other", editText.getText().toString());
+//                })
+//                .setNegativeButton(R.string.cancel, (dialog, which) -> {})
+//                .show();
+//        break;
+//    }
+//
+//    private void requestReport(final String reason) {
+//        String author = link.getAuthor();
+//        String title = link.getTitle();
+//
+//        new AlertDialog.Builder(itemView.getContext())
+//                .setMessage(resources.getString(R.string.report, title, author, reason))
+//                .setPositiveButton(R.string.ok, (dialog, which) -> {
+//                    eventListener.report(link, reason, null);
+//                })
+//                .setNegativeButton(R.string.cancel, null)
+//                .show();
+//    }
 
-        private BehaviorRelay<RxAdapterEvent<Pair<Subreddit, List<Thing>>>> relayData = BehaviorRelay.create(new RxAdapterEvent<>(Pair.create(new Subreddit(), new ArrayList<>())));
+    public static class EventHolder implements Action1<RxAdapterEvent<LinksModel>> {
+
+        private BehaviorRelay<RxAdapterEvent<LinksModel>> relayData = BehaviorRelay.create(new RxAdapterEvent<>(new LinksModel()));
         private BehaviorRelay<Boolean> relayLoading = BehaviorRelay.create(false);
         private BehaviorRelay<Sort> relaySort = BehaviorRelay.create(Sort.HOT);
         private BehaviorRelay<Time> relayTime = BehaviorRelay.create(Time.ALL);
 
         @Override
-        public void call(RxAdapterEvent<Pair<Subreddit, List<Thing>>> event) {
+        public void call(RxAdapterEvent<LinksModel> event) {
             relayData.call(event);
         }
 
-        public Observable<RxAdapterEvent<Pair<Subreddit, List<Thing>>>> getData() {
-            Pair<Subreddit, List<Thing>> data = relayData.hasValue() ? relayData.getValue().getData() : Pair.create(new Subreddit(), new ArrayList<>());
-
-            return Observable.just(new RxAdapterEvent<>(data))
-                    .mergeWith(relayData.skip(1));
+        public Observable<RxAdapterEvent<LinksModel>> getData() {
+            return relayData;
         }
 
         public BehaviorRelay<Boolean> getLoading() {

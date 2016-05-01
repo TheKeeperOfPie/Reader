@@ -9,6 +9,7 @@ import com.winsonchiu.reader.ActivityMainRoot;
 import com.winsonchiu.reader.FragmentNewMessage;
 import com.winsonchiu.reader.FragmentNewPost;
 import com.winsonchiu.reader.FragmentWeb;
+import com.winsonchiu.reader.comments.AdapterCommentList;
 import com.winsonchiu.reader.comments.AdapterLinkHeader;
 import com.winsonchiu.reader.comments.FragmentComments;
 import com.winsonchiu.reader.comments.FragmentCommentsInner;
@@ -19,6 +20,7 @@ import com.winsonchiu.reader.history.FragmentHistory;
 import com.winsonchiu.reader.inbox.FragmentInbox;
 import com.winsonchiu.reader.links.AdapterLink;
 import com.winsonchiu.reader.links.FragmentThreadList;
+import com.winsonchiu.reader.profile.AdapterProfile;
 import com.winsonchiu.reader.profile.ControllerProfile;
 import com.winsonchiu.reader.profile.FragmentProfile;
 import com.winsonchiu.reader.search.FragmentSearch;
@@ -54,5 +56,9 @@ public interface ComponentActivity {
     void inject(AdapterLink.ViewHolderLink target);
     void inject(FragmentWeb target);
     void inject(EventListenerBase target);
+
+    void inject(AdapterCommentList target);
+
+    void inject(AdapterProfile target);
 }
 

@@ -47,6 +47,7 @@ import com.winsonchiu.reader.FragmentNewMessage;
 import com.winsonchiu.reader.R;
 import com.winsonchiu.reader.adapter.AdapterListener;
 import com.winsonchiu.reader.comments.AdapterCommentList;
+import com.winsonchiu.reader.comments.Source;
 import com.winsonchiu.reader.data.Page;
 import com.winsonchiu.reader.data.reddit.Comment;
 import com.winsonchiu.reader.data.reddit.Link;
@@ -56,6 +57,7 @@ import com.winsonchiu.reader.data.reddit.Sort;
 import com.winsonchiu.reader.data.reddit.Thing;
 import com.winsonchiu.reader.data.reddit.Time;
 import com.winsonchiu.reader.data.reddit.User;
+import com.winsonchiu.reader.links.AdapterLink;
 import com.winsonchiu.reader.rx.FinalizingSubscriber;
 import com.winsonchiu.reader.rx.ObserverError;
 import com.winsonchiu.reader.theme.ThemeWrapper;
@@ -386,11 +388,84 @@ public class FragmentProfile extends FragmentBase implements Toolbar.OnMenuItemC
             }
         };
 
+        AdapterLink.ViewHolderLink.Listener listenerLink = new AdapterLink.ViewHolderLink.Listener() {
+            @Override
+            public void onSubmitComment(Link link, String text) {
+
+            }
+
+            @Override
+            public void onDownloadImage(Link link) {
+
+            }
+
+            @Override
+            public void onDownloadImage(Link link, String title, String fileName, String url) {
+
+            }
+
+            @Override
+            public void onLoadUrl(Link link, boolean forceExternal) {
+
+            }
+
+            @Override
+            public void onShowFullEditor(Link link) {
+
+            }
+
+            @Override
+            public void onVote(Link link, AdapterLink.ViewHolderLink viewHolderLink, int vote) {
+
+            }
+
+            @Override
+            public void onCopyText(Link link) {
+
+            }
+
+            @Override
+            public void onEdit(Link link) {
+
+            }
+
+            @Override
+            public void onDelete(Link link) {
+
+            }
+
+            @Override
+            public void onReport(Link link) {
+
+            }
+
+            @Override
+            public void onSave(Link link) {
+
+            }
+
+            @Override
+            public void onShowComments(Link link, AdapterLink.ViewHolderLink viewHolderLink, Source source) {
+
+            }
+
+            @Override
+            public void onShowError(String error) {
+
+            }
+
+            @Override
+            public void onMarkNsfw(Link link) {
+
+            }
+        };
+
         if (adapterProfile == null) {
             adapterProfile = new AdapterProfile(getActivity(),
                     controllerProfile,
                     adapterListener,
                     mListener.getEventListenerBase(),
+                    listenerLink,
                     new AdapterCommentList.ViewHolderComment.EventListenerComment() {
                         @Override
                         public void loadNestedComments(Comment comment) {
