@@ -19,11 +19,13 @@ import android.support.v4.view.ViewPropertyAnimatorListener;
 import android.support.v4.view.animation.FastOutSlowInInterpolator;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v4.widget.SwipeRefreshLayout;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.StaggeredGridLayoutManager;
 import android.support.v7.widget.Toolbar;
 import android.support.v7.widget.helper.ItemTouchHelper;
+import android.text.InputFilter;
 import android.text.SpannableString;
 import android.text.Spanned;
 import android.text.TextUtils;
@@ -38,6 +40,7 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
@@ -53,10 +56,10 @@ import com.winsonchiu.reader.FragmentNewPost;
 import com.winsonchiu.reader.R;
 import com.winsonchiu.reader.adapter.AdapterListener;
 import com.winsonchiu.reader.adapter.AdapterNotifySubscriber;
-import com.winsonchiu.reader.comments.Source;
 import com.winsonchiu.reader.data.reddit.Link;
 import com.winsonchiu.reader.data.reddit.Listing;
 import com.winsonchiu.reader.data.reddit.Reddit;
+import com.winsonchiu.reader.data.reddit.Report;
 import com.winsonchiu.reader.data.reddit.Sort;
 import com.winsonchiu.reader.data.reddit.Subreddit;
 import com.winsonchiu.reader.data.reddit.Thing;
@@ -64,6 +67,7 @@ import com.winsonchiu.reader.data.reddit.Time;
 import com.winsonchiu.reader.data.reddit.User;
 import com.winsonchiu.reader.history.Historian;
 import com.winsonchiu.reader.rx.FinalizingSubscriber;
+import com.winsonchiu.reader.rx.ObserverEmpty;
 import com.winsonchiu.reader.rx.ObserverError;
 import com.winsonchiu.reader.search.FragmentSearch;
 import com.winsonchiu.reader.theme.Themer;
@@ -125,6 +129,9 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
     private Subscription subscriptionLoading;
     private Subscription subscriptionSort;
     private Subscription subscriptionTime;
+    private Subscription subscriptionErrors;
+
+    private Report reportSelected;
 
     @BindView(R.id.layout_coordinator) CoordinatorLayout layoutCoordinator;
     @BindView(R.id.layout_app_bar) AppBarLayout layoutAppBar;
@@ -297,80 +304,160 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
             }
         };
 
-        AdapterLink.ViewHolderLink.Listener listener = new AdapterLink.ViewHolderLink.Listener() {
-            @Override
-            public void onSubmitComment(Link link, String text) {
-                mListener.getEventListenerBase().sendComment(link.getName(), text);
-            }
-
-            @Override
-            public void onDownloadImage(Link link) {
-
-            }
-
-            @Override
-            public void onDownloadImage(Link link, String title, String fileName, String url) {
-
-            }
-
-            @Override
-            public void onLoadUrl(Link link, boolean forceExternal) {
-                if (forceExternal) {
-                    mListener.getEventListenerBase().loadWebFragment(link.getUrl());
-                }
-                else {
-                    mListener.getEventListenerBase().loadUrl(link.getUrl());
-                }
-            }
-
-            @Override
-            public void onShowFullEditor(Link link) {
-
-            }
-
+        AdapterLink.ViewHolderLink.Listener listener = new LinksListenerBase(mListener.getEventListenerBase()) {
             @Override
             public void onVote(Link link, AdapterLink.ViewHolderLink viewHolderLink, int vote) {
+                mListener.getEventListenerBase()
+                        .onVote(link, vote)
+                        .subscribe(new ObserverEmpty<Link>() {
+                            @Override
+                            public void onError(Throwable e) {
+                                controllerLinks.getEventHolder().getErrors().call(LinksError.VOTE);
+                            }
 
-            }
-
-            @Override
-            public void onCopyText(Link link) {
-
-            }
-
-            @Override
-            public void onEdit(Link link) {
-
+                            @Override
+                            public void onNext(Link link) {
+                                controllerLinks.notifyChanged(link);
+                            }
+                        });
             }
 
             @Override
             public void onDelete(Link link) {
+                new AlertDialog.Builder(getContext())
+                        .setTitle(R.string.delete_post)
+                        .setMessage(link.getTitle())
+                        .setPositiveButton(R.string.yes,
+                                (dialog, which) -> {
+                                    mListener.getEventListenerBase()
+                                            .onDelete(link)
+                                            .subscribe(new ObserverEmpty<Link>() {
+                                                @Override
+                                                public void onError(Throwable e) {
+                                                    controllerLinks.getEventHolder().getErrors().call(LinksError.DELETE);
+                                                }
 
+                                                @Override
+                                                public void onNext(Link link) {
+                                                    controllerLinks.notifyRemoved(link);
+                                                }
+                                            });
+                                })
+                        .setNegativeButton(R.string.no, null)
+                        .show();
             }
 
             @Override
             public void onReport(Link link) {
-
+                new AlertDialog.Builder(getContext())
+                        .setTitle(R.string.report_title)
+                        .setSingleChoiceItems(Report.getDisplayReasons(getResources()), -1, (dialog, which) -> {
+                            reportSelected = Report.values()[which];
+                        })
+                        .setPositiveButton(R.string.ok, (dialog, which) -> {
+                            if (reportSelected == Report.OTHER) {
+                                View viewDialog = LayoutInflater.from(getContext()).inflate(R.layout.dialog_text_input, null, false);
+                                final EditText editText = (EditText) viewDialog.findViewById(R.id.edit_text);
+                                editText.setFilters(new InputFilter[]{new InputFilter.LengthFilter(100)});
+                                new AlertDialog.Builder(getContext())
+                                        .setView(viewDialog)
+                                        .setTitle(R.string.item_report)
+                                        .setPositiveButton(R.string.ok, (dialog1, which1) -> {
+                                            mListener.getEventListenerBase()
+                                                    .onReport(link, editText.getText().toString())
+                                                    .subscribe(new ObserverError<String>() {
+                                                        @Override
+                                                        public void onError(Throwable e) {
+                                                            controllerLinks.getEventHolder().getErrors().call(LinksError.REPORT);
+                                                        }
+                                                    });
+                                        })
+                                        .setNegativeButton(R.string.cancel, (dialog1, which1) -> {
+                                            dialog1.dismiss();
+                                        })
+                                        .show();
+                            }
+                            else if (reportSelected != null) {
+                                mListener.getEventListenerBase()
+                                        .onReport(link, reportSelected.getReason())
+                                        .subscribe(new ObserverError<String>() {
+                                            @Override
+                                            public void onError(Throwable e) {
+                                                controllerLinks.getEventHolder().getErrors().call(LinksError.REPORT);
+                                            }
+                                        });
+                            }
+                        })
+                        .setNegativeButton(R.string.cancel, null)
+                        .show();
             }
 
             @Override
             public void onSave(Link link) {
+                if (link.isSaved()) {
+                    mListener.getEventListenerBase()
+                            .onUnsave(link)
+                            .subscribe(new ObserverEmpty<Link>() {
+                                @Override
+                                public void onError(Throwable e) {
+                                    controllerLinks.getEventHolder().getErrors().call(LinksError.UNSAVE);
+                                }
 
-            }
+                                @Override
+                                public void onNext(Link link) {
+                                    controllerLinks.notifyChanged(link);
+                                }
+                            });
+                }
+                else {
+                    mListener.getEventListenerBase()
+                            .onSave(link)
+                            .subscribe(new ObserverEmpty<Link>() {
+                                @Override
+                                public void onError(Throwable e) {
+                                    controllerLinks.getEventHolder().getErrors().call(LinksError.SAVE);
+                                }
 
-            @Override
-            public void onShowComments(Link link, AdapterLink.ViewHolderLink viewHolderLink, Source source) {
-                mListener.getEventListenerBase().onClickComments(link, viewHolderLink, source);
-            }
-
-            @Override
-            public void onShowError(String error) {
-                Toast.makeText(getContext(), error, Toast.LENGTH_LONG).show();
+                                @Override
+                                public void onNext(Link link) {
+                                    controllerLinks.notifyChanged(link);
+                                }
+                            });
+                }
             }
 
             @Override
             public void onMarkNsfw(Link link) {
+                if (link.isOver18()) {
+                    mListener.getEventListenerBase()
+                            .onUnmarkNsfw(link)
+                            .subscribe(new ObserverEmpty<Link>() {
+                                @Override
+                                public void onError(Throwable e) {
+                                    controllerLinks.getEventHolder().getErrors().call(LinksError.UNMARK_NSFW);
+                                }
 
+                                @Override
+                                public void onNext(Link link) {
+                                    controllerLinks.notifyChanged(link);
+                                }
+                            });
+                }
+                else {
+                    mListener.getEventListenerBase()
+                            .onMarkNsfw(link)
+                            .subscribe(new ObserverEmpty<Link>() {
+                                @Override
+                                public void onError(Throwable e) {
+                                    controllerLinks.getEventHolder().getErrors().call(LinksError.MARK_NSFW);
+                                }
+
+                                @Override
+                                public void onNext(Link link) {
+                                    controllerLinks.notifyChanged(link);
+                                }
+                            });
+                }
             }
         };
 
@@ -569,6 +656,26 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
                     itemSortTime.setTitle(getString(R.string.time_description, menu.findItem(time.getMenuId()).toString()));
                 });
 
+        subscriptionErrors = eventHolder.getErrors()
+                .subscribe(linksError -> {
+                    switch (linksError) {
+                        case REPORT:
+                            break;
+                        case SAVE:
+                            Toast.makeText(getContext(), R.string.error_saving_post, Toast.LENGTH_SHORT).show();
+                            break;
+                        case UNSAVE:
+                            Toast.makeText(getContext(), R.string.error_unsaving_post, Toast.LENGTH_SHORT).show();
+                            break;
+                        case MARK_NSFW:
+                            Toast.makeText(getContext(), R.string.error_marking_nsfw, Toast.LENGTH_SHORT).show();
+                            break;
+                        case UNMARK_NSFW:
+                            Toast.makeText(getContext(), R.string.error_unmarking_nsfw, Toast.LENGTH_SHORT).show();
+                            break;
+                    }
+                });
+
         controllerUser.addListener(listenerUser);
     }
 
@@ -578,6 +685,7 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
         UtilsRx.unsubscribe(subscriptionLoading);
         UtilsRx.unsubscribe(subscriptionSort);
         UtilsRx.unsubscribe(subscriptionTime);
+        UtilsRx.unsubscribe(subscriptionErrors);
         controllerUser.removeListener(listenerUser);
         super.onPause();
     }
@@ -702,7 +810,7 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
 
                 FragmentNewPost fragmentNewPost = FragmentNewPost.newInstance(
                         controllerUser.getUser().getName(),
-                        subreddit.getUrl(),
+                        subreddit.getTitle(),
                         postType,
                         subreddit.getSubmitTextHtml());
 

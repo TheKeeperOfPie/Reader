@@ -19,7 +19,7 @@ import java.util.List;
 /**
  * Created by TheKeeperOfPie on 3/7/2015.
  */
-public class Comment extends Replyable {
+public class Comment extends Replyable implements Submission, Votable, Saveable {
 
     public static final String DELETED = "[deleted]";
 

@@ -17,8 +17,10 @@ import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.view.GestureDetectorCompat;
 import android.support.v4.widget.SwipeRefreshLayout;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.text.InputFilter;
 import android.text.TextUtils;
 import android.util.Log;
 import android.util.TypedValue;
@@ -27,6 +29,7 @@ import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.EditText;
 import android.widget.ImageView;
 
 import com.winsonchiu.reader.ActivityMain;
@@ -37,8 +40,13 @@ import com.winsonchiu.reader.R;
 import com.winsonchiu.reader.adapter.AdapterListener;
 import com.winsonchiu.reader.data.reddit.Comment;
 import com.winsonchiu.reader.data.reddit.Link;
+import com.winsonchiu.reader.data.reddit.Report;
 import com.winsonchiu.reader.data.reddit.Sort;
 import com.winsonchiu.reader.links.AdapterLink;
+import com.winsonchiu.reader.links.LinksError;
+import com.winsonchiu.reader.links.LinksListenerBase;
+import com.winsonchiu.reader.rx.ObserverEmpty;
+import com.winsonchiu.reader.rx.ObserverError;
 import com.winsonchiu.reader.utils.CallbackYouTubeDestruction;
 import com.winsonchiu.reader.utils.DisallowListener;
 import com.winsonchiu.reader.utils.LinearLayoutManagerWrapHeight;
@@ -348,44 +356,9 @@ public class FragmentCommentsInner extends FragmentBase {
             }
         };
 
-        AdapterLink.ViewHolderLink.Listener listener = new AdapterLink.ViewHolderLink.Listener() {
-            @Override
-            public void onSubmitComment(Link link, String text) {
-
-            }
-
-            @Override
-            public void onDownloadImage(Link link) {
-
-            }
-
-            @Override
-            public void onDownloadImage(Link link, String title, String fileName, String url) {
-
-            }
-
-            @Override
-            public void onLoadUrl(Link link, boolean forceExternal) {
-
-            }
-
-            @Override
-            public void onShowFullEditor(Link link) {
-
-            }
-
+        AdapterLink.ViewHolderLink.Listener listener =  new LinksListenerBase(mListener.getEventListenerBase()) {
             @Override
             public void onVote(Link link, AdapterLink.ViewHolderLink viewHolderLink, int vote) {
-
-            }
-
-            @Override
-            public void onCopyText(Link link) {
-
-            }
-
-            @Override
-            public void onEdit(Link link) {
 
             }
 
@@ -405,12 +378,29 @@ public class FragmentCommentsInner extends FragmentBase {
             }
 
             @Override
-            public void onShowComments(Link link, AdapterLink.ViewHolderLink viewHolderLink, Source source) {
+            public void onMarkNsfw(Link link) {
+
+            }
+        };
+
+        AdapterLink.ViewHolderLink.Listener listenerLink = new LinksListenerBase(mListener.getEventListenerBase()) {
+            @Override
+            public void onVote(Link link, AdapterLink.ViewHolderLink viewHolderLink, int vote) {
 
             }
 
             @Override
-            public void onShowError(String error) {
+            public void onDelete(Link link) {
+
+            }
+
+            @Override
+            public void onReport(Link link) {
+
+            }
+
+            @Override
+            public void onSave(Link link) {
 
             }
 
@@ -484,78 +474,6 @@ public class FragmentCommentsInner extends FragmentBase {
 
             @Override
             public void requestDisallowInterceptTouchEventHorizontal(boolean disallow) {
-
-            }
-        };
-
-        AdapterLink.ViewHolderLink.Listener listenerLink = new AdapterLink.ViewHolderLink.Listener() {
-            @Override
-            public void onSubmitComment(Link link, String text) {
-
-            }
-
-            @Override
-            public void onDownloadImage(Link link) {
-
-            }
-
-            @Override
-            public void onDownloadImage(Link link, String title, String fileName, String url) {
-
-            }
-
-            @Override
-            public void onLoadUrl(Link link, boolean forceExternal) {
-
-            }
-
-            @Override
-            public void onShowFullEditor(Link link) {
-
-            }
-
-            @Override
-            public void onVote(Link link, AdapterLink.ViewHolderLink viewHolderLink, int vote) {
-
-            }
-
-            @Override
-            public void onCopyText(Link link) {
-
-            }
-
-            @Override
-            public void onEdit(Link link) {
-
-            }
-
-            @Override
-            public void onDelete(Link link) {
-
-            }
-
-            @Override
-            public void onReport(Link link) {
-
-            }
-
-            @Override
-            public void onSave(Link link) {
-
-            }
-
-            @Override
-            public void onShowComments(Link link, AdapterLink.ViewHolderLink viewHolderLink, Source source) {
-
-            }
-
-            @Override
-            public void onShowError(String error) {
-
-            }
-
-            @Override
-            public void onMarkNsfw(Link link) {
 
             }
         };

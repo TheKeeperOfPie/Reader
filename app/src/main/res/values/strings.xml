@@ -243,6 +243,7 @@
     <string name="error_deleting_post">Error deleting post</string>
     <string name="error_deleting_comment">Error deleting comment</string>
     <string name="error_saving_post">Error saving post</string>
+    <string name="error_unsaving_post">Error unsaving post</string>
     <string name="error_saving_comment">Error saving comment</string>
     <string name="item_mark_nsfw">Mark NSFW</string>
     <string name="error_marking_nsfw">Error marking NSFW</string>
@@ -298,13 +299,17 @@
     <string name="error_album_image">Error loading\n%1$s</string>
 
     <string name="as_author">as %1$s</string>
-    <string name="submitting_post">Submitting to %1$s as /u/%2$s</string>
+    <string name="submitting_post">Submitting to /r/%1$s as /u/%2$s</string>
 
-    <string name="report_spam">Spam</string>
-    <string name="report_vote_manipulation">Vote manipulation</string>
-    <string name="report_personal_information">Personal information</string>
-    <string name="report_sexualizing_minors">Sexualizing minors</string>
-    <string name="report_breaking_reddit">Breaking Reddit</string>
-    <string name="report_other">Other</string>
+    <string name="report_title">Report</string>
+
+    <string name="report_reason_spam">Spam</string>
+    <string name="report_reason_vote_manipulation">Vote manipulation</string>
+    <string name="report_reason_personal_information">Personal information</string>
+    <string name="report_reason_sexualizing_minors">Sexualizing minors</string>
+    <string name="report_reason_breaking_reddit">Breaking Reddit</string>
+    <string name="report_reason_other">Other</string>
+
+    <string name="delete_post">Delete post?</string>
 
 </resources>

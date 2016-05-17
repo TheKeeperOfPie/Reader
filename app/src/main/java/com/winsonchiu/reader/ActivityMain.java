@@ -158,7 +158,7 @@ public class ActivityMain extends AppCompatActivity
 
     private Handler handler = new Handler();
     private Account accountUser;
-    private AdapterLink.ViewHolderLink.EventListener eventListenerBase;
+    private EventListenerBase eventListenerBase;
     private AdapterCommentList.ViewHolderComment.EventListener eventListenerComment;
     private final Runnable runnableInbox = new Runnable() {
         @Override
@@ -1356,7 +1356,7 @@ public class ActivityMain extends AppCompatActivity
     }
 
     @Override
-    public AdapterLink.ViewHolderLink.EventListener getEventListenerBase() {
+    public EventListenerBase getEventListenerBase() {
         return eventListenerBase;
     }
 

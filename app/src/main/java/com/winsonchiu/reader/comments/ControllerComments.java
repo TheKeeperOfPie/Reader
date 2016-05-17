@@ -9,8 +9,11 @@ import android.text.TextUtils;
 import android.util.Log;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.jakewharton.rxrelay.BehaviorRelay;
+import com.jakewharton.rxrelay.PublishRelay;
 import com.winsonchiu.reader.AppSettings;
 import com.winsonchiu.reader.CustomApplication;
+import com.winsonchiu.reader.adapter.RxAdapterEvent;
 import com.winsonchiu.reader.dagger.components.ComponentStatic;
 import com.winsonchiu.reader.data.database.reddit.RedditDatabase;
 import com.winsonchiu.reader.data.reddit.Comment;
@@ -20,17 +23,15 @@ import com.winsonchiu.reader.data.reddit.Reddit;
 import com.winsonchiu.reader.data.reddit.Replyable;
 import com.winsonchiu.reader.data.reddit.Sort;
 import com.winsonchiu.reader.data.reddit.Thing;
+import com.winsonchiu.reader.links.LinksError;
 import com.winsonchiu.reader.rx.FinalizingSubscriber;
 import com.winsonchiu.reader.rx.ObserverEmpty;
-import com.winsonchiu.reader.utils.ControllerListener;
 import com.winsonchiu.reader.utils.UtilsRx;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Set;
 
 import javax.inject.Inject;
 
@@ -38,6 +39,7 @@ import rx.Observable;
 import rx.Observer;
 import rx.Subscription;
 import rx.android.schedulers.AndroidSchedulers;
+import rx.functions.Action1;
 import rx.schedulers.Schedulers;
 
 /**
@@ -48,16 +50,13 @@ public class ControllerComments implements AdapterCommentList.ViewHolderComment.
     private static final String TAG = ControllerComments.class.getCanonicalName();
 
     private Link link = new Link();
-    private Set<Listener> listeners = new HashSet<>();
-    private Sort sort = Sort.CONFIDENCE;
     private Listing listingComments = new Listing();
+
+    private EventHolder eventHolder = new EventHolder();
 
     @Inject Reddit reddit;
     @Inject RedditDatabase redditDatabase;
     @Inject SharedPreferences sharedPreferences;
-
-    private boolean isRefreshing;
-    private boolean isCommentThread;
 
     private Subscription subscriptionComments;
 
@@ -65,24 +64,8 @@ public class ControllerComments implements AdapterCommentList.ViewHolderComment.
         CustomApplication.getComponentMain().inject(this);
     }
 
-    public void addListener(Listener listener) {
-        if (listeners.add(listener)) {
-            setTitle();
-            listener.getAdapter().notifyDataSetChanged();
-            listener.setSort(sort);
-            listener.setRefreshing(isRefreshing());
-            listener.setIsCommentThread(isCommentThread);
-        }
-    }
-
-    public void removeListener(Listener listener) {
-        listeners.remove(listener);
-    }
-
-    public void setTitle() {
-        for (Listener listener : listeners) {
-            listener.setToolbarTitle(link.getTitle());
-        }
+    public EventHolder getEventHolder() {
+        return eventHolder;
     }
 
     public void setLink(Link link) {
@@ -95,18 +78,12 @@ public class ControllerComments implements AdapterCommentList.ViewHolderComment.
     public void setLinkFromCache(Link link) {
         this.link = link;
         this.listingComments = link.getComments();
-        this.sort = link.getSuggestedSort();
-        for (Listener listener : listeners) {
-            listener.setSort(sort);
-        }
-        for (Listener listener : listeners) {
-            listener.getAdapter().notifyDataSetChanged();
-        }
+        eventHolder.getSort().call(link.getSuggestedSort());
     }
 
     public void reloadAllComments() {
         if (TextUtils.isEmpty(link.getId())) {
-            setRefreshing(false);
+            setLoading(false);
             return;
         }
 
@@ -157,10 +134,7 @@ public class ControllerComments implements AdapterCommentList.ViewHolderComment.
             }
         }
 
-        for (Listener listener : listeners) {
-            listener.getAdapter().notifyDataSetChanged();
-        }
-        setTitle();
+        eventHolder.call(new RxAdapterEvent<>(getData()));
     }
 
     public void loadLinkComments() {
@@ -168,7 +142,7 @@ public class ControllerComments implements AdapterCommentList.ViewHolderComment.
         link.setContextLevel(0);
 
         UtilsRx.unsubscribe(subscriptionComments);
-        subscriptionComments = reddit.comments(link.getSubreddit(), link.getId(), link.getCommentId(), sort.toString(), true, true, link.getContextLevel(), 10, 100)
+        subscriptionComments = reddit.comments(link.getSubreddit(), link.getId(), link.getCommentId(), eventHolder.getSort().getValue().toString(), true, true, link.getContextLevel(), 10, 100)
                 .observeOn(Schedulers.computation())
                 .doOnNext(redditDatabase.storeLink())
                 .onErrorResumeNext(Observable.<Link>empty())
@@ -179,7 +153,7 @@ public class ControllerComments implements AdapterCommentList.ViewHolderComment.
 
     public void loadCommentThread() {
         UtilsRx.unsubscribe(subscriptionComments);
-        subscriptionComments = reddit.comments(link.getSubreddit(), link.getId(), link.getCommentId(), sort.toString(), true, true, link.getContextLevel(), 10, 100)
+        subscriptionComments = reddit.comments(link.getSubreddit(), link.getId(), link.getCommentId(), eventHolder.getSort().getValue().toString(), true, true, link.getContextLevel(), 10, 100)
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(getSubscriberLink());
     }
@@ -188,38 +162,23 @@ public class ControllerComments implements AdapterCommentList.ViewHolderComment.
         return new FinalizingSubscriber<Link>() {
             @Override
             public void start() {
-                setRefreshing(true);
+                setLoading(true);
             }
 
             @Override
             public void next(com.winsonchiu.reader.data.reddit.Link link) {
                 setLinkWithComments(link);
-                setIsCommentThread(false);
             }
 
             @Override
             public void finish() {
-                setRefreshing(false);
+                setLoading(false);
             }
         };
     }
 
-    private void setRefreshing(boolean refreshing) {
-        isRefreshing = refreshing;
-        for (Listener listener : listeners) {
-            listener.setRefreshing(refreshing);
-        }
-    }
-
-    private void setIsCommentThread(boolean isCommentThread) {
-        this.isCommentThread = isCommentThread;
-        for (Listener listener : listeners) {
-            listener.setIsCommentThread(isCommentThread);
-        }
-    }
-
-    public boolean isRefreshing() {
-        return isRefreshing;
+    private void setLoading(boolean loading) {
+        eventHolder.getLoading().call(loading);
     }
 
     public String getSubredditName() {
@@ -230,9 +189,13 @@ public class ControllerComments implements AdapterCommentList.ViewHolderComment.
         return true;
     }
 
+    public CommentsModel getData() {
+        return new CommentsModel(link, listingComments);
+    }
+
     public void loadNestedComments(final Comment moreComment) {
 
-        setRefreshing(true);
+        setLoading(true);
 
         String children = "";
         List<String> childrenList = moreComment.getChildren();
@@ -240,12 +203,8 @@ public class ControllerComments implements AdapterCommentList.ViewHolderComment.
             int commentIndex = listingComments.getChildren()
                     .indexOf(moreComment);
             if (commentIndex >= 0) {
-                listingComments.getChildren()
-                        .remove(commentIndex);
-                for (Listener listener : listeners) {
-                    listener.getAdapter()
-                            .notifyItemRemoved(commentIndex + 1);
-                }
+                listingComments.getChildren().remove(commentIndex);
+                eventHolder.call(new RxAdapterEvent<>(getData(), RxAdapterEvent.Type.REMOVE, commentIndex + 1));
             }
             return;
         }
@@ -257,7 +216,7 @@ public class ControllerComments implements AdapterCommentList.ViewHolderComment.
                 .subscribe(new Observer<String>() {
                     @Override
                     public void onCompleted() {
-                        setRefreshing(false);
+                        setLoading(false);
                     }
 
                     @Override
@@ -318,12 +277,8 @@ public class ControllerComments implements AdapterCommentList.ViewHolderComment.
                                 commentIndex = listingComments.getChildren()
                                         .indexOf(moreComment);
                                 if (commentIndex >= 0) {
-                                    listingComments.getChildren()
-                                            .remove(commentIndex);
-                                    for (Listener listener : listeners) {
-                                        listener.getAdapter()
-                                                .notifyItemRemoved(commentIndex + 1);
-                                    }
+                                    listingComments.getChildren().remove(commentIndex);
+                                    eventHolder.call(new RxAdapterEvent<>(getData(), RxAdapterEvent.Type.REMOVE, commentIndex + 1));
                                 }
                             }
                             else {
@@ -356,12 +311,8 @@ public class ControllerComments implements AdapterCommentList.ViewHolderComment.
         commentIndex = listingComments.getChildren()
                 .indexOf(moreComment);
         if (commentIndex > -1) {
-            listingComments.getChildren()
-                    .remove(commentIndex);
-            for (Listener listener : listeners) {
-                listener.getAdapter()
-                        .notifyItemRemoved(commentIndex + 1);
-            }
+            listingComments.getChildren().remove(commentIndex);
+            eventHolder.call(new RxAdapterEvent<>(getData(), RxAdapterEvent.Type.REMOVE, commentIndex + 1));
 
             insertComments(commentIndex, listComments, listingComments);
 
@@ -373,10 +324,7 @@ public class ControllerComments implements AdapterCommentList.ViewHolderComment.
                 }
             }
 
-            for (Listener listener : listeners) {
-                listener.getAdapter()
-                        .notifyItemRangeInserted(commentIndex + 1, listComments.size());
-            }
+            eventHolder.call(new RxAdapterEvent<>(getData(), RxAdapterEvent.Type.INSERT, commentIndex + 1, listComments.size()));
         }
 
         // TODO: This is an expensive operation and should be tested for possible removal
@@ -424,13 +372,7 @@ public class ControllerComments implements AdapterCommentList.ViewHolderComment.
             }
             listingComments.getChildren().add(commentIndex + 1, comment);
 
-            for (Listener listener : listeners) {
-                listener.getAdapter().notifyItemInserted(commentIndex + 2);
-            }
-        }
-
-        for (Listener listener : listeners) {
-            listener.insertComment(comment);
+            eventHolder.call(new RxAdapterEvent<>(getData(), RxAdapterEvent.Type.INSERT, commentIndex + 2));
         }
     }
 
@@ -440,9 +382,7 @@ public class ControllerComments implements AdapterCommentList.ViewHolderComment.
         int commentIndex = deleteComment(comment, listingComments);
 
         if (commentIndex > -1) {
-            for (Listener listener : listeners) {
-                listener.getAdapter().notifyItemChanged(commentIndex + 1);
-            }
+            eventHolder.call(new RxAdapterEvent<>(getData(), RxAdapterEvent.Type.CHANGE, commentIndex + 1));
         }
 
         Observable<String> observable = reddit.delete(comment);
@@ -530,11 +470,8 @@ public class ControllerComments implements AdapterCommentList.ViewHolderComment.
         }
         comment.setCollapsed(0);
 
-        for (Listener listener : listeners) {
-            listener.getAdapter().notifyItemChanged(position + 1);
-            listener.getAdapter()
-                    .notifyItemRangeInserted(position + 2, numAdded);
-        }
+        eventHolder.call(new RxAdapterEvent<>(getData(), RxAdapterEvent.Type.CHANGE, position + 1));
+        eventHolder.call(new RxAdapterEvent<>(getData(), RxAdapterEvent.Type.INSERT, position + 2, numAdded));
     }
 
     private void collapseComment(int position) {
@@ -556,11 +493,8 @@ public class ControllerComments implements AdapterCommentList.ViewHolderComment.
         }
 
         if (notify) {
-            for (Listener listener : listeners) {
-                listener.getAdapter().notifyItemChanged(position);
-                listener.getAdapter()
-                        .notifyItemRangeRemoved(position + 1, numRemoved);
-            }
+            eventHolder.call(new RxAdapterEvent<>(getData(), RxAdapterEvent.Type.CHANGE, position));
+            eventHolder.call(new RxAdapterEvent<>(getData(), RxAdapterEvent.Type.INSERT, position + 1, numRemoved));
         }
     }
 
@@ -717,9 +651,7 @@ public class ControllerComments implements AdapterCommentList.ViewHolderComment.
                             Comment comment = (Comment) listingComments.getChildren().get(commentIndex);
                             comment.setBodyHtml(newComment.getBodyHtml());
                             comment.setEdited(newComment.getEdited());
-                            for (Listener listener : listeners) {
-                                listener.getAdapter().notifyItemChanged(commentIndex + 1);
-                            }
+                            eventHolder.call(new RxAdapterEvent<>(getData(), RxAdapterEvent.Type.CHANGE, commentIndex + 1));
                         }
                     }
                 });
@@ -752,17 +684,10 @@ public class ControllerComments implements AdapterCommentList.ViewHolderComment.
     }
 
     public void setSort(Sort sort) {
-        if (this.sort != sort) {
-            this.sort = sort;
-            for (Listener listener : listeners) {
-                listener.setSort(sort);
-            }
+        if (eventHolder.getSort().getValue() != sort) {
+            eventHolder.getSort().call(sort);
             reloadAllComments();
         }
-    }
-
-    public Sort getSort() {
-        return sort;
     }
 
     public void jumpToParent(Comment child) {
@@ -773,9 +698,7 @@ public class ControllerComments implements AdapterCommentList.ViewHolderComment.
             for (int index = commentIndex - 1; index >= 0; index--) {
                 Comment comment = (Comment) listingComments.getChildren().get(index);
                 if (comment.getLevel() == child.getLevel() - 1) {
-                    for (Listener listener : listeners) {
-                        listener.scrollTo(index + 1);
-                    }
+                    eventHolder.getScrollEvents().call(index + 1);
                     break;
                 }
             }
@@ -792,9 +715,7 @@ public class ControllerComments implements AdapterCommentList.ViewHolderComment.
         if (name.equals(link.getName())) {
             link.setReplyText(text);
             link.setReplyExpanded(!collapsed);
-            for (Listener listener : listeners) {
-                listener.getAdapter().notifyItemChanged(0);
-            }
+            eventHolder.call(new RxAdapterEvent<>(getData(), RxAdapterEvent.Type.CHANGE, 0));
             return true;
         }
 
@@ -803,9 +724,7 @@ public class ControllerComments implements AdapterCommentList.ViewHolderComment.
             if (thing.getName().equals(name)) {
                 ((Replyable) thing).setReplyText(text);
                 ((Replyable) thing).setReplyExpanded(!collapsed);
-                for (Listener listener : listeners) {
-                    listener.getAdapter().notifyItemChanged(index + 1);
-                }
+                eventHolder.call(new RxAdapterEvent<>(getData(), RxAdapterEvent.Type.CHANGE, index + 1));
                 return true;
             }
         }
@@ -816,27 +735,41 @@ public class ControllerComments implements AdapterCommentList.ViewHolderComment.
     public void setNsfw(String name, boolean over18) {
         if (name.equals(link.getName())) {
             link.setOver18(over18);
-            for (Listener listener : listeners) {
-                listener.getAdapter().notifyItemChanged(0);
-            }
-        }
-
-        for (Listener listener : listeners) {
-            listener.setNsfw(name, over18);
+            eventHolder.call(new RxAdapterEvent<>(getData(), RxAdapterEvent.Type.CHANGE, 0));
         }
     }
 
-    public boolean getIsCommentThread() {
-        return isCommentThread;
+    public static class EventHolder implements Action1<RxAdapterEvent<CommentsModel>> {
+
+        private BehaviorRelay<RxAdapterEvent<CommentsModel>> relayData = BehaviorRelay.create(new RxAdapterEvent<>(new CommentsModel()));
+        private BehaviorRelay<Boolean> relayLoading = BehaviorRelay.create(false);
+        private BehaviorRelay<Sort> relaySort = BehaviorRelay.create(Sort.CONFIDENCE);
+        private BehaviorRelay<LinksError> relayErrors = BehaviorRelay.create();
+        private PublishRelay<Integer> relayScrollEvents = PublishRelay.create();
+
+        @Override
+        public void call(RxAdapterEvent<CommentsModel> event) {
+            relayData.call(event);
+        }
+
+        public Observable<RxAdapterEvent<CommentsModel>> getData() {
+            return relayData;
+        }
+
+        public BehaviorRelay<Boolean> getLoading() {
+            return relayLoading;
+        }
+
+        public BehaviorRelay<Sort> getSort() {
+            return relaySort;
+        }
+
+        public BehaviorRelay<LinksError> getErrors() {
+            return relayErrors;
+        }
+
+        public PublishRelay<Integer> getScrollEvents() {
+            return relayScrollEvents;
+        }
     }
-
-    public interface Listener extends ControllerListener {
-        void setSort(Sort sort);
-        void setIsCommentThread(boolean isCommentThread);
-        void scrollTo(int position);
-
-        void insertComment(Comment comment);
-        void setNsfw(String name, boolean over18);
-    }
-
 }

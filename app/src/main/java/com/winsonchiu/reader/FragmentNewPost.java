@@ -106,11 +106,11 @@ public class FragmentNewPost extends FragmentBase implements Toolbar.OnMenuItemC
     private ColorFilter colorFilterPrimary;
     private ColorFilter colorFilterIcon;
 
-    public static FragmentNewPost newInstance(String user, String subredditUrl, Reddit.PostType postType, String submitTextHtml) {
+    public static FragmentNewPost newInstance(String user, String subreddit, Reddit.PostType postType, String submitTextHtml) {
         FragmentNewPost fragment = new FragmentNewPost();
         Bundle args = new Bundle();
         args.putString(USER, user);
-        args.putString(SUBREDDIT, subredditUrl);
+        args.putString(SUBREDDIT, subreddit);
         args.putString(SUBMIT_TEXT_HTML, submitTextHtml);
         args.putSerializable(POST_TYPE, postType);
         fragment.setArguments(args);
@@ -121,7 +121,7 @@ public class FragmentNewPost extends FragmentBase implements Toolbar.OnMenuItemC
         FragmentNewPost fragment = new FragmentNewPost();
         Bundle args = new Bundle();
         args.putString(USER, user);
-        args.putString(SUBREDDIT, "/r/" + link.getSubreddit());
+        args.putString(SUBREDDIT, link.getSubreddit());
         args.putBoolean(IS_EDIT, true);
         args.putString(EDIT_ID, link.getName());
         fragment.setArguments(args);

@@ -119,8 +119,8 @@ public class Reddit {
     public static final String DEFAULT = "default";
     public static final String NSFW = "nsfw";
 
-    public static final String POST_TYPE_LINK = "Link";
-    public static final String POST_TYPE_SELF = "Self";
+    public static final String POST_TYPE_LINK = "link";
+    public static final String POST_TYPE_SELF = "self";
 
     public static final String UTF_8 = "UTF-8";
     public static final String FRONT_PAGE = "Front Page";
@@ -453,9 +453,9 @@ public class Reddit {
                 .compose(TRANSFORMER);
     }
 
-    public Observable<String> voteLink(final Link link,
+    public Observable<String> voteLink(final Votable votable,
                                        int vote) {
-        return apiRedditAuthorized.vote(link.getName(), vote)
+        return apiRedditAuthorized.vote(votable.getName(), vote)
                 .compose(TRANSFORMER);
     }
 
@@ -472,18 +472,18 @@ public class Reddit {
                 .compose(TRANSFORMER);
     }
 
-    public Observable<String> delete(Thing thing) {
+    public Observable<String> delete(Submission thing) {
         return apiRedditAuthorized.delete(thing.getName())
                 .compose(TRANSFORMER);
     }
 
-    public Observable<String> save(Thing thing, String category) {
-        return apiRedditAuthorized.save(thing.getName(), category)
+    public Observable<String> save(Saveable saveable, String category) {
+        return apiRedditAuthorized.save(saveable.getName(), category)
                 .compose(TRANSFORMER);
     }
 
-    public Observable<String> unsave(Thing thing) {
-        return apiRedditAuthorized.unsave(thing.getName())
+    public Observable<String> unsave(Saveable saveable) {
+        return apiRedditAuthorized.unsave(saveable.getName())
                 .compose(TRANSFORMER);
     }
 
@@ -691,8 +691,13 @@ public class Reddit {
 
     }
 
-    public Observable<String> report(String id, String reason, String otherReason) {
-        return apiRedditAuthorized.report(id, reason, otherReason)
+    public Observable<String> report(String name, String reason, String otherReason) {
+        return apiRedditAuthorized.report(name, reason, otherReason)
+                .compose(TRANSFORMER);
+    }
+
+    public Observable<String> report(String name, String reason) {
+        return apiRedditAuthorized.report(name, reason)
                 .compose(TRANSFORMER);
     }
 

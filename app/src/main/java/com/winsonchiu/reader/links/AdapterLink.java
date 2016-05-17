@@ -4,8 +4,6 @@
 
 package com.winsonchiu.reader.links;
 
-import android.content.ClipData;
-import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -814,13 +812,6 @@ public abstract class AdapterLink extends AdapterBase<ViewHolderBase> implements
                     break;
                 case R.id.item_copy_text:
                     listener.onCopyText(link);
-                    ClipboardManager clipboard = (ClipboardManager) itemView.getContext()
-                            .getSystemService(
-                                    Context.CLIPBOARD_SERVICE);
-                    ClipData clip = ClipData.newPlainText(
-                            resources.getString(R.string.comment),
-                            link.getSelfText());
-                    clipboard.setPrimaryClip(clip);
 //                    eventListener.toast();
                     break;
                 case R.id.item_edit:
@@ -831,15 +822,6 @@ public abstract class AdapterLink extends AdapterBase<ViewHolderBase> implements
                     break;
                 case R.id.item_delete:
                     listener.onDelete(link);
-                    new AlertDialog.Builder(itemView.getContext())
-                            .setTitle("Delete post?")
-                            .setMessage(link.getTitle())
-                            .setPositiveButton("Yes",
-                                    (dialog, which) -> {
-//                                        eventListener.deletePost(link);
-                                    })
-                            .setNegativeButton("No", null)
-                            .show();
                     break;
                 case R.id.item_view_subreddit:
                     UtilsReddit.launchScreenSubreddit(itemView.getContext(), link);
@@ -1747,6 +1729,7 @@ public abstract class AdapterLink extends AdapterBase<ViewHolderBase> implements
             void markRead(Thing thing);
             Observable<String> markNsfw(Link link);
             User getUser();
+            void copyText(CharSequence text);
         }
 
         public interface EventListener extends EventListenerGeneral {

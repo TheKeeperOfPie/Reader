@@ -23,7 +23,7 @@ import java.util.List;
 /**
  * Created by TheKeeperOfPie on 3/7/2015.
  */
-public class Link extends Replyable implements Parcelable {
+public class Link extends Replyable implements Parcelable, Submission, Votable, Saveable {
 
     public static final String TAG = Link.class.getCanonicalName();
 

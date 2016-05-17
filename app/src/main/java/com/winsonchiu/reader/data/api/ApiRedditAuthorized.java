@@ -93,7 +93,7 @@ public interface ApiRedditAuthorized {
     Observable<String> comment(@Query("thing_id") String id,
                                @Query("text") String text);
 
-    @POST("/api/vote")
+    @POST("/api/vote?rank=2")
     Observable<String> vote(@Query("id") String id,
               @Query(Reddit.QUERY_VOTE) Integer vote);
 
@@ -156,7 +156,6 @@ public interface ApiRedditAuthorized {
             "?api_type=json&" +
             "resubmit=true&" +
             "sendreplies=true&" +
-            "then=comments&" +
             "extension=json")
     Observable<String> submit(@Query("kind") String kind,
                               @Query("sr") String subreddit,
@@ -166,10 +165,15 @@ public interface ApiRedditAuthorized {
                               @Query("iden") String captchaId,
                               @Query("captcha") String captchaText);
 
+    @Deprecated
     @POST("/api/report?api_type=json")
-    Observable<String> report(@Query("thing_id") String id,
-                              @Query("reason") String reason,
-                              @Query("other_reason") String otherReason);
+    Observable<String> report(@Query("thing_id") String name,
+            @Query("reason") String reason,
+            @Query("other_reason") String otherReason);
+
+    @POST("/api/report?api_type=json")
+    Observable<String> report(@Query("thing_id") String name,
+            @Query("reason") String reason);
 
     @GET("/api/recommend/sr/{subreddit}")
     Observable<String> recommend(@Path("subreddit") String subreddit,

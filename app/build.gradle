@@ -53,8 +53,8 @@ android {
 }
 
 dependencies {
-    apt 'com.google.dagger:dagger-compiler:2.3'
-    compile 'com.google.dagger:dagger:2.3'
+    apt 'com.google.dagger:dagger-compiler:2.4'
+    compile 'com.google.dagger:dagger:2.4'
 
     apt 'com.jakewharton:butterknife-compiler:8.0.0'
     compile 'com.jakewharton:butterknife:8.0.0'
@@ -67,7 +67,7 @@ dependencies {
 
     compile files('libs/YouTubeAndroidPlayerApi.jar')
 
-    def versionSupportLibrary = "23.3.0"
+    def versionSupportLibrary = "23.4.0"
 
     compile "com.android.support:appcompat-v7:$versionSupportLibrary"
     compile "com.android.support:customtabs:$versionSupportLibrary"

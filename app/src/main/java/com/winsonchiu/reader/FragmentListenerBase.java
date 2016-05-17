@@ -6,7 +6,7 @@ package com.winsonchiu.reader;
 
 import com.winsonchiu.reader.comments.AdapterCommentList;
 import com.winsonchiu.reader.data.reddit.Reddit;
-import com.winsonchiu.reader.links.AdapterLink;
+import com.winsonchiu.reader.utils.EventListenerBase;
 
 /**
  * Created by TheKeeperOfPie on 6/10/2015.
@@ -15,7 +15,7 @@ public interface FragmentListenerBase {
     void onNavigationBackClick();
     void openDrawer();
     Reddit getReddit();
-    AdapterLink.ViewHolderLink.EventListener getEventListenerBase();
+    EventListenerBase getEventListenerBase();
     AdapterCommentList.ViewHolderComment.EventListener getEventListener();
     @AppSettings.ThemeBackground String getThemeBackground();
     @AppSettings.ThemeColor String getThemePrimary();
