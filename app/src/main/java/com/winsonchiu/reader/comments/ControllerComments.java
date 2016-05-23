@@ -12,8 +12,9 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.jakewharton.rxrelay.BehaviorRelay;
 import com.jakewharton.rxrelay.PublishRelay;
 import com.winsonchiu.reader.AppSettings;
-import com.winsonchiu.reader.CustomApplication;
+import com.winsonchiu.reader.ControllerUser;
 import com.winsonchiu.reader.adapter.RxAdapterEvent;
+import com.winsonchiu.reader.dagger.components.ComponentActivity;
 import com.winsonchiu.reader.dagger.components.ComponentStatic;
 import com.winsonchiu.reader.data.database.reddit.RedditDatabase;
 import com.winsonchiu.reader.data.reddit.Comment;
@@ -23,7 +24,6 @@ import com.winsonchiu.reader.data.reddit.Reddit;
 import com.winsonchiu.reader.data.reddit.Replyable;
 import com.winsonchiu.reader.data.reddit.Sort;
 import com.winsonchiu.reader.data.reddit.Thing;
-import com.winsonchiu.reader.links.LinksError;
 import com.winsonchiu.reader.rx.FinalizingSubscriber;
 import com.winsonchiu.reader.rx.ObserverEmpty;
 import com.winsonchiu.reader.utils.UtilsRx;
@@ -57,11 +57,22 @@ public class ControllerComments implements AdapterCommentList.ViewHolderComment.
     @Inject Reddit reddit;
     @Inject RedditDatabase redditDatabase;
     @Inject SharedPreferences sharedPreferences;
+    @Inject ControllerUser controllerUser;
 
     private Subscription subscriptionComments;
 
-    public ControllerComments() {
-        CustomApplication.getComponentMain().inject(this);
+    public ControllerComments(Reddit reddit,
+            RedditDatabase redditDatabase,
+            SharedPreferences sharedPreferences,
+            ControllerUser controllerUser) {
+        this.reddit = reddit;
+        this.redditDatabase = redditDatabase;
+        this.sharedPreferences = sharedPreferences;
+        this.controllerUser = controllerUser;
+    }
+
+    public ControllerComments(ComponentActivity componentActivity) {
+        componentActivity.inject(this);
     }
 
     public EventHolder getEventHolder() {
@@ -69,14 +80,18 @@ public class ControllerComments implements AdapterCommentList.ViewHolderComment.
     }
 
     public void setLink(Link link) {
+        Log.d(TAG, "setLink() called with: link = [" + link + "]");
         this.listingComments = new Listing();
         this.link = link;
+        eventHolder.call(new RxAdapterEvent<>(getData()));
         setSort(link.getSuggestedSort());
         reloadAllComments();
     }
 
     public void setLinkFromCache(Link link) {
+        Log.d(TAG, "setLinkFromCache() called with: link = [" + link + "]");
         this.link = link;
+        eventHolder.call(new RxAdapterEvent<>(getData()));
         this.listingComments = link.getComments();
         eventHolder.getSort().call(link.getSuggestedSort());
     }
@@ -178,6 +193,9 @@ public class ControllerComments implements AdapterCommentList.ViewHolderComment.
     }
 
     private void setLoading(boolean loading) {
+        if (loading) {
+            Log.d(TAG, "setLoading() called with: loading = [" + loading + "]", new Exception());
+        }
         eventHolder.getLoading().call(loading);
     }
 
@@ -190,7 +208,14 @@ public class ControllerComments implements AdapterCommentList.ViewHolderComment.
     }
 
     public CommentsModel getData() {
-        return new CommentsModel(link, listingComments);
+        List<Comment> comments = new ArrayList<>(listingComments.getChildren().size());
+
+        for (Thing thing : listingComments.getChildren()) {
+            if (thing instanceof Comment) {
+                comments.add((Comment) thing);
+            }
+        }
+        return new CommentsModel(link, comments, true, controllerUser.getUser());
     }
 
     public void loadNestedComments(final Comment moreComment) {
@@ -538,20 +563,6 @@ public class ControllerComments implements AdapterCommentList.ViewHolderComment.
         return reddit;
     }
 
-    public int getItemCount() {
-        if (TextUtils.isEmpty(link.getId())) {
-            return 0;
-        }
-
-        return listingComments.getChildren()
-                .size() + 1;
-    }
-
-    public Comment getComment(int position) {
-        return (Comment) listingComments.getChildren()
-                .get(position - 1);
-    }
-
     public boolean isCommentExpanded(int position) {
         position = position - 1;
 
@@ -744,7 +755,7 @@ public class ControllerComments implements AdapterCommentList.ViewHolderComment.
         private BehaviorRelay<RxAdapterEvent<CommentsModel>> relayData = BehaviorRelay.create(new RxAdapterEvent<>(new CommentsModel()));
         private BehaviorRelay<Boolean> relayLoading = BehaviorRelay.create(false);
         private BehaviorRelay<Sort> relaySort = BehaviorRelay.create(Sort.CONFIDENCE);
-        private BehaviorRelay<LinksError> relayErrors = BehaviorRelay.create();
+        private BehaviorRelay<CommentsError> relayErrors = BehaviorRelay.create();
         private PublishRelay<Integer> relayScrollEvents = PublishRelay.create();
 
         @Override
@@ -764,7 +775,7 @@ public class ControllerComments implements AdapterCommentList.ViewHolderComment.
             return relaySort;
         }
 
-        public BehaviorRelay<LinksError> getErrors() {
+        public BehaviorRelay<CommentsError> getErrors() {
             return relayErrors;
         }
 

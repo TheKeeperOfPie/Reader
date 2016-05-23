@@ -5,18 +5,19 @@
 package com.winsonchiu.reader.dagger.modules;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 
 import com.winsonchiu.reader.ControllerUser;
 import com.winsonchiu.reader.comments.ControllerComments;
 import com.winsonchiu.reader.comments.ControllerCommentsTop;
 import com.winsonchiu.reader.dagger.ScopeActivity;
+import com.winsonchiu.reader.data.database.reddit.RedditDatabase;
+import com.winsonchiu.reader.data.reddit.Reddit;
 import com.winsonchiu.reader.history.ControllerHistory;
 import com.winsonchiu.reader.inbox.ControllerInbox;
 import com.winsonchiu.reader.links.ControllerLinks;
 import com.winsonchiu.reader.profile.ControllerProfile;
 import com.winsonchiu.reader.search.ControllerSearch;
-
-import javax.inject.Named;
 
 import dagger.Module;
 import dagger.Provides;
@@ -47,14 +48,11 @@ public class ModuleReddit {
 
     @ScopeActivity
     @Provides
-    public ControllerComments provideControllerComments() {
-        return new ControllerComments();
-    }
-
-    @Provides
-    @Named("instance")
-    public ControllerComments provideControllerCommentsInstance() {
-        return new ControllerComments();
+    public ControllerComments provideControllerComments(Reddit reddit,
+            RedditDatabase redditDatabase,
+            SharedPreferences sharedPreferences,
+            ControllerUser controllerUser) {
+        return new ControllerComments(reddit, redditDatabase, sharedPreferences, controllerUser);
     }
 
     @ScopeActivity

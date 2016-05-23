@@ -19,7 +19,7 @@ import java.util.List;
 public class LinksModel {
 
     private Subreddit subreddit = new Subreddit();
-    private List<Link> links = new ArrayList<>(0);
+    private List<Link> links = new ArrayList<>();
     private boolean showSubreddit;
     @Nullable private User user;
 

@@ -7,7 +7,6 @@ package com.winsonchiu.reader.comments;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Resources;
@@ -25,7 +24,6 @@ import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.text.Editable;
 import android.text.Html;
-import android.text.InputFilter;
 import android.text.Spannable;
 import android.text.SpannableString;
 import android.text.Spanned;
@@ -50,7 +48,6 @@ import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.winsonchiu.reader.ActivityMain;
 import com.winsonchiu.reader.AppSettings;
@@ -58,6 +55,7 @@ import com.winsonchiu.reader.ControllerUser;
 import com.winsonchiu.reader.R;
 import com.winsonchiu.reader.adapter.AdapterBase;
 import com.winsonchiu.reader.adapter.AdapterCallback;
+import com.winsonchiu.reader.adapter.AdapterDataListener;
 import com.winsonchiu.reader.adapter.AdapterListener;
 import com.winsonchiu.reader.data.reddit.Comment;
 import com.winsonchiu.reader.data.reddit.Link;
@@ -66,7 +64,6 @@ import com.winsonchiu.reader.links.AdapterLink;
 import com.winsonchiu.reader.links.AdapterLinkGrid;
 import com.winsonchiu.reader.links.AdapterLinkList;
 import com.winsonchiu.reader.profile.ControllerProfile;
-import com.winsonchiu.reader.rx.FinalizingSubscriber;
 import com.winsonchiu.reader.utils.CallbackYouTubeDestruction;
 import com.winsonchiu.reader.utils.OnTouchListenerDisallow;
 import com.winsonchiu.reader.utils.UtilsAnimation;
@@ -87,7 +84,7 @@ import rx.Observable;
  * Created by TheKeeperOfPie on 3/12/2015.
  */
 
-public class AdapterCommentList extends AdapterBase<RecyclerView.ViewHolder> implements CallbackYouTubeDestruction {
+public class AdapterCommentList extends AdapterBase<RecyclerView.ViewHolder> implements CallbackYouTubeDestruction, AdapterDataListener<CommentsModel> {
 
     private static final String TAG = AdapterCommentList.class.getCanonicalName();
 
@@ -103,12 +100,10 @@ public class AdapterCommentList extends AdapterBase<RecyclerView.ViewHolder> imp
     private boolean actionsExpanded;
 
     private FragmentActivity activity;
-    private AdapterLink.ViewHolderLink.EventListener eventListenerBase;
     private AdapterLink.ViewHolderLink.Listener listenerLink;
-    private ViewHolderComment.EventListener eventListener;
     private YouTubeListener youTubeListener;
     private CallbackYouTubeDestruction callbackYouTubeDestruction;
-    protected List<RecyclerView.ViewHolder> viewHolders;
+    protected List<RecyclerView.ViewHolder> viewHolders = new ArrayList<>();
 
     private AdapterLink.ViewHolderLink viewHolderLink;
     private boolean isGrid;
@@ -116,17 +111,17 @@ public class AdapterCommentList extends AdapterBase<RecyclerView.ViewHolder> imp
     private int colorLink;
     private boolean animationFinished;
 
-    private ControllerComments controllerComments;
     private AdapterListener adapterListener;
+    private ViewHolderComment.Listener listenerComment;
+
+    private CommentsModel data = new CommentsModel();
 
     @Inject ControllerUser controllerUser;
 
     public AdapterCommentList(FragmentActivity activity,
-            ControllerComments controllerComments,
             AdapterListener adapterListener,
-            AdapterLink.ViewHolderLink.EventListener eventListenerBase,
+            ViewHolderComment.Listener listenerCommnent,
             AdapterLink.ViewHolderLink.Listener listenerLink,
-            ViewHolderComment.EventListener eventListener,
             YouTubeListener youTubeListener,
             CallbackYouTubeDestruction callbackYouTubeDestruction,
             boolean isGrid,
@@ -135,18 +130,16 @@ public class AdapterCommentList extends AdapterBase<RecyclerView.ViewHolder> imp
             boolean actionsExpanded) {
         ((ActivityMain) activity).getComponentActivity().inject(this);
         this.activity = activity;
-        this.controllerComments = controllerComments;
+        this.listenerComment = listenerCommnent;
         this.adapterListener = adapterListener;
-        this.eventListenerBase = eventListenerBase;
         this.listenerLink = listenerLink;
-        this.eventListener = eventListener;
         this.youTubeListener = youTubeListener;
         this.callbackYouTubeDestruction = callbackYouTubeDestruction;
         this.isGrid = isGrid;
         this.firstLinkName = firstLinkName;
         this.colorLink = colorLink;
         this.actionsExpanded = actionsExpanded;
-        viewHolders = new ArrayList<>();
+        setAdapterLoadMoreListener(adapterListener);
     }
 
     @Override
@@ -217,7 +210,7 @@ public class AdapterCommentList extends AdapterBase<RecyclerView.ViewHolder> imp
 
                     @Override
                     public void onClickComments() {
-                        controllerComments.loadLinkComments();
+                        listenerComment.onClickComments();
                     }
 
                     @Override
@@ -273,7 +266,7 @@ public class AdapterCommentList extends AdapterBase<RecyclerView.ViewHolder> imp
 
                     @Override
                     public void onClickComments() {
-                        controllerComments.loadLinkComments();
+                        listenerComment.onClickComments();
                     }
 
                     @Override
@@ -292,22 +285,17 @@ public class AdapterCommentList extends AdapterBase<RecyclerView.ViewHolder> imp
                 .inflate(R.layout.row_comment, parent, false),
                 adapterCallback,
                 adapterListener,
-                eventListenerBase,
-                controllerComments,
-                eventListener);
+                listenerComment);
     }
 
     @Override
     public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
         super.onBindViewHolder(holder, position);
-        if (!controllerComments.isRefreshing() && position > controllerComments.getItemCount() - 5) {
-            controllerComments.loadMoreComments();
-        }
 
         if (holder.getItemViewType() == VIEW_LINK) {
             AdapterLink.ViewHolderLink viewHolderLink = (AdapterLink.ViewHolderLink) holder;
 
-            viewHolderLink.onBind(controllerComments.getLink(), controllerUser.getUser(), controllerComments.showSubreddit());
+            viewHolderLink.onBind(data.getLink(), controllerUser.getUser(), data.isShowSubreddit());
 
             viewHolderLink.itemView.invalidate();
 
@@ -315,7 +303,7 @@ public class AdapterCommentList extends AdapterBase<RecyclerView.ViewHolder> imp
         }
         else {
             ViewHolderComment viewHolderComment = (ViewHolderComment) holder;
-            viewHolderComment.onBind(controllerComments.getComment(position));
+            viewHolderComment.onBind(data.getComments().get(position - 1), data.getUser());
         }
         viewHolders.add(holder);
 
@@ -332,10 +320,14 @@ public class AdapterCommentList extends AdapterBase<RecyclerView.ViewHolder> imp
 
     @Override
     public int getItemCount() {
-        int count = controllerComments.getItemCount();
+        int count = TextUtils.isEmpty(data.getLink().getId()) ? 0 : data.getComments().size() + 1;
+
         if (count > 0 && !animationFinished) {
+            setAdapterLoadMoreListener(null);
             return 1;
         }
+
+        setAdapterLoadMoreListener(adapterListener);
         return count;
     }
 
@@ -345,13 +337,13 @@ public class AdapterCommentList extends AdapterBase<RecyclerView.ViewHolder> imp
             return;
         }
 
-        if (controllerComments.getLink().isSelf()) {
+        if (data.getLink().isSelf()) {
             viewHolderLink.textThreadSelf.setVisibility(View.GONE);
         }
         else {
             viewHolderLink.destroyWebViews();
             viewHolderLink.onRecycle();
-            viewHolderLink.onBind(controllerComments.getLink(), controllerUser.getUser(), controllerComments.showSubreddit());
+            viewHolderLink.onBind(data.getLink(), controllerUser.getUser(), data.isShowSubreddit());
         }
 
         if (expandActions) {
@@ -414,12 +406,17 @@ public class AdapterCommentList extends AdapterBase<RecyclerView.ViewHolder> imp
         }
     }
 
+    @Override
+    public void setData(CommentsModel data) {
+        this.data = data;
+    }
+
     public static class ViewHolderComment extends ViewHolderBase
             implements Toolbar.OnMenuItemClickListener {
 
-        private final EventListenerComment eventListenerComment;
         private final AdapterListener adapterListener;
         protected Comment comment;
+        protected User user;
 
         protected View viewIndent;
         protected View viewIndicator;
@@ -455,8 +452,6 @@ public class AdapterCommentList extends AdapterBase<RecyclerView.ViewHolder> imp
         protected View viewIndicatorCollapsed;
         protected TextView textCollapsed;
 
-        protected AdapterLink.ViewHolderLink.EventListener eventListenerBase;
-        protected EventListener eventListener;
         protected int indentWidth;
         protected int toolbarItemWidth;
         protected SharedPreferences preferences;
@@ -468,21 +463,21 @@ public class AdapterCommentList extends AdapterBase<RecyclerView.ViewHolder> imp
         protected int colorIconFilter;
         protected int colorGold;
 
+        protected Listener listener;
+
         public ViewHolderComment(View itemView,
                 AdapterCallback adapterCallback,
                 AdapterListener adapterListener,
-                AdapterLink.ViewHolderLink.EventListener eventListenerBase,
-                EventListenerComment eventListenerComment,
-                EventListener eventListener,
-                final ControllerProfile.Listener listener) {
-            this(itemView, adapterCallback, adapterListener, eventListenerBase, eventListenerComment, eventListener);
+                Listener listener,
+                final ControllerProfile.Listener listenerProfile) {
+            this(itemView, adapterCallback, adapterListener, listener);
 
             itemViewLink.setVisible(true);
             itemViewLink.setEnabled(true);
             itemViewLink.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
             itemViewLink.setOnMenuItemClickListener(
                     item -> {
-                        listener.loadLink(comment);
+                        listenerProfile.loadLink(comment);
                         return true;
                     });
         }
@@ -490,16 +485,11 @@ public class AdapterCommentList extends AdapterBase<RecyclerView.ViewHolder> imp
         public ViewHolderComment(final View itemView,
                 AdapterCallback adapterCallback,
                 AdapterListener adapterListener,
-                AdapterLink.ViewHolderLink.EventListener eventListenerBase,
-                EventListenerComment eventListenerComment,
-                EventListener eventListener) {
+                Listener listener) {
             super(itemView, adapterCallback);
 
+            this.listener = listener;
             this.adapterListener = adapterListener;
-
-            this.eventListenerComment = eventListenerComment;
-            this.eventListenerBase = eventListenerBase;
-            this.eventListener = eventListener;
 
             initialize();
             initializeToolbar();
@@ -566,13 +556,13 @@ public class AdapterCommentList extends AdapterBase<RecyclerView.ViewHolder> imp
 
                 @Override
                 public void onLongPress(MotionEvent e) {
-                    eventListenerComment.toggleComment(comment);
+                    listener.onToggleComment(comment);
                 }
 
                 @Override
                 public boolean onDoubleTap(MotionEvent e) {
-                    if (!comment.isMore() && !TextUtils.isEmpty(eventListenerBase.getUser().getName())) {
-                        voteComment(ViewHolderComment.this, comment, 1);
+                    if (!comment.isMore() && !TextUtils.isEmpty(user.getName())) {
+                        listener.onVoteComment(comment, ViewHolderComment.this, 1);
                     }
                     if (layoutContainerExpand.getVisibility() == View.VISIBLE) {
                         layoutContainerExpand.clearAnimation();
@@ -589,12 +579,7 @@ public class AdapterCommentList extends AdapterBase<RecyclerView.ViewHolder> imp
 
             });
 
-            View.OnTouchListener onTouchListener = new View.OnTouchListener() {
-                @Override
-                public boolean onTouch(View v, MotionEvent event) {
-                    return gestureDetectorCompat.onTouchEvent(event);
-                }
-            };
+            View.OnTouchListener onTouchListener = (v, event) -> gestureDetectorCompat.onTouchEvent(event);
 
             textComment.setClickable(true);
             textInfo.setClickable(true);
@@ -620,22 +605,17 @@ public class AdapterCommentList extends AdapterBase<RecyclerView.ViewHolder> imp
                     comment.setReplyText(s.toString());
                 }
             });
-            buttonReplyEditor.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    eventListenerBase.showReplyEditor(comment);
-                }
-            });
+            buttonReplyEditor.setOnClickListener(v -> listener.onShowReplyEditor(comment));
 
         }
 
         private void sendReply() {
             if (comment.isEditMode()) {
-                eventListenerComment.editComment(comment.getName(), comment.getLevel(), editTextReply.getText().toString());
+                listener.onEditComment(comment, editTextReply.getText().toString());
                 comment.setEdited(System.currentTimeMillis());
             }
             else {
-                eventListenerBase.sendComment(comment.getName(), editTextReply.getText().toString());
+                listener.onSendComment(comment, editTextReply.getText().toString());
             }
             comment.setReplyExpanded(false);
             layoutContainerReply.setVisibility(View.GONE);
@@ -679,7 +659,7 @@ public class AdapterCommentList extends AdapterBase<RecyclerView.ViewHolder> imp
         public void expandToolbarActions() {
 
             if (comment.getIsNew()) {
-                eventListenerBase.markRead(comment);
+                listener.onMarkRead(comment);
                 comment.setIsNew(false);
                 textInfo.setTextColor(comment.getIsNew() ? itemView.getResources()
                         .getColor(R.color.textColorAlert) : colorTextSecondary);
@@ -687,9 +667,10 @@ public class AdapterCommentList extends AdapterBase<RecyclerView.ViewHolder> imp
             }
 
             if (comment.isMore()) {
-                if (!eventListener.loadNestedComments(comment, eventListenerComment.getSubredditName(), eventListenerComment.getLinkId())) {
-                    eventListenerComment.loadNestedComments(comment);
-                }
+                listener.onLoadNestedComments(comment);
+//                if (!eventListener.loadNestedComments(comment, eventListenerComment.getSubredditName(), eventListenerComment.getLinkId())) {
+//                    eventListenerComment.loadNestedComments(comment);
+//                }
                 return;
             }
 
@@ -710,9 +691,8 @@ public class AdapterCommentList extends AdapterBase<RecyclerView.ViewHolder> imp
             int maxNum = (itemView.getWidth() - comment.getLevel() * indentWidth) / toolbarItemWidth;
             int numShown = 0;
 
-            boolean loggedIn = !TextUtils.isEmpty(eventListenerBase.getUser().getName());
-            boolean isAuthor = comment.getAuthor()
-                    .equals(eventListenerBase.getUser().getName());
+            boolean loggedIn = !TextUtils.isEmpty(user.getName());
+            boolean isAuthor = comment.getAuthor().equals(user.getName());
 
             itemEdit.setEnabled(isAuthor);
             itemEdit.setVisible(isAuthor);
@@ -783,8 +763,9 @@ public class AdapterCommentList extends AdapterBase<RecyclerView.ViewHolder> imp
             return indentWidth * comment.getLevel();
         }
 
-        public void onBind(Comment comment) {
+        public void onBind(Comment comment, User user) {
             this.comment = comment;
+            this.user = user;
 
             if (itemView.getBackground() != null) {
                 itemView.getBackground().setState(new int[0]);
@@ -908,7 +889,7 @@ public class AdapterCommentList extends AdapterBase<RecyclerView.ViewHolder> imp
             if (comment.getLinkAuthor().equals(comment.getAuthor())) {
                 color = colorAccent;
             }
-            else if (comment.getAuthor().equals(eventListenerBase.getUser().getName())) {
+            else if (comment.getAuthor().equals(user.getName())) {
                 color = colorPrimary;
             }
             else {
@@ -969,7 +950,7 @@ public class AdapterCommentList extends AdapterBase<RecyclerView.ViewHolder> imp
             layoutContainerReply.setVisibility(
                     comment.isReplyExpanded() ? View.VISIBLE : View.GONE);
             if (comment.isReplyExpanded()) {
-                textUsername.setText("- " + eventListenerBase.getUser().getName());
+                textUsername.setText("- " + user.getName());
                 adapterListener.clearDecoration();
                 editTextReply.setText(comment.getReplyText());
                 editTextReply.clearFocus();
@@ -985,13 +966,13 @@ public class AdapterCommentList extends AdapterBase<RecyclerView.ViewHolder> imp
         public boolean onMenuItemClick(MenuItem item) {
             switch (item.getItemId()) {
                 case R.id.item_jump_parent:
-                    eventListenerComment.jumpToParent(comment);
+                    listener.onJumpToParent(comment);
                     break;
                 case R.id.item_upvote:
-                    voteComment(ViewHolderComment.this, comment, 1);
+                    listener.onVoteComment(comment, ViewHolderComment.this, 1);
                     break;
                 case R.id.item_downvote:
-                    voteComment(ViewHolderComment.this, comment, -1);
+                    listener.onVoteComment(comment, ViewHolderComment.this, -1);
                     break;
                 case R.id.item_reply:
                     comment.setEditMode(false);
@@ -1006,7 +987,7 @@ public class AdapterCommentList extends AdapterBase<RecyclerView.ViewHolder> imp
                     intent.setAction(Intent.ACTION_VIEW);
                     intent.putExtra(ActivityMain.REDDIT_PAGE,
                             "https://reddit.com/user/" + comment.getAuthor());
-                    eventListenerBase.launchScreen(intent);
+                    listener.onViewProfile(comment);
                     break;
                 case R.id.item_copy_text:
                     ClipboardManager clipboard = (ClipboardManager) itemView.getContext()
@@ -1016,8 +997,7 @@ public class AdapterCommentList extends AdapterBase<RecyclerView.ViewHolder> imp
                             resources.getString(R.string.comment),
                             comment.getBody());
                     clipboard.setPrimaryClip(clip);
-                    eventListenerBase.toast(resources.getString(
-                            R.string.copied));
+                    listener.onCopyText(comment);
                     break;
                 case R.id.item_edit:
                     comment.setEditMode(true);
@@ -1026,102 +1006,33 @@ public class AdapterCommentList extends AdapterBase<RecyclerView.ViewHolder> imp
                     break;
                 case R.id.item_delete:
                     // TODO: Test if truncate needed
+                    listener.onDeleteComment(comment);
 
                     new AlertDialog.Builder(itemView.getContext())
                             .setTitle("Delete comment?")
                             .setMessage(comment.getBodyHtml())
                             .setPositiveButton("Yes",
                                     (dialog, which) -> {
-                                        eventListenerComment.deleteComment(comment)
-                                                .subscribe(new FinalizingSubscriber<String>() {
-                                                    @Override
-                                                    public void error(Throwable e) {
-                                                        Toast.makeText(itemView.getContext(), R.string.error_deleting_comment, Toast.LENGTH_LONG).show();
-                                                    }
-                                                });
+//                                        eventListenerComment.deleteComment(comment)
+//                                                .subscribe(new FinalizingSubscriber<String>() {
+//                                                    @Override
+//                                                    public void error(Throwable e) {
+//                                                        Toast.makeText(itemView.getContext(), R.string.error_deleting_comment, Toast.LENGTH_LONG).show();
+//                                                    }
+//                                                });
                                     })
                             .setNegativeButton("No", null)
                             .show();
                     break;
-                // Reporting
-                case R.id.item_report_spam:
-                    requestReport("spam");
-                    break;
-                case R.id.item_report_vote_manipulation:
-                    requestReport("vote manipulation");
-                    break;
-                case R.id.item_report_personal_information:
-                    requestReport("personal information");
-                    break;
-                case R.id.item_report_sexualizing_minors:
-                    requestReport("sexualizing minors");
-                    break;
-                case R.id.item_report_breaking_reddit:
-                    requestReport("breaking reddit");
-                    break;
-                case R.id.item_report_other:
-                    View viewDialog = LayoutInflater.from(itemView.getContext())
-                            .inflate(R.layout.dialog_text_input, null, false);
-                    InputFilter[] filterArray = new InputFilter[1];
-                    filterArray[0] = new InputFilter.LengthFilter(100);
-                    final EditText editText = (EditText) viewDialog.findViewById(R.id.edit_text);
-                    editText.setFilters(filterArray);
-                    new AlertDialog.Builder(itemView.getContext())
-                            .setView(viewDialog)
-                            .setTitle(R.string.item_report)
-                            .setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialog, int which) {
-                                    eventListenerBase.report(comment, "other",
-                                            editText.getText().toString());
-                                }
-                            })
-                            .setNegativeButton(R.string.cancel,
-                                    new DialogInterface.OnClickListener() {
-                                        @Override
-                                        public void onClick(DialogInterface dialog, int which) {
-
-                                        }
-                                    })
-                            .show();
+                case R.id.item_report:
+                    listener.onReport(comment);
                     break;
             }
             return true;
         }
 
-        private void voteComment(ViewHolderComment viewHolderComment, Comment comment, int vote) {
-            eventListenerComment.voteComment(viewHolderComment, comment, vote)
-                    .subscribe(new FinalizingSubscriber<String>() {
-                        @Override
-                        public void error(Throwable e) {
-                            Toast.makeText(itemView.getContext(), resources.getString(R.string.error_voting),
-                                    Toast.LENGTH_SHORT)
-                                    .show();
-                        }
-                    });
-        }
-
-        private void requestReport(final String reason) {
-            String author = comment.getAuthor();
-            String title = comment.getBody().toString();
-            if (title.length() > 30) {
-                title = title.substring(0, 30);
-            }
-
-            new AlertDialog.Builder(itemView.getContext())
-                    .setMessage(resources.getString(R.string.report, title, author, reason))
-                    .setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            eventListenerBase.report(comment, reason, null);
-                        }
-                    })
-                    .setNegativeButton(R.string.cancel, null)
-                    .show();
-        }
-
         private void saveComment(final Comment comment) {
-            eventListenerBase.save(comment);
+            listener.onSave(comment);
             syncSaveIcon();
         }
 
@@ -1139,6 +1050,23 @@ public class AdapterCommentList extends AdapterBase<RecyclerView.ViewHolder> imp
             toolbarActions.setVisibility(visibility);
             layoutContainerExpand.setVisibility(visibility);
             itemView.setVisibility(visibility);
+        }
+
+        public interface Listener {
+            void onClickComments();
+            void onToggleComment(Comment comment);
+            void onShowReplyEditor(Comment comment);
+            void onEditComment(Comment comment, String text);
+            void onSendComment(Comment comment, String text);
+            void onMarkRead(Comment comment);
+            void onLoadNestedComments(Comment comment);
+            void onJumpToParent(Comment comment);
+            void onViewProfile(Comment comment);
+            void onCopyText(Comment comment);
+            void onDeleteComment(Comment comment);
+            void onReport(Comment comment);
+            void onVoteComment(Comment comment, ViewHolderComment viewHolderComment, int vote);
+            void onSave(Comment comment);
         }
 
         public interface EventListenerComment {

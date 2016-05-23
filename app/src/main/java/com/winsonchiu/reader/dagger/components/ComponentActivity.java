@@ -11,6 +11,7 @@ import com.winsonchiu.reader.FragmentNewPost;
 import com.winsonchiu.reader.FragmentWeb;
 import com.winsonchiu.reader.comments.AdapterCommentList;
 import com.winsonchiu.reader.comments.AdapterLinkHeader;
+import com.winsonchiu.reader.comments.ControllerComments;
 import com.winsonchiu.reader.comments.FragmentComments;
 import com.winsonchiu.reader.comments.FragmentCommentsInner;
 import com.winsonchiu.reader.comments.FragmentReply;
@@ -60,5 +61,7 @@ public interface ComponentActivity {
     void inject(AdapterCommentList target);
 
     void inject(AdapterProfile target);
+
+    void inject(ControllerComments target);
 }
 

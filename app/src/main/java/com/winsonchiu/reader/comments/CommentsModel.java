@@ -4,8 +4,14 @@
 
 package com.winsonchiu.reader.comments;
 
+import android.support.annotation.Nullable;
+
+import com.winsonchiu.reader.data.reddit.Comment;
 import com.winsonchiu.reader.data.reddit.Link;
-import com.winsonchiu.reader.data.reddit.Listing;
+import com.winsonchiu.reader.data.reddit.User;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by TheKeeperOfPie on 5/15/2016.
@@ -13,22 +19,35 @@ import com.winsonchiu.reader.data.reddit.Listing;
 public class CommentsModel {
 
     private Link link = new Link();
-    private Listing listingComments = new Listing();
+    private List<Comment> comments = new ArrayList<>();
+    private boolean showSubreddit;
+    private User user;
 
     public CommentsModel() {
 
     }
 
-    public CommentsModel(Link link, Listing listingComments) {
+    public CommentsModel(Link link, List<Comment> comments, boolean showSubreddit, User user) {
         this.link = link;
-        this.listingComments = listingComments;
+        this.comments = comments;
+        this.showSubreddit = showSubreddit;
+        this.user = user;
     }
 
     public Link getLink() {
         return link;
     }
 
-    public Listing getListingComments() {
-        return listingComments;
+    public List<Comment> getComments() {
+        return comments;
+    }
+
+    @Nullable
+    public User getUser() {
+        return user;
+    }
+
+    public boolean isShowSubreddit() {
+        return showSubreddit;
     }
 }

@@ -5,7 +5,6 @@
 package com.winsonchiu.reader.links;
 
 import android.animation.ValueAnimator;
-import android.content.res.Resources;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
@@ -40,6 +39,7 @@ import com.winsonchiu.reader.utils.PicassoEndCallback;
 import com.winsonchiu.reader.utils.UtilsAnimation;
 import com.winsonchiu.reader.utils.UtilsColor;
 import com.winsonchiu.reader.utils.UtilsImage;
+import com.winsonchiu.reader.utils.UtilsView;
 import com.winsonchiu.reader.utils.ViewHolderBase;
 
 import java.util.ArrayList;
@@ -61,29 +61,7 @@ public class AdapterLinkGrid extends AdapterLink {
             ViewHolderLink.Listener listenerLink) {
         super(activity, adapterListener, eventListenerHeader, listenerLink);
 
-        layoutManager = new StaggeredGridLayoutManager(getSpanCount(), StaggeredGridLayoutManager.VERTICAL);
-    }
-
-    private int getSpanCount() {
-        Resources resources = activity.getResources();
-
-        int spanCount = 0;
-
-        try {
-            spanCount = Integer.parseInt(preferences.getString(AppSettings.PREF_GRID_COLUMNS, String.valueOf(0)));
-        }
-        catch (NumberFormatException e) {
-            e.printStackTrace();
-        }
-
-        if (spanCount <= 0) {
-            int columnThreshold = resources.getDimensionPixelSize(R.dimen.grid_column_width_threshold);
-            int width = resources.getDisplayMetrics().widthPixels;
-            int columns = width / columnThreshold;
-            spanCount = Math.max(1, columns);
-        }
-
-        return spanCount;
+        layoutManager = new StaggeredGridLayoutManager(UtilsView.getSpanCount(activity), StaggeredGridLayoutManager.VERTICAL);
     }
 
     @Override
@@ -285,11 +263,13 @@ public class AdapterLinkGrid extends AdapterLink {
         }
 
         private int getAdjustedThumbnailSize() {
-            int width = adapterCallback.getRecyclerView().getWidth();
+            int width = resources.getDisplayMetrics().widthPixels;
 
             RecyclerView.LayoutManager layoutManager = adapterCallback.getRecyclerView().getLayoutManager();
             if (layoutManager instanceof StaggeredGridLayoutManager) {
                 width /= ((StaggeredGridLayoutManager) layoutManager).getSpanCount();
+            } else {
+                width /= UtilsView.getSpanCount(itemView.getContext());
             }
 
             return (int) (width * Float.parseFloat(sharedPreferences.getString(AppSettings.PREF_GRID_THUMBNAIL_SIZE, "0.5")));

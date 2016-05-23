@@ -23,7 +23,7 @@ public abstract class AdapterBase<ViewHolderType extends RecyclerView.ViewHolder
     };
 
     protected int loadMoreThreshold = 5;
-    protected AdapterLoadMoreListener loadMoreListener;
+    @Nullable protected AdapterLoadMoreListener loadMoreListener;
 
     @Override
     @CallSuper
@@ -39,7 +39,7 @@ public abstract class AdapterBase<ViewHolderType extends RecyclerView.ViewHolder
         this.recyclerView = recyclerView;
     }
 
-    public void setAdapterLoadMoreListener(AdapterLoadMoreListener loadMoreListener) {
+    public void setAdapterLoadMoreListener(@Nullable AdapterLoadMoreListener loadMoreListener) {
         this.loadMoreListener = loadMoreListener;
     }
 }

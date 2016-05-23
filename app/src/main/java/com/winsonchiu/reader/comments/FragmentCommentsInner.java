@@ -8,6 +8,7 @@ import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.animation.ValueAnimator;
 import android.app.Activity;
+import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.ColorFilter;
 import android.graphics.PorterDuff;
@@ -38,21 +39,27 @@ import com.winsonchiu.reader.FragmentBase;
 import com.winsonchiu.reader.FragmentListenerBase;
 import com.winsonchiu.reader.R;
 import com.winsonchiu.reader.adapter.AdapterListener;
+import com.winsonchiu.reader.adapter.AdapterNotifySubscriber;
+import com.winsonchiu.reader.adapter.RxAdapterEvent;
+import com.winsonchiu.reader.dagger.components.ComponentActivity;
 import com.winsonchiu.reader.data.reddit.Comment;
 import com.winsonchiu.reader.data.reddit.Link;
 import com.winsonchiu.reader.data.reddit.Report;
 import com.winsonchiu.reader.data.reddit.Sort;
 import com.winsonchiu.reader.links.AdapterLink;
-import com.winsonchiu.reader.links.LinksError;
 import com.winsonchiu.reader.links.LinksListenerBase;
-import com.winsonchiu.reader.rx.ObserverEmpty;
 import com.winsonchiu.reader.rx.ObserverError;
 import com.winsonchiu.reader.utils.CallbackYouTubeDestruction;
 import com.winsonchiu.reader.utils.DisallowListener;
 import com.winsonchiu.reader.utils.LinearLayoutManagerWrapHeight;
 import com.winsonchiu.reader.utils.UtilsAnimation;
+import com.winsonchiu.reader.utils.UtilsList;
+import com.winsonchiu.reader.utils.UtilsRx;
 import com.winsonchiu.reader.utils.YouTubeListener;
 import com.winsonchiu.reader.views.CustomFrameLayout;
+
+import rx.Subscription;
+import rx.android.schedulers.AndroidSchedulers;
 
 public class FragmentCommentsInner extends FragmentBase {
 
@@ -92,65 +99,9 @@ public class FragmentCommentsInner extends FragmentBase {
     private ValueAnimator valueAnimatorPostExpand = ValueAnimator.ofFloat(0, 1);
     private boolean animationFinished;
 
-    private ControllerComments controllerComments = new ControllerComments();
+    private ControllerComments controllerComments;
     private Link link;
 
-    private ControllerComments.Listener listener = new ControllerComments.Listener() {
-        @Override
-        public void setSort(Sort sort) {
-            if (callback.isCurrentFragment(FragmentCommentsInner.this)) {
-                callback.setSort(sort);
-            }
-        }
-
-        @Override
-        public void setIsCommentThread(boolean isCommentThread) {
-            if (callback.isCurrentFragment(FragmentCommentsInner.this)) {
-                callback.setIsCommentThread(isCommentThread);
-            }
-        }
-
-        @Override
-        public void scrollTo(final int position) {
-            UtilsAnimation.scrollToPositionWithCentering(position,
-                    recyclerCommentList,
-                    scrollToPaddingTop,
-                    scrollToPaddingBottom,
-                    true);
-        }
-
-        @Override
-        public void insertComment(Comment comment) {
-            // Child ControllerComments so do nothing
-        }
-
-        @Override
-        public void setNsfw(String name, boolean over18) {
-            // Child ControllerComments so do nothing
-        }
-
-        @Override
-        public RecyclerView.Adapter getAdapter() {
-            return adapterCommentList;
-        }
-
-        @Override
-        public void setToolbarTitle(CharSequence title) {
-            if (callback.isCurrentFragment(FragmentCommentsInner.this)) {
-                callback.setTitle(title);
-            }
-        }
-
-        @Override
-        public void setRefreshing(boolean refreshing) {
-            swipeRefreshCommentList.setRefreshing(refreshing);
-        }
-
-        @Override
-        public void post(Runnable runnable) {
-            recyclerCommentList.post(runnable);
-        }
-    };
     private DisallowListener disallowListener = new DisallowListener() {
         @Override
         public void requestDisallowInterceptTouchEventVertical(boolean disallow) {
@@ -163,6 +114,7 @@ public class FragmentCommentsInner extends FragmentBase {
 
         }
     };
+
     private YouTubeListener youTubeListener = new YouTubeListener() {
         @Override
         public void loadYouTubeVideo(Link link, final String id, final int timeInMillis) {
@@ -174,6 +126,7 @@ public class FragmentCommentsInner extends FragmentBase {
             return callback.hideYouTube();
         }
     };
+
     private Callback callback = new Callback() {
         @Override
         public void loadYouTubeVideo(String id, int timeInMillis) {
@@ -236,6 +189,13 @@ public class FragmentCommentsInner extends FragmentBase {
         }
     };
 
+    private Subscription subscriptionData;
+    private Subscription subscriptionLoading;
+    private Subscription subscriptionSort;
+    private Subscription subscriptionScrollEvents;
+
+    private Report reportSelected;
+
     public static FragmentCommentsInner newInstance() {
         FragmentCommentsInner fragment = new FragmentCommentsInner();
         Bundle args = new Bundle();
@@ -268,6 +228,15 @@ public class FragmentCommentsInner extends FragmentBase {
         super.onSaveInstanceState(outState);
 
         outState.putParcelable("Link", controllerComments.getLink());
+    }
+
+    @Override
+    public void onAttach(Context context) {
+        super.onAttach(context);
+
+        if (controllerComments == null) {
+            controllerComments = new ControllerComments(((ActivityMain) context).getComponentActivity());
+        }
     }
 
     @Override
@@ -341,7 +310,7 @@ public class FragmentCommentsInner extends FragmentBase {
 
             @Override
             public void requestMore() {
-
+                controllerComments.loadMoreComments();
             }
 
             @Override
@@ -410,12 +379,123 @@ public class FragmentCommentsInner extends FragmentBase {
             }
         };
 
+        AdapterCommentList.ViewHolderComment.Listener listenerComment = new AdapterCommentList.ViewHolderComment.Listener() {
+            @Override
+            public void onClickComments() {
+
+            }
+
+            @Override
+            public void onToggleComment(Comment comment) {
+
+            }
+
+            @Override
+            public void onShowReplyEditor(Comment comment) {
+
+            }
+
+            @Override
+            public void onEditComment(Comment comment, String text) {
+
+            }
+
+            @Override
+            public void onSendComment(Comment comment, String text) {
+
+            }
+
+            @Override
+            public void onMarkRead(Comment comment) {
+
+            }
+
+            @Override
+            public void onLoadNestedComments(Comment comment) {
+
+            }
+
+            @Override
+            public void onJumpToParent(Comment comment) {
+
+            }
+
+            @Override
+            public void onViewProfile(Comment comment) {
+
+            }
+
+            @Override
+            public void onCopyText(Comment comment) {
+
+            }
+
+            @Override
+            public void onDeleteComment(Comment comment) {
+
+            }
+
+            @Override
+            public void onReport(Comment comment) {
+                // TODO: Add comment text
+                new AlertDialog.Builder(getContext())
+                        .setTitle(R.string.report_title)
+                        .setSingleChoiceItems(Report.getDisplayReasons(getResources()), -1, (dialog, which) -> {
+                            reportSelected = Report.values()[which];
+                        })
+                        .setPositiveButton(R.string.ok, (dialog, which) -> {
+                            if (reportSelected == Report.OTHER) {
+                                View viewDialog = LayoutInflater.from(getContext()).inflate(R.layout.dialog_text_input, null, false);
+                                final EditText editText = (EditText) viewDialog.findViewById(R.id.edit_text);
+                                editText.setFilters(new InputFilter[]{new InputFilter.LengthFilter(100)});
+                                new AlertDialog.Builder(getContext())
+                                        .setView(viewDialog)
+                                        .setTitle(R.string.item_report)
+                                        .setPositiveButton(R.string.ok, (dialog1, which1) -> {
+                                            mListener.getEventListenerBase()
+                                                    .onReport(link, editText.getText().toString())
+                                                    .subscribe(new ObserverError<String>() {
+                                                        @Override
+                                                        public void onError(Throwable e) {
+                                                            controllerComments.getEventHolder().getErrors().call(CommentsError.REPORT);
+                                                        }
+                                                    });
+                                        })
+                                        .setNegativeButton(R.string.cancel, (dialog1, which1) -> {
+                                            dialog1.dismiss();
+                                        })
+                                        .show();
+                            }
+                            else if (reportSelected != null) {
+                                mListener.getEventListenerBase()
+                                        .onReport(link, reportSelected.getReason())
+                                        .subscribe(new ObserverError<String>() {
+                                            @Override
+                                            public void onError(Throwable e) {
+                                                controllerComments.getEventHolder().getErrors().call(CommentsError.REPORT);
+                                            }
+                                        });
+                            }
+                        })
+                        .setNegativeButton(R.string.cancel, null)
+                        .show();
+            }
+
+            @Override
+            public void onVoteComment(Comment comment, AdapterCommentList.ViewHolderComment viewHolderComment, int vote) {
+
+            }
+
+            @Override
+            public void onSave(Comment comment) {
+
+            }
+        };
+
         adapterCommentList = new AdapterCommentList(getActivity(),
-                controllerComments,
                 adapterListenerComment,
-                mListener.getEventListenerBase(),
-                listener,
-                mListener.getEventListener(),
+                listenerComment,
+                listenerLink,
                 youTubeListener,
                 callbackYouTubeDestruction,
                 getArguments().getBoolean(ARG_IS_GRID, false),
@@ -587,6 +667,8 @@ public class FragmentCommentsInner extends FragmentBase {
             link = null;
         }
 
+        adapterCommentList.setData(controllerComments.getData());
+
         if (animationFinished) {
             setAnimationFinished(true);
         }
@@ -632,15 +714,59 @@ public class FragmentCommentsInner extends FragmentBase {
     public void onResume() {
         super.onResume();
 
+        ControllerComments.EventHolder eventHolder = controllerComments.getEventHolder();
+
+        subscriptionData = eventHolder.getData()
+                .observeOn(AndroidSchedulers.mainThread())
+                .doOnNext(new AdapterNotifySubscriber<>(adapterCommentList))
+                .map(RxAdapterEvent::getData)
+                .doOnNext(data -> {
+                    if (callback.isCurrentFragment(this)) {
+                        callback.setTitle(data.getLink().getTitle());
+                    }
+                })
+                .map(data -> !UtilsList.isNullOrEmpty(data.getComments()) && !data.getLink().getId().equals(data.getComments().get(0).getParentId()))
+                .subscribe(isCommentThread -> {
+                    if (callback.isCurrentFragment(this)) {
+                        callback.setIsCommentThread(isCommentThread);
+                    }
+                });
+
+        subscriptionLoading = eventHolder.getLoading()
+                .subscribe(swipeRefreshCommentList::setRefreshing);
+
+        subscriptionSort = eventHolder.getSort()
+                .subscribe(sort -> {
+                    if (callback.isCurrentFragment(this)) {
+                        callback.setSort(sort);
+                    }
+                });
+
+        subscriptionScrollEvents = eventHolder.getScrollEvents()
+                .subscribe(position -> {
+                    UtilsAnimation.scrollToPositionWithCentering(position,
+                            recyclerCommentList,
+                            scrollToPaddingTop,
+                            scrollToPaddingBottom,
+                            true);
+                });
+
         if (animationFinished) {
-            controllerComments.addListener(listener);
+
         }
     }
 
     @Override
     public void onPause() {
-        controllerComments.removeListener(listener);
+        unsubscribe();
         super.onPause();
+    }
+
+    public void unsubscribe() {
+        UtilsRx.unsubscribe(subscriptionData);
+        UtilsRx.unsubscribe(subscriptionLoading);
+        UtilsRx.unsubscribe(subscriptionSort);
+        UtilsRx.unsubscribe(subscriptionScrollEvents);
     }
 
     @Override
@@ -690,13 +816,10 @@ public class FragmentCommentsInner extends FragmentBase {
         valueAnimatorPostExpand.cancel();
         valueAnimatorPostExpand.removeAllUpdateListeners();
         valueAnimatorPostExpand.removeAllListeners();
-        valueAnimatorPostExpand.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
-            @Override
-            public void onAnimationUpdate(ValueAnimator animation) {
-                float interpolatedValue = animation.getAnimatedFraction();
-                layoutExpandPostInner.getLayoutParams().height = (int) (startHeight + (targetHeight - startHeight) * interpolatedValue);
-                layoutExpandPostInner.requestLayout();
-            }
+        valueAnimatorPostExpand.addUpdateListener(animation -> {
+            float interpolatedValue = animation.getAnimatedFraction();
+            layoutExpandPostInner.getLayoutParams().height = (int) (startHeight + (targetHeight - startHeight) * interpolatedValue);
+            layoutExpandPostInner.requestLayout();
         });
         valueAnimatorPostExpand.addListener(new AnimatorListenerAdapter() {
             @Override
@@ -729,7 +852,6 @@ public class FragmentCommentsInner extends FragmentBase {
                 if (recyclerLink.getAdapter() != adapterLink) {
                     recyclerLink.setAdapter(adapterLink);
                 }
-                controllerComments.addListener(listener);
             }
         }
 
@@ -761,14 +883,6 @@ public class FragmentCommentsInner extends FragmentBase {
 
     public boolean getPostExpanded() {
         return postExpanded;
-    }
-
-    public boolean getIsCommentThread() {
-        return controllerComments.getIsCommentThread();
-    }
-
-    public Sort getSort() {
-        return controllerComments.getSort();
     }
 
     public CharSequence getTitle() {
@@ -841,7 +955,8 @@ public class FragmentCommentsInner extends FragmentBase {
                 return false;
             }
         });
-        controllerComments.removeListener(listener);
+
+        unsubscribe();
     }
 
     public Link getLink() {
@@ -954,6 +1069,12 @@ public class FragmentCommentsInner extends FragmentBase {
 
     public boolean isPostExpanded() {
         return postExpanded;
+    }
+
+    public void createControllerComments(ComponentActivity componentActivity) {
+        if (controllerComments == null) {
+            controllerComments = new ControllerComments(componentActivity);
+        }
     }
 
     public interface Callback extends YouTubeListener {

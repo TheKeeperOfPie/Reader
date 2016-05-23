@@ -7,13 +7,11 @@ package com.winsonchiu.reader.utils;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
-import android.util.Log;
 import android.widget.Toast;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.winsonchiu.reader.ControllerUser;
 import com.winsonchiu.reader.R;
-import com.winsonchiu.reader.adapter.RxAdapterEvent;
 import com.winsonchiu.reader.comments.ControllerCommentsTop;
 import com.winsonchiu.reader.dagger.components.ComponentActivity;
 import com.winsonchiu.reader.dagger.components.ComponentStatic;
@@ -24,19 +22,15 @@ import com.winsonchiu.reader.data.reddit.Reddit;
 import com.winsonchiu.reader.data.reddit.Saveable;
 import com.winsonchiu.reader.data.reddit.Submission;
 import com.winsonchiu.reader.data.reddit.Thing;
-import com.winsonchiu.reader.data.reddit.ThingError;
 import com.winsonchiu.reader.data.reddit.User;
 import com.winsonchiu.reader.data.reddit.Votable;
 import com.winsonchiu.reader.history.ControllerHistory;
 import com.winsonchiu.reader.inbox.ControllerInbox;
 import com.winsonchiu.reader.links.AdapterLink;
 import com.winsonchiu.reader.links.ControllerLinks;
-import com.winsonchiu.reader.links.LinksError;
 import com.winsonchiu.reader.profile.ControllerProfile;
 import com.winsonchiu.reader.rx.FinalizingSubscriber;
 import com.winsonchiu.reader.rx.ObserverEmpty;
-import com.winsonchiu.reader.rx.ObserverNext;
-import com.winsonchiu.reader.rx.SubscriberCallError;
 import com.winsonchiu.reader.search.ControllerSearch;
 
 import java.util.HashMap;
@@ -46,7 +40,6 @@ import javax.inject.Inject;
 import rx.Observable;
 import rx.Observer;
 import rx.functions.Action1;
-import rx.functions.Func1;
 
 /**
  * Created by TheKeeperOfPie on 3/27/2016.
@@ -333,7 +326,7 @@ public abstract class EventListenerBase implements AdapterLink.ViewHolderLink.Ev
         boolean savedOld = saveable.isSaved();
         saveable.setSaved(true);
 
-        return reddit.save(saveable)
+        return reddit.save(saveable, null)
                 .flatMap(s -> Observable.<T>empty())
                 .onErrorResumeNext(throwable -> {
                     saveable.setSaved(savedOld);

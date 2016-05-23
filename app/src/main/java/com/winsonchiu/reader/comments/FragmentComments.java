@@ -104,6 +104,7 @@ public class FragmentComments extends FragmentBase
     private FragmentListenerBase mListener;
     private Toolbar toolbar;
     private LinearLayout layoutActions;
+    private ViewGroup layoutAnchor;
     private FloatingActionButton buttonExpandActions;
     private FloatingActionButton buttonJumpTop;
     private FloatingActionButton buttonCommentPrevious;
@@ -347,66 +348,37 @@ public class FragmentComments extends FragmentBase
 
         buttonExpandActions = (FloatingActionButton) layoutRoot
                 .findViewById(R.id.button_expand_actions);
-        buttonExpandActions.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                toggleLayoutActions();
-            }
-        });
+        buttonExpandActions.setOnClickListener(v -> toggleLayoutActions());
         ((CoordinatorLayout.LayoutParams) buttonExpandActions.getLayoutParams())
                 .setBehavior(behaviorFloatingActionButton);
 
         buttonJumpTop = (FloatingActionButton) layoutRoot.findViewById(R.id.button_jump_top);
-        buttonJumpTop.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                fragmentCurrent.scrollToPositionWithOffset(0, 0);
-            }
-        });
-        buttonJumpTop.setOnLongClickListener(new View.OnLongClickListener() {
-            @Override
-            public boolean onLongClick(View v) {
-                Toast.makeText(getActivity(),
-                        getString(R.string.content_description_button_jump_top),
-                        Toast.LENGTH_SHORT).show();
-                return false;
-            }
+        buttonJumpTop.setOnClickListener(v -> fragmentCurrent.scrollToPositionWithOffset(0, 0));
+        buttonJumpTop.setOnLongClickListener(v -> {
+            Toast.makeText(getActivity(),
+                    getString(R.string.content_description_button_jump_top),
+                    Toast.LENGTH_SHORT).show();
+            return false;
         });
 
         buttonCommentPrevious = (FloatingActionButton) layoutRoot.findViewById(
                 R.id.button_comment_previous);
-        buttonCommentPrevious.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                fragmentCurrent.previousComment();
-            }
-        });
-        buttonCommentPrevious.setOnLongClickListener(new View.OnLongClickListener() {
-            @Override
-            public boolean onLongClick(View v) {
-                Toast.makeText(getActivity(),
-                        getString(R.string.content_description_button_comment_previous),
-                        Toast.LENGTH_SHORT).show();
-                return false;
-            }
+        buttonCommentPrevious.setOnClickListener(v -> fragmentCurrent.previousComment());
+        buttonCommentPrevious.setOnLongClickListener(v -> {
+            Toast.makeText(getActivity(),
+                    getString(R.string.content_description_button_comment_previous),
+                    Toast.LENGTH_SHORT).show();
+            return false;
         });
 
         buttonCommentNext = (FloatingActionButton) layoutRoot
                 .findViewById(R.id.button_comment_next);
-        buttonCommentNext.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                fragmentCurrent.nextComment();
-            }
-        });
-        buttonCommentNext.setOnLongClickListener(new View.OnLongClickListener() {
-            @Override
-            public boolean onLongClick(View v) {
-                Toast.makeText(getActivity(),
-                        getString(R.string.content_description_button_comment_next),
-                        Toast.LENGTH_SHORT).show();
-                return false;
-            }
+        buttonCommentNext.setOnClickListener(v -> fragmentCurrent.nextComment());
+        buttonCommentNext.setOnLongClickListener(v -> {
+            Toast.makeText(getActivity(),
+                    getString(R.string.content_description_button_comment_next),
+                    Toast.LENGTH_SHORT).show();
+            return false;
         });
 
         // Margin is included within shadow margin on pre-Lollipop, so remove all regular margin
@@ -449,6 +421,7 @@ public class FragmentComments extends FragmentBase
         layoutCoordinator = (CoordinatorLayout) layoutRoot.findViewById(R.id.layout_coordinator);
         layoutAppBar = (AppBarLayout) layoutRoot.findViewById(R.id.layout_app_bar);
         layoutComments = (CustomFrameLayout) layoutRoot.findViewById(R.id.layout_comments);
+        layoutAnchor = (ViewGroup) layoutRoot.findViewById(R.id.layout_anchor);
 
         isStartOnLeft = getResources().getConfiguration().getLayoutDirection() == View.LAYOUT_DIRECTION_LTR;
         final float screenWidth = getResources().getDisplayMetrics().widthPixels;
@@ -602,6 +575,7 @@ public class FragmentComments extends FragmentBase
             @Override
             public Object instantiateItem(ViewGroup container, int position) {
                 FragmentCommentsInner fragment = (FragmentCommentsInner) super.instantiateItem(container, position);
+                fragment.createControllerComments(((ActivityMain) getActivity()).getComponentActivity());
                 Link link = null;
 
                 if (position < indexStart) {
@@ -642,6 +616,7 @@ public class FragmentComments extends FragmentBase
         };
 
         pagerComments = (ViewPager) layoutRoot.findViewById(R.id.pager_comments);
+        pagerComments.setOffscreenPageLimit(0);
         pagerComments.setAdapter(adapterComments);
         pagerComments.setCurrentItem(indexStart, false);
 
@@ -733,8 +708,6 @@ public class FragmentComments extends FragmentBase
         fragmentCurrent = fragment;
 
         setPostExpanded(fragmentCurrent.getPostExpanded());
-        setIsCommentThread(fragmentCurrent.getIsCommentThread());
-        setSort(fragmentCurrent.getSort());
         setTitle(fragmentCurrent.getTitle());
         fragmentCurrent.setAnimationFinished(animationFinished);
 
@@ -892,13 +865,13 @@ public class FragmentComments extends FragmentBase
             public void onAnimationUpdate(ValueAnimator animation) {
                 float interpolatedValue = animation.getAnimatedFraction();
 
-                ViewGroup.MarginLayoutParams layoutParams = (ViewGroup.MarginLayoutParams) layoutComments
+                ViewGroup.MarginLayoutParams layoutParams = (ViewGroup.MarginLayoutParams) layoutAnchor
                         .getLayoutParams();
                 float reverseInterpolation = 1.0f - interpolatedValue;
                 layoutParams.topMargin = (int) (targetY * reverseInterpolation);
                 layoutParams.leftMargin = (int) (startX * reverseInterpolation);
                 layoutParams.rightMargin = (int) (startMarginRight * reverseInterpolation);
-                layoutComments.setLayoutParams(layoutParams);
+                layoutAnchor.setLayoutParams(layoutParams);
                 layoutAppBar.setTranslationY(-toolbarHeight * reverseInterpolation);
                 ViewGroup.LayoutParams layoutParamsBackground = viewBackground
                         .getLayoutParams();
@@ -1008,12 +981,12 @@ public class FragmentComments extends FragmentBase
             }
         });
 
-        ViewGroup.MarginLayoutParams layoutParams = (ViewGroup.MarginLayoutParams) layoutComments
+        ViewGroup.MarginLayoutParams layoutParams = (ViewGroup.MarginLayoutParams) layoutAnchor
                 .getLayoutParams();
         layoutParams.topMargin = (int) targetY;
         layoutParams.leftMargin = (int) startX;
         layoutParams.rightMargin = startMarginRight;
-        layoutComments.setLayoutParams(layoutParams);
+        layoutAnchor.setLayoutParams(layoutParams);
 
         valueAnimator.start();
 
@@ -1268,8 +1241,8 @@ public class FragmentComments extends FragmentBase
                         }
 
                         int[] locationSwipeRefresh = new int[2];
-                        layoutComments.getLocationOnScreen(locationSwipeRefresh);
-                        final float viewHeight = layoutComments.getHeight();
+                        layoutAnchor.getLocationOnScreen(locationSwipeRefresh);
+                        final float viewHeight = layoutAnchor.getHeight();
                         final float targetY = startY - locationSwipeRefresh[1];
                         final float backgroundHeight = viewBackground.getHeight();
 
@@ -1288,12 +1261,12 @@ public class FragmentComments extends FragmentBase
                             protected void applyTransformation(float interpolatedTime,
                                     Transformation t) {
                                 super.applyTransformation(interpolatedTime, t);
-                                ViewGroup.MarginLayoutParams layoutParams = (ViewGroup.MarginLayoutParams) layoutComments
+                                ViewGroup.MarginLayoutParams layoutParams = (ViewGroup.MarginLayoutParams) layoutAnchor
                                         .getLayoutParams();
                                 layoutParams.topMargin = (int) (targetY * interpolatedTime);
                                 layoutParams.leftMargin = (int) (startX * interpolatedTime);
                                 layoutParams.rightMargin = (int) (startMarginRight * interpolatedTime);
-                                layoutComments.setLayoutParams(layoutParams);
+                                layoutAnchor.setLayoutParams(layoutParams);
                                 layoutAppBar.setTranslationY(-toolbarHeight * interpolatedTime);
 
                                 ViewGroup.LayoutParams layoutParamsBackground = viewBackground

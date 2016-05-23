@@ -37,6 +37,7 @@ import android.widget.TextView;
 
 import com.winsonchiu.reader.ActivityMain;
 import com.winsonchiu.reader.AppSettings;
+import com.winsonchiu.reader.ControllerUser;
 import com.winsonchiu.reader.R;
 import com.winsonchiu.reader.adapter.AdapterBase;
 import com.winsonchiu.reader.adapter.AdapterCallback;
@@ -44,7 +45,6 @@ import com.winsonchiu.reader.adapter.AdapterListener;
 import com.winsonchiu.reader.comments.AdapterCommentList;
 import com.winsonchiu.reader.data.reddit.Message;
 import com.winsonchiu.reader.links.AdapterLink;
-import com.winsonchiu.reader.profile.ControllerProfile;
 import com.winsonchiu.reader.utils.UtilsAnimation;
 import com.winsonchiu.reader.utils.UtilsInput;
 import com.winsonchiu.reader.utils.ViewHolderBase;
@@ -60,26 +60,23 @@ public class AdapterInbox extends AdapterBase<RecyclerView.ViewHolder> {
     private static final String TAG = AdapterInbox.class.getCanonicalName();
 
     private ControllerInbox controllerInbox;
+    private ControllerUser controllerUser;
     private AdapterListener adapterListener;
+    private AdapterCommentList.ViewHolderComment.Listener listenerComments;
     private AdapterLink.ViewHolderLink.EventListener eventListenerBase;
-    private AdapterCommentList.ViewHolderComment.EventListenerComment eventListenerComment;
-    private AdapterCommentList.ViewHolderComment.EventListener eventListener;
-    private ControllerProfile.Listener listener;
 
     private List<RecyclerView.ViewHolder> viewHolders = new ArrayList<>();
 
     public AdapterInbox(ControllerInbox controllerInbox,
+            ControllerUser controllerUser,
             AdapterListener adapterListener,
-            AdapterLink.ViewHolderLink.EventListener eventListenerBase,
-            AdapterCommentList.ViewHolderComment.EventListenerComment eventListenerComment,
-            AdapterCommentList.ViewHolderComment.EventListener eventListener,
-            ControllerProfile.Listener listener) {
+            AdapterCommentList.ViewHolderComment.Listener listenerComments,
+            AdapterLink.ViewHolderLink.EventListener eventListenerBase) {
         this.controllerInbox = controllerInbox;
+        this.controllerUser = controllerUser;
         this.adapterListener = adapterListener;
+        this.listenerComments = listenerComments;
         this.eventListenerBase = eventListenerBase;
-        this.eventListenerComment = eventListenerComment;
-        this.eventListener = eventListener;
-        this.listener = listener;
         setAdapterLoadMoreListener(adapterListener);
     }
 
@@ -106,10 +103,7 @@ public class AdapterInbox extends AdapterBase<RecyclerView.ViewHolder> {
                         R.layout.row_comment, parent, false),
                         adapterCallback,
                         adapterListener,
-                        eventListenerBase,
-                        eventListenerComment,
-                        eventListener,
-                        listener);
+                        listenerComments);
 
         }
 
@@ -127,7 +121,7 @@ public class AdapterInbox extends AdapterBase<RecyclerView.ViewHolder> {
                 break;
             case ControllerInbox.VIEW_TYPE_COMMENT:
                 AdapterCommentList.ViewHolderComment viewHolderComment = (AdapterCommentList.ViewHolderComment) holder;
-                viewHolderComment.onBind(controllerInbox.getComment(position));
+                viewHolderComment.onBind(controllerInbox.getComment(position), controllerUser.getUser());
                 break;
         }
         viewHolders.add(holder);

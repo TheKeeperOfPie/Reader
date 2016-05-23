@@ -46,10 +46,8 @@ public class AdapterProfile extends AdapterBase<RecyclerView.ViewHolder> impleme
 
     private FragmentActivity activity;
     private AdapterListener adapterListener;
-    private AdapterLink.ViewHolderLink.EventListener eventListenerBase;
     private AdapterLink.ViewHolderLink.Listener listenerLink;
-    private AdapterCommentList.ViewHolderComment.EventListenerComment eventListenerComment;
-    private AdapterCommentList.ViewHolderComment.EventListener eventListener;
+    private AdapterCommentList.ViewHolderComment.Listener listenerComments;
     private ControllerProfile.Listener listener;
     private List<RecyclerView.ViewHolder> viewHolders;
 
@@ -59,18 +57,14 @@ public class AdapterProfile extends AdapterBase<RecyclerView.ViewHolder> impleme
     public AdapterProfile(FragmentActivity activity,
             ControllerProfile controllerProfile,
             AdapterListener adapterListener,
-            AdapterLink.ViewHolderLink.EventListener eventListenerBase,
             AdapterLink.ViewHolderLink.Listener listenerLink,
-            AdapterCommentList.ViewHolderComment.EventListenerComment eventListenerComment,
-            AdapterCommentList.ViewHolderComment.EventListener eventListener,
+            AdapterCommentList.ViewHolderComment.Listener listenerComments,
             ControllerProfile.Listener listener) {
         ((ActivityMain) activity).getComponentActivity().inject(this);
         this.activity = activity;
         this.adapterListener = adapterListener;
-        this.eventListenerBase = eventListenerBase;
         this.listenerLink = listenerLink;
-        this.eventListenerComment = eventListenerComment;
-        this.eventListener = eventListener;
+        this.listenerComments = listenerComments;
         this.listener = listener;
         this.controllerProfile = controllerProfile;
         viewHolders = new ArrayList<>();
@@ -130,9 +124,7 @@ public class AdapterProfile extends AdapterBase<RecyclerView.ViewHolder> impleme
                         LayoutInflater.from(parent.getContext()).inflate(R.layout.row_comment, parent, false),
                         adapterCallback,
                         adapterListener,
-                        eventListenerBase,
-                        eventListenerComment,
-                        eventListener,
+                        listenerComments,
                         listener);
 
         }
@@ -184,7 +176,7 @@ public class AdapterProfile extends AdapterBase<RecyclerView.ViewHolder> impleme
             case 4:
                 if (holder.getItemViewType() == ControllerProfile.VIEW_TYPE_COMMENT) {
                     AdapterCommentList.ViewHolderComment viewHolderCommentTop = (AdapterCommentList.ViewHolderComment) holder;
-                    viewHolderCommentTop.onBind(controllerProfile.getTopComment());
+                    viewHolderCommentTop.onBind(controllerProfile.getTopComment(), controllerUser.getUser());
                 }
                 else {
                     ViewHolderText viewHolderText = (ViewHolderText) holder;
@@ -206,7 +198,7 @@ public class AdapterProfile extends AdapterBase<RecyclerView.ViewHolder> impleme
                 else if (holder instanceof AdapterCommentList.ViewHolderComment) {
 
                     AdapterCommentList.ViewHolderComment viewHolderComment = (AdapterCommentList.ViewHolderComment) holder;
-                    viewHolderComment.onBind(controllerProfile.getComment(position));
+                    viewHolderComment.onBind(controllerProfile.getComment(position), controllerProfile.getUser());
                 }
         }
         viewHolders.add(holder);

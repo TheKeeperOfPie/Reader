@@ -5,7 +5,6 @@
 package com.winsonchiu.reader.inbox;
 
 import android.app.Activity;
-import android.content.Intent;
 import android.content.res.TypedArray;
 import android.graphics.ColorFilter;
 import android.graphics.PorterDuff;
@@ -35,6 +34,7 @@ import android.widget.Toast;
 
 import com.winsonchiu.reader.ActivityMain;
 import com.winsonchiu.reader.AppSettings;
+import com.winsonchiu.reader.ControllerUser;
 import com.winsonchiu.reader.CustomApplication;
 import com.winsonchiu.reader.FragmentBase;
 import com.winsonchiu.reader.FragmentListenerBase;
@@ -44,10 +44,6 @@ import com.winsonchiu.reader.adapter.AdapterListener;
 import com.winsonchiu.reader.comments.AdapterCommentList;
 import com.winsonchiu.reader.data.Page;
 import com.winsonchiu.reader.data.reddit.Comment;
-import com.winsonchiu.reader.data.reddit.Reddit;
-import com.winsonchiu.reader.data.reddit.Sort;
-import com.winsonchiu.reader.data.reddit.Time;
-import com.winsonchiu.reader.profile.ControllerProfile;
 import com.winsonchiu.reader.rx.FinalizingSubscriber;
 import com.winsonchiu.reader.theme.ThemeWrapper;
 import com.winsonchiu.reader.utils.ItemDecorationDivider;
@@ -56,8 +52,6 @@ import com.winsonchiu.reader.utils.UtilsAnimation;
 import com.winsonchiu.reader.utils.UtilsColor;
 
 import javax.inject.Inject;
-
-import rx.Observable;
 
 public class FragmentInbox extends FragmentBase implements Toolbar.OnMenuItemClickListener {
 
@@ -82,6 +76,7 @@ public class FragmentInbox extends FragmentBase implements Toolbar.OnMenuItemCli
     private ColorFilter colorFilterAccent;
 
     @Inject ControllerInbox controllerInbox;
+    @Inject ControllerUser controllerUser;
 
     public static FragmentInbox newInstance() {
         FragmentInbox fragment = new FragmentInbox();
@@ -278,98 +273,84 @@ public class FragmentInbox extends FragmentBase implements Toolbar.OnMenuItemCli
             }
         };
 
+        AdapterCommentList.ViewHolderComment.Listener listenerComments = new AdapterCommentList.ViewHolderComment.Listener() {
+            @Override
+            public void onClickComments() {
+
+            }
+
+            @Override
+            public void onToggleComment(Comment comment) {
+
+            }
+
+            @Override
+            public void onShowReplyEditor(Comment comment) {
+
+            }
+
+            @Override
+            public void onEditComment(Comment comment, String text) {
+
+            }
+
+            @Override
+            public void onSendComment(Comment comment, String text) {
+
+            }
+
+            @Override
+            public void onMarkRead(Comment comment) {
+
+            }
+
+            @Override
+            public void onLoadNestedComments(Comment comment) {
+
+            }
+
+            @Override
+            public void onJumpToParent(Comment comment) {
+
+            }
+
+            @Override
+            public void onViewProfile(Comment comment) {
+
+            }
+
+            @Override
+            public void onCopyText(Comment comment) {
+
+            }
+
+            @Override
+            public void onDeleteComment(Comment comment) {
+
+            }
+
+            @Override
+            public void onReport(Comment comment) {
+
+            }
+
+            @Override
+            public void onVoteComment(Comment comment, AdapterCommentList.ViewHolderComment viewHolderComment, int vote) {
+
+            }
+
+            @Override
+            public void onSave(Comment comment) {
+
+            }
+        };
+
         if (adapterInbox == null) {
             adapterInbox = new AdapterInbox(controllerInbox,
+                    controllerUser,
                     adapterListener,
-                    mListener.getEventListenerBase(),
-                    new AdapterCommentList.ViewHolderComment.EventListenerComment() {
-                        @Override
-                        public void loadNestedComments(Comment comment) {
-                            controllerInbox.loadNestedComments(comment);
-                        }
-
-                        @Override
-                        public Observable<String> voteComment(AdapterCommentList.ViewHolderComment viewHolderComment,
-                                Comment comment,
-                                int vote) {
-                            return controllerInbox.voteComment(viewHolderComment, comment, vote);
-                        }
-
-                        @Override
-                        public boolean toggleComment(Comment comment) {
-                            return true;
-                        }
-
-                        @Override
-                        public Observable<String> deleteComment(Comment comment) {
-                            return controllerInbox.deleteComment(comment);
-                        }
-
-                        @Override
-                        public void editComment(String name, int level, String text) {
-                            controllerInbox.editComment(name, level, text);
-                        }
-
-                        @Override
-                        public void jumpToParent(Comment comment) {
-
-                        }
-
-                        @Override
-                        public String getLinkId() {
-                            return "";
-                        }
-
-                        @Override
-                        public String getSubredditName() {
-                            return "";
-                        }
-                    },
-                    mListener.getEventListener(), new ControllerProfile.Listener() {
-                @Override
-                public void setSortAndTime(Sort sort, Time time) {
-
-                }
-
-                @Override
-                public void setPage(Page page) {
-
-                }
-
-                @Override
-                public void setIsUser(boolean isUser) {
-
-                }
-
-                @Override
-                public void loadLink(Comment comment) {
-                    Intent intent = new Intent(activity, ActivityMain.class);
-                    intent.setAction(Intent.ACTION_VIEW);
-                    intent.putExtra(ActivityMain.REDDIT_PAGE,
-                            Reddit.BASE_URL + comment.getContext());
-                    startActivity(intent);
-                }
-
-                @Override
-                public RecyclerView.Adapter getAdapter() {
-                    return null;
-                }
-
-                @Override
-                public void setToolbarTitle(CharSequence title) {
-
-                }
-
-                @Override
-                public void setRefreshing(boolean refreshing) {
-
-                }
-
-                @Override
-                public void post(Runnable runnable) {
-                    recyclerInbox.post(runnable);
-                }
-            });
+                    listenerComments,
+                    mListener.getEventListenerBase());
         }
 
         recyclerInbox.setAdapter(adapterInbox);

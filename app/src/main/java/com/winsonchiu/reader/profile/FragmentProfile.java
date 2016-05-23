@@ -69,7 +69,6 @@ import com.winsonchiu.reader.utils.UtilsColor;
 
 import javax.inject.Inject;
 
-import rx.Observable;
 import rx.Observer;
 import rx.android.schedulers.AndroidSchedulers;
 
@@ -460,57 +459,85 @@ public class FragmentProfile extends FragmentBase implements Toolbar.OnMenuItemC
             }
         };
 
+        AdapterCommentList.ViewHolderComment.Listener listenerComments = new AdapterCommentList.ViewHolderComment.Listener() {
+            @Override
+            public void onClickComments() {
+
+            }
+
+            @Override
+            public void onToggleComment(Comment comment) {
+
+            }
+
+            @Override
+            public void onShowReplyEditor(Comment comment) {
+
+            }
+
+            @Override
+            public void onEditComment(Comment comment, String text) {
+
+            }
+
+            @Override
+            public void onSendComment(Comment comment, String text) {
+
+            }
+
+            @Override
+            public void onMarkRead(Comment comment) {
+
+            }
+
+            @Override
+            public void onLoadNestedComments(Comment comment) {
+
+            }
+
+            @Override
+            public void onJumpToParent(Comment comment) {
+
+            }
+
+            @Override
+            public void onViewProfile(Comment comment) {
+
+            }
+
+            @Override
+            public void onCopyText(Comment comment) {
+
+            }
+
+            @Override
+            public void onDeleteComment(Comment comment) {
+
+            }
+
+            @Override
+            public void onReport(Comment comment) {
+
+            }
+
+            @Override
+            public void onVoteComment(Comment comment, AdapterCommentList.ViewHolderComment viewHolderComment, int vote) {
+
+            }
+
+            @Override
+            public void onSave(Comment comment) {
+
+            }
+        };
+
         if (adapterProfile == null) {
             adapterProfile = new AdapterProfile(getActivity(),
                     controllerProfile,
                     adapterListener,
-                    mListener.getEventListenerBase(),
                     listenerLink,
-                    new AdapterCommentList.ViewHolderComment.EventListenerComment() {
-                        @Override
-                        public void loadNestedComments(Comment comment) {
-                            controllerProfile.loadNestedComments(comment);
-                        }
-
-                        @Override
-                        public Observable<String> voteComment(AdapterCommentList.ViewHolderComment viewHolderComment,
-                                Comment comment,
-                                int vote) {
-                            return controllerProfile.voteComment(viewHolderComment, comment, vote);
-                        }
-
-                        @Override
-                        public boolean toggleComment(Comment comment) {
-                            return true;
-                        }
-
-                        @Override
-                        public Observable<String> deleteComment(Comment comment) {
-                            return controllerProfile.deleteComment(comment);
-                        }
-
-                        @Override
-                        public void editComment(String name, int level, String text) {
-                            controllerProfile.editComment(name, level, text);
-                        }
-
-                        @Override
-                        public void jumpToParent(Comment comment) {
-
-                        }
-
-                        @Override
-                        public String getLinkId() {
-                            return "";
-                        }
-
-                        @Override
-                        public String getSubredditName() {
-                            return "";
-                        }
-
-                    },
-                    mListener.getEventListener(), listener);
+                    listenerComments,
+                    listener);
         }
 
         recyclerProfile.setAdapter(adapterProfile);

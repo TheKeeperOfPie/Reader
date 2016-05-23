@@ -349,6 +349,7 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
 
             @Override
             public void onReport(Link link) {
+                // TODO: Add link title
                 new AlertDialog.Builder(getContext())
                         .setTitle(R.string.report_title)
                         .setSingleChoiceItems(Report.getDisplayReasons(getResources()), -1, (dialog, which) -> {
