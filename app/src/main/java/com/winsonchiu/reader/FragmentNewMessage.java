@@ -5,10 +5,6 @@
 package com.winsonchiu.reader;
 
 import android.app.Activity;
-import android.content.res.TypedArray;
-import android.graphics.ColorFilter;
-import android.graphics.PorterDuff;
-import android.graphics.PorterDuffColorFilter;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.design.widget.AppBarLayout;
@@ -38,7 +34,6 @@ import android.widget.Toast;
 import com.github.rjeschke.txtmark.Processor;
 import com.squareup.picasso.Picasso;
 import com.winsonchiu.reader.data.reddit.Reddit;
-import com.winsonchiu.reader.utils.UtilsColor;
 import com.winsonchiu.reader.utils.UtilsInput;
 
 import org.json.JSONException;
@@ -88,8 +83,6 @@ public class FragmentNewMessage extends FragmentBase implements Toolbar.OnMenuIt
     private Activity activity;
     private MenuItem itemHideActions;
     private Menu menu;
-    private ColorFilter colorFilterPrimary;
-    private ColorFilter colorFilterIcon;
 
     public static FragmentNewMessage newInstance() {
         FragmentNewMessage fragment = new FragmentNewMessage();
@@ -146,28 +139,15 @@ public class FragmentNewMessage extends FragmentBase implements Toolbar.OnMenuIt
         editTextSubject.setText(arguments.getString(ARG_SUBJECT));
         editTextMessage.setText(arguments.getString(ARG_MESSAGE));
 
-        TypedArray typedArray = activity.getTheme().obtainStyledAttributes(
-                new int[]{R.attr.colorPrimary, R.attr.colorIconFilter});
-        final int colorPrimary = typedArray.getColor(0,
-                getResources().getColor(R.color.colorPrimary));
-        int colorIcon = typedArray.getColor(1, getResources().getColor(R.color.darkThemeIconFilter));
-        typedArray.recycle();
-
-        int colorResourcePrimary = UtilsColor.showOnWhite(colorPrimary) ? R.color.darkThemeIconFilter : R.color.lightThemeIconFilter;
-        int colorResourceTextMuted = UtilsColor.showOnWhite(colorPrimary) ? R.color.darkThemeTextColorMuted : R.color.lightThemeTextColorMuted;
-
-        colorFilterPrimary = new PorterDuffColorFilter(getResources().getColor(colorResourcePrimary), PorterDuff.Mode.MULTIPLY);
-        colorFilterIcon = new PorterDuffColorFilter(colorIcon, PorterDuff.Mode.MULTIPLY);
-
         toolbar = (Toolbar) view.findViewById(R.id.toolbar);
         toolbar.setTitle(getString(R.string.message));
-        toolbar.setTitleTextColor(getResources().getColor(colorResourcePrimary));
+        toolbar.setTitleTextColor(themer.getColorFilterPrimary().getColor());
         toolbar.setNavigationIcon(R.drawable.ic_arrow_back_white_24dp);
         toolbar.setNavigationOnClickListener(v -> {
             UtilsInput.hideKeyboard(editTextMessage);
             mListener.onNavigationBackClick();
         });
-        toolbar.getNavigationIcon().mutate().setColorFilter(colorFilterPrimary);
+        toolbar.getNavigationIcon().mutate().setColorFilter(themer.getColorFilterPrimary());
         setUpOptionsMenu();
 
         View.OnFocusChangeListener onFocusChangeListener = (v, hasFocus) -> {
@@ -197,8 +177,8 @@ public class FragmentNewMessage extends FragmentBase implements Toolbar.OnMenuIt
         tabLayout = (TabLayout) view.findViewById(R.id.layout_tab);
         tabLayout.setTabMode(TabLayout.MODE_FIXED);
         tabLayout.setTabGravity(TabLayout.GRAVITY_FILL);
-        tabLayout.setTabTextColors(getResources().getColor(colorResourceTextMuted),
-                getResources().getColor(colorResourcePrimary));
+        tabLayout.setTabTextColors(themer.getColorFilterTextMuted().getColor(),
+                themer.getColorFilterPrimary().getColor());
 
         viewPager = (ViewPager) view.findViewById(R.id.view_pager);
         viewPager.setAdapter(new PagerAdapter() {
@@ -323,7 +303,7 @@ public class FragmentNewMessage extends FragmentBase implements Toolbar.OnMenuIt
                         for (int index = 0; index < menu.size(); index++) {
 
                             MenuItem menuItem = menu.getItem(index);
-                            menuItem.getIcon().setColorFilter(colorFilterIcon);
+                            menuItem.getIcon().setColorFilter(themer.getColorFilterIcon());
 
                             if (numShown++ < maxNum - 1) {
                                 menuItem
@@ -352,7 +332,7 @@ public class FragmentNewMessage extends FragmentBase implements Toolbar.OnMenuIt
         itemHideActions = menu.findItem(R.id.item_hide_actions);
 
         for (int index = 0; index < menu.size(); index++) {
-            menu.getItem(index).getIcon().mutate().setColorFilter(colorFilterPrimary);
+            menu.getItem(index).getIcon().mutate().setColorFilter(themer.getColorFilterPrimary());
         }
     }
 

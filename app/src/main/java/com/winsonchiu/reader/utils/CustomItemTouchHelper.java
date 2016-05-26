@@ -29,7 +29,6 @@ package com.winsonchiu.reader.utils;
  */
 
 import android.content.Context;
-import android.content.res.TypedArray;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.PorterDuff;
@@ -61,6 +60,7 @@ import android.view.ViewParent;
 import android.view.animation.Interpolator;
 
 import com.winsonchiu.reader.R;
+import com.winsonchiu.reader.theme.Themer;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -2269,16 +2269,13 @@ public class CustomItemTouchHelper extends RecyclerView.ItemDecoration
             this.sizeIcon = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 24,
                     context.getResources().getDisplayMetrics());
 
-            TypedArray typedArray = context.getTheme().obtainStyledAttributes(
-                    new int[]{R.attr.colorPrimaryDark});
-            int colorPrimaryDark = typedArray.getColor(0, context.getResources().getColor(R.color.colorPrimaryDark));
-            typedArray.recycle();
+            Themer themer = new Themer(context);
 
-            int iconFilterResource = UtilsColor.showOnWhite(colorPrimaryDark) ? R.color.darkThemeIconFilter : R.color.lightThemeIconFilter;
+            int iconFilterResource = UtilsColor.showOnWhite(themer.getColorPrimaryDark()) ? R.color.darkThemeIconFilter : R.color.lightThemeIconFilter;
             int colorIconFilter = ContextCompat.getColor(context, iconFilterResource);
 
             paintUnder = new Paint();
-            paintUnder.setColor(colorPrimaryDark);
+            paintUnder.setColor(themer.getColorPrimaryDark());
             iconUnder = ContextCompat.getDrawable(context, iconUnderResource);
             iconUnder.setColorFilter(colorIconFilter, PorterDuff.Mode.SRC_IN);
         }

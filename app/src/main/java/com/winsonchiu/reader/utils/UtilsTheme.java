@@ -5,6 +5,9 @@
 package com.winsonchiu.reader.utils;
 
 import android.content.Context;
+import android.content.res.TypedArray;
+import android.support.annotation.AttrRes;
+import android.support.annotation.ColorInt;
 import android.support.design.widget.AppBarLayout;
 import android.support.v7.view.ContextThemeWrapper;
 import android.support.v7.widget.Toolbar;
@@ -35,4 +38,19 @@ public class UtilsTheme {
         return toolbar;
     }
 
+    public static int getAttributeColor(Context context, @AttrRes int resourceTarget, @ColorInt int colorDefault) {
+        TypedArray typedArray = context.getTheme().obtainStyledAttributes(new int[]{resourceTarget});
+        int color = typedArray.getColor(0, colorDefault);
+        typedArray.recycle();
+
+        return color;
+    }
+
+    public static float getAttributeDimension(Context context, @AttrRes int resourceTarget, float valueDefault) {
+        TypedArray typedArray = context.getTheme().obtainStyledAttributes(new int[]{resourceTarget});
+        float dimension = typedArray.getDimension(0, valueDefault);
+        typedArray.recycle();
+
+        return dimension;
+    }
 }

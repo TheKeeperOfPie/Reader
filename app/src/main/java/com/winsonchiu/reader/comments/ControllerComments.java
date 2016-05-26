@@ -80,7 +80,6 @@ public class ControllerComments implements AdapterCommentList.ViewHolderComment.
     }
 
     public void setLink(Link link) {
-        Log.d(TAG, "setLink() called with: link = [" + link + "]");
         this.listingComments = new Listing();
         this.link = link;
         eventHolder.call(new RxAdapterEvent<>(getData()));
@@ -89,7 +88,6 @@ public class ControllerComments implements AdapterCommentList.ViewHolderComment.
     }
 
     public void setLinkFromCache(Link link) {
-        Log.d(TAG, "setLinkFromCache() called with: link = [" + link + "]");
         this.link = link;
         eventHolder.call(new RxAdapterEvent<>(getData()));
         this.listingComments = link.getComments();

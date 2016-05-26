@@ -9,10 +9,6 @@ import android.animation.AnimatorListenerAdapter;
 import android.animation.ValueAnimator;
 import android.app.Activity;
 import android.content.Context;
-import android.content.res.TypedArray;
-import android.graphics.ColorFilter;
-import android.graphics.PorterDuff;
-import android.graphics.PorterDuffColorFilter;
 import android.graphics.RectF;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
@@ -23,7 +19,6 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.text.InputFilter;
 import android.text.TextUtils;
-import android.util.Log;
 import android.util.TypedValue;
 import android.view.GestureDetector;
 import android.view.LayoutInflater;
@@ -50,7 +45,6 @@ import com.winsonchiu.reader.links.AdapterLink;
 import com.winsonchiu.reader.links.LinksListenerBase;
 import com.winsonchiu.reader.rx.ObserverError;
 import com.winsonchiu.reader.utils.CallbackYouTubeDestruction;
-import com.winsonchiu.reader.utils.DisallowListener;
 import com.winsonchiu.reader.utils.LinearLayoutManagerWrapHeight;
 import com.winsonchiu.reader.utils.UtilsAnimation;
 import com.winsonchiu.reader.utils.UtilsList;
@@ -74,6 +68,7 @@ public class FragmentCommentsInner extends FragmentBase {
     private static final String ARG_ACTIONS_EXPANDED = "actionsExpanded";
     private static final String ARG_YOUTUBE_ID = "youTubeId";
     private static final String ARG_YOUTUBE_TIME = "youTubeTime";
+    private static final String ARG_POSITION = "position";
     private static final int EXPAND_FLING_THRESHOLD = 1000;
 
     private FragmentListenerBase mListener;
@@ -88,7 +83,6 @@ public class FragmentCommentsInner extends FragmentBase {
     private SwipeRefreshLayout swipeRefreshCommentList;
     private RecyclerView.AdapterDataObserver observer;
     private CustomFrameLayout layoutRoot;
-    private ColorFilter colorFilterIcon;
     private int scrollToPaddingTop;
     private int scrollToPaddingBottom;
 
@@ -101,19 +95,6 @@ public class FragmentCommentsInner extends FragmentBase {
 
     private ControllerComments controllerComments;
     private Link link;
-
-    private DisallowListener disallowListener = new DisallowListener() {
-        @Override
-        public void requestDisallowInterceptTouchEventVertical(boolean disallow) {
-            recyclerCommentList.requestDisallowInterceptTouchEvent(disallow);
-            swipeRefreshCommentList.requestDisallowInterceptTouchEvent(disallow);
-        }
-
-        @Override
-        public void requestDisallowInterceptTouchEventHorizontal(boolean disallow) {
-
-        }
-    };
 
     private YouTubeListener youTubeListener = new YouTubeListener() {
         @Override
@@ -260,30 +241,14 @@ public class FragmentCommentsInner extends FragmentBase {
         layoutRoot = (CustomFrameLayout) inflater
                 .inflate(R.layout.fragment_comments_inner, container, false);
 
-        CallbackYouTubeDestruction callbackYouTubeDestruction = new CallbackYouTubeDestruction() {
-            @Override
-            public void destroyYouTubePlayerFragments() {
-                adapterCommentList.destroyYouTubePlayerFragments();
-                adapterLink.destroyYouTubePlayerFragments();
-            }
+        CallbackYouTubeDestruction callbackYouTubeDestruction = () -> {
+            adapterCommentList.destroyYouTubePlayerFragments();
+            adapterLink.destroyYouTubePlayerFragments();
         };
-
-        TypedArray typedArray = getActivity().getTheme().obtainStyledAttributes(
-                new int[]{R.attr.colorIconFilter});
-        int colorIcon = typedArray.getColor(0, getResources().getColor(R.color.darkThemeIconFilter));
-        typedArray.recycle();
-
-        colorFilterIcon = new PorterDuffColorFilter(colorIcon,
-                PorterDuff.Mode.MULTIPLY);
 
         swipeRefreshCommentList = (SwipeRefreshLayout) layoutRoot.findViewById(
                 R.id.swipe_refresh_comment_list);
-        swipeRefreshCommentList.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
-            @Override
-            public void onRefresh() {
-                controllerComments.reloadAllComments();
-            }
-        });
+        swipeRefreshCommentList.setOnRefreshListener(() -> controllerComments.reloadAllComments());
 
         linearLayoutManager = new LinearLayoutManager(getActivity());
         recyclerCommentList = (RecyclerView) layoutRoot.findViewById(R.id.recycler_comment_list);
@@ -325,33 +290,6 @@ public class FragmentCommentsInner extends FragmentBase {
             }
         };
 
-        AdapterLink.ViewHolderLink.Listener listener =  new LinksListenerBase(mListener.getEventListenerBase()) {
-            @Override
-            public void onVote(Link link, AdapterLink.ViewHolderLink viewHolderLink, int vote) {
-
-            }
-
-            @Override
-            public void onDelete(Link link) {
-
-            }
-
-            @Override
-            public void onReport(Link link) {
-
-            }
-
-            @Override
-            public void onSave(Link link) {
-
-            }
-
-            @Override
-            public void onMarkNsfw(Link link) {
-
-            }
-        };
-
         AdapterLink.ViewHolderLink.Listener listenerLink = new LinksListenerBase(mListener.getEventListenerBase()) {
             @Override
             public void onVote(Link link, AdapterLink.ViewHolderLink viewHolderLink, int vote) {
@@ -381,13 +319,8 @@ public class FragmentCommentsInner extends FragmentBase {
 
         AdapterCommentList.ViewHolderComment.Listener listenerComment = new AdapterCommentList.ViewHolderComment.Listener() {
             @Override
-            public void onClickComments() {
-
-            }
-
-            @Override
             public void onToggleComment(Comment comment) {
-
+                controllerComments.toggleComment(comment);
             }
 
             @Override
@@ -412,12 +345,12 @@ public class FragmentCommentsInner extends FragmentBase {
 
             @Override
             public void onLoadNestedComments(Comment comment) {
-
+                controllerComments.loadNestedComments(comment);
             }
 
             @Override
             public void onJumpToParent(Comment comment) {
-
+                controllerComments.jumpToParent(comment);
             }
 
             @Override
@@ -636,14 +569,9 @@ public class FragmentCommentsInner extends FragmentBase {
 
         layoutExpandPostInner = (ViewGroup) layoutRoot.findViewById(R.id.layout_expand_post_inner);
         imageExpandIndicator = (ImageView) layoutRoot.findViewById(R.id.image_expand_indicator);
-        imageExpandIndicator.setColorFilter(colorFilterIcon);
+        imageExpandIndicator.setColorFilter(themer.getColorFilterIcon());
 
-        layoutRoot.setDispatchTouchListener(new View.OnTouchListener() {
-            @Override
-            public boolean onTouch(View v, MotionEvent event) {
-                return gestureDetectorExpand.onTouchEvent(event);
-            }
-        });
+        layoutRoot.setDispatchTouchListener((v, event) -> gestureDetectorExpand.onTouchEvent(event));
 
         recyclerLink = (RecyclerView) layoutRoot.findViewById(R.id.recycler_link);
         recyclerLink.setLayoutManager(layoutManagerLink);
@@ -661,7 +589,6 @@ public class FragmentCommentsInner extends FragmentBase {
             adapterLink.setAnimationFinished(true);
             adapterCommentList.setAnimationFinished(true);
             controllerComments.setLinkFromCache((Link) savedInstanceState.get("Link"));
-            Log.d(TAG, "onCreateView() called with: " + "inflater = [" + inflater + "], container = [" + container + "], savedInstanceState = [" + savedInstanceState + "]");
         } else if (link != null) {
             controllerComments.setLink(link);
             link = null;
@@ -672,8 +599,6 @@ public class FragmentCommentsInner extends FragmentBase {
         if (animationFinished) {
             setAnimationFinished(true);
         }
-
-        getArguments().putBoolean("Created", true);
 
         return layoutRoot;
     }
@@ -714,6 +639,22 @@ public class FragmentCommentsInner extends FragmentBase {
     public void onResume() {
         super.onResume();
 
+        if (UtilsRx.isUnsubscribed(subscriptionData)) {
+            subscribe();
+        }
+
+        if (animationFinished) {
+
+        }
+    }
+
+    @Override
+    public void onPause() {
+        unsubscribe();
+        super.onPause();
+    }
+
+    public void subscribe() {
         ControllerComments.EventHolder eventHolder = controllerComments.getEventHolder();
 
         subscriptionData = eventHolder.getData()
@@ -750,16 +691,6 @@ public class FragmentCommentsInner extends FragmentBase {
                             scrollToPaddingBottom,
                             true);
                 });
-
-        if (animationFinished) {
-
-        }
-    }
-
-    @Override
-    public void onPause() {
-        unsubscribe();
-        super.onPause();
     }
 
     public void unsubscribe() {
@@ -964,11 +895,11 @@ public class FragmentCommentsInner extends FragmentBase {
     }
 
     public void setPosition(int position) {
-        getArguments().putInt("position", position);
+        getArguments().putInt(ARG_POSITION, position);
     }
 
     public int getPosition() {
-        return getArguments().getInt("position");
+        return getArguments().getInt(ARG_POSITION);
     }
 
     public void setSort(Sort sort) {

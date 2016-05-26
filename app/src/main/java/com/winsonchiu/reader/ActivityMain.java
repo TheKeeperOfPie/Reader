@@ -18,7 +18,6 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
-import android.content.res.TypedArray;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
@@ -108,6 +107,7 @@ import com.winsonchiu.reader.search.ControllerSearch;
 import com.winsonchiu.reader.search.FragmentSearch;
 import com.winsonchiu.reader.settings.ActivitySettings;
 import com.winsonchiu.reader.theme.ThemeColor;
+import com.winsonchiu.reader.theme.Themer;
 import com.winsonchiu.reader.utils.CustomColorFilter;
 import com.winsonchiu.reader.utils.EventListenerBase;
 import com.winsonchiu.reader.utils.ImageDownload;
@@ -117,6 +117,7 @@ import com.winsonchiu.reader.utils.UtilsImage;
 import com.winsonchiu.reader.utils.UtilsJson;
 import com.winsonchiu.reader.utils.UtilsReddit;
 import com.winsonchiu.reader.utils.UtilsRx;
+import com.winsonchiu.reader.utils.UtilsTheme;
 import com.winsonchiu.reader.views.ScrollViewHeader;
 
 import java.io.File;
@@ -168,8 +169,7 @@ public class ActivityMain extends AppCompatActivity
         }
     };
     private CustomColorFilter colorFilterPrimary;
-    private int colorPrimary;
-    private int colorAccent;
+    private Themer themer;
 
     private Link linkHeader;
     private ImageDownload imageDownload;
@@ -291,13 +291,10 @@ public class ActivityMain extends AppCompatActivity
 
         componentActivity.inject(this);
 
-        TypedArray typedArray = obtainStyledAttributes(new int[]{R.attr.colorPrimary, R.attr.colorAccent});
-        colorPrimary = typedArray.getColor(0, ContextCompat.getColor(this, R.color.colorPrimary));
-        colorAccent = typedArray.getColor(0, ContextCompat.getColor(this, R.color.colorAccent));
-        typedArray.recycle();
+        themer = new Themer(this);
 
-        int colorResourcePrimary = UtilsColor.showOnWhite(colorPrimary) ? R.color.darkThemeIconFilter : R.color.lightThemeIconFilter;
-        int resourceIcon = UtilsColor.showOnWhite(colorPrimary) ? R.mipmap.app_icon_white_outline : R.mipmap.app_icon_dark_outline;
+        int colorResourcePrimary = UtilsColor.showOnWhite(themer.getColorPrimary()) ? R.color.darkThemeIconFilter : R.color.lightThemeIconFilter;
+        int resourceIcon = UtilsColor.showOnWhite(themer.getColorPrimary()) ? R.mipmap.app_icon_white_outline : R.mipmap.app_icon_dark_outline;
 
         colorFilterPrimary = new CustomColorFilter(ContextCompat.getColor(this, colorResourcePrimary), PorterDuff.Mode.MULTIPLY);
 
@@ -429,7 +426,7 @@ public class ActivityMain extends AppCompatActivity
         };
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            ActivityManager.TaskDescription taskDescription = new ActivityManager.TaskDescription("Reader", BitmapFactory.decodeResource(getResources(), resourceIcon), colorPrimary);
+            ActivityManager.TaskDescription taskDescription = new ActivityManager.TaskDescription("Reader", BitmapFactory.decodeResource(getResources(), resourceIcon), themer.getColorPrimary());
             setTaskDescription(taskDescription);
         }
 
@@ -585,12 +582,7 @@ public class ActivityMain extends AppCompatActivity
         float standardIncrement = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 56, getResources().getDisplayMetrics());
         float screenWidth = getResources().getDisplayMetrics().widthPixels;
 
-        TypedArray typedArray = getTheme().obtainStyledAttributes(
-                new int[]{android.R.attr.actionBarSize, R.attr.colorPrimary});
-        float marginEnd = typedArray.getDimension(0, standardIncrement);
-        typedArray.recycle();
-
-        float navigationWidth = screenWidth - marginEnd;
+        float navigationWidth = screenWidth - UtilsTheme.getAttributeDimension(this, R.attr.actionBarSize, standardIncrement);
         if (navigationWidth > standardIncrement * 6) {
             navigationWidth = standardIncrement * 6;
         }
@@ -1298,8 +1290,8 @@ public class ActivityMain extends AppCompatActivity
         CustomTabsIntent intentCustomTabs = new CustomTabsIntent.Builder(customTabsSession)
                 .setStartAnimations(this, R.anim.slide_from_bottom, R.anim.nothing)
                 .setExitAnimations(this, R.anim.nothing, R.anim.slide_to_bottom)
-                .setToolbarColor(colorPrimary)
-                .setSecondaryToolbarColor(colorAccent)
+                .setToolbarColor(themer.getColorPrimary())
+                .setSecondaryToolbarColor(themer.getColorAccent())
                 .setShowTitle(true)
                 .enableUrlBarHiding()
                 .addDefaultShareMenuItem()

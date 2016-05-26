@@ -10,10 +10,9 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Resources;
-import android.content.res.TypedArray;
-import android.graphics.PorterDuff;
-import android.graphics.PorterDuffColorFilter;
 import android.preference.PreferenceManager;
+import android.support.annotation.ColorInt;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.text.Editable;
@@ -45,8 +44,10 @@ import com.winsonchiu.reader.adapter.AdapterListener;
 import com.winsonchiu.reader.comments.AdapterCommentList;
 import com.winsonchiu.reader.data.reddit.Message;
 import com.winsonchiu.reader.links.AdapterLink;
+import com.winsonchiu.reader.theme.Themer;
 import com.winsonchiu.reader.utils.UtilsAnimation;
 import com.winsonchiu.reader.utils.UtilsInput;
+import com.winsonchiu.reader.utils.UtilsTheme;
 import com.winsonchiu.reader.utils.ViewHolderBase;
 
 import java.util.ArrayList;
@@ -226,17 +227,13 @@ public class AdapterInbox extends AdapterBase<RecyclerView.ViewHolder> {
             toolbarActions.setOnMenuItemClickListener(this);
 
             Menu menu = toolbarActions.getMenu();
-            TypedArray typedArray = itemView.getContext().getTheme().obtainStyledAttributes(new int[]{R.attr.colorIconFilter});
-            int colorIconFilter = typedArray.getColor(0, 0xFFFFFFFF);
-            typedArray.recycle();
 
-            PorterDuffColorFilter colorFilter = new PorterDuffColorFilter(colorIconFilter,
-                    PorterDuff.Mode.MULTIPLY);
+            Themer themer = new Themer(itemView.getContext());
 
             for (int index = 0; index < menu.size(); index++) {
-                menu.getItem(index).getIcon().mutate().setColorFilter(colorFilter);
+                menu.getItem(index).getIcon().mutate().setColorFilter(themer.getColorFilterIcon());
             }
-            buttonReplyEditor.setColorFilter(colorFilter);
+            buttonReplyEditor.setColorFilter(themer.getColorFilterIcon());
             preferences = PreferenceManager.getDefaultSharedPreferences(itemView.getContext());
 
             clickListenerLink = new View.OnClickListener() {
@@ -317,10 +314,10 @@ public class AdapterInbox extends AdapterBase<RecyclerView.ViewHolder> {
 
             textInfo.setText(spannableInfo);
 
-            TypedArray typedArray = itemView.getContext().getTheme().obtainStyledAttributes(new int[]{android.R.attr.textColorSecondary});
-            textInfo.setTextColor(message.isNew() ? itemView.getResources()
-                    .getColor(R.color.textColorAlert) : typedArray.getColor(0, itemView.getResources().getColor(R.color.darkThemeTextColorMuted)));
-            typedArray.recycle();
+            int colorTextSecondary = UtilsTheme.getAttributeColor(itemView.getContext(), android.R.attr.textColorSecondary, ContextCompat.getColor(itemView.getContext(), R.color.darkThemeTextColorMuted));
+
+            @ColorInt int colorTextInfo = message.isNew() ? ContextCompat.getColor(itemView.getContext(), R.color.textColorAlert) : colorTextSecondary;
+            textInfo.setTextColor(colorTextInfo);
         }
 
         @Override

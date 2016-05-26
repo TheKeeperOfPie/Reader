@@ -5,8 +5,6 @@
 package com.winsonchiu.reader.profile;
 
 import android.app.Activity;
-import android.content.res.TypedArray;
-import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -15,7 +13,7 @@ import android.widget.TextView;
 
 import com.winsonchiu.reader.R;
 import com.winsonchiu.reader.data.Page;
-import com.winsonchiu.reader.utils.UtilsColor;
+import com.winsonchiu.reader.theme.Themer;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -25,8 +23,7 @@ import java.util.List;
  */
 public class AdapterProfilePage extends BaseAdapter {
 
-    private final int colorTextPrimary;
-    private final int colorTextMenu;
+    private Themer themer;
     private List<Page> pages;
     private int colorPrimary;
     private boolean isUser;
@@ -44,13 +41,7 @@ public class AdapterProfilePage extends BaseAdapter {
         pages.add(new Page(ControllerProfile.PAGE_HIDDEN, activity.getString(R.string.profile_page_hidden)));
         pages.add(new Page(ControllerProfile.PAGE_SAVED, activity.getString(R.string.profile_page_saved)));
 
-        TypedArray typedArray = activity.getTheme().obtainStyledAttributes(
-                new int[] {R.attr.colorPrimary, android.R.attr.textColor});
-        colorPrimary = typedArray.getColor(0, activity.getResources().getColor(R.color.colorPrimary));
-        colorTextMenu = typedArray.getColor(1, Color.WHITE);
-        typedArray.recycle();
-
-        colorTextPrimary = UtilsColor.showOnWhite(colorPrimary) ? Color.WHITE : Color.BLACK;
+        themer = new Themer(activity);
     }
 
     @Override
@@ -77,7 +68,7 @@ public class AdapterProfilePage extends BaseAdapter {
 
         TextView textPage = (TextView) convertView.findViewById(R.id.text_page);
         textPage.setText(pages.get(position).getText());
-        textPage.setTextColor(colorTextMenu);
+        textPage.setTextColor(themer.getColorFilterPrimary().getColor());
 
         return convertView;
     }
@@ -91,7 +82,7 @@ public class AdapterProfilePage extends BaseAdapter {
 
         TextView textPage = (TextView) convertView.findViewById(R.id.text_page);
         textPage.setText(pages.get(position).getText());
-        textPage.setTextColor(colorTextPrimary);
+        textPage.setTextColor(themer.getColorFilterPrimary().getColor());
 
         return convertView;
     }

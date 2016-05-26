@@ -8,8 +8,6 @@ import android.app.Activity;
 import android.app.AlarmManager;
 import android.content.DialogInterface;
 import android.content.SharedPreferences;
-import android.content.res.TypedArray;
-import android.graphics.PorterDuff;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.annotation.Nullable;
@@ -61,7 +59,6 @@ import com.winsonchiu.reader.links.AdapterLinkGrid;
 import com.winsonchiu.reader.links.AdapterLinkList;
 import com.winsonchiu.reader.rx.ObserverError;
 import com.winsonchiu.reader.theme.ThemeWrapper;
-import com.winsonchiu.reader.utils.CustomColorFilter;
 import com.winsonchiu.reader.utils.CustomItemTouchHelper;
 import com.winsonchiu.reader.utils.ItemDecorationDivider;
 import com.winsonchiu.reader.utils.UtilsAnimation;
@@ -99,7 +96,6 @@ public class FragmentHistory extends FragmentBase implements Toolbar.OnMenuItemC
     private CoordinatorLayout layoutCoordinator;
     private AppBarLayout layoutAppBar;
     private View view;
-    private CustomColorFilter colorFilterPrimary;
     private ItemDecorationDivider itemDecorationDivider;
 
     private Subscription subscriptionData;
@@ -144,7 +140,7 @@ public class FragmentHistory extends FragmentBase implements Toolbar.OnMenuItemC
 
         View view = searchView.findViewById(android.support.v7.appcompat.R.id.search_go_btn);
         if (view instanceof ImageView) {
-            ((ImageView) view).setColorFilter(colorFilterPrimary);
+            ((ImageView) view).setColorFilter(themer.getColorFilterPrimary());
         }
 
         MenuItemCompat.setOnActionExpandListener(itemSearch,
@@ -179,7 +175,7 @@ public class FragmentHistory extends FragmentBase implements Toolbar.OnMenuItemC
         searchView.setSubmitButtonEnabled(true);
 
         for (int index = 0; index < menu.size(); index++) {
-            menu.getItem(index).getIcon().mutate().setColorFilter(colorFilterPrimary);
+            menu.getItem(index).getIcon().mutate().setColorFilter(themer.getColorFilterPrimary());
         }
     }
 
@@ -204,18 +200,9 @@ public class FragmentHistory extends FragmentBase implements Toolbar.OnMenuItemC
         layoutCoordinator = (CoordinatorLayout) view.findViewById(R.id.layout_coordinator);
         layoutAppBar = (AppBarLayout) view.findViewById(R.id.layout_app_bar);
 
-        TypedArray typedArray = getActivity().getTheme().obtainStyledAttributes(
-                new int[]{R.attr.colorPrimary});
-        final int colorPrimary = typedArray.getColor(0, getResources().getColor(R.color.colorPrimary));
-        typedArray.recycle();
-
-        int colorResourcePrimary = UtilsColor.showOnWhite(colorPrimary) ? R.color.darkThemeIconFilter : R.color.lightThemeIconFilter;
-
-        colorFilterPrimary = new CustomColorFilter(getResources().getColor(colorResourcePrimary), PorterDuff.Mode.MULTIPLY);
-
         int styleColorBackground = AppSettings.THEME_DARK.equals(mListener.getThemeBackground()) ? R.style.MenuDark : R.style.MenuLight;
 
-        ContextThemeWrapper contextThemeWrapper = new ContextThemeWrapper(new ThemeWrapper(getActivity(), UtilsColor.getThemeForColor(getResources(), colorPrimary, mListener)), styleColorBackground);
+        ContextThemeWrapper contextThemeWrapper = new ContextThemeWrapper(new ThemeWrapper(getActivity(), UtilsColor.getThemeForColor(getResources(), themer.getColorPrimary(), mListener)), styleColorBackground);
 
         toolbar = (Toolbar) getActivity().getLayoutInflater().cloneInContext(contextThemeWrapper).inflate(R.layout.toolbar, layoutAppBar, false);
         layoutAppBar.addView(toolbar);
@@ -229,8 +216,8 @@ public class FragmentHistory extends FragmentBase implements Toolbar.OnMenuItemC
             toolbar.setNavigationIcon(R.drawable.ic_arrow_back_white_24dp);
             toolbar.setNavigationOnClickListener(v -> mListener.onNavigationBackClick());
         }
-        toolbar.getNavigationIcon().mutate().setColorFilter(colorFilterPrimary);
-        toolbar.setTitleTextColor(getResources().getColor(colorResourcePrimary));
+        toolbar.getNavigationIcon().mutate().setColorFilter(themer.getColorFilterPrimary());
+        toolbar.setTitleTextColor(themer.getColorFilterPrimary().getColor());
         toolbar.setTitle(R.string.history);
         setUpOptionsMenu();
 
@@ -462,12 +449,12 @@ public class FragmentHistory extends FragmentBase implements Toolbar.OnMenuItemC
                             snackbar.dismiss();
                         }
                         SpannableString text = new SpannableString(getString(R.string.history_entry_deleted));
-                        text.setSpan(new ForegroundColorSpan(colorFilterPrimary.getColor()), 0, text.length(), Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
+                        text.setSpan(new ForegroundColorSpan(themer.getColorFilterPrimary().getColor()), 0, text.length(), Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
 
                         //noinspection ResourceType
                         snackbar = Snackbar.make(recyclerHistory, text,
                                 UtilsAnimation.SNACKBAR_DURATION)
-                                .setActionTextColor(colorFilterPrimary.getColor())
+                                .setActionTextColor(themer.getColorFilterPrimary().getColor())
                                 .setAction(
                                         R.string.undo, new View.OnClickListener() {
                                             @Override
@@ -476,8 +463,7 @@ public class FragmentHistory extends FragmentBase implements Toolbar.OnMenuItemC
                                                 recyclerHistory.invalidate();
                                             }
                                         });
-                        snackbar.getView()
-                                .setBackgroundColor(colorPrimary);
+                        snackbar.getView().setBackgroundColor(themer.getColorPrimary());
                         snackbar.show();
                     }
                 });
@@ -588,7 +574,7 @@ public class FragmentHistory extends FragmentBase implements Toolbar.OnMenuItemC
                             .putString(AppSettings.INTERFACE_MODE, AppSettings.MODE_LIST)
                             .apply();
                 }
-                item.getIcon().setColorFilter(colorFilterPrimary);
+                item.getIcon().setColorFilter(themer.getColorFilterPrimary());
                 return true;
             case R.id.item_time_range:
                 showDateRangeDialog();

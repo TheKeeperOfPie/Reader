@@ -146,7 +146,6 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
     @BindView(R.id.text_empty) TextView textEmpty;
     @BindView(R.id.button_subscribe) Button buttonSubscribe;
 
-
     @Inject SharedPreferences preferences;
     @Inject Historian historian;
     @Inject ControllerLinks controllerLinks;
@@ -1032,6 +1031,7 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
     @Override
     public void setVisibilityOfThing(int visibility, Thing thing) {
         super.setVisibilityOfThing(visibility, thing);
+        Log.d(TAG, "setVisibilityOfThing() called with: visibility = [" + visibility + "], thing = [" + thing + "]");
         adapterLink.setVisibility(visibility, thing);
     }
 

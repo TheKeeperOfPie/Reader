@@ -10,13 +10,13 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Resources;
-import android.content.res.TypedArray;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
 import android.graphics.drawable.Drawable;
 import android.preference.PreferenceManager;
 import android.support.annotation.Nullable;
 import android.support.v4.app.FragmentActivity;
+import android.support.v4.content.ContextCompat;
 import android.support.v4.graphics.ColorUtils;
 import android.support.v4.view.GestureDetectorCompat;
 import android.support.v7.app.AlertDialog;
@@ -64,11 +64,13 @@ import com.winsonchiu.reader.links.AdapterLink;
 import com.winsonchiu.reader.links.AdapterLinkGrid;
 import com.winsonchiu.reader.links.AdapterLinkList;
 import com.winsonchiu.reader.profile.ControllerProfile;
+import com.winsonchiu.reader.theme.Themer;
 import com.winsonchiu.reader.utils.CallbackYouTubeDestruction;
 import com.winsonchiu.reader.utils.OnTouchListenerDisallow;
 import com.winsonchiu.reader.utils.UtilsAnimation;
 import com.winsonchiu.reader.utils.UtilsInput;
 import com.winsonchiu.reader.utils.UtilsReddit;
+import com.winsonchiu.reader.utils.UtilsTheme;
 import com.winsonchiu.reader.utils.UtilsView;
 import com.winsonchiu.reader.utils.ViewHolderBase;
 import com.winsonchiu.reader.utils.YouTubeListener;
@@ -210,7 +212,7 @@ public class AdapterCommentList extends AdapterBase<RecyclerView.ViewHolder> imp
 
                     @Override
                     public void onClickComments() {
-                        listenerComment.onClickComments();
+                        listener.onShowComments(link, this, source);
                     }
 
                     @Override
@@ -266,7 +268,7 @@ public class AdapterCommentList extends AdapterBase<RecyclerView.ViewHolder> imp
 
                     @Override
                     public void onClickComments() {
-                        listenerComment.onClickComments();
+                        listener.onShowComments(link, this, source);
                     }
 
                     @Override
@@ -498,16 +500,20 @@ public class AdapterCommentList extends AdapterBase<RecyclerView.ViewHolder> imp
 
         @SuppressWarnings("ResourceType")
         private void initialize() {
+            Context context = itemView.getContext();
+
             resources = itemView.getResources();
-            preferences = PreferenceManager.getDefaultSharedPreferences(itemView.getContext());
-            TypedArray typedArray = itemView.getContext().getTheme().obtainStyledAttributes(new int[] {R.attr.colorPrimary, android.R.attr.textColor, android.R.attr.textColorSecondary, R.attr.colorAccent, R.attr.colorIconFilter, R.attr.colorGold});
-            colorPrimary = typedArray.getColor(0, resources.getColor(R.color.colorPrimary));
-            colorTextPrimary = typedArray.getColor(1, resources.getColor(R.color.darkThemeTextColor));
-            colorTextSecondary = typedArray.getColor(2, resources.getColor(R.color.darkThemeTextColorMuted));
-            colorAccent = typedArray.getColor(3, resources.getColor(R.color.colorAccent));
-            colorIconFilter = typedArray.getColor(4, 0xFFFFFFFF);
-            colorGold = typedArray.getColor(5, resources.getColor(R.color.darkThemeGold));
-            typedArray.recycle();
+            preferences = PreferenceManager.getDefaultSharedPreferences(context);
+
+            Themer themer = new Themer(context);
+
+            colorPrimary = themer.getColorPrimary();
+            colorAccent = themer.getColorAccent();
+            colorIconFilter = themer.getColorIconFilter();
+
+            colorTextPrimary = UtilsTheme.getAttributeColor(context, android.R.attr.textColorPrimary, ContextCompat.getColor(context, R.color.darkThemeTextColor));
+            colorTextSecondary = UtilsTheme.getAttributeColor(context, android.R.attr.textColorSecondary, ContextCompat.getColor(context, R.color.darkThemeTextColorMuted));
+            colorGold = UtilsTheme.getAttributeColor(context, R.attr.colorGold, ContextCompat.getColor(context, R.color.darkThemeGold));
 
             this.drawableUpvote = resources.getDrawable(R.drawable.ic_keyboard_arrow_up_white_24dp);
             this.drawableDownvote = resources.getDrawable(
@@ -1053,7 +1059,6 @@ public class AdapterCommentList extends AdapterBase<RecyclerView.ViewHolder> imp
         }
 
         public interface Listener {
-            void onClickComments();
             void onToggleComment(Comment comment);
             void onShowReplyEditor(Comment comment);
             void onEditComment(Comment comment, String text);

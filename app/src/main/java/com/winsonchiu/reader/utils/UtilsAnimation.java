@@ -10,6 +10,7 @@ import android.animation.ValueAnimator;
 import android.content.Context;
 import android.graphics.Color;
 import android.graphics.Point;
+import android.os.Handler;
 import android.support.annotation.Nullable;
 import android.support.v4.graphics.ColorUtils;
 import android.support.v4.view.ViewCompat;
@@ -44,6 +45,7 @@ public class UtilsAnimation {
 
     private static final double ANIMATION_MIN_DURATION = 150;
     private static final double ANIMATION_MAX_DURATION = 1000;
+    public static final long DELAY_RIPPLE = 250;
 
     public static ValueAnimator animateBackgroundColor(final View view, final int start, final int end) {
 
@@ -234,6 +236,14 @@ public class UtilsAnimation {
         int heightMeasureSpec = View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED);
         view.measure(widthMeasureSpec, heightMeasureSpec);
         return view.getMeasuredHeight();
+    }
+
+    public static void waitForRipple(View view, Runnable runnable) {
+        view.postOnAnimationDelayed(runnable, DELAY_RIPPLE);
+    }
+
+    public static void waitForRipple(Handler handler, Runnable runnable) {
+        handler.postDelayed(runnable, DELAY_RIPPLE);
     }
 
     public static ViewPropertyAnimatorCompat shrinkAndFadeOut(View view, long duration) {

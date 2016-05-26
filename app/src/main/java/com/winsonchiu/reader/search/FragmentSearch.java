@@ -5,8 +5,6 @@
 package com.winsonchiu.reader.search;
 
 import android.app.Activity;
-import android.content.res.TypedArray;
-import android.graphics.PorterDuff;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.design.widget.AppBarLayout;
@@ -50,13 +48,13 @@ import com.winsonchiu.reader.links.AdapterLink;
 import com.winsonchiu.reader.links.ControllerLinks;
 import com.winsonchiu.reader.rx.FinalizingSubscriber;
 import com.winsonchiu.reader.theme.ThemeWrapper;
-import com.winsonchiu.reader.utils.CustomColorFilter;
 import com.winsonchiu.reader.utils.ItemDecorationDivider;
 import com.winsonchiu.reader.utils.SimpleCallbackBackground;
 import com.winsonchiu.reader.utils.UtilsAnimation;
 import com.winsonchiu.reader.utils.UtilsColor;
 import com.winsonchiu.reader.utils.UtilsInput;
 import com.winsonchiu.reader.utils.UtilsRx;
+import com.winsonchiu.reader.utils.UtilsTheme;
 
 import javax.inject.Inject;
 
@@ -94,7 +92,6 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
     private CoordinatorLayout layoutCoordinator;
     private AppBarLayout layoutAppBar;
     private View view;
-    private CustomColorFilter colorFilterPrimary;
     private ItemTouchHelper itemTouchHelperSubreddits;
 
     private Subscription subscriptionLinks;
@@ -132,7 +129,7 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
                 mListener.onNavigationBackClick();
             }
         });
-        toolbar.getNavigationIcon().mutate().setColorFilter(colorFilterPrimary);
+        toolbar.getNavigationIcon().mutate().setColorFilter(themer.getColorFilterPrimary());
         toolbar.inflateMenu(R.menu.menu_search);
         toolbar.setOnMenuItemClickListener(this);
         menu = toolbar.getMenu();
@@ -146,18 +143,18 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
 
         View view = searchView.findViewById(android.support.v7.appcompat.R.id.search_go_btn);
         if (view instanceof ImageView) {
-            ((ImageView) view).setColorFilter(colorFilterPrimary);
+            ((ImageView) view).setColorFilter(themer.getColorFilterPrimary());
         }
         view = searchView.findViewById(android.support.v7.appcompat.R.id.search_src_text);
         if (view instanceof EditText) {
-            ((EditText) view).setTextColor(colorFilterPrimary.getColor());
-            ((EditText) view).setHintTextColor(colorFilterPrimary.getColor());
+            ((EditText) view).setTextColor(themer.getColorFilterPrimary().getColor());
+            ((EditText) view).setHintTextColor(themer.getColorFilterPrimary().getColor());
         }
 
         MenuItemCompat.setOnActionExpandListener(itemSearch, new MenuItemCompat.OnActionExpandListener() {
             @Override
             public boolean onMenuItemActionExpand(MenuItem item) {
-                toolbar.getNavigationIcon().mutate().setColorFilter(colorFilterPrimary);
+                toolbar.getNavigationIcon().mutate().setColorFilter(themer.getColorFilterPrimary());
                 return true;
             }
 
@@ -208,7 +205,7 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
         }
 
         for (int index = 0; index < menu.size(); index++) {
-            menu.getItem(index).getIcon().mutate().setColorFilter(colorFilterPrimary);
+            menu.getItem(index).getIcon().mutate().setColorFilter(themer.getColorFilterPrimary());
         }
 
     }
@@ -281,29 +278,20 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
             }
         };
 
-        TypedArray typedArray = getActivity().getTheme().obtainStyledAttributes(
-                new int[]{R.attr.colorPrimary, android.R.attr.windowBackground});
-        final int colorPrimary = typedArray.getColor(0, getResources().getColor(R.color.colorPrimary));
-        final int windowBackground = typedArray.getColor(1, getResources().getColor(R.color.darkThemeBackground));
-        typedArray.recycle();
-
-        int colorResourcePrimary = UtilsColor.showOnWhite(colorPrimary) ? R.color.darkThemeIconFilter : R.color.lightThemeIconFilter;
-        int colorResourceTextMuted = UtilsColor.showOnWhite(colorPrimary) ? R.color.darkThemeTextColorMuted : R.color.lightThemeTextColorMuted;
-
-        colorFilterPrimary = new CustomColorFilter(getResources().getColor(colorResourcePrimary), PorterDuff.Mode.MULTIPLY);
+        int windowBackground = UtilsTheme.getAttributeColor(getContext(), android.R.attr.windowBackground, 0);
 
         layoutCoordinator = (CoordinatorLayout) view.findViewById(R.id.layout_coordinator);
         layoutAppBar = (AppBarLayout) view.findViewById(R.id.layout_app_bar);
 
         int styleColorBackground = AppSettings.THEME_DARK.equals(mListener.getThemeBackground()) ? R.style.MenuDark : R.style.MenuLight;
 
-        ContextThemeWrapper contextThemeWrapper = new ContextThemeWrapper(new ThemeWrapper(getActivity(), UtilsColor.getThemeForColor(getResources(), colorPrimary, mListener)), styleColorBackground);
+        ContextThemeWrapper contextThemeWrapper = new ContextThemeWrapper(new ThemeWrapper(getActivity(), UtilsColor.getThemeForColor(getResources(), themer.getColorPrimary(), mListener)), styleColorBackground);
 
         toolbar = (Toolbar) getActivity().getLayoutInflater().cloneInContext(contextThemeWrapper).inflate(R.layout.toolbar, layoutAppBar, false);
         layoutAppBar.addView(toolbar, 0);
         ((AppBarLayout.LayoutParams) toolbar.getLayoutParams()).setScrollFlags(
                 AppBarLayout.LayoutParams.SCROLL_FLAG_SCROLL | AppBarLayout.LayoutParams.SCROLL_FLAG_ENTER_ALWAYS);
-        toolbar.setTitleTextColor(getResources().getColor(colorResourcePrimary));
+        toolbar.setTitleTextColor(themer.getColorFilterPrimary().getColor());
         setUpToolbar();
 
         adapterSearchSubreddits = new AdapterSearchSubreddits(getActivity(),
@@ -698,8 +686,8 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
 
         tabLayout = (TabLayout) view.findViewById(R.id.tab_search);
         tabLayout.setTabMode(TabLayout.MODE_SCROLLABLE);
-        tabLayout.setTabTextColors(getResources().getColor(colorResourceTextMuted),
-                getResources().getColor(colorResourcePrimary));
+        tabLayout.setTabTextColors(themer.getColorFilterTextMuted().getColor(),
+                themer.getColorFilterPrimary().getColor());
         tabLayout.setBackgroundColor(getResources().getColor(android.R.color.transparent));
 
         tabLayout.setupWithViewPager(viewPager);

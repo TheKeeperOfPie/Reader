@@ -6,7 +6,6 @@ import android.accounts.AccountManager;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Resources;
-import android.content.res.TypedArray;
 import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Build;
@@ -37,6 +36,7 @@ import com.winsonchiu.reader.data.reddit.Reddit;
 import com.winsonchiu.reader.data.reddit.User;
 import com.winsonchiu.reader.rx.FinalizingSubscriber;
 import com.winsonchiu.reader.theme.ThemeColor;
+import com.winsonchiu.reader.theme.Themer;
 import com.winsonchiu.reader.utils.UtilsColor;
 import com.winsonchiu.reader.utils.UtilsRx;
 
@@ -100,14 +100,10 @@ public class ActivityLogin extends AccountAuthenticatorActivity {
 
         layoutRoot = (ViewGroup) findViewById(R.id.layout_root);
 
-        TypedArray typedArray = getTheme().obtainStyledAttributes(
-                new int[]{R.attr.colorPrimary, R.attr.colorAccent});
-        int colorPrimary = typedArray.getColor(0, getResources().getColor(R.color.colorPrimary));
-
-        int colorResourcePrimary = UtilsColor.showOnWhite(colorPrimary) ? R.color.darkThemeIconFilter : R.color.lightThemeIconFilter;
+        Themer themer = new Themer(this);
 
         toolbar = (Toolbar) findViewById(R.id.toolbar);
-        toolbar.setTitleTextColor(getResources().getColor(colorResourcePrimary));
+        toolbar.setTitleTextColor(themer.getColorFilterPrimary().getColor());
 
         progressAuth = (ProgressBar) findViewById(R.id.progress_auth);
         webAuth = (WebView) findViewById(R.id.web_auth);

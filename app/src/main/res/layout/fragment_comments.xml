@@ -19,33 +19,25 @@
         android:layout_alignParentTop="true"
         >
 
+        <View
+            android:id="@+id/view_background"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="?attr/colorScreenBackground"
+            />
+
         <com.winsonchiu.reader.views.CustomFrameLayout
-            android:id="@+id/layout_anchor"
+            android:id="@+id/layout_comments"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             app:layout_behavior="@string/appbar_scrolling_view_behavior"
             >
 
-            <com.winsonchiu.reader.views.CustomFrameLayout
-                android:id="@+id/layout_comments"
+            <android.support.v4.view.ViewPager
+                android:id="@+id/pager_comments"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                >
-
-                <View
-                    android:id="@+id/view_background"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:background="?attr/colorScreenBackground"
-                    />
-
-                <android.support.v4.view.ViewPager
-                    android:id="@+id/pager_comments"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    />
-
-            </com.winsonchiu.reader.views.CustomFrameLayout>
+                />
 
         </com.winsonchiu.reader.views.CustomFrameLayout>
 
@@ -82,7 +74,7 @@
             android:layout_alignParentBottom="true"
             android:layout_alignParentEnd="true"
             android:rotation="90"
-            app:layout_anchor="@id/layout_anchor"
+            app:layout_anchor="@id/layout_comments"
             app:layout_anchorGravity="bottom|end"
             app:elevation="4dp"
             app:borderWidth="0dp"
@@ -111,6 +103,12 @@
             android:layout_margin="8dp"
             android:visibility="gone"
             android:contentDescription="@string/content_description_button_jump_top"
+            android:scaleX="0"
+            android:scaleY="0"
+            android:alpha="0"
+            tools:scaleX="1"
+            tools:scaleY="1"
+            tools:alpha="1"
             app:fabSize="mini"
             app:elevation="4dp"
             app:borderWidth="0dp"
@@ -125,6 +123,12 @@
             android:layout_margin="8dp"
             android:visibility="gone"
             android:contentDescription="@string/content_description_button_comment_previous"
+            android:scaleX="0"
+            android:scaleY="0"
+            android:alpha="0"
+            tools:scaleX="1"
+            tools:scaleY="1"
+            tools:alpha="1"
             app:fabSize="mini"
             app:elevation="4dp"
             app:borderWidth="0dp"
@@ -139,6 +143,12 @@
             android:layout_margin="8dp"
             android:visibility="gone"
             android:contentDescription="@string/content_description_button_comment_next"
+            android:scaleX="0"
+            android:scaleY="0"
+            android:alpha="0"
+            tools:scaleX="1"
+            tools:scaleY="1"
+            tools:alpha="1"
             app:fabSize="mini"
             app:elevation="4dp"
             app:borderWidth="0dp"

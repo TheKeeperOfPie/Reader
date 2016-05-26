@@ -18,11 +18,11 @@ import android.support.annotation.CallSuper;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.FragmentActivity;
+import android.support.v4.content.ContextCompat;
 import android.support.v4.view.GestureDetectorCompat;
 import android.support.v4.view.MenuItemCompat;
 import android.support.v4.view.MotionEventCompat;
 import android.support.v4.view.ViewPager;
-import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.RecyclerView.LayoutManager;
 import android.support.v7.widget.ShareActionProvider;
 import android.support.v7.widget.StaggeredGridLayoutManager;
@@ -87,6 +87,7 @@ import com.winsonchiu.reader.data.reddit.User;
 import com.winsonchiu.reader.glide.RequestListenerCompletion;
 import com.winsonchiu.reader.history.Historian;
 import com.winsonchiu.reader.rx.FinalizingSubscriber;
+import com.winsonchiu.reader.theme.Themer;
 import com.winsonchiu.reader.utils.BaseMediaPlayerControl;
 import com.winsonchiu.reader.utils.BaseTextWatcher;
 import com.winsonchiu.reader.utils.CallbackYouTubeDestruction;
@@ -101,6 +102,7 @@ import com.winsonchiu.reader.utils.UtilsInput;
 import com.winsonchiu.reader.utils.UtilsJson;
 import com.winsonchiu.reader.utils.UtilsReddit;
 import com.winsonchiu.reader.utils.UtilsRx;
+import com.winsonchiu.reader.utils.UtilsTheme;
 import com.winsonchiu.reader.utils.UtilsView;
 import com.winsonchiu.reader.utils.ViewHolderBase;
 import com.winsonchiu.reader.utils.YouTubeListener;
@@ -214,7 +216,7 @@ public abstract class AdapterLink extends AdapterBase<ViewHolderBase> implements
 
     public void setVisibility(int visibility, @NonNull Thing thing) {
         for (ViewHolderBase viewHolder : viewHolders) {
-            if (viewHolder.getItemViewType() == TYPE_LINK && thing.equals(((ViewHolderLink) viewHolder).link)) {
+            if (viewHolder.getItemViewType() == TYPE_LINK && thing.getId().equals(((ViewHolderLink) viewHolder).link.getId())) {
                 viewHolder.itemView.setVisibility(visibility);
             }
         }
@@ -300,7 +302,7 @@ public abstract class AdapterLink extends AdapterBase<ViewHolderBase> implements
                         true);
             }
 
-            buttonShowSidebar.setColorFilter(UtilsColor.getColorIconFilter(itemView.getContext()), PorterDuff.Mode.MULTIPLY);
+            buttonShowSidebar.setColorFilter(UtilsTheme.getAttributeColor(itemView.getContext(), R.attr.colorIconFilter, 0), PorterDuff.Mode.MULTIPLY);
         }
 
         private void setVisibility(int visibility) {
@@ -501,10 +503,10 @@ public abstract class AdapterLink extends AdapterBase<ViewHolderBase> implements
         public MediaPlayer mediaPlayer;
         public Uri uriVideo;
         public int bufferPercentage;
-        private Source source;
+        protected Source source;
         private boolean expanded;
 
-        private Listener listener;
+        protected Listener listener;
 
         public ViewHolderLink(FragmentActivity activity,
                 ViewGroup parent,
@@ -586,24 +588,18 @@ public abstract class AdapterLink extends AdapterBase<ViewHolderBase> implements
         protected void initialize() {
             Context context = itemView.getContext();
 
-            TypedArray typedArray = context.getTheme().obtainStyledAttributes(
-                    new int[]{
-                            android.R.attr.textColorPrimary,
-                            android.R.attr.textColorSecondary,
-                            R.attr.colorAlert,
-                            R.attr.colorAccent,
-                            R.attr.colorIconFilter
-                    });
+            Themer themer = new Themer(context);
 
-            colorTextPrimaryDefault = typedArray.getColor(0, getColor(R.color.darkThemeTextColor));
-            colorTextSecondaryDefault = typedArray.getColor(1, getColor(R.color.darkThemeTextColorMuted));
-            colorTextAlertDefault = typedArray.getColor(2, getColor(R.color.textColorAlert));
-            colorAccent = typedArray.getColor(3, getColor(R.color.colorAccent));
-            int colorIconFilter = typedArray.getColor(4, 0xFFFFFFFF);
+            TypedArray typedArray = context.getTheme().obtainStyledAttributes(R.styleable.TextAttributes);
+
+            colorTextPrimaryDefault = typedArray.getColor(R.styleable.TextAttributes_android_textColorPrimary, ContextCompat.getColor(context, R.color.darkThemeTextColor));
+            colorTextSecondaryDefault = typedArray.getColor(R.styleable.TextAttributes_android_textColorSecondary, ContextCompat.getColor(context, R.color.darkThemeTextColorMuted));
+            colorTextAlertDefault = themer.getColorAlert();
+            colorAccent = themer.getColorAccent();
 
             typedArray.recycle();
 
-            colorFilterIconDefault = new CustomColorFilter(colorIconFilter);
+            colorFilterIconDefault = themer.getColorFilterIcon();
             colorFilterIconLight = new CustomColorFilter(getColor(R.color.darkThemeIconFilter));
             colorFilterIconDark = new CustomColorFilter(getColor(R.color.lightThemeIconFilter));
             colorFilterPositive = new CustomColorFilter(colorPositive);

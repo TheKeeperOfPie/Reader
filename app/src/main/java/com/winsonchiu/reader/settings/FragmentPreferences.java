@@ -6,7 +6,6 @@ package com.winsonchiu.reader.settings;
 
 import android.app.Activity;
 import android.content.SharedPreferences;
-import android.content.res.TypedArray;
 import android.os.Bundle;
 import android.preference.ListPreference;
 import android.preference.Preference;
@@ -18,6 +17,7 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import com.winsonchiu.reader.R;
+import com.winsonchiu.reader.utils.UtilsTheme;
 
 /**
  * Created by TheKeeperOfPie on 6/30/2015.
@@ -53,11 +53,7 @@ public abstract class FragmentPreferences extends PreferenceFragment implements 
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = super.onCreateView(inflater, container, savedInstanceState);
 
-        TypedArray typedArray = getActivity().getTheme().obtainStyledAttributes(new int[] {R.attr.colorScreenBackground});
-        int colorScreenBackground = typedArray.getColor(0, getResources().getColor(R.color.darkThemeBackground));
-        typedArray.recycle();
-
-        view.setBackgroundColor(colorScreenBackground);
+        view.setBackgroundColor(UtilsTheme.getAttributeColor(getContext(), R.attr.colorScreenBackground, 0));
 
         return view;
     }

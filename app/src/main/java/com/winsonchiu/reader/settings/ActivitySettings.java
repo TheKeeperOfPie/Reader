@@ -8,10 +8,6 @@ import android.app.Activity;
 import android.app.Fragment;
 import android.content.SharedPreferences;
 import android.content.res.Resources;
-import android.content.res.TypedArray;
-import android.graphics.ColorFilter;
-import android.graphics.PorterDuff;
-import android.graphics.PorterDuffColorFilter;
 import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
@@ -23,6 +19,7 @@ import android.view.WindowManager;
 import com.winsonchiu.reader.AppSettings;
 import com.winsonchiu.reader.R;
 import com.winsonchiu.reader.theme.ThemeColor;
+import com.winsonchiu.reader.theme.Themer;
 import com.winsonchiu.reader.utils.UtilsColor;
 
 /**
@@ -32,7 +29,6 @@ public class ActivitySettings extends AppCompatActivity {
 
     private static final String TAG = ActivitySettings.class.getCanonicalName();
     private Toolbar toolbar;
-    private ColorFilter colorFilterPrimary;
 
     @Override
     public Resources.Theme getTheme() {
@@ -64,20 +60,13 @@ public class ActivitySettings extends AppCompatActivity {
             getWindow().clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
         }
 
-        TypedArray typedArray = getTheme().obtainStyledAttributes(
-                new int[]{R.attr.colorPrimary});
-        final int colorPrimary = typedArray.getColor(0, getResources().getColor(R.color.colorPrimary));
-        typedArray.recycle();
-
-        int colorResourcePrimary = UtilsColor.showOnWhite(colorPrimary) ? R.color.darkThemeIconFilter : R.color.lightThemeIconFilter;
-
-        colorFilterPrimary = new PorterDuffColorFilter(getResources().getColor(colorResourcePrimary), PorterDuff.Mode.MULTIPLY);
+        Themer themer = new Themer(this);
 
         toolbar = (Toolbar) findViewById(R.id.toolbar);
         toolbar.setTitle(R.string.settings);
-        toolbar.setTitleTextColor(getResources().getColor(colorResourcePrimary));
+        toolbar.setTitleTextColor(themer.getColorFilterPrimary().getColor());
         toolbar.setNavigationIcon(R.drawable.ic_arrow_back_white_24dp);
-        toolbar.getNavigationIcon().mutate().setColorFilter(colorFilterPrimary);
+        toolbar.getNavigationIcon().mutate().setColorFilter(themer.getColorFilterPrimary());
         toolbar.setNavigationOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {

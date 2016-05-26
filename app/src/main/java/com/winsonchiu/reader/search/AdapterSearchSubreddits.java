@@ -5,8 +5,6 @@
 package com.winsonchiu.reader.search;
 
 import android.app.Activity;
-import android.content.res.TypedArray;
-import android.graphics.PorterDuff;
 import android.support.v4.view.GestureDetectorCompat;
 import android.support.v4.view.MotionEventCompat;
 import android.support.v7.widget.LinearLayoutManager;
@@ -27,7 +25,7 @@ import com.winsonchiu.reader.R;
 import com.winsonchiu.reader.adapter.AdapterBase;
 import com.winsonchiu.reader.adapter.AdapterCallback;
 import com.winsonchiu.reader.data.reddit.Subreddit;
-import com.winsonchiu.reader.utils.CustomColorFilter;
+import com.winsonchiu.reader.theme.Themer;
 import com.winsonchiu.reader.utils.UtilsAnimation;
 import com.winsonchiu.reader.utils.UtilsReddit;
 import com.winsonchiu.reader.utils.ViewHolderBase;
@@ -61,6 +59,7 @@ public class AdapterSearchSubreddits extends AdapterBase<AdapterSearchSubreddits
 
     @Override
     public void onBindViewHolder(ViewHolder holder, int position) {
+        super.onBindViewHolder(holder, position);
         holder.onBind(controllerSearchBase.getSubreddit(position));
     }
 
@@ -79,7 +78,6 @@ public class AdapterSearchSubreddits extends AdapterBase<AdapterSearchSubreddits
         protected TextView textDescription;
         protected TextView textInfo;
         protected RelativeLayout layoutContainerExpand;
-        protected CustomColorFilter colorFilterIcon;
         protected Subreddit subreddit;
 
         public ViewHolder(final View itemView, AdapterCallback adapterCallback, final EventListener eventListener) {
@@ -163,12 +161,10 @@ public class AdapterSearchSubreddits extends AdapterBase<AdapterSearchSubreddits
                 }
             });
 
-            TypedArray typedArray = itemView.getContext().getTheme().obtainStyledAttributes(
-                    new int[] {R.attr.colorIconFilter});
-            colorFilterIcon = new CustomColorFilter(typedArray.getColor(0, 0xFFFFFFFF), PorterDuff.Mode.MULTIPLY);
-            typedArray.recycle();
-            buttonReorder.setColorFilter(colorFilterIcon);
-            buttonOpen.setColorFilter(colorFilterIcon);
+            Themer themer = new Themer(itemView.getContext());
+
+            buttonReorder.setColorFilter(themer.getColorFilterIcon());
+            buttonOpen.setColorFilter(themer.getColorFilterIcon());
 
         }
 

@@ -15,7 +15,6 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.content.res.TypedArray;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.annotation.Nullable;
@@ -35,6 +34,7 @@ import com.winsonchiu.reader.data.reddit.Message;
 import com.winsonchiu.reader.data.reddit.Reddit;
 import com.winsonchiu.reader.data.reddit.Thing;
 import com.winsonchiu.reader.rx.ObserverEmpty;
+import com.winsonchiu.reader.theme.Themer;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -207,9 +207,7 @@ public class Receiver extends BroadcastReceiver {
                 PendingIntent pendingIntentRecheckInbox = PendingIntent
                         .getBroadcast(context, 0, intentRecheckInbox, PendingIntent.FLAG_CANCEL_CURRENT);
 
-                TypedArray typedArray = context.obtainStyledAttributes(new int[]{R.attr.colorPrimary});
-                int colorPrimary = typedArray.getColor(0, context.getResources().getColor(R.color.colorPrimary));
-                typedArray.recycle();
+                Themer themer = new Themer(context);
 
                 NotificationCompat.Builder builder = new NotificationCompat.Builder(context)
                         .setSmallIcon(R.mipmap.app_icon_white_outline)
@@ -228,8 +226,8 @@ public class Receiver extends BroadcastReceiver {
                         .setDeleteIntent(pendingIntentRecheckInbox)
                         .setAutoCancel(true)
                         .setCategory(NotificationCompat.CATEGORY_EMAIL)
-                        .setColor(colorPrimary)
-                        .setLights(colorPrimary, LED_MS_ON, LED_MS_OFF);
+                        .setColor(themer.getColorPrimary())
+                        .setLights(themer.getColorPrimary(), LED_MS_ON, LED_MS_OFF);
 
                 notificationManager.notify(NOTIFICATION_INBOX, builder.build());
 

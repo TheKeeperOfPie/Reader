@@ -5,10 +5,6 @@
 package com.winsonchiu.reader.inbox;
 
 import android.app.Activity;
-import android.content.res.TypedArray;
-import android.graphics.ColorFilter;
-import android.graphics.PorterDuff;
-import android.graphics.PorterDuffColorFilter;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.design.widget.AppBarLayout;
@@ -72,8 +68,6 @@ public class FragmentInbox extends FragmentBase implements Toolbar.OnMenuItemCli
     private Menu menu;
     private CoordinatorLayout layoutCoordinator;
     private AppBarLayout layoutAppBar;
-    private ColorFilter colorFilterPrimary;
-    private ColorFilter colorFilterAccent;
 
     @Inject ControllerInbox controllerInbox;
     @Inject ControllerUser controllerUser;
@@ -141,28 +135,16 @@ public class FragmentInbox extends FragmentBase implements Toolbar.OnMenuItemCli
         layoutCoordinator = (CoordinatorLayout) view.findViewById(R.id.layout_coordinator);
         layoutAppBar = (AppBarLayout) view.findViewById(R.id.layout_app_bar);
 
-        TypedArray typedArray = activity.getTheme().obtainStyledAttributes(
-                new int[]{R.attr.colorPrimary, R.attr.colorAccent});
-        final int colorPrimary = typedArray.getColor(0, getResources().getColor(R.color.colorPrimary));
-        int colorAccent = typedArray.getColor(1, getResources().getColor(R.color.colorAccent));
-        typedArray.recycle();
-
-        int colorResourcePrimary = UtilsColor.showOnWhite(colorPrimary) ? R.color.darkThemeIconFilter : R.color.lightThemeIconFilter;
-        int colorResourceAccent = UtilsColor.showOnWhite(colorAccent) ? R.color.darkThemeIconFilter : R.color.lightThemeIconFilter;
-
         int styleColorBackground = AppSettings.THEME_DARK.equals(mListener.getThemeBackground()) ? R.style.MenuDark : R.style.MenuLight;
 
-        colorFilterPrimary = new PorterDuffColorFilter(getResources().getColor(colorResourcePrimary), PorterDuff.Mode.MULTIPLY);
-        colorFilterAccent = new PorterDuffColorFilter(getResources().getColor(colorResourceAccent), PorterDuff.Mode.MULTIPLY);
-
-        ContextThemeWrapper contextThemeWrapper = new ContextThemeWrapper(new ThemeWrapper(activity, UtilsColor.getThemeForColor(getResources(), colorPrimary, mListener)), styleColorBackground);
+        ContextThemeWrapper contextThemeWrapper = new ContextThemeWrapper(new ThemeWrapper(activity, UtilsColor.getThemeForColor(getResources(), themer.getColorPrimary(), mListener)), styleColorBackground);
 
         toolbar = (Toolbar) activity.getLayoutInflater().cloneInContext(contextThemeWrapper).inflate(R.layout.toolbar, layoutAppBar, false);
         layoutAppBar.addView(toolbar);
         ((AppBarLayout.LayoutParams) toolbar.getLayoutParams()).setScrollFlags(AppBarLayout.LayoutParams.SCROLL_FLAG_SCROLL | AppBarLayout.LayoutParams.SCROLL_FLAG_ENTER_ALWAYS);
-        toolbar.setTitleTextColor(getResources().getColor(colorResourcePrimary));
+        toolbar.setTitleTextColor(themer.getColorFilterPrimary().getColor());
         toolbar.setNavigationIcon(R.drawable.ic_menu_white_24dp);
-        toolbar.getNavigationIcon().mutate().setColorFilter(colorFilterPrimary);
+        toolbar.getNavigationIcon().mutate().setColorFilter(themer.getColorFilterPrimary());
         toolbar.setNavigationOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -184,7 +166,7 @@ public class FragmentInbox extends FragmentBase implements Toolbar.OnMenuItemCli
                         .commit();
             }
         });
-        floatingActionButtonNewMessage.setColorFilter(colorFilterAccent);
+        floatingActionButtonNewMessage.setColorFilter(themer.getColorFilterAccent());
 
         behaviorFloatingActionButton = new ScrollAwareFloatingActionButtonBehavior(activity, null,
                 new ScrollAwareFloatingActionButtonBehavior.OnVisibilityChangeListener() {
@@ -275,11 +257,6 @@ public class FragmentInbox extends FragmentBase implements Toolbar.OnMenuItemCli
 
         AdapterCommentList.ViewHolderComment.Listener listenerComments = new AdapterCommentList.ViewHolderComment.Listener() {
             @Override
-            public void onClickComments() {
-
-            }
-
-            @Override
             public void onToggleComment(Comment comment) {
 
             }
@@ -364,7 +341,7 @@ public class FragmentInbox extends FragmentBase implements Toolbar.OnMenuItemCli
         menu = toolbar.getMenu();
 
         for (int index = 0; index < menu.size(); index++) {
-            menu.getItem(index).getIcon().mutate().setColorFilter(colorFilterPrimary);
+            menu.getItem(index).getIcon().mutate().setColorFilter(themer.getColorFilterPrimary());
         }
     }
 

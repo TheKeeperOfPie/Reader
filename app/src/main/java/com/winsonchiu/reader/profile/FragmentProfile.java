@@ -6,8 +6,6 @@ package com.winsonchiu.reader.profile;
 
 import android.app.Activity;
 import android.content.Intent;
-import android.content.res.TypedArray;
-import android.graphics.PorterDuff;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.design.widget.AppBarLayout;
@@ -61,7 +59,6 @@ import com.winsonchiu.reader.links.AdapterLink;
 import com.winsonchiu.reader.rx.FinalizingSubscriber;
 import com.winsonchiu.reader.rx.ObserverError;
 import com.winsonchiu.reader.theme.ThemeWrapper;
-import com.winsonchiu.reader.utils.CustomColorFilter;
 import com.winsonchiu.reader.utils.CustomItemTouchHelper;
 import com.winsonchiu.reader.utils.ItemDecorationDivider;
 import com.winsonchiu.reader.utils.UtilsAnimation;
@@ -95,7 +92,6 @@ public class FragmentProfile extends FragmentBase implements Toolbar.OnMenuItemC
     private CustomItemTouchHelper itemTouchHelper;
     private CustomItemTouchHelper.SimpleCallback callback;
     private View view;
-    private CustomColorFilter colorFilterPrimary;
 
     @Inject ControllerUser controllerUser;
     @Inject ControllerProfile controllerProfile;
@@ -130,7 +126,7 @@ public class FragmentProfile extends FragmentBase implements Toolbar.OnMenuItemC
 
         View view = searchView.findViewById(android.support.v7.appcompat.R.id.search_go_btn);
         if (view instanceof ImageView) {
-            ((ImageView) view).setColorFilter(colorFilterPrimary);
+            ((ImageView) view).setColorFilter(themer.getColorFilterPrimary());
         }
 
         searchView.setQueryHint(getString(R.string.username));
@@ -172,7 +168,7 @@ public class FragmentProfile extends FragmentBase implements Toolbar.OnMenuItemC
         }
 
         for (int index = 0; index < menu.size(); index++) {
-            menu.getItem(index).getIcon().mutate().setColorFilter(colorFilterPrimary);
+            menu.getItem(index).getIcon().mutate().setColorFilter(themer.getColorFilterPrimary());
         }
 
     }
@@ -270,24 +266,14 @@ public class FragmentProfile extends FragmentBase implements Toolbar.OnMenuItemC
             }
         };
 
-        TypedArray typedArray = activity.getTheme().obtainStyledAttributes(
-                new int[]{R.attr.colorPrimary});
-        final int colorPrimary = typedArray.getColor(0, getResources().getColor(R.color.colorPrimary));
-        typedArray.recycle();
-
-        int colorResourcePrimary = UtilsColor.showOnWhite(colorPrimary) ? R.color.darkThemeIconFilter : R.color.lightThemeIconFilter;
-
         int styleColorBackground = AppSettings.THEME_DARK.equals(mListener.getThemeBackground()) ? R.style.MenuDark : R.style.MenuLight;
 
-        colorFilterPrimary = new CustomColorFilter(getResources().getColor(colorResourcePrimary), PorterDuff.Mode.MULTIPLY);
-
-        ContextThemeWrapper contextThemeWrapper = new ContextThemeWrapper(new ThemeWrapper(activity, UtilsColor.getThemeForColor(getResources(), colorPrimary, mListener)), styleColorBackground);
+        ContextThemeWrapper contextThemeWrapper = new ContextThemeWrapper(new ThemeWrapper(activity, UtilsColor.getThemeForColor(getResources(), themer.getColorPrimary(), mListener)), styleColorBackground);
 
         toolbar = (Toolbar) activity.getLayoutInflater().cloneInContext(contextThemeWrapper).inflate(R.layout.toolbar, layoutAppBar, false);
         layoutAppBar.addView(toolbar);
         ((AppBarLayout.LayoutParams) toolbar.getLayoutParams()).setScrollFlags(AppBarLayout.LayoutParams.SCROLL_FLAG_SCROLL | AppBarLayout.LayoutParams.SCROLL_FLAG_ENTER_ALWAYS);
 
-        toolbar.setTitleTextColor(getResources().getColor(colorResourcePrimary));
         if (getFragmentManager().getBackStackEntryCount() <= 1) {
             toolbar.setNavigationIcon(R.drawable.ic_menu_white_24dp);
             toolbar.setNavigationOnClickListener(new View.OnClickListener() {
@@ -306,8 +292,8 @@ public class FragmentProfile extends FragmentBase implements Toolbar.OnMenuItemC
                 }
             });
         }
-        toolbar.getNavigationIcon().mutate().setColorFilter(colorFilterPrimary);
-        toolbar.setTitleTextColor(getResources().getColor(colorResourcePrimary));
+        toolbar.getNavigationIcon().mutate().setColorFilter(themer.getColorFilterPrimary());
+        toolbar.setTitleTextColor(themer.getColorFilterPrimary().getColor());
         setUpOptionsMenu();
 
         adapterProfilePage = new AdapterProfilePage(activity);
@@ -461,11 +447,6 @@ public class FragmentProfile extends FragmentBase implements Toolbar.OnMenuItemC
 
         AdapterCommentList.ViewHolderComment.Listener listenerComments = new AdapterCommentList.ViewHolderComment.Listener() {
             @Override
-            public void onClickComments() {
-
-            }
-
-            @Override
             public void onToggleComment(Comment comment) {
 
             }
@@ -587,12 +568,12 @@ public class FragmentProfile extends FragmentBase implements Toolbar.OnMenuItemC
                 }
 
                 SpannableString text = new SpannableString(link.isHidden() ? getString(R.string.link_hidden) : getString(R.string.link_shown));
-                text.setSpan(new ForegroundColorSpan(colorFilterPrimary.getColor()), 0, text.length(), Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
+                text.setSpan(new ForegroundColorSpan(themer.getColorFilterPrimary().getColor()), 0, text.length(), Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
 
                 //noinspection ResourceType
                 snackbar = Snackbar.make(recyclerProfile, text,
                         UtilsAnimation.SNACKBAR_DURATION)
-                        .setActionTextColor(colorFilterPrimary.getColor())
+                        .setActionTextColor(themer.getColorFilterPrimary().getColor())
                         .setAction(
                                 R.string.undo, new View.OnClickListener() {
                                     @Override
@@ -608,8 +589,7 @@ public class FragmentProfile extends FragmentBase implements Toolbar.OnMenuItemC
                                         recyclerProfile.invalidate();
                                     }
                                 });
-                snackbar.getView()
-                        .setBackgroundColor(colorPrimary);
+                snackbar.getView().setBackgroundColor(themer.getColorPrimary());
                 snackbar.show();
             }
         };

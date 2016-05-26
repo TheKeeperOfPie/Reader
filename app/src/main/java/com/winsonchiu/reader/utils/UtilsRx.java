@@ -19,6 +19,10 @@ public class UtilsRx {
         }
     }
 
+    public static boolean isUnsubscribed(Subscription subscription) {
+        return subscription == null || subscription.isUnsubscribed();
+    }
+
     public static <Input, Result> Func1<Input, Observable<Result>> flatMapWrapError(Call<Input, Result> call) {
         return first -> {
             try {
