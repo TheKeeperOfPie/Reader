@@ -4,21 +4,24 @@
 
 package com.winsonchiu.reader.comments;
 
+import android.support.v4.util.Pair;
+
 import com.fasterxml.jackson.databind.JsonNode;
+import com.jakewharton.rxrelay.BehaviorRelay;
+import com.jakewharton.rxrelay.PublishRelay;
 import com.winsonchiu.reader.CustomApplication;
+import com.winsonchiu.reader.ReplyModel;
 import com.winsonchiu.reader.dagger.components.ComponentStatic;
 import com.winsonchiu.reader.data.reddit.Comment;
 import com.winsonchiu.reader.data.reddit.Link;
 import com.winsonchiu.reader.data.reddit.Reddit;
 import com.winsonchiu.reader.utils.UtilsRx;
 
-import java.util.HashSet;
-import java.util.Set;
-
 import javax.inject.Inject;
 
 import rx.Observer;
 import rx.android.schedulers.AndroidSchedulers;
+import rx.functions.Action1;
 import rx.schedulers.Schedulers;
 
 /**
@@ -28,9 +31,9 @@ public class ControllerCommentsTop {
 
     private static final String TAG = ControllerCommentsTop.class.getCanonicalName();
 
-    private Set<Listener> listeners = new HashSet<>();
-    private Link link;
+    private Link link = new Link();
     private Source source = Source.NONE;
+    private EventHolder eventHolder = new EventHolder();
 
     @Inject Reddit reddit;
 
@@ -38,29 +41,26 @@ public class ControllerCommentsTop {
         CustomApplication.getComponentMain().inject(this);
     }
 
-    public void addListener(Listener listener) {
-        listeners.add(listener);
-    }
-
-    public void removeListener(Listener listener) {
-        listeners.remove(listener);
+    public EventHolder getEventHolder() {
+        return eventHolder;
     }
 
     public void insertComment(Comment comment) {
-        for (Listener listener : listeners) {
-            listener.insertComment(comment);
-        }
+        eventHolder.getInsertions().call(comment);
     }
 
     public void setNsfw(String name, boolean over18) {
-        for (Listener listener : listeners) {
-            listener.setNsfw(name, over18);
-        }
+        eventHolder.getUpdatesNsfw().call(Pair.create(name, over18));
     }
 
     public void setLink(Link link, Source source) {
         this.link = link;
         this.source = source;
+        eventHolder.call(getData());
+    }
+
+    private CommentsTopModel getData() {
+        return new CommentsTopModel(link, source);
     }
 
     public void setLinkId(String linkId, Source source) {
@@ -77,10 +77,7 @@ public class ControllerCommentsTop {
         link = new Link();
         link.setId(linkId);
         this.source = source;
-    }
-
-    public Link getLink() {
-        return link;
+        eventHolder.call(getData());
     }
 
     public void editComment(String name, final int level, String text) {
@@ -106,28 +103,47 @@ public class ControllerCommentsTop {
 
                     @Override
                     public void onNext(Comment newComment) {
-                        for (Listener listener : listeners) {
-                            listener.updateComment(newComment);
-                        }
+                        eventHolder.getUpdatesComment().call(newComment);
                     }
                 });
     }
 
     public void setReplyText(String nameParent, String text, boolean collapsed) {
-        for (Listener listener : listeners) {
-            listener.setReplyText(nameParent, text, collapsed);
+        eventHolder.getUpdatesReplyText().call(new ReplyModel(nameParent, text, collapsed));
+    }
+
+    public static class EventHolder implements Action1<CommentsTopModel> {
+
+        private BehaviorRelay<CommentsTopModel> relayData = BehaviorRelay.create(new CommentsTopModel());
+        private PublishRelay<Comment> relayInsertions = PublishRelay.create();
+        private PublishRelay<Comment> relayUpdatesComment = PublishRelay.create();
+        private PublishRelay<Pair<String, Boolean>> relayUpdatesNsfw = PublishRelay.create();
+        private PublishRelay<ReplyModel> relayUpdatesReplyText = PublishRelay.create();
+
+        @Override
+        public void call(CommentsTopModel commentsTopModel) {
+            relayData.call(commentsTopModel);
         }
-    }
 
-    public Source getSource() {
-        return source;
-    }
+        public BehaviorRelay<CommentsTopModel> getData() {
+            return relayData;
+        }
 
-    public interface Listener {
-        void insertComment(Comment comment);
-        void setNsfw(String name, boolean over18);
-        void updateComment(Comment newComment);
-        void setReplyText(String nameParent, String text, boolean collapsed);
+        public PublishRelay<Comment> getInsertions() {
+            return relayInsertions;
+        }
+
+        public PublishRelay<Comment> getUpdatesComment() {
+            return relayUpdatesComment;
+        }
+
+        public PublishRelay<Pair<String, Boolean>> getUpdatesNsfw() {
+            return relayUpdatesNsfw;
+        }
+
+        public PublishRelay<ReplyModel> getUpdatesReplyText() {
+            return relayUpdatesReplyText;
+        }
     }
 
 }

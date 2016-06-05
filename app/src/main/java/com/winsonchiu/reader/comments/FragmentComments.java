@@ -51,7 +51,6 @@ import com.winsonchiu.reader.CustomApplication;
 import com.winsonchiu.reader.FragmentBase;
 import com.winsonchiu.reader.FragmentListenerBase;
 import com.winsonchiu.reader.R;
-import com.winsonchiu.reader.data.reddit.Comment;
 import com.winsonchiu.reader.data.reddit.Link;
 import com.winsonchiu.reader.data.reddit.Listing;
 import com.winsonchiu.reader.data.reddit.Sort;
@@ -64,6 +63,7 @@ import com.winsonchiu.reader.rx.ObserverFinish;
 import com.winsonchiu.reader.search.ControllerSearch;
 import com.winsonchiu.reader.utils.RecyclerFragmentPagerAdapter;
 import com.winsonchiu.reader.utils.ScrollAwareFloatingActionButtonBehavior;
+import com.winsonchiu.reader.utils.UtilsRx;
 import com.winsonchiu.reader.utils.UtilsTheme;
 import com.winsonchiu.reader.utils.YouTubeListener;
 import com.winsonchiu.reader.utils.YouTubePlayerStateListener;
@@ -76,6 +76,7 @@ import javax.inject.Inject;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
+import rx.Subscription;
 import rx.android.schedulers.AndroidSchedulers;
 
 public class FragmentComments extends FragmentBase
@@ -102,7 +103,6 @@ public class FragmentComments extends FragmentBase
 
     private FragmentListenerBase mListener;
     private ScrollAwareFloatingActionButtonBehavior behaviorFloatingActionButton;
-    private ControllerCommentsTop.Listener listenerTop;
     private FastOutSlowInInterpolator fastOutSlowInInterpolator;
     private FragmentBase fragmentToHide;
     private String fragmentParentTag;
@@ -141,6 +141,11 @@ public class FragmentComments extends FragmentBase
     private FragmentCommentsInner fragmentCurrent;
     private RecyclerFragmentPagerAdapter<FragmentCommentsInner> adapterComments;
     private Source source = Source.NONE;
+
+    private Subscription subscriptionInsertions;
+    private Subscription subscriptionUpdatesNsfw;
+    private Subscription subscriptionUpdatesComment;
+    private Subscription subscriptionUpdatesReplyText;
 
     @BindView(R.id.toolbar) Toolbar toolbar;
     @BindView(R.id.layout_actions) ViewGroup layoutActions;
@@ -251,28 +256,6 @@ public class FragmentComments extends FragmentBase
         layoutRoot = (CustomFrameLayout) inflater
                 .inflate(R.layout.fragment_comments, container, false);
         ButterKnife.bind(this, layoutRoot);
-
-        listenerTop = new ControllerCommentsTop.Listener() {
-            @Override
-            public void insertComment(Comment comment) {
-                fragmentCurrent.getControllerComments().insertComment(comment);
-            }
-
-            @Override
-            public void setNsfw(String name, boolean over18) {
-                fragmentCurrent.getControllerComments().setNsfw(name, over18);
-            }
-
-            @Override
-            public void updateComment(Comment newComment) {
-
-            }
-
-            @Override
-            public void setReplyText(String nameParent, String text, boolean collapsed) {
-
-            }
-        };
 
         youTubeListener = new YouTubeListener() {
             @Override
@@ -413,8 +396,7 @@ public class FragmentComments extends FragmentBase
                             FragmentBase fragment = (FragmentBase) getFragmentManager()
                                     .findFragmentByTag(fragmentParentTag);
                             if (fragment != null) {
-                                fragment.setVisibilityOfThing(View.VISIBLE,
-                                        controllerCommentsTop.getLink());
+                                fragment.setVisibilityOfThing(View.VISIBLE, linkTop);
                                 fragment.onHiddenChanged(false);
                             }
                             hasSwipedEnd = true;
@@ -515,7 +497,26 @@ public class FragmentComments extends FragmentBase
             }
         };
 
-        linkTop = controllerCommentsTop.getLink();
+        initializePager();
+
+        if (!getArguments().getBoolean(ARG_INITIALIZED, false)) {
+            viewBackground.setVisibility(View.INVISIBLE);
+            pagerComments.setVisibility(View.INVISIBLE);
+            layoutAppBar.setVisibility(View.GONE);
+
+            layoutComments.postOnAnimation(() -> animateEnter(layoutRoot));
+        }
+        else {
+            setAnimationFinished(true);
+        }
+
+        return layoutRoot;
+    }
+
+    private void initializePager() {
+        CommentsTopModel data = controllerCommentsTop.getEventHolder().getData().getValue();
+        linkTop = data.getLink();
+        source = data.getSource();
         initializePagerValues();
 
         adapterComments = new RecyclerFragmentPagerAdapter<FragmentCommentsInner>(getFragmentManager()) {
@@ -570,19 +571,6 @@ public class FragmentComments extends FragmentBase
 
         pagerComments.setAdapter(adapterComments);
         pagerComments.setCurrentItem(indexStart, false);
-
-        if (!getArguments().getBoolean(ARG_INITIALIZED, false)) {
-            viewBackground.setVisibility(View.INVISIBLE);
-            pagerComments.setVisibility(View.INVISIBLE);
-            layoutAppBar.setVisibility(View.GONE);
-
-            layoutComments.postOnAnimation(() -> animateEnter(layoutRoot));
-        }
-        else {
-            setAnimationFinished(true);
-        }
-
-        return layoutRoot;
     }
 
     private Link getPreviousLink(int positionPager) {
@@ -626,8 +614,6 @@ public class FragmentComments extends FragmentBase
     }
 
     private void initializePagerValues() {
-        source = controllerCommentsTop.getSource();
-
         switch (source) {
             case PROFILE:
             case NONE:
@@ -679,19 +665,31 @@ public class FragmentComments extends FragmentBase
     @Override
     public void onStart() {
         super.onStart();
-        controllerCommentsTop.addListener(listenerTop);
+
+        ControllerCommentsTop.EventHolder eventHolder = controllerCommentsTop.getEventHolder();
+
+        subscriptionInsertions = eventHolder.getInsertions()
+                .subscribe(comment -> fragmentCurrent.getControllerComments().insertComment(comment));
+
+        subscriptionUpdatesNsfw = eventHolder.getUpdatesNsfw()
+                .subscribe(pair -> fragmentCurrent.getControllerComments().setNsfw(pair.first, pair.second));
+
+        subscriptionUpdatesComment = eventHolder.getUpdatesComment()
+                .subscribe(comment -> {
+                    // TODO: Implement this
+                });
+
+        subscriptionUpdatesReplyText = eventHolder.getUpdatesReplyText()
+                .subscribe(comment -> fragmentCurrent.getControllerComments().setReplyText(comment));
     }
 
     @Override
-    public void onResume() {
-        super.onResume();
-        controllerCommentsTop.addListener(listenerTop);
-    }
-
-    @Override
-    public void onPause() {
-        controllerCommentsTop.removeListener(listenerTop);
-        super.onPause();
+    public void onStop() {
+        UtilsRx.unsubscribe(subscriptionInsertions);
+        UtilsRx.unsubscribe(subscriptionUpdatesNsfw);
+        UtilsRx.unsubscribe(subscriptionUpdatesComment);
+        UtilsRx.unsubscribe(subscriptionUpdatesReplyText);
+        super.onStop();
     }
 
     private void loadYoutubeVideo(final String id, final int timeInMillis) {
@@ -1137,7 +1135,7 @@ public class FragmentComments extends FragmentBase
                                 .findFragmentByTag(fragmentParentTag);
                         if (fragment != null) {
                             fragment.onHiddenChanged(false);
-                            fragment.setVisibilityOfThing(View.INVISIBLE, controllerCommentsTop.getLink());
+                            fragment.setVisibilityOfThing(View.INVISIBLE, linkTop);
                             getFragmentManager().beginTransaction().show(fragment)
                                     .commit();
                         }
@@ -1173,8 +1171,7 @@ public class FragmentComments extends FragmentBase
         FragmentBase fragment = (FragmentBase) getFragmentManager()
                 .findFragmentByTag(fragmentParentTag);
         if (fragment != null) {
-            fragment.setVisibilityOfThing(View.VISIBLE,
-                    controllerCommentsTop.getLink());
+            fragment.setVisibilityOfThing(View.VISIBLE, linkTop);
             fragment.onHiddenChanged(false);
         }
         float screenWidth = getResources().getDisplayMetrics().widthPixels;
@@ -1368,8 +1365,7 @@ public class FragmentComments extends FragmentBase
                                     FragmentBase fragment = (FragmentBase) getFragmentManager()
                                             .findFragmentByTag(fragmentParentTag);
                                     if (fragment != null) {
-                                        fragment.setVisibilityOfThing(View.INVISIBLE,
-                                                controllerCommentsTop.getLink());
+                                        fragment.setVisibilityOfThing(View.INVISIBLE, linkTop);
                                         fragment.onHiddenChanged(true);
                                     }
                                 }

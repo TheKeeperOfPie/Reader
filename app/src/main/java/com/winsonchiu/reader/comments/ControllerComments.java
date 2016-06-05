@@ -13,6 +13,7 @@ import com.jakewharton.rxrelay.BehaviorRelay;
 import com.jakewharton.rxrelay.PublishRelay;
 import com.winsonchiu.reader.AppSettings;
 import com.winsonchiu.reader.ControllerUser;
+import com.winsonchiu.reader.ReplyModel;
 import com.winsonchiu.reader.adapter.RxAdapterEvent;
 import com.winsonchiu.reader.dagger.components.ComponentActivity;
 import com.winsonchiu.reader.dagger.components.ComponentStatic;
@@ -720,7 +721,11 @@ public class ControllerComments implements AdapterCommentList.ViewHolderComment.
         return link.getId();
     }
 
-    public boolean setReplyText(String name, String text, boolean collapsed) {
+    public boolean setReplyText(ReplyModel replyModel) {
+        String name = replyModel.getNameParent();
+        String text = replyModel.getText();
+        boolean collapsed = replyModel.isCollapsed();
+
         if (name.equals(link.getName())) {
             link.setReplyText(text);
             link.setReplyExpanded(!collapsed);
@@ -762,7 +767,8 @@ public class ControllerComments implements AdapterCommentList.ViewHolderComment.
         }
 
         public Observable<RxAdapterEvent<CommentsModel>> getData() {
-            return relayData;
+            return relayData.skip(1)
+                    .startWith(new RxAdapterEvent<>(relayData.getValue().getData()));
         }
 
         public BehaviorRelay<Boolean> getLoading() {

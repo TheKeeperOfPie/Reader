@@ -43,6 +43,7 @@ import com.winsonchiu.reader.inbox.ControllerInbox;
 import com.winsonchiu.reader.inbox.FragmentInbox;
 import com.winsonchiu.reader.links.ControllerLinks;
 import com.winsonchiu.reader.links.FragmentThreadList;
+import com.winsonchiu.reader.profile.ControllerProfile;
 import com.winsonchiu.reader.profile.FragmentProfile;
 import com.winsonchiu.reader.search.ControllerSearch;
 import com.winsonchiu.reader.search.FragmentSearch;
@@ -90,7 +91,7 @@ public class FragmentReply extends FragmentBase implements Toolbar.OnMenuItemCli
 
     @Inject ControllerLinks controllerLinks;
     @Inject ControllerUser controllerUser;
-    @Inject ControllerComments controllerProfile;
+    @Inject ControllerProfile controllerProfile;
     @Inject ControllerInbox controllerInbox;
     @Inject ControllerSearch controllerSearch;
     @Inject ControllerInbox controllerHistory;

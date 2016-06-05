@@ -78,6 +78,17 @@ public class RxAdapterEvent<Data> {
         return payload;
     }
 
+    @Override
+    public String toString() {
+        return "RxAdapterEvent{" +
+                "data=" + data +
+                ", type=" + type +
+                ", positionStart=" + positionStart +
+                ", size=" + size +
+                ", payload=" + payload +
+                '}';
+    }
+
     public enum Type {
         CHANGE,
         INSERT,

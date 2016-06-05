@@ -636,22 +636,21 @@ public class FragmentCommentsInner extends FragmentBase {
     }
 
     @Override
-    public void onResume() {
-        super.onResume();
+    public void onStart() {
+        super.onStart();
 
         if (UtilsRx.isUnsubscribed(subscriptionData)) {
             subscribe();
         }
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
 
         if (animationFinished) {
 
         }
-    }
-
-    @Override
-    public void onPause() {
-        unsubscribe();
-        super.onPause();
     }
 
     public void subscribe() {
@@ -702,6 +701,7 @@ public class FragmentCommentsInner extends FragmentBase {
 
     @Override
     public void onStop() {
+        unsubscribe();
         adapterCommentList.destroyViewHolderLink();
         adapterLink.destroyViewHolderLink();
         super.onStop();

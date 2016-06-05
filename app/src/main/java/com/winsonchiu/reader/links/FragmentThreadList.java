@@ -66,6 +66,7 @@ import com.winsonchiu.reader.data.reddit.Thing;
 import com.winsonchiu.reader.data.reddit.Time;
 import com.winsonchiu.reader.data.reddit.User;
 import com.winsonchiu.reader.history.Historian;
+import com.winsonchiu.reader.rx.ActionLog;
 import com.winsonchiu.reader.rx.FinalizingSubscriber;
 import com.winsonchiu.reader.rx.ObserverEmpty;
 import com.winsonchiu.reader.rx.ObserverError;
@@ -621,12 +622,13 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
     }
 
     @Override
-    public void onResume() {
-        super.onResume();
+    public void onStart() {
+        super.onStart();
         ControllerLinks.EventHolder eventHolder = controllerLinks.getEventHolder();
         subscriptionData = eventHolder.getData()
                 .observeOn(Schedulers.computation())
                 .observeOn(AndroidSchedulers.mainThread())
+                .doOnNext(new ActionLog<>(TAG))
                 .doOnNext(new AdapterNotifySubscriber<>(adapterLinkGrid))
                 .doOnNext(new AdapterNotifySubscriber<>(adapterLinkList))
                 .doOnNext(event -> textEmpty.setVisibility(event.getData().getLinks().isEmpty() ? View.VISIBLE : View.GONE))
@@ -680,14 +682,14 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
     }
 
     @Override
-    public void onPause() {
+    public void onStop() {
         UtilsRx.unsubscribe(subscriptionData);
         UtilsRx.unsubscribe(subscriptionLoading);
         UtilsRx.unsubscribe(subscriptionSort);
         UtilsRx.unsubscribe(subscriptionTime);
         UtilsRx.unsubscribe(subscriptionErrors);
         controllerUser.removeListener(listenerUser);
-        super.onPause();
+        super.onStop();
     }
 
     @Override

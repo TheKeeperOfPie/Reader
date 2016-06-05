@@ -451,7 +451,8 @@ public class ControllerLinks {
         }
 
         public Observable<RxAdapterEvent<LinksModel>> getData() {
-            return relayData;
+            return relayData.skip(1)
+                    .startWith(new RxAdapterEvent<>(relayData.getValue().getData()));
         }
 
         public BehaviorRelay<Boolean> getLoading() {
