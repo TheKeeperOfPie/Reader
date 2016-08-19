@@ -48,8 +48,8 @@ import com.winsonchiu.reader.FragmentBase;
 import com.winsonchiu.reader.FragmentListenerBase;
 import com.winsonchiu.reader.R;
 import com.winsonchiu.reader.adapter.AdapterListener;
-import com.winsonchiu.reader.adapter.AdapterNotifySubscriber;
 import com.winsonchiu.reader.comments.Source;
+import com.winsonchiu.reader.data.reddit.Likes;
 import com.winsonchiu.reader.data.reddit.Link;
 import com.winsonchiu.reader.data.reddit.Listing;
 import com.winsonchiu.reader.data.reddit.Reddit;
@@ -307,7 +307,7 @@ public class FragmentHistory extends FragmentBase implements Toolbar.OnMenuItemC
             }
 
             @Override
-            public void onVote(Link link, AdapterLink.ViewHolderLink viewHolderLink, int vote) {
+            public void onVote(Link link, AdapterLink.ViewHolderLink viewHolderLink, Likes vote) {
 
             }
 
@@ -497,11 +497,14 @@ public class FragmentHistory extends FragmentBase implements Toolbar.OnMenuItemC
 
         subscriptionData = eventHolder.getData()
                 .observeOn(AndroidSchedulers.mainThread())
-                .doOnNext(new AdapterNotifySubscriber<>(adapterLinkGrid))
-                .doOnNext(new AdapterNotifySubscriber<>(adapterLinkList))
+                .doOnNext(linksModelRxAdapterEvent -> {
+                    adapterLinkGrid.setData(linksModelRxAdapterEvent.getData());
+                    adapterLinkList.setData(linksModelRxAdapterEvent.getData());
+                })
                 .subscribe();
 
         subscriptionLoading = eventHolder.getLoading()
+                .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(swipeRefreshHistory::setRefreshing);
     }
 

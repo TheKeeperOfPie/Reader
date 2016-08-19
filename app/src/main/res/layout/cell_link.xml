@@ -63,6 +63,7 @@
                 android:id="@+id/progress_image"
                 android:layout_width="48dp"
                 android:layout_height="48dp"
+                android:layout_margin="16dp"
                 android:layout_gravity="center"
                 android:indeterminate="true"
                 android:visibility="gone"

@@ -13,13 +13,19 @@ import android.text.SpannedString;
 import android.text.TextUtils;
 import android.util.Log;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.winsonchiu.reader.ActivityMain;
 import com.winsonchiu.reader.ApiKeys;
+import com.winsonchiu.reader.data.reddit.Comment;
 import com.winsonchiu.reader.data.reddit.Link;
+import com.winsonchiu.reader.data.reddit.Message;
 import com.winsonchiu.reader.data.reddit.Reddit;
 import com.winsonchiu.reader.data.reddit.Subreddit;
 import com.winsonchiu.reader.data.reddit.TagHandlerReddit;
+import com.winsonchiu.reader.data.reddit.Thing;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -142,5 +148,28 @@ public class UtilsReddit {
 
     public static void launchScreenSubreddit(Context context, Link link) {
         launchRedditPage(context, "https://reddit.com/r/" + link.getSubreddit());
+    }
+
+    public static List<Thing> parseJson(JsonNode node) {
+        switch (UtilsJson.getString(node.get("kind"))) {
+
+            // TODO: Add cases for all ID36s and fix adding Comments
+
+            case "more":
+                return UtilsList.of(Comment.fromJson(node, 0));
+            case "t1":
+                List<Thing> list = new ArrayList<>();
+                Comment.addAllFromJson(list, node, 0);
+                return list;
+            case "t3":
+                return UtilsList.of(Link.fromJson(node));
+            case "t4":
+                return UtilsList.of(Message.fromJson(node));
+            case "t5":
+                return UtilsList.of(Subreddit.fromJson(node));
+
+        }
+
+        return new ArrayList<>();
     }
 }

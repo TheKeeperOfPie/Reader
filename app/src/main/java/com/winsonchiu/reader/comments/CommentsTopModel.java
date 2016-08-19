@@ -4,7 +4,7 @@
 
 package com.winsonchiu.reader.comments;
 
-import com.winsonchiu.reader.data.reddit.Link;
+import com.winsonchiu.reader.links.LinkModel;
 
 /**
  * Created by TheKeeperOfPie on 5/15/2016.
@@ -12,23 +12,31 @@ import com.winsonchiu.reader.data.reddit.Link;
  */
 public class CommentsTopModel {
 
-    private Link link = new Link();
+    private LinkModel linkModel = new LinkModel();
     private Source source = Source.NONE;
 
     public CommentsTopModel() {
 
     }
 
-    public CommentsTopModel(Link link, Source source) {
-        this.link = link;
-        this.source = source;
+    public CommentsTopModel(CommentsTopModel other) {
+        this.linkModel = other.linkModel;
+        this.source = other.source;
     }
 
-    public Link getLink() {
-        return link;
+    public LinkModel getLinkModel() {
+        return linkModel;
+    }
+
+    public void setLinkModel(LinkModel linkModel) {
+        this.linkModel = linkModel;
     }
 
     public Source getSource() {
         return source;
+    }
+
+    public void setSource(Source source) {
+        this.source = source;
     }
 }

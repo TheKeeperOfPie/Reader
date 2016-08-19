@@ -40,6 +40,7 @@ import com.winsonchiu.reader.adapter.AdapterListener;
 import com.winsonchiu.reader.comments.AdapterCommentList;
 import com.winsonchiu.reader.data.Page;
 import com.winsonchiu.reader.data.reddit.Comment;
+import com.winsonchiu.reader.data.reddit.Likes;
 import com.winsonchiu.reader.rx.FinalizingSubscriber;
 import com.winsonchiu.reader.theme.ThemeWrapper;
 import com.winsonchiu.reader.utils.ItemDecorationDivider;
@@ -312,7 +313,7 @@ public class FragmentInbox extends FragmentBase implements Toolbar.OnMenuItemCli
             }
 
             @Override
-            public void onVoteComment(Comment comment, AdapterCommentList.ViewHolderComment viewHolderComment, int vote) {
+            public void onVoteComment(Comment comment, AdapterCommentList.ViewHolderComment viewHolderComment, Likes vote) {
 
             }
 

@@ -6,21 +6,21 @@ package com.winsonchiu.reader.comments;
 
 import android.support.v4.util.Pair;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.jakewharton.rxrelay.BehaviorRelay;
 import com.jakewharton.rxrelay.PublishRelay;
 import com.winsonchiu.reader.CustomApplication;
 import com.winsonchiu.reader.ReplyModel;
-import com.winsonchiu.reader.dagger.components.ComponentStatic;
 import com.winsonchiu.reader.data.reddit.Comment;
+import com.winsonchiu.reader.data.reddit.JsonPayload;
 import com.winsonchiu.reader.data.reddit.Link;
 import com.winsonchiu.reader.data.reddit.Reddit;
+import com.winsonchiu.reader.links.LinkModel;
+import com.winsonchiu.reader.rx.ObserverNext;
 import com.winsonchiu.reader.utils.UtilsRx;
 
 import javax.inject.Inject;
 
-import rx.Observer;
-import rx.android.schedulers.AndroidSchedulers;
+import rx.Observable;
 import rx.functions.Action1;
 import rx.schedulers.Schedulers;
 
@@ -31,8 +31,8 @@ public class ControllerCommentsTop {
 
     private static final String TAG = ControllerCommentsTop.class.getCanonicalName();
 
-    private Link link = new Link();
-    private Source source = Source.NONE;
+    private CommentsTopModel commentsTopModel = new CommentsTopModel();
+
     private EventHolder eventHolder = new EventHolder();
 
     @Inject Reddit reddit;
@@ -53,14 +53,14 @@ public class ControllerCommentsTop {
         eventHolder.getUpdatesNsfw().call(Pair.create(name, over18));
     }
 
-    public void setLink(Link link, Source source) {
-        this.link = link;
-        this.source = source;
-        eventHolder.call(getData());
+    private void publishUpdate() {
+        eventHolder.call(new CommentsTopModel(commentsTopModel));
     }
 
-    private CommentsTopModel getData() {
-        return new CommentsTopModel(link, source);
+    public void setLink(Link link, Source source) {
+        commentsTopModel.setLinkModel(new LinkModel(link));
+        commentsTopModel.setSource(source);
+        publishUpdate();
     }
 
     public void setLinkId(String linkId, Source source) {
@@ -69,40 +69,28 @@ public class ControllerCommentsTop {
 
     public void setLinkId(String linkId, String commentId, int contextLevel, Source source) {
         setLinkIdValues(linkId, source);
-        link.setContextLevel(contextLevel);
-        link.setCommentId(commentId);
+        commentsTopModel.getLinkModel().setContextLevel(contextLevel);
+        commentsTopModel.getLinkModel().setCommentId(commentId);
     }
 
     private void setLinkIdValues(String linkId, Source source) {
-        link = new Link();
+        Link link = new Link();
         link.setId(linkId);
-        this.source = source;
-        eventHolder.call(getData());
+        commentsTopModel.setLinkModel(new LinkModel(link));
+        commentsTopModel.setSource(source);
+        publishUpdate();
     }
 
     public void editComment(String name, final int level, String text) {
         reddit.editUserText(name, text)
                 .observeOn(Schedulers.computation())
-                .flatMap(UtilsRx.flatMapWrapError(response -> Comment.fromJson(ComponentStatic.getObjectMapper()
-                        .readValue(response, JsonNode.class)
-                        .get("json")
-                        .get("data")
-                        .get("things")
-                        .get(0), level)))
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(new Observer<Comment>() {
-                    @Override
-                    public void onCompleted() {
-
-                    }
-
-                    @Override
-                    public void onError(Throwable e) {
-
-                    }
-
+                .flatMap(UtilsRx.flatMapWrapError(JsonPayload::fromJson))
+                .flatMap(jsonPayload -> Observable.from(jsonPayload.getData().getThings()))
+                .ofType(Comment.class)
+                .subscribe(new ObserverNext<Comment>() {
                     @Override
                     public void onNext(Comment newComment) {
+                        newComment.setLevel(level);
                         eventHolder.getUpdatesComment().call(newComment);
                     }
                 });

@@ -58,6 +58,7 @@ import com.winsonchiu.reader.adapter.AdapterCallback;
 import com.winsonchiu.reader.adapter.AdapterDataListener;
 import com.winsonchiu.reader.adapter.AdapterListener;
 import com.winsonchiu.reader.data.reddit.Comment;
+import com.winsonchiu.reader.data.reddit.Likes;
 import com.winsonchiu.reader.data.reddit.Link;
 import com.winsonchiu.reader.data.reddit.User;
 import com.winsonchiu.reader.links.AdapterLink;
@@ -568,7 +569,7 @@ public class AdapterCommentList extends AdapterBase<RecyclerView.ViewHolder> imp
                 @Override
                 public boolean onDoubleTap(MotionEvent e) {
                     if (!comment.isMore() && !TextUtils.isEmpty(user.getName())) {
-                        listener.onVoteComment(comment, ViewHolderComment.this, 1);
+                        listener.onVoteComment(comment, ViewHolderComment.this, Likes.UPVOTE);
                     }
                     if (layoutContainerExpand.getVisibility() == View.VISIBLE) {
                         layoutContainerExpand.clearAnimation();
@@ -743,19 +744,19 @@ public class AdapterCommentList extends AdapterBase<RecyclerView.ViewHolder> imp
 
         public void setVoteColors() {
             switch (comment.getLikes()) {
-                case 1:
+                case UPVOTE:
                     drawableUpvote.mutate().setColorFilter(colorFilterPositive);
                     itemUpvote.setIcon(drawableUpvote);
                     drawableDownvote.setColorFilter(colorFilterMenuItem);
                     itemDownvote.setIcon(drawableDownvote);
                     break;
-                case -1:
+                case DOWNVOTE:
                     drawableDownvote.mutate().setColorFilter(colorFilterNegative);
                     itemDownvote.setIcon(drawableDownvote);
                     drawableUpvote.setColorFilter(colorFilterMenuItem);
                     itemUpvote.setIcon(drawableUpvote);
                     break;
-                case 0:
+                case NONE:
                     drawableUpvote.setColorFilter(colorFilterMenuItem);
                     itemUpvote.setIcon(drawableUpvote);
                     drawableDownvote.setColorFilter(colorFilterMenuItem);
@@ -861,11 +862,11 @@ public class AdapterCommentList extends AdapterBase<RecyclerView.ViewHolder> imp
             int voteColor = 0;
 
             switch (comment.getLikes()) {
-                case -1:
+                case DOWNVOTE:
                     voteIndicator = " \u25BC";
                     voteColor = colorNegative;
                     break;
-                case 1:
+                case UPVOTE:
                     voteIndicator = " \u25B2";
                     voteColor = colorPositive;
                     break;
@@ -975,10 +976,10 @@ public class AdapterCommentList extends AdapterBase<RecyclerView.ViewHolder> imp
                     listener.onJumpToParent(comment);
                     break;
                 case R.id.item_upvote:
-                    listener.onVoteComment(comment, ViewHolderComment.this, 1);
+                    listener.onVoteComment(comment, ViewHolderComment.this, Likes.UPVOTE);
                     break;
                 case R.id.item_downvote:
-                    listener.onVoteComment(comment, ViewHolderComment.this, -1);
+                    listener.onVoteComment(comment, ViewHolderComment.this, Likes.DOWNVOTE);
                     break;
                 case R.id.item_reply:
                     comment.setEditMode(false);
@@ -1070,7 +1071,7 @@ public class AdapterCommentList extends AdapterBase<RecyclerView.ViewHolder> imp
             void onCopyText(Comment comment);
             void onDeleteComment(Comment comment);
             void onReport(Comment comment);
-            void onVoteComment(Comment comment, ViewHolderComment viewHolderComment, int vote);
+            void onVoteComment(Comment comment, ViewHolderComment viewHolderComment, Likes vote);
             void onSave(Comment comment);
         }
 
@@ -1078,7 +1079,7 @@ public class AdapterCommentList extends AdapterBase<RecyclerView.ViewHolder> imp
             boolean toggleComment(Comment comment);
             Observable<String> deleteComment(Comment comment);
             void editComment(String name, int level, String text);
-            Observable<String> voteComment(ViewHolderComment viewHolderComment, Comment comment, int vote);
+            Observable<String> voteComment(ViewHolderComment viewHolderComment, Comment comment, Likes vote);
             void jumpToParent(Comment comment);
             String getLinkId();
             String getSubredditName();

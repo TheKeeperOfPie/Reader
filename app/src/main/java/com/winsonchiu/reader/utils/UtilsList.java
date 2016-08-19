@@ -7,6 +7,7 @@ package com.winsonchiu.reader.utils;
 import android.support.annotation.Nullable;
 import android.support.v4.util.Pair;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import rx.functions.Func1;
@@ -47,5 +48,18 @@ public class UtilsList {
 
     public static boolean isNullOrEmpty(List list) {
         return list == null || list.isEmpty();
+    }
+
+    @SafeVarargs
+    public static <Item> List<Item> of(Item... items) {
+        List<Item> list = new ArrayList<>();
+
+        if (items != null) {
+            for (Item item : items) {
+                list.add(item);
+            }
+        }
+
+        return list;
     }
 }

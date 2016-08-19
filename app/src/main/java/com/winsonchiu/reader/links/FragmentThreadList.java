@@ -55,7 +55,7 @@ import com.winsonchiu.reader.FragmentListenerBase;
 import com.winsonchiu.reader.FragmentNewPost;
 import com.winsonchiu.reader.R;
 import com.winsonchiu.reader.adapter.AdapterListener;
-import com.winsonchiu.reader.adapter.AdapterNotifySubscriber;
+import com.winsonchiu.reader.data.reddit.Likes;
 import com.winsonchiu.reader.data.reddit.Link;
 import com.winsonchiu.reader.data.reddit.Listing;
 import com.winsonchiu.reader.data.reddit.Reddit;
@@ -71,8 +71,6 @@ import com.winsonchiu.reader.rx.FinalizingSubscriber;
 import com.winsonchiu.reader.rx.ObserverEmpty;
 import com.winsonchiu.reader.rx.ObserverError;
 import com.winsonchiu.reader.search.FragmentSearch;
-import com.winsonchiu.reader.theme.Themer;
-import com.winsonchiu.reader.utils.CustomColorFilter;
 import com.winsonchiu.reader.utils.CustomItemTouchHelper;
 import com.winsonchiu.reader.utils.ItemDecorationDivider;
 import com.winsonchiu.reader.utils.ScrollAwareFloatingActionButtonBehavior;
@@ -115,8 +113,6 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
     private FastOutSlowInInterpolator fastOutSlowInInterpolator = new FastOutSlowInInterpolator();
 
     private ScrollAwareFloatingActionButtonBehavior behaviorButtonExpandActions;
-    private CustomColorFilter colorFilterPrimary;
-    private CustomColorFilter colorFilterAccent;
     private ItemDecorationDivider itemDecorationDivider;
 
     private View view;
@@ -205,7 +201,7 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
                     @Override
                     public void onEndHideFromScroll() {
                         buttonExpandActions.setImageResource(R.drawable.ic_unfold_more_white_24dp);
-                        buttonExpandActions.setColorFilter(colorFilterAccent);
+                        buttonExpandActions.setColorFilter(themer.getColorFilterAccent());
                     }
 
                 });
@@ -253,9 +249,9 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
             layoutActions.setLayoutParams(layoutParamsActions);
         }
 
-        buttonExpandActions.setColorFilter(colorFilterAccent);
-        buttonJumpTop.setColorFilter(colorFilterAccent);
-        buttonClearViewed.setColorFilter(colorFilterAccent);
+        buttonExpandActions.setColorFilter(themer.getColorFilterAccent());
+        buttonJumpTop.setColorFilter(themer.getColorFilterAccent());
+        buttonClearViewed.setColorFilter(themer.getColorFilterAccent());
 
         swipeRefreshThreadList.setOnRefreshListener(() -> controllerLinks.reloadSubreddit());
 
@@ -306,7 +302,7 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
 
         AdapterLink.ViewHolderLink.Listener listener = new LinksListenerBase(mListener.getEventListenerBase()) {
             @Override
-            public void onVote(Link link, AdapterLink.ViewHolderLink viewHolderLink, int vote) {
+            public void onVote(Link link, AdapterLink.ViewHolderLink viewHolderLink, Likes vote) {
                 mListener.getEventListenerBase()
                         .onVote(link, vote)
                         .subscribe(new ObserverEmpty<Link>() {
@@ -317,7 +313,7 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
 
                             @Override
                             public void onNext(Link link) {
-                                controllerLinks.notifyChanged(link);
+                                controllerLinks.update(link);
                             }
                         });
             }
@@ -339,7 +335,7 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
 
                                                 @Override
                                                 public void onNext(Link link) {
-                                                    controllerLinks.notifyRemoved(link);
+                                                    controllerLinks.remove(link);
                                                 }
                                             });
                                 })
@@ -406,7 +402,7 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
 
                                 @Override
                                 public void onNext(Link link) {
-                                    controllerLinks.notifyChanged(link);
+                                    controllerLinks.update(link);
                                 }
                             });
                 }
@@ -421,7 +417,7 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
 
                                 @Override
                                 public void onNext(Link link) {
-                                    controllerLinks.notifyChanged(link);
+                                    controllerLinks.update(link);
                                 }
                             });
                 }
@@ -440,7 +436,7 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
 
                                 @Override
                                 public void onNext(Link link) {
-                                    controllerLinks.notifyChanged(link);
+                                    controllerLinks.update(link);
                                 }
                             });
                 }
@@ -455,7 +451,7 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
 
                                 @Override
                                 public void onNext(Link link) {
-                                    controllerLinks.notifyChanged(link);
+                                    controllerLinks.update(link);
                                 }
                             });
                 }
@@ -566,12 +562,12 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
                         }
 
                         SpannableString text = new SpannableString(link.isHidden() ? getString(R.string.link_hidden) : getString(R.string.link_shown));
-                        text.setSpan(new ForegroundColorSpan(colorFilterPrimary.getColor()), 0, text.length(), Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
+                        text.setSpan(new ForegroundColorSpan(themer.getColorFilterPrimary().getColor()), 0, text.length(), Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
 
                         //noinspection ResourceType
                         snackbar = Snackbar.make(recyclerThreadList, text,
                                 UtilsAnimation.SNACKBAR_DURATION)
-                                .setActionTextColor(colorFilterPrimary.getColor())
+                                .setActionTextColor(themer.getColorFilterPrimary().getColor())
                                 .setAction(R.string.undo, v -> {
                                             mListener.getEventListenerBase().hide(link);
                                             controllerLinks.reshowLastHiddenLink();
@@ -629,10 +625,12 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
                 .observeOn(Schedulers.computation())
                 .observeOn(AndroidSchedulers.mainThread())
                 .doOnNext(new ActionLog<>(TAG))
-                .doOnNext(new AdapterNotifySubscriber<>(adapterLinkGrid))
-                .doOnNext(new AdapterNotifySubscriber<>(adapterLinkList))
-                .doOnNext(event -> textEmpty.setVisibility(event.getData().getLinks().isEmpty() ? View.VISIBLE : View.GONE))
-                .map(event -> event.getData().getSubreddit())
+                .doOnNext(linksModel -> {
+                    adapterLinkGrid.setData(linksModel);
+                    adapterLinkList.setData(linksModel);
+                })
+                .doOnNext(linksModel -> textEmpty.setVisibility(linksModel.getLinks().isEmpty() && TextUtils.isEmpty(linksModel.getSubreddit().getName()) ? View.VISIBLE : View.GONE))
+                .map(LinksModel::getSubreddit)
                 .subscribe(subreddit -> {
                     this.subreddit = subreddit;
 
@@ -710,7 +708,7 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
     }
 
     private void setUpToolbar() {
-        toolbar = UtilsTheme.generateToolbar(getContext(), layoutAppBar, new Themer(getContext()), mListener);
+        toolbar = UtilsTheme.generateToolbar(getContext(), layoutAppBar, themer, mListener);
         toolbar.setOnClickListener(v ->
                 getFragmentManager().beginTransaction()
                         .hide(FragmentThreadList.this)
@@ -728,7 +726,7 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
             toolbar.setNavigationOnClickListener(v -> mListener.onNavigationBackClick());
         }
 
-        toolbar.getNavigationIcon().mutate().setColorFilter(colorFilterPrimary);
+        toolbar.getNavigationIcon().mutate().setColorFilter(themer.getColorFilterPrimary());
         toolbar.inflateMenu(R.menu.menu_thread_list);
         toolbar.setOnMenuItemClickListener(this);
 
@@ -748,7 +746,7 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
         itemSortTime = menu.findItem(R.id.item_sort_time);
         itemSearch = menu.findItem(R.id.item_search);
 
-        UtilsColor.tintMenu(menu, colorFilterPrimary);
+        UtilsColor.tintMenu(menu, themer.getColorFilterPrimary());
     }
 
     private void resetAdapter(AdapterLink newAdapter) {
@@ -929,7 +927,7 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
                             if (finalIndex == layoutActions.getChildCount() - 1) {
                                 buttonExpandActions
                                         .setImageResource(R.drawable.ic_unfold_more_white_24dp);
-                                buttonExpandActions.setColorFilter(colorFilterAccent);
+                                buttonExpandActions.setColorFilter(themer.getColorFilterAccent());
                             }
                         }
 
@@ -976,7 +974,7 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
                             .putString(AppSettings.INTERFACE_MODE, AppSettings.MODE_LIST)
                             .apply();
                 }
-                item.getIcon().setColorFilter(colorFilterPrimary);
+                item.getIcon().setColorFilter(themer.getColorFilterPrimary());
                 return true;
 
         }

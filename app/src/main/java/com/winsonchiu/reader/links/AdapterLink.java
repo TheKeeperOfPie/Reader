@@ -23,6 +23,7 @@ import android.support.v4.view.GestureDetectorCompat;
 import android.support.v4.view.MenuItemCompat;
 import android.support.v4.view.MotionEventCompat;
 import android.support.v4.view.ViewPager;
+import android.support.v7.util.DiffUtil;
 import android.support.v7.widget.RecyclerView.LayoutManager;
 import android.support.v7.widget.ShareActionProvider;
 import android.support.v7.widget.StaggeredGridLayoutManager;
@@ -78,6 +79,7 @@ import com.winsonchiu.reader.comments.Source;
 import com.winsonchiu.reader.data.imgur.Album;
 import com.winsonchiu.reader.data.imgur.Image;
 import com.winsonchiu.reader.data.reddit.Comment;
+import com.winsonchiu.reader.data.reddit.Likes;
 import com.winsonchiu.reader.data.reddit.Link;
 import com.winsonchiu.reader.data.reddit.Reddit;
 import com.winsonchiu.reader.data.reddit.Replyable;
@@ -128,7 +130,6 @@ import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
 import butterknife.OnTouch;
-import rx.Observable;
 import rx.Observer;
 import rx.Subscription;
 import rx.android.schedulers.AndroidSchedulers;
@@ -173,8 +174,36 @@ public abstract class AdapterLink extends AdapterBase<ViewHolderBase> implements
     }
 
     @Override
-    public void setData(LinksModel data) {
-        this.data = data;
+    public void setData(LinksModel newData) {
+        DiffUtil.DiffResult diffResult = DiffUtil.calculateDiff(new DiffUtil.Callback() {
+            @Override
+            public int getOldListSize() {
+                return data.getLinks().size() + 1;
+            }
+
+            @Override
+            public int getNewListSize() {
+                return newData.getLinks().size() + 1;
+            }
+
+            @Override
+            public boolean areItemsTheSame(int oldItemPosition, int newItemPosition) {
+                if (oldItemPosition == 0 || newItemPosition == 0) {
+                    return true;
+                }
+
+                return data.getLinks().get(oldItemPosition - 1).getName().equals(newData.getLinks().get(newItemPosition - 1).getName());
+            }
+
+            @Override
+            public boolean areContentsTheSame(int oldItemPosition, int newItemPosition) {
+                return areItemsTheSame(oldItemPosition, newItemPosition);
+            }
+        });
+
+        this.data = newData;
+
+        diffResult.dispatchUpdatesTo(this);
     }
 
     public LayoutManager getLayoutManager() {
@@ -481,7 +510,7 @@ public abstract class AdapterLink extends AdapterBase<ViewHolderBase> implements
             @Override
             public boolean onDoubleTap(MotionEvent e) {
                 if (user != null) {
-                    listener.onVote(link, ViewHolderLink.this, 1);
+                    listener.onVote(link, ViewHolderLink.this, Likes.UPVOTE);
                 }
                 if (layoutContainerExpand.getVisibility() == View.VISIBLE) {
                     layoutContainerExpand.clearAnimation();
@@ -751,7 +780,7 @@ public abstract class AdapterLink extends AdapterBase<ViewHolderBase> implements
         public boolean onLongClick(View v) {
             switch (v.getId()) {
                 default:
-                    listener.onVote(link, this, 1);
+                    listener.onVote(link, this, Likes.UPVOTE);
                     clearOverlay();
                     return true;
             }
@@ -784,10 +813,10 @@ public abstract class AdapterLink extends AdapterBase<ViewHolderBase> implements
         public boolean onMenuItemClick(MenuItem menuItem) {
             switch (menuItem.getItemId()) {
                 case R.id.item_upvote:
-                    listener.onVote(link, this, 1);
+                    listener.onVote(link, this, Likes.UPVOTE);
                     break;
                 case R.id.item_downvote:
-                    listener.onVote(link, this, -1);
+                    listener.onVote(link, this, Likes.DOWNVOTE);
                     break;
                 case R.id.item_share:
                     break;
@@ -1020,11 +1049,11 @@ public abstract class AdapterLink extends AdapterBase<ViewHolderBase> implements
             int voteColor = 0;
 
             switch (link.getLikes()) {
-                case -1:
+                case DOWNVOTE:
                     voteIndicator = " \u25BC";
                     voteColor = colorNegative;
                     break;
-                case 1:
+                case UPVOTE:
                     voteIndicator = " \u25B2";
                     voteColor = colorPositive;
                     break;
@@ -1699,7 +1728,7 @@ public abstract class AdapterLink extends AdapterBase<ViewHolderBase> implements
             void onDownloadImage(Link link, String title, String fileName, String url);
             void onLoadUrl(Link link, boolean forceExternal);
             void onShowFullEditor(Link link);
-            void onVote(Link link, ViewHolderLink viewHolderLink, int vote);
+            void onVote(Link link, ViewHolderLink viewHolderLink, Likes vote);
             void onCopyText(Link link);
             void onEdit(Link link);
             void onDelete(Link link);
@@ -1717,13 +1746,9 @@ public abstract class AdapterLink extends AdapterBase<ViewHolderBase> implements
             void save(Link link);
             void save(Comment comment);
             void toast(String text);
-            boolean isUserLoggedIn();
-            void voteLink(ViewHolderLink viewHolderLink, Link link, int vote);
-            void deletePost(Link link);
             void report(Thing thing, String reason, String otherReason);
             void hide(Link link);
             void markRead(Thing thing);
-            Observable<String> markNsfw(Link link);
             User getUser();
             void copyText(CharSequence text);
         }

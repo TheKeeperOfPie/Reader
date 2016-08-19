@@ -10,7 +10,7 @@ package com.winsonchiu.reader.data.reddit;
 public interface Votable {
 
     String getName();
-    int getLikes();
-    void setLikes(int likes);
+    Likes getLikes();
+    void setLikes(Likes likes);
 
 }

@@ -34,10 +34,10 @@ import com.winsonchiu.reader.FragmentBase;
 import com.winsonchiu.reader.FragmentListenerBase;
 import com.winsonchiu.reader.R;
 import com.winsonchiu.reader.adapter.AdapterListener;
-import com.winsonchiu.reader.adapter.AdapterNotifySubscriber;
 import com.winsonchiu.reader.adapter.RxAdapterEvent;
 import com.winsonchiu.reader.dagger.components.ComponentActivity;
 import com.winsonchiu.reader.data.reddit.Comment;
+import com.winsonchiu.reader.data.reddit.Likes;
 import com.winsonchiu.reader.data.reddit.Link;
 import com.winsonchiu.reader.data.reddit.Report;
 import com.winsonchiu.reader.data.reddit.Sort;
@@ -292,7 +292,7 @@ public class FragmentCommentsInner extends FragmentBase {
 
         AdapterLink.ViewHolderLink.Listener listenerLink = new LinksListenerBase(mListener.getEventListenerBase()) {
             @Override
-            public void onVote(Link link, AdapterLink.ViewHolderLink viewHolderLink, int vote) {
+            public void onVote(Link link, AdapterLink.ViewHolderLink viewHolderLink, Likes vote) {
 
             }
 
@@ -415,7 +415,7 @@ public class FragmentCommentsInner extends FragmentBase {
             }
 
             @Override
-            public void onVoteComment(Comment comment, AdapterCommentList.ViewHolderComment viewHolderComment, int vote) {
+            public void onVoteComment(Comment comment, AdapterCommentList.ViewHolderComment viewHolderComment, Likes vote) {
 
             }
 
@@ -658,7 +658,7 @@ public class FragmentCommentsInner extends FragmentBase {
 
         subscriptionData = eventHolder.getData()
                 .observeOn(AndroidSchedulers.mainThread())
-                .doOnNext(new AdapterNotifySubscriber<>(adapterCommentList))
+                .doOnNext(linksModelRxAdapterEvent -> adapterCommentList.setData(linksModelRxAdapterEvent.getData()))
                 .map(RxAdapterEvent::getData)
                 .doOnNext(data -> {
                     if (callback.isCurrentFragment(this)) {

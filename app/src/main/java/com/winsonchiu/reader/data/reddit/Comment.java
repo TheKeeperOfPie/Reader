@@ -34,7 +34,7 @@ public class Comment extends Replyable implements Submission, Votable, Saveable 
     private Reddit.Distinguished distinguished = Reddit.Distinguished.NOT_DISTINGUISHED;
     private long edited;
     private int gilded;
-    private int likes;
+    private Likes likes = Likes.NONE;
     private String linkId = "";
     private int numReports; // May be "null"
     private String parentId = "";
@@ -167,13 +167,13 @@ public class Comment extends Replyable implements Submission, Votable, Saveable 
 
         switch (UtilsJson.getString(jsonNode.get("likes"))) {
             case "null":
-                comment.setLikes(0);
+                comment.setLikes(Likes.NONE);
                 break;
             case "true":
-                comment.setLikes(1);
+                comment.setLikes(Likes.UPVOTE);
                 break;
             case "false":
-                comment.setLikes(-1);
+                comment.setLikes(Likes.DOWNVOTE);
                 break;
         }
 
@@ -280,11 +280,11 @@ public class Comment extends Replyable implements Submission, Votable, Saveable 
         this.gilded = gilded;
     }
 
-    public int getLikes() {
+    public Likes getLikes() {
         return likes;
     }
 
-    public void setLikes(int likes) {
+    public void setLikes(Likes likes) {
         this.likes = likes;
     }
 
@@ -515,7 +515,7 @@ public class Comment extends Replyable implements Submission, Votable, Saveable 
         dest.writeInt(this.distinguished == null ? -1 : this.distinguished.ordinal());
         dest.writeLong(this.edited);
         dest.writeInt(this.gilded);
-        dest.writeInt(this.likes);
+        dest.writeInt(this.likes == null ? -1 : this.likes.ordinal());
         dest.writeString(this.linkId);
         dest.writeInt(this.numReports);
         dest.writeString(this.parentId);
@@ -553,7 +553,8 @@ public class Comment extends Replyable implements Submission, Votable, Saveable 
         this.distinguished = tmpDistinguished == -1 ? null : Reddit.Distinguished.values()[tmpDistinguished];
         this.edited = in.readLong();
         this.gilded = in.readInt();
-        this.likes = in.readInt();
+        int tmpLikes = in.readInt();
+        this.likes = tmpLikes == -1 ? null : Likes.values()[tmpLikes];
         this.linkId = in.readString();
         this.numReports = in.readInt();
         this.parentId = in.readString();

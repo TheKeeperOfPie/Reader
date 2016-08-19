@@ -34,7 +34,7 @@ public class Link extends Replyable implements Parcelable, Submission, Votable, 
     private String domain = "";
     private boolean hidden;
     private boolean isSelf;
-    private int likes;
+    private Likes likes = Likes.NONE;
     private String linkFlairCssClass = "";
     private String linkFlairText = "";
     private Media media = new Media();
@@ -102,13 +102,13 @@ public class Link extends Replyable implements Parcelable, Submission, Votable, 
 
         switch (UtilsJson.getString(nodeData.get("likes"))) {
             case "null":
-                link.setLikes(0);
+                link.setLikes(Likes.NONE);
                 break;
             case "true":
-                link.setLikes(1);
+                link.setLikes(Likes.UPVOTE);
                 break;
             case "false":
-                link.setLikes(-1);
+                link.setLikes(Likes.DOWNVOTE);
                 break;
         }
 
@@ -245,11 +245,11 @@ public class Link extends Replyable implements Parcelable, Submission, Votable, 
         this.isSelf = isSelf;
     }
 
-    public int getLikes() {
+    public Likes getLikes() {
         return likes;
     }
 
-    public void setLikes(int likes) {
+    public void setLikes(Likes likes) {
         this.likes = likes;
     }
 
@@ -1088,20 +1088,20 @@ public class Link extends Replyable implements Parcelable, Submission, Votable, 
         dest.writeString(this.author);
         dest.writeString(this.authorFlairCssClass);
         dest.writeString(this.authorFlairText);
-        dest.writeByte(clicked ? (byte) 1 : (byte) 0);
+        dest.writeByte(this.clicked ? (byte) 1 : (byte) 0);
         dest.writeString(this.domain);
-        dest.writeByte(hidden ? (byte) 1 : (byte) 0);
-        dest.writeByte(isSelf ? (byte) 1 : (byte) 0);
-        dest.writeInt(this.likes);
+        dest.writeByte(this.hidden ? (byte) 1 : (byte) 0);
+        dest.writeByte(this.isSelf ? (byte) 1 : (byte) 0);
+        dest.writeInt(this.likes == null ? -1 : this.likes.ordinal());
         dest.writeString(this.linkFlairCssClass);
         dest.writeString(this.linkFlairText);
         dest.writeParcelable(this.media, flags);
         dest.writeString(this.mediaEmbed);
         dest.writeInt(this.numComments);
-        dest.writeByte(over18 ? (byte) 1 : (byte) 0);
+        dest.writeByte(this.over18 ? (byte) 1 : (byte) 0);
         dest.writeString(this.permalink);
         dest.writeParcelable(this.preview, flags);
-        dest.writeByte(saved ? (byte) 1 : (byte) 0);
+        dest.writeByte(this.saved ? (byte) 1 : (byte) 0);
         dest.writeInt(this.score);
         TextUtils.writeToParcel(this.selfText, dest, flags);
         TextUtils.writeToParcel(this.selfTextHtml, dest, flags);
@@ -1113,7 +1113,7 @@ public class Link extends Replyable implements Parcelable, Submission, Votable, 
         dest.writeString(this.url);
         dest.writeLong(this.edited);
         dest.writeInt(this.distinguished == null ? -1 : this.distinguished.ordinal());
-        dest.writeByte(stickied ? (byte) 1 : (byte) 0);
+        dest.writeByte(this.stickied ? (byte) 1 : (byte) 0);
         dest.writeLong(this.created);
         dest.writeLong(this.createdUtc);
         dest.writeParcelable(this.comments, flags);
@@ -1136,7 +1136,8 @@ public class Link extends Replyable implements Parcelable, Submission, Votable, 
         this.domain = in.readString();
         this.hidden = in.readByte() != 0;
         this.isSelf = in.readByte() != 0;
-        this.likes = in.readInt();
+        int tmpLikes = in.readInt();
+        this.likes = tmpLikes == -1 ? null : Likes.values()[tmpLikes];
         this.linkFlairCssClass = in.readString();
         this.linkFlairText = in.readString();
         this.media = in.readParcelable(Media.class.getClassLoader());

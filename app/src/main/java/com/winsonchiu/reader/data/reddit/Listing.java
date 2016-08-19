@@ -7,8 +7,10 @@ package com.winsonchiu.reader.data.reddit;
 import android.os.Parcel;
 import android.os.Parcelable;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.winsonchiu.reader.utils.UtilsJson;
+import com.winsonchiu.reader.utils.UtilsReddit;
 
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
@@ -77,10 +79,7 @@ public class Listing implements Parcelable {
         this.children.addAll(linkedHashSet);
     }
 
-    public static Listing fromJson(JsonNode nodeRoot) {
-
-        long start = System.currentTimeMillis();
-
+    public static Listing fromJson(JsonNode nodeRoot) throws JsonProcessingException {
         Listing listing = new Listing();
         JsonNode nodeData = nodeRoot.get("data");
 
@@ -95,28 +94,7 @@ public class Listing implements Parcelable {
         ArrayList<Thing> things = new ArrayList<>();
 
         for (JsonNode node : nodeData.get("children")) {
-
-            switch (UtilsJson.getString(node.get("kind"))) {
-
-                // TODO: Add cases for all ID36s and fix adding Comments
-
-                case "more":
-                    things.add(Comment.fromJson(node, 0));
-                    break;
-                case "t1":
-                    Comment.addAllFromJson(things, node, 0);
-                    break;
-                case "t3":
-                    things.add(Link.fromJson(node));
-                    break;
-                case "t4":
-                    things.add(Message.fromJson(node));
-                    break;
-                case "t5":
-                    things.add(Subreddit.fromJson(node));
-                    break;
-
-            }
+            things.addAll(UtilsReddit.parseJson(node));
         }
 
         listing.setChildren(things);

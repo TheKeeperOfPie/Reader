@@ -30,7 +30,7 @@ public class UtilsTheme {
 
         Toolbar toolbar = (Toolbar) LayoutInflater.from(contextThemeWrapper).inflate(R.layout.toolbar, layoutAppBar, false);
 
-        layoutAppBar.addView(toolbar);
+        layoutAppBar.addView(toolbar, 0);
 
         ((AppBarLayout.LayoutParams) toolbar.getLayoutParams()).setScrollFlags(AppBarLayout.LayoutParams.SCROLL_FLAG_SCROLL | AppBarLayout.LayoutParams.SCROLL_FLAG_ENTER_ALWAYS);
         toolbar.setTitleTextColor(themer.getColorFilterPrimary().getColor());

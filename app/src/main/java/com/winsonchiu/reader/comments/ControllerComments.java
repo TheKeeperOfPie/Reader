@@ -19,6 +19,7 @@ import com.winsonchiu.reader.dagger.components.ComponentActivity;
 import com.winsonchiu.reader.dagger.components.ComponentStatic;
 import com.winsonchiu.reader.data.database.reddit.RedditDatabase;
 import com.winsonchiu.reader.data.reddit.Comment;
+import com.winsonchiu.reader.data.reddit.Likes;
 import com.winsonchiu.reader.data.reddit.Link;
 import com.winsonchiu.reader.data.reddit.Listing;
 import com.winsonchiu.reader.data.reddit.Reddit;
@@ -523,31 +524,31 @@ public class ControllerComments implements AdapterCommentList.ViewHolderComment.
     }
 
     public Observable<String> voteComment(final AdapterCommentList.ViewHolderComment viewHolder,
-            final Comment comment, final int vote) {
+            final Comment comment, Likes vote) {
         // TODO: Combine these instances into utility
         final int position = viewHolder.getAdapterPosition();
 
-        final int oldVote = comment.getLikes();
-        int newVote = 0;
+        final Likes oldVote = comment.getLikes();
+        Likes newVote = Likes.NONE;
 
         if (comment.getLikes() != vote) {
             newVote = vote;
         }
 
-        comment.setScore(comment.getScore() + newVote - comment.getLikes());
+        comment.setScore(comment.getScore() + newVote.getScoreValue() - comment.getLikes().getScoreValue());
         comment.setLikes(newVote);
 
         if (position == viewHolder.getAdapterPosition()) {
             viewHolder.setVoteColors();
         }
 
-        final int finalNewVote = newVote;
+        final Likes finalNewVote = newVote;
 
         Observable<String> observable = reddit.voteComment(comment, newVote);
         observable.subscribe(new FinalizingSubscriber<String>() {
                     @Override
                     public void error(Throwable e) {
-                        comment.setScore(comment.getScore() - finalNewVote);
+                        comment.setScore(comment.getScore() - finalNewVote.getScoreValue());
                         comment.setLikes(oldVote);
                         if (position == viewHolder.getAdapterPosition()) {
                             viewHolder.setVoteColors();

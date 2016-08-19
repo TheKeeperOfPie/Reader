@@ -1,6 +1,5 @@
 package com.winsonchiu.reader.utils;
 
-import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.Color;
 import android.graphics.ColorFilter;
@@ -11,12 +10,10 @@ import android.support.v4.util.LruCache;
 import android.support.v4.util.Pair;
 import android.support.v7.graphics.Palette;
 import android.support.v7.graphics.Target;
-import android.util.TypedValue;
 import android.view.Menu;
 
 import com.winsonchiu.reader.AppSettings;
 import com.winsonchiu.reader.FragmentListenerBase;
-import com.winsonchiu.reader.R;
 import com.winsonchiu.reader.theme.ThemeBackground;
 import com.winsonchiu.reader.theme.ThemeColor;
 
@@ -72,12 +69,6 @@ public class UtilsColor {
 
     public static boolean showOnWhite(int color) {
         return UtilsColor.computeContrast(color, Color.WHITE) > CONTRAST_THRESHOLD;
-    }
-
-    public static int getColorIconFilter(Context context) {
-        TypedValue typedValue = new TypedValue();
-        context.getTheme().resolveAttribute(R.attr.colorIconFilter, typedValue, true);
-        return typedValue.data;
     }
 
     public static void tintMenu(Menu menu, ColorFilter colorFilter) {

@@ -45,10 +45,10 @@ public class Themer {
         int colorResourceAccent = UtilsColor.showOnWhite(colorAccent) ? R.color.darkThemeIconFilter : R.color.lightThemeIconFilter;
         int colorResourceTextMuted = UtilsColor.showOnWhite(colorPrimary) ? R.color.darkThemeTextColorMuted : R.color.lightThemeTextColorMuted;
 
-        colorFilterPrimary = new CustomColorFilter(resources.getColor(colorResourcePrimary), PorterDuff.Mode.MULTIPLY);
-        colorFilterAccent = new CustomColorFilter(resources.getColor(colorResourceAccent), PorterDuff.Mode.MULTIPLY);
-        colorFilterTextMuted = new CustomColorFilter(colorResourceTextMuted, PorterDuff.Mode.MULTIPLY);
-        colorFilterIcon = new CustomColorFilter(colorIconFilter, PorterDuff.Mode.MULTIPLY);
+        colorFilterPrimary = new CustomColorFilter(resources.getColor(colorResourcePrimary), PorterDuff.Mode.SRC_IN);
+        colorFilterAccent = new CustomColorFilter(resources.getColor(colorResourceAccent), PorterDuff.Mode.SRC_IN);
+        colorFilterTextMuted = new CustomColorFilter(colorResourceTextMuted, PorterDuff.Mode.SRC_IN);
+        colorFilterIcon = new CustomColorFilter(colorIconFilter, PorterDuff.Mode.SRC_IN);
     }
 
     public int getColorPrimary() {

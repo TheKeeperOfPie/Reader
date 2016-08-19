@@ -16,6 +16,7 @@ import com.winsonchiu.reader.comments.ControllerCommentsTop;
 import com.winsonchiu.reader.dagger.components.ComponentActivity;
 import com.winsonchiu.reader.dagger.components.ComponentStatic;
 import com.winsonchiu.reader.data.reddit.Comment;
+import com.winsonchiu.reader.data.reddit.Likes;
 import com.winsonchiu.reader.data.reddit.Link;
 import com.winsonchiu.reader.data.reddit.Message;
 import com.winsonchiu.reader.data.reddit.Reddit;
@@ -33,13 +34,10 @@ import com.winsonchiu.reader.rx.FinalizingSubscriber;
 import com.winsonchiu.reader.rx.ObserverEmpty;
 import com.winsonchiu.reader.search.ControllerSearch;
 
-import java.util.HashMap;
-
 import javax.inject.Inject;
 
 import rx.Observable;
 import rx.Observer;
-import rx.functions.Action1;
 
 /**
  * Created by TheKeeperOfPie on 3/27/2016.
@@ -147,60 +145,6 @@ public abstract class EventListenerBase implements AdapterLink.ViewHolderLink.Ev
     }
 
     @Override
-    public boolean isUserLoggedIn() {
-        return controllerUser.hasUser();
-    }
-
-    @Override
-    public void voteLink(final AdapterLink.ViewHolderLink viewHolderLink, final Link link, int vote) {
-        final int position = viewHolderLink.getAdapterPosition();
-
-        final int oldVote = link.getLikes();
-        final int oldScore = link.getScore();
-        int newVote = 0;
-
-        if (link.getLikes() != vote) {
-            newVote = vote;
-        }
-
-        HashMap<String, String> params = new HashMap<>(2);
-        params.put(Reddit.QUERY_ID, link.getName());
-        params.put(Reddit.QUERY_VOTE, String.valueOf(newVote));
-
-        link.setScore(link.getScore() + newVote - link.getLikes());
-        link.setLikes(newVote);
-        if (position == viewHolderLink.getAdapterPosition()) {
-            viewHolderLink.setVoteColors();
-        }
-        final int finalNewVote = newVote;
-
-        reddit.voteLink(link, newVote)
-                .subscribe(new FinalizingSubscriber<String>() {
-                    @Override
-                    public void error(Throwable e) {
-                        link.setScore(oldScore);
-                        link.setLikes(oldVote);
-                        if (position == viewHolderLink.getAdapterPosition()) {
-                            viewHolderLink.setVoteColors();
-                        }
-                        Toast.makeText(context, context.getString(R.string.error_voting), Toast.LENGTH_SHORT)
-                                .show();
-                    }
-                });
-    }
-
-    @Override
-    public void deletePost(Link link) {
-        Observable.merge(controllerLinks.deletePost(link), controllerProfile.deletePost(link))
-                .subscribe(new FinalizingSubscriber<String>() {
-                    @Override
-                    public void error(Throwable e) {
-                        Toast.makeText(context, R.string.error_deleting_post, Toast.LENGTH_LONG).show();
-                    }
-                });
-    }
-
-    @Override
     public void report(Thing thing, String reason, String otherReason) {
         reddit.report(thing.getName(),
                 reason, otherReason)
@@ -242,35 +186,6 @@ public abstract class EventListenerBase implements AdapterLink.ViewHolderLink.Ev
                 .subscribe(new ObserverEmpty<>());
     }
 
-    @Override
-    public Observable<String> markNsfw(final Link link) {
-        link.setOver18(!link.isOver18());
-        syncNsfw(link);
-
-        if (link.isOver18()) {
-            return reddit.markNsfw(link)
-                    .doOnError(new Action1<Throwable>() {
-                        @Override
-                        public void call(Throwable throwable) {
-                            link.setOver18(false);
-                            syncNsfw(link);
-                            Toast.makeText(context, R.string.error_unmarking_nsfw, Toast.LENGTH_LONG).show();
-                        }
-                    });
-        }
-        else {
-            return reddit.unmarkNsfw(link)
-                    .doOnError(new Action1<Throwable>() {
-                        @Override
-                        public void call(Throwable throwable) {
-                            link.setOver18(true);
-                            syncNsfw(link);
-                            Toast.makeText(context, R.string.error_unmarking_nsfw, Toast.LENGTH_LONG).show();
-                        }
-                    });
-        }
-    }
-
     private void syncNsfw(Link link) {
         controllerLinks.setNsfw(link.getName(), link.isOver18());
         controllerCommentsTop.setNsfw(link.getName(), link.isOver18());
@@ -293,12 +208,11 @@ public abstract class EventListenerBase implements AdapterLink.ViewHolderLink.Ev
         toast(context.getString(R.string.copied));
     }
 
-    public <T extends Votable> Observable<T> onVote(T votable, int vote) {
-
-        int voteOld = votable.getLikes();
+    public <T extends Votable> Observable<T> onVote(T votable, Likes vote) {
+        Likes voteOld = votable.getLikes();
 
         if (vote == voteOld) {
-            vote = 0;
+            vote = Likes.NONE;
         }
 
         votable.setLikes(vote);

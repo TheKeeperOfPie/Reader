@@ -22,6 +22,7 @@ import android.view.MenuItem;
 import android.webkit.URLUtil;
 import android.widget.EditText;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.winsonchiu.reader.ApiKeys;
 import com.winsonchiu.reader.AppSettings;
@@ -86,7 +87,17 @@ public class Reddit {
 
     // Constant values to represent Thing states
     public enum Distinguished {
-        NOT_DISTINGUISHED, MODERATOR, ADMIN, SPECIAL
+        @JsonProperty("null")
+        NOT_DISTINGUISHED,
+
+        @JsonProperty("moderator")
+        MODERATOR,
+
+        @JsonProperty("admin")
+        ADMIN,
+
+        @JsonProperty("special")
+        SPECIAL
     }
 
     public static final CharSequence NULL = "null";
@@ -454,8 +465,8 @@ public class Reddit {
     }
 
     public Observable<String> voteLink(final Votable votable,
-                                       int vote) {
-        return apiRedditAuthorized.vote(votable.getName(), vote)
+                                       Likes vote) {
+        return apiRedditAuthorized.vote(votable.getName(), vote.getScoreValue())
                 .compose(TRANSFORMER);
     }
 
@@ -467,8 +478,8 @@ public class Reddit {
     }
 
     public Observable<String> voteComment(final Comment comment,
-            int vote) {
-        return apiRedditAuthorized.vote(comment.getName(), vote)
+            Likes vote) {
+        return apiRedditAuthorized.vote(comment.getName(), vote.getScoreValue())
                 .compose(TRANSFORMER);
     }
 

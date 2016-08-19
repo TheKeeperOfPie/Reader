@@ -4,6 +4,7 @@
 
 package com.winsonchiu.reader.dagger.components;
 
+import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import javax.inject.Inject;
@@ -25,6 +26,9 @@ public class ComponentStatic {
     @Inject
     ObjectMapper objectMapper;
 
+    @Inject
+    JsonFactory jsonFactory;
+
     public ComponentStatic() {
         componentData.inject(this);
     }
@@ -35,5 +39,9 @@ public class ComponentStatic {
 
     public static ObjectMapper getObjectMapper() {
         return component.objectMapper;
+    }
+
+    public static JsonFactory getJsonFactory() {
+        return component.jsonFactory;
     }
 }

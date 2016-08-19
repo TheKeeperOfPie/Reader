@@ -9,13 +9,13 @@ repositories {
 }
 
 android {
-    compileSdkVersion 23
-    buildToolsVersion '23.0.2'
+    compileSdkVersion 24
+    buildToolsVersion '24.0.1'
 
     defaultConfig {
         applicationId "com.winsonchiu.reader"
-        minSdkVersion 23
-        targetSdkVersion 23
+        minSdkVersion 24
+        targetSdkVersion 24
         versionCode 58
         versionName "1.5"
         vectorDrawables.useSupportLibrary = true
@@ -26,6 +26,10 @@ android {
     }
 
     buildTypes {
+        debug {
+            minifyEnabled false
+        }
+
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
@@ -47,22 +51,21 @@ android {
 }
 
 dependencies {
-    apt 'com.google.dagger:dagger-compiler:2.4'
-    compile 'com.google.dagger:dagger:2.4'
+    apt 'com.google.dagger:dagger-compiler:2.6'
+    compile 'com.google.dagger:dagger:2.6'
 
-
-    apt 'com.jakewharton:butterknife-compiler:8.0.0'
-    compile 'com.jakewharton:butterknife:8.0.0'
+    apt 'com.jakewharton:butterknife-compiler:8.1.0'
+    compile 'com.jakewharton:butterknife:8.1.0'
 
     compile fileTree(include: ['*.jar'], dir: 'libs')
 
-    compile('com.crashlytics.sdk.android:crashlytics:2.5.5@aar') {
+    compile('com.crashlytics.sdk.android:crashlytics:2.6.2@aar') {
         transitive = true;
     }
 
     compile files('libs/YouTubeAndroidPlayerApi.jar')
 
-    def versionSupportLibrary = "23.4.0"
+    def versionSupportLibrary = "24.2.0"
 
     compile "com.android.support:appcompat-v7:$versionSupportLibrary"
     compile "com.android.support:customtabs:$versionSupportLibrary"
@@ -86,8 +89,8 @@ dependencies {
     compile 'com.squareup.okhttp3:logging-interceptor:3.2.0'
     compile 'com.squareup.retrofit2:adapter-rxjava:2.0.0'
     compile 'com.squareup.retrofit2:retrofit:2.0.0'
-    compile 'io.reactivex:rxandroid:1.1.0'
-    compile 'io.reactivex:rxjava:1.1.0'
+    compile 'io.reactivex:rxandroid:1.2.1'
+    compile 'io.reactivex:rxjava:1.1.9'
     compile 'javax.annotation:jsr250-api:1.0'
     compile 'jp.wasabeef:takt:1.0.2'
 

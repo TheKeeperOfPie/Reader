@@ -515,7 +515,7 @@ public class FragmentComments extends FragmentBase
 
     private void initializePager() {
         CommentsTopModel data = controllerCommentsTop.getEventHolder().getData().getValue();
-        linkTop = data.getLink();
+        linkTop = data.getLinkModel().getLink();
         source = data.getSource();
         initializePagerValues();
 
@@ -621,8 +621,8 @@ public class FragmentComments extends FragmentBase
                 itemCount = 1;
                 break;
             case LINKS:
-                indexStart = controllerLinks.indexOf(linkTop);
-                itemCount = Math.max(1, controllerLinks.sizeLinks());
+                indexStart = controllerLinks.indexOfLink(linkTop);
+                itemCount = Math.max(1, controllerLinks.numberOfLinks());
                 break;
             case SEARCH_LINKS:
                 indexStart = controllerSearch.indexOfLink(linkTop);
@@ -1306,7 +1306,7 @@ public class FragmentComments extends FragmentBase
                                     .subscribe(new ObserverFinish<Listing>() {
                                         @Override
                                         public void onFinish() {
-                                            itemCount = controllerLinks.sizeLinks();
+                                            itemCount = controllerLinks.numberOfLinks();
                                             adapterComments.notifyDataSetChanged();
                                         }
                                     });

@@ -3,26 +3,23 @@
  */
 
 package com.winsonchiu.reader.utils;
-/*
-    Taken from CheeseSquare demo app, located at
-    https://github.com/ianhanniballake/cheesesquare/blob/aefa8b57e61266e4ad51bef36e669d69f7fd749c/app/src/main/java/com/support/android/designlibdemo/ScrollAwareFABBehavior.java
- */
 
 import android.content.Context;
 import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.view.ViewCompat;
 import android.support.v4.view.ViewPropertyAnimatorListener;
-import android.support.v4.view.animation.FastOutSlowInInterpolator;
+import android.support.v4.view.animation.FastOutLinearInInterpolator;
 import android.util.AttributeSet;
 import android.view.View;
 import android.view.animation.Interpolator;
 
-public class ScrollAwareFloatingActionButtonBehavior extends FloatingActionButton.Behavior {
+public class ScrollAwareFloatingActionButtonBehavior extends FixedFloatingActionButtonBehavior {
 
-    public static final Interpolator INTERPOLATOR = new FastOutSlowInInterpolator();
+    public static final String TAG = ScrollAwareFloatingActionButtonBehavior.class.getCanonicalName();
+
+    public static final Interpolator INTERPOLATOR = new FastOutLinearInInterpolator();
     public static final long DURATION = 300;
-    private static final String TAG = ScrollAwareFloatingActionButtonBehavior.class.getCanonicalName();
 
     private boolean mIsAnimatingOut = false;
     private OnVisibilityChangeListener listener;
@@ -60,20 +57,18 @@ public class ScrollAwareFloatingActionButtonBehavior extends FloatingActionButto
                 dyUnconsumed);
 
         if (dyConsumed > 0 && !this.mIsAnimatingOut && child.getVisibility() == View.VISIBLE) {
-            // User scrolled down and the FAB is currently visible -> hide the FAB
             animateOut(child);
         }
         else if (dyConsumed < 0 && child.getVisibility() != View.VISIBLE) {
-            // User scrolled up and the FAB is currently not visible -> show the FAB
             animateIn(child);
         }
     }
 
-    // Same animation that FloatingActionButton.Behavior uses to hide the FAB when the AppBarLayout exits
     public void animateOut(final FloatingActionButton button) {
         if (listener != null) {
             listener.onStartHideFromScroll();
         }
+
         ViewCompat.animate(button)
                 .scaleX(0f)
                 .scaleY(0f)
@@ -100,9 +95,9 @@ public class ScrollAwareFloatingActionButtonBehavior extends FloatingActionButto
                 });
     }
 
-    // Same animation that FloatingActionButton.Behavior uses to show the FAB when the AppBarLayout enters
     public void animateIn(FloatingActionButton button) {
         button.setVisibility(View.VISIBLE);
+
         ViewCompat.animate(button)
                 .scaleX(1f)
                 .scaleY(1f)

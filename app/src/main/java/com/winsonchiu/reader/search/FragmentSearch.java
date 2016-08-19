@@ -18,7 +18,6 @@ import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.SearchView;
 import android.support.v7.widget.Toolbar;
 import android.support.v7.widget.helper.ItemTouchHelper;
-import android.view.ContextThemeWrapper;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -29,14 +28,13 @@ import android.widget.ImageView;
 import android.widget.Toast;
 
 import com.winsonchiu.reader.ActivityMain;
-import com.winsonchiu.reader.AppSettings;
 import com.winsonchiu.reader.CustomApplication;
 import com.winsonchiu.reader.FragmentBase;
 import com.winsonchiu.reader.FragmentListenerBase;
 import com.winsonchiu.reader.R;
 import com.winsonchiu.reader.adapter.AdapterListener;
-import com.winsonchiu.reader.adapter.AdapterNotifySubscriber;
 import com.winsonchiu.reader.comments.Source;
+import com.winsonchiu.reader.data.reddit.Likes;
 import com.winsonchiu.reader.data.reddit.Link;
 import com.winsonchiu.reader.data.reddit.Listing;
 import com.winsonchiu.reader.data.reddit.Reddit;
@@ -47,17 +45,16 @@ import com.winsonchiu.reader.data.reddit.Time;
 import com.winsonchiu.reader.links.AdapterLink;
 import com.winsonchiu.reader.links.ControllerLinks;
 import com.winsonchiu.reader.rx.FinalizingSubscriber;
-import com.winsonchiu.reader.theme.ThemeWrapper;
 import com.winsonchiu.reader.utils.ItemDecorationDivider;
 import com.winsonchiu.reader.utils.SimpleCallbackBackground;
 import com.winsonchiu.reader.utils.UtilsAnimation;
-import com.winsonchiu.reader.utils.UtilsColor;
 import com.winsonchiu.reader.utils.UtilsInput;
 import com.winsonchiu.reader.utils.UtilsRx;
 import com.winsonchiu.reader.utils.UtilsTheme;
 
 import javax.inject.Inject;
 
+import butterknife.BindView;
 import rx.Observer;
 import rx.Subscription;
 import rx.android.schedulers.AndroidSchedulers;
@@ -69,12 +66,6 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
 
     private FragmentListenerBase mListener;
 
-    private TabLayout tabLayout;
-    private ViewPager viewPager;
-    private RecyclerView recyclerSearchSubreddits;
-    private RecyclerView recyclerSearchLinks;
-    private RecyclerView recyclerSearchLinksSubreddit;
-    private RecyclerView recyclerSearchSubredditsRecommended;
     private LinearLayoutManager layoutManagerSubreddits;
     private LinearLayoutManager layoutManagerLinks;
     private LinearLayoutManager layoutManagerLinksSubreddit;
@@ -89,8 +80,6 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
     private MenuItem itemSearch;
     private MenuItem itemSortTime;
     private Toolbar toolbar;
-    private CoordinatorLayout layoutCoordinator;
-    private AppBarLayout layoutAppBar;
     private View view;
     private ItemTouchHelper itemTouchHelperSubreddits;
 
@@ -99,6 +88,30 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
     private Subscription subscriptionSort;
     private Subscription subscriptionTime;
     private Subscription subscriptionCurrentPage;
+
+    @BindView(R.id.layout_coordinator)
+    CoordinatorLayout layoutCoordinator;
+
+    @BindView(R.id.layout_app_bar)
+    AppBarLayout layoutAppBar;
+
+    @BindView(R.id.recycler_search_subreddits)
+    RecyclerView recyclerSearchSubreddits;
+
+    @BindView(R.id.recycler_search_links)
+    RecyclerView recyclerSearchLinks;
+
+    @BindView(R.id.recycler_search_links_subreddit)
+    RecyclerView recyclerSearchLinksSubreddit;
+
+    @BindView(R.id.recycler_search_subreddits_recommended)
+    RecyclerView recyclerSearchSubredditsRecommended;
+
+    @BindView(R.id.pager_search)
+    ViewPager pagerSearch;
+
+    @BindView(R.id.tab_search)
+    TabLayout layoutTabs;
 
     @Inject ControllerLinks controllerLinks;
     @Inject ControllerSearch controllerSearch;
@@ -122,13 +135,9 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
     }
 
     private void setUpToolbar() {
+        toolbar = UtilsTheme.generateToolbar(getContext(), layoutAppBar, themer, mListener);
         toolbar.setNavigationIcon(R.drawable.ic_arrow_back_white_24dp);
-        toolbar.setNavigationOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                mListener.onNavigationBackClick();
-            }
-        });
+        toolbar.setNavigationOnClickListener(v -> mListener.onNavigationBackClick());
         toolbar.getNavigationIcon().mutate().setColorFilter(themer.getColorFilterPrimary());
         toolbar.inflateMenu(R.menu.menu_search);
         toolbar.setOnMenuItemClickListener(this);
@@ -139,13 +148,15 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
         itemSearch = menu.findItem(R.id.item_search);
         itemSearch.expandActionView();
 
-        final SearchView searchView = (SearchView) itemSearch.getActionView();
+        SearchView viewSearch = (SearchView) itemSearch.getActionView();
+        viewSearch.setIconified(false);
+        viewSearch.requestFocus();
 
-        View view = searchView.findViewById(android.support.v7.appcompat.R.id.search_go_btn);
+        View view = viewSearch.findViewById(android.support.v7.appcompat.R.id.search_go_btn);
         if (view instanceof ImageView) {
             ((ImageView) view).setColorFilter(themer.getColorFilterPrimary());
         }
-        view = searchView.findViewById(android.support.v7.appcompat.R.id.search_src_text);
+        view = viewSearch.findViewById(android.support.v7.appcompat.R.id.search_src_text);
         if (view instanceof EditText) {
             ((EditText) view).setTextColor(themer.getColorFilterPrimary().getColor());
             ((EditText) view).setHintTextColor(themer.getColorFilterPrimary().getColor());
@@ -163,10 +174,10 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
                 return true;
             }
         });
-        searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+        viewSearch.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
             @Override
             public boolean onQueryTextSubmit(String query) {
-                if (viewPager.getCurrentItem() == ControllerSearch.PAGE_SUBREDDITS) {
+                if (pagerSearch.getCurrentItem() == ControllerSearch.PAGE_SUBREDDITS) {
                     controllerLinks.setParameters(query.replaceAll("\\s", ""), Sort.HOT, Time.ALL);
                     closeKeyboard();
                     mListener.onNavigationBackClick();
@@ -189,19 +200,17 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
                 return false;
             }
         });
-        searchView.setSubmitButtonEnabled(true);
-        searchView.setQuery(controllerSearch.getQuery(), false);
+        viewSearch.setSubmitButtonEnabled(true);
+        viewSearch.setQuery(controllerSearch.getQuery(), false);
 
         menu.findItem(R.id.item_sort_relevance)
                 .setChecked(true);
         menu.findItem(R.id.item_sort_all)
                 .setChecked(true);
-        itemSortTime.setTitle(
-                getString(R.string.time_description, getString(
-                        R.string.item_sort_all)));
+        itemSortTime.setTitle(getString(R.string.time_description, getString(R.string.item_sort_all)));
 
         if (getArguments().getBoolean(ARG_HIDE_KEYBOARD)) {
-            searchView.clearFocus();
+            viewSearch.clearFocus();
         }
 
         for (int index = 0; index < menu.size(); index++) {
@@ -253,7 +262,7 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
     @SuppressWarnings("ResourceType")
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        view = inflater.inflate(R.layout.fragment_search, container, false);
+        view = bind(inflater.inflate(R.layout.fragment_search, container, false));
 
         listenerSearch = new ControllerSearch.Listener() {
 
@@ -280,18 +289,6 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
 
         int windowBackground = UtilsTheme.getAttributeColor(getContext(), android.R.attr.windowBackground, 0);
 
-        layoutCoordinator = (CoordinatorLayout) view.findViewById(R.id.layout_coordinator);
-        layoutAppBar = (AppBarLayout) view.findViewById(R.id.layout_app_bar);
-
-        int styleColorBackground = AppSettings.THEME_DARK.equals(mListener.getThemeBackground()) ? R.style.MenuDark : R.style.MenuLight;
-
-        ContextThemeWrapper contextThemeWrapper = new ContextThemeWrapper(new ThemeWrapper(getActivity(), UtilsColor.getThemeForColor(getResources(), themer.getColorPrimary(), mListener)), styleColorBackground);
-
-        toolbar = (Toolbar) getActivity().getLayoutInflater().cloneInContext(contextThemeWrapper).inflate(R.layout.toolbar, layoutAppBar, false);
-        layoutAppBar.addView(toolbar, 0);
-        ((AppBarLayout.LayoutParams) toolbar.getLayoutParams()).setScrollFlags(
-                AppBarLayout.LayoutParams.SCROLL_FLAG_SCROLL | AppBarLayout.LayoutParams.SCROLL_FLAG_ENTER_ALWAYS);
-        toolbar.setTitleTextColor(themer.getColorFilterPrimary().getColor());
         setUpToolbar();
 
         adapterSearchSubreddits = new AdapterSearchSubreddits(getActivity(),
@@ -342,8 +339,6 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
                 });
 
         layoutManagerSubreddits = new LinearLayoutManager(getActivity(), LinearLayoutManager.VERTICAL, false);
-        recyclerSearchSubreddits = (RecyclerView) view.findViewById(
-                R.id.recycler_search_subreddits);
         recyclerSearchSubreddits.setLayoutManager(layoutManagerSubreddits);
         recyclerSearchSubreddits.setAdapter(adapterSearchSubreddits);
         recyclerSearchSubreddits.addItemDecoration(
@@ -406,7 +401,7 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
             }
 
             @Override
-            public void onVote(Link link, AdapterLink.ViewHolderLink viewHolderLink, int vote) {
+            public void onVote(Link link, AdapterLink.ViewHolderLink viewHolderLink, Likes vote) {
 
             }
 
@@ -480,7 +475,7 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
             public void requestDisallowInterceptTouchEventVertical(boolean disallow) {
                 recyclerSearchLinks.requestDisallowInterceptTouchEvent(disallow);
                 recyclerSearchLinksSubreddit.requestDisallowInterceptTouchEvent(disallow);
-                viewPager.requestDisallowInterceptTouchEvent(disallow);
+                pagerSearch.requestDisallowInterceptTouchEvent(disallow);
             }
 
             @Override
@@ -528,7 +523,7 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
             public void requestDisallowInterceptTouchEventVertical(boolean disallow) {
                 recyclerSearchLinks.requestDisallowInterceptTouchEvent(disallow);
                 recyclerSearchLinksSubreddit.requestDisallowInterceptTouchEvent(disallow);
-                viewPager.requestDisallowInterceptTouchEvent(disallow);
+                pagerSearch.requestDisallowInterceptTouchEvent(disallow);
             }
 
             @Override
@@ -549,15 +544,12 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
                 Source.SEARCH_LINKS_SUBREDDIT);
 
         layoutManagerLinks = new LinearLayoutManager(getActivity(), LinearLayoutManager.VERTICAL, false);
-        recyclerSearchLinks = (RecyclerView) view.findViewById(R.id.recycler_search_links);
         recyclerSearchLinks.setLayoutManager(layoutManagerLinks);
         recyclerSearchLinks.setAdapter(adapterLinks);
         recyclerSearchLinks.addItemDecoration(
                 new ItemDecorationDivider(getActivity(), ItemDecorationDivider.VERTICAL_LIST));
 
         layoutManagerLinksSubreddit = new LinearLayoutManager(getActivity(), LinearLayoutManager.VERTICAL, false);
-        recyclerSearchLinksSubreddit = (RecyclerView) view.findViewById(
-                R.id.recycler_search_links_subreddit);
         recyclerSearchLinksSubreddit.setLayoutManager(layoutManagerLinksSubreddit);
         recyclerSearchLinksSubreddit.setAdapter(adapterLinksSubreddit);
         recyclerSearchLinksSubreddit.addItemDecoration(
@@ -605,15 +597,12 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
                 });
 
         layoutManagerSubredditsRecommended = new LinearLayoutManager(getActivity(), LinearLayoutManager.VERTICAL, false);
-        recyclerSearchSubredditsRecommended = (RecyclerView) view.findViewById(
-                R.id.recycler_search_subreddits_recommended);
         recyclerSearchSubredditsRecommended.setLayoutManager(layoutManagerSubredditsRecommended);
         recyclerSearchSubredditsRecommended.setAdapter(adapterSearchSubredditsRecommended);
         recyclerSearchSubredditsRecommended.addItemDecoration(
                 new ItemDecorationDivider(getActivity(), ItemDecorationDivider.VERTICAL_LIST));
 
-        viewPager = (ViewPager) view.findViewById(R.id.view_pager_search);
-        viewPager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
+        pagerSearch.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
             @Override
             public void onPageScrolled(int position,
                     float positionOffset,
@@ -642,12 +631,12 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
             }
         });
 
-        final int count = controllerLinks.isOnSpecificSubreddit() ? viewPager.getChildCount() : viewPager.getChildCount() - 1;
+        final int count = controllerLinks.isOnSpecificSubreddit() ? pagerSearch.getChildCount() : pagerSearch.getChildCount() - 1;
 
         pagerAdapter = new PagerAdapter() {
             @Override
             public Object instantiateItem(ViewGroup container, int position) {
-                return viewPager.getChildAt(position);
+                return pagerSearch.getChildAt(position);
             }
 
             @Override
@@ -682,17 +671,16 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
             }
         };
 
-        viewPager.setAdapter(pagerAdapter);
+        pagerSearch.setAdapter(pagerAdapter);
 
-        tabLayout = (TabLayout) view.findViewById(R.id.tab_search);
-        tabLayout.setTabMode(TabLayout.MODE_SCROLLABLE);
-        tabLayout.setTabTextColors(themer.getColorFilterTextMuted().getColor(),
+        layoutTabs.setTabMode(TabLayout.MODE_SCROLLABLE);
+        layoutTabs.setTabTextColors(themer.getColorFilterTextMuted().getColor(),
                 themer.getColorFilterPrimary().getColor());
-        tabLayout.setBackgroundColor(getResources().getColor(android.R.color.transparent));
+        layoutTabs.setBackgroundColor(getResources().getColor(android.R.color.transparent));
 
-        tabLayout.setupWithViewPager(viewPager);
-        viewPager.addOnPageChangeListener(
-                new TabLayout.TabLayoutOnPageChangeListener(tabLayout));
+        layoutTabs.setupWithViewPager(pagerSearch);
+        pagerSearch.addOnPageChangeListener(
+                new TabLayout.TabLayoutOnPageChangeListener(layoutTabs));
 
         return view;
     }
@@ -710,12 +698,12 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
 
         subscriptionLinks = eventHolder.getLinks()
                 .observeOn(AndroidSchedulers.mainThread())
-                .doOnNext(new AdapterNotifySubscriber<>(adapterLinks))
+                .doOnNext(linksModelRxAdapterEvent -> adapterLinks.setData(linksModelRxAdapterEvent.getData()))
                 .subscribe();
 
         subscriptionLinksSubreddit = eventHolder.getLinksSubreddit()
                 .observeOn(AndroidSchedulers.mainThread())
-                .doOnNext(new AdapterNotifySubscriber<>(adapterLinksSubreddit))
+                .doOnNext(linksModelRxAdapterEvent -> adapterLinksSubreddit.setData(linksModelRxAdapterEvent.getData()))
                 .subscribe();
 
         subscriptionSort = eventHolder.getSort()
@@ -728,7 +716,7 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
                 });
 
         subscriptionCurrentPage = eventHolder.getCurrentPage()
-                .subscribe(page -> viewPager.setCurrentItem(page));
+                .subscribe(page -> pagerSearch.setCurrentItem(page));
     }
 
     @Override
@@ -795,7 +783,7 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
     public void onHiddenChanged(boolean hidden) {
         super.onHiddenChanged(hidden);
         if (hidden) {
-            switch (viewPager.getCurrentItem()) {
+            switch (pagerSearch.getCurrentItem()) {
                 case ControllerSearch.PAGE_LINKS:
                     adapterLinks.pauseViewHolders();
                     break;
@@ -813,7 +801,7 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
     @Override
     public void setVisibilityOfThing(int visibility, Thing thing) {
         super.setVisibilityOfThing(visibility, thing);
-        switch (viewPager.getCurrentItem()) {
+        switch (pagerSearch.getCurrentItem()) {
             case ControllerSearch.PAGE_LINKS:
                 adapterLinks.setVisibility(visibility, thing);
                 break;
@@ -825,7 +813,7 @@ public class FragmentSearch extends FragmentBase implements Toolbar.OnMenuItemCl
 
     @Override
     public void onShown() {
-        switch (viewPager.getCurrentItem()) {
+        switch (pagerSearch.getCurrentItem()) {
             case ControllerSearch.PAGE_LINKS:
                 adapterLinks.setVisibility(View.VISIBLE);
                 break;

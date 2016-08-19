@@ -79,6 +79,7 @@
                 android:rotation="90"
                 app:layout_anchor="@id/swipe_refresh_thread_list"
                 app:layout_anchorGravity="bottom|end"
+                app:layout_behavior="com.winsonchiu.reader.utils.FixedFloatingActionButtonBehavior"
                 app:elevation="4dp"
                 app:borderWidth="0dp"
                 />
@@ -107,6 +108,7 @@
                 android:layout_margin="8dp"
                 android:visibility="gone"
                 android:contentDescription="@string/content_description_button_jump_top"
+                app:layout_behavior="com.winsonchiu.reader.utils.FixedFloatingActionButtonBehavior"
                 app:fabSize="mini"
                 app:elevation="4dp"
                 app:borderWidth="0dp"
@@ -121,6 +123,7 @@
                 android:layout_margin="8dp"
                 android:visibility="gone"
                 android:contentDescription="@string/content_description_button_clear_viewed"
+                app:layout_behavior="com.winsonchiu.reader.utils.FixedFloatingActionButtonBehavior"
                 app:fabSize="mini"
                 app:elevation="4dp"
                 app:borderWidth="0dp"

@@ -48,6 +48,7 @@ import com.winsonchiu.reader.comments.AdapterCommentList;
 import com.winsonchiu.reader.comments.Source;
 import com.winsonchiu.reader.data.Page;
 import com.winsonchiu.reader.data.reddit.Comment;
+import com.winsonchiu.reader.data.reddit.Likes;
 import com.winsonchiu.reader.data.reddit.Link;
 import com.winsonchiu.reader.data.reddit.Listing;
 import com.winsonchiu.reader.data.reddit.Reddit;
@@ -400,7 +401,7 @@ public class FragmentProfile extends FragmentBase implements Toolbar.OnMenuItemC
             }
 
             @Override
-            public void onVote(Link link, AdapterLink.ViewHolderLink viewHolderLink, int vote) {
+            public void onVote(Link link, AdapterLink.ViewHolderLink viewHolderLink, Likes vote) {
 
             }
 
@@ -502,7 +503,7 @@ public class FragmentProfile extends FragmentBase implements Toolbar.OnMenuItemC
             }
 
             @Override
-            public void onVoteComment(Comment comment, AdapterCommentList.ViewHolderComment viewHolderComment, int vote) {
+            public void onVoteComment(Comment comment, AdapterCommentList.ViewHolderComment viewHolderComment, Likes vote) {
 
             }
 
