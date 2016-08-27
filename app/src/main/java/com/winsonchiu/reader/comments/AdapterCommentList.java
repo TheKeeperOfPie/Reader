@@ -412,6 +412,8 @@ public class AdapterCommentList extends AdapterBase<RecyclerView.ViewHolder> imp
     @Override
     public void setData(CommentsModel data) {
         this.data = data;
+
+        notifyDataSetChanged();
     }
 
     public static class ViewHolderComment extends ViewHolderBase

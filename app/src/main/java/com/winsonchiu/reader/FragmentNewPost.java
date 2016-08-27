@@ -41,7 +41,6 @@ import com.winsonchiu.reader.data.reddit.Link;
 import com.winsonchiu.reader.data.reddit.Listing;
 import com.winsonchiu.reader.data.reddit.Reddit;
 import com.winsonchiu.reader.links.ControllerLinks;
-import com.winsonchiu.reader.rx.FinalizingSubscriber;
 import com.winsonchiu.reader.utils.UtilsInput;
 import com.winsonchiu.reader.utils.UtilsReddit;
 import com.winsonchiu.reader.utils.UtilsRx;
@@ -52,7 +51,6 @@ import org.json.JSONObject;
 import javax.inject.Inject;
 
 import rx.Observer;
-import rx.android.schedulers.AndroidSchedulers;
 
 public class FragmentNewPost extends FragmentBase implements Toolbar.OnMenuItemClickListener {
 
@@ -461,15 +459,7 @@ public class FragmentNewPost extends FragmentBase implements Toolbar.OnMenuItemC
                     @Override
                     public void onNext(String s) {
                         UtilsInput.hideKeyboard(editTextBody);
-                        controllerLinks.reloadAllLinks(false)
-                                .observeOn(AndroidSchedulers.mainThread())
-                                .subscribe(new FinalizingSubscriber<Listing>() {
-                                    @Override
-                                    public void error(Throwable e) {
-                                        Toast.makeText(activity, getString(R.string.error_loading_links), Toast.LENGTH_SHORT)
-                                                .show();
-                                    }
-                                });
+                        controllerLinks.reload();
                         mListener.onNavigationBackClick();
                     }
                 });
@@ -546,15 +536,7 @@ public class FragmentNewPost extends FragmentBase implements Toolbar.OnMenuItemC
                         }
 
                         UtilsInput.hideKeyboard(editTextBody);
-                        controllerLinks.reloadAllLinks(false)
-                                .observeOn(AndroidSchedulers.mainThread())
-                                .subscribe(new FinalizingSubscriber<Listing>() {
-                                    @Override
-                                    public void error(Throwable e) {
-                                        Toast.makeText(activity, getString(R.string.error_loading_links), Toast.LENGTH_SHORT)
-                                                .show();
-                                    }
-                                });
+                        controllerLinks.reload();
                         mListener.onNavigationBackClick();
                     }
                 });

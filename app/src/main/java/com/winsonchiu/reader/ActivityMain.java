@@ -269,7 +269,7 @@ public class ActivityMain extends AppCompatActivity
         this.themePrimaryDark = themePrimaryDark;
         this.themeAccent = themeAccent;
 
-        theme = getResources().newTheme();
+        theme = super.getTheme();
 
         UtilsColor.applyTheme(theme,
                 themeBackground,
@@ -326,9 +326,6 @@ public class ActivityMain extends AppCompatActivity
         eventListenerBase = new EventListenerBase(componentActivity) {
             @Override
             public void onClickComments(Link link, AdapterLink.ViewHolderLink viewHolderLink, Source source) {
-                controllerCommentsTop
-                        .setLink(link, source);
-
                 int color = viewHolderLink.getBackgroundColor();
 
                 FragmentBase fragment = (FragmentBase) getSupportFragmentManager().findFragmentById(R.id.frame_fragment);
@@ -343,6 +340,9 @@ public class ActivityMain extends AppCompatActivity
                                 FragmentComments.TAG)
                         .addToBackStack(null)
                         .commit();
+
+                controllerCommentsTop
+                        .setLink(link, source);
             }
 
             @Override

@@ -57,7 +57,6 @@ import com.winsonchiu.reader.R;
 import com.winsonchiu.reader.adapter.AdapterListener;
 import com.winsonchiu.reader.data.reddit.Likes;
 import com.winsonchiu.reader.data.reddit.Link;
-import com.winsonchiu.reader.data.reddit.Listing;
 import com.winsonchiu.reader.data.reddit.Reddit;
 import com.winsonchiu.reader.data.reddit.Report;
 import com.winsonchiu.reader.data.reddit.Sort;
@@ -67,7 +66,6 @@ import com.winsonchiu.reader.data.reddit.Time;
 import com.winsonchiu.reader.data.reddit.User;
 import com.winsonchiu.reader.history.Historian;
 import com.winsonchiu.reader.rx.ActionLog;
-import com.winsonchiu.reader.rx.FinalizingSubscriber;
 import com.winsonchiu.reader.rx.ObserverEmpty;
 import com.winsonchiu.reader.rx.ObserverError;
 import com.winsonchiu.reader.search.FragmentSearch;
@@ -85,7 +83,6 @@ import javax.inject.Inject;
 import butterknife.BindView;
 import rx.Subscription;
 import rx.android.schedulers.AndroidSchedulers;
-import rx.schedulers.Schedulers;
 
 public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuItemClickListener {
 
@@ -253,20 +250,15 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
         buttonJumpTop.setColorFilter(themer.getColorFilterAccent());
         buttonClearViewed.setColorFilter(themer.getColorFilterAccent());
 
-        swipeRefreshThreadList.setOnRefreshListener(() -> controllerLinks.reloadSubreddit());
+        swipeRefreshThreadList.setOnRefreshListener(() -> {
+            controllerLinks.reload();
+        });
 
         AdapterListener adapterListener = new AdapterListener() {
 
             @Override
             public void requestMore() {
-                controllerLinks.loadMoreLinks()
-                        .observeOn(AndroidSchedulers.mainThread())
-                        .subscribe(new ObserverError<Listing>() {
-                            @Override
-                            public void onError(Throwable e) {
-                                Toast.makeText(getContext(), getString(R.string.error_loading_links), Toast.LENGTH_SHORT).show();
-                            }
-                        });
+                controllerLinks.loadMore();
             }
 
             @Override
@@ -474,7 +466,7 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
 
         itemDecorationDivider = new ItemDecorationDivider(getActivity(), ItemDecorationDivider.VERTICAL_LIST);
 
-        recyclerThreadList.setItemAnimator(null);
+//        recyclerThreadList.setItemAnimator(null);
         resetAdapter(adapterLink);
 
         recyclerThreadList.addOnScrollListener(new RecyclerView.OnScrollListener() {
@@ -622,7 +614,6 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
         super.onStart();
         ControllerLinks.EventHolder eventHolder = controllerLinks.getEventHolder();
         subscriptionData = eventHolder.getData()
-                .observeOn(Schedulers.computation())
                 .observeOn(AndroidSchedulers.mainThread())
                 .doOnNext(new ActionLog<>(TAG))
                 .doOnNext(linksModel -> {
@@ -645,18 +636,25 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
                 });
 
         subscriptionLoading = eventHolder.getLoading()
+                .doOnEach(notification -> {
+                    Log.d(TAG, "call() called with: notification = [" + notification + "]");
+                })
+                .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(swipeRefreshThreadList::setRefreshing);
 
         subscriptionSort = eventHolder.getSort()
+                .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(sort -> menu.findItem(sort.getMenuId()).setChecked(true));
 
         subscriptionTime = eventHolder.getTime()
+                .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(time -> {
                     menu.findItem(time.getMenuId()).setChecked(true);
                     itemSortTime.setTitle(getString(R.string.time_description, menu.findItem(time.getMenuId()).toString()));
                 });
 
         subscriptionErrors = eventHolder.getErrors()
+                .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(linksError -> {
                     switch (linksError) {
                         case REPORT:
@@ -834,18 +832,7 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
                     buttonSubscribe.setVisibility(View.GONE);
                 }
                 else {
-                    controllerLinks.reloadSubredditOnly()
-                            .subscribe(new FinalizingSubscriber<Subreddit>() {
-                                @Override
-                                public void next(Subreddit next) {
-                                    if (next.isUserIsSubscriber()) {
-                                        buttonSubscribe.setText(R.string.unsubscribe);
-                                    } else {
-                                        buttonSubscribe.setText(R.string.subscribe);
-                                    }
-                                    buttonSubscribe.setVisibility(controllerUser.hasUser() ? View.VISIBLE : View.GONE);
-                                }
-                            });
+                    controllerLinks.reload();
                 }
             }
         };
@@ -938,11 +925,6 @@ public class FragmentThreadList extends FragmentBase implements Toolbar.OnMenuIt
                     })
                     .start();
         }
-    }
-
-    @Override
-    public void onSaveInstanceState(Bundle outState) {
-        super.onSaveInstanceState(outState);
     }
 
     @Override

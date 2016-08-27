@@ -9,9 +9,12 @@ package com.winsonchiu.reader.links;
  */
 public enum LinksError {
 
+    LOAD,
     REPORT,
     SAVE,
     UNSAVE,
     MARK_NSFW,
-    VOTE, DELETE, UNMARK_NSFW
+    VOTE,
+    DELETE,
+    UNMARK_NSFW
 }

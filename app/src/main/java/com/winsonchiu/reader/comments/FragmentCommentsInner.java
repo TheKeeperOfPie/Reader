@@ -208,7 +208,8 @@ public class FragmentCommentsInner extends FragmentBase {
     public void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
 
-        outState.putParcelable("Link", controllerComments.getLink());
+        // TODO: Figure out Binder transaction
+//        outState.putParcelable("Link", controllerComments.getLink());
     }
 
     @Override
@@ -673,9 +674,11 @@ public class FragmentCommentsInner extends FragmentBase {
                 });
 
         subscriptionLoading = eventHolder.getLoading()
+                .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(swipeRefreshCommentList::setRefreshing);
 
         subscriptionSort = eventHolder.getSort()
+                .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(sort -> {
                     if (callback.isCurrentFragment(this)) {
                         callback.setSort(sort);
@@ -683,6 +686,7 @@ public class FragmentCommentsInner extends FragmentBase {
                 });
 
         subscriptionScrollEvents = eventHolder.getScrollEvents()
+                .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(position -> {
                     UtilsAnimation.scrollToPositionWithCentering(position,
                             recyclerCommentList,

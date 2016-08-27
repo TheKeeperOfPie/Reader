@@ -188,8 +188,11 @@ public abstract class AdapterLink extends AdapterBase<ViewHolderBase> implements
 
             @Override
             public boolean areItemsTheSame(int oldItemPosition, int newItemPosition) {
-                if (oldItemPosition == 0 || newItemPosition == 0) {
+                if (oldItemPosition == 0 && newItemPosition == 0) {
                     return true;
+                }
+                else if (oldItemPosition == 0 || newItemPosition == 0) {
+                    return false;
                 }
 
                 return data.getLinks().get(oldItemPosition - 1).getName().equals(newData.getLinks().get(newItemPosition - 1).getName());
@@ -416,7 +419,7 @@ public abstract class AdapterLink extends AdapterBase<ViewHolderBase> implements
     }
 
     public static abstract class ViewHolderLink extends ViewHolderBase
-            implements Toolbar.OnMenuItemClickListener, View.OnClickListener,
+            implements Toolbar.OnMenuItemClickListener,
             View.OnLongClickListener, SurfaceHolder.Callback {
 
         @BindView(R.id.layout_root) ViewGroup layoutRoot;
@@ -753,7 +756,6 @@ public abstract class AdapterLink extends AdapterBase<ViewHolderBase> implements
                 R.id.button_send_reply,
                 R.id.text_thread_self
         })
-        @Override
         public void onClick(View v) {
             switch (v.getId()) {
                 case R.id.button_comments:

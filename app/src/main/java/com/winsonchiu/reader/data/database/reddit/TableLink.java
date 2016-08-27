@@ -144,7 +144,14 @@ public final class TableLink extends Table<Link> {
 
         List<Thing> links = new ArrayList<>();
         ObjectMapper objectMapper = ComponentStatic.getObjectMapper();
-        Cursor query = sqLiteDatabase.query(NAME, new String[] {COLUMN_JSON, COLUMN_COMMENTS}, _ID + " IN (" + TextUtils.join(",", parameters) + ")", (String[]) ids.toArray(), null, null, null);
+
+        String[] idArray = new String[ids.size()];
+
+        for (int index = 0; index < idArray.length; index++) {
+            idArray[index] = ids.get(index);
+        }
+
+        Cursor query = sqLiteDatabase.query(NAME, new String[] {COLUMN_JSON, COLUMN_COMMENTS}, _ID + " IN (" + TextUtils.join(",", parameters) + ")", idArray, null, null, null);
 
         if (query != null) {
             if (query.moveToFirst()) {

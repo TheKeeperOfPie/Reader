@@ -162,14 +162,12 @@ public class ControllerComments implements AdapterCommentList.ViewHolderComment.
                 .doOnNext(redditDatabase.storeLink())
                 .onErrorResumeNext(Observable.<Link>empty())
                 .switchIfEmpty(redditDatabase.getLink(link.getId()))
-                .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(getSubscriberLink());
     }
 
     public void loadCommentThread() {
         UtilsRx.unsubscribe(subscriptionComments);
         subscriptionComments = reddit.comments(link.getSubreddit(), link.getId(), link.getCommentId(), eventHolder.getSort().getValue().toString(), true, true, link.getContextLevel(), 10, 100)
-                .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(getSubscriberLink());
     }
 

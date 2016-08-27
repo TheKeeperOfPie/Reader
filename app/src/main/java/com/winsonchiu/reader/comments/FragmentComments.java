@@ -52,17 +52,18 @@ import com.winsonchiu.reader.FragmentBase;
 import com.winsonchiu.reader.FragmentListenerBase;
 import com.winsonchiu.reader.R;
 import com.winsonchiu.reader.data.reddit.Link;
-import com.winsonchiu.reader.data.reddit.Listing;
 import com.winsonchiu.reader.data.reddit.Sort;
 import com.winsonchiu.reader.history.ControllerHistory;
 import com.winsonchiu.reader.history.Historian;
 import com.winsonchiu.reader.links.AdapterLink;
 import com.winsonchiu.reader.links.ControllerLinks;
+import com.winsonchiu.reader.links.LinksController;
+import com.winsonchiu.reader.links.LinksModel;
 import com.winsonchiu.reader.profile.ControllerProfile;
-import com.winsonchiu.reader.rx.ObserverFinish;
 import com.winsonchiu.reader.search.ControllerSearch;
 import com.winsonchiu.reader.utils.RecyclerFragmentPagerAdapter;
 import com.winsonchiu.reader.utils.ScrollAwareFloatingActionButtonBehavior;
+import com.winsonchiu.reader.utils.UtilsList;
 import com.winsonchiu.reader.utils.UtilsRx;
 import com.winsonchiu.reader.utils.UtilsTheme;
 import com.winsonchiu.reader.utils.YouTubeListener;
@@ -77,7 +78,6 @@ import javax.inject.Inject;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import rx.Subscription;
-import rx.android.schedulers.AndroidSchedulers;
 
 public class FragmentComments extends FragmentBase
         implements Toolbar.OnMenuItemClickListener, View.OnTouchListener {
@@ -137,11 +137,11 @@ public class FragmentComments extends FragmentBase
     private Link linkTop;
     private int positionCurrent;
     private int indexStart;
-    private int itemCount;
     private FragmentCommentsInner fragmentCurrent;
     private RecyclerFragmentPagerAdapter<FragmentCommentsInner> adapterComments;
     private Source source = Source.NONE;
 
+    private Subscription subscriptionLinks;
     private Subscription subscriptionInsertions;
     private Subscription subscriptionUpdatesNsfw;
     private Subscription subscriptionUpdatesComment;
@@ -166,6 +166,8 @@ public class FragmentComments extends FragmentBase
     @Inject ControllerHistory controllerHistory;
     @Inject ControllerProfile controllerProfile;
     @Inject Historian historian;
+
+    private LinksModel linksModel = new LinksModel();
 
     public static FragmentComments newInstance() {
         FragmentComments fragment = new FragmentComments();
@@ -497,7 +499,7 @@ public class FragmentComments extends FragmentBase
             }
         };
 
-        initializePager();
+        setUpPager();
 
         if (!getArguments().getBoolean(ARG_INITIALIZED, false)) {
             viewBackground.setVisibility(View.INVISIBLE);
@@ -513,11 +515,62 @@ public class FragmentComments extends FragmentBase
         return layoutRoot;
     }
 
-    private void initializePager() {
+    @Override
+    public void onResume() {
+        super.onResume();
+
+        subscribe();
+    }
+
+    private void subscribe() {
+        CommentsTopModel data = controllerCommentsTop.getEventHolder().getData().getValue();
+        Link linkStart = data.getLinkModel().getLink();
+        Source source = data.getSource();
+
+        LinksController linksController = getLinksControllerFromSource(source);
+
+        if (linksController == null) {
+            this.linksModel.getLinks().clear();
+            this.linksModel.getLinks().add(linkStart);
+        } else {
+            subscriptionLinks = linksController.getEventHolder()
+                    .getData()
+                    .subscribe(linksModel -> {
+                        this.linksModel = linksModel;
+
+                        if (indexStart == 0) {
+                            indexStart = UtilsList.indexOf(linksModel.getLinks(), link -> linkStart.getId().equals(link.getId()));
+                            positionCurrent = indexStart;
+                        }
+
+                        adapterComments.notifyDataSetChanged();
+                        pagerComments.setCurrentItem(positionCurrent, false);
+                    });
+        }
+    }
+
+    @Nullable
+    private LinksController getLinksControllerFromSource(Source source) {
+        switch (source) {
+            case LINKS:
+                return controllerLinks;
+//            case SEARCH_LINKS:
+//                return controllerSearch;
+//            case SEARCH_LINKS_SUBREDDIT:
+//                return controllerSearch;
+//            case HISTORY:
+//                return controllerHistory;
+            default:
+            case PROFILE:
+            case NONE:
+                return null;
+        }
+    }
+
+    private void setUpPager() {
         CommentsTopModel data = controllerCommentsTop.getEventHolder().getData().getValue();
         linkTop = data.getLinkModel().getLink();
         source = data.getSource();
-        initializePagerValues();
 
         adapterComments = new RecyclerFragmentPagerAdapter<FragmentCommentsInner>(getFragmentManager()) {
 
@@ -528,21 +581,10 @@ public class FragmentComments extends FragmentBase
 
             @Override
             public Object instantiateItem(ViewGroup container, int position) {
+                Link link = linksModel.getLinks().get(position);
+
                 FragmentCommentsInner fragment = (FragmentCommentsInner) super.instantiateItem(container, position);
                 fragment.createControllerComments(((ActivityMain) getActivity()).getComponentActivity());
-                Link link = null;
-
-                if (position < indexStart) {
-                    link = getPreviousLink(position);
-                }
-                else if (position > indexStart) {
-                    link = getNextLink(position);
-                }
-
-                if (link == null) {
-                    link = linkTop;
-                }
-
                 fragment.setLink(link);
                 fragment.setCallback(fragmentCallback);
                 fragment.setAnimationFinished(animationFinished);
@@ -564,81 +606,17 @@ public class FragmentComments extends FragmentBase
             }
 
             @Override
+            public int getItemPosition(Object object) {
+                return POSITION_NONE;
+            }
+
+            @Override
             public int getCount() {
-                return itemCount;
+                return linksModel.getLinks().size();
             }
         };
 
         pagerComments.setAdapter(adapterComments);
-        pagerComments.setCurrentItem(indexStart, false);
-    }
-
-    private Link getPreviousLink(int positionPager) {
-        int offset = indexStart - positionPager;
-
-        switch (source) {
-            case PROFILE:
-            case NONE:
-                break;
-            case LINKS:
-                return controllerLinks.getPreviousLink(linkTop, offset);
-            case SEARCH_LINKS:
-                return controllerSearch.getPreviousLink(linkTop, offset);
-            case SEARCH_LINKS_SUBREDDIT:
-                return controllerSearch.getPreviousLinkSubreddit(linkTop, offset);
-            case HISTORY:
-                return controllerHistory.getPreviousLink(linkTop, offset);
-        }
-
-        return null;
-    }
-
-    private Link getNextLink(int positionPager) {
-        int offset = positionPager - indexStart;
-
-        switch (source) {
-            case PROFILE:
-            case NONE:
-                break;
-            case LINKS:
-                return controllerLinks.getNextLink(linkTop, offset);
-            case SEARCH_LINKS:
-                return controllerSearch.getNextLink(linkTop, offset);
-            case SEARCH_LINKS_SUBREDDIT:
-                return controllerSearch.getNextLinkSubreddit(linkTop, offset);
-            case HISTORY:
-                return controllerHistory.getNextLink(linkTop, offset);
-        }
-
-        return null;
-    }
-
-    private void initializePagerValues() {
-        switch (source) {
-            case PROFILE:
-            case NONE:
-                indexStart = 0;
-                itemCount = 1;
-                break;
-            case LINKS:
-                indexStart = controllerLinks.indexOfLink(linkTop);
-                itemCount = Math.max(1, controllerLinks.numberOfLinks());
-                break;
-            case SEARCH_LINKS:
-                indexStart = controllerSearch.indexOfLink(linkTop);
-                itemCount = Math.max(1, controllerSearch.sizeLinks());
-                break;
-            case SEARCH_LINKS_SUBREDDIT:
-                indexStart = controllerSearch.indexOfLinkSubreddit(linkTop);
-                itemCount = Math.max(1, controllerSearch.sizeLinks());
-                break;
-            case HISTORY:
-                indexStart = controllerHistory.indexOf(linkTop);
-                itemCount = Math.max(1, controllerHistory.sizeLinks());
-                break;
-        }
-
-        positionCurrent = indexStart;
     }
 
     private void setCurrentFragment(FragmentCommentsInner fragment) {
@@ -1301,15 +1279,7 @@ public class FragmentComments extends FragmentBase
                         }
 
                         if (position >= adapterComments.getCount() - 3) {
-                            controllerLinks.loadMoreLinks()
-                                    .observeOn(AndroidSchedulers.mainThread())
-                                    .subscribe(new ObserverFinish<Listing>() {
-                                        @Override
-                                        public void onFinish() {
-                                            itemCount = controllerLinks.numberOfLinks();
-                                            adapterComments.notifyDataSetChanged();
-                                        }
-                                    });
+                            controllerLinks.loadMore();
                         }
                     }
 
